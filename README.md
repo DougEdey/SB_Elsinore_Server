@@ -1,5 +1,5 @@
-StrangeBrewTroller
-==================
+StrangeBrew Elsinore Server
+===========================
 
 StrangeBrew Controller for Electric Breweries using Rasbperry Pi and 1-wire
 
@@ -13,6 +13,7 @@ Wiring
 
 Modify the existing rpibrew.cfg (which I have provided as an example) to setup the initial values and what you have installed, for example, for the HLT:
 
+```
 [hlt]
 set_point = 168.0 << Target Temperature when in Auto Mode
 duty_cycle = 100.0 << Amount of time the system is on (%) in Manual mode
@@ -22,7 +23,7 @@ i_param = 169.0
 d_param = 4.0
 probe = 28-0000032c449f << 1 Wire probe address
 gpio = 11 << wiringPi GPIO output pin
-
+```
 
 Start the process using:
 
@@ -30,7 +31,19 @@ Start the process using:
 
 The output will display the status.
 
-I have a basic Android app uploaded as well: BrewTroller.apk
+Basic JSON output is:
+
+```
+{"hlt_pid":
+	{"elapsed":1362949226111,"scale":"F","cycle":2.0,"duty":0.0,"p":4.0,"gpio":11,"temp":44.6,"setpoint":175.0,"k":41.0,"i":169.0,"mode":"off"},
+	
+"kettle_temp":
+	{"elapsed":1362949226921,"scale":"F","temp":44.4866}
+}
+```
+I have a basic Android app uploaded as well: 
+[Strangewbrew Elsinore for Android] (https://github.com/DougEdey/SB_Elsinore_Android)
+
 ![Android App PID](img/PID_Elsinore.png)
 ![Android App Temp](img/Temp_Elsinore.png)
 
@@ -46,4 +59,3 @@ A BB app is coming too.
 
 
 Long term I will be providing a Image file for the raspberry pi which'll allow you to run quickly!
-
