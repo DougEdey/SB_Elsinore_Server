@@ -31,9 +31,12 @@ Start the process using:
 The output will display the status.
 
 I have a basic Android app uploaded as well: BrewTroller.apk
-![Android App](img/AndroidBrewtroller.png)
+![Android App PID](img/PID_Elsinore.png)
+![Android App Temp](img/Temp_Elsinore.png)
 
-I've designed it to run on Nexus 7 tablets using Android 4.0.4+ Settings are simple, just setting the hostname/port at the moment.
+I've designed it to run on Nexus 7 tablets using Android 4.0.4+ Settings are simple, just setting the hostname/port at the moment, with a refresh rate.
+
+There's a basic timer, I'll be adding alerts in soon.
 
 Since this is early days develeopment, it must be expected that there will be bugs! But please file a bug report, or better yet, a bug fix with a pull request.
 
