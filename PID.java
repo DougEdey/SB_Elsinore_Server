@@ -178,6 +178,17 @@ final class PID implements Runnable {
 		return k_param;
 	}
 
+<<<<<<< HEAD
+	public Temp getTempProbe() {
+		return fTemp;
+	}
+
+	public String getName() {
+		return fTemp.getName();
+	}
+
+=======
+>>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 
   //PRIVATE ///
 	private double calc_average() {

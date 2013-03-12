@@ -4,8 +4,14 @@ import java.util.*;
 
 public final class Temp implements Runnable {
 
+<<<<<<< HEAD
+	public Temp (String input, String aName ){
+		fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
+		name = input;
+=======
 	public Temp ( String aName ){
 		fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
+>>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 		System.out.println(fProbe);
 	}
 
@@ -54,9 +60,19 @@ public final class Temp implements Runnable {
 		}
 	}
 
+<<<<<<< HEAD
+	public String getName() {
+		return name;
+	}
+
+	// PRIVATE ////
+	private String fProbe;
+	private String name;
+=======
 	
 	// PRIVATE ////
 	private String fProbe;
+>>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 	private Path probe;
 	private double currentTemp = 0;
 	private long currentTime = 0;
