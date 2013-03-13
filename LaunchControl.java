@@ -1,9 +1,6 @@
 import java.util.List;
 import java.util.ArrayList;
-<<<<<<< HEAD
 import java.util.Iterator;
-=======
->>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 import java.io.*;
 
 import org.json.simple.JSONObject;
@@ -11,13 +8,8 @@ import org.ini4j.*;
 import org.ini4j.ConfigParser.*;
 
 public final class LaunchControl {
-<<<<<<< HEAD
 	static List<PID> pidList = new ArrayList<PID>(); // hlt = null; public PID mlt = null; public PID kettle = null;
 	public List<Temp> tempList = new ArrayList<Temp>(); // hltTemp = null; private Temp mltTemp = null; private Temp kettleTemp = null;
-=======
-	public PID hlt = null; public PID mlt = null; public PID kettle = null;
-	private Temp hltTemp = null; private Temp mltTemp = null; private Temp kettleTemp = null;
->>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 	private String scale = "F";
 
 	public static void main(String... arguments) {
@@ -27,11 +19,7 @@ public final class LaunchControl {
 
 	public LaunchControl() {
 		final List<Thread> procList = new ArrayList<Thread>();
-<<<<<<< HEAD
 	//	final List<PID> pidList = new ArrayList<PID>();
-=======
-		final List<PID> pidList = new ArrayList<PID>();
->>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 		
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
@@ -43,15 +31,7 @@ public final class LaunchControl {
 
 			}
 		});
-<<<<<<< HEAD
 
-		List<Thread> tempThreads = new ArrayList<Thread>();
-		List<Thread> pidThreads = new ArrayList<Thread>();
-=======
-		Thread hlt_thread = null;
-		Thread mlt_thread = null;
-		Thread kettle_thread = null;
->>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 
 		readConfig();
 
@@ -62,27 +42,19 @@ public final class LaunchControl {
 			e.printStackTrace();
 		}
 		
-<<<<<<< HEAD
-		// iterate the list of PIDs
-		Iterator<PID> iterator = pidList.iterator();
+		// iterate the list of Threads to kick off any PIDs
+		Iterator<Temp> iterator = tempList.iterator();
 		while (iterator.hasNext()) {
 			// launch all the PIDs first, since they will launch the temp theads too
-			PID tPid = iterator.next();
-			Temp tTemp = tPid.getTempProbe();
-			// setup the scale for each temp probe
-			tTemp.setScale(scale);
-			// setup the threads
-			tempThreads.add(new Thread(tTemp));
-			pidThreads.add(new Thread(tPid));
+			
+			Temp tTemp = iterator.next();
+			PID tPid = findPID(tTemp.getName());
 
 			
 		}
 
 
 		/*
-=======
-
->>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 		//build an HLT and start it running
 		System.out.println(hlt_probe);
 		System.out.println(mlt_probe);
@@ -101,40 +73,8 @@ public final class LaunchControl {
 			procList.add(hlt_thread);
 		}
 
-<<<<<<< HEAD
 		*/
 
-=======
-		//build an MLT and start it running
-		if(!mlt_probe.equals("") && !mlt_probe.equals("0")) {
-			mltTemp = new Temp(mlt_probe);
-			mltTemp.setScale(scale);
-			Thread mltTemp_thread = new Thread(mltTemp);
-			mltTemp_thread.start();
-			if(mlt_gpio != -1) {
-				mlt = new PID(mltTemp, "HLT", mlt_duty, mlt_cycle, mlt_p, mlt_i, mlt_k, mlt_gpio);
-				mlt_thread = new Thread( mlt );
-				mlt_thread.start();
-			}
-			pidList.add(mlt);
-			procList.add(mlt_thread);
-		}
-
-		//build a Kettle and start it running
-		if(!kettle_probe.equals("") && !kettle_probe.equals("0")) {
-			kettleTemp = new Temp(kettle_probe);
-			kettleTemp.setScale(scale);
-			Thread kettleTemp_thread = new Thread(kettleTemp);
-			kettleTemp_thread.start();
-			if(kettle_gpio != -1) {
-				kettle = new PID(kettleTemp, "HLT", kettle_duty, kettle_cycle, kettle_p, kettle_i, kettle_k, kettle_gpio);
-				kettle_thread = new Thread( kettle );
-				kettle_thread.start();
-			}
-			pidList.add(kettle);
-			procList.add(kettle_thread);
-		}
->>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 
 		System.out.println("Waiting for input...");
 		String input = "";
@@ -157,56 +97,7 @@ public final class LaunchControl {
 			if(inputBroken[0].equalsIgnoreCase("quit")) {
 				System.out.println("Quitting");
 				System.exit(0);
-<<<<<<< HEAD
-			}/*
-=======
 			}
->>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
-			else if(inputBroken[0].equalsIgnoreCase("mlt")) {
-				if(mlt_thread != null) {
-					// not here, dump it
-					System.out.println(mlt.getStatus());
-				}else if(mltTemp != null) {
-					// not here, dump it
-					System.out.println(mltTemp.getTemp() + "@" + mltTemp.getTime());
-				} else {
-					System.out.println("MLT Thread isn't started");
-				}
-			}
-			else if(inputBroken[0].equalsIgnoreCase("hlt")) {
-				if(hlt_thread != null) {
-					// not here, dump it
-					System.out.println(hlt.getStatus());
-				}else if(hltTemp != null) {
-					// not here, dump it
-					System.out.println(hltTemp.getTemp() + "@" + hltTemp.getTime());
-				} else {
-					System.out.println("HLT Thread isn't started");
-				}
-				
-			}
-			else if(inputBroken[0].equalsIgnoreCase("kettle")) {
-				if(kettle_thread != null) {
-					// not here, dump it
-					System.out.println(kettle.getStatus());
-				}else if(kettleTemp != null) {
-					// not here, dump it
-					System.out.println(kettleTemp.getTemp() + "@" + kettleTemp.getTime());
-				} else {
-					System.out.println("Kettle Thread isn't started");
-				}
-
-			}
-			else if(inputBroken[0].equalsIgnoreCase("list")) {
-				for(PID p : pidList) {
-					if(p != null)
-					System.out.println(p.getStatus());
-				}
-<<<<<<< HEAD
-			}*/
-=======
-			}
->>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 		}
 	}
 
@@ -223,14 +114,10 @@ public final class LaunchControl {
 
 		kettle_temp = kettle_duty = kettle_cycle = kettle_setpoint = kettle_k = kettle_i = kettle_p = 0.0;
 
-<<<<<<< HEAD
 		JSONObject tJSON = null;
 
 		// iterate the thread lists
 		// use the temp list to determine if we have a PID to go with
-		if(tempList != null) {
-			System.out.println(tempList.size());
-		}
 		for(Temp t : tempList) {
 			PID tPid = findPID(t.getName());
 			tJSON = new JSONObject();
@@ -243,6 +130,7 @@ public final class LaunchControl {
 				tJSON.put("p", tPid.getP());
 				tJSON.put("i", tPid.getI());
 				tJSON.put("k", tPid.getK());
+				tJSON.put("status", tPid.getStatus());
 			} 
 			tJSON.put("temp", t.getTemp());
 			tJSON.put("elapsed", t.getTime());
@@ -250,77 +138,6 @@ public final class LaunchControl {
 			rObj.put(t.getName(), tJSON);
 			
 		}	
-=======
-		JSONObject mltJSON = null;
-		JSONObject hltJSON = null;
-		JSONObject kettleJSON = null;
-
-		if(mlt != null) {
-			mltJSON = new JSONObject();
-			mltJSON.put("temp", mltTemp.getTemp());
-			mltJSON.put("mode", mlt.getMode());
-			mltJSON.put("gpio", mlt.getGPIO());
-			mltJSON.put("duty", mlt.getDuty());
-			mltJSON.put("cycle", mlt.getCycle());
-			mltJSON.put("setpoint", mlt.getSetPoint());
-			mltJSON.put("p", mlt.getP());
-			mltJSON.put("i", mlt.getI());
-			mltJSON.put("k", mlt.getK());
-			mltJSON.put("elapsed", mltTemp.getTime());
-			mltJSON.put("scale", mltTemp.getScale());
-			rObj.put("mlt_pid", mltJSON);
-		} else if(mltTemp != null ) {
-			mltJSON = new JSONObject();
-			mltJSON.put("temp", mltTemp.getTemp());
-			mltJSON.put("elapsed", mltTemp.getTime());
-			mltJSON.put("scale", mltTemp.getScale());
-			rObj.put("mlt_temp", mltJSON);
-		}
-		
-		if(hlt != null) {
-			hltJSON = new JSONObject();
-			hltJSON.put("temp", hltTemp.getTemp());
-			hltJSON.put("mode", hlt.getMode());
-			hltJSON.put("gpio", hlt.getGPIO());
-			hltJSON.put("duty", hlt.getDuty());
-			hltJSON.put("cycle", hlt.getCycle());
-			hltJSON.put("setpoint", hlt.getSetPoint());
-			hltJSON.put("p", hlt.getP());
-			hltJSON.put("i", hlt.getI());
-			hltJSON.put("k", hlt.getK());
-			hltJSON.put("elapsed", hltTemp.getTime());
-			hltJSON.put("scale", hltTemp.getScale());
-			rObj.put("hlt_pid", hltJSON);
-		} else if(hltTemp != null ) {
-			hltJSON = new JSONObject();
-			hltJSON.put("temp", hltTemp.getTemp());
-			hltJSON.put("elapsed", hltTemp.getTime());
-			hltJSON.put("scale", hltTemp.getScale());
-			rObj.put("hlt_temp", hltJSON);
-		} 
-
-		if(kettle != null) {
-			kettleJSON = new JSONObject();
-			kettleJSON.put("temp", kettleTemp.getTemp());
-			kettleJSON.put("mode", kettle.getMode());
-			kettleJSON.put("gpio", kettle.getGPIO());
-			kettleJSON.put("duty", kettle.getDuty());
-			kettleJSON.put("cycle", kettle.getCycle());
-			kettleJSON.put("setpoint", kettle.getSetPoint());
-			kettleJSON.put("p", kettle.getP());
-			kettleJSON.put("i", kettle.getI());
-			kettleJSON.put("k", kettle.getK());
-			kettleJSON.put("elapsed", kettleTemp.getTime());
-			kettleJSON.put("scale", kettleTemp.getScale());
-			rObj.put("kettle_pid", kettleJSON);
-		} else if(kettleTemp != null ) {
-			kettleJSON = new JSONObject();
-			kettleJSON.put("temp", kettleTemp.getTemp());
-			kettleJSON.put("elapsed", kettleTemp.getTime());
-			kettleJSON.put("scale", kettleTemp.getScale());
-			rObj.put("kettle_temp", kettleJSON);
-		} 
->>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 
 		StringWriter out = new StringWriter();
 		try {
@@ -344,7 +161,6 @@ public final class LaunchControl {
 			return;
 		}
 
-<<<<<<< HEAD
 		List<String> configSections = config.sections();
 		
 		Iterator<String> iterator = configSections.iterator();
@@ -424,93 +240,6 @@ public final class LaunchControl {
 					i = config.getDouble(input, "i_param");
 				}
 			}
-=======
-		try {
-			if(config.hasSection("general")) {
-				if(config.hasOption("general", "scale")) {
-					scale = config.get("general", "scale");
-				}
-			}
-			if(config.hasSection("mlt")) {
-				if(config.hasOption("mlt", "probe")) {
-					mlt_probe = config.get("mlt", "probe");
-				}
-				if(config.hasOption("mlt", "gpio")) {
-					mlt_gpio = config.getInt("mlt", "gpio");
-				}
-				if(config.hasOption("mlt", "duty_cycle")) {
-					mlt_duty = config.getDouble("mlt", "duty_cycle");
-				}
-				if(config.hasOption("mlt", "cycle_time")) {
-					mlt_cycle = config.getDouble("mlt", "cycle_time");
-				}
-				if(config.hasOption("mlt", "set_point")) {
-					mlt_setpoint = config.getDouble("mlt", "set_point");
-				}
-				if(config.hasOption("mlt", "k_param")) {
-					mlt_k = config.getDouble("mlt", "k_param");
-				}
-				if(config.hasOption("mlt", "p_param")) {
-					mlt_p = config.getDouble("mlt", "p_param");
-				}
-				if(config.hasOption("mlt", "i_param")) {
-					mlt_i = config.getDouble("mlt", "i_param");
-				}
-			}
-			if(config.hasSection("hlt")) {
-				if(config.hasOption("hlt", "probe")) {
-					hlt_probe = config.get("hlt", "probe");
-				}
-				if(config.hasOption("hlt", "gpio")) {
-					hlt_gpio = config.getInt("hlt", "gpio");
-				}
-				if(config.hasOption("hlt", "duty_cycle")) {
-					hlt_duty = config.getDouble("hlt", "duty_cycle");
-				}
-				if(config.hasOption("hlt", "cycle_time")) {
-					hlt_cycle = config.getDouble("hlt", "cycle_time");
-				}
-				if(config.hasOption("hlt", "set_point")) {
-					hlt_setpoint = config.getDouble("hlt", "set_point");
-				}
-				if(config.hasOption("hlt", "k_param")) {
-					hlt_k = config.getDouble("hlt", "k_param");
-				}
-				if(config.hasOption("hlt", "p_param")) {
-					hlt_p = config.getDouble("hlt", "p_param");
-				}
-				if(config.hasOption("hlt", "i_param")) {
-					hlt_i = config.getDouble("hlt", "i_param");
-				}
-			}
-			if(config.hasSection("kettle")) {
-				if(config.hasOption("kettle", "probe")) {
-					kettle_probe = config.get("kettle", "probe");
-				}
-				if(config.hasOption("kettle", "gpio")) {
-					kettle_gpio = config.getInt("kettle", "gpio");
-				}
-				if(config.hasOption("kettle", "duty_cycle")) {
-					kettle_duty = config.getDouble("kettle", "duty_cycle");
-				}
-				if(config.hasOption("kettle", "cycle_time")) {
-					kettle_cycle = config.getDouble("kettle", "cycle_time");
-				}
-				if(config.hasOption("kettle", "set_point")) {
-					kettle_setpoint = config.getDouble("kettle", "set_point");
-				}
-				if(config.hasOption("kettle", "k_param")) {
-					kettle_k = config.getDouble("kettle", "k_param");
-				}
-				if(config.hasOption("kettle", "p_param")) {
-					kettle_p = config.getDouble("kettle", "p_param");
-				}
-				if(config.hasOption("kettle", "i_param")) {
-					kettle_i = config.getDouble("kettle", "i_param");
-				}
-			}
-
->>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 		} catch (NoSectionException nse) {
 			System.out.print("No Such Section");
 			nse.printStackTrace();
@@ -521,20 +250,30 @@ public final class LaunchControl {
 			System.out.print("No Such Option");
 			noe.printStackTrace();
 		}
-<<<<<<< HEAD
 			if(probe != null && !probe.equals("0")) {
 				// input is the name we'll use from here on out
 				Temp tTemp = new Temp(input, probe);
 				tempList.add(tTemp);
 				System.out.println("Adding " + tTemp.getName());
+				// setup the scale for each temp probe
+				tTemp.setScale(scale);
+				// setup the threads
+				Thread tThread = new Thread(tTemp);
+				tempThreads.add(tThread);
+				tThread.start();
+
 				if((duty != 0.0 || cycle != 0.0 || p != 0.0 || i != 0.0 || k != 0.0) && gpio != -1) {
-					PID tPid = new PID(tTemp, input, duty, cycle, p, i, k, gpio);
-					pidList.add(tPid);
+					PID tPID = new PID(tTemp, input, duty, cycle, p, i, k, gpio);
+					pidList.add(tPID);
+					Thread pThread = new Thread(tPID);
+					pidThreads.add(pThread);
+					pThread.start();
+					tPID.setCool(10, 2, 12, p, i, k);
 				}
 			}
 	}
 
-	private PID findPID(String name) {
+	public PID findPID(String name) {
 		// search based on the input name
 		Iterator<PID> iterator = pidList.iterator();
 		PID tPid = null;
@@ -548,17 +287,7 @@ public final class LaunchControl {
 		return null;
 	}
 
-=======
-	}
-
-	private String mlt_probe = ""; private String hlt_probe = ""; private String kettle_probe = "";
-	private String mlt_mode = ""; private String hlt_mode = ""; private String kettle_mode = "";
-	private int mlt_gpio = -1; private int hlt_gpio = -1; private int kettle_gpio = -1;
-	private long mlt_elapsed = 0;
-	private long hlt_elapsed = 0;
-	private long kettle_elapsed = 0;
-	private double mlt_temp, mlt_duty = 4, mlt_cycle = 0, mlt_setpoint = 175, mlt_k = 44, mlt_i = 165, mlt_p = 4;
-	private double hlt_temp, hlt_duty = 4, hlt_cycle = 0, hlt_setpoint = 175, hlt_k = 44, hlt_i = 165, hlt_p = 4;
->>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 	private double kettle_temp, kettle_duty = 4, kettle_cycle = 0, kettle_setpoint = 175, kettle_k = 44, kettle_i = 165, kettle_p = 4;
+	private List<Thread> tempThreads = new ArrayList<Thread>();
+	private List<Thread> pidThreads = new ArrayList<Thread>();
 }

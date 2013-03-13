@@ -81,17 +81,12 @@ public class BrewServer extends NanoHTTPD {
 				if((temp = params.getProperty("mode")) != null) {
 					mode = temp;
 				}
+			String inputUnit = params.getProperty("form");
+			System.out.println("Form: " + inputUnit);
 
-			System.out.println("Form: " + params.getProperty("form"));
-			if(params.getProperty("form").equalsIgnoreCase("mlt") && bLauncher.mlt != null) {
-				bLauncher.mlt.updateValues(mode, duty, cycle, setpoint, p, i, k );
-			}
-			if(params.getProperty("form").equalsIgnoreCase("hlt") && bLauncher.hlt != null) {
-				System.out.println("Updating HLT " + setpoint);
-				bLauncher.hlt.updateValues(mode, duty, cycle, setpoint, p, i, k );
-			}
-			if(params.getProperty("form").equalsIgnoreCase("kettle") && bLauncher.kettle != null) {
-				bLauncher.kettle.updateValues(mode, duty, cycle, setpoint, p, i, k );
+			PID tPID = bLauncher.findPID(inputUnit);
+			if(tPID != null) {
+				tPID.updateValues(mode, duty, cycle, setpoint, p, i, k );
 			}
 		}
 		if(uri.toLowerCase().contains("getstatus")) {

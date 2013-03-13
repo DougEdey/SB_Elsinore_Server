@@ -51,13 +51,16 @@ final class PID implements Runnable {
 	}
 
 	public synchronized String getStatus() {
+		if(OC != null) {
+			return OC.getStatus();
+		}
 		return "Duty Cyle: " + duty_cycle + " - Temp: " + getTemp();
 	}
 
 	public void run() {
 		System.out.println( "Running " + fName + " PID." );
 		// create the Output if needed
-		if(fGPIO!= -1) {
+		if(fGPIO != -1) {
 			OC = new OutputControl(fName, fGPIO, cycle_time);	
 			Thread outputThread = new Thread(OC);
 			outputThread.start();
@@ -95,7 +98,7 @@ final class PID implements Runnable {
 						}
 						// determine if the heat needs to be on or off
 						OC.setDuty(duty_cycle);
-						OC.setTime(cycle_time);
+						OC.setHTime(cycle_time);
 
 						//System.out.println(fName + " status: " + fTemp_F + " duty cycle: " + duty_cycle);
 					}
@@ -115,8 +118,8 @@ final class PID implements Runnable {
 	public void setDuty(double duty) {
 		if(duty > 100) {
 			duty = 100;
-		} else if (duty < 0) {
-			duty = 0;
+		} else if (duty < -100) {
+			duty = -100;
 		}
 
 		duty_cycle = duty;
@@ -178,7 +181,6 @@ final class PID implements Runnable {
 		return k_param;
 	}
 
-<<<<<<< HEAD
 	public Temp getTempProbe() {
 		return fTemp;
 	}
@@ -187,8 +189,6 @@ final class PID implements Runnable {
 		return fTemp.getName();
 	}
 
-=======
->>>>>>> 10cf2511bcd5888f694ff0a0bce988a5972de20a
 
   //PRIVATE ///
 	private double calc_average() {
@@ -247,11 +247,11 @@ final class PID implements Runnable {
 	double yk = 0.0,
 
 	GMA_HLIM = 100.0,
-	GMA_LLIM = 0.0;
+	GMA_LLIM = -100.0;
 
-	private double calcPID_reg4(double xk, boolean enable) {
+	private double calcPID_reg4(double avgTemp, boolean enable) {
 		double ek = 0.0;
-		ek = set_point - xk; // # calculate e[k] = SP[k] - PV[k]
+		ek = set_point - avgTemp; // # calculate e[k] = SP[k] - PV[k]
 		if (enable) {
 			//-----------------------------------------------------------
 			// Calculate PID controller:	
@@ -259,11 +259,11 @@ final class PID implements Runnable {
 			// Ts*e[k]/Ti +
 			// Td/Ts*(2*PV[k-1] - PV[k] - PV[k-2]))
 			//-----------------------------------------------------------
-			pp = k_param * (xk_1 - xk); // # y[k] = y[k-1] + Kc*(PV[k-1] - PV[k])
+			pp = k_param * (xk_1 - avgTemp); // # y[k] = y[k-1] + Kc*(PV[k-1] - PV[k])
 			//System.out.println("pp: " + pp);
 			pi = k0 * ek; // # + Kc*Ts/Ti * e[k]
 			//System.out.println("pi: " + pp);
-			pd = k1 * (2.0 * xk_1 - xk - xk_2);
+			pd = k1 * (2.0 * xk_1 - avgTemp - xk_2);
 			//System.out.println("pd: " + pp);
 			yk += pp + pi + pd;
 		} else {
@@ -274,7 +274,7 @@ final class PID implements Runnable {
 		}
 
 		xk_2 = xk_1;  // PV[k-2] = PV[k-1]
-		xk_1 = xk;    // PV[k-1] = PV[k]
+		xk_1 = avgTemp;    // PV[k-1] = PV[k]
 		
             	//System.out.println("YK: " + yk);
 		// limit y[k] to GMA_HLIM and GMA_LLIM
@@ -292,5 +292,24 @@ final class PID implements Runnable {
 		if(OC != null) {
 			OC.shutdown();
 		}
+	}
+
+	// set the cool values
+	public void setCool(int GPIO, int duty, double delay, double p, double i, double k) {
+		// set the values
+		int j = 0;
+		while(OC == null) {
+			j++;
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				return;
+			}
+
+			if(j>10) {
+				return;
+			}
+		}
+		OC.setCool(GPIO, duty, delay);
 	}
 }
