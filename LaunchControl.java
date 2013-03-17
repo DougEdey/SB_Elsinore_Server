@@ -1,11 +1,20 @@
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.TimeZone;
+import java.util.Calendar;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.io.*;
 
-import org.json.simple.JSONObject;
+import org.json.JSONObject;
+import org.json.JSONException;
 import org.ini4j.*;
 import org.ini4j.ConfigParser.*;
+
+import Cosm.*;
 
 public final class LaunchControl {
 	static List<PID> pidList = new ArrayList<PID>(); // hlt = null; public PID mlt = null; public PID kettle = null;
@@ -100,6 +109,24 @@ public final class LaunchControl {
 			}
 		}
 	}
+	
+	public String getCosmImages() {
+		try {
+			if(cosmFeed != null ){
+				for(Temp t : tempList) {
+					Datastream tData = findDatastream(t.getName());
+					if(tData != null) {
+						cosm.getDatastreamImage(cosmFeed.getId(), t.getName());
+					}
+				}
+			}
+
+		} catch (CosmException e) {
+			return "Could not get the images";
+		}
+
+		return "Grabbed images";
+	}
 
 	public String getJSONStatus() {
 		// get each setting add it to the JSON
@@ -115,7 +142,7 @@ public final class LaunchControl {
 		kettle_temp = kettle_duty = kettle_cycle = kettle_setpoint = kettle_k = kettle_i = kettle_p = 0.0;
 
 		JSONObject tJSON = null;
-
+		try {
 		// iterate the thread lists
 		// use the temp list to determine if we have a PID to go with
 		for(Temp t : tempList) {
@@ -137,15 +164,43 @@ public final class LaunchControl {
 			tJSON.put("scale", t.getScale());
 			rObj.put(t.getName(), tJSON);
 			
-		}	
+			// update COSM
+			if (cosmFeed != null) {
+				Datastream tData = findDatastream(t.getName());
+				tData.setCurrentValue(Double.toString(t.getTemp()));
+				Unit tUnit = new Unit();
+				tUnit.setType("temp");
+				tUnit.setSymbol(t.getScale());
+				tUnit.setLabel("temperature");
+				// generate the date time parameters
+				DateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd");
+				DateFormat sFormat = new SimpleDateFormat("HH:mm:ss");
 
-		StringWriter out = new StringWriter();
-		try {
-			rObj.writeJSONString(out);
-		} catch (IOException e) {
-			System.out.print("IOException generating JSON String");
+				Date updateDate = new Date(t.getTime());
+				long totSeconds = TimeZone.getDefault().getRawOffset() / 1000; 
+				long currSecond = (int)(totSeconds % 60);
+				long totMinutes = totSeconds / 60;
+				long currMinute = (int)(totMinutes % 60);
+				long totHours = totMinutes / 60;
+
+			//	tData.setAt(dFormat.format(updateDate) + "T" + sFormat.format(updateDate) + "Z" + totHours+ ":" + currMinute);
+//				tUnit.setAt(dFormat.format(updateDate) + "T" + sFormat.format(updateDate) + "Z" + Calendar.get(Calendar.ZONE_OFFSET));
+
+				tData.setUnit(tUnit);
+
+				
+				try {
+					cosm.updateDatastream(cosmFeed.getId(), t.getName(), tData);
+				} catch (CosmException e) {
+					System.out.println("Failed to update datastream: " + e.getMessage());
+				}
+
+			}
+		}	
+		} catch (JSONException e) {
+			return "Failed";
 		}
-		return out.toString();
+		return rObj.toString();
 
 	}
 		
@@ -193,6 +248,11 @@ public final class LaunchControl {
 			if(config.hasSection(input)) {
 				if(config.hasOption(input, "scale")) {
 					scale = config.get(input, "scale");
+				}
+				if(config.hasOption(input, "cosm") && config.hasOption(input, "cosm_feed")) {
+					startCosm(config.get(input, "cosm"), config.getInt(input, "cosm_feed"));
+				} else if (config.hasOption(input, "pachube") && config.hasOption(input, "pachube_feed")) {
+					startCosm(config.get(input, "pachube"), config.getInt(input, "pachube_feed"));
 				}
 			}
 		} catch (NoSectionException nse) {
@@ -250,28 +310,75 @@ public final class LaunchControl {
 			System.out.print("No Such Option");
 			noe.printStackTrace();
 		}
-			if(probe != null && !probe.equals("0")) {
-				// input is the name we'll use from here on out
-				Temp tTemp = new Temp(input, probe);
-				tempList.add(tTemp);
-				System.out.println("Adding " + tTemp.getName());
-				// setup the scale for each temp probe
-				tTemp.setScale(scale);
-				// setup the threads
-				Thread tThread = new Thread(tTemp);
-				tempThreads.add(tThread);
-				tThread.start();
+		if(probe != null && !probe.equals("0")) {
+			// input is the name we'll use from here on out
+			Temp tTemp = new Temp(input, probe);
+			tempList.add(tTemp);
+			System.out.println("Adding " + tTemp.getName());
+			// setup the scale for each temp probe
+			tTemp.setScale(scale);
+			// setup the threads
+			Thread tThread = new Thread(tTemp);
+			tempThreads.add(tThread);
+			tThread.start();
 
-				if((duty != 0.0 || cycle != 0.0 || p != 0.0 || i != 0.0 || k != 0.0) && gpio != -1) {
-					PID tPID = new PID(tTemp, input, duty, cycle, p, i, k, gpio);
-					pidList.add(tPID);
-					Thread pThread = new Thread(tPID);
-					pidThreads.add(pThread);
-					pThread.start();
-					tPID.setCool(10, 2, 12, p, i, k);
-				}
+			if((duty != 0.0 || cycle != 0.0 || p != 0.0 || i != 0.0 || k != 0.0) && gpio != -1) {
+				PID tPID = new PID(tTemp, input, duty, cycle, p, i, k, gpio);
+				pidList.add(tPID);
+				Thread pThread = new Thread(tPID);
+				pidThreads.add(pThread);
+				pThread.start();
+				tPID.setCool(10, 2, 12, p, i, k);
 			}
+
+			// try to createthe data stream
+			if(cosm == null || cosmFeed == null) {
+				// we have a pacfeed that is valid
+
+			}
+		}
+
+
 	}
+
+	private Datastream findDatastream(String tag) {
+		// iterate the list by tag
+		List <Datastream> cList = Arrays.asList(cosmStreams);
+		Iterator<Datastream> iterator = cList.iterator();
+		Datastream tData = null;
+		while (iterator.hasNext()) {
+			// launch all the PIDs first, since they will launch the temp theads too
+			tData = iterator.next();
+
+			if(tData.getId().equalsIgnoreCase(tag)) {
+				return tData;
+			}
+		}
+
+		// couldn't find the tag, lets add it
+		tData = new Datastream();//cosmFeed.getId(), tag, 0d, 0d, 240d); // always setup for Fahrenheit
+
+		System.out.println("Creating new feed");
+		List<String> lTags = new ArrayList<String> ();
+
+		lTags.add("Elsinore");
+		lTags.add("temperature");
+		
+		String[] aTags = new String[lTags.size()];
+		lTags.toArray(aTags);
+
+		tData.setTags(aTags);
+		tData.setId(tag);
+		try {
+			cosm.createDatastream(cosmFeed.getId(), tData);
+		} catch (CosmException e) {
+			System.out.println("Fauiled to create stream:" + e.getMessage() + " - " + cosmFeed.getId());
+
+			return null;
+		}
+		return tData;
+	}
+
 
 	public PID findPID(String name) {
 		// search based on the input name
@@ -286,6 +393,32 @@ public final class LaunchControl {
 		}
 		return null;
 	}
+
+	private void startCosm(String APIKey, int feedID) {
+		System.out.println("API: " + APIKey + " Feed: " + feedID);
+		cosm = new Cosm(APIKey);
+		if(cosm == null) {
+			// failed
+			return;
+		}
+
+		// get the data feed
+		try {
+			cosmFeed = cosm.getFeed(feedID, true);
+			System.out.println("Got " + cosmFeed.getTitle());
+		} catch (CosmException e) {
+			return;
+		}
+
+		// get the list of feeds
+		
+		cosmStreams = cosmFeed.getDatastreams();
+		return;
+	}
+
+	private Cosm cosm = null;
+	private Feed cosmFeed = null;
+	private Datastream[] cosmStreams = null;
 
 	private double kettle_temp, kettle_duty = 4, kettle_cycle = 0, kettle_setpoint = 175, kettle_k = 44, kettle_i = 165, kettle_p = 4;
 	private List<Thread> tempThreads = new ArrayList<Thread>();

@@ -10,8 +10,8 @@ public class BrewServer extends NanoHTTPD {
 
 		
 		// just serve up on port 8080 for now
-		super(8080, new File("/var/www/templates/"));
-		rootDir = new File("/var/www/templates/");
+		super(8080, new File(System.getProperty("user.dir")));
+		rootDir = new File(System.getProperty("user.dir"));
 		if(rootDir.exists() && rootDir.isDirectory()) {
 			System.out.println(rootDir.toString());
 		}
@@ -22,8 +22,8 @@ public class BrewServer extends NanoHTTPD {
 	public Response serve( String uri, String method, Properties header, Properties params, Properties files )
 	{
 
-//		System.out.print("URL : " + uri + " mehtod: " + method);
 		if(method.equalsIgnoreCase("POST")) {
+		System.out.print("URL : " + uri + " mehtod: " + method);
 			// parms contains the properties here
 				// parse the values if possible
 
@@ -78,6 +78,14 @@ public class BrewServer extends NanoHTTPD {
 						System.out.print("Bad p");
 					}
 				}
+				if((temp = params.getProperty("d")) != null) {
+					try {
+						dTemp = Double.parseDouble(temp);
+						p = dTemp;
+					} catch (NumberFormatException nfe) {
+						System.out.print("Bad d");
+					}
+				}
 				if((temp = params.getProperty("mode")) != null) {
 					mode = temp;
 				}
@@ -92,6 +100,9 @@ public class BrewServer extends NanoHTTPD {
 		if(uri.toLowerCase().contains("getstatus")) {
 			
 			return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, bLauncher.getJSONStatus() );
+		}
+		if(uri.toLowerCase().contains("getimages")) {
+			return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, bLauncher.getCosmImages() );
 		}
 
 		return serveFile( uri, header, rootDir, true );

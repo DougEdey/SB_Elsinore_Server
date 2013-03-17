@@ -33,11 +33,11 @@ public final class OutputControl implements Runnable {
 		double on_time, off_time;
 		System.out.println("Using GPIO: " + fGPIOc + " and " + fGPIOh);
 		try {
-			if(fGPIOh <= 0) {
+			if(fGPIOh > 0) {
 				Heat_SSR = new OutPin(fGPIOh);
 			}
 
-			if(fGPIOc <= 0) {
+			if(fGPIOc > 0) {
 				Cool_SSR = new OutPin(fGPIOc);
 			}
 
@@ -50,7 +50,6 @@ public final class OutputControl implements Runnable {
 				if(fGPIOh <= 0 && Heat_SSR == null) {
 					Heat_SSR = new OutPin(fGPIOh);
 				}
-
 
 				if(fDuty == 0) {
 					allOff();
@@ -152,7 +151,7 @@ public final class OutputControl implements Runnable {
 			Cool_SSR.setValue(false);
 		}
 		if(Heat_SSR != null) {
-			Heat_SSR.setValue(false);
+			Heat_SSR.setValue(true);
 		}
 	}
 
@@ -186,10 +185,11 @@ public final class OutputControl implements Runnable {
 			Cool_SSR.close();
 		}
 	}
-   // PRIVATE ////
+	
+	// PRIVATE ////
 	private OutPin Heat_SSR = null;
 	private OutPin Cool_SSR = null;
-   private String fName;
+	private String fName;
 	private int fGPIOh;
 	private int fGPIOc;
 	private int fTimeh;

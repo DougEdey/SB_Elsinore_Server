@@ -23,12 +23,12 @@ i_param = 169.0
 d_param = 4.0
 probe = 28-0000032c449f << 1 Wire probe address
 gpio = 11 << wiringPi GPIO output pin
-
 ```
 
 Start the process using:
 
-> sudo java -cp framboos-0.0.1-SNAPSHOT.jar:ini4j-0.5.2.jar:json-simple-1.1.1.jar:. LaunchControl
+> sudo java -cp libs/framboos-0.0.1-SNAPSHOT.jar:libs/ini4j-0.5.2.jar:libs/json-20090211.jar:libs/httpclient-4.2.jar:libs/httpcore-4.2.jar:libs/commons-logging-1.1.1.jar:libs/Cosm.jar:. LaunchControl
+
 
 The output will display the status.
 
@@ -40,10 +40,15 @@ The output will display the status.
 	{"elapsed":1362949226921,"scale":"F","temp":44.4866}
 }
 ```
-
 I have a basic Android app uploaded as well: 
 [Strangewbrew Elsinore for Android] (https://github.com/DougEdey/SB_Elsinore_Android)
 
+![Android App PID](img/PID_Elsinore.png)
+![Android App Temp](img/Temp_Elsinore.png)
+
+I've designed it to run on Nexus 7 tablets using Android 4.0.4+ Settings are simple, just setting the hostname/port at the moment, with a refresh rate.
+
+There's a basic timer, I'll be adding alerts in soon.
 
 Since this is early days develeopment, it must be expected that there will be bugs! But please file a bug report, or better yet, a bug fix with a pull request.
 
