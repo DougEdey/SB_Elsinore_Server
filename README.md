@@ -25,9 +25,14 @@ probe = 28-0000032c449f << 1 Wire probe address
 gpio = 11 << wiringPi GPIO output pin
 ```
 
-Start the process using:
+Start the process using either the startup script:
 
-> sudo java -cp libs/framboos-0.0.1-SNAPSHOT.jar:libs/ini4j-0.5.2.jar:libs/json-20090211.jar:libs/httpclient-4.2.jar:libs/httpcore-4.2.jar:libs/commons-logging-1.1.1.jar:libs/Cosm.jar:. LaunchControl
+> ./launchElsinore
+
+OR Java
+
+> sudo java -cp libs/framboos-0.0.1-SNAPSHOT.jar:libs/ini4j-0.5.2.jar:libs/json-20090211.jar:libs/httpclient-4.2.jar:libs/httpcore-4.2.jar:libs/commons-logging-1.1.1.jar:libs/joda-time-2.2.jar:libs/Cosm.jar:. LaunchControl
+
 
 
 The output will display the status.
