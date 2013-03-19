@@ -102,7 +102,15 @@ public class BrewServer extends NanoHTTPD {
 			return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, bLauncher.getJSONStatus() );
 		}
 		if(uri.toLowerCase().contains("getimages")) {
-			return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, bLauncher.getCosmImages() );
+			// try to get the String start and end
+			//Setup the defaults first
+			String startDate = params.getProperty("startDate");
+			String endDate = params.getProperty("endDate");
+			if(startDate == null || endDate == null) {
+				return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, bLauncher.getCosmImages(null, null) );
+			}
+
+			return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, bLauncher.getCosmImages(startDate, endDate) );
 		}
 
 		return serveFile( uri, header, rootDir, true );

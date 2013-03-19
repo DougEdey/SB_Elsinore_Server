@@ -110,13 +110,17 @@ public final class LaunchControl {
 		}
 	}
 	
-	public String getCosmImages() {
+	public String getCosmImages(String startDate, String endDate) {
 		try {
 			if(cosmFeed != null ){
 				for(Temp t : tempList) {
 					Datastream tData = findDatastream(t.getName());
 					if(tData != null) {
-						cosm.getDatastreamImage(cosmFeed.getId(), t.getName());
+						if(startDate == null || endDate == null) {
+							cosm.getDatastreamImage(cosmFeed.getId(), t.getName());
+						} else {
+							cosm.getDatastreamImage(cosmFeed.getId(), t.getName(), startDate, endDate);
+						}
 					}
 				}
 			}
