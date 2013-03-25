@@ -132,6 +132,28 @@ public final class LaunchControl {
 		return "Grabbed images";
 	}
 
+	public String getCosmXML(String startDate, String endDate) {
+		try {
+			if(cosmFeed != null ){
+				for(Temp t : tempList) {
+					Datastream tData = findDatastream(t.getName());
+					if(tData != null) {
+						if(startDate == null || endDate == null) {
+							cosm.getDatastreamXML(cosmFeed.getId(), t.getName());
+						} else {
+							cosm.getDatastreamXML(cosmFeed.getId(), t.getName(), startDate, endDate);
+						}
+					}
+				}
+			}
+
+		} catch (CosmException e) {
+			return "Could not get the images";
+		}
+
+		return "Grabbed images";
+	}
+
 	public String getJSONStatus() {
 		// get each setting add it to the JSON
 		JSONObject rObj = new JSONObject();

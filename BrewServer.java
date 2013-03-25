@@ -94,6 +94,7 @@ public class BrewServer extends NanoHTTPD {
 
 			PID tPID = bLauncher.findPID(inputUnit);
 			if(tPID != null) {
+				System.out.println(mode +":" + duty + ":" + cycle +":"+ setpoint +":"+ p+":"+ i+":"+ k );
 				tPID.updateValues(mode, duty, cycle, setpoint, p, i, k );
 			}
 		}

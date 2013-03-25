@@ -36,9 +36,11 @@ final class PID implements Runnable {
 		hard_duty_cycle = duty;
 		cycle_time = cycle;
 		set_point = setpoint;
+		System.out.println(p_param + ": " + i_param + ": " + k_param);
 		p_param = p;
 		i_param = i;
 		k_param = k;
+		System.out.println(p_param + ": " + i_param + ": " + k_param);
 		if(i_param == 0.0){
 			k0 = 0.0;
 		} else {
