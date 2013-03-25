@@ -61,6 +61,8 @@ final class PID implements Runnable {
 
 	public void run() {
 		System.out.println( "Running " + fName + " PID." );
+		// setup the first time
+		previousTime = System.currentTimeMillis();
 		// create the Output if needed
 		if(fGPIO != -1) {
 			OC = new OutputControl(fName, fGPIO, cycle_time);	
@@ -193,6 +195,8 @@ final class PID implements Runnable {
 
 
   //PRIVATE ///
+  	private long previousTime = 0;
+
 	private double calc_average() {
 		int size = temp_F_list.size();
 		
@@ -246,13 +250,28 @@ final class PID implements Runnable {
 		pi = 0.0,
  		pd = 0.0;
 	// output for the PID
-	double yk = 0.0,
+	double yk = 0.0;
+	double error = 0.0;
+	double previous_error = 0.0;
+	double integral = 00.0;
+	double derivative = 0.0;
+	double output = 0.0;
 
-	GMA_HLIM = 100.0,
+	double GMA_HLIM = 100.0,
 	GMA_LLIM = -100.0;
 
 	private double calcPID_reg4(double avgTemp, boolean enable) {
-		double ek = 0.0;
+		currentTime = System.currentTimeMillis();
+		double dt = (currentTime - previousTime)/1000;
+
+		error = set_point - avgTemp;
+		integral = integral - error * dt;
+		derivative = (error - previous_error)/dt;
+
+	        output = p_param*error + i_param*integral + k_param*derivative;
+		previous_error = error;
+
+		/*
 		ek = set_point - avgTemp; // # calculate e[k] = SP[k] - PV[k]
 		if (enable) {
 			//-----------------------------------------------------------
@@ -277,16 +296,18 @@ final class PID implements Runnable {
 
 		xk_2 = xk_1;  // PV[k-2] = PV[k-1]
 		xk_1 = avgTemp;    // PV[k-1] = PV[k]
-		
-            	//System.out.println("YK: " + yk);
+		*/
 		// limit y[k] to GMA_HLIM and GMA_LLIM
-		if (yk >GMA_HLIM) {
-			yk = GMA_HLIM;
+		if (output > GMA_HLIM) {
+			output = GMA_HLIM;
 		}
-		if (yk < GMA_LLIM) {
-			yk = GMA_LLIM;
+		if (output < GMA_LLIM) {
+			output = GMA_LLIM;
 		}
-		return yk;
+            	System.out.println("Duty: " + output);
+		previousTime = currentTime;
+		previous_error = error;
+		return output;
         
 	}
 
