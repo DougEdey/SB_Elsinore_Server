@@ -25,6 +25,7 @@ public class BrewServer extends NanoHTTPD {
 		if(method.equalsIgnoreCase("POST")) {
 		System.out.print("URL : " + uri + " mehtod: " + method);
 			// parms contains the properties here
+			if(uri.toLowerCase().contains("updatepid")) {
 				// parse the values if possible
 
 				String temp, mode = "off";
@@ -89,13 +90,62 @@ public class BrewServer extends NanoHTTPD {
 				if((temp = params.getProperty("mode")) != null) {
 					mode = temp;
 				}
-			String inputUnit = params.getProperty("form");
-			System.out.println("Form: " + inputUnit);
+				String inputUnit = params.getProperty("form");
+				System.out.println("Form: " + inputUnit);
 
-			PID tPID = bLauncher.findPID(inputUnit);
-			if(tPID != null) {
-				System.out.println(mode +":" + duty + ":" + cycle +":"+ setpoint +":"+ p+":"+ i+":"+ k );
-				tPID.updateValues(mode, duty, cycle, setpoint, p, i, k );
+				PID tPID = bLauncher.findPID(inputUnit);
+				if(tPID != null) {
+					System.out.println(mode +":" + duty + ":" + cycle +":"+ setpoint +":"+ p+":"+ i+":"+ k );
+					tPID.updateValues(mode, duty, cycle, setpoint, p, i, k );
+				}
+			}
+
+			if(uri.toLowerCase().contains("updateDay")) {
+				// we're storing the data for the brew day
+				String tempDateStamp;
+
+				BrewDay brewDay = bLauncher.getBrewDay();
+
+				// start of brew day
+				if((tempDateStamp = params.getProperty("startDay")) != null) {
+					brewDay.setStart(tempDateStamp);
+				}
+
+				// start mashing in
+				if((tempDateStamp = params.getProperty("mashIn")) != null) {
+					brewDay.setMashIn(tempDateStamp);
+				}
+
+				// start mashing out
+				if((tempDateStamp = params.getProperty("mashOut")) != null) {
+					brewDay.setMashOut(tempDateStamp);
+				}
+
+				// start sparging
+				if((tempDateStamp = params.getProperty("spargeStart")) != null) {
+					brewDay.setSpargeStart(tempDateStamp);
+				}
+
+				// stop sparging
+				if((tempDateStamp = params.getProperty("spargeEnd")) != null) {
+					brewDay.setSpargeEnd(tempDateStamp);
+				}
+
+				//  start boiling
+				if((tempDateStamp = params.getProperty("boilStart")) != null) {
+					brewDay.setBoilStart(tempDateStamp);
+				}
+
+				// start chilling
+				if((tempDateStamp = params.getProperty("chillStart")) != null) {
+					brewDay.setChillStart(tempDateStamp);
+				}
+
+				// stop chilling
+				if((tempDateStamp = params.getProperty("chillEnd")) != null) {
+					brewDay.setChillEnd(tempDateStamp);
+				}
+
 			}
 		}
 		if(uri.toLowerCase().contains("getstatus")) {

@@ -262,12 +262,15 @@ final class PID implements Runnable {
 
 	private double calcPID_reg4(double avgTemp, boolean enable) {
 		currentTime = System.currentTimeMillis();
+		if(previousTime == 0.0) {
+			previousTime = currentTime;
+		}
 		double dt = (currentTime - previousTime)/1000;
 
 		error = set_point - avgTemp;
-		integral = integral - error * dt;
+		integral = (integral - error) * dt;
 		derivative = (error - previous_error)/dt;
-
+		
 	        output = p_param*error + i_param*integral + k_param*derivative;
 		previous_error = error;
 
@@ -304,7 +307,6 @@ final class PID implements Runnable {
 		if (output < GMA_LLIM) {
 			output = GMA_LLIM;
 		}
-            	System.out.println("Duty: " + output);
 		previousTime = currentTime;
 		previous_error = error;
 		return output;

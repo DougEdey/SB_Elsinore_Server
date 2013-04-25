@@ -1,5 +1,3 @@
-$def with (mode, set_point, duty_cycle, cycle_time, k_param, i_param, d_param)
-
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 
@@ -8,20 +6,27 @@ $def with (mode, set_point, duty_cycle, cycle_time, k_param, i_param, d_param)
     <head>
     	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
         <title>RasPi Brew Temperature Controller</title>
-        <link rel="stylesheet" type="text/css" href="static/raspibrew.css" />
+        <link rel="stylesheet" type="text/css" href="/templates/static/raspibrew.css" />
         
         <!--[if IE]><script type="text/javascript" src="excanvas.js"></script><![endif]-->
-		<script type="text/javascript" src="static/gauge.js">			
+		<script type="text/javascript" src="/templates/static/gauge.js">			
 		</script>
-        <script type="text/javascript" src="static/jquery.js">   
+        <script type="text/javascript" src="/templates/static/jquery.js">   
         </script>
-        <script type="text/javascript" src="static/jquery.flot.js">
+        <script type="text/javascript" src="/templates/static/jquery.flot.js">
         </script>
-        <script type="text/javascript" src="static/jquery.flot.selection.js">
+        <script type="text/javascript" src="/templates/static/jquery.flot.selection.js">
         </script>
+<script type="text/javascript" src="/templates/static/segment-display.js"></script>
         
         <script type="text/javascript">
-        
+
+	var prev_time;
+        function pad(n, width, z) {
+		  z = z || '0';
+		  n = n + '';
+		  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+	}
         	//
 			// Copyright (c) 2012 Stephen P. Smith
 			//
@@ -44,11 +49,10 @@ $def with (mode, set_point, duty_cycle, cycle_time, k_param, i_param, d_param)
 			// IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         
 			//declare globals
-        	var t, tempdataarray, heatdataarray,hltdataarray, mltdataarray, kettledataarray, setpointdataarray, dutyCycle, options_temp, options_heat, plot, gaugeDisplay, newGaugeDisplay
+        	var t, tempdataarray = [], hltheatdataarray = [], mltheatdataarray = [], kettleheatdataarray = [], hltdataarray = [], mltdataarray = [], kettledataarray =[], setpointdataarray =[], dutyCycle, options_temp, options_heat, plot, gaugeDisplay, newGaugeDisplay
         	var capture_on = 1;
         	var temp_C, temp_F, setpoint_C
         	t = 0;
-			var postPending = 0;
         	
         	function findLS(selected_start, selected_end, in_pointArray) {
         		
@@ -146,254 +150,47 @@ $def with (mode, set_point, duty_cycle, cycle_time, k_param, i_param, d_param)
 		            dataType: "json",
 		            async: true, 
 		            cache: false,
-		            timeout:50000, 
-			    beforeSend: function(jqXHR, settings) {
-				//Cancel the get if the post is pending
-				if(postPending == 1) {
-					console.log("Get Paused");
-					return false;
-				}
-				return true;
-			},
-		            error: function(jqXHR, exception) {
-            if (jqXHR.status === 0) {
-                alert('Not connect.\n Verify Network.');
-            } else if (jqXHR.status == 404) {
-                alert('Requested page not found. [404]');
-            } else if (jqXHR.status == 500) {
-                alert('Internal Server Error [500].');
-            } else if (exception === 'parsererror') {
-                alert('Requested JSON parse failed.');
-            } else if (exception === 'timeout') {
-                alert('Time out error.');
-            } else if (exception === 'abort') {
-                alert('Ajax request aborted.');
-            } else {
-                alert('Uncaught Error.\n' + jqXHR.responseText);
-            }
-        },
+		            timeout:5000, 
 		            success: function(data){  
-		            	 
-		            	     //alert(data.mode);
-		            	     //temp_F = (9.0/5.0)*parseFloat(data.temp) + 32;
-		            	     //temp_F = temp_F.toFixed(2);
-		            	     
-		            	     temp_C = (5.0/9.0)*(parseFloat(data.hlt_temp) - 32);
-		            	     temp_C = temp_C.toFixed(2);
-		            	     
-		            	   // if we don't have a temperature probe there's no gauge to show!
-		            	   	if(data.hlt_temp == 0) {
-		            	   		jQuery('#tempGaugeHLT').hide();
-		            	   		jQuery('#hlt_temp_summary').hide();
-		            	   	}
-		            	   
-		            	   	if(data.mlt_temp == 0) {
-		            	   		jQuery('#tempGaugeMLT').hide();
-		            	   		jQuery('#mlt_temp_summary').hide();
-		            	   	}
-		            	   	
-		            	   	if(data.kettle_temp == 0) {
-		            	   		jQuery('#tempGaugeKettle').hide();
-		            	   		jQuery('#kettle_temp_summary').hide();
-		            	   	}
-		            	   
-		            	     
-		            	     jQuery('#tempResponse').html(data.kettle_temp);
-		            	     if(data.hlt_temp != 0 ){
-		            	     	hltGaugeDisplay.setValue(parseFloat(data.hlt_temp));
-		            	     	jQuery('#hltStatus').text(data.hlt_temp);
-		            	     }
-		            	     
-		            	     if(data.mlt_temp != 0) {
-		            	     	mltGaugeDisplay.setValue(parseFloat(data.mlt_temp));
-		            	     	jQuery('#mltStatus').text(data.mlt_temp);
-		            	     }
-		            	     
-		            	     if(data.kettle_temp != 0) {
-		            	     	kettleGaugeDisplay.setValue(parseFloat(data.kettle_temp));
-		            	     	jQuery('#kettleStatus').text(data.kettle_temp);
-		            	     }
-		            	     
-		            	     if (data.mode == "auto") {
-		            	     	//setpoint_C = (5.0/9.0)*(parseFloat(data.set_point) - 32);
-		            	     	//alert(data.name + data.set_point);
-		            	     	setpointdataarray.push([t, parseFloat(data.set_point)]);
-		            	     	
-							 }
-							 else {
-								 setpointdataarray = [];
-							 }
-		            	     
-	            	    
-            	     		mltdataarray.push([t, parseFloat(data.mlt_temp)]);
-            	     		hltdataarray.push([t, parseFloat(data.hlt_temp)]);
-            	         	kettledataarray.push([t, parseFloat(data.kettle_temp)]);
-            	    
-		            	     
-		            	  //   heatdataarray.push([t,parseFloat(data.duty_cycle)]);
-		            	     	            	      	
-		            	     //tempdataarray.push([i,parseFloat(data.temp)]);
-		            	     //heatdataarray.push([i,parseFloat(data.duty_cycle)]);
-		            	              	     
-		            	     while (tempdataarray.length > jQuery('#windowSizeText').val()){
-		            	     	tempdataarray.shift();
-		            	     }
-		            	     while (mltdataarray.length > jQuery('#windowSizeText').val()){
-		            	     	mltdataarray.shift();
-		            	     }
-		            	     while (hltdataarray.length > jQuery('#windowSizeText').val()){
-		            	     	hltdataarray.shift();
-		            	     }
-		            	     while (kettledataarray.length > jQuery('#windowSizeText').val()){
-		            	     	kettledataarray.shift();
-		            	     }
-		            	     while (heatdataarray.length > jQuery('#windowSizeText').val()){
-		            	     	heatdataarray.shift();
-		            	     }
-		            	     
-		            	     t += parseFloat(data.elapsed)
-		            	     
-		            	     jQuery('#windowSizeText').change(function(){mltdataarray=[];hltdataarray=[];kettledataarray=[];heatdataarray=[];t = 0;});
-		            	     
-		            	     //i++;
-							 if (capture_on == 1) {
-							 	 if (data.mode == "auto") {
-		            	     	    plot = jQuery.plot($$("#tempplot"), [ setpointdataarray, mltdataarray, hltdataarray, kettledataarray ], options_temp);
-		            	     	 }
-			            	     else {
-			            	     	plot = jQuery.plot($$("#tempplot"), [ mltdataarray, hltdataarray, kettledataarray ], options_temp);
-			            	     }
-			            	     plot = jQuery.plot($$("#heatplot"), [ heatdataarray ], options_heat);
-			            	     //plot.setData([dataarray]);
-	        					 //plot.draw();	 
-		            	     	 setTimeout('waitForMsg()', 1); //in millisec
-		        			 }
-		            }
+
+				$.each(data, function(key, val) {
+					vessel = key;
+			       			temp = parseFloat(val.temp).toFixed(2);
+						scale = val.scale;
+
+						// set the current temp scale
+						if(vessel == "hlt"){
+							Temp = parseFloat(temp).toFixed(2);
+	        	                                int = Math.floor(Temp);
+        	        	                        dec = Temp % 1;
+                                		        dec = dec.toString().substr(1,3);
+							hltGaugeDisplay.setValue(pad(int, 3, 0) + "" + dec);
+						if(vessel == "mlt"){
+							Temp = parseFloat(temp).toFixed(2);
+	        	                                int = Math.floor(Temp);
+        	        	                        dec = Temp % 1;
+                                		        dec = dec.toString().substr(1,3);
+							mltGaugeDisplay.setValue(pad(int, 3, 0) + "" + dec);
+						}
+						if(vessel == "kettle"){
+							Temp = parseFloat(temp).toFixed(2);
+	        	                                int = Math.floor(Temp);
+        	        	                        dec = Temp % 1;
+                                		        dec = dec.toString().substr(1,3);
+							kettleGaugeDisplay.setValue(pad(int, 3, 0) + "" + dec);
+						}
+				     	
+				});
+			},
+			error: function (xhr, ajaxOptions, thrownError) {
+				xhr.abort();
+			}
 		        });
 		        
 		    };
 		          jQuery(document).ready(function() {
+					t = 0;
 		          	
-		        			jQuery.get({
-		           			 type: "GET",
-		            url: "/getpid",
-		            dataType: "json",
-		            async: true, 
-		            cache: false,
-						complete: function(data) {
-		            	  //if we have no GPIO, there's nothing to control!
-		            	     if(data.hlt_gpio == "-1") {
-		            	    	 
-		            	    	 jQuery('#hltcontrolPanel').hide();
-		            	    	 jQuery('#hlt_pid_display').hide();
-		            	    	 jQuery('#hlt_pid_display_2').hide();
-		            	    	 jQuery('#hlt_setpointResponse').hide();
-	                             jQuery('#hlt_dutycycleResponse').hide();	                             
-	                             jQuery('#hlt_cycletimeResponse').hide();
-	                             jQuery('#hlt_k_paramResponse').hide();
-	                             jQuery('#hlt_i_paramResponse').hide();
-	                             jQuery('#hlt_d_paramResponse').hide();
-		            	     } else {
-		            	    	 // Display the control panel data
-		            	    	 jQuery('#hltMode').html(data.hlt_mode);
-		            	    	 
-                                 jQuery('#hlt_setpointResponse').html(data.hlt_set_point);
-                                 
-                                 jQuery('#hltdutycycleResponse').html(parseFloat(data.hlt_duty_cycle).toFixed(2));
-                                 jQuery('#hlt_cycletimeResponse').html(data.hlt_cycle_time);
-                                 jQuery('#hlt_k_paramResponse').html(data.hlt_k_param);
-                                 jQuery('#hlt_i_paramResponse').html(data.hlt_i_param);
-                                 jQuery('#hlt_d_paramResponse').html(data.hlt_d_param);
-                                 
-                                 jQuery("#tempGaugeHLT").click(function() {
-         							
-         							// Define the onClick function to set the selected value and update the values from the options
-         							jQuery('#mode'+jQuery('#hltMode').text()).attr('checked', true);
-         							
-         							jQuery('input[name=setpoint]').val(jQuery('#hlt_setpointResponse').text());
-         							jQuery('input[name=dutycycle]').val(jQuery('#hltdutycycleResponse').text());
-         							jQuery('input[name=cycletime]').val(jQuery('#hlt_cycletimeResponse').html());
-         							jQuery('input[name=k]').val(jQuery('#hlt_k_paramResponse').html());
-         							jQuery('input[name=i]').val(jQuery('#hlt_i_paramResponse').html());
-         							jQuery('input[name=d]').val(jQuery('#hlt_d_paramResponse').html());
-         							jQuery("#formHLT").attr('checked', true);
-         						});
-
-		            	     }
-		            	    
-		            	   //if we have no GPIO, there's nothing to control!
-		            	     if(data.mlt_gpio == -1) {
-		            	    	 jQuery('#mltcontrolPanel').hide();
-		            	    	 jQuery('#mlt_pid_display').hide();
-		            	    	 jQuery('#mlt_pid_display_2').hide();
-		            	    	 jQuery('#mlt_setpointResponse').hide();
-	                             jQuery('#mltdutycycleResponse').hide();	                             
-	                             jQuery('#mlt_cycletimeResponse').hide();
-	                             jQuery('#mlt_k_paramResponse').hide();
-	                             jQuery('#mlt_i_paramResponse').hide();
-	                             jQuery('#mlt_d_paramResponse').hide();
-		            	    	 
-		            	     } else {
-		            	    	 // Display the control panel data
-		            	    	 
-		            	    	 jQuery('#mltMode').html(data.mlt_mode);
-		            	    	 jQuery('#mlt_setpointResponse').html(data.mlt_set_point);
-                                 jQuery('#mltdutycycleResponse').html(parseFloat(data.mlt_duty_cycle).toFixed(2));
-                                 jQuery('#mlt_cycletimeResponse').html(data.mlt_cycle_time);
-                                 jQuery('#mlt_k_paramResponse').html(data.mlt_k_param);
-                                 jQuery('#mlt_i_paramResponse').html(data.mlt_i_param);
-                                 jQuery('#mlt_d_paramResponse').html(data.mlt_d_param);
-                                 
-                             	
-         						jQuery("#tempGaugeMLT").click(function() {
-         							// Define the onClick function to set the selected value and update the values from the options
-         							jQuery('#mode'+jQuery('#mltMode').text()).attr('checked', true);
-         							jQuery('input[name=setpoint]').val(jQuery('#mlt_setpointResponse').text());
-         							jQuery('input[name=dutycycle]').val(jQuery('#mltdutycycleResponse').text());
-         							jQuery('input[name=cycletime]').val(jQuery('#mlt_cycletimeResponse').html());
-         							jQuery('input[name=k]').val(jQuery('#mlt_k_paramResponse').html());
-         							jQuery('input[name=i]').val(jQuery('#mlt_i_paramResponse').html());
-         							jQuery('input[name=d]').val(jQuery('#mlt_d_paramResponse').html())
-         							
-         							jQuery("#formMLT").attr('checked', true);
-         						});
-		            	     }
-		            	     
-		            	     //if we have no GPIO, there's nothing to control!
-		            	     if(data.kettle_gpio == -1) {
-		            	    	 jQuery('#kettle_pid_display').hide();
-		            	    	 jQuery('#kettle_pid_display_2').hide();
-		            	    	 jQuery('#kettlecontrolPanel').hide(); 
-		            	    	 jQuery('#kettle_setpointResponse').hide();
-	                             jQuery('#kettle_dutycycleResponse').hide();	                             
-	                             jQuery('#kettle_cycletimeResponse').hide();
-	                             jQuery('#kettle_k_paramResponse').hide();
-	                             jQuery('#kettle_i_paramResponse').hide();
-	                             jQuery('#kettle_d_paramResponse').hide();
-		            	     }else {
-		            	    	 jQuery('#kettleMode').html(data.kettle_mode);
-		            	    	 jQuery('#kettle_setpointResponse').html(data.kettle_set_point);
-	                             jQuery('#kettledutycycleResponse').html(parseFloat(data.kettle_duty_cycle).toFixed(2));
-	                             jQuery('#kettle_cycletimeResponse').html(data.kettle_cycle_time);
-	                             jQuery('#kettle_k_paramResponse').html(data.kettle_k_param);
-	                             jQuery('#kettle_i_paramResponse').html(data.kettle_i_param);
-	                             jQuery('#kettle_d_paramResponse').html(data.kettle_d_param);
-
-	     						jQuery("#tempGaugeKettle").click(function() {
-	     							// Define the onClick function to set the selected value and update the values from the options
-	     							jQuery('#mode'+jQuery('#kettleMode').text()).attr('checked', true);
-	     							
-	     							jQuery('input[name=setpoint]').val(jQuery('#kettle_setpointResponse').text());
-	     							jQuery('input[name=dutycycle]').val(jQuery('#kettledutycycleResponse').text());
-	     							jQuery('input[name=cycletime]').val(jQuery('#kettle_cycletimeResponse').html());
-	     							jQuery('input[name=k]').val(jQuery('#kettle_k_paramResponse').html());
-	     							jQuery('input[name=i]').val(jQuery('#kettle_i_paramResponse').html());
-	     							jQuery('input[name=d]').val(jQuery('#kettle_d_paramResponse').html())
-	     							jQuery("#formKettle").attr('checked', true);
-	     						})
-						}
-		            	     }
-						});
 		        	  	// Lock on and add the +/- Buttons
 						jQuery("div[id='pidInput']").append('<div class="inc button" style="float:left">+</div><div class="dec button">-</div>');
 		        	  	
@@ -426,7 +223,9 @@ $def with (mode, set_point, duty_cycle, cycle_time, k_param, i_param, d_param)
 		          			hltdataarray=[];
 		          			kettledataarray=[];
 		          			mltdataarray=[];
-		          			heatdataarray=[];
+		          			mltheatdataarray=[];
+		          			hltheatdataarray=[];
+		          			kettleheatdataarray=[];
 		          			t = 0;
 		          			waitForMsg();
 		          		});
@@ -460,27 +259,29 @@ $def with (mode, set_point, duty_cycle, cycle_time, k_param, i_param, d_param)
 						     formdata = jQuery(this).serialize();
 						     
 						     jQuery.ajax({
-					            type: "POST",
-                               data: formdata,
-                               success: function(data) {
-											return true;
-                               },
-										 
-                            });
-                            //reset plot
-                            if (jQuery('#off').is(':checked') == false) {
-	                             tempdataarray=[];
-	                             heatdataarray=[];
-	                             hltpointdataarray = [];
-	                             mltpointdataarray = [];
-	                             kettlepointdataarray = [];
-	                             t = 0;
-                            }
-						     return false;
+					        	    type: "POST",
+				                               data: formdata,
+				                               success: function(data) {
+				                               }
+                        			    });
+		                            //reset plot
+		          			tempdataarray=[];
+		          			hltdataarray=[];
+		          			kettledataarray=[];
+		          			mltdataarray=[];
+		          			mltheatdataarray=[];
+		          			hltheatdataarray=[];
+		          			kettleheatdataarray=[];
+	        	                     hltpointdataarray = [];
+	                	             mltpointdataarray = [];
+	                        	     kettlepointdataarray = [];
+		                             t = 0;
+						return false;
 						});
 						
 			            
 	                    //draw gauge
+				/*
 						var mlt_options_gauge = {
 							majorTickLabel: true,
 							value: 40,
@@ -539,7 +340,46 @@ $def with (mode, set_point, duty_cycle, cycle_time, k_param, i_param, d_param)
 						mltGaugeDisplay = new Gauge( document.getElementById( 'tempGaugeMLT'), mlt_options_gauge );
 						hltGaugeDisplay = new Gauge( document.getElementById( 'tempGaugeHLT'), hlt_options_gauge );
 						kettleGaugeDisplay = new Gauge( document.getElementById( 'tempGaugeKettle'), kettle_options_gauge );
-						
+				*/		
+					 mltGaugeDisplay = new SegmentDisplay("tempGaugeMLT");
+						  mltGaugeDisplay.pattern         = "###.##";
+						  mltGaugeDisplay.mltGaugeDisplayAngle    = 6;
+						  mltGaugeDisplay.digitHeight     = 20;
+						  mltGaugeDisplay.digitWidth      = 14;
+						  mltGaugeDisplay.digitDistance   = 2.5;
+						  mltGaugeDisplay.segmentWidth    = 2;
+						  mltGaugeDisplay.segmentDistance = 0.3;
+						  mltGaugeDisplay.segmentCount    = 7;
+						  mltGaugeDisplay.cornerType      = 3;
+						  mltGaugeDisplay.colorOn         = "#e95d0f";
+						  mltGaugeDisplay.colorOff        = "#4b1e05";
+						  mltGaugeDisplay.draw();
+					 hltGaugeDisplay = new SegmentDisplay("tempGaugeHLT");
+						  hltGaugeDisplay.pattern         = "###.##";
+						  hltGaugeDisplay.mltGaugeDisplayAngle    = 6;
+						  hltGaugeDisplay.digitHeight     = 20;
+						  hltGaugeDisplay.digitWidth      = 14;
+						  hltGaugeDisplay.digitDistance   = 2.5;
+						  hltGaugeDisplay.segmentWidth    = 2;
+						  hltGaugeDisplay.segmentDistance = 0.3;
+						  hltGaugeDisplay.segmentCount    = 7;
+						  hltGaugeDisplay.cornerType      = 3;
+						  hltGaugeDisplay.colorOn         = "#e95d0f";
+						  hltGaugeDisplay.colorOff        = "#4b1e05";
+						  hltGaugeDisplay.draw();
+					 kettleGaugeDisplay = new SegmentDisplay("tempGaugeKettle");
+						  kettleGaugeDisplay.pattern         = "###.##";
+						  kettleGaugeDisplay.mltGaugeDisplayAngle    = 6;
+						  kettleGaugeDisplay.digitHeight     = 20;
+						  kettleGaugeDisplay.digitWidth      = 14;
+						  kettleGaugeDisplay.digitDistance   = 2.5;
+						  kettleGaugeDisplay.segmentWidth    = 2;
+						  kettleGaugeDisplay.segmentDistance = 0.3;
+						  kettleGaugeDisplay.segmentCount    = 7;
+						  kettleGaugeDisplay.cornerType      = 3;
+						  kettleGaugeDisplay.colorOn         = "#e95d0f";
+						  kettleGaugeDisplay.colorOff        = "#4b1e05";
+						  kettleGaugeDisplay.draw();
 		          	    // line plot Settings
 		          		i = 0;
 		          		tempdataarray = []; 
@@ -626,15 +466,15 @@ $def with (mode, set_point, duty_cycle, cycle_time, k_param, i_param, d_param)
 	    <div class="ControlResponse" style="float:left">
 	    	<table>
 	    	<tr>
-	    		<td>
+	    		<td id='MLTGauge' class="gauge display" style='background-color: rgb(36, 30, 30);border: 3px solid #999;width: 300px;height: 188px;'>
 					<canvas id="tempGaugeMLT" width="300" height="300">
 					</canvas>
 				</td>
-				<td>
+	    		<td id='HLTGauge' class="gauge display" style='background-color: rgb(36, 30, 30);border: 3px solid #999;width: 300px;height: 188px;'>
 					<canvas id="tempGaugeHLT" width="300" height="300">
 					</canvas>
 				</td>
-				<td>
+	    		<td id='hltGauge' class="gauge display" style='background-color: rgb(36, 30, 30);border: 3px solid #999;width: 300px;height: 188px;'>
 					<canvas id="tempGaugeKettle" width="300" height="300">
 					</canvas>
 				</td>
@@ -671,8 +511,7 @@ $def with (mode, set_point, duty_cycle, cycle_time, k_param, i_param, d_param)
 			    			<div>Set Point: <div id="mlt_setpointResponse" style="display:inline" >0</div>&#176F</div>
 			    			<div align=right>Kc:<div id="mlt_k_paramResponse" style="display:inline">0</div>%/&#176F</div>
 			    			<div align=right>Duty Cycle:<div id="mltdutycycleResponse" align=right style="display:inline">50</div>%</div>
-		    				<div align=right>Ti: <div id="mlt_i_paraResponse" align=right style="display:inline">50</div>%</div>
-		    				<div align=right>Ti: <div id="hlt_i_paramResponse" style="display:inline">0</div> secs</div>
+		    				<div align=right>Ti: <div id="mlt_i_paramResponse" align=right style="display:inline">50</div>%</div>
 		    			</div>
 	    			</td>
 				<td align=right>

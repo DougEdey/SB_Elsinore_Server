@@ -20,6 +20,7 @@ public final class LaunchControl {
 	static List<PID> pidList = new ArrayList<PID>(); // hlt = null; public PID mlt = null; public PID kettle = null;
 	public List<Temp> tempList = new ArrayList<Temp>(); // hltTemp = null; private Temp mltTemp = null; private Temp kettleTemp = null;
 	private String scale = "F";
+	private BrewDay brewDay = null;
 
 	public static void main(String... arguments) {
 		System.out.println( "Running Brewery Controller." );
@@ -169,6 +170,9 @@ public final class LaunchControl {
 
 		JSONObject tJSON = null;
 		try {
+		
+		//get the datestamps data 
+		
 		// iterate the thread lists
 		// use the temp list to determine if we have a PID to go with
 		for(Temp t : tempList) {
@@ -221,6 +225,10 @@ public final class LaunchControl {
 					System.out.println("Failed to update datastream: " + e.getMessage());
 				}
 
+			}
+
+			if (brewDay != null) {
+				rObj.put("brewday", brewDay.brewDayStatus());
 			}
 		}	
 		} catch (JSONException e) {
@@ -440,6 +448,14 @@ public final class LaunchControl {
 		
 		cosmStreams = cosmFeed.getDatastreams();
 		return;
+	}
+	
+	public BrewDay getBrewDay() {
+		if (brewDay == null) {
+			brewDay = new BrewDay();
+		}
+
+		return brewDay;
 	}
 
 	private Cosm cosm = null;

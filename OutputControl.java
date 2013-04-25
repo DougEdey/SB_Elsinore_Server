@@ -50,7 +50,6 @@ public final class OutputControl implements Runnable {
 				if(fGPIOh <= 0 && Heat_SSR == null) {
 					Heat_SSR = new OutPin(fGPIOh);
 				}
-				System.out.println("Duty: " + fDuty + " cycle: " + fTimeh);
 				if(fDuty == 0) {
 					allOff();
 					Thread.sleep(fTimeh);
