@@ -50,6 +50,14 @@ public final class BrewDay {
 
 
 	// start
+	Date getStart() {
+		return startDay;
+	}
+
+	String getStartString() {
+		return lFormat.format(startDay);
+	}
+
 	void setStart(Date startIn) {
 		startDay = startIn;
 	}
@@ -59,6 +67,14 @@ public final class BrewDay {
 	}
 
 	// mash in
+	Date getMashIn() {
+		return mashIn;
+	}
+
+	String getMashInString() {
+		return lFormat.format(mashIn);
+	}
+
 	void setMashIn(Date mashInIn) {
 		mashIn = mashInIn;
 	}
@@ -68,6 +84,14 @@ public final class BrewDay {
 	}
 
 	// mash out
+	Date getMashOut() {
+		return mashOut;
+	}
+
+	String getMashOutString() {
+		return lFormat.format(mashOut);
+	}
+
 	void setMashOut(Date mashOutIn) {
 		mashOut = mashOutIn;
 	}
@@ -77,6 +101,14 @@ public final class BrewDay {
 	}
 
 	// sparge start
+	Date getSpargeStart() {
+		return spargeStart;
+	}
+
+	String getSpargeStartString() {
+		return lFormat.format(spargeStart);
+	}
+
 	void setSpargeStart(Date spargeStartIn) {
 		spargeStart = spargeStartIn;
 	}
@@ -86,6 +118,14 @@ public final class BrewDay {
 	}
 
 	// sparge end
+	Date getSpargeEnd() {
+		return spargeEnd;
+	}
+
+	String getSpargeEndString() {
+		return lFormat.format(spargeEnd);
+	}
+
 	void setSpargeEnd(Date spargeEndIn) {
 		spargeEnd = spargeEndIn;
 	}
@@ -95,8 +135,16 @@ public final class BrewDay {
 	}
 
 	// boil start
+	Date getBoilStart() {
+		return boilStart;
+	}
+
+	String getBoilStartString() {
+		return lFormat.format(boilStart);
+	}
+
 	void setBoilStart(Date boilStartIn) {
-		spargeEnd = boilStartIn;
+		boilStart = boilStartIn;
 	}
 
 	void setBoilStart(String boilStartIn) {
@@ -104,6 +152,14 @@ public final class BrewDay {
 	}
 
 	// chill start
+	Date getChillStart() {
+		return chillStart;
+	}
+
+	String getChillStartString() {
+		return lFormat.format(chillStart);
+	}
+
 	void setChillStart(Date chillStartIn) {
 		chillStart = chillStartIn;
 	}
@@ -113,6 +169,14 @@ public final class BrewDay {
 	}
 
 	// chill stop
+	Date getChillEnd() {
+		return chillEnd;
+	}
+
+	String getChillEndString() {
+		return lFormat.format(chillEnd);
+	}
+
 	void setChillEnd(Date chillEndIn) {
 		chillEnd = chillEndIn;
 	}
