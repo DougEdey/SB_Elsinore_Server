@@ -22,8 +22,8 @@ public class BrewServer extends NanoHTTPD {
 	public Response serve( String uri, String method, Properties header, Properties params, Properties files )
 	{
 
+		System.out.println("URL : " + uri + " method: " + method);
 		if(method.equalsIgnoreCase("POST")) {
-		System.out.print("URL : " + uri + " mehtod: " + method);
 			// parms contains the properties here
 			if(uri.toLowerCase().contains("updatepid")) {
 				// parse the values if possible
@@ -98,13 +98,22 @@ public class BrewServer extends NanoHTTPD {
 					System.out.println(mode +":" + duty + ":" + cycle +":"+ setpoint +":"+ p+":"+ i+":"+ k );
 					tPID.updateValues(mode, duty, cycle, setpoint, p, i, k );
 				}
+				return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, "Updated PID" );
 			}
 
-			if(uri.toLowerCase().contains("updateDay")) {
+			if(uri.toLowerCase().contains("updateday")) {
 				// we're storing the data for the brew day
 				String tempDateStamp;
 
 				BrewDay brewDay = bLauncher.getBrewDay();
+
+				// updated date
+				if((tempDateStamp = params.getProperty("updated")) != null) {
+					brewDay.setStart(tempDateStamp);
+				} else {
+					// we don't have an updated datestamp. Don't do anything for now
+					return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, "No update datestamp, not updating a thang! YA HOSER!" );
+				}
 
 				// start of brew day
 				if((tempDateStamp = params.getProperty("startDay")) != null) {
@@ -146,7 +155,9 @@ public class BrewServer extends NanoHTTPD {
 					brewDay.setChillEnd(tempDateStamp);
 				}
 
+				return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, "Updated Brewday" );
 			}
+
 		}
 		if(uri.toLowerCase().contains("getstatus")) {
 			
