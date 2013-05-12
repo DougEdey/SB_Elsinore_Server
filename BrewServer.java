@@ -109,7 +109,7 @@ public class BrewServer extends NanoHTTPD {
 
 				// updated date
 				if((tempDateStamp = params.getProperty("updated")) != null) {
-					brewDay.setStart(tempDateStamp);
+					brewDay.setUpdated(tempDateStamp);
 				} else {
 					// we don't have an updated datestamp. Don't do anything for now
 					return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, "No update datestamp, not updating a thang! YA HOSER!" );
