@@ -15,6 +15,7 @@ public final class BrewDay {
 	DateFormat sFormat = new SimpleDateFormat("HH:mm:ss");
 	DateFormat lFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	// the actual dates
+	Date updated = null;
 	Date startDay = null;
 	Date mashIn = null;
 	Date mashOut = null;
@@ -185,6 +186,22 @@ public final class BrewDay {
 		setChillEnd(parseDateString(chillEndIn));
 	}
 
+	public Date getUpdate() {
+		return updated;
+	}
+	
+	public String getUpdatedString() {
+		return lFormat.format(updated);
+	}
+
+	public void setUpdated(Date updatedIn) {
+		updated = updatedIn;
+	}
+
+	public void setUpdated(String updatedIn) {
+		setUpdated(parseDateString(updatedIn));
+	}
+	
 	// get the JSON
 	JSONObject brewDayStatus() {
 		JSONObject status = new JSONObject();
