@@ -582,7 +582,7 @@ public final class LaunchControl {
 		// iterate the list of temperature Threads to get values
 		Integer i = 1;
 		Iterator<Temp> iterator = tempList.iterator();
-		System.out.println("\n\nNo config data found as usable, please update rpibrew.cfg with the correct values below:");
+		System.out.println("\n\nNo config data found as usable. Select a input and name it (i.e. \"1 kettle\" no quotes) or type \"r\" to refresh:");
 		while (iterator.hasNext()) {
 			// launch all the PIDs first, since they will launch the temp theads too
 			Temp tTemp = iterator.next();
