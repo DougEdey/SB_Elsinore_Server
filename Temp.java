@@ -5,6 +5,7 @@ import java.util.*;
 public final class Temp implements Runnable {
 
 	public Temp (String input, String aName ) {
+		probeName = aName;
 		fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
 		name = input;
 		System.out.println(fProbe);
@@ -14,38 +15,7 @@ public final class Temp implements Runnable {
 		
 		
 		while(true) {
-
-			BufferedReader br = null;
-			try {
-				br = new BufferedReader(new FileReader(fProbe));
-				StringBuilder sb = new StringBuilder();
-				String line = br.readLine();
-				if(line.contains("NO")) {
-					// bad CRC, do nothing
-				} else if(line.contains("YES")) {
-					// good CRC
-					line = br.readLine();
-					// last value should be t=
-					int t = line.indexOf("t=");
-					String temp = line.substring(t+2);
-					double tTemp = Double.parseDouble(temp);
-					currentTemp = tTemp/1000;
-					if(scale.equals("F")) {
-						currentTemp = (9.0/5.0)*currentTemp + 32;
-					}
-					currentTime = System.currentTimeMillis();
-				}
-			} catch (IOException ie) {
-				ie.printStackTrace();
-			} catch (NumberFormatException nfe) {
-				nfe.printStackTrace();
-			} finally {
-				if(br != null){
-					try {
-						br.close();
-					} catch (IOException ie) {
-					}
-				}
+			if(updateTemp() == -1) {
 			}
 			try {
 				Thread.sleep(500);
@@ -55,13 +25,23 @@ public final class Temp implements Runnable {
 		}
 	}
 
+	public void setName(String n) {
+		name = n;
+	}
+
 	public String getName() {
 		return name;
 	}
 
+	public String getProbe() {
+		return probeName;
+	}
+
 	// PRIVATE ////
-	private String fProbe;
+	public String fProbe;
 	private String name;
+	private String probeName;
+
 	private Path probe;
 	private double currentTemp = 0;
 	private long currentTime = 0;
@@ -103,6 +83,44 @@ public final class Temp implements Runnable {
 
 	public long getTime() {
 		return currentTime;
+	}
+
+	public double updateTemp() {
+		BufferedReader br = null;
+		double result = -1L;
+		try {
+			br = new BufferedReader(new FileReader(fProbe));
+			StringBuilder sb = new StringBuilder();
+			String line = br.readLine();
+			if(line.contains("NO")) {
+				// bad CRC, do nothing
+			} else if(line.contains("YES")) {
+				// good CRC
+				line = br.readLine();
+				// last value should be t=
+				int t = line.indexOf("t=");
+				String temp = line.substring(t+2);
+				double tTemp = Double.parseDouble(temp);
+				currentTemp = tTemp/1000;
+				if(scale.equals("F")) {
+					currentTemp = (9.0/5.0)*currentTemp + 32;
+				}
+				result = currentTemp;
+				currentTime = System.currentTimeMillis();
+			}
+		} catch (IOException ie) {
+			ie.printStackTrace();
+		} catch (NumberFormatException nfe) {
+			nfe.printStackTrace();
+		} finally {
+			if(br != null){
+				try {
+					br.close();
+				} catch (IOException ie) {
+				}
+			}
+		}
+		return result;
 	}
 }
 

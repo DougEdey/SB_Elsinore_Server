@@ -16,6 +16,8 @@ import org.ini4j.ConfigParser.*;
 
 import Cosm.*;
 
+import com.sb.common.ServePID;
+
 public final class LaunchControl {
 	static List<PID> pidList = new ArrayList<PID>(); // hlt = null; public PID mlt = null; public PID kettle = null;
 	public List<Temp> tempList = new ArrayList<Temp>(); // hltTemp = null; private Temp mltTemp = null; private Temp kettleTemp = null;
@@ -56,34 +58,9 @@ public final class LaunchControl {
 		Iterator<Temp> iterator = tempList.iterator();
 		while (iterator.hasNext()) {
 			// launch all the PIDs first, since they will launch the temp theads too
-			
 			Temp tTemp = iterator.next();
 			PID tPid = findPID(tTemp.getName());
-
-			
 		}
-
-
-		/*
-		//build an HLT and start it running
-		System.out.println(hlt_probe);
-		System.out.println(mlt_probe);
-		System.out.println(kettle_probe);
-		if(!hlt_probe.equals("") && !hlt_probe.equals("0")) {
-			hltTemp = new Temp(hlt_probe);
-			hltTemp.setScale(scale);
-			Thread hltTemp_thread = new Thread(hltTemp);
-			hltTemp_thread.start();
-			if(hlt_gpio != -1) {
-				hlt = new PID(hltTemp, "HLT", hlt_duty, hlt_cycle, hlt_p, hlt_i, hlt_k, hlt_gpio);
-				hlt_thread = new Thread( hlt );
-				hlt_thread.start();
-			}
-			pidList.add(hlt);
-			procList.add(hlt_thread);
-		}
-
-		*/
 
 
 		System.out.println("Waiting for input...");
@@ -153,6 +130,16 @@ public final class LaunchControl {
 		}
 
 		return "Grabbed images";
+	}
+
+	public String getControlPage() {
+		List<String> devList = new ArrayList<String>();
+		 for(Temp t : tempList) {
+		 	devList.add(t.getName());
+		 }
+
+		ServePID pidServe = new ServePID(devList);
+		return pidServe.getPage();
 	}
 
 	public String getJSONStatus() {
@@ -247,6 +234,7 @@ public final class LaunchControl {
 			config.read("rpibrew.cfg");
 		} catch (IOException e) {	
 			System.out.println("Config file doesn't exist");
+			createConfig();
 			return;
 		}
 
@@ -262,6 +250,11 @@ public final class LaunchControl {
 				parseDevice(config, temp);
 			}
 			
+		}
+
+		if (tempList.size() == 0) {
+			// get user input
+			createConfig();
 		}
 
 	}
@@ -458,6 +451,113 @@ public final class LaunchControl {
 		return brewDay;
 	}
 
+	private void createConfig() {
+		// try to access the list of 1-wire devices
+		File w1Folder = new File("/sys/bus/w1/devices/");
+		File[] listOfFiles = w1Folder.listFiles();
+		for ( File currentFile : listOfFiles) {
+			if (currentFile.isDirectory() && !currentFile.getName().startsWith("w1_bus_master")) {
+				// got a directory, check for a temp
+				System.out.println("Checking for " + currentFile.getName());
+				Temp currentTemp = new Temp(currentFile.getName(), currentFile.getName());
+				tempList.add(currentTemp);
+				// setup the scale for each temp probe
+				currentTemp.setScale(scale);
+				// setup the threads
+				Thread tThread = new Thread(currentTemp);
+				tempThreads.add(tThread);
+				tThread.start();
+			}
+		}
+
+		if (tempList.size() == 0) {
+			System.out.println("Could not find any one wire devices, please check you have the correct modules setup");
+			System.exit(0);
+		}
+		
+		displaySensors();
+
+		ConfigParser config = new ConfigParser();
+
+		System.out.println("Select the input");
+		String input = "";
+		String[] inputBroken;
+		while(true) {
+			System.out.print(">");
+			input = "";
+			 //  open up standard input
+			input = readInput();
+			// parse the input and determine where to throw the data
+			inputBroken = input.split(" ");
+			// is the first value something we recognize?
+			if(inputBroken[0].equalsIgnoreCase("quit")) {
+				System.out.println("Quitting");
+				System.out.println("Updating config file, please check it in rpibrew.cfg.new");
+
+				File configOut = new File("rpibrew.cfg.new");
+				try {
+					config.write(configOut);
+				} catch (IOException ioe) {
+					System.out.println("Could not update file");
+				}
+				System.exit(0);
+			}
+			if(inputBroken[0].startsWith("r") || inputBroken[0].startsWith("R")) {
+				System.out.println("Refreshing...");
+				displaySensors();
+			}
+
+			int selector = 0;
+			try {
+				selector = Integer.parseInt(inputBroken[0]);
+				// we parsed ok
+				if (selector > 0 && selector <= tempList.size()) {
+					// we have a valid input
+					String name = "";
+					int GPIO = -1;
+
+					if (inputBroken.length > 1) {
+						name = inputBroken[1];
+					} else {
+						System.out.println("Please name the input: ");
+						input = readInput();
+						inputBroken = input.split(" ");
+						if(inputBroken.length > 0) {
+							name = inputBroken[0];
+						}
+					}
+
+					displayGPIO();
+
+					System.out.println( "Adding " + tempList.get(selector-1).getName() + " as " + name);
+					System.out.println("To make this a PID add the GPIO number now, or anything else for a temp probe only: ");
+					input = readInput();
+					try {
+						GPIO = Integer.parseInt(input);
+					} catch (NumberFormatException n) {
+						// not a GPIO
+
+					}
+
+					// Check for Valid GPIO values
+					tempList.get(selector-1).setName(name);
+					if (GPIO != -1 && GPIO != 7) {
+						addPIDToConfig(config, tempList.get(selector-1).getProbe(), name, GPIO);
+					} else {
+						System.out.println("No valid GPIO Value found, adding as a temperature only probe");
+						addTempToConfig(config, tempList.get(selector-1).getProbe(), name);
+					}
+
+				} else {
+					System.out.println( "Input number (" + input + ") is not valid\n");
+				}
+			} catch (NumberFormatException e) {
+				// not a number
+			}
+		}
+
+	}
+
 	private Cosm cosm = null;
 	private Feed cosmFeed = null;
 	private Datastream[] cosmStreams = null;
@@ -465,4 +565,76 @@ public final class LaunchControl {
 	private double kettle_temp, kettle_duty = 4, kettle_cycle = 0, kettle_setpoint = 175, kettle_k = 44, kettle_i = 165, kettle_p = 4;
 	private List<Thread> tempThreads = new ArrayList<Thread>();
 	private List<Thread> pidThreads = new ArrayList<Thread>();
+
+	private String readInput() {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		String input = "";
+		try {
+			input = br.readLine();
+		} catch (IOException ioe) {
+			
+			System.out.println("IO error trying to read your input: " + input);
+		}
+		return input;
+	}
+	
+	private void displaySensors() {
+		// iterate the list of temperature Threads to get values
+		Integer i = 1;
+		Iterator<Temp> iterator = tempList.iterator();
+		System.out.println("\n\nNo config data found as usable, please update rpibrew.cfg with the correct values below:");
+		while (iterator.hasNext()) {
+			// launch all the PIDs first, since they will launch the temp theads too
+			Temp tTemp = iterator.next();
+			System.out.println( i.toString() + ") " + tTemp.getName() + " = " + tTemp.updateTemp());
+			i++;
+		}
+	}
+	
+	private void displayGPIO() {
+		System.out.println("GPIO Values, use the outer values");
+		System.out.println("USE |PHYSICAL |USE");
+		System.out.println(" NA |  1 * 2  | NA");
+		System.out.println("  8 |  3 * 4  | NA");
+		System.out.println("  9 |  5 * 6  | NA");
+		System.out.println(" NA |  7 * 8  | 15");
+		System.out.println(" NA |  9 * 10 | 16");
+		System.out.println("  0 | 11 * 12 | 1 ");
+		System.out.println("  2 | 13 * 14 | NA ");
+		System.out.println("  3 | 15 * 16 | 4 ");
+		System.out.println(" NA | 17 * 18 | 5");
+		System.out.println(" 12 | 19 * 20 | NA ");
+		System.out.println(" 13 | 21 * 22 | 6 ");
+		System.out.println(" 14 | 23 * 24 | 10 ");
+		System.out.println(" NA | 25 * 26 | 11 ");
+	}
+
+	private void addTempToConfig(ConfigParser config, String device, String name) {
+		try {
+		  if (!config.hasSection(name) ) {
+		  		// update this one
+				config.addSection(name);
+		  }
+
+		  config.set(name, "probe", device);
+		} catch (Exception e) {
+		}
+	}
+
+	private void addPIDToConfig(ConfigParser config, String device, String name, int GPIO) {
+		try {
+		  if (!config.hasSection(name) ) {
+		  		// update this one
+				config.addSection(name);
+		  }
+
+		  config.set(name, "probe", device);
+		  config.set(name, "gpio", GPIO);
+		  config.set(name, "k_param", 0);
+		  config.set(name, "i_param", 0);
+		  config.set(name, "d_param", 0);
+		} catch (Exception e) {
+			return;
+		}
+	}
 }

@@ -1,6 +1,6 @@
 import java.io.*;
 import java.util.*;
-
+import com.sb.common.ServePID;
 
 public class BrewServer extends NanoHTTPD {
 	
@@ -30,6 +30,7 @@ public class BrewServer extends NanoHTTPD {
 
 				String temp, mode = "off";
 				double dTemp, duty = 0, cycle = 4, setpoint = 175, k = 44, i = 165, p = 4;
+				System.out.println(params.toString());
 				if((temp = params.getProperty("dutycycle")) != null) {
 					try {
 						dTemp = Double.parseDouble(temp);
@@ -174,7 +175,10 @@ public class BrewServer extends NanoHTTPD {
 
 			return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, bLauncher.getCosmImages(startDate, endDate) );
 		}
-
+		
+		if (uri.toLowerCase().contains("control")) {
+			return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, bLauncher.getControlPage());
+		}
 		return serveFile( uri, header, rootDir, true );
 	}
 
