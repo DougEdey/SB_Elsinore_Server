@@ -1,4 +1,5 @@
 import java.util.List;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Arrays;
@@ -19,8 +20,8 @@ import Cosm.*;
 import com.sb.common.ServePID;
 
 public final class LaunchControl {
-	static List<PID> pidList = new ArrayList<PID>(); // hlt = null; public PID mlt = null; public PID kettle = null;
-	public List<Temp> tempList = new ArrayList<Temp>(); // hltTemp = null; private Temp mltTemp = null; private Temp kettleTemp = null;
+	static List<PID> pidList = new ArrayList<PID>(); 
+	public List<Temp> tempList = new ArrayList<Temp>(); 
 	private String scale = "F";
 	private BrewDay brewDay = null;
 
@@ -133,9 +134,15 @@ public final class LaunchControl {
 	}
 
 	public String getControlPage() {
-		List<String> devList = new ArrayList<String>();
+		HashMap<String, String> devList = new HashMap<String, String>();
 		 for(Temp t : tempList) {
-		 	devList.add(t.getName());
+			PID tPid = findPID(t.getName());
+			String type = "Temp";
+
+			if (tPid != null) {
+				type = "PID";
+			}
+		 	devList.put(t.getName(), type);
 		 }
 
 		ServePID pidServe = new ServePID(devList);
@@ -147,13 +154,6 @@ public final class LaunchControl {
 		JSONObject rObj = new JSONObject();
 
 		String active_devices = "";
-
-		// init the params in case there's no value
-		mlt_temp = mlt_duty = mlt_cycle = mlt_setpoint = mlt_k = mlt_i = mlt_p = 0.0;
-
-		hlt_temp = hlt_duty = hlt_cycle = hlt_setpoint = hlt_k = hlt_i = hlt_p = 0.0;
-
-		kettle_temp = kettle_duty = kettle_cycle = kettle_setpoint = kettle_k = kettle_i = kettle_p = 0.0;
 
 		JSONObject tJSON = null;
 		try {
@@ -173,7 +173,7 @@ public final class LaunchControl {
 				tJSON.put("setpoint", tPid.getSetPoint());
 				tJSON.put("p", tPid.getP());
 				tJSON.put("i", tPid.getI());
-				tJSON.put("k", tPid.getK());
+				tJSON.put("d", tPid.getD());
 				tJSON.put("status", tPid.getStatus());
 			} 
 			tJSON.put("temp", t.getTemp());
@@ -259,15 +259,6 @@ public final class LaunchControl {
 
 	}
 
-	private String mlt_probe = ""; private String hlt_probe = ""; private String kettle_probe = "";
-	private String mlt_mode = ""; private String hlt_mode = ""; private String kettle_mode = "";
-	private int mlt_gpio = -1; private int hlt_gpio = -1; private int kettle_gpio = -1;
-	private long mlt_elapsed = 0;
-	private long hlt_elapsed = 0;
-	private long kettle_elapsed = 0;
-	private double mlt_temp, mlt_duty = 4, mlt_cycle = 0, mlt_setpoint = 175, mlt_k = 44, mlt_i = 165, mlt_p = 4;
-	private double hlt_temp, hlt_duty = 4, hlt_cycle = 0, hlt_setpoint = 175, hlt_k = 44, hlt_i = 165, hlt_p = 4;
-
 
 	// parse the general section
 	private void parseGeneral(ConfigParser config, String input) {
@@ -298,7 +289,7 @@ public final class LaunchControl {
 	private void parseDevice(ConfigParser config, String input) {
 		String probe = null;
 		int gpio = -1;
-		double duty = 0.0, cycle = 0.0, setpoint = 0.0, k = 0.0, i = 0.0, p = 0.0;
+		double duty = 0.0, cycle = 0.0, setpoint = 0.0, p = 0.0, i = 0.0, d = 0.0;
 		System.out.println("Parsing : " + input);
 		try {
 			if(config.hasSection(input)) {
@@ -318,7 +309,7 @@ public final class LaunchControl {
 					setpoint = config.getDouble(input, "set_point");
 				}
 				if(config.hasOption(input, "k_param")) {
-					k = config.getDouble(input, "k_param");
+					d = config.getDouble(input, "k_param");
 				}
 				if(config.hasOption(input, "p_param")) {
 					p = config.getDouble(input, "p_param");
@@ -349,13 +340,13 @@ public final class LaunchControl {
 			tempThreads.add(tThread);
 			tThread.start();
 
-			if((duty != 0.0 || cycle != 0.0 || p != 0.0 || i != 0.0 || k != 0.0) && gpio != -1) {
-				PID tPID = new PID(tTemp, input, duty, cycle, p, i, k, gpio);
+			if((duty != 0.0 || cycle != 0.0 || p != 0.0 || i != 0.0 || d != 0.0) && gpio != -1) {
+				PID tPID = new PID(tTemp, input, duty, cycle, p, i, d, gpio);
 				pidList.add(tPID);
 				Thread pThread = new Thread(tPID);
 				pidThreads.add(pThread);
 				pThread.start();
-				tPID.setCool(10, 2, 12, p, i, k);
+				tPID.setCool(10, 2, 12, p, i, d);
 			}
 
 			// try to createthe data stream
@@ -562,7 +553,6 @@ public final class LaunchControl {
 	private Feed cosmFeed = null;
 	private Datastream[] cosmStreams = null;
 
-	private double kettle_temp, kettle_duty = 4, kettle_cycle = 0, kettle_setpoint = 175, kettle_k = 44, kettle_i = 165, kettle_p = 4;
 	private List<Thread> tempThreads = new ArrayList<Thread>();
 	private List<Thread> pidThreads = new ArrayList<Thread>();
 

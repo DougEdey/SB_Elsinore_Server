@@ -1,7 +1,6 @@
 body {
         color: #3E3E3E;
         background-color: #FBFFFF;
-		margin: 30px;
 		font-family: Verdana;
 }
 
@@ -13,7 +12,7 @@ div.controlPanel {
 }
 
 .controller {
-	margin:2px 0 20px 10px;
+	margin:2px 0 1px 1px;
 	text-align:center;
 	width: 25em;
 	border: 1px solid #999;
@@ -22,6 +21,9 @@ div.controlPanel {
 	vertical-align: top;
 	margin-top: 0px;
 	margin-bottom: auto;
+}
+
+.temp {
 }
 
 .gage {

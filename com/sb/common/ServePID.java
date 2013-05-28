@@ -1,32 +1,37 @@
 package com.sb.common;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Iterator;
 
 public class ServePID {
 	// This class is used to serve the webpage for the PID control
 	// Also known as the Elsinore web page
 	// I can easily refactor this for a better name later
 	public String lineSep = System.getProperty("line.separator");
-	private List<String> devices;
-	public ServePID(List<String> devList) {
+	private HashMap<String, String> devices;
+	public ServePID(HashMap<String, String> devList) {
 		// no passed values, just generate the basic data
 		devices = devList;
 	}
 	
 	
 	public String getHeader() {
-		
-		String header = "<div id='header'>I hope</div>" + lineSep;
+		String header = "";
 		return header;
 	}
 	
 	public String getPage() {
 		String page = "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta http-equiv='Content-Type' content='text/html; charset=utf-8'><meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/></head>" + lineSep;
 		page = page + "<title>PID Dislay page</title>" + lineSep +
-				"<body>Content to come soon." + lineSep +
+				"<body>" + lineSep +
 				getHeader() + lineSep +
 				addJS() + lineSep;
-		for (String s : devices) {
-			page += addController(s);
+
+		Iterator devIterator = devices.entrySet().iterator();
+		while ( devIterator.hasNext()) {
+			Map.Entry pairs = (Map.Entry) devIterator.next();
+			page += addController((String) pairs.getKey(), (String) pairs.getValue());
 		}
 		page += "</body>";
 		return page;
@@ -68,8 +73,8 @@ public class ServePID {
 
 	}
 	
-	public String addController(String device) {
-		String controller = "<div id=\"" + device + "\" class=\"controller\">" + lineSep +
+	public String addController(String device, String type) {
+		String controller = "<div id=\"" + device + "\" class=\"controller " + type +"\">" + lineSep +
 					"<script type='text/javascript'>" + lineSep +
 					"jQuery(document).ready(function() {" + lineSep +
 
@@ -85,18 +90,21 @@ public class ServePID {
 					"GaugeDisplay[\"" + device + "\"].cornerType      = 3;" + lineSep +
 					"GaugeDisplay[\"" + device + "\"].colorOn         = \"#e95d0f\";" + lineSep +
 					"GaugeDisplay[\"" + device + "\"].colorOff        = \"#4b1e05\";" + lineSep +
-					"GaugeDisplay[\"" + device + "\"].draw();" + lineSep +
-					"Gauges[\"" + device + "\"] = new JustGage({ id: \"" + device + "-gage\", min: 0, max:100, title:\"Cycle\" }); " + lineSep +
-					"$(\"input[type='number']\").stepper();"+ lineSep +
-					"});" + lineSep + lineSep +
+					"GaugeDisplay[\"" + device + "\"].draw();" + lineSep;
+			if(type.equals("PID")) {
+				controller += "Gauges[\"" + device + "\"] = new JustGage({ id: \"" + device + "-gage\", min: 0, max:100, title:\"Cycle\" }); " + lineSep +
+					"$(\"input[type='number']\").stepper();"+ lineSep;
+			}
+				controller += "});" + lineSep + lineSep +
 					"</script>" + lineSep +
 					"<div id=\"" + device + "-title\" class=\"title\">" + device + "</div>" + lineSep +
 					" <canvas id=\"" + device + "-tempGauge\" class=\"gauge\" width=\"300\" height=\"140\">" + lineSep +
 					"</canvas>" + lineSep +
 					"<div id='" + device + "-tempSummary'>Temperature(<div id='tempUnit'>F</div>): " + lineSep +
 							"<div id='" + device + "-tempStatus' >temp</div>&#176<div id='tempUnit'>F</div>" + lineSep + 
-					"</div>" + lineSep +
-					"<div id=\"" + device + "-gage\" class='gage'></div>" + lineSep +
+					"</div>" + lineSep;
+			if(type.equals("PID")) {
+				controller +=	"<div id=\"" + device + "-gage\" class='gage'></div>" + lineSep +
 					"<form id=\""+ device + "-form\" class=\"controlPanelForm\">" + lineSep +
 					"<input id=\"" + device + "-modeAuto\" class=\"modeclass\" type=\"radio\" name=\"mode\" value=\"auto\" /> Auto" + lineSep +
 					"<input id=\"" + device + "-modeManual\" class=\"modeclass\" type=\"radio\" name=\"mode\" value=\"manual\"/> Manual" + lineSep +
@@ -105,7 +113,7 @@ public class ServePID {
                     "<div id='pidInput' class='labels'><div id='"+ device + "-labelSP' >Set Point:</div>"+ lineSep +
                     "<br /><div id='"+ device + "-labelDC' >Duty Cycle:</div>" + lineSep +
                     "<br /><div id='"+ device + "-labelDT' >Duty Time:</div>" + lineSep +
-                    "<br /><div id='"+ device + "-labelk' >K:</div>" + lineSep +
+                    "<br /><div id='"+ device + "-labelp' >P:</div>" + lineSep +
                     "<br /><div id='"+ device + "-labeli' >I:</div>" + lineSep +
                     "<br /><div id='"+ device + "-labeld' >D:</div>" + lineSep +
 		    "</div>" + lineSep +
@@ -127,7 +135,7 @@ public class ServePID {
                     "<br />" + lineSep +
                     
 			"<div id=\"" + device + "-p\">" + lineSep +
-                    "	<input class='inputBox k' type=\"number\" step=\"any\" name=\"" + device + "-p\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
+                    "	<input class='inputBox p' type=\"number\" step=\"any\" name=\"" + device + "-p\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
 			"</div>" + lineSep +
                     "<br />" + lineSep +
         
@@ -145,15 +153,16 @@ public class ServePID {
                     	"<div id='"+ device + "-unitSP'>&#176/<div id='tempUnit'>F</div>secs</div><br />"+ 
                    	"<div id='"+ device + "-unitDC'>%</div><br />"+ 
                     	"<div id='"+ device + "-unitDT'>%/&#176<div id='tempUnit'>F</div>secs</div><br />"+ 
-                   	"<div id='"+ device + "-unitK'>secs</div><br />"+ 
+                   	"<div id='"+ device + "-unitP'>secs</div><br />"+ 
                     	"<div id='"+ device + "-unitI'>&#176<div id='tempUnit'>F</div></div><br />" +
 			"<div id='"+ device + "-unitD'>secs</div><br/>" +
 						"</div><br style='clear:both' />"+
 
                     "<button id=\"sendcommand\" type=\"submit\" value=\"SubmitCommand\">Send Command</button>" + lineSep +
 
-					"</form>" + lineSep +
-				"</div>";
+					"</form>" + lineSep;
+		}
+		controller +=	"</div>";
 		
 		return controller;
 	}

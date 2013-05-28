@@ -29,7 +29,7 @@ public class BrewServer extends NanoHTTPD {
 				// parse the values if possible
 
 				String temp, mode = "off";
-				double dTemp, duty = 0, cycle = 4, setpoint = 175, k = 44, i = 165, p = 4;
+				double dTemp, duty = 0, cycle = 4, setpoint = 175, p = 0, i = 0, d = 0;
 				System.out.println(params.toString());
 				if((temp = params.getProperty("dutycycle")) != null) {
 					try {
@@ -56,12 +56,12 @@ public class BrewServer extends NanoHTTPD {
 						System.out.print("Bad setpoint");
 					}
 				}
-				if((temp = params.getProperty("k")) != null) {
+				if((temp = params.getProperty("p")) != null) {
 					try {
 						dTemp = Double.parseDouble(temp);
-						k = dTemp;
+						p = dTemp;
 					} catch (NumberFormatException nfe) {
-						System.out.print("Bad k");
+						System.out.print("Bad p");
 					}
 				}
 				if((temp = params.getProperty("i")) != null) {
@@ -72,18 +72,10 @@ public class BrewServer extends NanoHTTPD {
 						System.out.print("Bad i");
 					}
 				}
-				if((temp = params.getProperty("p")) != null) {
-					try {
-						dTemp = Double.parseDouble(temp);
-						p = dTemp;
-					} catch (NumberFormatException nfe) {
-						System.out.print("Bad p");
-					}
-				}
 				if((temp = params.getProperty("d")) != null) {
 					try {
 						dTemp = Double.parseDouble(temp);
-						p = dTemp;
+						d =  dTemp;
 					} catch (NumberFormatException nfe) {
 						System.out.print("Bad d");
 					}
@@ -91,13 +83,14 @@ public class BrewServer extends NanoHTTPD {
 				if((temp = params.getProperty("mode")) != null) {
 					mode = temp;
 				}
+
 				String inputUnit = params.getProperty("form");
 				System.out.println("Form: " + inputUnit);
 
 				PID tPID = bLauncher.findPID(inputUnit);
 				if(tPID != null) {
-					System.out.println(mode +":" + duty + ":" + cycle +":"+ setpoint +":"+ p+":"+ i+":"+ k );
-					tPID.updateValues(mode, duty, cycle, setpoint, p, i, k );
+					System.out.println(mode +":" + duty + ":" + cycle +":"+ setpoint +":"+ p+":"+ i+":"+ d );
+					tPID.updateValues(mode, duty, cycle, setpoint, p, i, d );
 				}
 				return new NanoHTTPD.Response( HTTP_OK, MIME_HTML, "Updated PID" );
 			}

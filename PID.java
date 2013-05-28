@@ -16,16 +16,16 @@ final class PID implements Runnable {
 		cycle_time = aTime;
 		p_param = p;
 		i_param = i;
-		k_param = k;
+		d_param = k;
 		fName = aName;
 		fTemp = aTemp;
 		fGPIO = GPIO;
 		if(i_param == 0.0){
 			k0 = 0.0;
 		} else {
-			k0 = k_param * cycle_time / i_param;
+			k0 = d_param * cycle_time / i_param;
 		}
-		k1 = k_param * k_param / cycle_time;
+		k1 = d_param * d_param / cycle_time;
 		lpf1 = (2.0 * k_lpf - cycle_time) / (2.0 * k_lpf + cycle_time);
 		lpf2 = cycle_time / (2.0 * k_lpf + cycle_time) ;
 		
@@ -36,17 +36,17 @@ final class PID implements Runnable {
 		hard_duty_cycle = duty;
 		cycle_time = cycle;
 		set_point = setpoint;
-		System.out.println(p_param + ": " + i_param + ": " + k_param);
+		System.out.println(p_param + ": " + i_param + ": " + d_param);
 		p_param = p;
 		i_param = i;
-		k_param = k;
-		System.out.println(p_param + ": " + i_param + ": " + k_param);
+		d_param = k;
+		System.out.println(p_param + ": " + i_param + ": " + d_param);
 		if(i_param == 0.0){
 			k0 = 0.0;
 		} else {
-			k0 = k_param * cycle_time / i_param;
+			k0 = d_param * cycle_time / i_param;
 		}
-		k1 = k_param * k_param / cycle_time;
+		k1 = d_param * d_param / cycle_time;
 		lpf1 = (2.0 * k_lpf - cycle_time) / (2.0 * k_lpf + cycle_time);
 		lpf2 = cycle_time / (2.0 * k_lpf + cycle_time) ;
 		return;
@@ -138,7 +138,7 @@ final class PID implements Runnable {
 	}
 
 	public void setK(double k) {
-		k_param = k;
+		d_param = k;
 	}
 
 	public void setI(double i) {
@@ -181,8 +181,8 @@ final class PID implements Runnable {
 		return i_param;
 	}
 
-	public double getK() {
-		return k_param;
+	public double getD() {
+		return d_param;
 	}
 
 	public Temp getTempProbe() {
@@ -227,7 +227,7 @@ final class PID implements Runnable {
 	private double set_point;
 	private double p_param;
 	private double i_param;
-	private double k_param;
+	private double d_param;
 	private String mode;
 	private String fName;
 	private long currentTime = System.currentTimeMillis();
@@ -271,35 +271,9 @@ final class PID implements Runnable {
 		integral = (integral - error) * dt;
 		derivative = (error - previous_error)/dt;
 		
-	        output = p_param*error + i_param*integral + k_param*derivative;
+	        output = p_param*error + i_param*integral + d_param*derivative;
 		previous_error = error;
 
-		/*
-		ek = set_point - avgTemp; // # calculate e[k] = SP[k] - PV[k]
-		if (enable) {
-			//-----------------------------------------------------------
-			// Calculate PID controller:	
-			// y[k] = y[k-1] + kc*(PV[k-1] - PV[k] +
-			// Ts*e[k]/Ti +
-			// Td/Ts*(2*PV[k-1] - PV[k] - PV[k-2]))
-			//-----------------------------------------------------------
-			pp = k_param * (xk_1 - avgTemp); // # y[k] = y[k-1] + Kc*(PV[k-1] - PV[k])
-			//System.out.println("pp: " + pp);
-			pi = k0 * ek; // # + Kc*Ts/Ti * e[k]
-			//System.out.println("pi: " + pp);
-			pd = k1 * (2.0 * xk_1 - avgTemp - xk_2);
-			//System.out.println("pd: " + pp);
-			yk += pp + pi + pd;
-		} else {
-			yk = 0.0;
-			pp = 0.0;
-			pi = 0.0;
-			pd = 0.0;
-		}
-
-		xk_2 = xk_1;  // PV[k-2] = PV[k-1]
-		xk_1 = avgTemp;    // PV[k-1] = PV[k]
-		*/
 		// limit y[k] to GMA_HLIM and GMA_LLIM
 		if (output > GMA_HLIM) {
 			output = GMA_HLIM;

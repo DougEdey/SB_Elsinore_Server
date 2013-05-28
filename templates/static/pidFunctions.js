@@ -32,9 +32,6 @@ function waitForMsg(){
 				GaugeDisplay[vessel].setValue(pad(int, 3, 0) + "" + dec);
 				jQuery("#"+vessel+"-tempStatus").text(temp);
 				if(!("gpio" in val )) {
-					// hide the sections we don't want
-					jQuery("#"+vessel+"-form").hide();	
-					jQuery("#"+vessel+"-gage").hide();
 					return; // nothing else to do
 				}
 
@@ -53,7 +50,6 @@ function waitForMsg(){
 				s.attr('checked', 'checked');
 
 				Gauges[vessel].refresh(val.duty);
-//				justGage({vessel+'-gage', val.duty});
 				jQuery('input[name="'+vessel+'-dutycycle"]').val(val.duty);
 				jQuery('input[name="'+vessel+'-cycletime"]').val(val.cycle);
 				jQuery('input[name="'+vessel+'-setpoint"]').val(val.setpoint);
