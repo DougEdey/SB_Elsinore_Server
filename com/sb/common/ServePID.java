@@ -1,4 +1,6 @@
 package com.sb.common;
+import java.net.Inet4Address;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -59,9 +61,16 @@ public class ServePID {
 	        "<script type=\"text/javascript\">" + lineSep +
 	        "var update = 1;" + lineSep +
 	        "var GaugeDisplay = {}; " + lineSep +
-	        "var Gauges = {}; " + lineSep +
-	        "var hostName = 'http://elsinore:8080';" + lineSep +
-	         "//long polling - wait for message" + lineSep +
+	        "var Gauges = {}; " + lineSep;
+
+		try {
+	        	javascript += "var hostName = 'http://" + Inet4Address.getLocalHost().getHostAddress() + ":8080';" + lineSep;
+		} catch (UnknownHostException e) {
+			System.out.println("Couldn't get host on startup!");
+			e.printStackTrace();
+		}
+	        
+		javascript +=  "//long polling - wait for message" + lineSep +
 	         
 	        "jQuery(document).ready(function() {" + lineSep +
 	        "jQuery(\".controlPanelForm\").submit(function() {submitForm(this);});" + lineSep +
