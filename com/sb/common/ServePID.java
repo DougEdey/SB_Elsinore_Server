@@ -63,13 +63,6 @@ public class ServePID {
 	        "var GaugeDisplay = {}; " + lineSep +
 	        "var Gauges = {}; " + lineSep;
 
-		try {
-	        	javascript += "var hostName = 'http://" + Inet4Address.getLocalHost().getHostAddress() + ":8080';" + lineSep;
-		} catch (UnknownHostException e) {
-			System.out.println("Couldn't get host on startup!");
-			e.printStackTrace();
-		}
-	        
 		javascript +=  "//long polling - wait for message" + lineSep +
 	         
 	        "jQuery(document).ready(function() {" + lineSep +

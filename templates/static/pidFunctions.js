@@ -4,7 +4,7 @@ function waitForMsg(){
 	}
 	jQuery.ajax({
 		type: 'GET',
-		url: hostName+'/getstatus',
+		url: '/getstatus',
 		dataType: 'json',
 		async: true,
 		cache: false,
