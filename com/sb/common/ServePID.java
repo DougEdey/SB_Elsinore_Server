@@ -14,6 +14,7 @@ public class ServePID {
 	private HashMap<String, String> devices;
 	public ServePID(HashMap<String, String> devList) {
 		// no passed values, just generate the basic data
+		
 		devices = devList;
 	}
 	
@@ -31,10 +32,28 @@ public class ServePID {
 				addJS() + lineSep;
 
 		Iterator devIterator = devices.entrySet().iterator();
+		
 		while ( devIterator.hasNext()) {
 			Map.Entry pairs = (Map.Entry) devIterator.next();
-			page += addController((String) pairs.getKey(), (String) pairs.getValue());
+			String devName = (String) pairs.getKey();
+			String devType = (String) pairs.getValue();
+			if (devType.equalsIgnoreCase("PID")) {
+				page += addController(devName, devType);
+			}
 		}
+		// iterate the Temp devices to make them into a table
+		devIterator = devices.entrySet().iterator();
+		page += lineSep + " <div id='tempProbes'>" + lineSep;
+		while ( devIterator.hasNext()) {
+			Map.Entry pairs = (Map.Entry) devIterator.next();
+			String devName = (String) pairs.getKey();
+			String devType = (String) pairs.getValue();
+			if (!devType.equalsIgnoreCase("PID")) {
+				page += addController(devName, devType);
+			}
+		}
+		page += lineSep + " </div>" + lineSep;
+
 		page += "</body>";
 		return page;
 	}

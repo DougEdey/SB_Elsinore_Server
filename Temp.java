@@ -6,7 +6,13 @@ public final class Temp implements Runnable {
 
 	public Temp (String input, String aName ) {
 		probeName = aName;
-		fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
+		
+		if (input.equalsIgnoreCase("system")) {
+			fProbe = "/sys/class/thermal/thermal_zone0/temp";
+		} else {
+			fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
+		}
+
 		name = input;
 		System.out.println(fProbe);
 	}
@@ -102,6 +108,14 @@ public final class Temp implements Runnable {
 				String temp = line.substring(t+2);
 				double tTemp = Double.parseDouble(temp);
 				currentTemp = tTemp/1000;
+				if(scale.equals("F")) {
+					currentTemp = (9.0/5.0)*currentTemp + 32;
+				}
+				result = currentTemp;
+				currentTime = System.currentTimeMillis();
+			} else { // the System temp
+				currentTemp = Double.parseDouble(line);
+				currentTemp = currentTemp/1000;
 				if(scale.equals("F")) {
 					currentTemp = (9.0/5.0)*currentTemp + 32;
 				}

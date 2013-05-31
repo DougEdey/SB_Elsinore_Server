@@ -11,6 +11,11 @@ div.controlPanel {
 	height:30px
 }
 
+#tempProbes {
+	display: inline-table;
+	float:right
+}
+
 .controller {
 	margin:2px 0 1px 1px;
 	text-align:center;
@@ -24,6 +29,7 @@ div.controlPanel {
 }
 
 .temp {
+	display: table-row;
 }
 
 .gage {

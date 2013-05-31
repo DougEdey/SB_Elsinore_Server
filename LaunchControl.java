@@ -256,7 +256,18 @@ public final class LaunchControl {
 			// get user input
 			createConfig();
 		}
-
+		
+		// Add a new temperature probe for the system
+		// input is the name we'll use from here on out
+		Temp tTemp = new Temp("system", "");
+		tempList.add(tTemp);
+		System.out.println("Adding " + tTemp.getName());
+		// setup the scale for each temp probe
+		tTemp.setScale(scale);
+		// setup the threads
+		Thread tThread = new Thread(tTemp);
+		tempThreads.add(tThread);
+		tThread.start();
 	}
 
 

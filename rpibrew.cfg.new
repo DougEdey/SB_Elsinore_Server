@@ -1,0 +1,13 @@
+[kettle]
+probe = 28-0000032c449f
+gpio = 11
+k_param = 0
+i_param = 0
+d_param = 0
+
+[MLT]
+probe = 28-0000032c506e
+
+[Box]
+probe = 28-000003716a87
+

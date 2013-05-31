@@ -50,6 +50,7 @@ function waitForMsg(){
 				s.attr('checked', 'checked');
 
 				Gauges[vessel].refresh(val.duty);
+				jQuery('div[id="tempUnit"]').text(val.scale);
 				jQuery('input[name="'+vessel+'-dutycycle"]').val(val.duty);
 				jQuery('input[name="'+vessel+'-cycletime"]').val(val.cycle);
 				jQuery('input[name="'+vessel+'-setpoint"]').val(val.setpoint);
