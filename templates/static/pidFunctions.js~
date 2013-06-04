@@ -13,11 +13,9 @@ function waitForMsg(){
 			if(data == null) 
 				return;
 			$.each(data, function(key, val) {
+				
 				vessel = key;
 
-				if(window.disableUpdates) {
-					return false;
-				}
 				temp = parseFloat(val.temp).toFixed(2);
 				// check to see if we have a valid vessel
 				if (isNaN(temp)) {
@@ -64,59 +62,47 @@ function waitForMsg(){
 				jQuery("#"+vessel+"-modeAuto").click(function() {disable(this); selectAuto(this);});
 				jQuery("#"+vessel+"-modeOff").click(function() {disable(this); selectOff(this);});
 				jQuery("#"+vessel+"-modeManual").click(function() {disable(this); selectManual(this);});
-				window.disableUpdates = 0;
+				Window.disableUpdates = 0;
 			})
 		}
 	})
-	setTimeout(waitForMsg, 1000); 
 	
+	setTimeout(waitForMsg, 5000);
 }
 
 function selectOff(vessel) {
-	Window.mode = "off";
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
 		i = v.indexOf("-");
 		vessel = v.substr(0, i);
 	}
-
-	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="red";
-	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
-	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="#666666";
-
 	jQuery('div[id^="'+vessel+'-label"]').each(function (index) {
 		$(this).hide();
 		}
 	);
 	jQuery('input[name^="'+vessel+'-"]').each(function (index) {
-		$(this).parent().hide();
+		$(this).parent().parent().parent().hide();
 		}
 	);
 	jQuery('div[id^="'+vessel+'-unit"]').each(function (index) {
 		$(this).hide();
 		}
 	);
-	return false;
+
 }
 
 function selectAuto(vessel) {
-	Window.mode = "auto";
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
 		i = v.indexOf("-");
 		vessel = v.substr(0, i);
 	}
-
-	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
-	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
-	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="red";
-
 	jQuery('div[id^="'+vessel+'-label"]').each(function (index) {
 		$(this).show();
 		}
 	);
 	jQuery('input[name^="'+vessel+'-"]').each(function (index) {
-		$(this).parent().show();
+		$(this).parent().parent().parent().show();
 		}
 	);
 	jQuery('div[id^="'+vessel+'-unit"]').each(function (index) {
@@ -132,30 +118,23 @@ function selectAuto(vessel) {
 		}
 	);
 	jQuery('input[name^="'+vessel+'-dutycycle"]').each(function (index) {
-		$(this).parent().hide();
+		$(this).parent().parent().parent().hide();
 		}
 	);
-	return false;
 }
 
 function selectManual(vessel) {
-	Window.mode = "manual";
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
 		i = v.indexOf("-");
 		vessel = v.substr(0, i);
 	}
-
-	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
-	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="red";
-	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="#666666";
-
 	jQuery('div[id^="'+vessel+'-label"]').each(function (index) {
 		$(this).hide();
 		}
 	);
 	jQuery('input[name^="'+vessel+'-"]').each(function (index) {
-		$(this).parent().hide();
+		$(this).parent().parent().parent().hide();
 		}
 	);
 	jQuery('div[id^="'+vessel+'-unit"]').each(function (index) {
@@ -179,14 +158,13 @@ function selectManual(vessel) {
 		}
 	);
 	jQuery('input[name^="'+vessel+'-dutycycle"]').each(function (index) {
-		$(this).parent().show();
+		$(this).parent().parent().parent().show();
 		}
 	);
 	jQuery('input[name^="'+vessel+'-cycletime"]').each(function (index) {
-		$(this).parent().show();
+		$(this).parent().parent().parent().show();
 		}
 	);
-	return false;
 }
 
 function submitForm(form){
@@ -195,15 +173,14 @@ function submitForm(form){
 	var find = vessel + '-';
 	formdata = formdata.replace(new RegExp(find, 'g'), '');
 	formdata = formdata.replace(new RegExp('&d=', 'g'), '&k=');
-	formdata = "form=" + vessel + "&" + "mode=" + Window.mode + "&" +formdata;
+	formdata = "form=" + vessel + "&" + formdata;
 	$.ajax({ 
 		url: 'updatepid',
 		type: 'POST',
 		data: formdata,
-		success: function(data) {}
+ 		async:false,
+		success: function() {return false;}
 	});	
-	window.disableUpdates = 0;
-	return false;
 }
 
 function pad(n, width, z) {

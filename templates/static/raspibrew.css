@@ -124,8 +124,7 @@ div[id*='-label'] {
 
 form[id$='-form'] button{
 clear:both;
-margin-left:150px;
-width:125px;
+width:100px;
 height:31px;
 background:#666666 url(img/button.png) no-repeat;
 text-align:center;
@@ -133,6 +132,7 @@ line-height:31px;
 color:#FFFFFF;
 font-size:11px;
 font-weight:bold;
+
 }
 
 /* Set border and padding values moved inward */
