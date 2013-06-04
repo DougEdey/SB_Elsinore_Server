@@ -23,7 +23,7 @@
     <property name="build.dir"   value="build"/>
     <property name="classes.dir" value="bin"/>
     <property name="lib.dir" 	 value="libs"/>
-    <property name="jar.dir"     value=""/>
+    <property name="jar.dir"     value="."/>
     
     
     <target name="init">
