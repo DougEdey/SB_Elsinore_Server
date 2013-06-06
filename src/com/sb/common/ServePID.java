@@ -62,21 +62,16 @@ public class ServePID {
 		String javascript =  "<link rel=\"stylesheet\" type=\"text/css\" href=\"/templates/static/raspibrew.css\" />" 
 					+ lineSep +
 	        "<!--[if IE]><script type=\"text/javascript\" src=\"excanvas.js\"></script><![endif]-->" + lineSep +
-	        "<script type=\"text/javascript\" src=\"/templates/static/gauge.js\"></script>" + lineSep +                        
-	       
+	        
 	        "<script type=\"text/javascript\" src=\"/templates/static/jquery.js\"></script>" + lineSep +   
 		
-	        
-			"<script type=\"text/javascript\" src=\"/templates/static/jquery.flot.js\"></script>" + lineSep +
-	        
-	        "<script type=\"text/javascript\" src=\"/templates/static/jquery.flot.selection.js\"></script>" + lineSep +
-		"<script type=\"text/javascript\" src=\"/templates/static/jquery.fs.stepper.js\"></script>" + lineSep +
+	        "<script type=\"text/javascript\" src=\"/templates/static/jquery.fs.stepper.js\"></script>" + lineSep +
 
 	        
 	        "<script type=\"text/javascript\" src=\"/templates/static/segment-display.js\"></script>" + lineSep +
 	        "<script type=\"text/javascript\" src=\"/templates/static/pidFunctions.js\"></script>" + lineSep +
 		"<script type=\"text/javascript\" src=\"/templates/static/raphael.2.1.0.min.js\"></script>" + lineSep +
-		"<script type=\"text/javascript\" src=\"/templates/static/justgage.1.0.1.min.js\"></script>" + lineSep +
+		"<script type=\"text/javascript\" src=\"/templates/static/justgage.js\"></script>" + lineSep +
 	        "<script type=\"text/javascript\">" + lineSep +
 	        "var update = 1;" + lineSep +
 	        "var GaugeDisplay = {}; " + lineSep +
@@ -85,23 +80,7 @@ public class ServePID {
 		javascript +=  "//long polling - wait for message" + lineSep +
 	         
 	        "jQuery(document).ready(function() {" + lineSep +
-	        /*"jQuery(\".controlPanelForm\").submit(function() {" + lineSep +
-	        	"formdata = jQuery(form).serialize();" + lineSep +
-		        "vessel = form.id.substring(0, form.id.indexOf(\"-form\"));" + lineSep +
-		        "var find = vessel + '-';" + lineSep +
-		        "formdata = formdata.replace(new RegExp(find, 'g'), '');" + lineSep +
-		        "formdata = formdata.replace(new RegExp('&d=', 'g'), '&k=');" + lineSep +
-		        "formdata = \"form=\" + vessel + \"&\" + \"mode=\" + Window.mode + \"&\" +formdata;" + lineSep +
-		        "$.ajax({" + lineSep +
-		                "url: 'updatepid'," + lineSep +
-		                "type: 'POST'," + lineSep +
-		                "data: formdata," + lineSep +
-		                "success: function(data) {}" + lineSep +
-			        "});" + lineSep +
-			    "return false;" + lineSep +
-			"});" + lineSep +*/
-			
-        	"waitForMsg();" + lineSep +
+	        "	waitForMsg();" + lineSep +
         	"});" + lineSep +
 	        "</script>";
 		
@@ -142,11 +121,11 @@ public class ServePID {
 					"</div>" + lineSep;
 				
 			if(type.equals("PID")) {
-				controller +=	"<div id=\"" + device + "-gage\" class='gage'></div>" + lineSep +
+				controller +=	"<div id=\"" + device + "-gage\" class='gauge'></div>" + lineSep +
 						"<form id=\""+ device + "-form\" class=\"controlPanelForm\" >" + lineSep +
-					"<button id=\"" + device + "-modeAuto\" class=\"modeclass\" onclick='selectAuto(this); return false;'>Auto</button>" + lineSep +
-					"<button id=\"" + device + "-modeManual\" class=\"modeclass\" onclick='selectManual(this); return false;'>Manual</button>" + lineSep +
-                    "<button id=\"" + device + "-modeOff\" class=\"modeclass\" onclick='selectOff(this); return false;'>Off</button>" + lineSep +
+					"<button id=\"" + device + "-modeAuto\" class=\"modeclass\" onclick='disable(this); selectAuto(this); return false;'>Auto</button>" + lineSep +
+					"<button id=\"" + device + "-modeManual\" class=\"modeclass\" onclick='disable(this); selectManual(this); return false;'>Manual</button>" + lineSep +
+                    "<button id=\"" + device + "-modeOff\" class=\"modeclass\" onclick='disable(this); selectOff(this); return false;'>Off</button>" + lineSep +
                     "<br />" + lineSep +
                     
                     "<div id='pidInput' class='labels'><div id='"+ device + "-labelSP' >Set Point:</div>"+ lineSep +

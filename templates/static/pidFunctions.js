@@ -33,25 +33,30 @@ function waitForMsg(){
 				dec = dec.toString().substr(1,3);
 				GaugeDisplay[vessel].setValue(pad(int, 3, 0) + "" + dec);
 				jQuery("#"+vessel+"-tempStatus").text(temp);
+				// cleanup
+				dec = null;
+				temp = null;
+				Temp = null;
 				if(!("gpio" in val )) {
 					return; // nothing else to do
 				}
 
 				// setup the values
 				var mode = val.mode.charAt(0).toUpperCase() + val.mode.slice(1);
-				var s = jQuery('#' + vessel + '-mode'+mode);
-				if(mode== "Off") {
-					selectOff(vessel);
+				if (Window.mode != mode ) {
+				
+					if(mode== "Off") {
+						selectOff(vessel);
+					}
+					if(mode == "Auto") {
+						selectAuto(vessel);
+					}
+					if(mode == "Manual") {
+						selectManual(vessel);
+					}
 				}
-				if(mode == "Auto") {
-					selectAuto(vessel);
-				}
-				if(mode == "Manual") {
-					selectManual(vessel);
-				}
-				s.attr('checked', 'checked');
-
-				Gauges[vessel].refresh(val.duty);
+				Gauges[vessel].refresh(val.duty); 
+//				jQuery('div[id="'+vessel+'-gage"]').text(val.duty);
 				jQuery('div[id="tempUnit"]').text(val.scale);
 				jQuery('input[name="'+vessel+'-dutycycle"]').val(val.duty);
 				jQuery('input[name="'+vessel+'-cycletime"]').val(val.cycle);
@@ -59,13 +64,11 @@ function waitForMsg(){
 				jQuery('input[name="'+vessel+'-p"]').val(val.p);
 				jQuery('input[name="'+vessel+'-i"]').val(val.i);
 				jQuery('input[name="'+vessel+'-d"]').val(val.k);
-				jQuery("#pidInput").click(function() {disable(this)});
-				//jQuery(".modeClass").click(function() {disable(this);});
-				jQuery("#"+vessel+"-modeAuto").click(function() {disable(this); selectAuto(this);});
-				jQuery("#"+vessel+"-modeOff").click(function() {disable(this); selectOff(this);});
-				jQuery("#"+vessel+"-modeManual").click(function() {disable(this); selectManual(this);});
+				
 				window.disableUpdates = 0;
 			})
+			vessel = null;
+			data = null;
 		}
 	})
 	setTimeout(waitForMsg, 1000); 
@@ -78,6 +81,7 @@ function selectOff(vessel) {
 		var v = vessel.id;
 		i = v.indexOf("-");
 		vessel = v.substr(0, i);
+		v = null;
 	}
 
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="red";
@@ -96,6 +100,7 @@ function selectOff(vessel) {
 		$(this).hide();
 		}
 	);
+	vessel = null;
 	return false;
 }
 
@@ -105,6 +110,7 @@ function selectAuto(vessel) {
 		var v = vessel.id;
 		i = v.indexOf("-");
 		vessel = v.substr(0, i);
+		v = null;
 	}
 
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
@@ -135,6 +141,7 @@ function selectAuto(vessel) {
 		$(this).parent().hide();
 		}
 	);
+	vessel = null;
 	return false;
 }
 
@@ -144,6 +151,7 @@ function selectManual(vessel) {
 		var v = vessel.id;
 		i = v.indexOf("-");
 		vessel = v.substr(0, i);
+		v = null;
 	}
 
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
@@ -186,6 +194,7 @@ function selectManual(vessel) {
 		$(this).parent().show();
 		}
 	);
+	vessel = null;
 	return false;
 }
 
@@ -200,7 +209,7 @@ function submitForm(form){
 		url: 'updatepid',
 		type: 'POST',
 		data: formdata,
-		success: function(data) {}
+		success: function(data) {data = null}
 	});	
 	window.disableUpdates = 0;
 	return false;
