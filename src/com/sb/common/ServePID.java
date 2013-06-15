@@ -113,16 +113,25 @@ public class ServePID {
 				
 				controller += "});" + lineSep + lineSep +
 					"</script>" + lineSep +
-					"<div id=\"" + device + "-title\" class=\"title\">" + device + "</div>" + lineSep +
+					"<div id=\"" + device + "-header\" class=\"header\"";
+				if(type.equals("PID")) {
+					controller += " onclick=\"toggleDiv('" + device + "-controls');\" "; 
+				}
+				controller += "><div id=\"" + device + "-title\" class=\"title\"" +
+				
+			
+					">" + device + "</div>" + lineSep +
 					" <canvas id=\"" + device + "-tempGauge\" class=\"gauge\" width=\"300\" height=\"140\">" + lineSep +
 					"</canvas>" + lineSep +
 					"<div id='" + device + "-tempSummary'>Temperature(<div id='tempUnit'>F</div>): " + lineSep +
 							"<div id='" + device + "-tempStatus' >temp</div>&#176<div id='tempUnit'>F</div>" + lineSep + 
+					"</div>" + lineSep +
 					"</div>" + lineSep;
 				
 			if(type.equals("PID")) {
-				controller +=	"<div id=\"" + device + "-gage\" class='gauge'></div>" + lineSep +
-						"<form id=\""+ device + "-form\" class=\"controlPanelForm\" >" + lineSep +
+				controller += "<div id=\"" + device + "-controls\" class='controller'>" + lineSep + 	
+					"<div id=\"" + device + "-gage\" class='gage'></div>" + lineSep +
+					"<form id=\""+ device + "-form\" class=\"controlPanelForm\" >" + lineSep +
 					"<button id=\"" + device + "-modeAuto\" class=\"modeclass\" onclick='disable(this); selectAuto(this); return false;'>Auto</button>" + lineSep +
 					"<button id=\"" + device + "-modeManual\" class=\"modeclass\" onclick='disable(this); selectManual(this); return false;'>Manual</button>" + lineSep +
                     "<button id=\"" + device + "-modeOff\" class=\"modeclass\" onclick='disable(this); selectOff(this); return false;'>Off</button>" + lineSep +
@@ -178,7 +187,8 @@ public class ServePID {
 
                     "<button id=\"sendcommand\" type=\"submit\" value=\"SubmitCommand\" onClick='submitForm(this.form); waitForMsg(); return false;'>Send Command</button>" + lineSep +
 
-					"</form>" + lineSep;
+					"</form>" + lineSep +
+					"</div>" + lineSep; // finish off the Controller inputs
 		}
 		controller +=	"</div>";
 		

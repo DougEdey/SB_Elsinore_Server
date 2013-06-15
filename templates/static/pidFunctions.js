@@ -55,6 +55,7 @@ function waitForMsg(){
 						selectManual(vessel);
 					}
 				}
+				mode = null;
 				Gauges[vessel].refresh(val.duty); 
 //				jQuery('div[id="'+vessel+'-gage"]').text(val.duty);
 				jQuery('div[id="tempUnit"]').text(val.scale);
@@ -223,4 +224,14 @@ function pad(n, width, z) {
 
 function disable(input) {
 	window.disableUpdates = 1;
+}
+
+function toggleDiv(id) {
+	var e = document.getElementById(id);
+       if(e.style.display == 'table-cell')
+          e.style.display = 'none';
+       else
+          e.style.display = 'table-cell';
+
+	e = null;
 }
