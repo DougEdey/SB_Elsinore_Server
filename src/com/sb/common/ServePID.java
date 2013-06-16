@@ -89,7 +89,7 @@ public class ServePID {
 	}
 	
 	public String addController(String device, String type) {
-		String controller = "<div id=\"" + device + "\" class=\"controller " + type +"\">" + lineSep +
+		String controller = "<div id=\"" + device + "\" class=\"holo-content controller " + type +"\">" + lineSep +
 					"<script type='text/javascript'>" + lineSep +
 					"jQuery(document).ready(function() {" + lineSep +
 
@@ -132,61 +132,71 @@ public class ServePID {
 				controller += "<div id=\"" + device + "-controls\" class='controller'>" + lineSep + 	
 					"<div id=\"" + device + "-gage\" class='gage'></div>" + lineSep +
 					"<form id=\""+ device + "-form\" class=\"controlPanelForm\" >" + lineSep +
-					"<button id=\"" + device + "-modeAuto\" class=\"modeclass\" onclick='disable(this); selectAuto(this); return false;'>Auto</button>" + lineSep +
-					"<button id=\"" + device + "-modeManual\" class=\"modeclass\" onclick='disable(this); selectManual(this); return false;'>Manual</button>" + lineSep +
-                    "<button id=\"" + device + "-modeOff\" class=\"modeclass\" onclick='disable(this); selectOff(this); return false;'>Off</button>" + lineSep +
-                    "<br />" + lineSep +
+					"<div class=\"holo-buttons\">" + lineSep +
+					"<button id=\"" + device + "-modeAuto\" class=\"holo-button modeclass holo-button\" onclick='disable(this); selectAuto(this); return false;'>Auto</button>" + lineSep +
+					"<button id=\"" + device + "-modeManual\" class=\"holo-button modeclass\" onclick='disable(this); selectManual(this); return false;'>Manual</button>" + lineSep +
+                    "<button id=\"" + device + "-modeOff\" class=\"holo-button modeclass\" onclick='disable(this); selectOff(this); return false;'>Off</button>" + lineSep +
+                    "</div>" + lineSep +
                     
-                    "<div id='pidInput' class='labels'><div id='"+ device + "-labelSP' >Set Point:</div>"+ lineSep +
-                    "<br /><div id='"+ device + "-labelDC' >Duty Cycle:</div>" + lineSep +
-                    "<br /><div id='"+ device + "-labelDT' >Duty Time:</div>" + lineSep +
-                    "<br /><div id='"+ device + "-labelp' >P:</div>" + lineSep +
-                    "<br /><div id='"+ device + "-labeli' >I:</div>" + lineSep +
-                    "<br /><div id='"+ device + "-labeld' >D:</div>" + lineSep +
-		    "</div>" + lineSep +
-
-                "<div id='pidInput' class='inputs'>" + lineSep +
-			"<div id=\"" + device + "-setpoint\">" + lineSep +
-	"<input class='inputBox setpoint' type=\"number\" step=\"any\" name=\"" + device + "-setpoint\"  maxlength = \"4\" size =\"4\" value=\"\" style=\"text-align: left;\"/>" +
-			"</div>" + lineSep +
-                    "<br />" + lineSep +
-
-			"<div id=\"" + device + "-dutycycle\">" + lineSep +
-                    "	<input class='inputBox dutycycle' type=\"number\" step=\"any\" name=\"" + device + "-dutycycle\" maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
-			"</div>" + lineSep +
-                    "<br />" + lineSep +
+                    "<div id='pidInput' class='labels'>" +
+                    	// 	SET POINT
+                    	"<div id='"+ device + "-SP' class='holo-field'>" + lineSep +
+	                    	"<div id='"+ device + "-labelSP' >Set Point:</div>"+ lineSep +
+	                    	"<div id=\"" + device + "-setpoint\">" + lineSep +
+	                    		"<input class='inputBox setpoint' type=\"text\" name=\"" + device + "-setpoint\"  maxlength = \"4\" size =\"4\" value=\"\" style=\"text-align: left;\"/>" +
+	                    	"</div>" + lineSep +
+	                    	"<div id='"+ device + "-unitSP'><div id='tempUnit'>F</div></div>"+ lineSep +
+	                    	"</div>" + lineSep +
+            
+                    	// DUTY CYCLE
+                    	"<br />" + "<div id='"+ device + "-DC' class='holo-field'>" + lineSep +
+                    	"<div id='"+ device + "-labelDC' >Duty Cycle:</div>" + lineSep +
                     
-			"<div id=\"" + device + "-cycletime\">" + lineSep +
-                    "	<input class='inputBox dutytime' type=\"number\" name=\"" + device + "-cycletime\" maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
-			"</div>" + lineSep +
-                    "<br />" + lineSep +
-                    
-			"<div id=\"" + device + "-p\">" + lineSep +
-                    "	<input class='inputBox p' type=\"number\" step=\"any\" name=\"" + device + "-p\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
-			"</div>" + lineSep +
-                    "<br />" + lineSep +
-        
-			"<div id=\"" + device + "-i\">" + lineSep +
-                    "	<input class='inputBox i' type=\"number\" step=\"any\" name=\"" + device + "-i\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
-			"</div>" + lineSep +
-                    "<br />" + lineSep +
-        
-			"<div id=\"" + device + "-d\">" + lineSep +
-                    "	<input class='inputBox d' type=\"number\" step=\"any\" name=\"" + device + "-d\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
-			"</div>" + lineSep +
-               "</div>" + lineSep +
+                    		"<div id=\"" + device + "-dutycycle\">" + lineSep +
+                    			"<input class='inputBox dutycycle' name=\"" + device + "-dutycycle\" maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
+                    		"</div>" + lineSep +
+                    	"<div id='"+ device + "-unitDC'>%</div><br />"+ 
+                    	"</div>" + lineSep +
+                    	
+                    	// DUTY TIME
+                    	"<br />" + "<div id='"+ device + "-DT' class='holo-field'>" + lineSep +
+                    	"<div id='"+ device + "-labelDT' >Duty Time:</div>" + lineSep +
+                 			"<div id=\"" + device + "-cycletime\">" + lineSep +
+                 				"<input class='inputBox dutytime' name=\"" + device + "-cycletime\" maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
+                 			"</div>" + lineSep +
+                 		"<div id='"+ device + "-unitDT'>secs</div><br />"+ 
+                 		"</div>" + lineSep +
+                 		
+                 		// P
+	                    "<br />" + "<div id='"+ device + "-p' class='holo-field'>" + lineSep +
+	                    "<div id='"+ device + "-labelp' >P:</div>" + lineSep +
+		                    "<div id=\"" + device + "-pinput\">" + lineSep +
+		                    "	<input class='inputBox p' name=\"" + device + "-p\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
+		                    "</div>" + lineSep +
+		                    "<div id='"+ device + "-unitP'>secs</div><br />"+ 
+		                "</div>" + lineSep +
+		                
+		                // I
+	                    "<br />" + "<div id='"+ device + "-i' class='holo-field'>" + lineSep +
+	                    "<div id='"+ device + "-labeli' >I:</div>" + lineSep +
+		                    "<div id=\"" + device + "-iinput\">" + lineSep +
+		                    "	<input class='inputBox i' name=\"" + device + "-i\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
+		                    "</div>" + lineSep +
+		                    "<div id='"+ device + "-unitI'>&#176<div id='tempUnit'>F</div></div><br />" +
+		                "</div>" + lineSep +    
+		                // D
+	                    "<br />" + "<div id='"+ device + "-d' class='holo-field'>" + lineSep +
+	                    "<div id='"+ device + "-labeld' >D:</div>" + lineSep +
+		        			"<div id=\"" + device + "-dinput\">" + lineSep +
+				                    "	<input class='inputBox d ' name=\"" + device + "-d\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
+							"</div>" + lineSep +
+							"<div id='"+ device + "-unitD'>secs</div><br/>" +
+						"</div>" + lineSep +	
+					"</div>" + lineSep +
 
-						"<div id='pidInput' class='units'>"+
-                    	"<div id='"+ device + "-unitSP'>&#176/<div id='tempUnit'>F</div>secs</div><br />"+ 
-                   	"<div id='"+ device + "-unitDC'>%</div><br />"+ 
-                    	"<div id='"+ device + "-unitDT'>secs</div><br />"+ 
-                   	"<div id='"+ device + "-unitP'>secs</div><br />"+ 
-                    	"<div id='"+ device + "-unitI'>&#176<div id='tempUnit'>F</div></div><br />" +
-			"<div id='"+ device + "-unitD'>secs</div><br/>" +
-						"</div><br style='clear:both' />"+
-
-                    "<button id=\"sendcommand\" type=\"submit\" value=\"SubmitCommand\" onClick='submitForm(this.form); waitForMsg(); return false;'>Send Command</button>" + lineSep +
-
+					"<div class='holo-buttons'>" + lineSep +
+                    "<button class='holo-button' id=\"sendcommand\" type=\"submit\" value=\"SubmitCommand\" onClick='submitForm(this.form); waitForMsg(); return false;'>Send Command</button>" + lineSep +
+                    "</div>" + lineSep +
 					"</form>" + lineSep +
 					"</div>" + lineSep; // finish off the Controller inputs
 		}

@@ -1,6 +1,8 @@
 @import url("screen.css") screen; 
 @import url("handheld.css") handheld; 
 
+@import url("holo.css"); 
+
 body {
         color: #3E3E3E;
         background-color: #FBFFFF;
@@ -83,11 +85,38 @@ div[id$='-tempStatus'] {
 	float:left;
 }
 
-#pidInput.labels {
-	text-align: right;
-	float:left;
+div[id*='-label'] {
+	display: table-cell;
 }
 
+div[id*='-unit'] {
+	display: table-cell;
+}
+
+div[id*='-setpoint'] {
+	display: table-cell;
+}
+
+div[id*='-dutycycle'] {
+	display: table-cell;
+}
+
+div[id*='-cycletime'] {
+	display: table-cell;
+}
+
+div[id*='-pinput'] {
+	display: table-cell;
+}
+
+div[id*='-iinput'] {
+	display: table-cell;
+}
+
+div[id*='-dinput'] {
+	display: table-cell;
+}
+/*
 form[id$='-form'] input{
 font-size:12px;
 padding:4px 2px;
@@ -100,10 +129,7 @@ div[id*='-unit'] {
 	margin-bottom: 10px;
 	height:30px;
 }
-div[id*='-label'] {
-	margin-bottom: 10px;
-	height:30px;
-}
+
 
 form[id$='-form'] button{
 clear:both;
@@ -117,7 +143,7 @@ font-size:11px;
 font-weight:bold;
 
 }
-
+*/
 /* Set border and padding values moved inward */
 *{
     box-sizing: border-box;

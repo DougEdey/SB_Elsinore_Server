@@ -89,18 +89,13 @@ function selectOff(vessel) {
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="#666666";
 
-	jQuery('div[id^="'+vessel+'-label"]').each(function (index) {
-		$(this).hide();
-		}
-	);
-	jQuery('input[name^="'+vessel+'-"]').each(function (index) {
-		$(this).parent().hide();
-		}
-	);
-	jQuery('div[id^="'+vessel+'-unit"]').each(function (index) {
-		$(this).hide();
-		}
-	);
+	jQuery('div[id="'+vessel+'-SP"]').hide();
+	jQuery('div[id="'+vessel+'-DT"]').hide();
+	jQuery('div[id="'+vessel+'-DC"]').hide();
+	jQuery('div[id="'+vessel+'-p"]').hide();
+	jQuery('div[id="'+vessel+'-i"]').hide();
+	jQuery('div[id="'+vessel+'-d"]').hide();
+
 	vessel = null;
 	return false;
 }
@@ -118,30 +113,13 @@ function selectAuto(vessel) {
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="red";
 
-	jQuery('div[id^="'+vessel+'-label"]').each(function (index) {
-		$(this).show();
-		}
-	);
-	jQuery('input[name^="'+vessel+'-"]').each(function (index) {
-		$(this).parent().show();
-		}
-	);
-	jQuery('div[id^="'+vessel+'-unit"]').each(function (index) {
-		$(this).show();
-		}
-	);
-	jQuery('div[id^="'+vessel+'-labelDC"]').each(function (index) {
-		$(this).hide();
-		}
-	);
-	jQuery('div[id^="'+vessel+'-unitDC"]').each(function (index) {
-		$(this).hide();
-		}
-	);
-	jQuery('input[name^="'+vessel+'-dutycycle"]').each(function (index) {
-		$(this).parent().hide();
-		}
-	);
+	jQuery('div[id="'+vessel+'-SP"]').show();
+	jQuery('div[id="'+vessel+'-DT"]').show();
+	jQuery('div[id="'+vessel+'-DC"]').hide();
+	jQuery('div[id="'+vessel+'-p"]').show();
+	jQuery('div[id="'+vessel+'-i"]').show();
+	jQuery('div[id="'+vessel+'-d"]').show();
+
 	vessel = null;
 	return false;
 }
@@ -159,42 +137,13 @@ function selectManual(vessel) {
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="red";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="#666666";
 
-	jQuery('div[id^="'+vessel+'-label"]').each(function (index) {
-		$(this).hide();
-		}
-	);
-	jQuery('input[name^="'+vessel+'-"]').each(function (index) {
-		$(this).parent().hide();
-		}
-	);
-	jQuery('div[id^="'+vessel+'-unit"]').each(function (index) {
-		$(this).hide();
-		}
-	);
-	jQuery('div[id^="'+vessel+'-labelDT"]').each(function (index) {
-		$(this).show();
-		}
-	);
-	jQuery('div[id^="'+vessel+'-labelDC"]').each(function (index) {
-		$(this).show();
-		}
-	);
-	jQuery('div[id^="'+vessel+'-unitDT"]').each(function (index) {
-		$(this).show();
-		}
-	);
-	jQuery('div[id^="'+vessel+'-unitDC"]').each(function (index) {
-		$(this).show();
-		}
-	);
-	jQuery('input[name^="'+vessel+'-dutycycle"]').each(function (index) {
-		$(this).parent().show();
-		}
-	);
-	jQuery('input[name^="'+vessel+'-cycletime"]').each(function (index) {
-		$(this).parent().show();
-		}
-	);
+	jQuery('div[id="'+vessel+'-SP"]').hide();
+	jQuery('div[id="'+vessel+'-DT"]').show();
+	jQuery('div[id="'+vessel+'-DC"]').show();
+	jQuery('div[id="'+vessel+'-p"]').hide();
+	jQuery('div[id="'+vessel+'-i"]').hide();
+	jQuery('div[id="'+vessel+'-d"]').hide();
+
 	vessel = null;
 	return false;
 }
