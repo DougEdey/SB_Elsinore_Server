@@ -52,32 +52,33 @@ For RPi, you'll want to use GPIO[X] where X is the pin number. BeagleboardBlack 
 Config File
 =========
 
+```
+[general]
+scale = F
+#cosm = COSM API KEY
+#cosm_feed = YOUR COSM FEED
 
->[general]
->scale = F
->#cosm = COSM API KEY
->#cosm_feed = YOUR COSM FEED
->
->[kettle]
->set_point = 168.0
->duty_cycle = 100.0
->cycle_time = 2.0
->k_param = 41.0
->i_param = 169.0
->d_param = 4.0
->probe = 28-0000032c449f
->gpio = GPIO2_1
->
->
->[mlt]
->set_point = 0.0
->duty_cycle = 0.0
->cycle_time = 2.0
->k_param = 44.0
->i_param = 165.0
->d_param = 4.0
->probe = 28-0000032c506e
->gpio = 
+[kettle]
+set_point = 168.0
+duty_cycle = 100.0
+cycle_time = 2.0
+k_param = 41.0
+i_param = 169.0
+d_param = 4.0
+probe = 28-0000032c449f
+gpio = GPIO2_1
+
+
+[mlt]
+set_point = 0.0
+duty_cycle = 0.0
+cycle_time = 2.0
+k_param = 44.0
+i_param = 165.0
+d_param = 4.0
+probe = 28-0000032c506e
+gpio = 
+```
 
 This is a sample Setup file, you can see I have two devices setup here, the MLT is a "read only" probe that doesn't have a GPIO associated. Whereas the Kettle is setup with default PID values, and has a GPIO pinout of GPIO2_1.
 
