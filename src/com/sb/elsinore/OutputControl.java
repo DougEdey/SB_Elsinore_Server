@@ -3,25 +3,25 @@ import framboos.*;
 
 public final class OutputControl implements Runnable {
 
-   public OutputControl ( String aName, int GPIO_heat, double heat_time ){
+   public OutputControl ( String aName, String fGPIO, double heat_time ){
    	// just for heating
 	fName = aName;
-	fGPIOh = GPIO_heat;
+	fGPIOh = fGPIO.toLowerCase();
 	setHTime(heat_time);
    }
 
 
-   public OutputControl ( String aName, int GPIO_heat, double heat_time, int GPIO_cool, double cool_time, double cool_delay ){
+   public OutputControl ( String aName, String GPIO_heat, double heat_time, String GPIO_cool, double cool_time, double cool_delay ){
    	// just for heating and cooling
 	fName = aName;
-	fGPIOc = GPIO_cool;
-	fGPIOh = GPIO_heat;
+	fGPIOc = GPIO_cool.toLowerCase();
+	fGPIOh = GPIO_heat.toLowerCase();
 	setHTime(heat_time);
 	setCTime(cool_time);
 	setCDelay(cool_delay);
    }
 
-   public void setCool(int GPIO, double time, double delay) {
+   public void setCool(String GPIO, double time, double delay) {
    	
 	fGPIOc = GPIO;
 	setCTime(time);
@@ -33,27 +33,33 @@ public final class OutputControl implements Runnable {
 		double duty;
 		double on_time, off_time;
 		BrewServer.log.info("Using GPIO: " + fGPIOc + " and " + fGPIOh);
+		BrewServer.log.info("Starting the ("+fGPIOh+") heating output: " + GpioPin.getPinNumber(fGPIOh));
 		try {
+			
 			try {
-				if(fGPIOh > 0) {
+				
+				if(fGPIOc != null && !fGPIOh.equals("")) {
 					Heat_SSR = new OutPin(fGPIOh);
+					BrewServer.log.info("Started the heating output: " + GpioPin.getPinNumber(fGPIOh));
 				}
 		
-				if(fGPIOc > 0) {
+				if(fGPIOc != null && !fGPIOc.equals("")) {
 					Cool_SSR = new OutPin(fGPIOc);
 				}
 			} catch (RuntimeException e) {
+				
 				BrewServer.log.warning("Could not control the GPIO Pin. Did you start as root?");
-			
+				e.printStackTrace();
+				return;
 			}
 
 			while(true) {
 	
 			try {
-				if(fGPIOc <= 0 && Cool_SSR == null) {
+				if(fGPIOc != null && !fGPIOc.equals("") && Cool_SSR == null) {
 					Cool_SSR = new OutPin(fGPIOc);
 				}
-				if(fGPIOh <= 0 && Heat_SSR == null) {
+				if(fGPIOh != null && !fGPIOh.equals("") && Heat_SSR == null) {
 					Heat_SSR = new OutPin(fGPIOh);
 				}
 				if(fDuty == 0) {
@@ -108,7 +114,8 @@ public final class OutputControl implements Runnable {
 				coolStopTime = System.currentTimeMillis();
 				System.out.print("Wakeup in " + fName);
 			} catch (RuntimeException e) {
-				BrewServer.log.warning("Could not control the GPIO Pin. Did you start as root?");
+				BrewServer.log.warning("Could not control the GPIO Pin during loop. Did you start as root?");
+				e.printStackTrace();
 				return;
 			}
 		}
@@ -118,8 +125,9 @@ public final class OutputControl implements Runnable {
    }
 
 	public void shutdown() {
-			allOff();
-			allDisable();
+		BrewServer.log.info("Shutting down OC");
+		allOff();
+		allDisable();
 	}
 
    public String getStatus() {
@@ -199,8 +207,8 @@ public final class OutputControl implements Runnable {
 	private OutPin Heat_SSR = null;
 	private OutPin Cool_SSR = null;
 	private String fName;
-	private int fGPIOh;
-	private int fGPIOc;
+	private String fGPIOh = "";
+	private String fGPIOc = "";
 	private int fTimeh;
 	private int fTimec;
 	private int cool_delay;

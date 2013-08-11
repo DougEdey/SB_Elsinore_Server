@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.Calendar;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.io.*;
@@ -297,7 +299,7 @@ public final class LaunchControl {
 	// parse each section
 	private void parseDevice(ConfigParser config, String input) {
 		String probe = null;
-		int gpio = -1;
+		String gpio = "";
 		double duty = 0.0, cycle = 0.0, setpoint = 0.0, p = 0.0, i = 0.0, d = 0.0;
 		BrewServer.log.info("Parsing : " + input);
 		try {
@@ -306,7 +308,7 @@ public final class LaunchControl {
 					probe = config.get(input, "probe");
 				}
 				if(config.hasOption(input, "gpio")) {
-					gpio = config.getInt(input, "gpio");
+					gpio = config.get(input, "gpio");
 				}
 				if(config.hasOption(input, "duty_cycle")) {
 					duty = config.getDouble(input, "duty_cycle");
@@ -337,11 +339,12 @@ public final class LaunchControl {
 			System.out.print("No Such Option");
 			noe.printStackTrace();
 		}
+		
 		if(probe != null && !probe.equals("0")) {
 			// input is the name we'll use from here on out
 			Temp tTemp = new Temp(input, probe);
 			tempList.add(tTemp);
-			BrewServer.log.info("Adding " + tTemp.getName());
+			BrewServer.log.info("Adding " + tTemp.getName() + " GPIO is (" + gpio + ")");
 			// setup the scale for each temp probe
 			tTemp.setScale(scale);
 			// setup the threads
@@ -349,13 +352,13 @@ public final class LaunchControl {
 			tempThreads.add(tThread);
 			tThread.start();
 
-			if((duty != 0.0 || cycle != 0.0 || p != 0.0 || i != 0.0 || d != 0.0) && gpio != -1) {
+			if(!gpio.equals("")) {
+				BrewServer.log.info("Adding PID with GPIO: " + gpio);
 				PID tPID = new PID(tTemp, input, duty, cycle, p, i, d, gpio);
 				pidList.add(tPID);
 				Thread pThread = new Thread(tPID);
 				pidThreads.add(pThread);
 				pThread.start();
-				tPID.setCool(10, 2, 12, p, i, d);
 			}
 
 			// try to createthe data stream
@@ -399,7 +402,7 @@ public final class LaunchControl {
 		try {
 			cosm.createDatastream(cosmFeed.getId(), tData);
 		} catch (CosmException e) {
-			BrewServer.log.info("Fauiled to create stream:" + e.getMessage() + " - " + cosmFeed.getId());
+			BrewServer.log.info("Failed to create stream:" + e.getMessage() + " - " + cosmFeed.getId());
 
 			return null;
 		}
@@ -514,7 +517,7 @@ public final class LaunchControl {
 				if (selector > 0 && selector <= tempList.size()) {
 					// we have a valid input
 					String name = "";
-					int GPIO = -1;
+					String GPIO = "";
 
 					if (inputBroken.length > 1) {
 						name = inputBroken[1];
@@ -533,7 +536,25 @@ public final class LaunchControl {
 					System.out.println("To make this a PID add the GPIO number now, or anything else for a temp probe only: ");
 					input = readInput();
 					try {
-						GPIO = Integer.parseInt(input);
+						GPIO = input;
+						// try to parse the GPIO to determine the type
+						Pattern pinPattern = Pattern.compile("(GPIO)([0-9])_([0-9]*)");
+						Pattern pinPatternAlt = Pattern.compile("(GPIO)?([0-9]*)");
+						
+						Matcher pinMatcher = pinPattern.matcher(GPIO);
+						
+						if(pinMatcher.groupCount() > 0) {
+							// Beagleboard style input
+							System.out.println("Matched GPIO pinout for Beagleboard: " + input + ". OS: " + System.getProperty("os.name"));
+						} else {
+							pinMatcher = pinPatternAlt.matcher(GPIO);
+							if(pinMatcher.groupCount() > 0) {
+								System.out.println("Direct GPIO Pinout detected. OS: " + System.getProperty("os.name"));
+							} else {
+								System.out.println("Could not match the GPIO!");							
+							}
+						}
+						
 					} catch (NumberFormatException n) {
 						// not a GPIO
 
@@ -541,7 +562,7 @@ public final class LaunchControl {
 
 					// Check for Valid GPIO values
 					tempList.get(selector-1).setName(name);
-					if (GPIO != -1 && GPIO != 7) {
+					if (GPIO != "GPIO1" && GPIO != "GPIO7") {
 						addPIDToConfig(config, tempList.get(selector-1).getProbe(), name, GPIO);
 					} else {
 						System.out.println("No valid GPIO Value found, adding as a temperature only probe");
@@ -592,20 +613,20 @@ public final class LaunchControl {
 	
 	private void displayGPIO() {
 		System.out.println("GPIO Values, use the outer values");
-		System.out.println("USE |PHYSICAL |USE");
-		System.out.println(" NA |  1 * 2  | NA");
-		System.out.println("  8 |  3 * 4  | NA");
-		System.out.println("  9 |  5 * 6  | NA");
-		System.out.println(" NA |  7 * 8  | 15");
-		System.out.println(" NA |  9 * 10 | 16");
-		System.out.println("  0 | 11 * 12 | 1 ");
-		System.out.println("  2 | 13 * 14 | NA ");
-		System.out.println("  3 | 15 * 16 | 4 ");
-		System.out.println(" NA | 17 * 18 | 5");
-		System.out.println(" 12 | 19 * 20 | NA ");
-		System.out.println(" 13 | 21 * 22 | 6 ");
-		System.out.println(" 14 | 23 * 24 | 10 ");
-		System.out.println(" NA | 25 * 26 | 11 ");
+		System.out.println(" USE     |PHYSICAL |USE");
+		System.out.println("  NA     |  1 * 2  | NA");
+		System.out.println(" GPIO0/2 |  3 * 4  | NA");
+		System.out.println(" GPIO1/3 |  5 * 6  | NA");
+		System.out.println("  NA     |  7 * 8  | GPIO14");
+		System.out.println("  NA     |  9 * 10 | GPIO15");
+		System.out.println("  GPIO17 | 11 * 12 | GPIO18 ");
+		System.out.println("GPIO21/27| 13 * 14 | NA ");
+		System.out.println("  GPIO22 | 15 * 16 | GPIO23");
+		System.out.println(" NA      | 17 * 18 | GPIO24");
+		System.out.println(" GPIO10  | 19 * 20 | NA ");
+		System.out.println(" GPIO9   | 21 * 22 | GPIO25");
+		System.out.println(" GPIO11  | 23 * 24 | GPIO8 ");
+		System.out.println(" NA      | 25 * 26 | GPIO7 ");
 	}
 
 	private void addTempToConfig(ConfigParser config, String device, String name) {
@@ -620,7 +641,7 @@ public final class LaunchControl {
 		}
 	}
 
-	private void addPIDToConfig(ConfigParser config, String device, String name, int GPIO) {
+	private void addPIDToConfig(ConfigParser config, String device, String name, String GPIO) {
 		try {
 		  if (!config.hasSection(name) ) {
 		  		// update this one

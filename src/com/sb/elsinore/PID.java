@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 final class PID implements Runnable {
 	private OutputControl OC = null;
 
-	public PID (Temp aTemp, String aName, double aDuty, double aTime, double p, double i, double k, int GPIO) {
+	public PID (Temp aTemp, String aName, double aDuty, double aTime, double p, double i, double k, String GPIO) {
 		mode = "off";
 		set_point = 175;
 		duty_cycle = aDuty;
@@ -20,7 +22,28 @@ final class PID implements Runnable {
 		d_param = k;
 		fName = aName;
 		fTemp = aTemp;
-		fGPIO = GPIO;
+		Pattern pinPattern = Pattern.compile("(GPIO)([0-9])_([0-9]*)");
+		Pattern pinPatternAlt = Pattern.compile("(GPIO)?([0-9]*)");
+		
+		Matcher pinMatcher = pinPattern.matcher(GPIO);
+		
+		BrewServer.log.info("Matches: " + pinMatcher.groupCount());
+		
+		if(pinMatcher.groupCount() > 0) {
+			// Beagleboard style input
+			BrewServer.log.info("Matched GPIO pinout for Beagleboard: " + GPIO + ". OS: " + System.getProperty("os.level"));
+			fGPIO = GPIO;
+		} else {
+			pinMatcher = pinPatternAlt.matcher(GPIO);
+			if(pinMatcher.groupCount() > 0) {
+				BrewServer.log.info("Direct GPIO Pinout detected. OS: " + System.getProperty("os.level"));
+				fGPIO = pinMatcher.group(pinMatcher.groupCount());
+			} else {
+				BrewServer.log.info("Could not match the GPIO!");
+				fGPIO = "";
+			}
+		}
+		
 		
 	}
 	public void updateValues(String m, double duty, double cycle, double setpoint, double p, double i, double k ) {
@@ -49,10 +72,12 @@ final class PID implements Runnable {
 		// setup the first time
 		previousTime = System.currentTimeMillis();
 		// create the Output if needed
-		if(fGPIO != -1) {
+		if(!fGPIO.equals("")) {
 			OC = new OutputControl(fName, fGPIO, cycle_time);	
 			Thread outputThread = new Thread(OC);
 			outputThread.start();
+		} else {
+			return;
 		}
 
 		
@@ -63,8 +88,8 @@ final class PID implements Runnable {
 					fTemp_C = fTemp.getTempC();
 					currentTime = fTemp.getTime();
 					fTemp_F = fTemp.getTempF();
-					// if the GPIO is -1 we do not need to do any of this;
-					if(fGPIO != -1) {
+					// if the GPIO is blank we do not need to do any of this;
+					if(fGPIO != "") {
 						if(temp_F_list.size() >= 5) {
 							temp_F_list.remove(0);
 						}	
@@ -142,7 +167,7 @@ final class PID implements Runnable {
 		return fTemp_C;
 	}
 
-	public int getGPIO() {
+	public String getGPIO() {
 		return fGPIO;
 	}
 
@@ -204,7 +229,7 @@ final class PID implements Runnable {
 	private boolean fStatus = false;
 	private Temp fTemp;
 	private double fTemp_F, fTemp_C;
-	private int fGPIO;
+	private String fGPIO;
 	private List<Double> temp_F_list = new ArrayList<Double>();
 	private double duty_cycle;
 	private double hard_duty_cycle;
@@ -261,7 +286,7 @@ final class PID implements Runnable {
 	}
 
 	// set the cool values
-	public void setCool(int GPIO, int duty, double delay, double p, double i, double k) {
+	public void setCool(String GPIO, int duty, double delay, double p, double i, double k) {
 		// set the values
 		int j = 0;
 		while(OC == null) {

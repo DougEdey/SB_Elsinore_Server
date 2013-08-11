@@ -20,7 +20,9 @@ public final class Temp implements Runnable {
 		
 		
 		while(true) {
-			if(updateTemp() == -1) {
+			if(updateTemp() == -999) {
+				// Ruhoh no file found, exit to prevent logs filling up
+				return;
 			}
 			try {
 				Thread.sleep(500);
@@ -121,7 +123,8 @@ public final class Temp implements Runnable {
 				currentTime = System.currentTimeMillis();
 			}
 		} catch (IOException ie) {
-			ie.printStackTrace();
+			System.out.println("Couldn't find the device under: " + fProbe);
+			return -999;
 		} catch (NumberFormatException nfe) {
 			nfe.printStackTrace();
 		} finally {
