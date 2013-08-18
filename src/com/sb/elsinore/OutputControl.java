@@ -32,7 +32,7 @@ public final class OutputControl implements Runnable {
    public void run() {
 		double duty;
 		double on_time, off_time;
-		BrewServer.log.info("Using GPIO: " + fGPIOc + " and " + fGPIOh);
+		
 		BrewServer.log.info("Starting the ("+fGPIOh+") heating output: " + GpioPin.getPinNumber(fGPIOh));
 		try {
 			

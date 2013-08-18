@@ -11,15 +11,25 @@ import java.util.regex.Pattern;
 final class PID implements Runnable {
 	private OutputControl OC = null;
 
-	public PID (Temp aTemp, String aName, double aDuty, double aTime, double p, double i, double k, String GPIO) {
+	// inner class to hold the settings
+	public class Settings {
+		public double duty_cycle, cycle_time, proportional, integral, derivative, set_point;
+		
+		public Settings() {
+			duty_cycle = cycle_time = proportional = integral = derivative = set_point = 0.0;
+		}
+	}
+	
+	public PID (Temp aTemp, String aName, double aDuty, double aTime, double p, double i, double d, String GPIO) {
 		mode = "off";
-		set_point = 175;
-		duty_cycle = aDuty;
-		hard_duty_cycle = aDuty;
-		cycle_time = aTime;
-		p_param = p;
-		i_param = i;
-		d_param = k;
+		heatSetting = new Settings();
+		heatSetting.set_point = 175;
+		heatSetting.duty_cycle = aDuty;
+		heatSetting.cycle_time = aTime;
+		heatSetting.proportional = p;
+		heatSetting.integral = i;
+		heatSetting.derivative = d;
+		
 		fName = aName;
 		fTemp = aTemp;
 		Pattern pinPattern = Pattern.compile("(GPIO)([0-9])_([0-9]*)");
@@ -46,17 +56,17 @@ final class PID implements Runnable {
 		
 		
 	}
-	public void updateValues(String m, double duty, double cycle, double setpoint, double p, double i, double k ) {
+	public void updateValues(String m, double duty, double cycle, double setpoint, double p, double i, double d ) {
 		mode = m;
-		hard_duty_cycle = duty;
-		cycle_time = cycle;
-		set_point = setpoint;
-		BrewServer.log.info(p_param + ": " + i_param + ": " + d_param);
-		p_param = p;
-		i_param = i;
-		d_param = k;
-		BrewServer.log.info(p_param + ": " + i_param + ": " + d_param);
-		
+		heatSetting.duty_cycle = duty;
+		heatSetting.cycle_time = cycle;
+		heatSetting.set_point = setpoint;
+		BrewServer.log.info(heatSetting.proportional + ": " + heatSetting.integral + ": " + heatSetting.derivative);
+		heatSetting.proportional = p;
+		heatSetting.integral = i;
+		heatSetting.derivative = d;
+		BrewServer.log.info(heatSetting.proportional + ": " + heatSetting.integral + ": " + heatSetting.derivative);	
+		LaunchControl.savePID(this.fName, heatSetting);
 		return;
 	}
 
@@ -64,7 +74,7 @@ final class PID implements Runnable {
 		if(OC != null) {
 			return OC.getStatus();
 		}
-		return "Duty Cyle: " + duty_cycle + " - Temp: " + getTemp();
+		return "No output on! Duty Cyle: " + heatSetting.duty_cycle + " - Temp: " + getTemp();
 	}
 
 	public void run() {
@@ -73,7 +83,7 @@ final class PID implements Runnable {
 		previousTime = System.currentTimeMillis();
 		// create the Output if needed
 		if(!fGPIO.equals("")) {
-			OC = new OutputControl(fName, fGPIO, cycle_time);	
+			OC = new OutputControl(fName, fGPIO, heatSetting.cycle_time);	
 			Thread outputThread = new Thread(OC);
 			outputThread.start();
 		} else {
@@ -101,18 +111,18 @@ final class PID implements Runnable {
 	
 						// we have the current temperature
 						if (mode.equals("auto")) {
-							duty_cycle = calcPID_reg4(temp_F_avg, true);
+							OC.setDuty(calcPID_reg4(temp_F_avg, true));
 						}
 						if (mode.equals("manual")) {
-							duty_cycle = hard_duty_cycle;
+							OC.setDuty(heatSetting.duty_cycle);
 						}
 					
 						if (mode.equals("off")) {
-							duty_cycle = 0;
+							OC.setDuty(0);
 						}
 						// determine if the heat needs to be on or off
-						OC.setDuty(duty_cycle);
-						OC.setHTime(cycle_time);
+						
+						OC.setHTime(heatSetting.cycle_time);
 
 						//BrewServer.log.info(fName + " status: " + fTemp_F + " duty cycle: " + duty_cycle);
 					}
@@ -136,7 +146,7 @@ final class PID implements Runnable {
 			duty = -100;
 		}
 
-		duty_cycle = duty;
+		heatSetting.duty_cycle = duty;
 	}
 
 	public void setTemp(double temp) {
@@ -144,21 +154,21 @@ final class PID implements Runnable {
 			temp = 0;
 		}
 
-		set_point = temp;
-	}
-
-	public void setK(double k) {
-		d_param = k;
-	}
-
-	public void setI(double i) {
-		i_param = i;
+		heatSetting.set_point = temp;
 	}
 
 	public void setP(double p) {
-		p_param = p;
+		heatSetting.proportional = p;
 	}
 
+	public void setI(double i) {
+		heatSetting.integral = i;
+	}
+
+	public void setD(double d) {
+		heatSetting.derivative = d;
+	}
+	
 	public String getMode() {
 		return mode;
 	}
@@ -172,27 +182,27 @@ final class PID implements Runnable {
 	}
 
 	public double getDuty() {
-		return duty_cycle;
+		return heatSetting.duty_cycle;
 	}
 
 	public double getCycle() {
-		return cycle_time;
+		return heatSetting.cycle_time;
 	}
 
 	public double getSetPoint() {
-		return set_point;
+		return heatSetting.set_point;
 	}
 
 	public double getP() {
-		return p_param;
+		return heatSetting.proportional;
 	}
 
 	public double getI() {
-		return i_param;
+		return heatSetting.integral;
 	}
 
 	public double getD() {
-		return d_param;
+		return heatSetting.derivative;
 	}
 
 	public Temp getTempProbe() {
@@ -231,22 +241,18 @@ final class PID implements Runnable {
 	private double fTemp_F, fTemp_C;
 	private String fGPIO;
 	private List<Double> temp_F_list = new ArrayList<Double>();
-	private double duty_cycle;
-	private double hard_duty_cycle;
-	private double cycle_time;
-	private double set_point;
-	private double p_param;
-	private double i_param;
-	private double d_param;
+	
 	private String mode;
 	private String fName;
 	private long currentTime = System.currentTimeMillis();
+	public Settings heatSetting;
+	public Settings coldSetting;
 
 	// Temp values for PID calculation
-	double error = 0.0;
+	double errorFactor = 0.0;
 	double previous_error = 0.0;
-	double integral = 00.0;
-	double derivative = 0.0;
+	double integralFactor = 00.0;
+	double derivativeFactor = 0.0;
 	double output = 0.0;
 
 	double GMA_HLIM = 100.0,
@@ -259,12 +265,15 @@ final class PID implements Runnable {
 		}
 		double dt = (currentTime - previousTime)/1000;
 
-		error = set_point - avgTemp;
-		integral = (integral - error) * dt;
-		derivative = (error - previous_error)/dt;
+		errorFactor = heatSetting.set_point - avgTemp;
+		integralFactor = (integralFactor - errorFactor) * dt;
+		derivativeFactor = (errorFactor - previous_error)/dt;
 		
-	        output = p_param*error + i_param*integral + d_param*derivative;
-		previous_error = error;
+	    output = heatSetting.proportional*errorFactor 
+	    		+ heatSetting.integral*integralFactor 
+	    		+ heatSetting.derivative*derivativeFactor;
+	    
+		previous_error = errorFactor;
 
 		// limit y[k] to GMA_HLIM and GMA_LLIM
 		if (output > GMA_HLIM) {
@@ -274,7 +283,7 @@ final class PID implements Runnable {
 			output = GMA_LLIM;
 		}
 		previousTime = currentTime;
-		previous_error = error;
+		previous_error = errorFactor;
 		return output;
         
 	}

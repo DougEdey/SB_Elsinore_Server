@@ -75,9 +75,11 @@ public class BrewServer extends NanoHTTPD {
                 log.addHandler(fileHandler);
                 // default level, this can be changed
                 try {
+                	log.info("System property: "+System.getProperty("debug"));
+                	if (System.getProperty("debug").equalsIgnoreCase("INFO")) {
                 	
-                	if (System.getProperty("elsinore.debug").equalsIgnoreCase("INFO")) {
-                		log.setLevel(Level.INFO);	
+                		log.setLevel(Level.INFO);
+                		log.info("Enabled logging at an info level");
                 	} 
                 } catch (NullPointerException e) {
                 	log.setLevel(Level.WARNING);

@@ -1,24 +1,33 @@
 package com.sb.elsinore;
-import java.util.List;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.TimeZone;
-import java.util.Calendar;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import org.json.JSONObject;
+import org.ini4j.ConfigParser;
+import org.ini4j.ConfigParser.DuplicateSectionException;
+import org.ini4j.ConfigParser.InterpolationException;
+import org.ini4j.ConfigParser.NoOptionException;
+import org.ini4j.ConfigParser.NoSectionException;
 import org.json.JSONException;
-import org.ini4j.*;
-import org.ini4j.ConfigParser.*;
+import org.json.JSONObject;
 
-import Cosm.*;
+import Cosm.Cosm;
+import Cosm.CosmException;
+import Cosm.Datastream;
+import Cosm.Feed;
+import Cosm.Unit;
 
 import com.sb.common.ServePID;
 
@@ -34,7 +43,7 @@ public final class LaunchControl {
 	}
 
 	public LaunchControl() {
-		final List<Thread> procList = new ArrayList<Thread>();
+	//	final List<Thread> procList = new ArrayList<Thread>();
 	//	final List<PID> pidList = new ArrayList<PID>();
 		
 		Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -60,7 +69,7 @@ public final class LaunchControl {
 		while (iterator.hasNext()) {
 			// launch all the PIDs first, since they will launch the temp theads too
 			Temp tTemp = iterator.next();
-			PID tPid = findPID(tTemp.getName());
+			findPID(tTemp.getName());
 		}
 
 
@@ -319,14 +328,14 @@ public final class LaunchControl {
 				if(config.hasOption(input, "set_point")) {
 					setpoint = config.getDouble(input, "set_point");
 				}
-				if(config.hasOption(input, "k_param")) {
-					d = config.getDouble(input, "k_param");
+				if(config.hasOption(input, "derivative")) {
+					d = config.getDouble(input, "derivative");
 				}
-				if(config.hasOption(input, "p_param")) {
-					p = config.getDouble(input, "p_param");
+				if(config.hasOption(input, "proportional")) {
+					p = config.getDouble(input, "proportional");
 				}
-				if(config.hasOption(input, "i_param")) {
-					i = config.getDouble(input, "i_param");
+				if(config.hasOption(input, "integral")) {
+					i = config.getDouble(input, "integral");
 				}
 			}
 		} catch (NoSectionException nse) {
@@ -650,11 +659,64 @@ public final class LaunchControl {
 
 		  config.set(name, "probe", device);
 		  config.set(name, "gpio", GPIO);
-		  config.set(name, "k_param", 0);
-		  config.set(name, "i_param", 0);
-		  config.set(name, "d_param", 0);
+		
 		} catch (Exception e) {
 			return;
 		}
+	}
+	
+	public void saveSettings() {
+		// go through the list of PIDs and save each
+		for(PID n : pidList) {
+			if(n != null) {
+				savePID(n.getName(), n.heatSetting);
+			}
+		}
+
+	}
+	
+	public static void savePID(String name, PID.Settings settings) {
+		// read the config file from the rpibrew.cfg file
+		BrewServer.log.info("Saving the information for " + name);
+		ConfigParser config = new ConfigParser();
+		try {
+			config.read("rpibrew.cfg");
+		} catch (IOException e) {	
+			System.out.println("Config file doesn't exist");
+			return;
+		}
+		
+		// save any changes
+		try {
+			if(!config.hasSection(name)) {
+				// no idea why there wouldn't be this section
+				config.addSection(name);
+			}
+			
+			config.set(name, "duty_cycle", settings.duty_cycle);
+			config.set(name, "cycle_time", settings.cycle_time);
+			config.set(name, "set_point", settings.set_point);
+			config.set(name, "proportional", settings.proportional);
+			config.set(name, "integral", settings.integral);
+			config.set(name, "derivative", settings.derivative);
+			
+			File configOut = new File("rpibrew.cfg");
+			try {
+				config.write(configOut);
+			} catch (IOException ioe) {
+				System.out.println("Could not update file");
+			}
+			
+		} catch (NoSectionException nse) {
+			System.out.print("No Such Section " + name);
+			nse.printStackTrace();
+		} catch (DuplicateSectionException e) {
+			// TODO Auto-generated catch block
+			System.out.print("Duplicate section");
+			e.printStackTrace();
+		}
+		
+		
+		
 	}
 }

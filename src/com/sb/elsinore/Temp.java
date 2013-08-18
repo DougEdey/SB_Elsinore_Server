@@ -3,6 +3,7 @@ import java.io.*;
 
 public final class Temp implements Runnable {
 
+	
 	public Temp (String input, String aName ) {
 		probeName = aName;
 		
@@ -21,8 +22,10 @@ public final class Temp implements Runnable {
 		
 		while(true) {
 			if(updateTemp() == -999) {
-				// Ruhoh no file found, exit to prevent logs filling up
-				return;
+				// Ruhoh no file found, disable output to prevent logging floods
+				loggingOn = false;
+			} else {
+				loggingOn = true;
 			}
 			try {
 				Thread.sleep(500);
@@ -48,7 +51,7 @@ public final class Temp implements Runnable {
 	public String fProbe;
 	private String name;
 	private String probeName;
-
+	private boolean loggingOn = true;
 
 	private double currentTemp = 0;
 	private long currentTime = 0;
@@ -123,7 +126,9 @@ public final class Temp implements Runnable {
 				currentTime = System.currentTimeMillis();
 			}
 		} catch (IOException ie) {
-			System.out.println("Couldn't find the device under: " + fProbe);
+			if(loggingOn) {
+				System.out.println("Couldn't find the device under: " + fProbe);
+			}
 			return -999;
 		} catch (NumberFormatException nfe) {
 			nfe.printStackTrace();
