@@ -26,11 +26,11 @@ RaspberryPi or Beagleboard?
 I recently purchased a beagleboard to experiment with, as a result of that I learned a lot more about how Linux deals with OneWire and GPIO. For beagleboard to get OneWire support, you need to install a Device Tree Overlay file. I have added these under the support directory:
 
 To compile the overlay: 
-``` sudo dtc -O dtb -o /lib/firmware/w1cape-00A0.dtbo -b 0 -@ w1-00A0.dtbo ```
+``` sudo dtc -O dtb -o /lib/firmware/w1-00A0.dtbo -b 0 -@ w1-00A0.dtbo ```
 
-Or copy the w1cape-00A0.dtbo in the support directory to /lib/firmware (as root), the above command copies the file for you.
+Or copy the w1-00A0.dtbo in the support directory to /lib/firmware (as root), the above command copies the file for you.
 
-There's a file called w1setup.sh and w1remove.sh, these are scripts to add and remove the w1cape from the system (incase of issues)
+Login as root (such as "sudo su") and run "echo w1 > /sys/devices/bone_capemgr.8/slots"
 
 These need to be run as root.
 
