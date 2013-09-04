@@ -164,6 +164,10 @@ public final class OutputControl implements Runnable {
 		cool_status = false;
 		heat_status = true;
 		
+		if(Cool_SSR == null && Heat_SSR == null) {
+			BrewServer.log.info("No SSRs to turn on");
+		}
+		
 		if(Cool_SSR != null) {
 			Cool_SSR.setValue(false);
 		}
