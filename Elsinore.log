@@ -1,0 +1,316 @@
+Sep 04, 2013 10:38:43 PM com.sb.elsinore.BrewServer <init>
+INFO: System property: info
+Sep 04, 2013 10:38:43 PM com.sb.elsinore.BrewServer <init>
+INFO: Enabled logging at an info level
+Sep 04, 2013 10:38:43 PM com.sb.elsinore.BrewServer <init>
+INFO: Root directory: /home/elsinore/SB_Elsinore_Server
+Sep 04, 2013 10:38:44 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:44 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:45 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:46 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:47 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:48 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:49 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:50 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /controller method: GET
+Sep 04, 2013 10:38:50 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /templates/static/raspibrew.css method: GET
+Sep 04, 2013 10:38:50 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /templates/static/segment-display.js method: GET
+Sep 04, 2013 10:38:50 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /templates/static/jquery.js method: GET
+Sep 04, 2013 10:38:50 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /templates/static/jquery.fs.stepper.js method: GET
+Sep 04, 2013 10:38:50 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /templates/static/raphael.2.1.0.min.js method: GET
+Sep 04, 2013 10:38:50 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /templates/static/pidFunctions.js method: GET
+Sep 04, 2013 10:38:50 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /templates/static/justgage.js method: GET
+Sep 04, 2013 10:38:50 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /templates/static/screen.css method: GET
+Sep 04, 2013 10:38:50 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /templates/static/handheld.css method: GET
+Sep 04, 2013 10:38:50 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /templates/static/holo.css method: GET
+Sep 04, 2013 10:38:51 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:51 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /favicon.ico method: GET
+Sep 04, 2013 10:38:52 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:54 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /updatepid method: POST
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.BrewServer serve
+INFO: {cycletime=5, NanoHttpd.QUERY_STRING=form=kettle&mode=auto&setpoint=175&dutycycle=60&cycletime=5&p=0&i=0&k=, form=kettle, p=0, dutycycle=60, setpoint=175, k=, i=0, mode=auto}
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.BrewServer serve
+INFO: Duty cycle: 60.0
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.BrewServer serve
+INFO: Cycle time: 60.0
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.BrewServer serve
+INFO: Set Point: 175.0
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.BrewServer serve
+INFO: P: 0.0
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.BrewServer serve
+INFO: I: 0.0
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.BrewServer serve
+INFO: Mode: auto
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.BrewServer serve
+INFO: Form: kettle
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.BrewServer serve
+INFO: auto:60.0:5.0:175.0:0.0:0.0:0.0
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.PID updateValues
+INFO: 0.0: 0.0: 0.0
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.PID updateValues
+INFO: 0.0: 0.0: 0.0
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.LaunchControl savePID
+INFO: Saving the information for kettle
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:38:55 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:56 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:38:56 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:57 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:38:58 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:58 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:38:58 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:38:59 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:38:59 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:00 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:39:01 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:01 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:39:02 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:02 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:39:03 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:03 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /updatepid method: POST
+Sep 04, 2013 10:39:03 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:03 PM com.sb.elsinore.BrewServer serve
+INFO: {cycletime=5, NanoHttpd.QUERY_STRING=form=kettle&mode=auto&setpoint=175&dutycycle=60&cycletime=5&p=0&i=0&k=, form=kettle, p=0, dutycycle=60, setpoint=175, k=, i=0, mode=auto}
+Sep 04, 2013 10:39:03 PM com.sb.elsinore.BrewServer serve
+INFO: Duty cycle: 60.0
+Sep 04, 2013 10:39:03 PM com.sb.elsinore.BrewServer serve
+INFO: Cycle time: 60.0
+Sep 04, 2013 10:39:04 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:39:04 PM com.sb.elsinore.BrewServer serve
+INFO: Set Point: 175.0
+Sep 04, 2013 10:39:04 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:04 PM com.sb.elsinore.BrewServer serve
+INFO: P: 0.0
+Sep 04, 2013 10:39:04 PM com.sb.elsinore.BrewServer serve
+INFO: I: 0.0
+Sep 04, 2013 10:39:04 PM com.sb.elsinore.BrewServer serve
+INFO: Mode: auto
+Sep 04, 2013 10:39:04 PM com.sb.elsinore.BrewServer serve
+INFO: Form: kettle
+Sep 04, 2013 10:39:04 PM com.sb.elsinore.BrewServer serve
+INFO: auto:60.0:5.0:175.0:0.0:0.0:0.0
+Sep 04, 2013 10:39:04 PM com.sb.elsinore.PID updateValues
+INFO: 0.0: 0.0: 0.0
+Sep 04, 2013 10:39:04 PM com.sb.elsinore.PID updateValues
+INFO: 0.0: 0.0: 0.0
+Sep 04, 2013 10:39:04 PM com.sb.elsinore.LaunchControl savePID
+INFO: Saving the information for kettle
+Sep 04, 2013 10:39:04 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:05 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:39:05 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:06 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:39:07 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:39:08 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.PID run
+INFO: Calculated: 0.0
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /updatepid method: POST
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.BrewServer serve
+INFO: {cycletime=5, NanoHttpd.QUERY_STRING=form=kettle&mode=auto&setpoint=175&dutycycle=60&cycletime=5&p=60&i=0&k=, form=kettle, p=60, dutycycle=60, setpoint=175, k=, i=0, mode=auto}
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.BrewServer serve
+INFO: Duty cycle: 60.0
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.BrewServer serve
+INFO: Cycle time: 60.0
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.BrewServer serve
+INFO: Set Point: 175.0
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.BrewServer serve
+INFO: P: 60.0
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.BrewServer serve
+INFO: I: 0.0
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.BrewServer serve
+INFO: Mode: auto
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.BrewServer serve
+INFO: Form: kettle
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.BrewServer serve
+INFO: auto:60.0:5.0:175.0:60.0:0.0:0.0
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.PID updateValues
+INFO: 0.0: 0.0: 0.0
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.PID updateValues
+INFO: 60.0: 0.0: 0.0
+Sep 04, 2013 10:39:09 PM com.sb.elsinore.LaunchControl savePID
+INFO: Saving the information for kettle
+Sep 04, 2013 10:39:10 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:10 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:11 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:11 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:12 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:12 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:13 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:13 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:14 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:14 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:15 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:15 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:16 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:16 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:17 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:17 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:18 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:18 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:19 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:19 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:20 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:20 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:21 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:21 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:22 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:22 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:23 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:23 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:24 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:24 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:25 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:25 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:26 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:26 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:27 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:27 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:28 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:28 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:29 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:29 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:30 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:30 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:31 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:31 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:32 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:32 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:33 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:33 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:34 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:34 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:35 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:35 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:36 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:36 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:37 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:37 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:38 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:38 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:39 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:39 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:40 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:40 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:41 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:41 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:42 PM com.sb.elsinore.PID run
+INFO: Calculated: 100.0
+Sep 04, 2013 10:39:42 PM com.sb.elsinore.BrewServer serve
+INFO: URL : /getstatus method: GET
+Sep 04, 2013 10:39:43 PM com.sb.elsinore.OutputControl shutdown
+INFO: Shutting down OC
