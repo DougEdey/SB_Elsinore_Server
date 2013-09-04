@@ -33,7 +33,9 @@ import com.sb.common.ServePID;
 
 public final class LaunchControl {
 	public static List<PID> pidList = new ArrayList<PID>(); 
-	public static List<Temp> tempList = new ArrayList<Temp>(); 
+	public static List<Temp> tempList = new ArrayList<Temp>();
+	public static List<Pump> pumpList = new ArrayList<Pump>();
+	
 	private String scale = "F";
 	private static BrewDay brewDay = null;
 
@@ -255,6 +257,9 @@ public final class LaunchControl {
 			if(temp.equalsIgnoreCase("general")){
 				// parse the general config
 				parseGeneral(config, temp);
+			} else if(temp.equalsIgnoreCase("pumps")){
+				// parse the general config
+				parsePumps(config, temp);
 			} else {
 				parseDevice(config, temp);
 			}
@@ -305,6 +310,25 @@ public final class LaunchControl {
 		}
 	}
 
+	private void parsePumps(ConfigParser config, String input) {
+		try {
+			List<String> pumps = config.options(input);
+			for(String pumpName : pumps) {
+				String gpio = config.get(input, pumpName);
+				pumpList.add(new Pump(pumpName, gpio));
+			}
+		} catch (NoSectionException nse) {
+			// we shouldn't get here!
+			nse.printStackTrace();
+		} catch (NoOptionException e) {
+			// We shouldn't get here!
+			e.printStackTrace();
+		} catch (InterpolationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	// parse each section
 	private void parseDevice(ConfigParser config, String input) {
 		String probe = null;

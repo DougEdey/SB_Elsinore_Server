@@ -13,7 +13,7 @@
         <pathelement location="bin"/>
         <pathelement location="libs/commons-logging-1.1.1.jar"/>
         <pathelement location="libs/Cosm.jar"/>
-        <pathelement location="libs/framboos-0.0.1-SNAPSHOT.jar"/>
+        <pathelement location="libs/framboos.jar"/>
         <pathelement location="libs/ini4j-0.5.2.jar"/>
         <pathelement location="libs/joda-time-2.2.jar"/>
         <pathelement location="libs/json-simple-1.1.1.jar"/>
