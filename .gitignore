@@ -1,2 +1,4 @@
 #Don't upload final config files
 *.cfg
+#Hide the maven build folder
+target
