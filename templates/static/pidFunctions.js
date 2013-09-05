@@ -56,8 +56,13 @@ function waitForMsg(){
 					}
 				}
 				mode = null;
-				Gauges[vessel].refresh(val.duty); 
-//				jQuery('div[id="'+vessel+'-gage"]').text(val.duty);
+				if(val.actualduty != null) {
+					Gauges[vessel].refresh(val.actualduty); 				
+				} else {
+					Gauges[vessel].refresh(val.duty); 
+				}
+
+			
 				jQuery('div[id="tempUnit"]').text(val.scale);
 				jQuery('input[name="'+vessel+'-dutycycle"]').val(val.duty);
 				jQuery('input[name="'+vessel+'-cycletime"]').val(val.cycle);
