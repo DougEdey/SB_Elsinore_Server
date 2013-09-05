@@ -62,6 +62,7 @@ public final class OutputControl implements Runnable {
 				if(fGPIOh != null && !fGPIOh.equals("") && Heat_SSR == null) {
 					Heat_SSR = new OutPin(fGPIOh);
 				}
+				BrewServer.log.info("Fduty: "+fDuty);
 				if(fDuty == 0) {
 					allOff();
 					Thread.sleep(fTimeh);
@@ -141,8 +142,9 @@ public final class OutputControl implements Runnable {
       return "off";
    }
 	
-	public void setDuty(double duty) {
+	public synchronized void setDuty(double duty) {
 		fDuty = duty;
+		BrewServer.log.info("IN: " + duty + " OUT: " + fDuty);
 	}
 	
 	public void setHTime(double time) {
@@ -220,5 +222,10 @@ public final class OutputControl implements Runnable {
 	private boolean cool_status = false;
 	private boolean heat_status = false;
 	private long coolStopTime = -1;
+	
+	public synchronized double getDuty() {
+		// TODO Auto-generated method stub
+		return fDuty;
+	}
 }
 

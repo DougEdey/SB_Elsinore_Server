@@ -179,6 +179,10 @@ public final class LaunchControl {
 			if(tPid != null) {
 				tJSON.put("mode", tPid.getMode());
 				tJSON.put("gpio", tPid.getGPIO());
+				// hack to get the real duty out
+				if(tPid.getMode().contains("auto")) {
+					tJSON.put("actualduty", tPid.heatSetting.calculatedDuty);
+				}
 				tJSON.put("duty", tPid.getDuty());
 				tJSON.put("cycle", tPid.getCycle());
 				tJSON.put("setpoint", tPid.getSetPoint());
