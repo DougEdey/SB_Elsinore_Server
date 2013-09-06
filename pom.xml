@@ -9,10 +9,13 @@
     <description>Elsinore Server for Home Brew Automation</description>
 
     <repositories>
+        <!-- Special Repository for artifacts that are not in any public maven
+        repository.
+        -->
         <repository>
             <id>repo</id>
             <releases>
-                <enabled>false</enabled>
+                <enabled>true</enabled>
                 <checksumPolicy>ignore</checksumPolicy>
             </releases>
             <snapshots>
@@ -82,14 +85,14 @@
 
         <!-- Get this at : https://github.com/jkransen/framboos -->
         <dependency>
-            <groupId>jkransen</groupId>
+            <groupId>framboos</groupId>
             <artifactId>framboos</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
         <!-- Get this from : https://github.com/pieterjm/JCosmAPI -->
         <dependency>
-            <groupId>pieterjm</groupId>
+            <groupId>JCosmAPI</groupId>
             <artifactId>JCosmAPI</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
@@ -120,14 +123,14 @@
                 </executions>
             </plugin>
             <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
-        <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
-        </configuration>
-      </plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
