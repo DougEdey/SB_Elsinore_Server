@@ -69,10 +69,8 @@ public class BrewServer extends NanoHTTPD {
         }
 
         if(lH.length == 0) {
-                fileHandler = new FileHandler("Elsinore.log");
-                fileHandler.setFormatter(new SimpleFormatter());
                 log.addHandler(new ConsoleHandler());
-                log.addHandler(fileHandler);
+                
                 // default level, this can be changed
                 try {
                 	log.info("System property: "+System.getProperty("debug"));
@@ -123,7 +121,7 @@ public class BrewServer extends NanoHTTPD {
 					try {
 						dTemp = Double.parseDouble(temp);
 						cycle = dTemp;
-						BrewServer.log.info("Cycle time: " + duty);
+						BrewServer.log.info("Cycle time: " + cycle);
 					} catch (NumberFormatException nfe) {
 						BrewServer.log.info("Bad cycle");
 					}

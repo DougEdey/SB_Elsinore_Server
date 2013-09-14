@@ -14,6 +14,7 @@ final class PID implements Runnable {
 	// inner class to hold the settings
 	public class Settings {
 		public double duty_cycle, cycle_time, proportional, integral, derivative, set_point;
+		public double calculatedDuty;
 		
 		public Settings() {
 			duty_cycle = cycle_time = proportional = integral = derivative = set_point = 0.0;
@@ -29,6 +30,7 @@ final class PID implements Runnable {
 		heatSetting.proportional = p;
 		heatSetting.integral = i;
 		heatSetting.derivative = d;
+		heatSetting.calculatedDuty = 0.0;
 		
 		fName = aName;
 		fTemp = aTemp;
@@ -58,7 +60,9 @@ final class PID implements Runnable {
 	}
 	public void updateValues(String m, double duty, double cycle, double setpoint, double p, double i, double d ) {
 		mode = m;
-		heatSetting.duty_cycle = duty;
+		if(mode.equals("manual")) {
+			heatSetting.duty_cycle = duty;
+		}
 		heatSetting.cycle_time = cycle;
 		heatSetting.set_point = setpoint;
 		BrewServer.log.info(heatSetting.proportional + ": " + heatSetting.integral + ": " + heatSetting.derivative);
@@ -111,20 +115,19 @@ final class PID implements Runnable {
 	
 						// we have the current temperature
 						if (mode.equals("auto")) {
-							OC.setDuty(calcPID_reg4(temp_F_avg, true));
-						}
-						if (mode.equals("manual")) {
+							heatSetting.calculatedDuty = calcPID_reg4(temp_F_avg, true);
+							BrewServer.log.info("Calculated: " + heatSetting.calculatedDuty);
+							OC.setDuty(heatSetting.calculatedDuty);
+						} else if (mode.equals("manual")) {
 							OC.setDuty(heatSetting.duty_cycle);
-						}
-					
-						if (mode.equals("off")) {
+						} else if (mode.equals("off")) {
 							OC.setDuty(0);
 						}
 						// determine if the heat needs to be on or off
 						
 						OC.setHTime(heatSetting.cycle_time);
 
-						//BrewServer.log.info(fName + " status: " + fTemp_F + " duty cycle: " + duty_cycle);
+						BrewServer.log.info(mode + ": " + fName + " status: " + fTemp_F + " duty cycle: " + OC.getDuty());
 					}
 					//notify all waiters of the change of state
 				}
@@ -264,10 +267,16 @@ final class PID implements Runnable {
 			previousTime = currentTime;
 		}
 		double dt = (currentTime - previousTime)/1000;
+		if(dt == 0.0 || Double.isNaN(dt)) {
+			return OC.getDuty();
+		}
 
 		errorFactor = heatSetting.set_point - avgTemp;
 		integralFactor = (integralFactor - errorFactor) * dt;
 		derivativeFactor = (errorFactor - previous_error)/dt;
+		
+		BrewServer.log.info("DT: " + dt + " Error: " + errorFactor + " integral: " + integralFactor + " derivative: " + derivativeFactor);
+		
 		
 	    output = heatSetting.proportional*errorFactor 
 	    		+ heatSetting.integral*integralFactor 
