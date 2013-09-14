@@ -25,10 +25,13 @@ public class ServePID {
 	}
 	
 	public String getPage() {
-		String page = "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta http-equiv='Content-Type' content='text/html; charset=utf-8'><meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/></head>" + lineSep;
-		page = page + "<title>PID Dislay page</title>" + lineSep +
-				"<body>" + lineSep +
+		String page = "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta http-equiv='Content-Type' content='text/html; charset=utf-8'><meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>" + lineSep;
+		page = page + "<title>Elsinore Controller</title>" + lineSep +
+			    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" + lineSep +
+			    
+				
 				getHeader() + lineSep +
+				"</head><body>" + lineSep +
 				addJS() + lineSep;
 
 		Iterator devIterator = devices.entrySet().iterator();
@@ -59,8 +62,9 @@ public class ServePID {
 	}
 	
 	public String addJS() {
-		String javascript =  "<link rel=\"stylesheet\" type=\"text/css\" href=\"/templates/static/raspibrew.css\" />" 
-					+ lineSep +
+		String javascript =  "<link rel=\"stylesheet\" type=\"text/css\" href=\"/templates/static/raspibrew.css\" />" + lineSep +  
+				 "<!-- Bootstrap -->" + lineSep +
+				"<link href=\"/templates/static/bootstrap-3.0.0/css/bootstrap.min.css\" rel=\"stylesheet\" media=\"screen\">" + lineSep + 
 	        "<!--[if IE]><script type=\"text/javascript\" src=\"excanvas.js\"></script><![endif]-->" + lineSep +
 	        
 	        "<script type=\"text/javascript\" src=\"/templates/static/jquery.js\"></script>" + lineSep +   
@@ -70,8 +74,10 @@ public class ServePID {
 	        
 	        "<script type=\"text/javascript\" src=\"/templates/static/segment-display.js\"></script>" + lineSep +
 	        "<script type=\"text/javascript\" src=\"/templates/static/pidFunctions.js\"></script>" + lineSep +
-		"<script type=\"text/javascript\" src=\"/templates/static/raphael.2.1.0.min.js\"></script>" + lineSep +
-		"<script type=\"text/javascript\" src=\"/templates/static/justgage.js\"></script>" + lineSep +
+			"<script type=\"text/javascript\" src=\"/templates/static/raphael.2.1.0.min.js\"></script>" + lineSep +
+			"<script type=\"text/javascript\" src=\"/templates/static/justgage.js\"></script>" + lineSep +
+			// BOOTSTRAP
+			"<script type=\"text/javascript\" src=\"/templates/static/bootstrap-3.0.0/js/bootstrap.min.js\"></script>" + lineSep +
 	        "<script type=\"text/javascript\">" + lineSep +
 	        "var update = 1;" + lineSep +
 	        "var GaugeDisplay = {}; " + lineSep +
@@ -89,7 +95,7 @@ public class ServePID {
 	}
 	
 	public String addController(String device, String type) {
-		String controller = "<div id=\"" + device + "\" class=\"holo-content controller " + type +"\">" + lineSep +
+		String controller = "<div id=\"" + device + "\" class=\"holo-content controller panel panel-primary " + type +"\">" + lineSep +
 					"<script type='text/javascript'>" + lineSep +
 					"jQuery(document).ready(function() {" + lineSep +
 
@@ -112,15 +118,13 @@ public class ServePID {
 			}
 				
 				controller += "});" + lineSep + lineSep +
-					"</script>" + lineSep +
-					"<div id=\"" + device + "-header\" class=\"header\"";
-				if(type.equals("PID")) {
-					controller += " onclick=\"toggleDiv('" + device + "-controls');\" "; 
-				}
-				controller += "><div id=\"" + device + "-title\" class=\"title\"" +
+					"</script>" + lineSep;
+					
+				
+				controller += "<div id=\"" + device + "-title\" class=\"title panel-heading \"" +
 				
 			
-					">" + device + "</div>" + lineSep +
+					">" + device + "</div><div class=\"panel-body\">" + lineSep +
 					" <canvas id=\"" + device + "-tempGauge\" class=\"gauge\" width=\"300\" height=\"140\">" + lineSep +
 					"</canvas>" + lineSep +
 					"<div id='" + device + "-tempSummary'>Temperature(<div id='tempUnit'>F</div>): " + lineSep +
@@ -138,61 +142,61 @@ public class ServePID {
                     "<button id=\"" + device + "-modeOff\" class=\"holo-button modeclass\" onclick='disable(this); selectOff(this); return false;'>Off</button>" + lineSep +
                     "</div>" + lineSep +
                     
-                    "<div id='pidInput' class='labels'>" +
+                    "<table id='pidInput' class='labels table'>" +
                     	// 	SET POINT
-                    	"<div id='"+ device + "-SP' class='holo-field'>" + lineSep +
-	                    	"<div id='"+ device + "-labelSP' >Set Point:</div>"+ lineSep +
-	                    	"<div id=\"" + device + "-setpoint\">" + lineSep +
+                    	"<tr id='"+ device + "-SP' class='holo-field'>" + lineSep +
+	                    	"<td id='"+ device + "-labelSP' >Set Point</td>"+ lineSep +
+	                    	"<td id=\"" + device + "-setpoint\">" + lineSep +
 	                    		"<input class='inputBox setpoint' type=\"text\" name=\"" + device + "-setpoint\"  maxlength = \"4\" size =\"4\" value=\"\" style=\"text-align: left;\"/>" +
-	                    	"</div>" + lineSep +
-	                    	"<div id='"+ device + "-unitSP'><div id='tempUnit'>F</div></div>"+ lineSep +
-	                    	"</div>" + lineSep +
+	                    	"</td>" + lineSep +
+	                    	"<td id='"+ device + "-unitSP'><div id='tempUnit'>F</div></td>"+ lineSep +
+	                    "</tr>" + lineSep +
             
-                    	// DUTY CYCLE
-                    	"<br />" + "<div id='"+ device + "-DC' class='holo-field'>" + lineSep +
-                    	"<div id='"+ device + "-labelDC' >Duty Cycle:</div>" + lineSep +
+                    	// DUTY CYCLE 
+                    	"<tr id='"+ device + "-DC' class='holo-field'>" + lineSep +
+                    		"<td id='"+ device + "-labelDC' >Duty Cycle</td>" + lineSep +
                     
-                    		"<div id=\"" + device + "-dutycycle\">" + lineSep +
+                    		"<td id=\"" + device + "-dutycycle\">" + lineSep +
                     			"<input class='inputBox dutycycle' name=\"" + device + "-dutycycle\" maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
-                    		"</div>" + lineSep +
-                    	"<div id='"+ device + "-unitDC'>%</div><br />"+ 
-                    	"</div>" + lineSep +
+                    		"</td>" + lineSep +
+                    	"<td id='"+ device + "-unitDC'>%</td><br />"+ 
+                    	"</tr>" + lineSep +
                     	
                     	// DUTY TIME
-                    	"<br />" + "<div id='"+ device + "-DT' class='holo-field'>" + lineSep +
-                    	"<div id='"+ device + "-labelDT' >Duty Time:</div>" + lineSep +
-                 			"<div id=\"" + device + "-cycletime\">" + lineSep +
+                    	"<tr id='"+ device + "-DT' class='holo-field'>" + lineSep +
+                    	"<td id='"+ device + "-labelDT' >Duty Time:</td>" + lineSep +
+                 			"<td id=\"" + device + "-cycletime\">" + lineSep +
                  				"<input class='inputBox dutytime' name=\"" + device + "-cycletime\" maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
-                 			"</div>" + lineSep +
-                 		"<div id='"+ device + "-unitDT'>secs</div><br />"+ 
-                 		"</div>" + lineSep +
+                 			"</td>" + lineSep +
+                 		"<td id='"+ device + "-unitDT'>secs</td>"+ 
+                 		"</tr>" + lineSep +
                  		
                  		// P
-	                    "<br />" + "<div id='"+ device + "-p' class='holo-field'>" + lineSep +
-	                    "<div id='"+ device + "-labelp' >P:</div>" + lineSep +
-		                    "<div id=\"" + device + "-pinput\">" + lineSep +
+	                    "<tr id='"+ device + "-p' class='holo-field'>" + lineSep +
+	                    "<td id='"+ device + "-labelp' >P</td>" + lineSep +
+		                    "<td id=\"" + device + "-pinput\">" + lineSep +
 		                    "	<input class='inputBox p' name=\"" + device + "-p\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
-		                    "</div>" + lineSep +
-		                    "<div id='"+ device + "-unitP'>secs</div><br />"+ 
-		                "</div>" + lineSep +
+		                    "</td>" + lineSep +
+		                    "<td id='"+ device + "-unitP'>secs</td>"+ 
+		                "</tr>" + lineSep +
 		                
 		                // I
-	                    "<br />" + "<div id='"+ device + "-i' class='holo-field'>" + lineSep +
-	                    "<div id='"+ device + "-labeli' >I:</div>" + lineSep +
-		                    "<div id=\"" + device + "-iinput\">" + lineSep +
+	                    "<br />" + "<tr id='"+ device + "-i' class='holo-field'>" + lineSep +
+	                    "<td id='"+ device + "-labeli' >I</td>" + lineSep +
+		                    "<td id=\"" + device + "-iinput\">" + lineSep +
 		                    "	<input class='inputBox i' name=\"" + device + "-i\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
-		                    "</div>" + lineSep +
-		                    "<div id='"+ device + "-unitI'>&#176<div id='tempUnit'>F</div></div><br />" +
-		                "</div>" + lineSep +    
+		                    "</td>" + lineSep +
+		                    "<td id='"+ device + "-unitI'>&#176<div id='tempUnit'>F</div></td>" +
+		                "</tr>" + lineSep +    
 		                // D
-	                    "<br />" + "<div id='"+ device + "-d' class='holo-field'>" + lineSep +
-	                    "<div id='"+ device + "-labeld' >D:</div>" + lineSep +
-		        			"<div id=\"" + device + "-dinput\">" + lineSep +
+	                    "<br />" + "<tr id='"+ device + "-d' class='holo-field'>" + lineSep +
+	                    "<td id='"+ device + "-labeld' >D</td>" + lineSep +
+		        			"<td id=\"" + device + "-dinput\">" + lineSep +
 				                    "	<input class='inputBox d ' name=\"" + device + "-d\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
-							"</div>" + lineSep +
-							"<div id='"+ device + "-unitD'>secs</div><br/>" +
-						"</div>" + lineSep +	
-					"</div>" + lineSep +
+							"</td>" + lineSep +
+							"<td id='"+ device + "-unitD'>secs</td>" +
+						"</tr>" + lineSep +	
+					"</table>" + lineSep +
 
 					"<div class='holo-buttons'>" + lineSep +
                     "<button class='holo-button' id=\"sendcommand\" type=\"submit\" value=\"SubmitCommand\" onClick='submitForm(this.form); waitForMsg(); return false;'>Send Command</button>" + lineSep +

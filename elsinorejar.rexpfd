@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?><rexpfd>
+    <destination path="doug-ThinkPad-W520.elsinore:/home/elsinore/SB_Elsinore_Server"/>
+    <options createDirectoryStructure="false" createSelectedOnly="true" descriptionFilePath="/SB_Elsinore_Server/elsinorejar.rexpfd" overWriteExistingFiles="false" reviewSynchronize="false" saveSettings="true"/>
+    <selectedElements>
+        <file path="/SB_Elsinore_Server/Elsinore.jar"/>
+    </selectedElements>
+</rexpfd>

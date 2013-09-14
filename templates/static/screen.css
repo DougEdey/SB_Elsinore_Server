@@ -1,12 +1,7 @@
 .controller {
         margin:2px 0 1px 1px;
         text-align:center;
-        width: 25em;
-        border: 0px solid #999;
         display: inline-block;
-        vertical-align: top;
-        margin-top: 0px;
-        margin-bottom: auto;
 }
 
 
