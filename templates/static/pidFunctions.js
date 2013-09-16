@@ -94,12 +94,12 @@ function selectOff(vessel) {
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="#666666";
 
-	jQuery('div[id="'+vessel+'-SP"]').hide();
-	jQuery('div[id="'+vessel+'-DT"]').hide();
-	jQuery('div[id="'+vessel+'-DC"]').hide();
-	jQuery('div[id="'+vessel+'-p"]').hide();
-	jQuery('div[id="'+vessel+'-i"]').hide();
-	jQuery('div[id="'+vessel+'-d"]').hide();
+	jQuery('tr[id="'+vessel+'-SP"]').hide();
+	jQuery('tr[id="'+vessel+'-DT"]').hide();
+	jQuery('tr[id="'+vessel+'-DC"]').hide();
+	jQuery('tr[id="'+vessel+'-p"]').hide();
+	jQuery('tr[id="'+vessel+'-i"]').hide();
+	jQuery('tr[id="'+vessel+'-d"]').hide();
 
 	vessel = null;
 	return false;
@@ -118,12 +118,12 @@ function selectAuto(vessel) {
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="red";
 
-	jQuery('div[id="'+vessel+'-SP"]').show();
-	jQuery('div[id="'+vessel+'-DT"]').show();
-	jQuery('div[id="'+vessel+'-DC"]').hide();
-	jQuery('div[id="'+vessel+'-p"]').show();
-	jQuery('div[id="'+vessel+'-i"]').show();
-	jQuery('div[id="'+vessel+'-d"]').show();
+	jQuery('tr[id="'+vessel+'-SP"]').show();
+	jQuery('tr[id="'+vessel+'-DT"]').show();
+	jQuery('tr[id="'+vessel+'-DC"]').hide();
+	jQuery('tr[id="'+vessel+'-p"]').show();
+	jQuery('tr[id="'+vessel+'-i"]').show();
+	jQuery('tr[id="'+vessel+'-d"]').show();
 
 	vessel = null;
 	return false;
@@ -142,12 +142,12 @@ function selectManual(vessel) {
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="red";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="#666666";
 
-	jQuery('div[id="'+vessel+'-SP"]').hide();
-	jQuery('div[id="'+vessel+'-DT"]').show();
-	jQuery('div[id="'+vessel+'-DC"]').show();
-	jQuery('div[id="'+vessel+'-p"]').hide();
-	jQuery('div[id="'+vessel+'-i"]').hide();
-	jQuery('div[id="'+vessel+'-d"]').hide();
+	jQuery('tr[id="'+vessel+'-SP"]').hide();
+	jQuery('tr[id="'+vessel+'-DT"]').show();
+	jQuery('tr[id="'+vessel+'-DC"]').show();
+	jQuery('tr[id="'+vessel+'-p"]').hide();
+	jQuery('tr[id="'+vessel+'-i"]').hide();
+	jQuery('tr[id="'+vessel+'-d"]').hide();
 
 	vessel = null;
 	return false;

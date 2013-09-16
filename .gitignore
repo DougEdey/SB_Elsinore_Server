@@ -2,3 +2,4 @@
 *.cfg
 #Hide the maven build folder
 target
+bin
