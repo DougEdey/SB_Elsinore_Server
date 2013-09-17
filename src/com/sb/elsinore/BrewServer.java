@@ -73,7 +73,7 @@ public class BrewServer extends NanoHTTPD {
                 
                 // default level, this can be changed
                 try {
-                	log.info("System property: "+System.getProperty("debug"));
+                	log.info("Checking system property 'debug': "+System.getProperty("debug")+(System.getProperty("debug")==null?" .  Set to 'INFO' for additional output":"")); 
                 	if (System.getProperty("debug").equalsIgnoreCase("INFO")) {
                 	
                 		log.setLevel(Level.INFO);
