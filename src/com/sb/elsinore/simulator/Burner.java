@@ -15,26 +15,24 @@ import java.util.logging.Logger;
 public class Burner extends Thread
 {
     //Read this gpio to fire the heater
+    private String rootPath = "/mock";
 
-    private String heaterPath = "/sys/class/gpio/gpio0/value";
+    private String heaterPath;
     //Read and then increase this based on time
-    private String thermometerPath = "/sys/bus/w1/devices/foo/w1_slave";
+    private String thermometerPath;
     private double gallons;
     private double watts;
     private boolean on = false;
     private String probe;
+    private boolean running = true;
+    private boolean logStateChange = false;
 
-    public Burner()
-    {
-        this.setDaemon(true);
-    }
-
-    public Burner(double gallons, double watts, double initialTemp, String gpio, String probe)
+    public Burner(String rootPath, double gallons, double watts, double initialTemp, String gpio, String probe)
     {
         this.gallons = gallons;
         this.watts = watts;
-        thermometerPath = "/sys/bus/w1/devices/" + probe + "/w1_slave";
-        heaterPath = "/sys/class/gpio/gpio" + gpio + "/value";
+        thermometerPath = rootPath+"/bus/w1/devices/" + probe + "/w1_slave";
+        heaterPath = rootPath+"/class/gpio/" + gpio + "/value";
         this.probe = probe;
         //TODO Initialize Paths
         File therm = new File(thermometerPath);
@@ -50,9 +48,8 @@ public class Burner extends Thread
     public void run()
     {
         long timeCheck = System.currentTimeMillis();
-        while (true)
+        while (isRunning())
         {
-
             int currentValue = 0;
             try
             {
@@ -139,6 +136,13 @@ public class Burner extends Thread
      */
     public void setOn(boolean on)
     {
+        if( isLogStateChange() )
+        {
+            if( this.on != on )
+            {
+                System.out.println(on?"Element ON":"Element OFF");
+            }
+        }
         this.on = on;
     }
 
@@ -172,5 +176,37 @@ public class Burner extends Thread
                 Logger.getLogger(Burner.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+    }
+
+    /**
+     * @return the running
+     */
+    public boolean isRunning()
+    {
+        return running;
+    }
+
+    /**
+     * @param running the running to set
+     */
+    public void setRunning(boolean running)
+    {
+        this.running = running;
+    }
+
+    /**
+     * @return the logStateChange
+     */
+    public boolean isLogStateChange()
+    {
+        return logStateChange;
+    }
+
+    /**
+     * @param logStateChange the logStateChange to set
+     */
+    public void setLogStateChange(boolean logStateChange)
+    {
+        this.logStateChange = logStateChange;
     }
 }
