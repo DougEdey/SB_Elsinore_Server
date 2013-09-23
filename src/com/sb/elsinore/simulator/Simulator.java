@@ -125,7 +125,7 @@ public class Simulator
     /**
      * @param kettleGallons the kettleGallons to set
      */
-    @Command(abbrev = "g", name = "gallons")
+    @Command(abbrev = "g", name = "set-gallons")
     
     public void setKettleGallons(double kettleGallons)
     {
@@ -146,7 +146,7 @@ public class Simulator
     /**
      * @param kettleWattage the kettleWattage to set
      */
-    @Command(abbrev = "w", name = "watts")
+    @Command(abbrev = "w", name = "set-watts")
     public void setKettleWattage(double kettleWattage)
     {
         this.kettleWattage = kettleWattage;
@@ -165,7 +165,7 @@ public class Simulator
     /**
      * @param kettleTemp the kettleTemp to set
      */
-    @Command(abbrev = "t", name = "temp")
+    @Command(abbrev = "t", name = "set-temp")
     public void setKettleTemp(double kettleTemp)
     {
         this.kettleTemp = kettleTemp;
@@ -184,7 +184,7 @@ public class Simulator
     /**
      * @param kettleGPIO the kettleGPIO to set
      */
-    @Command(abbrev = "gp", name = "gpio")
+    @Command(abbrev = "gp", name = "set-gpio")
     public void setKettleGPIO(String kettleGPIO)
     {
         this.kettleGPIO = kettleGPIO;
@@ -203,7 +203,7 @@ public class Simulator
     /**
      * @param kettleOneWire the kettleOneWire to set
      */
-    @Command(abbrev = "ow", name = "1-wire")
+    @Command(abbrev = "ow", name = "set-1wire")
     public void setKettleOneWire(String kettleOneWire)
     {
         this.kettleOneWire = kettleOneWire;
@@ -222,7 +222,7 @@ public class Simulator
     /**
      * @param rootPath the rootPath to set
      */
-    @Command(abbrev = "p", name = "path")
+    @Command(abbrev = "p", name = "set-path")
     public void setRootPath(String rootPath)
     {
         this.rootPath = rootPath;
