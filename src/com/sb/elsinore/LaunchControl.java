@@ -495,6 +495,13 @@ public final class LaunchControl {
 		// try to access the list of 1-wire devices
 		File w1Folder = new File("/sys/bus/w1/devices/");
 		File[] listOfFiles = w1Folder.listFiles();
+                if( listOfFiles == null )
+                {
+                    System.out.println("Could not find any one wire devices, because the path /sys/bus/w1/devices/ does not exist");
+                    System.exit(0);
+                }
+                
+                
 		for ( File currentFile : listOfFiles) {
 			if (currentFile.isDirectory() && !currentFile.getName().startsWith("w1_bus_master")) {
 				// got a directory, check for a temp

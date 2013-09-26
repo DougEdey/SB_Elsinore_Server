@@ -80,7 +80,7 @@ public final class Temp implements Runnable {
 		if(scale.equals("F")) {
 			return currentTemp;
 		}
-		return (currentTemp-32) /(9.0*5.0);
+		return (currentTemp-32) * 5.0 / 9.0;
 	}
 
 	public double getTempC() {
@@ -101,7 +101,8 @@ public final class Temp implements Runnable {
 			br = new BufferedReader(new FileReader(fProbe));
 			StringBuilder sb = new StringBuilder();
 			String line = br.readLine();
-			if(line.contains("NO")) {
+                        
+			if(line == null || line.contains("NO")) {
 				// bad CRC, do nothing
 			} else if(line.contains("YES")) {
 				// good CRC

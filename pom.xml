@@ -23,6 +23,13 @@
             </snapshots>
             <url>file://${project.basedir}/repo</url>
         </repository>
+        <repository>
+            <id>snapshots</id>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <url>http://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
     </repositories>
 	
     <dependencies>
@@ -81,6 +88,12 @@
                     <artifactId>junit</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.googlecode.cliche</groupId>
+            <artifactId>cliche</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
 
         <!-- Get this at : https://github.com/jkransen/framboos -->
