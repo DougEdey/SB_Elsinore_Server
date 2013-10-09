@@ -83,13 +83,6 @@
             </exclusions>
         </dependency>
 
-        <!-- Get this at : https://github.com/jkransen/framboos -->
-        <dependency>
-            <groupId>framboos</groupId>
-            <artifactId>framboos</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-
         <!-- Get this from : https://github.com/pieterjm/JCosmAPI -->
         <dependency>
             <groupId>JCosmAPI</groupId>
