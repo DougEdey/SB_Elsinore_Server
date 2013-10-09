@@ -20,8 +20,8 @@ import org.ini4j.ConfigParser.DuplicateSectionException;
 import org.ini4j.ConfigParser.InterpolationException;
 import org.ini4j.ConfigParser.NoOptionException;
 import org.ini4j.ConfigParser.NoSectionException;
-import org.json.JSONException;
-import org.json.JSONObject;
+
+import org.json.simple.JSONObject;
 
 import Cosm.Cosm;
 import Cosm.CosmException;
@@ -167,8 +167,7 @@ public final class LaunchControl {
 		String active_devices = "";
 
 		JSONObject tJSON = null;
-		try {
-		
+	
 		//get the datestamps data 
 		
 		// iterate the thread lists
@@ -233,9 +232,7 @@ public final class LaunchControl {
 				rObj.put("brewday", brewDay.brewDayStatus());
 			}
 		}	
-		} catch (JSONException e) {
-			return "Failed";
-		}
+	
 		return rObj.toString();
 
 	}
