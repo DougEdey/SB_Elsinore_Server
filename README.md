@@ -89,7 +89,9 @@ Control Interface
 
 Visit <ip of your system>:8080/control to access the webUI, which works on mobiles too:
 
-[Imgur](http://i.imgur.com/CABbHrs)
+![Browser Layout](http://i.imgur.com/j59BcFZ.png)
+
+[Album of the UI Progress](http://imgur.com/a/jEIbc)
 
 This is an example of the PID control interface, temperature probes are displayed on the right hand side as LCD displays. On the Raspberry Pi you'll also get the system temperature (this isn't enabled on Beagleboard yet)
 
