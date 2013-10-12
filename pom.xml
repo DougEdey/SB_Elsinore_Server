@@ -77,6 +77,13 @@
             </exclusions>
         </dependency>
 
+        <!-- Get this from : https://github.com/dougedey/jGPIO -->
+        <dependency>
+            <groupId>jGPIO</groupId>
+            <artifactId>jGPIO</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        
         <!-- Get this from : https://github.com/pieterjm/JCosmAPI -->
         <dependency>
             <groupId>JCosmAPI</groupId>
