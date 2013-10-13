@@ -1,7 +1,4 @@
 package com.sb.common;
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
-import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -177,7 +174,7 @@ public class ServePID {
 		                    "<td id=\"" + device + "-pinput\">" + lineSep +
 		                    "	<input class='inputBox p' name=\"" + device + "-p\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
 		                    "</td>" + lineSep +
-		                    "<td id='"+ device + "-unitP'>secs</td>"+ 
+		                    "<td id='"+ device + "-unitP'>secs#176<div id='tempUnit'>F</div></td>"+ 
 		                "</tr>" + lineSep +
 		                
 		                // I
