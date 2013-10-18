@@ -492,6 +492,12 @@ public final class LaunchControl {
 		// try to access the list of 1-wire devices
 		File w1Folder = new File("/sys/bus/w1/devices/");
 		File[] listOfFiles = w1Folder.listFiles();
+		
+		if (listOfFiles.length == 0) {
+			System.out.println("No 1Wire probes found! Please check your system!");
+			System.exit(-1);
+		}
+		
 		for ( File currentFile : listOfFiles) {
 			if (currentFile.isDirectory() && !currentFile.getName().startsWith("w1_bus_master")) {
 				// got a directory, check for a temp
