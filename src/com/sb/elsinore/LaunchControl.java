@@ -491,6 +491,10 @@ public final class LaunchControl {
 	private void createConfig() {
 		// try to access the list of 1-wire devices
 		File w1Folder = new File("/sys/bus/w1/devices/");
+		if (!w1Folder.exists()) {
+			System.out.println("Couldn't read the one wire devices directory!");
+			System.exit(-1);
+		}
 		File[] listOfFiles = w1Folder.listFiles();
 		
 		if (listOfFiles.length == 0) {
@@ -536,13 +540,17 @@ public final class LaunchControl {
 			if(inputBroken[0].equalsIgnoreCase("quit")) {
 				System.out.println("Quitting");
 				System.out.println("Updating config file, please check it in rpibrew.cfg.new");
-
+				
 				File configOut = new File("rpibrew.cfg.new");
 				try {
 					config.write(configOut);
 				} catch (IOException ioe) {
 					System.out.println("Could not update file");
 				}
+				
+				System.out.println("Config file updated. Please copy it from rpibrew.cfg.new to rpibrew.cfg to use the data");
+				System.out.println("You may need to do this as root");
+				
 				System.exit(0);
 			}
 			if(inputBroken[0].startsWith("r") || inputBroken[0].startsWith("R")) {
