@@ -134,7 +134,7 @@ public class ServePID {
 					"<div id=\"" + device + "-gage\" class='gage'></div>" + lineSep +
 					"<form id=\""+ device + "-form\" class=\"controlPanelForm\" >" + lineSep +
 					"<div class=\"holo-buttons\">" + lineSep +
-					"<button id=\"" + device + "-modeAuto\" class=\"holo-button modeclass holo-button\" onclick='disable(this); selectAuto(this); return false;'>Auto</button>" + lineSep +
+					"<button id=\"" + device + "-modeAuto\" class=\"holo-button modeclass\" onclick='disable(this); selectAuto(this); return false;'>Auto</button>" + lineSep +
 					"<button id=\"" + device + "-modeManual\" class=\"holo-button modeclass\" onclick='disable(this); selectManual(this); return false;'>Manual</button>" + lineSep +
                     "<button id=\"" + device + "-modeOff\" class=\"holo-button modeclass\" onclick='disable(this); selectOff(this); return false;'>Off</button>" + lineSep +
                     "</div>" + lineSep +
@@ -196,7 +196,7 @@ public class ServePID {
 					"</table>" + lineSep +
 
 					"<div class='holo-buttons'>" + lineSep +
-                    "<button class='holo-button' id=\"sendcommand\" type=\"submit\" value=\"SubmitCommand\" onClick='submitForm(this.form); waitForMsg(); return false;'>Send Command</button>" + lineSep +
+                    "<button class='holo-button modeclass' id=\"sendcommand\" type=\"submit\" value=\"SubmitCommand\" onClick='submitForm(this.form); waitForMsg(); return false;'>Send Command</button>" + lineSep +
                     "</div>" + lineSep +
 					"</form>" + lineSep +
 					"</div>" + lineSep; // finish off the Controller inputs
