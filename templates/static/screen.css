@@ -14,8 +14,16 @@
 
 }
 
+#PIDs {
+		  padding: 1em;
+		  float:	left;
+}
+#pumps {
+		  padding: 1em;
+		  float:left;
+}
 #tempProbes {
-        display: inline-table;
-	float: right;
+		  padding: 1em;
+		  float:left;
 }
 

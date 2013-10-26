@@ -1,4 +1,6 @@
 package com.sb.elsinore;
+import jGPIO.InvalidGPIOException;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -156,7 +158,7 @@ public final class LaunchControl {
 		 	devList.put(t.getName(), type);
 		 }
 
-		ServePID pidServe = new ServePID(devList);
+		ServePID pidServe = new ServePID(devList, pumpList);
 		return pidServe.getPage();
 	}
 
@@ -203,23 +205,7 @@ public final class LaunchControl {
 				tUnit.setType("temp");
 				tUnit.setSymbol(t.getScale());
 				tUnit.setLabel("temperature");
-				// generate the date time parameters
-				DateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd");
-				DateFormat sFormat = new SimpleDateFormat("HH:mm:ss");
-
-				Date updateDate = new Date(t.getTime());
-				long totSeconds = TimeZone.getDefault().getRawOffset() / 1000; 
-				long currSecond = (int)(totSeconds % 60);
-				long totMinutes = totSeconds / 60;
-				long currMinute = (int)(totMinutes % 60);
-				long totHours = totMinutes / 60;
-
-			//	tData.setAt(dFormat.format(updateDate) + "T" + sFormat.format(updateDate) + "Z" + totHours+ ":" + currMinute);
-//				tUnit.setAt(dFormat.format(updateDate) + "T" + sFormat.format(updateDate) + "Z" + Calendar.get(Calendar.ZONE_OFFSET));
-
 				tData.setUnit(tUnit);
-
-				
 				try {
 					cosm.updateDatastream(cosmFeed.getId(), t.getName(), tData);
 				} catch (CosmException e) {
@@ -227,12 +213,23 @@ public final class LaunchControl {
 				}
 
 			}
-
+			
 			if (brewDay != null) {
 				rObj.put("brewday", brewDay.brewDayStatus());
 			}
 		}	
-	
+		
+		// generate the list of pump
+		if (pumpList != null && pumpList.size() > 0) {
+			JSONObject pJSON = new JSONObject();
+			
+			for(Pump p : pumpList) {
+				pJSON.put(p.getName(), p.getStatus());
+			}
+			
+			rObj.put("pumps", pJSON);
+		}
+			
 		return rObj.toString();
 
 	}
@@ -254,12 +251,12 @@ public final class LaunchControl {
 		
 		Iterator<String> iterator = configSections.iterator();
 		while (iterator.hasNext()) {
-			String temp = iterator.next().toString();
+			String temp = iterator.next().toString();;
 			if(temp.equalsIgnoreCase("general")){
 				// parse the general config
 				parseGeneral(config, temp);
 			} else if(temp.equalsIgnoreCase("pumps")){
-				// parse the general config
+				// parse the pump config
 				parsePumps(config, temp);
 			} else {
 				parseDevice(config, temp);
@@ -283,6 +280,7 @@ public final class LaunchControl {
 		Thread tThread = new Thread(tTemp);
 		tempThreads.add(tThread);
 		tThread.start();
+		
 	}
 
 
@@ -316,7 +314,13 @@ public final class LaunchControl {
 			List<String> pumps = config.options(input);
 			for(String pumpName : pumps) {
 				String gpio = config.get(input, pumpName);
-				pumpList.add(new Pump(pumpName, gpio));
+				try {
+					pumpList.add(new Pump(pumpName, gpio));
+				} catch (InvalidGPIOException e) {
+					System.out.println("Invalid GPIO (" + gpio + ") detected for pump " + pumpName);
+					System.out.println("Please fix the config file before running");
+					System.exit(-1);
+				}
 			}
 		} catch (NoSectionException nse) {
 			// we shouldn't get here!
@@ -458,6 +462,21 @@ public final class LaunchControl {
 		return null;
 	}
 
+
+	public static Pump findPump(String name) {
+		// search based on the input name
+		Iterator<Pump> iterator = pumpList.iterator();
+		Pump tPump = null;
+		while (iterator.hasNext()) {
+			// launch all the PIDs first, since they will launch the temp theads too
+			tPump = iterator.next();
+			if(tPump.getName().equalsIgnoreCase(name)) {
+				return tPump;
+			}
+		}
+		return null;
+	}
+	
 	private void startCosm(String APIKey, int feedID) {
 		BrewServer.log.info("API: " + APIKey + " Feed: " + feedID);
 		cosm = new Cosm(APIKey);
@@ -536,7 +555,7 @@ public final class LaunchControl {
 			input = readInput();
 			// parse the input and determine where to throw the data
 			inputBroken = input.split(" ");
-			// is the first value something we recognize?
+			// is the first value something we recognise?
 			if(inputBroken[0].equalsIgnoreCase("quit")) {
 				System.out.println("Quitting");
 				System.out.println("Updating config file, please check it in rpibrew.cfg.new");
@@ -644,6 +663,16 @@ public final class LaunchControl {
 			System.out.println("IO error trying to read your input: " + input);
 		}
 		return input;
+	}
+	
+	private void displayPumps() {
+		System.out.println("The following pumps are configured:");
+		Iterator<Pump> iterator = pumpList.iterator();
+		
+		while (iterator.hasNext()) {
+			Pump tPump = iterator.next();
+			System.out.println(tPump.getName() + " on GPIO" + tPump.getGPIO());
+		}
 	}
 	
 	private void displaySensors() {
@@ -758,4 +787,5 @@ public final class LaunchControl {
 		
 		
 	}
+
 }

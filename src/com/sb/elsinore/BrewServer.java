@@ -255,6 +255,21 @@ public class BrewServer extends NanoHTTPD {
 				return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated Brewday" );
 			}
 
+			if(uri.toLowerCase().contains("updatepump")) {
+				if(parms.containsKey("toggle")) {
+					String pumpname = parms.get("toggle");
+					Pump tempPump = LaunchControl.findPump(pumpname);
+					if (tempPump != null) {
+						if(tempPump.getStatus()) {
+							tempPump.turnOff();
+						} else {
+							tempPump.turnOn();
+						}
+					} else {
+						log.warning("Invalid pump: " + pumpname + " provided.");
+					}
+				}
+			}
 		}
 		if(uri.toLowerCase().contains("getstatus")) {
 			

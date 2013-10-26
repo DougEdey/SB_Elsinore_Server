@@ -30,8 +30,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 .holo p, .holo .p, .holo-content h1 { padding: 0 24px 8px; margin: 0; }
 .holo-content h1 { padding-top: 24px; padding-bottom: 16px;}
 .holo p:first-child { padding-top: 16px; }
-.holo .holo-buttons { padding: 0 16px; }
-.holo button { cursor:pointer; background-color: rgb(102, 102, 102); }
+.holo .holo-buttons { padding: 0 16px; display: table-cell }
+.holo button { display:table-cell; cursor:pointer; background-color: rgb(102, 102, 102); }
 .holo .button { background:0; border:0; }
 .holo .holo-basic-button {  }
 .holo .holo-borderless-button {  }
@@ -207,7 +207,7 @@ select.holo-spinner option { height: 32px; border-top: 1px #444 solid; }
 
 .holo-button {
 	background-color: rgb(102, 102, 102);
-	display: block;
+	display: table-cell;
 	margin:10px 0;
 	padding: 12px 40px;
 	border-top: 1px solid rgba(255,255,255,0.34);

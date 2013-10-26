@@ -1,7 +1,7 @@
 package com.sb.elsinore;
 
-import framboos.GpioPin;
-import framboos.OutPin;
+import jGPIO.InvalidGPIOException;
+import jGPIO.OutPin;
 
 public class Pump {
 	
@@ -12,13 +12,21 @@ public class Pump {
 	public String name;
 	public OutPin output = null;
 	
-	public Pump(String name, String pinName) {
+	public Pump(String name, String pinName) throws InvalidGPIOException {
 		this.name = name;
-		output = new OutPin(pinName);
+		try {
+			output = new OutPin(pinName);
+		} catch (InvalidGPIOException e) {
+			// TODO Auto-generated catch block
+			throw e;
+		} catch (RuntimeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public boolean getStatus() {
-		return output.getValue();
+		return output.getValue().equals("1");
 	}
 	
 	public void turnOn() {
@@ -27,5 +35,15 @@ public class Pump {
 	
 	public void turnOff() {
 		output.setValue(false);
+	}
+
+	public String getName() {
+		// TODO Auto-generated method stub
+		return name;
+	}
+
+	public String getGPIO() {
+		// TODO Auto-generated method stub
+		return output.getGPIOName();
 	}
 }
