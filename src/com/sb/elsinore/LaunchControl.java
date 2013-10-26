@@ -1,4 +1,5 @@
 package com.sb.elsinore;
+import jGPIO.GPIO;
 import jGPIO.InvalidGPIOException;
 
 import java.io.BufferedReader;
@@ -165,13 +166,8 @@ public final class LaunchControl {
 	public static String getJSONStatus() {
 		// get each setting add it to the JSON
 		JSONObject rObj = new JSONObject();
-
-		String active_devices = "";
-
 		JSONObject tJSON = null;
 	
-		//get the datestamps data 
-		
 		// iterate the thread lists
 		// use the temp list to determine if we have a PID to go with
 		for(Temp t : tempList) {
@@ -219,19 +215,17 @@ public final class LaunchControl {
 			}
 		}	
 		
-		// generate the list of pump
+		// generate the list of pumps
 		if (pumpList != null && pumpList.size() > 0) {
-			JSONObject pJSON = new JSONObject();
+			tJSON = new JSONObject();
 			
 			for(Pump p : pumpList) {
-				pJSON.put(p.getName(), p.getStatus());
+				tJSON.put(p.getName(), p.getStatus());
 			}
 			
-			rObj.put("pumps", pJSON);
+			rObj.put("pumps", tJSON);
 		}
-			
 		return rObj.toString();
-
 	}
 		
 
@@ -541,11 +535,10 @@ public final class LaunchControl {
 			System.exit(0);
 		}
 		
-		displaySensors();
-
 		ConfigParser config = new ConfigParser();
 
-		System.out.println("Select the input");
+		displaySensors();
+		System.out.println("Select the input, enter \"r\" to refresh, or use \"pump <name> <gpio>\" to add a pump");
 		String input = "";
 		String[] inputBroken;
 		while(true) {
@@ -577,6 +570,39 @@ public final class LaunchControl {
 				displaySensors();
 			}
 
+			// Read in the pumps
+			if (inputBroken[0].equalsIgnoreCase("pump")) {
+				if (inputBroken.length != 3 || inputBroken[1].length() == 0 || inputBroken[2].length() == 0 ) {
+					System.out.println("Not enough parameters to add a pump");
+					continue;
+				}
+				
+				try {
+					GPIO.getPinNumber(inputBroken[2]);
+				} catch (InvalidGPIOException e) {
+					System.out.println(e.getMessage());
+					continue;
+				}
+				
+				// We should be good to go now
+				if (!config.hasSection("pumps")) {
+					try {
+						config.addSection("pumps");
+					} catch (DuplicateSectionException e) {
+						// won't happen
+					}
+				}
+				
+				try {
+					config.set("pumps", inputBroken[1], inputBroken[2]);
+				} catch (NoSectionException e) {
+					// Never going to happen
+				}
+				
+				System.out.println("Added " + inputBroken[1] + " pump on GPIO pin " + inputBroken[2]);
+				continue;
+			}
+			
 			int selector = 0;
 			try {
 				selector = Integer.parseInt(inputBroken[0]);
