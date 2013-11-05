@@ -193,6 +193,12 @@ public final class LaunchControl {
 			tJSON.put("temp", t.getTemp());
 			tJSON.put("elapsed", t.getTime());
 			tJSON.put("scale", t.getScale());
+			
+			double tVolume = t.getVolume();
+			if (tVolume != -1.0) {
+				tJSON.put("volume", tVolume);
+			}
+			
 			rObj.put(t.getName(), tJSON);
 			
 			// update COSM
@@ -337,6 +343,7 @@ public final class LaunchControl {
 		String volumeUnits = null;
 		HashMap<Integer, Integer> volumeArray = new HashMap<Integer, Integer>();
 		double duty = 0.0, cycle = 0.0, setpoint = 0.0, p = 0.0, i = 0.0, d = 0.0;
+		int analoguePin = -1;
 		
 		BrewServer.log.info("Parsing : " + input);
 		try {
@@ -377,7 +384,12 @@ public final class LaunchControl {
 					if ( curOption.equalsIgnoreCase("unit")) {
 						volumeUnits = config.get(volumeSection, curOption);
 						continue;
-					}
+					} 
+					
+					if ( curOption.equalsIgnoreCase("pin")) {
+						analoguePin = config.getInt(volumeSection, curOption);
+						continue;
+					} 
 					
 					try {
 						Integer volValue = Integer.parseInt(curOption);
@@ -443,8 +455,8 @@ public final class LaunchControl {
 				pThread.start();
 			}
 
-			if (volumeArray != null && volumeArray.size() >= 3) {
-				tTemp.addVolumes(volumeArray, volumeUnits);
+			if (analoguePin != -1 && volumeArray != null && volumeArray.size() >= 3) {
+				tTemp.addVolumes(1, volumeArray, volumeUnits);
 			}
 			
 			// try to createthe data stream

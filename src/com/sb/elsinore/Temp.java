@@ -1,4 +1,8 @@
 package com.sb.elsinore;
+import jGPIO.GPIO.Direction;
+import jGPIO.InPin;
+import jGPIO.InvalidGPIOException;
+
 import java.io.*;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,12 +28,17 @@ public final class Temp implements Runnable {
 		
 		
 		while(true) {
-			if(updateTemp() == -999) {
+			if (updateTemp() == -999) {
 				// Ruhoh no file found, disable output to prevent logging floods
 				loggingOn = false;
 			} else {
 				loggingOn = true;
 			}
+			
+			if (volumeMeasurement) {
+				updateVolume();
+			}
+			
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {
@@ -66,6 +75,7 @@ public final class Temp implements Runnable {
 	private String volumeUnit = null; 
 	private double volumeConstant = 0;
 	private double volumeMultiplier = 0.0;
+	private InPin volumePin = null;
 	
 	public double getTemp() {
 		// set up the reader
@@ -153,12 +163,26 @@ public final class Temp implements Runnable {
 		return result;
 	}
 
-	public void addVolumes(HashMap<Integer, Integer> volumeArray, String unit) {
+	public void addVolumes(int analogPin, HashMap<Integer, Integer> volumeArray, String unit) {
 		// start a volume measurement at the same time
 		volumeMeasurement = true;
 		volumeBase = volumeArray;
 		volumeUnit = unit;
 		
+		try {
+			volumePin = new InPin(analogPin, Direction.ANALOGUE);
+		} catch (InvalidGPIOException e) {
+			System.out.println("Invalid Analog GPIO specified " + analogPin);
+			return;
+		}
+		
+		setupVolume();
+		
+		if (volumeConstant != 0.0 && volumeMultiplier != 0.0) {
+			
+		} else {
+			volumeMeasurement = false;
+		}
 		
 	}
 	
@@ -211,6 +235,35 @@ public final class Temp implements Runnable {
 		
 		// we should be done now
 		
+	}
+	
+	public void updateVolume() {
+		try {
+			double pinValue = Double.parseDouble(volumePin.readValue());
+			currentVolume = (pinValue - volumeConstant) * volumeMultiplier;
+			return;
+		} catch (NumberFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RuntimeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public double getVolume() {
+		if (volumeMeasurement) {
+			return currentVolume;
+		}
+		
+		return -1.0;
 	}
 }
 
