@@ -10,10 +10,12 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -332,10 +334,13 @@ public final class LaunchControl {
 	private void parseDevice(ConfigParser config, String input) {
 		String probe = null;
 		String gpio = "";
+		String volumeUnits = null;
+		HashMap<Integer, Integer> volumeArray = new HashMap<Integer, Integer>();
 		double duty = 0.0, cycle = 0.0, setpoint = 0.0, p = 0.0, i = 0.0, d = 0.0;
+		
 		BrewServer.log.info("Parsing : " + input);
 		try {
-			if(config.hasSection(input)) {
+			if (config.hasSection(input)) {
 				if(config.hasOption(input, "probe")) {
 					probe = config.get(input, "probe");
 				}
@@ -361,6 +366,51 @@ public final class LaunchControl {
 					i = config.getDouble(input, "integral");
 				}
 			}
+			
+			// Check to see if there is a volume section
+			String volumeSection = input + "-volume";
+			if (config.hasSection(volumeSection)) {
+				List<String> volumeOptions = config.options(volumeSection);
+				
+				// Whilst we really want a 0th element, lets just dump this data into a list
+				for (String curOption : volumeOptions) {
+					if ( curOption.equalsIgnoreCase("unit")) {
+						volumeUnits = config.get(volumeSection, curOption);
+						continue;
+					}
+					
+					try {
+						Integer volValue = Integer.parseInt(curOption);
+						Integer volReading = config.getInt(volumeSection, curOption);
+						if (volValue != null && volReading != null) {
+							volumeArray.put(volValue, volReading);
+						}
+						// we can parse this as an integer
+					} catch (NumberFormatException e) {
+						System.out.println("Could not parse " + curOption + " as an integer");
+					}
+					
+				}
+				
+				if (volumeUnits == null) {
+					System.out.println("Couldn't find a volume unit for " + input);
+					volumeArray = null;
+				}
+				
+				if (volumeArray != null && volumeArray.size() < 3) {
+					System.out.println("Not enough volume data points, " + volumeArray.size() + " found");
+					volumeArray = null;
+				} else {
+					if (!volumeArray.containsKey(0)) {
+						// we don't have a basic level, not implemented yet, math is hard
+						System.out.println("No key for '0' level! Sorry this is unimplemented!");
+						volumeArray = null;
+					} 
+					
+					// otherwise we are OK
+				}
+			}
+			
 		} catch (NoSectionException nse) {
 			System.out.print("No Such Section");
 			nse.printStackTrace();
@@ -393,6 +443,10 @@ public final class LaunchControl {
 				pThread.start();
 			}
 
+			if (volumeArray != null && volumeArray.size() >= 3) {
+				tTemp.addVolumes(volumeArray, volumeUnits);
+			}
+			
 			// try to createthe data stream
 			if(cosm == null || cosmFeed == null) {
 				// we have a pacfeed that is valid

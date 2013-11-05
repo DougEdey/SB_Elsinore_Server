@@ -1,5 +1,8 @@
 package com.sb.elsinore;
 import java.io.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public final class Temp implements Runnable {
 
@@ -56,7 +59,14 @@ public final class Temp implements Runnable {
 	private double currentTemp = 0;
 	private long currentTime = 0;
 	private String scale = "C";
-
+	
+	private boolean volumeMeasurement = false;
+	private HashMap<Integer, Integer> volumeBase = null;
+	private double currentVolume = 0;
+	private String volumeUnit = null; 
+	private double volumeConstant = 0;
+	private double volumeMultiplier = 0.0;
+	
 	public double getTemp() {
 		// set up the reader
 		if(scale.equals("F")) {
@@ -141,6 +151,66 @@ public final class Temp implements Runnable {
 			}
 		}
 		return result;
+	}
+
+	public void addVolumes(HashMap<Integer, Integer> volumeArray, String unit) {
+		// start a volume measurement at the same time
+		volumeMeasurement = true;
+		volumeBase = volumeArray;
+		volumeUnit = unit;
+		
+		
+	}
+	
+	public void setupVolume() {
+		if (volumeBase == null) {
+			return;
+		}
+		
+		// Calculate the values of b*value + c = volume
+		// get the value of c
+		volumeConstant = volumeBase.get(0);
+		volumeMultiplier = 0.0;
+		
+		// for the rest of the values
+		Iterator it = volumeBase.entrySet().iterator();
+		Map.Entry prevPair = null;
+		
+		if (volumeConstant != 0.0) {
+			volumeConstant = 0.0;
+		}
+		
+		while (it.hasNext()) {
+			Map.Entry pairs = (Map.Entry) it.next();
+			if (prevPair != null) {
+				// diff the pair value and dive by the diff of the key
+				Integer keyDiff = (Integer) pairs.getKey() - (Integer) prevPair.getKey();
+				Integer valueDiff = ((Integer) pairs.getValue() - (Integer) prevPair.getValue());
+				double newMultiplier = ((double)valueDiff)/keyDiff;
+				double newConstant = (Integer)pairs.getValue() - ((double)valueDiff*keyDiff);
+				
+				if (volumeMultiplier != 0.0) {
+					if (newMultiplier != volumeMultiplier) {
+						System.out.println("The newMultiplier isn't the same as the old one, if this is a big difference, be careful! You may need a quadratic!");
+						System.out.println("New: " + newMultiplier + ". Old: " + volumeMultiplier);
+					}			
+				} else {
+					volumeMultiplier = newMultiplier;
+				}
+				
+				if (volumeConstant != 0.0) {
+					if (newConstant != volumeConstant) {
+						System.out.println("The new constant isn't the same as the old one, if this is a big difference, be careful! You may need a quadratic!");
+						System.out.println("New: " + newConstant + ". Old: " + volumeConstant);
+					}
+				} else {
+					volumeConstant = newConstant;
+				}
+			}
+		}
+		
+		// we should be done now
+		
 	}
 }
 
