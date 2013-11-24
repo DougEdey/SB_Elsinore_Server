@@ -104,18 +104,18 @@ final class PID implements Runnable {
 					fTemp_F = fTemp.getTempF();
 					// if the GPIO is blank we do not need to do any of this;
 					if(fGPIO != "") {
-						if(temp_F_list.size() >= 5) {
-							temp_F_list.remove(0);
+						if(temp_list.size() >= 5) {
+							temp_list.remove(0);
 						}	
 	
-						temp_F_list.add(fTemp_F);
+						temp_list.add(fTemp.getTemp());
 	
-						double temp_F_avg = calc_average();
+						double temp_avg = calc_average();
 	
 	
 						// we have the current temperature
 						if (mode.equals("auto")) {
-							heatSetting.calculatedDuty = calcPID_reg4(temp_F_avg, true);
+							heatSetting.calculatedDuty = calcPID_reg4(temp_avg, true);
 							BrewServer.log.info("Calculated: " + heatSetting.calculatedDuty);
 							OC.setDuty(heatSetting.calculatedDuty);
 						} else if (mode.equals("manual")) {
@@ -221,10 +221,10 @@ final class PID implements Runnable {
   	private long previousTime = 0;
 
 	private double calc_average() {
-		int size = temp_F_list.size();
+		int size = temp_list.size();
 		
 		double total =0.0;
-		for (double t : temp_F_list) {
+		for (double t : temp_list) {
 			total += t;
 		}
 		return total/size;
@@ -243,7 +243,7 @@ final class PID implements Runnable {
 	private Temp fTemp;
 	private double fTemp_F, fTemp_C;
 	private String fGPIO;
-	private List<Double> temp_F_list = new ArrayList<Double>();
+	private List<Double> temp_list = new ArrayList<Double>();
 	
 	private String mode;
 	private String fName;

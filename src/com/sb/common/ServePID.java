@@ -1,10 +1,11 @@
 package com.sb.common;
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
+
+import com.sb.elsinore.Pump;
 
 public class ServePID {
 	// This class is used to serve the webpage for the PID control
@@ -12,12 +13,13 @@ public class ServePID {
 	// I can easily refactor this for a better name later
 	public String lineSep = System.getProperty("line.separator");
 	private HashMap<String, String> devices;
-	public ServePID(HashMap<String, String> devList) {
-		// no passed values, just generate the basic data
-		
-		devices = devList;
-	}
+	private List<Pump> pumps;
 	
+	public ServePID(HashMap<String, String> devList, List<Pump> pumpList) {
+		// no passed values, just generate the basic data
+		devices = devList;
+		pumps = pumpList;
+	}
 	
 	public String getHeader() {
 		String header = "";
@@ -36,27 +38,55 @@ public class ServePID {
 
 		Iterator devIterator = devices.entrySet().iterator();
 		
+		
+		String pidContent = lineSep + " <div id='PIDs'>" + lineSep;
+		
 		while ( devIterator.hasNext()) {
 			Map.Entry pairs = (Map.Entry) devIterator.next();
 			String devName = (String) pairs.getKey();
 			String devType = (String) pairs.getValue();
 			if (devType.equalsIgnoreCase("PID")) {
-				page += addController(devName, devType);
+				pidContent += addController(devName, devType);
 			}
 		}
+		
+		pidContent += lineSep + " </div>" + lineSep;
+		
 		// iterate the Temp devices to make them into a table
 		devIterator = devices.entrySet().iterator();
-		page += lineSep + " <div id='tempProbes'>" + lineSep;
+		String tempContent = lineSep + " <div id='tempProbes'>" + lineSep;
 		while ( devIterator.hasNext()) {
 			Map.Entry pairs = (Map.Entry) devIterator.next();
 			String devName = (String) pairs.getKey();
 			String devType = (String) pairs.getValue();
 			if (!devType.equalsIgnoreCase("PID")) {
-				page += addController(devName, devType);
+				tempContent += addController(devName, devType);
 			}
 		}
-		page += lineSep + " </div>" + lineSep;
-
+		tempContent += lineSep + " </div>" + lineSep;
+		
+		
+		// Add in the pumps
+		// Declare this outside as an empty string since not everyone has these
+		String pumpContent = "";
+		if (pumps != null && pumps.size() > 0) {
+			Iterator<Pump> pumpIterator = pumps.iterator();
+			
+			pumpContent = "<div id='pumps' class=\"panel panel-info\">" + lineSep;	
+			pumpContent += "<div id=\"pumps-title\" class=\"title panel-heading \">Pumps</div>";
+			pumpContent += "<div id=\"pumps-body\" class=\"panel-body\">";
+			while (pumpIterator.hasNext()) {
+				pumpContent += addPump(pumpIterator.next().getName());
+			}
+			pumpContent += lineSep + "</div>";
+			pumpContent += lineSep + " </div>" + lineSep;
+		}
+		
+		// TODO: Update this for custom page ordering, we should be able to do this quickly and easily
+		page += pidContent;
+		page += tempContent;
+		page += pumpContent;
+		
 		page += "</body>";
 		return page;
 	}
@@ -137,7 +167,7 @@ public class ServePID {
 					"<div id=\"" + device + "-gage\" class='gage'></div>" + lineSep +
 					"<form id=\""+ device + "-form\" class=\"controlPanelForm\" >" + lineSep +
 					"<div class=\"holo-buttons\">" + lineSep +
-					"<button id=\"" + device + "-modeAuto\" class=\"holo-button modeclass holo-button\" onclick='disable(this); selectAuto(this); return false;'>Auto</button>" + lineSep +
+					"<button id=\"" + device + "-modeAuto\" class=\"holo-button modeclass\" onclick='disable(this); selectAuto(this); return false;'>Auto</button>" + lineSep +
 					"<button id=\"" + device + "-modeManual\" class=\"holo-button modeclass\" onclick='disable(this); selectManual(this); return false;'>Manual</button>" + lineSep +
                     "<button id=\"" + device + "-modeOff\" class=\"holo-button modeclass\" onclick='disable(this); selectOff(this); return false;'>Off</button>" + lineSep +
                     "</div>" + lineSep +
@@ -177,7 +207,7 @@ public class ServePID {
 		                    "<td id=\"" + device + "-pinput\">" + lineSep +
 		                    "	<input class='inputBox p' name=\"" + device + "-p\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
 		                    "</td>" + lineSep +
-		                    "<td id='"+ device + "-unitP'>secs</td>"+ 
+		                    "<td id='"+ device + "-unitP'>secs#176<div id='tempUnit'>F</div></td>"+ 
 		                "</tr>" + lineSep +
 		                
 		                // I
@@ -187,7 +217,8 @@ public class ServePID {
 		                    "	<input class='inputBox i' name=\"" + device + "-i\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
 		                    "</td>" + lineSep +
 		                    "<td id='"+ device + "-unitI'>&#176<div id='tempUnit'>F</div></td>" +
-		                "</tr>" + lineSep +    
+		                "</tr>" + lineSep +  
+		                
 		                // D
 	                    "<br />" + "<tr id='"+ device + "-d' class='holo-field'>" + lineSep +
 	                    "<td id='"+ device + "-labeld' >D</td>" + lineSep +
@@ -199,7 +230,7 @@ public class ServePID {
 					"</table>" + lineSep +
 
 					"<div class='holo-buttons'>" + lineSep +
-                    "<button class='holo-button' id=\"sendcommand\" type=\"submit\" value=\"SubmitCommand\" onClick='submitForm(this.form); waitForMsg(); return false;'>Send Command</button>" + lineSep +
+                    "<button class='holo-button modeclass' id=\"sendcommand\" type=\"submit\" value=\"SubmitCommand\" onClick='submitForm(this.form); waitForMsg(); return false;'>Send Command</button>" + lineSep +
                     "</div>" + lineSep +
 					"</form>" + lineSep +
 					"</div>" + lineSep; // finish off the Controller inputs
@@ -207,6 +238,14 @@ public class ServePID {
 		controller +=	"</div>";
 		
 		return controller;
+	}
+	
+	String addPump(String pumpName) {
+		String pumpDetails = lineSep;
+        pumpDetails += "<button class='holo-button pump' id=\"" + pumpName + "\" type=\"submit\" value=\"SubmitCommand\" onClick='submitPump(this); waitForMsg(); return false;'>" + pumpName + "</button>" + lineSep;
+        
+		
+		return pumpDetails;
 	}
 
 }

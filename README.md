@@ -49,6 +49,15 @@ RPi numbering is displayed in the setup utility on first startup, Beaglebone Bla
 
 For RPi, you'll want to use GPIO[X] where X is the pin number. BeagleboardBlack has multiple banks, for example GPIO2_2, this translates to physical pin 66, banks are separated by 32 outputs per bank. 
 
+Pump Control
+============
+
+Elsinore now supports pumps, you'll need to add a new section called "pumps" and each pump must be on it's own line in the form 
+``` name=gpio ```
+
+The buttons will be RED when on, and GRAY when off. 
+
+
 Config File
 =========
 
@@ -78,6 +87,10 @@ i_param = 165.0
 d_param = 4.0
 probe = 28-0000032c506e
 gpio = 
+
+[pumps]
+pump_a = GPIO0_8
+pump_foo = GPIO0_9
 ```
 
 This is a sample Setup file, you can see I have two devices setup here, the MLT is a "read only" probe that doesn't have a GPIO associated. Whereas the Kettle is setup with default PID values, and has a GPIO pinout of GPIO2_1.
@@ -89,7 +102,9 @@ Control Interface
 
 Visit <ip of your system>:8080/control to access the webUI, which works on mobiles too:
 
-[Imgur](http://i.imgur.com/CABbHrs)
+![Browser Layout](http://i.imgur.com/j59BcFZ.png)
+
+[Album of the UI Progress](http://imgur.com/a/jEIbc)
 
 This is an example of the PID control interface, temperature probes are displayed on the right hand side as LCD displays. On the Raspberry Pi you'll also get the system temperature (this isn't enabled on Beagleboard yet)
 

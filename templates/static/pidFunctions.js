@@ -14,6 +14,18 @@ function waitForMsg(){
 				return;
 			$.each(data, function(key, val) {
 				vessel = key;
+				
+				if(vessel == "pumps") {
+					$.each(val, function (pumpName, pumpStatus) {
+						//enable or disable the pump as required
+						if (pumpStatus) {
+							jQuery('button[id^="' + pumpName + '"]')[0].style.background="red";
+						} else {
+							jQuery('button[id^="' + pumpName + '"]')[0].style.background="#666666";
+						}
+					})
+					return true;
+				}
 
 				if(window.disableUpdates) {
 					return false;
@@ -168,6 +180,17 @@ function submitForm(form){
 	});	
 	window.disableUpdates = 0;
 	return false;
+}
+
+function submitPump(pumpStatus) {
+		  $.ajax({
+					 url: 'updatepump',
+		  			type: 'POST',
+		  			data: "toggle=" + pumpStatus.id,
+					success: function(data) {data = null}
+			});	
+		  window.disableUpdates = 0;
+		  return false;
 }
 
 function pad(n, width, z) {

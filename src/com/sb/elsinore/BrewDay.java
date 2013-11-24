@@ -5,8 +5,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
-import org.json.JSONObject;
-import org.json.JSONException;
+import org.json.simple.JSONObject;
 
 public final class BrewDay {
 
@@ -206,7 +205,7 @@ public final class BrewDay {
 	// get the JSON
 	JSONObject brewDayStatus() {
 		JSONObject status = new JSONObject();
-		try {
+
 		if(startDay != null) {
 			status.put("startDay", lFormat.format(startDay));
 		}
@@ -231,11 +230,7 @@ public final class BrewDay {
 		if(chillEnd != null) {
 			status.put("chillEnd", lFormat.format(chillEnd));
 		}
-		} catch (JSONException e) {
-			BrewServer.log.info("Couldn't generate Date Status");
-			e.printStackTrace();
-
-		}
+		
 
 		
 		return status;

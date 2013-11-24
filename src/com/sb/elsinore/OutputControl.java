@@ -1,5 +1,5 @@
 package com.sb.elsinore;
-import framboos.*;
+import jGPIO.*;
 
 public final class OutputControl implements Runnable {
 
@@ -33,14 +33,14 @@ public final class OutputControl implements Runnable {
 		double duty;
 		double on_time, off_time;
 		
-		BrewServer.log.info("Starting the ("+fGPIOh+") heating output: " + GpioPin.getPinNumber(fGPIOh));
+		
 		try {
-			
+			BrewServer.log.info("Starting the ("+fGPIOh+") heating output: " + GPIO.getPinNumber(fGPIOh));	
 			try {
 				
 				if(fGPIOc != null && !fGPIOh.equals("")) {
 					Heat_SSR = new OutPin(fGPIOh);
-					BrewServer.log.info("Started the heating output: " + GpioPin.getPinNumber(fGPIOh));
+					BrewServer.log.info("Started the heating output: " + GPIO.getPinNumber(fGPIOh));
 				}
 		
 				if(fGPIOc != null && !fGPIOc.equals("")) {
@@ -120,6 +120,9 @@ public final class OutputControl implements Runnable {
 				return;
 			}
 		}
+		} catch (InvalidGPIOException e1) {
+			System.out.println(e1.getMessage());
+			e1.printStackTrace();
 		} finally {
 			allOff();
 		}
