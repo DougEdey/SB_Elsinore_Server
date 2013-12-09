@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,7 +26,6 @@ import org.ini4j.ConfigParser.DuplicateSectionException;
 import org.ini4j.ConfigParser.InterpolationException;
 import org.ini4j.ConfigParser.NoOptionException;
 import org.ini4j.ConfigParser.NoSectionException;
-
 import org.json.simple.JSONObject;
 
 import Cosm.Cosm;
@@ -40,6 +40,19 @@ public final class LaunchControl {
 	public static List<PID> pidList = new ArrayList<PID>(); 
 	public static List<Temp> tempList = new ArrayList<Temp>();
 	public static List<Pump> pumpList = new ArrayList<Pump>();
+	public static enum Volumes {US_GALLON("US Gallon"), UK_GALLON("UK Gallon"), LITRES("Litres");
+	
+		private Volumes(final String text) {
+			this.text = text;
+		}
+	
+		private final String text;
+		
+		@Override
+		public String toString() {
+			return text;
+		}
+	};
 	
 	private String scale = "F";
 	private static BrewDay brewDay = null;
@@ -341,7 +354,7 @@ public final class LaunchControl {
 		String probe = null;
 		String gpio = "";
 		String volumeUnits = null;
-		HashMap<Integer, Integer> volumeArray = new HashMap<Integer, Integer>();
+		HashMap<Double, Integer> volumeArray = new HashMap<Double, Integer>();
 		double duty = 0.0, cycle = 0.0, setpoint = 0.0, p = 0.0, i = 0.0, d = 0.0;
 		int analoguePin = -1;
 		
@@ -392,11 +405,10 @@ public final class LaunchControl {
 					} 
 					
 					try {
-						Integer volValue = Integer.parseInt(curOption);
-						Integer volReading = config.getInt(volumeSection, curOption);
-						if (volValue != null && volReading != null) {
-							volumeArray.put(volValue, volReading);
-						}
+						double volValue = Double.parseDouble(curOption);
+						int volReading = config.getInt(volumeSection, curOption);
+						volumeArray.put(volValue, volReading);
+						
 						// we can parse this as an integer
 					} catch (NumberFormatException e) {
 						System.out.println("Could not parse " + curOption + " as an integer");
@@ -456,7 +468,21 @@ public final class LaunchControl {
 			}
 
 			if (analoguePin != -1 && volumeArray != null && volumeArray.size() >= 3) {
-				tTemp.addVolumes(1, volumeArray, volumeUnits);
+				try {
+					tTemp.setupVolumes(analoguePin, Volumes.valueOf(volumeUnits));
+					
+					Iterator<Entry<Double, Integer>> volIter = volumeArray.entrySet().iterator();
+					
+					while (volIter.hasNext()) {
+						Entry<Double, Integer> entry = volIter.next();
+						tTemp.addVolumeMeasurement(entry.getKey(), entry.getValue());
+					}
+				} catch (InvalidGPIOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				
 			}
 			
 			// try to createthe data stream
@@ -666,6 +692,24 @@ public final class LaunchControl {
 				}
 				
 				System.out.println("Added " + inputBroken[1] + " pump on GPIO pin " + inputBroken[2]);
+				displayPumps();
+				
+				continue;
+				
+			}
+			
+			if (inputBroken[0].equalsIgnoreCase("volume")) {
+				System.out.println("Adding volume details, please select the vessel to use:");
+				
+				displaySensors();
+				input = readInput();
+				inputBroken = input.split(" ");
+				try {
+					int vesselNumber = Integer.parseInt(inputBroken[0]);
+					calibrateVessel(vesselNumber);
+				} catch (NumberFormatException e) {
+					System.out.println("Couldn't read " + inputBroken[0] + " as an integer");
+				}
 				continue;
 			}
 			
@@ -736,6 +780,56 @@ public final class LaunchControl {
 			}
 		}
 
+	}
+
+	private void calibrateVessel(int vesselNumber) {
+		int volInt = -1, ain = -1;
+		System.out.println("Calibrating " + tempList.get(vesselNumber-1).getName());
+		
+		System.out.println("Please select the volume unit");
+		for( Volumes vol : Volumes.values()) {
+			System.out.println(vol.ordinal() + ": " + vol);
+		}
+		
+		System.out.println(">");
+		String line = readInput();
+		
+		try {
+			volInt = Integer.parseInt(line);
+		} catch (NumberFormatException nfe) {
+			System.out.println("Couldn't read '" + line + "' as an integer");
+			return;
+		}
+		
+		System.out.println("Please select the Analogue Input number>");
+		line = readInput();
+		
+		try {
+			ain = Integer.parseInt(line);
+		} catch (NumberFormatException nfe) {
+			System.out.println("Couldn't read '" + line + "' as an integer");
+			return;
+		}
+		
+		try {
+			tempList.get(vesselNumber-1).setupVolumes(ain, (Volumes.values())[volInt]);
+		} catch (InvalidGPIOException e) {
+			System.out.println("Something is wrong with the analog input (" + ain + ") selected");
+			return;
+		}
+		
+		System.out.println("This will loop until you type 'q' (no quotes) to continue");
+		System.out.println("Add liquid, wait for the level to settle, then type the amount you currently have in.");
+		System.out.println("For instance, add 1G of water, then type '1'<Enter>, add another 1G of water and type '2'<enter>");
+		System.out.println("Until you are done calibrating");
+		
+		boolean unbroken = true;
+		
+		while (unbroken) {
+			System.out.println(">");
+			line = readInput();
+			
+		}
 	}
 
 	private static Cosm cosm = null;

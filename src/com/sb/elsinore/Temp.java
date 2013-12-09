@@ -7,6 +7,10 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+
+import com.sb.elsinore.LaunchControl.Volumes;
 
 public final class Temp implements Runnable {
 
@@ -29,7 +33,7 @@ public final class Temp implements Runnable {
 		
 		while(true) {
 			if (updateTemp() == -999) {
-				// Ruhoh no file found, disable output to prevent logging floods
+				// Uhoh no file found, disable output to prevent logging floods
 				loggingOn = false;
 			} else {
 				loggingOn = true;
@@ -70,11 +74,12 @@ public final class Temp implements Runnable {
 	private String scale = "C";
 	
 	private boolean volumeMeasurement = false;
-	private HashMap<Integer, Integer> volumeBase = null;
+	private HashMap<Double, Integer> volumeBase = null;
 	private double currentVolume = 0;
-	private String volumeUnit = null; 
+	private Volumes volumeUnit = null; 
 	private double volumeConstant = 0;
 	private double volumeMultiplier = 0.0;
+	private int volumeAIN = -1;
 	private InPin volumePin = null;
 	
 	public double getTemp() {
@@ -119,7 +124,6 @@ public final class Temp implements Runnable {
 		double result = -1L;
 		try {
 			br = new BufferedReader(new FileReader(fProbe));
-			StringBuilder sb = new StringBuilder();
 			String line = br.readLine();
 			if(line.contains("NO")) {
 				// bad CRC, do nothing
@@ -163,17 +167,17 @@ public final class Temp implements Runnable {
 		return result;
 	}
 
-	public void addVolumes(int analogPin, HashMap<Integer, Integer> volumeArray, String unit) {
+	
+	public void setupVolumes(int analogPin, Volumes unit) throws InvalidGPIOException {
 		// start a volume measurement at the same time
 		volumeMeasurement = true;
-		volumeBase = volumeArray;
 		volumeUnit = unit;
 		
 		try {
 			volumePin = new InPin(analogPin, Direction.ANALOGUE);
 		} catch (InvalidGPIOException e) {
 			System.out.println("Invalid Analog GPIO specified " + analogPin);
-			return;
+			throw(e);
 		}
 		
 		setupVolume();
@@ -239,8 +243,43 @@ public final class Temp implements Runnable {
 	
 	public void updateVolume() {
 		try {
-			double pinValue = Double.parseDouble(volumePin.readValue());
-			currentVolume = (pinValue - volumeConstant) * volumeMultiplier;
+			int pinValue = Integer.parseInt(volumePin.readValue());
+			// Are we outside of the known range?
+			Iterator<Entry<Double, Integer>> volumesIT = volumeBase.entrySet().iterator();
+			Entry<Double, Integer> curEntry = null, prevEntry = null;
+			double tVolume = -1;
+					
+			try  {
+				while(volumesIT.hasNext()) {
+					if(prevEntry == null) {
+						prevEntry = volumesIT.next();
+					}
+					curEntry = volumesIT.next();
+					
+					if(pinValue >= prevEntry.getValue() && pinValue <= curEntry.getValue()) {
+						// We have a set encompassing the values! assume it's linear
+						double volRange = curEntry.getKey() - prevEntry.getKey();
+						int readingRange = curEntry.getValue() - prevEntry.getValue();
+						
+						double ratio = ((double) pinValue - curEntry.getValue()) /
+								readingRange;
+						
+						double volDiff = ratio * volRange;
+						
+						tVolume = volDiff + prevEntry.getKey();
+					}
+				}
+			} catch (NoSuchElementException e) {
+				// no more elements
+			}
+			
+			if (tVolume == -1) {
+				// try to assume the value
+				currentVolume = (pinValue - volumeConstant) * volumeMultiplier;
+			} else {
+				currentVolume = tVolume;
+			}
+			
 			return;
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
@@ -258,6 +297,55 @@ public final class Temp implements Runnable {
 		
 	}
 	
+	public void setVolumeUnit(Volumes unit) {
+		volumeUnit = unit;
+	}
+	
+	public void addVolumeMeasurement(double volume) {
+		// record 10 readings and average it
+		int maxReads = 10;
+		int total = 0;
+		for (int i = 0; i < maxReads; i++) {
+			try {
+				try {
+					total += Integer.parseInt(volumePin.readValue());
+					
+				} catch (RuntimeException re) {
+					re.printStackTrace();
+					return;
+				} catch (IOException e) {
+					e.printStackTrace();
+					return;
+				}
+				
+			} catch (NumberFormatException  e) {
+				// TODO Auto-generated catch block
+				System.out.println("Bad Analog input value!");
+				return;
+			}
+			
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+		
+		// read in ten values
+		int avgValue = (int) Math.floor((double) total / maxReads);
+		
+		volumeBase.put(volume, avgValue);
+		
+		System.out.println("Read " + avgValue + " for " + volume + " " + volumeUnit.toString() );
+		return;
+	}
+	
+	public void addVolumeMeasurement(Double key, Integer value) {
+		volumeBase.put(key, value);
+	}
+	
 	public double getVolume() {
 		if (volumeMeasurement) {
 			return currentVolume;
@@ -265,5 +353,13 @@ public final class Temp implements Runnable {
 		
 		return -1.0;
 	}
+	
+	public Volumes getVolumeUnit() {
+		return volumeUnit;
+	}
+
+	
+
+	
 }
 
