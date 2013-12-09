@@ -764,12 +764,17 @@ public final class LaunchControl {
 					}
 
 					// Check for Valid GPIO values
-					tempList.get(selector-1).setName(name);
+					Temp tTemp = tempList.get(selector-1);
+					tTemp.setName(name);
 					if (GPIO != "GPIO1" && GPIO != "GPIO7") {
-						addPIDToConfig(config, tempList.get(selector-1).getProbe(), name, GPIO);
+						addPIDToConfig(config, tTemp.getProbe(), name, GPIO);
 					} else {
 						System.out.println("No valid GPIO Value found, adding as a temperature only probe");
-						addTempToConfig(config, tempList.get(selector-1).getProbe(), name);
+						addTempToConfig(config, tTemp.getProbe(), name);
+					}
+					
+					if (tTemp.volumeBase != null) {
+						saveVolume(config, tTemp.getName(), tTemp.volumeAIN, tTemp.getVolumeUnit(), tTemp.volumeBase);
 					}
 
 				} else {
@@ -780,6 +785,34 @@ public final class LaunchControl {
 			}
 		}
 
+	}
+
+	private void saveVolume(ConfigParser config, String name, int volumeAIN, Volumes volumeUnit,
+			HashMap<Double, Integer> volumeBase) {
+		
+		String name_volume = name + "-volume";
+		try {
+			if (!config.hasSection(name_volume)) {
+				config.addSection(name_volume);
+			}
+			
+			config.set(name_volume, "unit", volumeUnit.toString());
+			config.set(name_volume, "pin", volumeAIN);
+			
+			Iterator<Entry<Double, Integer>> volIter = volumeBase.entrySet().iterator();
+			
+			while (volIter.hasNext()) {
+				Entry<Double, Integer> entry = volIter.next();
+				config.set(name_volume, entry.getKey().toString(), entry.getValue().toString());
+			}
+ 			
+		} catch (NoSectionException nse) {
+			// Never going to happen
+		} catch (DuplicateSectionException e) {
+			// Never going to happen
+			
+		}
+		
 	}
 
 	private void calibrateVessel(int vesselNumber) {
@@ -913,7 +946,6 @@ public final class LaunchControl {
 
 		  config.set(name, "probe", device);
 		  config.set(name, "gpio", GPIO);
-		
 		} catch (Exception e) {
 			return;
 		}
@@ -953,6 +985,7 @@ public final class LaunchControl {
 			config.set(name, "proportional", settings.proportional);
 			config.set(name, "integral", settings.integral);
 			config.set(name, "derivative", settings.derivative);
+			
 			
 			File configOut = new File("rpibrew.cfg");
 			try {

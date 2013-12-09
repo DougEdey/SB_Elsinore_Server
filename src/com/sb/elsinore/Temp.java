@@ -73,13 +73,14 @@ public final class Temp implements Runnable {
 	private long currentTime = 0;
 	private String scale = "C";
 	
-	private boolean volumeMeasurement = false;
-	private HashMap<Double, Integer> volumeBase = null;
+	public boolean volumeMeasurement = false;
+	public int volumeAIN = -1;
+	public HashMap<Double, Integer> volumeBase = null;
+	
 	private double currentVolume = 0;
 	private Volumes volumeUnit = null; 
 	private double volumeConstant = 0;
 	private double volumeMultiplier = 0.0;
-	private int volumeAIN = -1;
 	private InPin volumePin = null;
 	
 	public double getTemp() {
@@ -357,7 +358,6 @@ public final class Temp implements Runnable {
 	public Volumes getVolumeUnit() {
 		return volumeUnit;
 	}
-
 	
 
 	
