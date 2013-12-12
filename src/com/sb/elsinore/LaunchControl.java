@@ -208,7 +208,7 @@ public final class LaunchControl {
 			tJSON.put("scale", t.getScale());
 			
 			double tVolume = t.getVolume();
-			if (tVolume != -1.0) {
+			if (t.volumeMeasurement && tVolume != -1.0) {
 				tJSON.put("volume", tVolume);
 			}
 			

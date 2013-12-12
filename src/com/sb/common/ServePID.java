@@ -235,6 +235,8 @@ public class ServePID {
 					"</form>" + lineSep +
 					"</div>" + lineSep; // finish off the Controller inputs
 		}
+			
+		controller += 	"<div class='" + device + "-volume'></div>" + lineSep;
 		controller +=	"</div>";
 		
 		return controller;
@@ -247,5 +249,6 @@ public class ServePID {
 		
 		return pumpDetails;
 	}
+	
 
 }
