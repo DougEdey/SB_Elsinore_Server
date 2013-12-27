@@ -9,23 +9,53 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.logging.Level;
 
-import com.sb.elsinore.LaunchControl.Volumes;
+import org.owfs.jowfsclient.OwfsException;
 
 public final class Temp implements Runnable {
-
+	
+	final String BBB_SYSTEM_TEMP = "/sys/class/hwmon/hwmon0/device/temp1_input";
+	final String RPI_SYSTEM_TEMP = "/sys/class/thermal/thermal_zone0/temp";
 	
 	public Temp (String input, String aName ) {
-		probeName = aName;
-		
+	
+		BrewServer.log.info("Adding" + aName);
 		if (input.equalsIgnoreCase("system")) {
-			fProbe = "/sys/class/thermal/thermal_zone0/temp";
+			File tempFile = new File(RPI_SYSTEM_TEMP);
+			if (tempFile.exists()) {
+				fProbe = RPI_SYSTEM_TEMP;
+			} else {
+				tempFile = new File(BBB_SYSTEM_TEMP);
+				if (tempFile.exists()) {
+					fProbe = BBB_SYSTEM_TEMP;
+				} else {
+					BrewServer.log.info("Couldn't find a valid system temperature probe");
+					return;
+				}
+			}
+		} else if (LaunchControl.owfsConnection != null) {
+			try {
+				aName = aName.replace("-", ".");
+				BrewServer.log.info("Using OWFS for " + aName + "/temperature");
+				LaunchControl.owfsConnection.read(aName + "/temperature");
+			} catch ( OwfsException e) {
+				BrewServer.log.log(Level.SEVERE, "This is not a temperature probe!", e);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			fProbe = null;
 		} else {
 			fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
 		}
-
+		
+		probeName = aName;
 		name = input;
-		BrewServer.log.info(fProbe);
+		BrewServer.log.info(probeName + " added.");
 	}
 
 	public void run() {
@@ -33,7 +63,10 @@ public final class Temp implements Runnable {
 		
 		while(true) {
 			if (updateTemp() == -999) {
-				// Uhoh no file found, disable output to prevent logging floods
+				if (fProbe == null || fProbe.equals("/sys/class/thermal/thermal_zone0/temp")) {
+					return;
+				}
+				// Uh(oh no file found, disable output to prevent logging floods
 				loggingOn = false;
 			} else {
 				loggingOn = true;
@@ -74,11 +107,13 @@ public final class Temp implements Runnable {
 	private String scale = "C";
 	
 	public boolean volumeMeasurement = false;
+	public String volumeAddress = null;
+	public String volumeOffset = null;
 	public int volumeAIN = -1;
-	public HashMap<Double, Integer> volumeBase = null;
+	public HashMap<Double, Double> volumeBase = null;
 	
 	private double currentVolume = 0;
-	private Volumes volumeUnit = null; 
+	private String volumeUnit = null; 
 	private double volumeConstant = 0;
 	private double volumeMultiplier = 0.0;
 	private InPin volumePin = null;
@@ -121,8 +156,44 @@ public final class Temp implements Runnable {
 	}
 
 	public double updateTemp() {
-		BufferedReader br = null;
 		double result = -1L;
+		
+		if (fProbe == null) {
+			result = updateTempFromOWFS();
+		} else {
+			result = updateTempFromFile();
+		}
+		
+		if (result == -999) {
+			return result;
+		}
+		if(scale.equals("F")) {
+			result = (9.0/5.0)*result + 32;
+		}
+		currentTemp = result;
+		currentTime = System.currentTimeMillis();
+	
+		return result;
+	}
+	
+	public double updateTempFromOWFS() {
+		// Use the OWFS connection
+		double temp = -999;
+		try {
+			String rawTemp = LaunchControl.owfsConnection.read(probeName + "/temperature");
+			temp = Double.parseDouble(rawTemp);
+		} catch (IOException e) {
+			BrewServer.log.log(Level.SEVERE, "Couldn't read " + probeName, e);
+		} catch (OwfsException e) {
+			BrewServer.log.log(Level.SEVERE, "Couldn't read " + probeName, e);
+		}
+		
+		return temp;
+	}
+	
+	public double updateTempFromFile() {
+		BufferedReader br = null;
+	
 		try {
 			br = new BufferedReader(new FileReader(fProbe));
 			String line = br.readLine();
@@ -136,23 +207,17 @@ public final class Temp implements Runnable {
 				String temp = line.substring(t+2);
 				double tTemp = Double.parseDouble(temp);
 				currentTemp = tTemp/1000;
-				if(scale.equals("F")) {
-					currentTemp = (9.0/5.0)*currentTemp + 32;
-				}
-				result = currentTemp;
-				currentTime = System.currentTimeMillis();
-			} else { // the System temp
-				currentTemp = Double.parseDouble(line);
-				currentTemp = currentTemp/1000;
-				if(scale.equals("F")) {
-					currentTemp = (9.0/5.0)*currentTemp + 32;
-				}
-				result = currentTemp;
-				currentTime = System.currentTimeMillis();
+			} else {
+				// System Temperature
+				currentTemp = Double.parseDouble(line)/1000; 
 			}
+				
 		} catch (IOException ie) {
 			if(loggingOn) {
 				System.out.println("Couldn't find the device under: " + fProbe);
+				if (fProbe == RPI_SYSTEM_TEMP) {
+					fProbe = BBB_SYSTEM_TEMP;
+				}
 			}
 			return -999;
 		} catch (NumberFormatException nfe) {
@@ -165,11 +230,35 @@ public final class Temp implements Runnable {
 				}
 			}
 		}
-		return result;
+		return currentTemp;
 	}
 
 	
-	public void setupVolumes(int analogPin, Volumes unit) throws InvalidGPIOException {
+	public void setupVolumes(String address, String offset, String unit) {
+		volumeMeasurement = true;
+		volumeUnit = unit;
+		volumeAddress = address.replace("-", ".");
+		volumeOffset = offset;
+		offset = offset.toUpperCase();
+		try { 
+			BrewServer.log.log(Level.INFO, "Volume ADC at: " + volumeAddress + " - " + offset);
+			String temp = LaunchControl.owfsConnection.read(volumeAddress + "/volt." + offset);
+			BrewServer.log.log(Level.INFO, "Volume reads " + temp);
+		} catch (IOException e) {
+			BrewServer.log.log(Level.SEVERE, "IOException when access the ADC over 1wire", e);
+		} catch (OwfsException e) {
+			BrewServer.log.log(Level.SEVERE, "OWFSException when access the ADC over 1wire", e);
+		}
+				
+		if (volumeConstant != 0.0 && volumeMultiplier != 0.0) {
+			BrewServer.log.info("Volume constants and multiplier are good");
+		} else {
+			BrewServer.log.info("Volume constants and multiplier show there's no change in the pressure sensor");
+		}
+
+	}
+	
+	public void setupVolumes(int analogPin, String unit) throws InvalidGPIOException {
 		// start a volume measurement at the same time
 		volumeMeasurement = true;
 		volumeUnit = unit;
@@ -183,9 +272,7 @@ public final class Temp implements Runnable {
 		
 		setupVolume();
 		
-		if (volumeConstant != 0.0 && volumeMultiplier != 0.0) {
-			
-		} else {
+		if (volumeConstant == 0.0 || volumeMultiplier == 0.0) {
 			volumeMeasurement = false;
 		}
 		
@@ -242,34 +329,82 @@ public final class Temp implements Runnable {
 		
 	}
 	
-	public void updateVolume() {
+	
+	public double updateVolume() {
 		try {
-			int pinValue = Integer.parseInt(volumePin.readValue());
+			double pinValue = 0;
+			if (volumeAIN != -1) {
+				pinValue = Integer.parseInt(volumePin.readValue());
+			} else if (volumeAddress != null && volumeOffset != null) {
+				try {
+					pinValue = Double.parseDouble(LaunchControl.owfsConnection.read(volumeAddress + "/volt." + volumeOffset));
+				} catch (OwfsException e) {
+					BrewServer.log.log(Level.SEVERE, "Could not update the volume reading from OWFS", e);
+					return 0.0;
+				}
+				
+			} else {
+				return 0.0;
+			}
+			
 			// Are we outside of the known range?
-			Iterator<Entry<Double, Integer>> volumesIT = volumeBase.entrySet().iterator();
-			Entry<Double, Integer> curEntry = null, prevEntry = null;
+			
+			Double curKey = null, prevKey = null;
+			Double curValue = null, prevValue = null;
+			SortedSet<Double> keys = null;
+			try {
+				keys = new TreeSet<Double>(volumeBase.keySet());
+			} catch (NullPointerException npe) {
+				// No VolumeBase setup, so we're probably calibrating
+				return pinValue;
+			}
+			
 			double tVolume = -1;
-					
+			
 			try  {
-				while(volumesIT.hasNext()) {
-					if(prevEntry == null) {
-						prevEntry = volumesIT.next();
+				for (Double key: keys) {
+					if(prevKey == null) {
+						prevKey = key;
+						prevValue = volumeBase.get(key);
+						continue;
+					} else if (curKey != null) {
+						prevKey = curKey;
+						prevValue = curValue;
 					}
-					curEntry = volumesIT.next();
 					
-					if(pinValue >= prevEntry.getValue() && pinValue <= curEntry.getValue()) {
+					
+					curKey = key;
+					curValue = volumeBase.get(key);
+					
+					if(pinValue >= prevValue && pinValue <= curValue) {
 						// We have a set encompassing the values! assume it's linear
-						double volRange = curEntry.getKey() - prevEntry.getKey();
-						int readingRange = curEntry.getValue() - prevEntry.getValue();
+						double volRange = curKey - prevKey;
+						double readingRange = curValue - prevValue;
 						
-						double ratio = ((double) pinValue - curEntry.getValue()) /
+						double ratio = ((double) pinValue - prevValue) /
 								readingRange;
 						
 						double volDiff = ratio * volRange;
 						
-						tVolume = volDiff + prevEntry.getKey();
+						tVolume = volDiff + prevKey;
 					}
+					
+					
 				}
+				
+				if (tVolume == -1) {
+					// Try to extrapolate
+					double volRange = curKey - prevKey;
+					double readingRange = curValue - prevValue;
+					
+					double ratio = ((double) pinValue - prevValue) /
+							readingRange;
+					
+					double volDiff = ratio * volRange;
+					
+					tVolume = volDiff + prevKey;
+				}
+				
 			} catch (NoSuchElementException e) {
 				// no more elements
 			}
@@ -281,7 +416,7 @@ public final class Temp implements Runnable {
 				currentVolume = tVolume;
 			}
 			
-			return;
+			return pinValue;
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -295,10 +430,10 @@ public final class Temp implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+		return 0.0;
 	}
 	
-	public void setVolumeUnit(Volumes unit) {
+	public void setVolumeUnit(String unit) {
 		volumeUnit = unit;
 	}
 	
@@ -335,7 +470,7 @@ public final class Temp implements Runnable {
 		}
 		
 		// read in ten values
-		int avgValue = (int) Math.floor((double) total / maxReads);
+		double avgValue = (double) total / maxReads;
 		
 		volumeBase.put(volume, avgValue);
 		
@@ -343,7 +478,11 @@ public final class Temp implements Runnable {
 		return;
 	}
 	
-	public void addVolumeMeasurement(Double key, Integer value) {
+	public void addVolumeMeasurement(Double key, Double value) {
+		BrewServer.log.info("Adding " + key + " with value " + value);
+		if (volumeBase == null ) {
+			volumeBase = new HashMap<Double, Double>();
+		}
 		volumeBase.put(key, value);
 	}
 	
@@ -355,7 +494,7 @@ public final class Temp implements Runnable {
 		return -1.0;
 	}
 	
-	public Volumes getVolumeUnit() {
+	public String getVolumeUnit() {
 		return volumeUnit;
 	}
 	

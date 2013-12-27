@@ -240,7 +240,7 @@ final class PID implements Runnable {
 		return ((tempC * 9) / 5) + 32;
 	}
 	private boolean fStatus = false;
-	private Temp fTemp;
+	public Temp fTemp;
 	private double fTemp_F, fTemp_C;
 	private String fGPIO;
 	private List<Double> temp_list = new ArrayList<Double>();

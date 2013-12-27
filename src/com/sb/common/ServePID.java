@@ -236,7 +236,7 @@ public class ServePID {
 					"</div>" + lineSep; // finish off the Controller inputs
 		}
 			
-		controller += 	"<div class='" + device + "-volume'></div>" + lineSep;
+		controller += 	"<div id='" + device + "-volume'></div>" + lineSep;
 		controller +=	"</div>";
 		
 		return controller;

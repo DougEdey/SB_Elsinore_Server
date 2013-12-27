@@ -31,6 +31,7 @@ function waitForMsg(){
 					return false;
 				}
 				temp = parseFloat(val.temp).toFixed(2);
+				
 				// check to see if we have a valid vessel
 				if (isNaN(temp)) {
 					return true;
@@ -49,6 +50,12 @@ function waitForMsg(){
 				dec = null;
 				temp = null;
 				Temp = null;
+				
+				// Check for the volume
+				if ("volume" in val) {
+					jQuery("#" + vessel + "-volume").text(parseFloat(val.volume).toFixed(2) + " " + val.volumeUnits);
+				}
+				
 				if(!("gpio" in val )) {
 					return; // nothing else to do
 				}
