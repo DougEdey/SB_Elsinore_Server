@@ -428,6 +428,9 @@ public final class Temp implements Runnable {
 			} catch (NullPointerException npe) {
 				// No VolumeBase setup, so we're probably calibrating
 				return pinValue;
+			} catch (Exception e) {
+				BrewServer.log.log(Level.SEVERE, "Uncaught exception when creating the volume set", e);
+				System.exit(-1);
 			}
 			
 			double tVolume = -1;
