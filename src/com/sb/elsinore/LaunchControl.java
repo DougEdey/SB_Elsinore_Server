@@ -68,6 +68,8 @@ public final class LaunchControl {
 	/* One Wire File System Information */
 	public static OwfsConnection owfsConnection = null;
 	public static boolean useOWFS = false;
+	private static String owfsServer = "localhost";
+	private static int owfsPort = 2121;
 
 	/*****
 	 * Main method to launch the brewery
@@ -134,6 +136,33 @@ public final class LaunchControl {
 		}
 	}
 	
+	/************
+	 * Start the COSM Connection
+	 * @param APIKey User APIKey from COSM
+	 * @param feedID The FeedID to get
+	 */
+	private void startCosm(String APIKey, int feedID) {
+		BrewServer.log.info("API: " + APIKey + " Feed: " + feedID);
+		cosm = new Cosm(APIKey);
+		if(cosm == null) {
+			// failed
+			return;
+		}
+	
+		// get the data feed
+		try {
+			cosmFeed = cosm.getFeed(feedID, true);
+			BrewServer.log.info("Got " + cosmFeed.getTitle());
+		} catch (CosmException e) {
+			return;
+		}
+	
+		// get the list of feeds
+		
+		cosmStreams = cosmFeed.getDatastreams();
+		return;
+	}
+
 	/*****
 	 * Create an image from a COSM Feed
 	 * @param startDate The start date to get the image from
@@ -363,11 +392,11 @@ public final class LaunchControl {
 				
 				if (config.hasOption(input, "owfs_server") && config.hasOption(input, "owfs_port")) {
 	
-					String owfsServer = config.get(input, "owfs_server");
-					int owfsPort = config.getInt(input, "owfs_port");
+					owfsServer = config.get(input, "owfs_server");
+					owfsPort = config.getInt(input, "owfs_port");
 					BrewServer.log.log(Level.INFO, "Setup OWFS at "+  owfsServer + ":" + owfsPort);
 					
-					setupOWFS(owfsServer, owfsPort);
+					setupOWFS();
 				}
 			}
 		} catch (NoSectionException nse) {
@@ -650,33 +679,6 @@ public final class LaunchControl {
 		return null;
 	}
 	
-	/************
-	 * Start the COSM Connection
-	 * @param APIKey User APIKey from COSM
-	 * @param feedID The FeedID to get
-	 */
-	private void startCosm(String APIKey, int feedID) {
-		BrewServer.log.info("API: " + APIKey + " Feed: " + feedID);
-		cosm = new Cosm(APIKey);
-		if(cosm == null) {
-			// failed
-			return;
-		}
-
-		// get the data feed
-		try {
-			cosmFeed = cosm.getFeed(feedID, true);
-			BrewServer.log.info("Got " + cosmFeed.getTitle());
-		} catch (CosmException e) {
-			return;
-		}
-
-		// get the list of feeds
-		
-		cosmStreams = cosmFeed.getDatastreams();
-		return;
-	}
-	
 	/********
 	 * Get the BrewDay object
 	 * @return
@@ -739,41 +741,6 @@ public final class LaunchControl {
 		}
 	}
 	
-	/***********
-	 * List the One-Wire devices in OWFS
-	 * Much more fully featured access
-	 */
-	private void listOWFSDevices() {
-		try {
-			List<String> owfsDirs = owfsConnection.listDirectory("/");
-			Iterator<String> dirIt = owfsDirs.iterator();
-			String dir = null;
-			
-			while (dirIt.hasNext()) {
-				dir = dirIt.next();
-				if (dir.startsWith("/2")) {
-					// we have a "good' directory, I'm only aware that directories starting with a number of 2 are good
-					// got a directory, check for a temp
-					System.out.println("Checking for " + dir);
-					Temp currentTemp = new Temp(dir, dir);
-					tempList.add(currentTemp);
-					// setup the scale for each temp probe
-					currentTemp.setScale(scale);
-					// setup the threads
-					Thread tThread = new Thread(currentTemp);
-					tempThreads.add(tThread);
-					tThread.start();
-				}
- 			}
-		} catch (OwfsException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
 	/**********
 	 * Setup the configuration, we get here if the configuration file doesn't exist
 	 */
@@ -974,7 +941,7 @@ public final class LaunchControl {
 	 * @param server Server Name where owserver is hosted
 	 * @param port The port the owserver is running on
 	 */
-	private void setupOWFS(String server, int port) {
+	public static void setupOWFS() {
 		if (owfsConnection != null) {
 			try {
 				owfsConnection.disconnect();
@@ -985,12 +952,91 @@ public final class LaunchControl {
 		}
 		
 		// Use the thread safe mechanism
-		OwfsConnectionConfig owConfig = new OwfsConnectionConfig(server, port);
+		OwfsConnectionConfig owConfig = new OwfsConnectionConfig(owfsServer, owfsPort);
 		owConfig.setPersistence(OwPersistence.ON);
 		owfsConnection = OwfsConnectionFactory.newOwfsClientThreadSafe(owConfig);
 		useOWFS = true;
 	}
 	
+	/********
+	 * Create the OWFS Connection to the server (owserver)
+	 */
+	private void createOWFS() {
+		
+		System.out.println("Creating the OWFS configuration.");
+		System.out.println("What is the OWFS server host? (Defaults to localhost)");
+		
+		String line = readInput();
+		if (!line.trim().equals("")) {
+			owfsServer = line.trim();
+		}
+		
+		System.out.println("What is the OWFS server port? (Defaults to 4304)");
+		
+		line = readInput();
+		if (!line.trim().equals("")) {
+			owfsPort = Integer.parseInt(line.trim());
+		}
+		
+		if (config == null ) {
+			initializeConfig();
+		}
+		
+		try {
+			if(!config.hasSection("general")) {
+				config.addSection("general");
+			}
+			config.set("general", "owfs_server", owfsServer);
+			config.set("general", "owfs_port", owfsPort);
+		} catch (NoSectionException e) {
+			// Impossibru
+		} catch (DuplicateSectionException e) {
+			// Impossible
+		}
+			
+		// Create the connection
+		setupOWFS();
+	}
+	
+	/************
+	 * Reconnects the OWFS connection
+	 */
+
+	/***********
+	 * List the One-Wire devices in OWFS
+	 * Much more fully featured access
+	 */
+	private void listOWFSDevices() {
+		try {
+			List<String> owfsDirs = owfsConnection.listDirectory("/");
+			Iterator<String> dirIt = owfsDirs.iterator();
+			String dir = null;
+			
+			while (dirIt.hasNext()) {
+				dir = dirIt.next();
+				if (dir.startsWith("/2")) {
+					// we have a "good' directory, I'm only aware that directories starting with a number of 2 are good
+					// got a directory, check for a temp
+					System.out.println("Checking for " + dir);
+					Temp currentTemp = new Temp(dir, dir);
+					tempList.add(currentTemp);
+					// setup the scale for each temp probe
+					currentTemp.setScale(scale);
+					// setup the threads
+					Thread tThread = new Thread(currentTemp);
+					tempThreads.add(tThread);
+					tThread.start();
+				}
+			}
+		} catch (OwfsException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 	/*********
 	 * Calibrate the vessel specified using a REPL loop
 	 * @param vesselNumber
@@ -1237,48 +1283,6 @@ public final class LaunchControl {
 	}
 
 	
-	/********
-	 * Create the OWFS Connection to the server (owserver)
-	 */
-	private void createOWFS() {
-		String owfsHost = "localhost";
-		String owfsPort = "4304";
-		
-		System.out.println("Creating the OWFS configuration.");
-		System.out.println("What is the OWFS server host? (Defaults to localhost)");
-		
-		String line = readInput();
-		if (!line.trim().equals("")) {
-			owfsHost = line.trim();
-		}
-		
-		System.out.println("What is the OWFS server port? (Defaults to 4304)");
-		
-		line = readInput();
-		if (!line.trim().equals("")) {
-			owfsPort = line.trim();
-		}
-		
-		if (config == null ) {
-			initializeConfig();
-		}
-		
-		try {
-			if(!config.hasSection("general")) {
-				config.addSection("general");
-			}
-			config.set("general", "owfs_server", owfsHost);
-			config.set("general", "owfs_port", owfsPort);
-		} catch (NoSectionException e) {
-			// Impossibru
-		} catch (DuplicateSectionException e) {
-			// Impossible
-		}
-			
-		// Create the connection
-		setupOWFS(owfsHost, Integer.parseInt(owfsPort));
-	}
-
 	/****
 	 * Add the specified basic PID info to the Config
 	 * @param device Probe address

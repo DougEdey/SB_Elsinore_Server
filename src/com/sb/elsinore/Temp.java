@@ -12,6 +12,8 @@ import java.util.NoSuchElementException;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.owfs.jowfsclient.OwfsException;
 
@@ -19,6 +21,7 @@ public final class Temp implements Runnable {
 	
 	final String BBB_SYSTEM_TEMP = "/sys/class/hwmon/hwmon0/device/temp1_input";
 	final String RPI_SYSTEM_TEMP = "/sys/class/thermal/thermal_zone0/temp";
+	final Pattern TEMP_REGEXP = Pattern.compile("(-?)(\\d{1,3})(C|F)");
 	
 	public Temp (String input, String aName ) {
 	
@@ -40,7 +43,11 @@ public final class Temp implements Runnable {
 			try {
 				aName = aName.replace("-", ".");
 				BrewServer.log.info("Using OWFS for " + aName + "/temperature");
-				LaunchControl.owfsConnection.read(aName + "/temperature");
+				if(LaunchControl.owfsConnection.exists(probeName + "/temperature")) {
+					LaunchControl.owfsConnection.read(aName + "/temperature");
+				} else {
+					BrewServer.log.severe("Couldn't find probe " + aName);
+				}
 			} catch ( OwfsException e) {
 				BrewServer.log.log(Level.SEVERE, "This is not a temperature probe!", e);
 			} catch (IOException e) {
@@ -95,9 +102,37 @@ public final class Temp implements Runnable {
 	public String getProbe() {
 		return probeName;
 	}
+	
+	/******
+	 * Method to take a cutoff value, parse it to the correct scale and then update the cutoffTemp
+	 * @param cutoffInput String describing the temperature
+	 */
+	public void setCutoffTemp(String cutoffInput) {
+		Matcher tempMatcher = TEMP_REGEXP.matcher(cutoffInput);
+		
+		if (tempMatcher.groupCount() > 0) {
+			// We have matched against the TEMP_REGEXP
+			String negative = tempMatcher.group(1);
+			if (negative == null ) {
+				negative = "+";
+			}
+			
+			Double temperature = Double.parseDouble(negative + tempMatcher.group(2));
+			String unit = tempMatcher.group(3);
+			
+			if (unit.equals(this.scale)) {
+				cutoffTemp = temperature;
+			} else if (unit.equals("F")) {
+				cutoffTemp = FtoC(temperature);
+			} else if (unit.equals("C")) {
+				cutoffTemp = CtoF(temperature);
+			}
+		}
+	}
 
 	// PRIVATE ////
 	public String fProbe;
+	
 	private String name;
 	private String probeName;
 	private boolean loggingOn = true;
@@ -105,6 +140,7 @@ public final class Temp implements Runnable {
 	private double currentTemp = 0;
 	private long currentTime = 0;
 	private String scale = "C";
+	private double cutoffTemp = -999;
 	
 	public boolean volumeMeasurement = false;
 	public String volumeAddress = null;
@@ -131,7 +167,22 @@ public final class Temp implements Runnable {
 	}
 
 	public void setScale(String s) {
-		if(s.equalsIgnoreCase("F") || s.equalsIgnoreCase("C")) {
+		if(s.equalsIgnoreCase("F"))
+		{
+			// Do we need to convert the cutoff temp
+			if (cutoffTemp != -999 && !scale.equalsIgnoreCase(s)) {
+				cutoffTemp = CtoF(cutoffTemp);
+			}
+			
+			scale = s;
+		}
+		if(s.equalsIgnoreCase("C"))
+		{
+			// Do we need to convert the cutoff temp
+			if (cutoffTemp != -999 && !scale.equalsIgnoreCase(s)) {
+				cutoffTemp = FtoC(cutoffTemp);
+			}
+			
 			scale = s;
 		}
 		
@@ -149,6 +200,14 @@ public final class Temp implements Runnable {
 			return currentTemp;
 		}
 		return (9.0/5.0)*currentTemp + 32;
+	}
+	
+	public double FtoC(double currentTemp) {
+		return (9.0/5.0)*currentTemp + 32;
+	}
+	
+	public double CtoF(double currentTemp) {
+		return (currentTemp-32) /(9.0*5.0);
 	}
 
 	public long getTime() {
@@ -179,13 +238,21 @@ public final class Temp implements Runnable {
 	public double updateTempFromOWFS() {
 		// Use the OWFS connection
 		double temp = -999;
+		String rawTemp = "";
 		try {
-			String rawTemp = LaunchControl.owfsConnection.read(probeName + "/temperature");
-			temp = Double.parseDouble(rawTemp);
+			if(LaunchControl.owfsConnection.exists(probeName + "/temperature")) {
+				rawTemp = LaunchControl.owfsConnection.read(probeName + "/temperature");
+				temp = Double.parseDouble(rawTemp);
+			} else {
+				BrewServer.log.severe("Couldn't find the probe " + probeName + " for " + name);
+			}
 		} catch (IOException e) {
 			BrewServer.log.log(Level.SEVERE, "Couldn't read " + probeName, e);
 		} catch (OwfsException e) {
 			BrewServer.log.log(Level.SEVERE, "Couldn't read " + probeName, e);
+			LaunchControl.setupOWFS();
+		} catch (NumberFormatException e) {
+			BrewServer.log.log(Level.SEVERE, "Couldn't parse" + rawTemp, e);
 		}
 		
 		return temp;
@@ -242,8 +309,12 @@ public final class Temp implements Runnable {
 		offset = offset.toUpperCase();
 		try { 
 			BrewServer.log.log(Level.INFO, "Volume ADC at: " + volumeAddress + " - " + offset);
-			String temp = LaunchControl.owfsConnection.read(volumeAddress + "/volt." + offset);
-			BrewServer.log.log(Level.INFO, "Volume reads " + temp);
+			if(LaunchControl.owfsConnection.exists(volumeAddress + "/volt." + offset)) {
+				String temp = LaunchControl.owfsConnection.read(volumeAddress + "/volt." + offset);
+				BrewServer.log.log(Level.INFO, "Volume reads " + temp);
+			} else {
+				BrewServer.log.severe("Couldn't read the Volume from " + volumeAddress + "/volt. " + offset);
+			}
 		} catch (IOException e) {
 			BrewServer.log.log(Level.SEVERE, "IOException when access the ADC over 1wire", e);
 		} catch (OwfsException e) {
@@ -337,9 +408,14 @@ public final class Temp implements Runnable {
 				pinValue = Integer.parseInt(volumePin.readValue());
 			} else if (volumeAddress != null && volumeOffset != null) {
 				try {
-					pinValue = Double.parseDouble(LaunchControl.owfsConnection.read(volumeAddress + "/volt." + volumeOffset));
-				} catch (OwfsException e) {
+					if(LaunchControl.owfsConnection.exists(volumeAddress + "/volt." + volumeOffset)) {
+						pinValue = Double.parseDouble(LaunchControl.owfsConnection.read(volumeAddress + "/volt." + volumeOffset));
+					} else {
+						BrewServer.log.severe("Couldn't read the Volume from " + volumeAddress + "/volt. " + volumeOffset);
+					}
+				} catch (Exception e) {
 					BrewServer.log.log(Level.SEVERE, "Could not update the volume reading from OWFS", e);
+					LaunchControl.setupOWFS();
 					return 0.0;
 				}
 				
