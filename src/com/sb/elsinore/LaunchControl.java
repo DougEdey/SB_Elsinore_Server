@@ -1036,6 +1036,29 @@ public final class LaunchControl {
 			e.printStackTrace();
 		}
 	}
+	
+	/***********
+	 * Helper method to read a path value from OWFS with all checks
+	 * @param path The path to read from
+	 * @return	A string representing the value (or null if there's an error
+	 * @throws OwfsException If OWFS throws an error
+	 * @throws IOException If an IO error occurs
+	 */
+	public static String readOWFSPath(String path) throws OwfsException, IOException {
+		String result = null;
+		if (owfsConnection == null) {
+			setupOWFS();
+			if (owfsConnection == null) {
+				BrewServer.log.info("no OWFS connection");
+			}
+		}
+		
+		if (owfsConnection.exists(path)) {
+			result = owfsConnection.read(path);
+		}
+		
+		return result;
+	}
 
 	/*********
 	 * Calibrate the vessel specified using a REPL loop

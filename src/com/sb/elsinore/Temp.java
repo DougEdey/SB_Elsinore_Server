@@ -43,11 +43,10 @@ public final class Temp implements Runnable {
 			try {
 				aName = aName.replace("-", ".");
 				BrewServer.log.info("Using OWFS for " + aName + "/temperature");
-				if(LaunchControl.owfsConnection.exists(probeName + "/temperature")) {
-					LaunchControl.owfsConnection.read(aName + "/temperature");
-				} else {
-					BrewServer.log.severe("Couldn't find probe " + aName);
+				if ("" == LaunchControl.readOWFSPath(aName + "/temperature")) {
+					BrewServer.log.severe("This is not a temperature probe " + aName);
 				}
+				
 			} catch ( OwfsException e) {
 				BrewServer.log.log(Level.SEVERE, "This is not a temperature probe!", e);
 			} catch (IOException e) {
@@ -240,12 +239,11 @@ public final class Temp implements Runnable {
 		double temp = -999;
 		String rawTemp = "";
 		try {
-			if(LaunchControl.owfsConnection.exists(probeName + "/temperature")) {
-				rawTemp = LaunchControl.owfsConnection.read(probeName + "/temperature");
-				temp = Double.parseDouble(rawTemp);
-			} else {
+			rawTemp =  LaunchControl.readOWFSPath(probeName + "/temperature");
+			if (rawTemp.equals("")) {
 				BrewServer.log.severe("Couldn't find the probe " + probeName + " for " + name);
 			}
+			temp = Double.parseDouble(rawTemp);
 		} catch (IOException e) {
 			BrewServer.log.log(Level.SEVERE, "Couldn't read " + probeName, e);
 		} catch (OwfsException e) {
@@ -309,11 +307,11 @@ public final class Temp implements Runnable {
 		offset = offset.toUpperCase();
 		try { 
 			BrewServer.log.log(Level.INFO, "Volume ADC at: " + volumeAddress + " - " + offset);
-			if(LaunchControl.owfsConnection.exists(volumeAddress + "/volt." + offset)) {
-				String temp = LaunchControl.owfsConnection.read(volumeAddress + "/volt." + offset);
-				BrewServer.log.log(Level.INFO, "Volume reads " + temp);
-			} else {
+			String temp = LaunchControl.readOWFSPath(volumeAddress + "/volt." + offset);
+			if (temp.equals("")) {
 				BrewServer.log.severe("Couldn't read the Volume from " + volumeAddress + "/volt. " + offset);
+			} else {
+				BrewServer.log.log(Level.INFO, "Volume reads " + temp);
 			}
 		} catch (IOException e) {
 			BrewServer.log.log(Level.SEVERE, "IOException when access the ADC over 1wire", e);
@@ -408,11 +406,7 @@ public final class Temp implements Runnable {
 				pinValue = Integer.parseInt(volumePin.readValue());
 			} else if (volumeAddress != null && volumeOffset != null) {
 				try {
-					if(LaunchControl.owfsConnection.exists(volumeAddress + "/volt." + volumeOffset)) {
-						pinValue = Double.parseDouble(LaunchControl.owfsConnection.read(volumeAddress + "/volt." + volumeOffset));
-					} else {
-						BrewServer.log.severe("Couldn't read the Volume from " + volumeAddress + "/volt. " + volumeOffset);
-					}
+					pinValue = Double.parseDouble(LaunchControl.readOWFSPath(volumeAddress + "/volt." + volumeOffset));
 				} catch (Exception e) {
 					BrewServer.log.log(Level.SEVERE, "Could not update the volume reading from OWFS", e);
 					LaunchControl.setupOWFS();
