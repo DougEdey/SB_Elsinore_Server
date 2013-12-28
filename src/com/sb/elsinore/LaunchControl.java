@@ -447,6 +447,7 @@ public final class LaunchControl {
 		String gpio = "";
 		String volumeUnits = "Litres";
 		String dsAddress = null, dsOffset = null;
+		String cutoffTemp = null;
 		HashMap<Double, Double> volumeArray = new HashMap<Double, Double>();
 		double duty = 0.0, cycle = 0.0, setpoint = 0.0, p = 0.0, i = 0.0, d = 0.0;
 		int analoguePin = -1;
@@ -477,6 +478,9 @@ public final class LaunchControl {
 				}
 				if(config.hasOption(input, "integral")) {
 					i = config.getDouble(input, "integral");
+				}
+				if (config.hasOption(input, "cutoff")) {
+					cutoffTemp = config.get(input, "cutoff");
 				}
 			}
 			
@@ -552,6 +556,11 @@ public final class LaunchControl {
 			BrewServer.log.info("Adding " + tTemp.getName() + " GPIO is (" + gpio + ")");
 			// setup the scale for each temp probe
 			tTemp.setScale(scale);
+			
+			if (cutoffTemp != null) {
+				tTemp.setCutoffTemp(cutoffTemp);
+			}
+			
 			// setup the threads
 			Thread tThread = new Thread(tTemp);
 			tempThreads.add(tThread);

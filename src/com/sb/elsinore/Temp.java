@@ -110,7 +110,7 @@ public final class Temp implements Runnable {
 	public void setCutoffTemp(String cutoffInput) {
 		Matcher tempMatcher = TEMP_REGEXP.matcher(cutoffInput);
 		
-		if (tempMatcher.groupCount() > 0) {
+		if (tempMatcher.find()) {
 			// We have matched against the TEMP_REGEXP
 			String negative = tempMatcher.group(1);
 			if (negative == null ) {
@@ -127,6 +127,9 @@ public final class Temp implements Runnable {
 			} else if (unit.equals("C")) {
 				cutoffTemp = CtoF(temperature);
 			}
+			
+		} else {
+			BrewServer.log.severe(cutoffTemp + " doesn't match " + TEMP_REGEXP.pattern());
 		}
 	}
 
@@ -203,11 +206,12 @@ public final class Temp implements Runnable {
 	}
 	
 	public double FtoC(double currentTemp) {
-		return (9.0/5.0)*currentTemp + 32;
+		return (currentTemp-32) /(9.0*5.0);
 	}
 	
 	public double CtoF(double currentTemp) {
-		return (currentTemp-32) /(9.0*5.0);
+		return (9.0/5.0)*currentTemp + 32;
+		
 	}
 
 	public long getTime() {
@@ -232,6 +236,10 @@ public final class Temp implements Runnable {
 		currentTemp = result;
 		currentTime = System.currentTimeMillis();
 	
+		if ( cutoffTemp != -999 && currentTemp >= cutoffTemp) {
+			BrewServer.log.log(Level.SEVERE, currentTemp + ": ****** CUT OFF TEMPERATURE (" + cutoffTemp + ") EXCEEDED *****");
+			System.exit(-1);
+		}
 		return result;
 	}
 	
