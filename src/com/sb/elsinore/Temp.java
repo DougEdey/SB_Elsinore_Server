@@ -4,6 +4,7 @@ import jGPIO.InPin;
 import jGPIO.InvalidGPIOException;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -423,7 +424,7 @@ public final class Temp implements Runnable {
 			Double curValue = null, prevValue = null;
 			SortedSet<Double> keys = null;
 			try {
-				keys = new TreeSet<Double>(volumeBase.keySet());
+				keys = Collections.synchronizedSortedSet(new TreeSet<Double>(volumeBase.keySet()));
 			} catch (NullPointerException npe) {
 				// No VolumeBase setup, so we're probably calibrating
 				return pinValue;
