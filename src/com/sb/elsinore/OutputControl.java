@@ -4,35 +4,33 @@ import jGPIO.*;
 public final class OutputControl implements Runnable {
 
    public OutputControl ( String aName, String fGPIO, double heat_time ){
-   	// just for heating
-	fName = aName;
-	fGPIOh = fGPIO.toLowerCase();
-	setHTime(heat_time);
+	   	// just for heating
+		fName = aName;
+		fGPIOh = fGPIO.toLowerCase();
+		setHTime(heat_time);
    }
 
 
    public OutputControl ( String aName, String GPIO_heat, double heat_time, String GPIO_cool, double cool_time, double cool_delay ){
-   	// just for heating and cooling
-	fName = aName;
-	fGPIOc = GPIO_cool.toLowerCase();
-	fGPIOh = GPIO_heat.toLowerCase();
-	setHTime(heat_time);
-	setCTime(cool_time);
-	setCDelay(cool_delay);
+	   	// just for heating and cooling
+		fName = aName;
+		fGPIOc = GPIO_cool.toLowerCase();
+		fGPIOh = GPIO_heat.toLowerCase();
+		setHTime(heat_time);
+		setCTime(cool_time);
+		setCDelay(cool_delay);
    }
 
-   public void setCool(String GPIO, double time, double delay) {
-   	
-	fGPIOc = GPIO;
-	setCTime(time);
-	setCDelay(delay);
+   public void setCool(String GPIO, double time, double delay) { 	
+		fGPIOc = GPIO;
+		setCTime(time);
+		setCDelay(delay);
    }
 
 
    public void run() {
 		double duty;
 		double on_time, off_time;
-		
 		
 		try {
 			BrewServer.log.info("Starting the ("+fGPIOh+") heating output: " + GPIO.getPinNumber(fGPIOh));	

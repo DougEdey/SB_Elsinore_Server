@@ -103,6 +103,10 @@ public final class LaunchControl {
 				if (startupCommand.hasOption("config")) {
 					configFileName = startupCommand.getOptionValue("config");
 				}
+				
+				if (startupCommand.hasOption("gpio_definitions")) {
+					System.setProperty("gpio_definitions", startupCommand.getOptionValue("gpio_definitions"));
+				}
 			} catch (ParseException e) {
 				System.out.println("Error when parsing the command line");
 				e.printStackTrace();
@@ -121,6 +125,7 @@ public final class LaunchControl {
 		startupOptions.addOption("help", false, "Show this help");
 		startupOptions.addOption("owfs", false, "Setup OWFS connection for configuration on startup");
 		startupOptions.addOption("config", true, "Specify the name of the configuration file");
+		startupOptions.addOption("gpio_definitions", false, "specify the GPIO Definitions file if you're on Kernel 3.8 or above");
 	}
 	
 	/* Constructor */

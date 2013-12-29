@@ -81,7 +81,7 @@
         <dependency>
             <groupId>jGPIO</groupId>
             <artifactId>jGPIO</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>0.0.2-SNAPSHOT</version>
         </dependency>
         
         <dependency>
