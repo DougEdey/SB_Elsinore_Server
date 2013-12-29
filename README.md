@@ -85,6 +85,12 @@ The String is in the form: <number><scale>
 
 So in the config file below, I can use 85C as a cutoff temperature and it'll turn off when it goes above 85C
 
+Also, to enable the System Temperature reading, please add
+
+``` system_temp = true ```
+
+In the [general] section of the configuration file.
+
 
 Config File
 =========
