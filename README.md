@@ -10,44 +10,45 @@ Since these systems run on Linux, that is a requirement to using this.
 
 The system is based off the Dallas One Wire protocol for the temperature probes (expanding to analogue inputs too), and Straightforward GPIO outputs for SSR control
 
-Here is an example circuit (which I currently use) In this example, for RaspberryPi, Pin 4 MUST be reserved for the one wire circuit, and there's a 4k7 pullup resistor.
+Setup Instructions
+====================
+[Beaglebone Black](extras/BeagleboneBlackSetup.md)
 
-![Circuit Diagram](https://raw.github.com/DougEdey/SB_Elsinore_Server/master/img/rpi_circuit.png)
+[RaspberryPi](extras/RaspberryPiSetup.md)
 
-One Wire devices can be chained, with only one Pullup resistor before the first connection to a device. I currently have 4 Temperature probes on my circuit, connected using XLR jacks.
+Startup Instructions
+====================
 
-In this example, I have two SSRs connected to the GPIO Pin 11 and one connected to GPIO 10 (this is just an example).
+Clone this repository:
 
-Previous versions of this application used WiringPi pinout, this has changed, if you're unsure what version you have, the Software will walk you through the setup on first run, and you can remove/change the name of rpibrew.cfg to restart the setup process.
+``` git clone https://github.com/DougEdey/SB_Elsinore_Server ```
+
+Move to the checked out Directory:
+
+``` cd SB_Elsinore_Server ```
+
+Run:
+
+``` java -jar Elsinore.jar [options ]```
+
+To startup the setup procedure, I am aware that it needs to be improved, if you have any suggestions, please raise a bug
+Use -help to show the full list of options.
+
+Then check the config file if you want to, then you can copy the new one to the default name
+
+``` cp rpibrew.cfg.new rpibrew.cfg ```
+
+And rerun Elsinore to get started
+
+``` java -jar Elsinore.jar [options] ```
+
 
 RaspberryPi or Beagleboard?
 =======================
 
-I recently purchased a beagleboard to experiment with, as a result of that I learned a lot more about how Linux deals with OneWire and GPIO. For beagleboard to get OneWire support, you need to install a Device Tree Overlay file. I have added these under the support directory:
-
-To compile the overlay: 
-``` sudo dtc -O dtb -o /lib/firmware/w1-00A0.dtbo -b 0 -@ w1-00A0.dtbo ```
-
-Or copy the w1-00A0.dtbo in the support directory to /lib/firmware (as root), the above command copies the file for you.
-
-Login as root (such as "sudo su") and run "echo w1 > /sys/devices/bone_capemgr.8/slots"
-
-These need to be run as root.
+The BeagleBoard Black does have a big advantage over the RPi, it has onboard analogue inputs, but these are 1.8V.
 
 The RaspberryPi works fine with the existing software, the only thing you need to do differently is naming the GPIO Pinouts.
-
-GPIO Naming
-===========
-
-The Pinout number is obviously different between RaspberryPi and Beaglebone.
-
-For RPi pinout: http://elinux.org/RPi_Low-level_peripherals
-
-For Beagleboard Black Pinout: http://elinux.org/BeagleBone#P9_and_P8_-_Each_2x23_pins
-
-RPi numbering is displayed in the setup utility on first startup, Beaglebone Black is not, but the above diagrams give details. 
-
-For RPi, you'll want to use GPIO[X] where X is the pin number. BeagleboardBlack has multiple banks, for example GPIO2_2, this translates to physical pin 66, banks are separated by 32 outputs per bank. 
 
 Pump Control
 ============
@@ -57,6 +58,20 @@ Elsinore now supports pumps, you'll need to add a new section called "pumps" and
 
 The buttons will be RED when on, and GRAY when off. 
 
+One Wire & OWFS
+==========
+One Wire is fantastic (in my opinion) each sensor or device has a full 64 bit address, and you don't have to worry about the order and you can chain them!
+
+One Wire devices can be chained, with only one Pullup resistor before the first connection to a device. I currently have 4 Temperature probes on my circuit, and a ADC, connected using XLR jacks.
+
+
+[OWFS](http://owfs.org/) is a much better One Wire Implementation, it is highly recommended to install it, and it is REQUIRED if you use One Wire based Analog inputs (like the DS2450
+
+Install it using your standard package manager, then you need to set a mountpoint up (I use /mnt/1wire) and set 
+
+``` server: w1 ``` in the OWFS configuration File (/etc/owfs.conf by default), you can chose the ports as you want for OWFSHTTP and OWServer, the configuration tool will setup OWFS if it can.
+
+To manually setup OWFS, use the option -owfs when starting up Elsinore
 
 Config File
 =========

@@ -211,7 +211,6 @@ public final class Temp implements Runnable {
 	
 	public double CtoF(double currentTemp) {
 		return (9.0/5.0)*currentTemp + 32;
-		
 	}
 
 	public long getTime() {
@@ -249,10 +248,11 @@ public final class Temp implements Runnable {
 		String rawTemp = "";
 		try {
 			rawTemp =  LaunchControl.readOWFSPath(probeName + "/temperature");
-			if (rawTemp.equals("")) {
+			if (rawTemp == null || rawTemp.equals("")) {
 				BrewServer.log.severe("Couldn't find the probe " + probeName + " for " + name);
+			} else {
+				temp = Double.parseDouble(rawTemp);
 			}
-			temp = Double.parseDouble(rawTemp);
 		} catch (IOException e) {
 			BrewServer.log.log(Level.SEVERE, "Couldn't read " + probeName, e);
 		} catch (OwfsException e) {

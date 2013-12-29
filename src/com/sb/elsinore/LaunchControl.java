@@ -16,6 +16,12 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.ini4j.ConfigParser;
 import org.ini4j.ConfigParser.DuplicateSectionException;
 import org.ini4j.ConfigParser.InterpolationException;
@@ -69,7 +75,10 @@ public final class LaunchControl {
 	public static OwfsConnection owfsConnection = null;
 	public static boolean useOWFS = false;
 	private static String owfsServer = "localhost";
-	private static int owfsPort = 2121;
+	private static int owfsPort = 4304;
+	
+	private static Options startupOptions = null;
+	private static CommandLine startupCommand = null;
 
 	/*****
 	 * Main method to launch the brewery
@@ -77,9 +86,43 @@ public final class LaunchControl {
 	 */
 	public static void main(String... arguments) {
 		BrewServer.log.info( "Running Brewery Controller." );
+		if (arguments.length > 0) {
+			createOptions();
+			CommandLineParser parser = new BasicParser();
+			try {
+				startupCommand = parser.parse( startupOptions, arguments);
+				
+				// Do we need to print the help?
+				if (startupCommand.hasOption("help")) {
+					HelpFormatter hF = new HelpFormatter();
+					hF.printHelp("java -jar Elsinore.jar", startupOptions);
+					return;
+				}
+				
+				// Check for a custom value
+				if (startupCommand.hasOption("config")) {
+					configFileName = startupCommand.getOptionValue("config");
+				}
+			} catch (ParseException e) {
+				System.out.println("Error when parsing the command line");
+				e.printStackTrace();
+				return;
+			}
+		}
 		LaunchControl lc = new LaunchControl();
 	}
 
+	/*******
+	 *  Used to setup the options for the command line parser
+	 */
+	private static void createOptions() {
+		startupOptions = new Options();
+		
+		startupOptions.addOption("help", false, "Show this help");
+		startupOptions.addOption("owfs", false, "Setup OWFS connection for configuration on startup");
+		startupOptions.addOption("config", true, "Specify the name of the configuration file");
+	}
+	
 	/* Constructor */
 	public LaunchControl() {
 		
@@ -755,6 +798,10 @@ public final class LaunchControl {
 	 */
 	private void createConfig() {
 		
+		if (startupCommand.hasOption("owfs")) {
+			createOWFS();
+		}
+		
 		if (useOWFS) {
 			listOWFSDevices();
 		} else {
@@ -787,13 +834,13 @@ public final class LaunchControl {
 			input = readInput();
 			// parse the input and determine where to throw the data
 			inputBroken = input.split(" ");
-			// is the first value something we recognise?
+			// is the first value something we recognize?
 			if(inputBroken[0].equalsIgnoreCase("quit")) {
 				saveSettings();
 				System.out.println("Quitting");
-				System.out.println("Updating config file, please check it in rpibrew.cfg.new");
+				System.out.println("Updating config file, please check it in " + configFileName + ".new");
 				
-				File configOut = new File("rpibrew.cfg.new");
+				File configOut = new File(configFileName + "new");
 				try {
 					config.write(configOut);
 				} catch (IOException ioe) {
@@ -808,6 +855,7 @@ public final class LaunchControl {
 			if(inputBroken[0].startsWith("r") || inputBroken[0].startsWith("R")) {
 				System.out.println("Refreshing...");
 				displaySensors();
+				continue;
 			}
 
 			// Read in the pumps
@@ -961,6 +1009,7 @@ public final class LaunchControl {
 		}
 		
 		// Use the thread safe mechanism
+		System.out.println("Connecting to " + owfsServer + ":" + owfsPort);
 		OwfsConnectionConfig owConfig = new OwfsConnectionConfig(owfsServer, owfsPort);
 		owConfig.setPersistence(OwPersistence.ON);
 		owfsConnection = OwfsConnectionFactory.newOwfsClientThreadSafe(owConfig);
@@ -1018,6 +1067,9 @@ public final class LaunchControl {
 	private void listOWFSDevices() {
 		try {
 			List<String> owfsDirs = owfsConnection.listDirectory("/");
+			if (owfsDirs.size() > 0) {
+				System.out.println("Listing OWFS devices on " + owfsServer + ":" + owfsPort);
+			}
 			Iterator<String> dirIt = owfsDirs.iterator();
 			String dir = null;
 			
@@ -1054,16 +1106,22 @@ public final class LaunchControl {
 	 * @throws IOException If an IO error occurs
 	 */
 	public static String readOWFSPath(String path) throws OwfsException, IOException {
-		String result = null;
+		String result = "";
 		if (owfsConnection == null) {
 			setupOWFS();
 			if (owfsConnection == null) {
 				BrewServer.log.info("no OWFS connection");
 			}
 		}
-		
-		if (owfsConnection.exists(path)) {
-			result = owfsConnection.read(path);
+		try {
+			if(owfsConnection.exists(path)) {
+				result = owfsConnection.read(path);
+			}
+		} catch (OwfsException e) {
+			// Error -1 is file not found, exists should bloody catch this
+			if (!e.getMessage().equals("Error -1")) {
+				throw e;
+			}
 		}
 		
 		return result;
@@ -1205,9 +1263,9 @@ public final class LaunchControl {
 			Double currentTemp = tTemp.updateTemp();
 			System.out.print(i.toString() + ") " + tTemp.getName());
 			if(currentTemp == -999) {
-				  System.out.print(" doesn't have a valid temperature");
+				  System.out.println(" doesn't have a valid temperature");
 			} else {
-				System.out.print( " " + currentTemp);
+				System.out.println( " " + currentTemp);
 			}
 			i++;
 		}
