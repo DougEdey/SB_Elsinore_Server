@@ -283,6 +283,7 @@ public final class LaunchControl {
 	 * Get the JSON Output String for the current Status of the PIDs, Temps, Pumps, etc...
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public static String getJSONStatus() {
 		// get each setting add it to the JSON
 		JSONObject rObj = new JSONObject();
@@ -291,32 +292,15 @@ public final class LaunchControl {
 		// iterate the thread lists
 		// use the temp list to determine if we have a PID to go with
 		for(Temp t : tempList) {
+			/* Check for a PID */
 			PID tPid = findPID(t.getName());
 			tJSON = new JSONObject();
 			if(tPid != null) {
-				tJSON.put("mode", tPid.getMode());
-				tJSON.put("gpio", tPid.getGPIO());
-				// hack to get the real duty out
-				if(tPid.getMode().contains("auto")) {
-					tJSON.put("actualduty", tPid.heatSetting.calculatedDuty);
-				}
-				tJSON.put("duty", tPid.getDuty());
-				tJSON.put("cycle", tPid.getCycle());
-				tJSON.put("setpoint", tPid.getSetPoint());
-				tJSON.put("p", tPid.getP());
-				tJSON.put("i", tPid.getI());
-				tJSON.put("d", tPid.getD());
-				tJSON.put("status", tPid.getStatus());
+				tJSON.putAll(tPid.getMapStatus());
 			} 
-			tJSON.put("temp", t.getTemp());
-			tJSON.put("elapsed", t.getTime());
-			tJSON.put("scale", t.getScale());
 			
-			double tVolume = t.getVolume();
-			if (t.volumeMeasurement && tVolume != -1.0) {
-				tJSON.put("volume", tVolume);
-				tJSON.put("volumeUnits", t.getVolumeUnit());
-			}
+			// Add the temp to the JSON Map
+			tJSON.putAll(t.getMapStatus());
 			
 			rObj.put(t.getName(), tJSON);
 			

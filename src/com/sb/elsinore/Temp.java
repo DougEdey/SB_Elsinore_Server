@@ -139,6 +139,7 @@ public final class Temp implements Runnable {
 	private String name;
 	private String probeName;
 	private boolean loggingOn = true;
+	private String currentError = null;
 
 	private double currentTemp = 0;
 	private long currentTime = 0;
@@ -232,8 +233,10 @@ public final class Temp implements Runnable {
 		if(scale.equals("F")) {
 			result = (9.0/5.0)*result + 32;
 		}
+		
 		currentTemp = result;
 		currentTime = System.currentTimeMillis();
+		currentError = null;
 	
 		if ( cutoffTemp != -999 && currentTemp >= cutoffTemp) {
 			BrewServer.log.log(Level.SEVERE, currentTemp + ": ****** CUT OFF TEMPERATURE (" + cutoffTemp + ") EXCEEDED *****");
@@ -254,12 +257,15 @@ public final class Temp implements Runnable {
 				temp = Double.parseDouble(rawTemp);
 			}
 		} catch (IOException e) {
-			BrewServer.log.log(Level.SEVERE, "Couldn't read " + probeName, e);
+			currentError = "Couldn't read " + probeName;
+			BrewServer.log.log(Level.SEVERE, currentError, e);
 		} catch (OwfsException e) {
-			BrewServer.log.log(Level.SEVERE, "Couldn't read " + probeName, e);
+			currentError = "Couldn't read " + probeName;
+			BrewServer.log.log(Level.SEVERE, currentError, e);
 			LaunchControl.setupOWFS();
 		} catch (NumberFormatException e) {
-			BrewServer.log.log(Level.SEVERE, "Couldn't parse" + rawTemp, e);
+			currentError = "Couldn't parse" + rawTemp;
+			BrewServer.log.log(Level.SEVERE, currentError, e);
 		}
 		
 		return temp;
@@ -267,20 +273,23 @@ public final class Temp implements Runnable {
 	
 	public double updateTempFromFile() {
 		BufferedReader br = null;
-	
+		String temp = null;
+		
 		try {
 			br = new BufferedReader(new FileReader(fProbe));
 			String line = br.readLine();
 			if(line.contains("NO")) {
 				// bad CRC, do nothing
+				currentError = "Bad CRC from " + fProbe;
 			} else if(line.contains("YES")) {
 				// good CRC
 				line = br.readLine();
 				// last value should be t=
 				int t = line.indexOf("t=");
-				String temp = line.substring(t+2);
+				temp = line.substring(t+2);
 				double tTemp = Double.parseDouble(temp);
 				currentTemp = tTemp/1000;
+				currentError = null;
 			} else {
 				// System Temperature
 				currentTemp = Double.parseDouble(line)/1000; 
@@ -288,13 +297,15 @@ public final class Temp implements Runnable {
 				
 		} catch (IOException ie) {
 			if(loggingOn) {
-				System.out.println("Couldn't find the device under: " + fProbe);
+				currentError = "Couldn't find the device under: " + fProbe;
+				System.out.println(currentError);
 				if (fProbe == RPI_SYSTEM_TEMP) {
 					fProbe = BBB_SYSTEM_TEMP;
 				}
 			}
 			return -999;
 		} catch (NumberFormatException nfe) {
+			currentError = "Couldn't parse " + temp + " as a double";
 			nfe.printStackTrace();
 		} finally {
 			if(br != null){
@@ -578,6 +589,30 @@ public final class Temp implements Runnable {
 	
 	public String getVolumeUnit() {
 		return volumeUnit;
+	}
+
+	/*****
+	 * Helper function to return a map of the current status
+	 * @return
+	 */
+	public Map<String, Object> getMapStatus() {
+		Map<String, Object> statusMap = new HashMap<String, Object>();
+		
+		statusMap.put("temp", getTemp());
+		statusMap.put("elapsed", getTime());
+		statusMap.put("scale", getScale());
+		
+		double tVolume = getVolume();
+		if (volumeMeasurement && tVolume != -1.0) {
+			statusMap.put("volume", tVolume);
+			statusMap.put("volumeUnits", getVolumeUnit());
+		}
+		
+		if (currentError != null) {
+			statusMap.put("error", currentError);
+		}
+		
+		return statusMap;
 	}
 	
 

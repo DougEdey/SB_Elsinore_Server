@@ -126,6 +126,7 @@ public class ServePID {
 	
 	public String addController(String device, String type) {
 		String controller = "<div id=\"" + device + "\" class=\"holo-content controller panel panel-primary " + type +"\">" + lineSep +
+				
 					"<script type='text/javascript'>" + lineSep +
 					"jQuery(document).ready(function() {" + lineSep +
 
@@ -154,7 +155,10 @@ public class ServePID {
 				controller += "<div id=\"" + device + "-title\" class=\"title panel-heading \"" +
 				
 			
-					">" + device + "</div><div class=\"panel-body\">" + lineSep +
+					">" + device + "</div>" +
+					// Add in the Error message box
+					"<div id=\"" + device + "-error\" class-\"panel panel-error\"></div>" 
+							+ "<div class=\"panel-body\">" + lineSep +
 					" <canvas id=\"" + device + "-tempGauge\" class=\"gauge\" width=\"300\" height=\"140\">" + lineSep +
 					"</canvas>" + lineSep +
 					"<div id='" + device + "-tempSummary'>Temperature(<div id='tempUnit'>F</div>): " + lineSep +

@@ -1,7 +1,8 @@
 package com.sb.elsinore;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
-
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,6 +22,17 @@ final class PID implements Runnable {
 		}
 	}
 	
+	/****** 
+	 * Create a new PID
+	 * @param aTemp Temperature Object to use
+	 * @param aName Name of the PID
+	 * @param aDuty Duty Cycle % being set
+	 * @param aTime Cycle Time in seconds
+	 * @param p Proportional value
+	 * @param i Integral Value
+	 * @param d Differential value
+	 * @param GPIO GPIO to be used to control the output
+	 */
 	public PID (Temp aTemp, String aName, double aDuty, double aTime, double p, double i, double d, String GPIO) {
 		mode = "off";
 		heatSetting = new Settings();
@@ -34,6 +46,8 @@ final class PID implements Runnable {
 		
 		fName = aName;
 		fTemp = aTemp;
+		
+		// Determine what kind of GPIO Mapping we have
 		Pattern pinPattern = Pattern.compile("(GPIO)([0-9])_([0-9]*)");
 		Pattern pinPatternAlt = Pattern.compile("(GPIO)?([0-9]*)");
 		
@@ -58,6 +72,17 @@ final class PID implements Runnable {
 		
 		
 	}
+	
+	/******
+	 * Update the current values of the PID
+	 * @param m String indicating mode (manual, auto, off)
+	 * @param duty Duty Cycle % being set
+	 * @param cycle Cycle Time in seconds
+	 * @param setpoint Target temperature for auto mode
+	 * @param p Proportional value
+	 * @param i Integral Value
+	 * @param d Differential value
+	 */
 	public void updateValues(String m, double duty, double cycle, double setpoint, double p, double i, double d ) {
 		mode = m;
 		if(mode.equals("manual")) {
@@ -74,13 +99,22 @@ final class PID implements Runnable {
 		return;
 	}
 
+	/****
+	 * Get the Status of the current PID, heating, off, etc...
+	 * @return
+	 */
 	public synchronized String getStatus() {
 		if(OC != null) {
 			return OC.getStatus();
 		}
-		return "No output on! Duty Cyle: " + heatSetting.duty_cycle + " - Temp: " + getTemp();
+		// Output control is broken
+		return "No output on! Duty Cyle: " + heatSetting.duty_cycle + " - Temp: " + getTempC();
 	}
 
+	
+	/******
+	 * Main loop for using a PID Thread
+	 */
 	public void run() {
 		BrewServer.log.info( "Running " + fName + " PID." );
 		// setup the first time
@@ -94,7 +128,7 @@ final class PID implements Runnable {
 			return;
 		}
 
-		
+		// Main loop
 		while (true) {
 			try {
 				synchronized ( fTemp ) {
@@ -132,7 +166,7 @@ final class PID implements Runnable {
 					//notify all waiters of the change of state
 				}
 
-				//pause execution for a few seconds
+				//pause execution for a seconds
 				Thread.sleep( 1000 );
 			}
 			catch ( InterruptedException ex ){
@@ -142,6 +176,10 @@ final class PID implements Runnable {
 		}
 	}
 
+	/********
+	 * Set the duty time in %
+	 * @param duty Duty Cycle percentage
+	 */
 	public void setDuty(double duty) {
 		if(duty > 100) {
 			duty = 100;
@@ -152,6 +190,10 @@ final class PID implements Runnable {
 		heatSetting.duty_cycle = duty;
 	}
 
+	/****
+	 * Set the target temperature for the auto mode
+	 * @param temp
+	 */
 	public void setTemp(double temp) {
 		if (temp < 0) {
 			temp = 0;
@@ -160,58 +202,122 @@ final class PID implements Runnable {
 		heatSetting.set_point = temp;
 	}
 
+	/******
+	 * Set the proportional value
+	 * @param p
+	 */
 	public void setP(double p) {
 		heatSetting.proportional = p;
 	}
 
+	/******
+	 * Set the integral value
+	 * @param i
+	 */
 	public void setI(double i) {
 		heatSetting.integral = i;
 	}
 
+	/******
+	 * Set the differential value
+	 * @param d
+	 */
 	public void setD(double d) {
 		heatSetting.derivative = d;
 	}
 	
+	/*******
+	 * Get the current mode
+	 * @return
+	 */
 	public String getMode() {
 		return mode;
 	}
 
-	public double getTemp() {
+	/*****
+	 * Get the temperature in celsius
+	 * @return
+	 */
+	public double getTempC() {
 		return fTemp_C;
 	}
 
+	/*****
+	 * Get the temperature in fahrenheit
+	 * @return
+	 */
+	public double getTempF() {
+		return fTemp_C;
+	}
+	
+	/*****
+	 * Get the GPIO Pin
+	 * @return
+	 */
 	public String getGPIO() {
 		return fGPIO;
 	}
 
+	/******
+	 * Get the current duty cycle percentage
+	 * @return
+	 */
 	public double getDuty() {
 		return heatSetting.duty_cycle;
 	}
 
+	/****
+	 * Get the current Duty Cycle Time
+	 * @return
+	 */
 	public double getCycle() {
 		return heatSetting.cycle_time;
 	}
 
+	/******
+	 * Get the PID Target tempeture
+	 * @return
+	 */
 	public double getSetPoint() {
 		return heatSetting.set_point;
 	}
 
+	/******
+	 * Get the current proportional value
+	 * @return
+	 */
 	public double getP() {
 		return heatSetting.proportional;
 	}
 
+	/*******
+	 * Get the current Integral value
+	 * @return
+	 */
 	public double getI() {
 		return heatSetting.integral;
 	}
 
+	/*********
+	 * Get the current Differential value
+	 * @return
+	 */
 	public double getD() {
 		return heatSetting.derivative;
 	}
 
+	/*****
+	 * Get the current Temp object
+	 * @return
+	 */
 	public Temp getTempProbe() {
 		return fTemp;
 	}
 
+	/******
+	 * Get the name of this device
+	 * @return
+	 */
 	public String getName() {
 		return fTemp.getName();
 	}
@@ -220,6 +326,10 @@ final class PID implements Runnable {
   //PRIVATE ///
   	private long previousTime = 0;
 
+  	/******
+  	 * Calculate the average of the current temp list
+  	 * @return
+  	 */
 	private double calc_average() {
 		int size = temp_list.size();
 		
@@ -230,15 +340,6 @@ final class PID implements Runnable {
 		return total/size;
 	}
 
-	private double fToC(double tempF) {
-		// routine to convert basic F temps to C
-		return (5 * (tempF - 32)) / 9;
-	}
-
-	private double cToF(double tempC) {
-		// routine to convert Celcius to Farenheit
-		return ((tempC * 9) / 5) + 32;
-	}
 	private boolean fStatus = false;
 	public Temp fTemp;
 	private double fTemp_F, fTemp_C;
@@ -261,6 +362,12 @@ final class PID implements Runnable {
 	double GMA_HLIM = 100.0,
 	GMA_LLIM = -100.0;
 
+	/*****
+	 * Calculate the current PID Duty
+	 * @param avgTemp The current average temperature
+	 * @param enable 
+	 * @return  A Double of the duty cycle %
+	 */
 	private double calcPID_reg4(double avgTemp, boolean enable) {
 		currentTime = System.currentTimeMillis();
 		if(previousTime == 0.0) {
@@ -297,6 +404,9 @@ final class PID implements Runnable {
         
 	}
 
+	/****
+	 * Used as a shutdown hook to close off everything
+	 */
 	public void shutdown() {
 		if(OC != null) {
 			OC.shutdown();
@@ -320,5 +430,28 @@ final class PID implements Runnable {
 			}
 		}
 		OC.setCool(GPIO, duty, delay);
+	}
+	
+	/******
+	 * Return a map of the current status
+	 * @return
+	 */
+	public Map<String, Object> getMapStatus() {
+		Map<String, Object> statusMap = new HashMap<String, Object>();
+		statusMap.put("mode", getMode());
+		statusMap.put("gpio", getGPIO());
+		// hack to get the real duty out
+		if(getMode().contains("auto")) {
+			statusMap.put("actualduty", heatSetting.calculatedDuty);
+		}
+		statusMap.put("duty", getDuty());
+		statusMap.put("cycle", getCycle());
+		statusMap.put("setpoint", getSetPoint());
+		statusMap.put("p", getP());
+		statusMap.put("i", getI());
+		statusMap.put("d", getD());
+		statusMap.put("status", getStatus());
+		
+		return statusMap;
 	}
 }

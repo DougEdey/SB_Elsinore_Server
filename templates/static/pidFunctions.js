@@ -51,6 +51,14 @@ function waitForMsg(){
 				temp = null;
 				Temp = null;
 				
+				// Check for an error message
+				if ("errorMessage" in val) {
+					jQuery("#" + vessel + "-error").text(val.errorMessage);
+					jQuery("#" + vessel + "-error").show();
+				} else {
+					jQuery("#" + vessel + "-error").hide();
+				}
+				
 				// Check for the volume
 				if ("volume" in val) {
 					jQuery("#" + vessel + "-volume").text(parseFloat(val.volume).toFixed(2) + " " + val.volumeUnits);
