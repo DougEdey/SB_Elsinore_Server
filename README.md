@@ -73,6 +73,19 @@ Install it using your standard package manager, then you need to set a mountpoin
 
 To manually setup OWFS, use the option -owfs when starting up Elsinore
 
+Cutoff Temperature
+============
+After the [incident](http://imgur.com/a/pwQVE) I decided to add a cutoff temperature, in my case I have a temperature probe on my SSRs, and when they go over a certain temperature I want to kill the server so it doesn't get badly damaged
+
+Adding 
+``` cutoff = <string> ```
+To any of the devices, will kill Elsinore when the temperature for that device goes above it.
+
+The String is in the form: <number><scale>
+
+So in the config file below, I can use 85C as a cutoff temperature and it'll turn off when it goes above 85C
+
+
 Config File
 =========
 
