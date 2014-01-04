@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import com.sb.elsinore.BrewDay;
+import com.sb.elsinore.BrewServer;
+import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Pump;
 
 public class ServeHTML {
@@ -87,6 +90,9 @@ public class ServeHTML {
 		page += tempContent;
 		page += pumpContent;
 		
+		page += "<div id=\"tempProbes\">" +lineSep;
+		page += addTimers();
+		page += "</div>" +lineSep;
 		page += "</body>";
 		return page;
 	}
@@ -106,6 +112,7 @@ public class ServeHTML {
 	        "<script type=\"text/javascript\" src=\"/templates/static/pidFunctions.js\"></script>" + lineSep +
 			"<script type=\"text/javascript\" src=\"/templates/static/raphael.2.1.0.min.js\"></script>" + lineSep +
 			"<script type=\"text/javascript\" src=\"/templates/static/justgage.js\"></script>" + lineSep +
+			"<script type=\"text/javascript\" src=\"/templates/static/tinytimer.min.js\"></script>" + lineSep +
 			// BOOTSTRAP
 			"<script type=\"text/javascript\" src=\"/templates/static/bootstrap-3.0.0/js/bootstrap.min.js\"></script>" + lineSep +
 	        "<script type=\"text/javascript\">" + lineSep +
@@ -157,7 +164,7 @@ public class ServeHTML {
 			
 					">" + device + "</div>" +
 					// Add in the Error message box
-					"<div id=\"" + device + "-error\" class-\"panel panel-error\"></div>" 
+					"<div id=\"" + device + "-error\" class-\"panel-error\"></div>" 
 							+ "<div class=\"panel-body\">" + lineSep +
 					" <canvas id=\"" + device + "-tempGauge\" class=\"gauge\" width=\"300\" height=\"140\">" + lineSep +
 					"</canvas>" + lineSep +
@@ -252,6 +259,54 @@ public class ServeHTML {
         
 		
 		return pumpDetails;
+	}
+	
+	String addTimers() {
+		String timers = lineSep;
+		timers += "<div class='panel panel-info'>\n<div class='title panel-heading'>Timers</div>";
+		
+		timers += "<div class='panel-body'>";
+		// Mash button
+		timers += "<span class='holo-button pump' id=\"mash\" type=\"submit\" "
+				+ "value=\"mashTimer\" onclick='setTimer(this, \"mash\"); waitForMsg(); return false;'>"
+				+ "Start Mash"
+				+ "</span>";
+		timers += "<span class='holo-button pump' style='display:none' id=\"mashTimer\" type=\"submit\" "
+				+ "value=\"mashTimer\" onclick='setTimer(this, \"mash\"); waitForMsg(); return false;'>"
+				+ "</span>";
+		
+		// Sparge
+		timers += "<span class='holo-button pump' id=\"sparge\" type=\"submit\" "
+				+ "value=\"spargeTimer\" onclick='setTimer(this, \"sparge\"); waitForMsg(); return false;'>"
+				+ "Start Sparge"
+				+ "</span>";
+		timers += "<span class='holo-button pump' style='display:none' id=\"spargeTimer\" type=\"submit\" "
+				+ "value=\"spargeTimer\" onclick='setTimer(this, \"sparge\"); waitForMsg(); return false;'>"
+				+ "</span>";
+		
+		//Boil
+		timers += "<span class='holo-button pump' id=\"boil\" type=\"submit\" "
+				+ "value=\"boilTimer\" onclick='setTimer(this, \"boil\"); waitForMsg(); return false;'>"
+				+ "Start Boil"
+				+ "</span>";
+		timers += "<span class='holo-button pump' style='display:none' id=\"boilTimer\" type=\"submit\" "
+				+ "value=\"boilTimer\" onclick='setTimer(this, \"boil\"); waitForMsg(); return false;'>"
+				+ "</span>";
+		
+		//Chill
+		timers += "<span class='holo-button pump' id=\"chill\" type=\"submit\" "
+				+ "value=\"chillTimer\" onclick='setTimer(this, \"chill\"); waitForMsg(); return false;'>"
+				+ "Start Chill"
+				+ "</span>";
+		timers += "<span class='holo-button pump' style='display:none' id=\"chillTimer\" type=\"submit\" "
+				+ "value=\"chillTimer\" onclick='setTimer(this, \"chill\"); waitForMsg(); return false;'>"
+				+ "</span>";
+		
+		
+		timers += "</div>" // panel body
+				+ "</div>"; // panel
+		
+		return timers;
 	}
 	
 

@@ -1,6 +1,6 @@
 package com.sb.elsinore;
-import java.io.*;
 import java.util.Date;
+import java.util.logging.Level;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -13,15 +13,17 @@ public final class BrewDay {
 	// generate the date time parameters
 	DateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd");
 	DateFormat sFormat = new SimpleDateFormat("HH:mm:ss");
-	DateFormat lFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	DateFormat lFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+	
 	// the actual dates
 	Date updated = null;
 	Date startDay = null;
-	Date mashIn = null;
-	Date mashOut = null;
+	Date mashStart = null;
+	Date mashEnd = null;
 	Date spargeStart = null;
 	Date spargeEnd = null;
 	Date boilStart = null;
+	Date boilEnd = null;
 	Date chillStart = null;
 	Date chillEnd = null;
 
@@ -34,7 +36,7 @@ public final class BrewDay {
 		try {
 			dDate = new Date(Long.parseLong(dateString));
 		} catch (NumberFormatException e) {
-			BrewServer.log.info("Error: " + dateString + " could not be parsed as a long, trying date");
+			BrewServer.log.log(Level.INFO, "Error: " + dateString + " could not be parsed as a long, trying date", e);
 			try{
 				dDate = lFormat.parse(dateString);
 			} catch (ParseException p) {
@@ -51,138 +53,156 @@ public final class BrewDay {
 
 
 	// start
-	Date getStart() {
+	public Date getStart() {
 		return startDay;
 	}
 
-	String getStartString() {
+	public String getStartString() {
 		return lFormat.format(startDay);
 	}
 
-	void setStart(Date startIn) {
+	public void setStart(Date startIn) {
 		startDay = startIn;
 	}
 
-	void setStart(String startIn) {
+	public void setStart(String startIn) {
 		setStart(parseDateString(startIn));
 	}
 
 	// mash in
-	Date getMashIn() {
-		return mashIn;
+	public Date getMashIn() {
+		return mashStart;
 	}
 
-	String getMashInString() {
-		return lFormat.format(mashIn);
+	public String getMashInString() {
+		return lFormat.format(mashStart);
 	}
 
-	void setMashIn(Date mashInIn) {
-		mashIn = mashInIn;
+	public void setMashIn(Date mashInIn) {
+		mashStart = mashInIn;
 	}
 
-	void setMashIn(String mashInIn) {
+	public void setMashIn(String mashInIn) {
 		setMashIn(parseDateString(mashInIn));
 	}
 
 	// mash out
-	Date getMashOut() {
-		return mashOut;
+	public Date getMashOut() {
+		return mashEnd;
 	}
 
-	String getMashOutString() {
-		return lFormat.format(mashOut);
+	public String getMashOutString() {
+		return lFormat.format(mashEnd);
 	}
 
-	void setMashOut(Date mashOutIn) {
-		mashOut = mashOutIn;
+	public void setMashOut(Date mashOutIn) {
+		mashEnd = mashOutIn;
 	}
 
-	void setMashOut(String mashOutIn) {
+	public void setMashOut(String mashOutIn) {
 		setMashOut(parseDateString(mashOutIn));
 	}
 
 	// sparge start
-	Date getSpargeStart() {
+	public Date getSpargeStart() {
 		return spargeStart;
 	}
 
-	String getSpargeStartString() {
+	public String getSpargeStartString() {
 		return lFormat.format(spargeStart);
 	}
 
-	void setSpargeStart(Date spargeStartIn) {
+	public void setSpargeStart(Date spargeStartIn) {
 		spargeStart = spargeStartIn;
 	}
 
-	void setSpargeStart(String spargeStartIn) {
+	public void setSpargeStart(String spargeStartIn) {
 		setSpargeStart(parseDateString(spargeStartIn));
 	}
 
 	// sparge end
-	Date getSpargeEnd() {
+	public Date getSpargeEnd() {
 		return spargeEnd;
 	}
 
-	String getSpargeEndString() {
+	public String getSpargeEndString() {
 		return lFormat.format(spargeEnd);
 	}
 
-	void setSpargeEnd(Date spargeEndIn) {
+	public void setSpargeEnd(Date spargeEndIn) {
 		spargeEnd = spargeEndIn;
 	}
 
-	void setSpargeEnd(String spargeEndIn) {
+	public void setSpargeEnd(String spargeEndIn) {
 		setSpargeEnd(parseDateString(spargeEndIn));
 	}
 
 	// boil start
-	Date getBoilStart() {
+	public Date getBoilStart() {
 		return boilStart;
 	}
 
-	String getBoilStartString() {
+	public String getBoilStartString() {
 		return lFormat.format(boilStart);
 	}
 
-	void setBoilStart(Date boilStartIn) {
+	public void setBoilStart(Date boilStartIn) {
 		boilStart = boilStartIn;
 	}
 
-	void setBoilStart(String boilStartIn) {
+	public void setBoilStart(String boilStartIn) {
 		setBoilStart(parseDateString(boilStartIn));
 	}
+	
+	// boil end
+	public Date getBoilEnd() {
+		return boilEnd;
+	}
+
+	public String getBoilEndString() {
+		return lFormat.format(boilEnd);
+	}
+
+	public void setBoilEnd(Date boilEndIn) {
+		boilEnd = boilEndIn;
+	}
+
+	public void setBoilEnd(String boilEndIn) {
+		setBoilEnd(parseDateString(boilEndIn));
+	}
+
 
 	// chill start
-	Date getChillStart() {
+	public Date getChillStart() {
 		return chillStart;
 	}
 
-	String getChillStartString() {
+	public String getChillStartString() {
 		return lFormat.format(chillStart);
 	}
 
-	void setChillStart(Date chillStartIn) {
+	public void setChillStart(Date chillStartIn) {
 		chillStart = chillStartIn;
 	}
 
-	void setChillStart(String chillStartIn) {
+	public void setChillStart(String chillStartIn) {
 		setChillStart(parseDateString(chillStartIn));
 	}
 
 	// chill stop
-	Date getChillEnd() {
+	public Date getChillEnd() {
 		return chillEnd;
 	}
 
-	String getChillEndString() {
+	public String getChillEndString() {
 		return lFormat.format(chillEnd);
 	}
 
-	void setChillEnd(Date chillEndIn) {
+	public void setChillEnd(Date chillEndIn) {
 		chillEnd = chillEndIn;
 	}
 
-	void setChillEnd(String chillEndIn) {
+	public void setChillEnd(String chillEndIn) {
 		setChillEnd(parseDateString(chillEndIn));
 	}
 
@@ -203,17 +223,17 @@ public final class BrewDay {
 	}
 	
 	// get the JSON
-	JSONObject brewDayStatus() {
+	public JSONObject brewDayStatus() {
 		JSONObject status = new JSONObject();
 
 		if(startDay != null) {
 			status.put("startDay", lFormat.format(startDay));
 		}
-		if(mashIn != null) {
-			status.put("mashIn", lFormat.format(mashIn));
+		if(mashStart != null) {
+			status.put("mashStart", lFormat.format(mashStart));
 		}
-		if(mashOut != null) {
-			status.put("mashOut", lFormat.format(mashOut));
+		if(mashEnd != null) {
+			status.put("mashEnd", lFormat.format(mashEnd));
 		}
 		if(spargeStart != null) {
 			status.put("spargeStart", lFormat.format(spargeStart));
@@ -223,6 +243,10 @@ public final class BrewDay {
 		}
 		if(boilStart != null) {
 			status.put("boilStart", lFormat.format(boilStart));
+		}
+		
+		if(boilEnd != null) {
+			status.put("boilEnd", lFormat.format(boilEnd));
 		}
 		if(chillStart != null) {
 			status.put("chillStart", lFormat.format(chillStart));

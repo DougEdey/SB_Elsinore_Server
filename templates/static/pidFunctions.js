@@ -12,8 +12,16 @@ function waitForMsg(){
 		success: function(data){
 			if(data == null) 
 				return;
+		
 			$.each(data, function(key, val) {
 				vessel = key;
+				
+				if (vessel == "brewday") {
+					checkTimer(val, "mash");
+					checkTimer(val, "sparge");
+					checkTimer(val, "boil");
+					checkTimer(val, "chill");
+				}
 				
 				if(vessel == "pumps") {
 					$.each(val, function (pumpName, pumpStatus) {
@@ -226,4 +234,55 @@ function toggleDiv(id) {
           e.style.display = 'table-cell';
 
 	e = null;
+}
+
+function setTimer(button, stage) {
+	// get the current Datestamp
+	var curDate = Date.now();
+	if(button.innerHTML.toLowerCase() == ("Start " + stage).toLowerCase()) {
+		$("#" + stage).hide();
+		$("#"+stage+"Timer").show();
+		formdata = stage.toLowerCase() + "Start=" + curDate;
+	} else {
+		$("#"+stage).show();
+		$("#"+stage+"Timer").hide();
+		formdata = stage.toLowerCase()+"End=" + curDate;
+	}
+	
+	formdata +="&updated=" + curDate;
+	
+	$.ajax({ 
+		url: 'updateday',
+		type: 'POST',
+		data: formdata,
+		success: function(data) {data = null}
+	});	
+	window.disableUpdates = 0;
+	return false;
+}
+
+function checkTimer(val, stage) {
+	// Check for a boil timing
+	if (stage + "Start" in val) {
+		var startTime = new Date(val[stage+"Start"]);
+		
+		// boil has been started, has it been finished
+		if (stage + "End" in val) {
+			var endTime = new Date(val[stage+"End"]);
+			var diffTime = endTime - startTime;
+			var hours = Math.floor(diffTime/(1000*60*60));
+			diffTime -= hours * 1000*60*60;
+			var mins = Math.floor(diffTime/(1000*60));
+			diffTime -= mins * 1000*60;
+			$("#"+stage).show();
+			$("#"+stage+"Timer").hide();
+			$("#"+stage)[0].innerHTML = stage + ": " + hours + ":" + mins + ":" + diffTime/1000;
+		} else {
+			$("#"+stage).hide();
+			$("#"+stage+"Timer").show();
+			$("#"+stage+"Timer").tinyTimer({from: startTime});
+		}
+	} else {
+		$("#"+stage+"Timer").hide();
+	}
 }

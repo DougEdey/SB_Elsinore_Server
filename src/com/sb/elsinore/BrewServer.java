@@ -211,20 +211,21 @@ public class BrewServer extends NanoHTTPD {
 				}
 
 				// start mashing in
-				if(parms.containsKey("mashIn")) {
-					tempDateStamp = parms.get("mashIn");
+				if(parms.containsKey("mashStart")) {
+					tempDateStamp = parms.get("mashStart");
 					brewDay.setMashIn(tempDateStamp);
 				}
 
 				// start mashing out
-				if(parms.containsKey("mashOut")) {
-					tempDateStamp = parms.get("mashOut");
+				if(parms.containsKey("mashEnd")) {
+					tempDateStamp = parms.get("mashEnd");
 					brewDay.setMashOut(tempDateStamp);
 				}
 
 				// start sparging
 				if(parms.containsKey("spargeStart")) {
-					tempDateStamp = parms.get("spartStart");
+					System.out.println(parms.toString());
+					tempDateStamp = parms.get("spargeStart");
 					brewDay.setSpargeStart(tempDateStamp);
 				}
 
@@ -238,6 +239,12 @@ public class BrewServer extends NanoHTTPD {
 				if(parms.containsKey("boilStart")) {
 					tempDateStamp = parms.get("boilStart");
 					brewDay.setBoilStart(tempDateStamp);
+				}
+				
+				//  stop boiling
+				if(parms.containsKey("boilEnd")) {
+					tempDateStamp = parms.get("boilEnd");
+					brewDay.setBoilEnd(tempDateStamp);
 				}
 
 				// start chilling
@@ -278,6 +285,10 @@ public class BrewServer extends NanoHTTPD {
 				
 		if (uri.toLowerCase().contains("control")) {
 			return new NanoHTTPD.Response( Status.OK, MIME_HTML, LaunchControl.getControlPage());
+		}
+		
+		if (uri.toLowerCase().contains("timers")) {
+			return new NanoHTTPD.Response( Status.OK, MIME_HTML, LaunchControl.getBrewDay().brewDayStatus().toString());
 		}
 		
 		if(new File(rootDir, uri).exists()) {
