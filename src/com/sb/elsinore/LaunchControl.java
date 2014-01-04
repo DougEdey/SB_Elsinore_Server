@@ -40,7 +40,7 @@ import Cosm.Datastream;
 import Cosm.Feed;
 import Cosm.Unit;
 
-import com.sb.common.ServePID;
+import com.sb.common.ServeHTML;
 
 public final class LaunchControl {
 	/* List of PIDs, Temperatures, and Pump objects */
@@ -280,7 +280,7 @@ public final class LaunchControl {
 		 	devList.put(t.getName(), type);
 		 }
 
-		ServePID pidServe = new ServePID(devList, pumpList);
+		ServeHTML pidServe = new ServeHTML(devList, pumpList);
 		return pidServe.getPage();
 	}
 

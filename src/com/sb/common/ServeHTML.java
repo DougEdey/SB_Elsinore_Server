@@ -7,7 +7,7 @@ import java.util.Iterator;
 
 import com.sb.elsinore.Pump;
 
-public class ServePID {
+public class ServeHTML {
 	// This class is used to serve the webpage for the PID control
 	// Also known as the Elsinore web page
 	// I can easily refactor this for a better name later
@@ -15,7 +15,7 @@ public class ServePID {
 	private HashMap<String, String> devices;
 	private List<Pump> pumps;
 	
-	public ServePID(HashMap<String, String> devList, List<Pump> pumpList) {
+	public ServeHTML(HashMap<String, String> devList, List<Pump> pumpList) {
 		// no passed values, just generate the basic data
 		devices = devList;
 		pumps = pumpList;
