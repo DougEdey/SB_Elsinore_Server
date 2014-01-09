@@ -1,8 +1,8 @@
 package com.sb.elsinore;
 import java.io.*;
 import java.net.URLEncoder;
-
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
@@ -204,59 +204,16 @@ public class BrewServer extends NanoHTTPD {
 					return new NanoHTTPD.Response( Status.OK, MIME_HTML, "No update datestamp, not updating a thang! YA HOSER!" );
 				}
 
-				// start of brew day
-				if(parms.containsKey("startDay")) {
-					tempDateStamp = parms.get("startDay");
-					brewDay.setStart(tempDateStamp);
-				}
-
-				// start mashing in
-				if(parms.containsKey("mashStart")) {
-					tempDateStamp = parms.get("mashStart");
-					brewDay.setMashIn(tempDateStamp);
-				}
-
-				// start mashing out
-				if(parms.containsKey("mashEnd")) {
-					tempDateStamp = parms.get("mashEnd");
-					brewDay.setMashOut(tempDateStamp);
-				}
-
-				// start sparging
-				if(parms.containsKey("spargeStart")) {
-					System.out.println(parms.toString());
-					tempDateStamp = parms.get("spargeStart");
-					brewDay.setSpargeStart(tempDateStamp);
-				}
-
-				// stop sparging
-				if(parms.containsKey("spargeEnd")) {
-					tempDateStamp = parms.get("spargeEnd");
-					brewDay.setSpargeEnd(tempDateStamp);
-				}
-
-				//  start boiling
-				if(parms.containsKey("boilStart")) {
-					tempDateStamp = parms.get("boilStart");
-					brewDay.setBoilStart(tempDateStamp);
-				}
+				Iterator<Entry<String, String>> it = parms.entrySet().iterator();
 				
-				//  stop boiling
-				if(parms.containsKey("boilEnd")) {
-					tempDateStamp = parms.get("boilEnd");
-					brewDay.setBoilEnd(tempDateStamp);
-				}
-
-				// start chilling
-				if(parms.containsKey("chillStart")) {
-					tempDateStamp = parms.get("chillStart");
-					brewDay.setChillStart(tempDateStamp);
-				}
-
-				// stop chilling
-				if(parms.containsKey("chillEnd")) {
-					tempDateStamp = parms.get("chillEnd");
-					brewDay.setChillEnd(tempDateStamp);
+				Entry<String, String> e = null;
+				
+				while (it.hasNext()) {
+					e = it.next();
+					
+					if (e.getKey().endsWith("Start") || e.getKey().endsWith("End")) {
+						brewDay.setTimer(e.getKey(), e.getValue());
+					}
 				}
 
 				return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated Brewday" );

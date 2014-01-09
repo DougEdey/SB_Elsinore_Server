@@ -261,6 +261,27 @@ function setTimer(button, stage) {
 	return false;
 }
 
+function resetTimer(button, stage) {
+	// get the current Datestamp
+	var curDate = Date.now();
+	$("#"+stage)[0].innerHTML = "Start " + stage;
+	
+	$("#"+stage).show();
+	$("#"+stage+"Timer").hide();
+	formdata = stage.toLowerCase()+"End=null&" + stage.toLowerCase() +"Start=null" ;
+
+	formdata +="&updated=" + curDate;
+	
+	$.ajax({ 
+		url: 'updateday',
+		type: 'POST',
+		data: formdata,
+		success: function(data) {data = null}
+	});	
+	window.disableUpdates = 0;
+	return false;
+}
+
 function checkTimer(val, stage) {
 	// Check for a boil timing
 	if (stage + "Start" in val) {

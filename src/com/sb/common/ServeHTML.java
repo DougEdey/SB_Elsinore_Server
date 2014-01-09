@@ -266,41 +266,21 @@ public class ServeHTML {
 		timers += "<div class='panel panel-info'>\n<div class='title panel-heading'>Timers</div>";
 		
 		timers += "<div class='panel-body'>";
-		// Mash button
-		timers += "<span class='holo-button pump' id=\"mash\" type=\"submit\" "
-				+ "value=\"mashTimer\" onclick='setTimer(this, \"mash\"); waitForMsg(); return false;'>"
-				+ "Start Mash"
-				+ "</span>";
-		timers += "<span class='holo-button pump' style='display:none' id=\"mashTimer\" type=\"submit\" "
-				+ "value=\"mashTimer\" onclick='setTimer(this, \"mash\"); waitForMsg(); return false;'>"
-				+ "</span>";
-		
-		// Sparge
-		timers += "<span class='holo-button pump' id=\"sparge\" type=\"submit\" "
-				+ "value=\"spargeTimer\" onclick='setTimer(this, \"sparge\"); waitForMsg(); return false;'>"
-				+ "Start Sparge"
-				+ "</span>";
-		timers += "<span class='holo-button pump' style='display:none' id=\"spargeTimer\" type=\"submit\" "
-				+ "value=\"spargeTimer\" onclick='setTimer(this, \"sparge\"); waitForMsg(); return false;'>"
-				+ "</span>";
-		
-		//Boil
-		timers += "<span class='holo-button pump' id=\"boil\" type=\"submit\" "
-				+ "value=\"boilTimer\" onclick='setTimer(this, \"boil\"); waitForMsg(); return false;'>"
-				+ "Start Boil"
-				+ "</span>";
-		timers += "<span class='holo-button pump' style='display:none' id=\"boilTimer\" type=\"submit\" "
-				+ "value=\"boilTimer\" onclick='setTimer(this, \"boil\"); waitForMsg(); return false;'>"
-				+ "</span>";
-		
-		//Chill
-		timers += "<span class='holo-button pump' id=\"chill\" type=\"submit\" "
-				+ "value=\"chillTimer\" onclick='setTimer(this, \"chill\"); waitForMsg(); return false;'>"
-				+ "Start Chill"
-				+ "</span>";
-		timers += "<span class='holo-button pump' style='display:none' id=\"chillTimer\" type=\"submit\" "
-				+ "value=\"chillTimer\" onclick='setTimer(this, \"chill\"); waitForMsg(); return false;'>"
-				+ "</span>";
+			
+		for (String timer : LaunchControl.timerList) {
+			// Mash button
+			timers += "<div><span class='holo-button pump' id=\""+ timer + "\" type=\"submit\" "
+					+ "value=\""+ timer + "Timer\" onclick='setTimer(this, \""+ timer + "\"); waitForMsg(); return false;'>"
+					+ "Start "+ timer
+					+ "</span>";
+			timers += "<span class='holo-button pump' style='display:none' id=\""+ timer + "Timer\" type=\"submit\" "
+					+ "value=\""+ timer + "Timer\" onclick='setTimer(this, \""+ timer + "\"); waitForMsg(); return false;'>"
+					+ "</span>";
+			timers += "<span class='holo-button pump' id=\""+ timer + "\" type=\"submit\" "
+					+ "value=\""+ timer + "Timer\" onclick='resetTimer(this, \""+ timer + "\"); waitForMsg(); return false;'>"
+					+ "Reset "+ timer
+					+ "</span></div><br /><br />";
+		}
 		
 		
 		timers += "</div>" // panel body

@@ -47,6 +47,7 @@ public final class LaunchControl {
 	public static List<PID> pidList = new ArrayList<PID>(); 
 	public static List<Temp> tempList = new ArrayList<Temp>();
 	public static List<Pump> pumpList = new ArrayList<Pump>();
+	public static List<String> timerList = new ArrayList<String>(); 
 	
 	/* Temperature and PID threads */
 	private List<Thread> tempThreads = new ArrayList<Thread>();
@@ -374,6 +375,9 @@ public final class LaunchControl {
 			} else if(temp.equalsIgnoreCase("pumps")){
 				// parse the pump config
 				parsePumps(config, temp);
+			} else if(temp.equalsIgnoreCase("timers")){
+				// parse the pump config
+				parseTimers(config, temp);
 			} else {
 				parseDevice(config, temp);
 			}
@@ -471,6 +475,28 @@ public final class LaunchControl {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	/*****
+	 * Parse the list of timers
+	 * @param config The config Parser object to use
+	 * @param input the name of the section to parse
+	 */
+	private void parseTimers(ConfigParser config, String input) {
+		try {
+			timerList = config.options(input);
+			// TODO: Add in countup/countdown detection
+			
+		} catch (NoSectionException nse) {
+			// we shouldn't get here!
+			nse.printStackTrace();
+		} /*catch (NoOptionException e) {
+			// We shouldn't get here!
+			e.printStackTrace();
+		} catch (InterpolationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
 	}
 	
 	// parse each section
