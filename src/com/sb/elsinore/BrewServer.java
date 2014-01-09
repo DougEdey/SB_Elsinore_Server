@@ -56,11 +56,12 @@ public class BrewServer extends NanoHTTPD {
     }};
 
     
-	public BrewServer () throws IOException{
+	public BrewServer (int port) throws IOException{
 
-		
+		super(port);
 		// just serve up on port 8080 for now
-		super(8080);
+		System.out.println("Launching on port " + port);
+		
 		
 		//setup the logging handlers
         Handler[] lH = log.getHandlers();

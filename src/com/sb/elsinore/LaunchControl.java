@@ -56,6 +56,8 @@ public final class LaunchControl {
 	/* ConfigParser details, need to investigate moving to a better ini parser */
 	private static ConfigParser config = null;
 	private static String configFileName = "rpibrew.cfg";
+	private static ServerRunner sRunner = null;
+	public static int port = 8080;
 	
 	/* Volume Units here are to be used in the future for conversion */
 	public final class volumeUnits {
@@ -108,6 +110,16 @@ public final class LaunchControl {
 				if (startupCommand.hasOption("gpio_definitions")) {
 					System.setProperty("gpio_definitions", startupCommand.getOptionValue("gpio_definitions"));
 				}
+				
+				if (startupCommand.hasOption("port")) {
+					try {
+						int t = Integer.parseInt(startupCommand.getOptionValue("port"));
+						port = t;
+					} catch (NumberFormatException e) {
+						System.out.println("Couldn't parse port value as an integer: " + startupCommand.getOptionValue("port"));
+						System.exit(-1);
+					}
+				}
 			} catch (ParseException e) {
 				System.out.println("Error when parsing the command line");
 				e.printStackTrace();
@@ -126,6 +138,7 @@ public final class LaunchControl {
 		startupOptions.addOption("help", false, "Show this help");
 		startupOptions.addOption("owfs", false, "Setup OWFS connection for configuration on startup");
 		startupOptions.addOption("config", true, "Specify the name of the configuration file");
+		startupOptions.addOption("port", true, "Specify the port to run the webserver on");
 		startupOptions.addOption("gpio_definitions", false, "specify the GPIO Definitions file if you're on Kernel 3.8 or above");
 	}
 	
@@ -149,7 +162,8 @@ public final class LaunchControl {
 
 		// Debug info before launching the BrewServer itself
 		BrewServer.log.log(Level.INFO, "CONFIG READ COMPLETED***********");
-		ServerRunner.run(BrewServer.class);
+		sRunner = new ServerRunner(BrewServer.class, port);
+		sRunner.run();
 		
 		// iterate the list of Threads to kick off any PIDs
 		Iterator<Temp> iterator = tempList.iterator();
@@ -813,7 +827,7 @@ public final class LaunchControl {
 	 */
 	private void createConfig() {
 		
-		if (startupCommand.hasOption("owfs")) {
+		if (startupCommand != null && startupCommand.hasOption("owfs")) {
 			createOWFS();
 		}
 		
