@@ -21,10 +21,11 @@ public class ServerRunner implements Runnable {
             System.exit(-1);
         }
 
-        System.out.println("Server started, Hit Enter to stop.\n");
+        System.out.println("Server started, kill to stop.\n");
 
         try {
-            System.in.read();
+        	while (true)
+        		System.in.read();
         } catch (Throwable ignored) {
         }
 

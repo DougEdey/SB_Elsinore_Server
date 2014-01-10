@@ -354,7 +354,7 @@ public class BrewServer extends NanoHTTPD {
                 if (dot >= 0)
                     mime = MIME_TYPES.get(f.getCanonicalPath().substring(dot + 1).toLowerCase());
                 if (mime == null)
-                    mime = NanoHTTPD.MIME_DEFAULT_BINARY;
+                    mime = NanoHTTPD.MIME_HTML;
 
                 // Calculate etag
                 String etag = Integer.toHexString((f.getAbsolutePath() + f.lastModified() + "" + f.length()).hashCode());
