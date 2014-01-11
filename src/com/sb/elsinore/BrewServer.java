@@ -74,7 +74,7 @@ public class BrewServer extends NanoHTTPD {
                 
                 // default level, this can be changed
                 try {
-                	log.info("System property: "+System.getProperty("debug"));
+                	log.info("Debug System property: "+System.getProperty("debug"));
                 	if (System.getProperty("debug").equalsIgnoreCase("INFO")) {
                 	
                 		log.setLevel(Level.INFO);
@@ -100,7 +100,7 @@ public class BrewServer extends NanoHTTPD {
 		BrewServer.log.info("URL : " + uri + " method: " + method);
 		if(method == Method.POST) {
 			// parms contains the properties here
-			if(uri.toLowerCase().contains("updatepid")) {
+			if(uri.toLowerCase().equals("/updatepid")) {
 				// parse the values if possible
 
 				String temp, mode = "off";
@@ -190,7 +190,7 @@ public class BrewServer extends NanoHTTPD {
 				return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated PID" );
 			}
 
-			if(uri.toLowerCase().contains("updateday")) {
+			if(uri.toLowerCase().equals("/updateday")) {
 				// we're storing the data for the brew day
 				String tempDateStamp;
 
@@ -219,8 +219,8 @@ public class BrewServer extends NanoHTTPD {
 
 				return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated Brewday" );
 			}
-
-			if(uri.toLowerCase().contains("updatepump")) {
+			
+			if(uri.toLowerCase().equals("/updatepump")) {
 				if(parms.containsKey("toggle")) {
 					String pumpname = parms.get("toggle");
 					Pump tempPump = LaunchControl.findPump(pumpname);
@@ -230,22 +230,37 @@ public class BrewServer extends NanoHTTPD {
 						} else {
 							tempPump.turnOn();
 						}
+						return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated Pump" );
 					} else {
 						log.warning("Invalid pump: " + pumpname + " provided.");
 					}
 				}
 			}
+			
+			if(uri.toLowerCase().equals("/toggleaux")) {
+				if(parms.containsKey("toggle")) {
+					String pidname = parms.get("toggle");
+					PID tempPID = LaunchControl.findPID(pidname);
+					if (tempPID != null) {
+						tempPID.toggleAux();
+						return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated Aux for " + pidname );
+					} else {
+						log.warning("Invalid PID: " + pidname + " provided.");
+					}
+				}
+			}
 		}
-		if(uri.toLowerCase().contains("getstatus")) {
+		
+		if(uri.toLowerCase().equals("/getstatus")) {
 			
 			return new NanoHTTPD.Response( Status.OK, MIME_HTML, LaunchControl.getJSONStatus() );
 		}
 				
-		if (uri.toLowerCase().contains("control")) {
+		if (uri.toLowerCase().equals("/controller")) {
 			return new NanoHTTPD.Response( Status.OK, MIME_HTML, LaunchControl.getControlPage());
 		}
 		
-		if (uri.toLowerCase().contains("timers")) {
+		if (uri.toLowerCase().equals("/timers")) {
 			return new NanoHTTPD.Response( Status.OK, MIME_HTML, LaunchControl.getBrewDay().brewDayStatus().toString());
 		}
 		
@@ -253,6 +268,7 @@ public class BrewServer extends NanoHTTPD {
             return serveFile(uri, header, rootDir);
 		}
 
+		BrewServer.log.info("Invalid URI: " + uri);
 		return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Unrecognized URL");
 	}
 

@@ -8,6 +8,7 @@ import java.util.Iterator;
 import com.sb.elsinore.BrewDay;
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
+import com.sb.elsinore.PID;
 import com.sb.elsinore.Pump;
 
 public class ServeHTML {
@@ -174,6 +175,8 @@ public class ServeHTML {
 					"</div>" + lineSep;
 				
 			if(type.equals("PID")) {
+				PID tempPID = LaunchControl.findPID(device);
+				
 				controller += "<div id=\"" + device + "-controls\" class='controller'>" + lineSep + 	
 					"<div id=\"" + device + "-gage\" class='gage'></div>" + lineSep +
 					"<form id=\""+ device + "-form\" class=\"controlPanelForm\" >" + lineSep +
@@ -240,8 +243,14 @@ public class ServeHTML {
 						"</tr>" + lineSep +	
 					"</table>" + lineSep +
 
-					"<div class='holo-buttons'>" + lineSep +
-                    "<button class='holo-button modeclass' id=\"sendcommand\" type=\"submit\" value=\"SubmitCommand\" onClick='submitForm(this.form); waitForMsg(); return false;'>Send Command</button>" + lineSep +
+					"<div class='holo-buttons'>" + lineSep;
+					
+					if (tempPID.hasAux()) {
+						controller += "<br/><button class='holo-button pump' id=\"" + device + "Aux\" onClick='toggleAux(\"" + device + "\"), waitForMsg(); return false;' >" + lineSep;
+						controller += "Aux ON</button><br />";
+					}
+				
+                    controller += "<button class='holo-button modeclass' id=\"sendcommand\" type=\"submit\" value=\"SubmitCommand\" onClick='submitForm(this.form); waitForMsg(); return false;'>Send Command</button>" + lineSep +
                     "</div>" + lineSep +
 					"</form>" + lineSep +
 					"</div>" + lineSep; // finish off the Controller inputs

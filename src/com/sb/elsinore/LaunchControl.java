@@ -120,6 +120,11 @@ public final class LaunchControl {
 						System.exit(-1);
 					}
 				}
+				
+				if (startupCommand.hasOption("d")) {
+					System.setProperty("debug", "INFO");
+				}
+				
 			} catch (ParseException e) {
 				System.out.println("Error when parsing the command line");
 				e.printStackTrace();
@@ -135,11 +140,15 @@ public final class LaunchControl {
 	private static void createOptions() {
 		startupOptions = new Options();
 		
-		startupOptions.addOption("help", false, "Show this help");
-		startupOptions.addOption("owfs", false, "Setup OWFS connection for configuration on startup");
-		startupOptions.addOption("config", true, "Specify the name of the configuration file");
-		startupOptions.addOption("port", true, "Specify the port to run the webserver on");
-		startupOptions.addOption("gpio_definitions", false, "specify the GPIO Definitions file if you're on Kernel 3.8 or above");
+		startupOptions.addOption("h", "help", false, "Show this help");
+		
+		startupOptions.addOption("d", "debug", false, "Enable debug output");
+		
+		startupOptions.addOption("o", "owfs", false, "Setup OWFS connection for configuration on startup");
+		startupOptions.addOption("c", "config", true, "Specify the name of the configuration file");
+		startupOptions.addOption("p", "port", true, "Specify the port to run the webserver on");
+		
+		startupOptions.addOption("g", "gpio_definitions", false, "specify the GPIO Definitions file if you're on Kernel 3.8 or above");
 	}
 	
 	/* Constructor */
@@ -516,10 +525,10 @@ public final class LaunchControl {
 	// parse each section
 	private void parseDevice(ConfigParser config, String input) {
 		String probe = null;
-		String gpio = "";
+		String gpio = null;
 		String volumeUnits = "Litres";
 		String dsAddress = null, dsOffset = null;
-		String cutoffTemp = null;
+		String cutoffTemp = null, auxPin = null;
 		HashMap<Double, Double> volumeArray = new HashMap<Double, Double>();
 		double duty = 0.0, cycle = 0.0, setpoint = 0.0, p = 0.0, i = 0.0, d = 0.0;
 		int analoguePin = -1;
@@ -554,6 +563,10 @@ public final class LaunchControl {
 				if (config.hasOption(input, "cutoff")) {
 					cutoffTemp = config.get(input, "cutoff");
 				}
+				if (config.hasOption(input, "aux")) {
+					auxPin = config.get(input, "aux");
+				}
+				
 			}
 			
 			// Check to see if there is a volume section
@@ -638,13 +651,20 @@ public final class LaunchControl {
 			tempThreads.add(tThread);
 			tThread.start();
 
-			if(!gpio.equals("")) {
+			if(gpio != null && !gpio.equals("")) {
 				BrewServer.log.info("Adding PID with GPIO: " + gpio);
 				PID tPID = new PID(tTemp, input, duty, cycle, p, i, d, gpio);
+				
+				if (auxPin != null && !auxPin.equals("")) {
+					tPID.setAux(auxPin);
+				}
+				
 				pidList.add(tPID);
 				Thread pThread = new Thread(tPID);
 				pidThreads.add(pThread);
 				pThread.start();
+				
+				
 			}
 
 			if (analoguePin != -1 ) {

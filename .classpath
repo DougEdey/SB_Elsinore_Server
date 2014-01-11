@@ -16,7 +16,7 @@
 	<classpathentry exported="true" kind="lib" path="libs/ini4j-0.5.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/joda-time-2.2.jar"/>
 	<classpathentry kind="lib" path="libs/json-simple-1.1.1.jar"/>
-	<classpathentry kind="lib" path="libs/jGPIO.jar"/>
+	<classpathentry kind="lib" path="libs/jGPIO.jar" sourcepath="/jGPIO"/>
 	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>

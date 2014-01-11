@@ -1,4 +1,7 @@
 package com.sb.elsinore;
+import jGPIO.InvalidGPIOException;
+import jGPIO.OutPin;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
@@ -6,10 +9,11 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-final class PID implements Runnable {
+public final class PID implements Runnable {
 	private OutputControl OC = null;
 
 	// inner class to hold the settings
@@ -47,6 +51,12 @@ final class PID implements Runnable {
 		fName = aName;
 		fTemp = aTemp;
 		
+		fGPIO = detectGPIO(GPIO);
+		
+	}
+	
+	
+	private String detectGPIO (String GPIO) {
 		// Determine what kind of GPIO Mapping we have
 		Pattern pinPattern = Pattern.compile("(GPIO)([0-9])_([0-9]*)");
 		Pattern pinPatternAlt = Pattern.compile("(GPIO)?([0-9]*)");
@@ -58,21 +68,19 @@ final class PID implements Runnable {
 		if(pinMatcher.groupCount() > 0) {
 			// Beagleboard style input
 			BrewServer.log.info("Matched GPIO pinout for Beagleboard: " + GPIO + ". OS: " + System.getProperty("os.level"));
-			fGPIO = GPIO;
+			return GPIO;
 		} else {
 			pinMatcher = pinPatternAlt.matcher(GPIO);
 			if(pinMatcher.groupCount() > 0) {
 				BrewServer.log.info("Direct GPIO Pinout detected. OS: " + System.getProperty("os.level"));
-				fGPIO = pinMatcher.group(pinMatcher.groupCount());
+				// The last group (should be the second group) gives us the GPIO number
+				return pinMatcher.group(pinMatcher.groupCount());
 			} else {
 				BrewServer.log.info("Could not match the GPIO!");
-				fGPIO = "";
+				return "";
 			}
 		}
-		
-		
 	}
-	
 	/******
 	 * Update the current values of the PID
 	 * @param m String indicating mode (manual, auto, off)
@@ -126,6 +134,19 @@ final class PID implements Runnable {
 			outputThread.start();
 		} else {
 			return;
+		}
+		
+		// Detect an Auxilliary output
+		if (auxGPIO != null || !auxGPIO.equals("")) {
+			try {
+				auxPin = new OutPin(auxGPIO);
+			} catch (InvalidGPIOException e) {
+				BrewServer.log.log(Level.SEVERE, "Couldn't parse " + auxGPIO + " as a valid GPIO");
+				System.exit(-1);
+			} catch (RuntimeException e) {
+				BrewServer.log.log(Level.SEVERE, "Couldn't setup " + auxGPIO + " as a valid GPIO");
+				System.exit(-1);
+			}
 		}
 
 		// Main loop
@@ -202,6 +223,36 @@ final class PID implements Runnable {
 		heatSetting.set_point = temp;
 	}
 
+	/*******
+	 * set an auxilliary manual GPIO (for dual element systems)
+	 * @param gpio
+	 */
+	public void setAux(String gpio) {
+		this.auxGPIO = detectGPIO(gpio);
+		
+		if (auxGPIO == null || auxGPIO.equals("")) {
+			BrewServer.log.log(Level.WARNING, "Could not detect GPIO as valid: " + gpio);
+		}
+		
+	}
+	
+	public void toggleAux() {
+		// Flip the aux pin value
+		if (auxPin != null) {
+			// If the value if "1" we set it to false
+			// If the value is not "1" we set it to true
+			BrewServer.log.info("Aux Pin is being set to: "  + !auxPin.getValue().equals("1"));
+			auxPin.setValue(!auxPin.getValue().equals("1"));
+		} else {
+			BrewServer.log.info("Aux Pin is not set for " + this.fName);
+		}
+	}
+	
+	public boolean hasAux() {
+		return (auxPin != null);
+	}
+	
+	
 	/******
 	 * Set the proportional value
 	 * @param p
@@ -344,6 +395,7 @@ final class PID implements Runnable {
 	public Temp fTemp;
 	private double fTemp_F, fTemp_C;
 	private String fGPIO;
+	private String auxGPIO = null;
 	private List<Double> temp_list = new ArrayList<Double>();
 	
 	private String mode;
@@ -351,6 +403,7 @@ final class PID implements Runnable {
 	private long currentTime = System.currentTimeMillis();
 	public Settings heatSetting;
 	public Settings coldSetting;
+	private OutPin auxPin = null;
 
 	// Temp values for PID calculation
 	double errorFactor = 0.0;
@@ -411,6 +464,10 @@ final class PID implements Runnable {
 		if(OC != null) {
 			OC.shutdown();
 		}
+		
+		if (auxPin != null) {
+			auxPin.close();
+		}
 	}
 
 	// set the cool values
@@ -451,6 +508,11 @@ final class PID implements Runnable {
 		statusMap.put("i", getI());
 		statusMap.put("d", getD());
 		statusMap.put("status", getStatus());
+		
+		if(auxPin != null) {
+			// This value should be cached, but I don't trust someone to hit it with a different application
+			statusMap.put("auxStatus", auxPin.getValue());
+		}
 		
 		return statusMap;
 	}

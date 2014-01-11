@@ -28,8 +28,10 @@ function waitForMsg(){
 						//enable or disable the pump as required
 						if (pumpStatus) {
 							jQuery('button[id^="' + pumpName + '"]')[0].style.background="red";
+							jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" ON";
 						} else {
 							jQuery('button[id^="' + pumpName + '"]')[0].style.background="#666666";
+							jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" OFF";
 						}
 					})
 					return true;
@@ -105,6 +107,17 @@ function waitForMsg(){
 				jQuery('input[name="'+vessel+'-p"]').val(val.p);
 				jQuery('input[name="'+vessel+'-i"]').val(val.i);
 				jQuery('input[name="'+vessel+'-d"]').val(val.k);
+				
+				// Aux Mode check
+				if ("auxStatus" in val) {
+					if (val.auxStatus == "on") {
+						jQuery("button[id='" + vessel + "Aux'")[0].style.background = "red";
+						jQuery("button[id='" + vessel + "Aux'")[0].innerHTML = "Aux ON"
+					} else {
+						jQuery("button[id='" + vessel + "Aux'")[0].style.background = "#666666";
+						jQuery("button[id='" + vessel + "Aux'")[0].innerHTML = "Aux OFF"
+					}
+				}
 				
 				window.disableUpdates = 0;
 			})
@@ -306,4 +319,15 @@ function checkTimer(val, stage) {
 	} else {
 		$("#"+stage+"Timer").hide();
 	}
+}
+
+function toggleAux(PIDName) {
+	 $.ajax({
+		 url: 'toggleAux',
+			type: 'POST',
+			data: "toggle=" + PIDName,
+		success: function(data) {data = null}
+	});	
+	window.disableUpdates = 0;
+	return false;
 }
