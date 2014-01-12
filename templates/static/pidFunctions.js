@@ -110,7 +110,7 @@ function waitForMsg(){
 				
 				// Aux Mode check
 				if ("auxStatus" in val) {
-					if (val.auxStatus == "on") {
+					if (val.auxStatus == "on" || val.auxStatus == "1") {
 						jQuery("button[id='" + vessel + "Aux'")[0].style.background = "red";
 						jQuery("button[id='" + vessel + "Aux'")[0].innerHTML = "Aux ON"
 					} else {
