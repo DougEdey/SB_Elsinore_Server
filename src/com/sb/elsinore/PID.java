@@ -137,7 +137,7 @@ public final class PID implements Runnable {
 		}
 		
 		// Detect an Auxilliary output
-		if (auxGPIO != null || !auxGPIO.equals("")) {
+		if (auxGPIO != null && !auxGPIO.equals("")) {
 			try {
 				auxPin = new OutPin(auxGPIO);
 			} catch (InvalidGPIOException e) {
