@@ -134,7 +134,11 @@ The scale can be changed between C or F to use Celsius or Fahrenheit on the syst
 Control Interface
 ============
 
-Visit <ip of your system>:8080/control to access the webUI, which works on mobiles too:
+Visit 
+```
+<ip of your system>:8080/controller
+```
+to access the webUI, which works on mobiles too:
 
 ![Browser Layout](http://i.imgur.com/j59BcFZ.png)
 
