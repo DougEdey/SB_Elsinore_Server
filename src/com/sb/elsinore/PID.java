@@ -103,7 +103,7 @@ public final class PID implements Runnable {
 		heatSetting.integral = i;
 		heatSetting.derivative = d;
 		BrewServer.log.info(heatSetting.proportional + ": " + heatSetting.integral + ": " + heatSetting.derivative);	
-		LaunchControl.savePID(this.fName, heatSetting);
+		LaunchControl.savePID(this.fName, heatSetting, fGPIO, auxGPIO);
 		return;
 	}
 
@@ -309,6 +309,10 @@ public final class PID implements Runnable {
 		return fGPIO;
 	}
 
+	public String getAuxGPIO() {
+		return auxGPIO;
+	}
+	
 	/******
 	 * Get the current duty cycle percentage
 	 * @return
@@ -461,6 +465,10 @@ public final class PID implements Runnable {
 	 * Used as a shutdown hook to close off everything
 	 */
 	public void shutdown() {
+		if (this.getName() != null && !getName().equals("")) {
+			LaunchControl.savePID(this.getName(), heatSetting, fGPIO, auxGPIO);
+		}
+		
 		if(OC != null) {
 			OC.shutdown();
 		}

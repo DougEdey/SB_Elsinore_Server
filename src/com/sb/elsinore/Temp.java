@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,8 +25,15 @@ public final class Temp implements Runnable {
 	final String RPI_SYSTEM_TEMP = "/sys/class/thermal/thermal_zone0/temp";
 	final Pattern TEMP_REGEXP = Pattern.compile("(-?)(\\d{1,3})(C|F)");
 	
+	public void save() {
+		if (name != null && !name.equals("")) {
+			LaunchControl.addTempToConfigStatic(probeName, name);
+		}
+	}
+	
 	public Temp (String input, String aName ) {
 	
+		
 		BrewServer.log.info("Adding" + aName);
 		if (input.equalsIgnoreCase("system")) {
 			File tempFile = new File(RPI_SYSTEM_TEMP);
@@ -150,7 +158,7 @@ public final class Temp implements Runnable {
 	public String volumeAddress = null;
 	public String volumeOffset = null;
 	public int volumeAIN = -1;
-	public HashMap<Double, Double> volumeBase = null;
+	public ConcurrentHashMap<Double, Double> volumeBase = null;
 	
 	private double currentVolume = 0;
 	private String volumeUnit = null; 
@@ -574,7 +582,7 @@ public final class Temp implements Runnable {
 	public void addVolumeMeasurement(Double key, Double value) {
 		BrewServer.log.info("Adding " + key + " with value " + value);
 		if (volumeBase == null ) {
-			volumeBase = new HashMap<Double, Double>();
+			volumeBase = new ConcurrentHashMap<Double, Double>();
 		}
 		volumeBase.put(key, value);
 	}
