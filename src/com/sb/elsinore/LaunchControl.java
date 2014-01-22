@@ -1486,6 +1486,25 @@ public final class LaunchControl {
 			}
 		}
 		
+		// Save the timers
+		NodeList nList = configDoc.getElementsByTagName("timers");
+		Element timersElement = null;
+		
+		if (nList.getLength() == 0 ) {
+			timersElement = configDoc.createElement("timers");
+			configDoc.getDocumentElement().appendChild(timersElement);
+		} else {
+			timersElement = (Element) nList.item(0);
+		}
+		
+		for (String t : timerList) {
+			if (timersElement.getElementsByTagName(t).getLength() == 0) {
+				// No timer by this name
+				Element temp = configDoc.createElement(t);
+				timersElement.appendChild(temp);
+			}
+		}
+		
 	}
 	
 	/******
