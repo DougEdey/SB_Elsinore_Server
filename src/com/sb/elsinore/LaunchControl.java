@@ -542,11 +542,15 @@ public final class LaunchControl {
 			tempNodes = config.getElementsByTagName("owfs_server");
 			if (tempNodes.getLength() == 1){
 				owfsServer = tempNodes.item(0).getTextContent();
+			} else {
+				owfsServer = null;
 			}
 			
 			tempNodes = config.getElementsByTagName("owfs_port");
 			if (tempNodes.getLength() == 1){
 				owfsPort = Integer.parseInt(tempNodes.item(0).getTextContent());
+			} else {
+				owfsPort = -1;
 			}
 			
 			if (owfsServer != null && owfsPort != -1) {
@@ -1087,28 +1091,37 @@ public final class LaunchControl {
 			generalElement = (Element) generalList.item(0);
 		}
 		
-		NodeList tList = configDoc.getElementsByTagName("owfs_server");
+		
+		NodeList tList = null;
 		Element tempElement = null;
 		
-		if (tList.getLength() == 0) {
-			tempElement = configDoc.createElement("owfs_server");
-		} else {
-			tempElement = (Element) tList.item(0);
-		}
-		tempElement.setTextContent(owfsServer);
-		generalElement.appendChild(tempElement);
-		
-		tList = configDoc.getElementsByTagName("owfs_port");
-		tempElement = null;
-		
-		if (tList.getLength() == 0) {
-			tempElement = configDoc.createElement("owfs_port");
-		} else {
-			tempElement = (Element) tList.item(0);
+		if (owfsServer != null) {
+			tList = configDoc.getElementsByTagName("owfs_server");
+			tempElement = null;
+			
+			if (tList.getLength() == 0) {
+				tempElement = configDoc.createElement("owfs_server");
+			} else {
+				tempElement = (Element) tList.item(0);
+			}
+			tempElement.setTextContent(owfsServer);
+			generalElement.appendChild(tempElement);
 		}
 		
-		tempElement.setTextContent(Integer.toString(owfsPort));
-		generalElement.appendChild(tempElement);
+		if (owfsPort != -1) {
+				
+			tList = configDoc.getElementsByTagName("owfs_port");
+			tempElement = null;
+			
+			if (tList.getLength() == 0) {
+				tempElement = configDoc.createElement("owfs_port");
+			} else {
+				tempElement = (Element) tList.item(0);
+			}
+			
+			tempElement.setTextContent(Integer.toString(owfsPort));
+			generalElement.appendChild(tempElement);
+		}
 		
 		try {
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
