@@ -67,6 +67,7 @@ import Cosm.Feed;
 import Cosm.Unit;
 
 import com.sb.common.ServeHTML;
+import javax.xml.validation.Schema;
 
 public final class LaunchControl {
 	/* List of PIDs, Temperatures, and Pump objects */
@@ -84,7 +85,6 @@ public final class LaunchControl {
 	private static Document configDoc = null;
 	
 	private static String configFileName = "elsinore.cfg";
-	private static String altConfigFileName = "rpibrew.cfg";
 	
 	private static ServerRunner sRunner = null;
 	public static int port = 8080;
@@ -108,7 +108,7 @@ public final class LaunchControl {
 	public static OwfsConnection owfsConnection = null;
 	public static boolean useOWFS = false;
 	private static String owfsServer = "localhost";
-	private static int owfsPort = 4304;
+	private static Integer owfsPort = 4304;
 	
 	private static Options startupOptions = null;
 	private static CommandLine startupCommand = null;
@@ -423,6 +423,13 @@ public final class LaunchControl {
 			initializeConfig();
 		}
 		
+		if (configCfg == null) {
+			System.out.println("CFG IS NULL");
+		}
+		if (configDoc == null) {
+			System.out.println("DOC IS NULL");
+		}
+		
 		if (configDoc == null && configCfg == null) {
 			createConfig();
 			return;
@@ -506,54 +513,65 @@ public final class LaunchControl {
 	}
 
 	private void parseGeneral(Element config) {
+		if (config == null) {
+			return;
+		}
+		
 		try {
-			NodeList tempNodes = config.getElementsByTagName("scale");
-			if (tempNodes.getLength() == 1) {
-				scale = tempNodes.item(0).getTextContent();
+			
+			Element tElement = getFirstElement(config, "scale"); 
+			if (tElement != null) {
+				scale = tElement.getTextContent();
 			}
 			
 			String cosmAPIKey = null;
-			int cosmFeed = -1;
+			Integer cosmFeed = null;
 			
-			tempNodes = config.getElementsByTagName("cosm");
-			if (tempNodes.getLength() == 1) {
-				cosmAPIKey = tempNodes.item(0).getTextContent();
+			tElement = getFirstElement(config, "cosm");
+			if (tElement != null) {
+				cosmAPIKey = tElement.getTextContent();
+			}	
+			try {
+				cosmFeed = Integer.parseInt(getFirstElement(config, "cosm_feed").getTextContent());
+			} catch (NumberFormatException e) {
+				cosmFeed = null;
+			} catch (NullPointerException ne) {
+				cosmFeed = null;
 			}
 			
-			tempNodes = config.getElementsByTagName("cosm_feed");
-			if (tempNodes.getLength() == 1) {
-				cosmFeed = Integer.parseInt(tempNodes.item(0).getTextContent());
+			if (cosmAPIKey == null) {
+				try {
+					cosmAPIKey = getFirstElement(config, "pachube").getTextContent();
+				} catch (NullPointerException e)  {
+					cosmAPIKey = null;
+				}
 			}
 			
-			tempNodes = config.getElementsByTagName("pachube");
-			if (tempNodes.getLength() == 1) {
-				cosmAPIKey = tempNodes.item(0).getTextContent();
+			if (cosmFeed == null) {
+				try {
+					cosmFeed = Integer.parseInt(getFirstElement(config, "cosm_feed").getTextContent());
+				} catch (NumberFormatException e) {
+					cosmFeed = null;
+				} catch (NullPointerException e)  {
+					cosmFeed = null;
+				}
+				
 			}
 			
-			tempNodes = config.getElementsByTagName("pachube_feed");
-			if (tempNodes.getLength() == 1) {
-				cosmFeed = Integer.parseInt(tempNodes.item(0).getTextContent());
-			}
-			
-			if (cosmAPIKey != null && cosmFeed != -1) {
+			if (cosmAPIKey != null && cosmFeed != null) {
 				startCosm(cosmAPIKey, cosmFeed);
 			}
-			
-			tempNodes = config.getElementsByTagName("owfs_server");
-			if (tempNodes.getLength() == 1){
-				owfsServer = tempNodes.item(0).getTextContent();
-			} else {
+			try {
+				owfsServer = getFirstElement(config, "owfs_server").getTextContent();
+				owfsPort = Integer.parseInt(getFirstElement(config, "owfs_port").getTextContent());
+			} catch (NullPointerException e)  {
 				owfsServer = null;
+				owfsPort = null;
 			}
 			
-			tempNodes = config.getElementsByTagName("owfs_port");
-			if (tempNodes.getLength() == 1){
-				owfsPort = Integer.parseInt(tempNodes.item(0).getTextContent());
-			} else {
-				owfsPort = -1;
-			}
 			
-			if (owfsServer != null && owfsPort != -1) {
+			
+			if (owfsServer != null && owfsPort != null) {
 				BrewServer.log.log(Level.INFO, "Setup OWFS at "+  owfsServer + ":" + owfsPort);
 				
 				setupOWFS();
@@ -596,6 +614,10 @@ public final class LaunchControl {
 	}
 	
 	private void parsePumps(Element config) {
+		if (config == null) {
+			return;
+		}
+		
 		NodeList pumps = config.getChildNodes();
 		
 		for(int i = 0; i < pumps.getLength(); i++) {
@@ -619,6 +641,10 @@ public final class LaunchControl {
 	 * @param input the name of the section to parse
 	 */
 	private void parseTimers(ConfigParser config, String input) {
+		if (config == null) {
+			return;
+		}
+		
 		try {
 			timerList = config.options(input);
 			// TODO: Add in countup/countdown detection
@@ -630,6 +656,9 @@ public final class LaunchControl {
 	}
 	
 	private void parseTimers(Element config) {
+		if (config == null) {
+			return;
+		}
 		NodeList timers = config.getChildNodes();
 		timerList = new ArrayList<String>();
 		
@@ -927,17 +956,14 @@ public final class LaunchControl {
 				}
 				
 				// We should be good to go now
-				NodeList pumpElementList = configDoc.getDocumentElement().getElementsByTagName("pumps");
+				Element pumpElement = getFirstElement(null, "pumps");
 				
-				if (pumpElementList.getLength() == 0) {
-					Element pump = configDoc.createElement("pumps");
-					configDoc.getDocumentElement().appendChild(pump);
-					pumpElementList = configDoc.getDocumentElement().getElementsByTagName("pumps");
+				if (pumpElement == null) {
+					pumpElement = addNewElement(null, "pumps");
 				}
 				
-				Element pumpElement = (Element) pumpElementList.item(0);
+				Element newPump = addNewElement(pumpElement, inputBroken[1]);
 				
-				Element newPump = configDoc.createElement(inputBroken[1]);
 				newPump.appendChild(configDoc.createTextNode(inputBroken[2]));
 				pumpElement.appendChild(newPump);
 				
@@ -1052,6 +1078,7 @@ public final class LaunchControl {
 		
 		try {
 			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			
 			Transformer transformer = transformerFactory.newTransformer();
 			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
@@ -1082,45 +1109,32 @@ public final class LaunchControl {
 	static private void saveConfigFile() {
 		File configOut = new File(configFileName);
 		
-		NodeList generalList = configDoc.getElementsByTagName("general");
-		Element generalElement = null;
-		if (generalList.getLength() == 0) {
-			generalElement = configDoc.createElement("general");
-			configDoc.getDocumentElement().appendChild(generalElement);
-		} else {
-			generalElement = (Element) generalList.item(0);
+		Element generalElement = getFirstElement(null, "general");
+		if (generalElement == null) {
+			generalElement = addNewElement(null, "general");
 		}
-		
 		
 		NodeList tList = null;
 		Element tempElement = null;
 		
 		if (owfsServer != null) {
-			tList = configDoc.getElementsByTagName("owfs_server");
-			tempElement = null;
+			tempElement = getFirstElement(generalElement, "owfs_server");
 			
-			if (tList.getLength() == 0) {
-				tempElement = configDoc.createElement("owfs_server");
-			} else {
-				tempElement = (Element) tList.item(0);
-			}
+			if (tempElement == null) {
+				tempElement = addNewElement(generalElement, "owfs_server");
+			} 
+			
 			tempElement.setTextContent(owfsServer);
-			generalElement.appendChild(tempElement);
 		}
 		
-		if (owfsPort != -1) {
-				
-			tList = configDoc.getElementsByTagName("owfs_port");
-			tempElement = null;
+		if (owfsPort != null) {
+			tempElement = getFirstElement(generalElement, "owfs_port");
 			
-			if (tList.getLength() == 0) {
-				tempElement = configDoc.createElement("owfs_port");
-			} else {
-				tempElement = (Element) tList.item(0);
-			}
+			if (tempElement == null) {
+				tempElement = addNewElement(generalElement, "owfs_port");
+			} 
 			
 			tempElement.setTextContent(Integer.toString(owfsPort));
-			generalElement.appendChild(tempElement);
 		}
 		
 		try {
@@ -1207,22 +1221,16 @@ public final class LaunchControl {
 			initializeConfig();
 		}
 		
-		NodeList generalList = configDoc.getElementsByTagName("general");
-		
-		if (generalList.getLength() == 0) {
-			configDoc.getDocumentElement().appendChild(configDoc.createElement("general"));
-			generalList = configDoc.getElementsByTagName("general");
+		Element generalElement = getFirstElement(null, "general");
+		if (generalElement == null) {
+			generalElement = addNewElement(null, "general");
 		}
 	
-		Element generalElement = (Element) generalList.item(0);
-		
-		Element tempElement = configDoc.createElement("owfs_server");
-		generalElement.appendChild(tempElement);
+		Element tempElement = addNewElement(null, "owfs_server");
 		tempElement.setTextContent(owfsServer);
 		
-		tempElement = configDoc.createElement("owfs_port");
+		tempElement = addNewElement(null, "owfs_port");
 		tempElement.setTextContent(Integer.toString(owfsPort));
-		generalElement.appendChild(tempElement);
 		
 		// Create the connection
 		setupOWFS();
@@ -1478,7 +1486,7 @@ public final class LaunchControl {
 				if (n.getName().equals("") ) {
 					continue;
 				} else {
-					System.out.println("Saving " + n.getName());
+					System.out.println("Saving PID " + n.getName());
 				
 					savePID(n.getName(), n.heatSetting, n.getGPIO(), n.getAuxGPIO());
 					
@@ -1500,21 +1508,18 @@ public final class LaunchControl {
 		}
 		
 		// Save the timers
-		NodeList nList = configDoc.getElementsByTagName("timers");
-		Element timersElement = null;
+		Element timersElement = getFirstElement(null, "timers");
 		
-		if (nList.getLength() == 0 ) {
-			timersElement = configDoc.createElement("timers");
-			configDoc.getDocumentElement().appendChild(timersElement);
-		} else {
-			timersElement = (Element) nList.item(0);
+		if (timersElement == null) {
+			timersElement = addNewElement(null, "timers");
 		}
 		
 		for (String t : timerList) {
-			if (timersElement.getElementsByTagName(t).getLength() == 0) {
+			
+			if (getFirstElementByXpath(null, "/elsinore/timers/timer[@id='" + t + "']") == null) {
 				// No timer by this name
-				Element temp = configDoc.createElement(t);
-				timersElement.appendChild(temp);
+				Element newTimer = addNewElement(timersElement, "timer");
+				newTimer.setAttribute("id", t);
 			}
 		}
 		
@@ -1532,131 +1537,33 @@ public final class LaunchControl {
 		}
 			
 		if (configDoc == null) {
-			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder dBuilder = null;
-			try {
-				dBuilder = dbFactory.newDocumentBuilder();
-				configDoc = dBuilder.newDocument();
-				
-				configDoc.appendChild(configDoc.createElement("elsinore"));
-			} catch (ParserConfigurationException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
+			setupConfigDoc();
 		}
 		
 		// Save the config  to the configuration file
 		System.out.println("Saving the information for " + name);
 		
 		// save any changes
-		NodeList tempList = null;
-		
-		try {
-			expr = xpath.compile("/elsinore/device[@id='" + name + "']");
-			tempList = (NodeList) expr.evaluate(configDoc, XPathConstants.NODESET);
-		} catch (XPathExpressionException e) {
-			System.out.println("Bad Xpath for " + name);
-			e.printStackTrace();
-		}
-			
-		Element device = null;
-		if (tempList.getLength() == 0) {
+		Element device = getFirstElementByXpath(null, "/elsinore/device[@id='" + name + "']");
+		if (device == null) {
+			System.out.println("Creating new Element");
 			// no idea why there wouldn't be this section
-			device = configDoc.createElement("device");
+			device = addNewElement(null, "device");
 			device.setAttribute("id", name);
-			configDoc.getDocumentElement().appendChild(device);
-		} else {
-			device = (Element) tempList.item(0);
 		}
 		
-		Element tElement = null;
-		NodeList tList = device.getElementsByTagName("duty_cycle");
+		System.out.println("Using base node " + device.getNodeName() + " with ID " + device.getAttribute("id"));
 		
-		if (tList.getLength() == 0) {
-			tElement = configDoc.createElement("duty_cycle");
-		} else {
-			tElement = (Element) tList.item(0);
-		}
-		
-		tElement.setTextContent(Double.toString(settings.duty_cycle));
-		device.appendChild(tElement);
-		
-		tList = device.getElementsByTagName("cycle_time");
-		
-		if (tList.getLength() == 0) {
-			tElement = configDoc.createElement("cycle_time");
-		} else {
-			tElement = (Element) tList.item(0);
-		}
-		
-		tElement.setTextContent(Double.toString(settings.cycle_time));
-		device.appendChild(tElement);
-		
-		tList = device.getElementsByTagName("set_point");
-		
-		if (tList.getLength() == 0) {
-			tElement = configDoc.createElement("set_point");
-		} else {
-			tElement = (Element) tList.item(0);
-		}
-		
-		tElement.setTextContent(Double.toString(settings.set_point));
-		device.appendChild(tElement);
-		
-		tList = device.getElementsByTagName("proportional");
-		
-		if (tList.getLength() == 0) {
-			tElement = configDoc.createElement("proportional");
-		} else {
-			tElement = (Element) tList.item(0);
-		}
-		
-		tElement.setTextContent(Double.toString(settings.proportional));
-		device.appendChild(tElement);
-
-		tList = device.getElementsByTagName("integral");
-		
-		if (tList.getLength() == 0) {
-			tElement = configDoc.createElement("integral");
-		} else {
-			tElement = (Element) tList.item(0);
-		}
-		
-		tElement.setTextContent(Double.toString(settings.integral));
-		device.appendChild(tElement);
-		
-		tList = device.getElementsByTagName("derivative");
-		
-		if (tList.getLength() == 0) {
-			tElement = configDoc.createElement("derivative");
-		} else {
-			tElement = (Element) tList.item(0);
-		}
-		
-		tElement.setTextContent(Double.toString(settings.derivative));
-		device.appendChild(tElement);
-		
-		tList = device.getElementsByTagName("gpio");
-		
-		if (tList.getLength() == 0) {
-			tElement = configDoc.createElement("gpio");
-		} else {
-			tElement = (Element) tList.item(0);
-		}
-		
-		tElement.setTextContent(gpio);
-		device.appendChild(tElement);
+		setElementText(device, "duty_cycle", Double.toString(settings.duty_cycle));
+		setElementText(device, "cycle_time", Double.toString(settings.cycle_time));
+		setElementText(device, "set_point", Double.toString(settings.set_point));
+		setElementText(device, "proportional", Double.toString(settings.proportional));
+		setElementText(device, "integral", Double.toString(settings.integral));
+		setElementText(device, "derivative", Double.toString(settings.derivative));
+		setElementText(device, "gpio", gpio);
 		
 		if (auxGPIO != null) {
-			tList = device.getElementsByTagName("aux");
-			
-			if (tList.getLength() == 0) {
-				tElement = configDoc.createElement("aux");
-			} else {
-				tElement = (Element) tList.item(0);
-			}
-			tElement.setTextContent(gpio);
-			device.appendChild(tElement);
+			setElementText(device, "aux", auxGPIO);
 		}
 		
 		saveConfigFile();
@@ -1669,55 +1576,16 @@ public final class LaunchControl {
 	 * @param name Device Name
 	 * @param GPIO GPIO to be used to control the Output
 	 */
-	private void addPIDToConfig(String probe, String name, String GPIO) {
+	private Element addPIDToConfig(String probe, String name, String GPIO) {
 
-		System.out.println("Saving " + name + " with probe " + GPIO);
+		System.out.println("Saving " + name + " with GPIO " + GPIO);
 				
-		// save any changes
-		NodeList tempList = null;
+		Element device = addTempToConfig(probe, name);
 		
-		try {
-			expr = xpath.compile("/elsinore/device[@id='" + name + "']");
-			tempList = (NodeList) expr.evaluate(configDoc, XPathConstants.NODESET);
-		} catch (XPathExpressionException e) {
-			System.out.println("Bad Xpath for " + name);
-			e.printStackTrace();
-		}
+		setElementText(device, "gpio", GPIO);
+		
+		return device;
 			
-		Element device = null;
-		if (tempList.getLength() == 0) {
-			// no idea why there wouldn't be this section
-			device = configDoc.createElement("device");
-			device.setAttribute("id", name);
-			configDoc.getDocumentElement().appendChild(device);
-		} else {
-			device = (Element) tempList.item(0);
-		}
-		
-		tempList = device.getElementsByTagName("probe");
-		Element tElement = null;
-		
-		if (tempList.getLength() == 0) {
-			tElement = configDoc.createElement("probe");
-		} else {
-			tElement = (Element) tempList.item(0);
-		}
-		tElement.setTextContent(probe);
-		device.appendChild(tElement);
-		
-		tempList = device.getElementsByTagName("gpio");
-		tElement = null;
-		
-		if (tempList.getLength() == 0) {
-			tElement = configDoc.createElement("gpio");
-		} else {
-			tElement = (Element) tempList.item(0);
-		}
-		tElement.setTextContent(probe);
-		device.appendChild(tElement);
-		tElement.setTextContent(GPIO);
-		device.appendChild(tElement);
-		
 	}
 
 	/*******
@@ -1725,90 +1593,24 @@ public final class LaunchControl {
 	 * @param device
 	 * @param name
 	 */
-	private void addTempToConfig(String probe, String name) {
+	public static Element addTempToConfig(String probe, String name) {
+		
 		// save any changes
 		System.out.println("Saving " + name + " with probe " + probe);
-		NodeList tempList = null;		
-		try {
-			expr = xpath.compile("/elsinore/device[@id='" + name + "']");
-			tempList = (NodeList) expr.evaluate(configDoc, XPathConstants.NODESET);
-		} catch (XPathExpressionException e) {
-			System.out.println("Bad Xpath for " + name);
-			e.printStackTrace();
-		}
-			
-		Element device = null;
-		if (tempList.getLength() == 0) {
+		// save any changes
+		Element device = getFirstElementByXpath(null, "/elsinore/device[@id='" + name + "']");
+		if (device == null) {
 			// no idea why there wouldn't be this section
-			device = configDoc.createElement("device");
+			device = addNewElement(null, "device");
 			device.setAttribute("id", name);
-			configDoc.getDocumentElement().appendChild(device);
-		} else {
-			device = (Element) tempList.item(0);
 		}
 		
-		tempList = device.getElementsByTagName("probe");
-		Element tElement = null;
+		setElementText(device, "probe", probe);
 		
-		if (tempList.getLength() == 0) {
-			tElement = configDoc.createElement("probe");
-		} else {
-			tElement = (Element) tempList.item(0);
-		}
-		tElement.setTextContent(probe);
-		device.appendChild(tElement);
-		
+		return device;
 	}
 	
-	public static void addTempToConfigStatic(String probe, String name) {
-		// save any changes
-		System.out.println("Saving " + name + " with probe " + probe);
-		if (configDoc == null) {
-			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder dBuilder = null;
-			try {
-				dBuilder = dbFactory.newDocumentBuilder();
-				configDoc = dBuilder.newDocument();
-				configDoc.appendChild(configDoc.createElement("elsinore"));
-			} catch (ParserConfigurationException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-		}
 		
-		NodeList tempList = null;
-		
-		try {
-			expr = xpath.compile("/elsinore/device[@id='" + name + "']");
-			tempList = (NodeList) expr.evaluate(configDoc, XPathConstants.NODESET);
-		} catch (XPathExpressionException e) {
-			System.out.println("Bad Xpath for " + name);
-			e.printStackTrace();
-		}
-			
-		Element device = null;
-		if (tempList.getLength() == 0) {
-			// no idea why there wouldn't be this section
-			device = configDoc.createElement("device");
-			configDoc.getDocumentElement().appendChild(device);
-			device.setAttribute("id", name);
-			
-		} else {
-			device = (Element) tempList.item(0);
-		}
-		
-		tempList = device.getElementsByTagName("probe");
-		Element tElement = null;
-		
-		if (tempList.getLength() == 0) {
-			tElement = configDoc.createElement("probe");
-		} else {
-			tElement = (Element) tempList.item(0);
-		}
-		tElement.setTextContent(probe);
-		device.appendChild(tElement);
-		
-	}
 	
 	/*******
 	 * Save the volume details to the config
@@ -1822,88 +1624,25 @@ public final class LaunchControl {
 			ConcurrentHashMap<Double, Double> volumeBase) {
 		
 		System.out.println("Saving volume for " + name);
-		String name_volume = name + "-volume";
 		
-		// save any changes
-		NodeList tempList = null;
-		
-		try {
-			expr = xpath.compile("/elsinore/device[@id='" + name + "']");
-			tempList = (NodeList) expr.evaluate(configDoc, XPathConstants.NODESET);
-		} catch (XPathExpressionException e) {
-			System.out.println("Bad Xpath for " + name);
-			e.printStackTrace();
-		}
-			
-		Element device = null;
-		if (tempList.getLength() == 0) {
-			// no idea why there wouldn't be this section
-			device = configDoc.createElement("device");
-			device.setAttribute("id", name);
-			configDoc.getDocumentElement().appendChild(device);
-		} else {
-			device = (Element) tempList.item(0);
-		}
+		Element device = saveVolumeMeasurements(name, volumeBase, volumeUnit);
 	
-		Element tElement = null;
-		
-		// Units for the Volume measurement
-		tempList = device.getElementsByTagName("volume-unit");
-		
-		if (tempList.getLength() == 0) {
-			tElement = configDoc.createElement("volume-unit");
-		} else {
-			tElement = (Element) tempList.item(0);
-		}
-		tElement.setTextContent(volumeUnit.toString());
-		device.appendChild(tElement);
-		
 		// Units for the Volume OneWire Address
-		tempList = device.getElementsByTagName("volume-address");
-		
-		if (tempList.getLength() == 0) {
-			tElement = configDoc.createElement("volume-address");
-		} else {
-			tElement = (Element) tempList.item(0);
+		Element tElement = getFirstElement(device, "volume-address");
+		if (tElement == null) {
+			tElement = addNewElement(device, "volume-address");
 		}
+		
 		tElement.setTextContent(address);
-		device.appendChild(tElement);
 		
 		// Units for the Volume OneWire Offset
-		tempList = device.getElementsByTagName("volume-offset");
-		
-		if (tempList.getLength() == 0) {
-			tElement = configDoc.createElement("volume-offset");
-		} else {
-			tElement = (Element) tempList.item(0);
+		tElement = getFirstElement(device, "volume-offset");
+		if (tElement == null) {
+			tElement = addNewElement(device, "volume-offset");
 		}
+		
 		tElement.setTextContent(offset);
-		device.appendChild(tElement);
-	
-		Iterator<Entry<Double, Double>> volIter = volumeBase.entrySet().iterator();
 		
-		while (volIter.hasNext()) {
-			Entry<Double, Double> entry = volIter.next();
-			System.out.println("Looking for volume entry: " + entry.getKey().toString());
-			
-			try {
-				expr = xpath.compile("/elsinore/device[@id='" + name + "']/volume[@vol='"+entry.getKey().toString()+"']");
-				tempList = (NodeList) expr.evaluate(configDoc, XPathConstants.NODESET);
-			} catch (XPathExpressionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			if (tempList.getLength() == 0) {
-				tElement = configDoc.createElement("volume");
-				tElement.setAttribute("vol", entry.getKey().toString());
-			} else {
-				tElement = (Element) tempList.item(0);
-			}
-			
-			tElement.setTextContent(entry.getValue().toString());
-			device.appendChild(tElement);
-		}
 		
 	}
 
@@ -1917,79 +1656,56 @@ public final class LaunchControl {
 	private void saveVolume(String name, int volumeAIN, String volumeUnit,
 			ConcurrentHashMap<Double, Double> volumeBase) {
 		
-		System.out.println("Saving volume for " + name);
-		String name_volume = name + "-volume";
+		BrewServer.log.info("Saving volume for " + name);
 		
 		// save any changes
-		NodeList tempList = null;
+		Element device = saveVolumeMeasurements(name, volumeBase, volumeUnit);
 		
-		try {
-			expr = xpath.compile("/elsinore/device[@id='" + name + "']");
-			tempList = (NodeList) expr.evaluate(configDoc, XPathConstants.NODESET);
-		} catch (XPathExpressionException e) {
-			System.out.println("Bad Xpath for " + name);
-			e.printStackTrace();
-		}
-			
-		Element device = null;
-		if (tempList.getLength() == 0) {
-			// no idea why there wouldn't be this section
-			device = configDoc.createElement("device");
-			device.setAttribute("id", name);
-			configDoc.getDocumentElement().appendChild(device);
-		} else {
-			device = (Element) tempList.item(0);
+		Element tElement = getFirstElement(device, "volume-pin");
+		if (tElement == null) {
+			tElement = addNewElement(device, "volume-pin");
 		}
 		
-		Element tElement = null;
-		
-		// Units for the Volume measurement
-		tempList = device.getElementsByTagName("volume-unit");
-		
-		if (tempList.getLength() == 0) {
-			tElement = configDoc.createElement("volume-unit");
-		} else {
-			tElement = (Element) tempList.item(0);
-		}
-		tElement.setTextContent(volumeUnit.toString());
-		device.appendChild(tElement);
-		
-		// Units for the Volume OneWire Address
-		tempList = device.getElementsByTagName("volume-pin");
-		
-		if (tempList.getLength() == 0) {
-			tElement = configDoc.createElement("volume-pin");
-		} else {
-			tElement = (Element) tempList.item(0);
-		}
 		tElement.setTextContent(Integer.toString(volumeAIN));
-		device.appendChild(tElement);
+		
+	}
+	
+	public Element saveVolumeMeasurements(String name, ConcurrentHashMap<Double, Double> volumeBase, String volumeUnit) {
+		Element device = getFirstElementByXpath(null, "/elsinore/device[@id='" + name + "']");
+	
+		if (device == null) {
+			// no idea why there wouldn't be this section
+			device = addNewElement(null, "device");
+			device.setAttribute("id", name);
+		}
+		
+		Element tElement = getFirstElement(device, "volume-unit");
+		
+		if (tElement == null) {
+			tElement = addNewElement(device, "volume-unit");
+		}
+		
+		tElement.setTextContent(volumeUnit.toString());
+	
 		
 		Iterator<Entry<Double, Double>> volIter = volumeBase.entrySet().iterator();
 		
 		while (volIter.hasNext()) {
 			Entry<Double, Double> entry = volIter.next();
+			BrewServer.log.info("Looking for volume entry: " + entry.getKey().toString());
 			
-			try {
-				expr = xpath.compile("/elsinore/device[@id='" + name + "']/volume[@vol='"+entry.getKey().toString()+"']");
-				tempList = (NodeList) expr.evaluate(configDoc, XPathConstants.NODESET);
-			} catch (XPathExpressionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			tElement = getFirstElementByXpath(null, "/elsinore/device[@id='" + name + "']/volume[@vol='"+entry.getKey().toString()+"']");
 			
-			if (tempList.getLength() == 0) {
-				tElement = configDoc.createElement("volume");
+			if (tElement == null) {
+				tElement = addNewElement(device, "volume");
 				tElement.setAttribute("vol", entry.getKey().toString());
-			} else {
-				tElement = (Element) tempList.item(0);
 			}
 			
 			tElement.setTextContent(entry.getValue().toString());
-			device.appendChild(tElement);
+			
 		}
 		
-		
+		return device;
 	}
 
 	/******
@@ -1997,6 +1713,7 @@ public final class LaunchControl {
 	 */
 	private void initializeConfig() {
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		//dbFactory.setAttribute( "http://java.sun.com/xml/jaxp/properties/schemaSource", "elsinore.xsd");
 		DocumentBuilder dBuilder = null;
 		try {
 			dBuilder = dbFactory.newDocumentBuilder();
@@ -2005,8 +1722,13 @@ public final class LaunchControl {
 			e1.printStackTrace();
 		}
 		
+		File existingConfig = new File(configFileName);
+		if (!existingConfig.exists()) {
+			return;
+		}
+		
 		try {
-			configDoc = dBuilder.parse(new File(configFileName));
+			configDoc = dBuilder.parse(existingConfig);
 			XPath xp = XPathFactory.newInstance().newXPath();
 			NodeList nl = (NodeList) xp.evaluate("//text()[normalize-space(.)='']", configDoc, XPathConstants.NODESET);
 
@@ -2023,12 +1745,14 @@ public final class LaunchControl {
 		
 		try {
 			configCfg = new ConfigParser();
+			
 			System.out.println("Backing up config to " + configFileName + ".original");
 			
 			copyFile(new File(configFileName), new File(configFileName+".original"));
 			
 			configCfg.read(configFileName);
 			System.out.println("Created configCfg");
+		
 		} catch (IOException e) {	
 			System.out.println("Config file at: " + configFileName + " doesn't exist");
 			configCfg = null;
@@ -2065,11 +1789,11 @@ public final class LaunchControl {
 			return;
 		}
 		
-		NodeList tempList = configDoc.getElementsByTagName("general");
 		
-		if (tempList.getLength() > 0){
-			parseGeneral((Element) tempList.item(0));
-		}
+		// setup generl first
+		parseGeneral(getFirstElement(null, "general"));
+		parsePumps(getFirstElement(null, "pumps"));
+		
 		
 		for (int i = 0; i < configSections.getLength(); i++) {
 			Node temp = configSections.item(i);
@@ -2078,7 +1802,7 @@ public final class LaunchControl {
 				System.out.println("Checking section " + e.getNodeName());
 				// Parsed general first
 				if (e.getNodeName().equalsIgnoreCase("general")) {
-					//parseGeneral(e); 
+					continue;
 				} else if (e.getNodeName().equalsIgnoreCase("pumps")) {
 					parsePumps(e); 
 				} else if (e.getNodeName().equalsIgnoreCase("timers")) {
@@ -2221,61 +1945,61 @@ public final class LaunchControl {
 		
 		BrewServer.log.info("Parsing XML Device: " + deviceName);
 		try {
-			NodeList tempList = config.getElementsByTagName("probe");
-			if (tempList.getLength() == 1) {
-				probe = tempList.item(0).getTextContent();
+			Element tElement = getFirstElement(config, "probe");
+			if (tElement != null) {
+				probe = tElement.getTextContent();
 			}
 			
-			tempList = config.getElementsByTagName("gpio");
-			if (tempList.getLength() == 1) {
-				gpio = tempList.item(0).getTextContent();
+			tElement = getFirstElement(config, "gpio");
+			if (tElement != null) {
+				gpio = tElement.getTextContent();
 			}
 			
-			tempList = config.getElementsByTagName("duty_cycle");
-			if (tempList.getLength() == 1) {
-				duty = Double.parseDouble(tempList.item(0).getTextContent());
+			tElement = getFirstElement(config, "duty_cycle");
+			if (tElement != null) {
+				duty = Double.parseDouble(tElement.getTextContent());
 			}
 			
-			tempList = config.getElementsByTagName("cycle_time");
-			if (tempList.getLength() == 1) {
-				cycle = Double.parseDouble(tempList.item(0).getTextContent());
+			tElement = getFirstElement(config, "cycle_time");
+			if (tElement != null) {
+				cycle = Double.parseDouble(tElement.getTextContent());
 			}
 			
-			tempList = config.getElementsByTagName("set_point");
-			if (tempList.getLength() == 1) {
-				setpoint = Double.parseDouble(tempList.item(0).getTextContent());
+			tElement = getFirstElement(config, "set_point");
+			if (tElement != null) {
+				setpoint = Double.parseDouble(tElement.getTextContent());
 			}
 			
-			tempList = config.getElementsByTagName("proportional");
-			if (tempList.getLength() == 1) {
-				p = Double.parseDouble(tempList.item(0).getTextContent());
+			tElement = getFirstElement(config, "proportional");
+			if (tElement != null) {
+				p = Double.parseDouble(tElement.getTextContent());
 			}
 			
-			tempList = config.getElementsByTagName("integral");
-			if (tempList.getLength() == 1) {
-				i = Double.parseDouble(tempList.item(0).getTextContent());
+			tElement = getFirstElement(config, "integral");
+			if (tElement != null) {
+				i = Double.parseDouble(tElement.getTextContent());
 			}
 			
-			tempList = config.getElementsByTagName("derivative");
-			if (tempList.getLength() == 1) {
-				d = Double.parseDouble(tempList.item(0).getTextContent());
+			tElement = getFirstElement(config, "derivative");
+			if (tElement != null) {
+				d = Double.parseDouble(tElement.getTextContent());
 			}
 			
-			tempList = config.getElementsByTagName("cutoff");
-			if (tempList.getLength() == 1) {
-				cutoffTemp = tempList.item(0).getTextContent();
+			tElement = getFirstElement(config, "cutoff");
+			if (tElement != null) {
+				cutoffTemp = tElement.getTextContent();
+			}
+
+			tElement = getFirstElement(config, "aux");
+			if (tElement != null) {
+				auxPin = tElement.getTextContent();
 			}
 			
-			tempList = config.getElementsByTagName("aux");
-			if (tempList.getLength() == 1) {
-				auxPin = tempList.item(0).getTextContent();
-			}
+			NodeList tList = config.getElementsByTagName("volume");
 			
-			tempList = config.getElementsByTagName("volume");
-			
-			if (tempList.getLength() == 1) {
+			if (tList.getLength() == 1) {
 				// we have volume elements
-				NodeList volumeOptions = tempList.item(0).getChildNodes();
+				NodeList volumeOptions = tList.item(0).getChildNodes();
 				
 				for (int j = 0; j < volumeOptions.getLength(); j++) {
 					Element curOption = (Element) volumeOptions.item(j);
@@ -2297,28 +2021,26 @@ public final class LaunchControl {
 				}
 			}
 			
-			
-			tempList = config.getElementsByTagName("volume-unit");
-			if (tempList.getLength() == 1) {
-				volumeUnits = tempList.item(0).getTextContent();
+			tElement = getFirstElement(config, "volume-unit");
+			if (tElement != null) {
+				volumeUnits = tElement.getTextContent();
+			}
+
+			tElement = getFirstElement(config, "volume-pin");
+			if (tElement != null) {
+				analoguePin = Integer.parseInt(tElement.getTextContent());
 			}
 			
-			tempList = config.getElementsByTagName("volume-pin");
-			if (tempList.getLength() == 1) {
-				analoguePin = Integer.parseInt(tempList.item(0).getTextContent());
+			tElement = getFirstElement(config, "volume-address");
+			if (tElement != null) {
+				dsAddress = tElement.getTextContent();
 			}
 			
-			tempList = config.getElementsByTagName("volume-address");
-			if (tempList.getLength() == 1) {
-				dsAddress = tempList.item(0).getTextContent();
-			}			
-			
-			tempList = config.getElementsByTagName("volume-offset");
-			if (tempList.getLength() == 1) {
-				dsOffset = tempList.item(0).getTextContent();
+			tElement = getFirstElement(config, "volume-offset");
+			if (tElement != null) {
+				dsOffset = tElement.getTextContent();
 			}
 			
-	
 			if (volumeUnits == null) {
 				System.out.println("Couldn't find a volume unit for " + deviceName);
 				volumeArray = null;
@@ -2368,4 +2090,96 @@ public final class LaunchControl {
 	    }
 	}
 	
+	private static void setupConfigDoc() {
+
+		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		//dbFactory.setAttribute( "http://java.sun.com/xml/jaxp/properties/schemaSource", "elsinore.xsd");
+		DocumentBuilder dBuilder = null;
+		try {
+			dBuilder = dbFactory.newDocumentBuilder();
+			configDoc = dBuilder.newDocument();
+			
+			configDoc.appendChild(configDoc.createElement("elsinore"));
+		} catch (ParserConfigurationException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+	
+	private static NodeList getAllNodes(Element baseNode, String nodeName) {
+		
+		if (baseNode == null) {
+			baseNode = configDoc.getDocumentElement();
+		}
+		
+		NodeList tempList = baseNode.getElementsByTagName(nodeName);
+		
+		return tempList;
+	}
+
+	private static Element getFirstElement(Element baseNode, String nodeName) {
+
+		NodeList nodeList = getAllNodes(baseNode, nodeName);
+		
+		Element eFound = null;
+		if (nodeList != null && nodeList.getLength() > 0){
+			eFound = (Element) nodeList.item(0);
+		}
+		
+		return eFound;	
+	}
+	
+	private static Element addNewElement(Element baseNode, String nodeName) {
+		
+		Element newElement = configDoc.createElement(nodeName);
+		System.out.println("Creating element of " + nodeName);
+		
+		if (baseNode == null) {
+			System.out.println("Creating on configDoc base");
+			baseNode = configDoc.getDocumentElement();
+		} else {
+			System.out.println("on " + baseNode.getNodeName());
+		}
+		
+		newElement = (Element) baseNode.appendChild(newElement);
+		
+		return newElement;
+	}
+	
+	private static Element getFirstElementByXpath(Element baseNode, String xpathIn) {
+		
+		Element tElement = null;
+		
+		try {
+			expr = xpath.compile(xpathIn);
+			NodeList tList = (NodeList) expr.evaluate(configDoc, XPathConstants.NODESET);
+			if (tList.getLength() > 0) {
+				tElement = (Element) tList.item(0);
+			}
+		} catch (XPathExpressionException e) {
+			// TODO Auto-generated catch block
+			System.exit(-1);
+			e.printStackTrace();
+		}
+		
+		return tElement;
+		
+	}
+	
+	private static void setElementText(Element baseNode, String elementName, String textContent) {
+		
+		if(baseNode == null) {
+			baseNode = configDoc.getDocumentElement();
+		}
+		
+		Element tElement = getFirstElement(baseNode, elementName);
+		
+		if (tElement == null) {
+			tElement = addNewElement(baseNode, elementName);
+		}
+		
+		tElement.setTextContent(textContent);
+		
+		baseNode.appendChild(tElement);
+	}
 }

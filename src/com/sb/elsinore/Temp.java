@@ -27,7 +27,7 @@ public final class Temp implements Runnable {
 	
 	public void save() {
 		if (name != null && !name.equals("")) {
-			LaunchControl.addTempToConfigStatic(probeName, name);
+			LaunchControl.addTempToConfig(probeName, name);
 		}
 	}
 	

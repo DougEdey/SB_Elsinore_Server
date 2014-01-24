@@ -95,6 +95,8 @@ In the [general] section of the configuration file.
 Config File
 =========
 
+This config file will automatically be parsed and converted to an XML file 
+
 ```
 [general]
 scale = F
