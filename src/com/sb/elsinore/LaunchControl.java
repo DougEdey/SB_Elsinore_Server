@@ -192,7 +192,6 @@ public final class LaunchControl {
 			public void run() {
 				
 				saveSettings();
-				
 				for (Temp t : tempList) {
 					if (t != null) {
 						t.save();
@@ -204,9 +203,7 @@ public final class LaunchControl {
 						n.shutdown();
 					}
 				}
-				
 				saveConfigFile();
-
 			}
 		});
 
@@ -663,7 +660,8 @@ public final class LaunchControl {
 		timerList = new ArrayList<String>();
 		
 		for (int i = 0; i < timers.getLength(); i++) {
-			timerList.add(timers.item(i).getNodeName());
+			Element tElement = (Element) timers.item(i);
+			timerList.add(tElement.getAttribute("id"));
 		}
 	} 
 	
@@ -907,6 +905,7 @@ public final class LaunchControl {
 		displaySensors();
 		System.out.println("Select the input, enter \"r\" to refresh, or use \"pump <name> <gpio>\" to add a pump");
 		System.out.println("Type \"volume\" to start volume calibration");
+		System.out.println("Type \"timer <name>\" to add a timer");
 		String input = "";
 		String[] inputBroken;
 		
@@ -945,6 +944,7 @@ public final class LaunchControl {
 			if (inputBroken[0].equalsIgnoreCase("pump")) {
 				if (inputBroken.length != 3 || inputBroken[1].length() == 0 || inputBroken[2].length() == 0 ) {
 					System.out.println("Not enough parameters to add a pump");
+					System.out.println("pump <name> <gpio>");
 					continue;
 				}
 				
@@ -987,6 +987,29 @@ public final class LaunchControl {
 					System.out.println("Couldn't read " + inputBroken[0] + " as an integer");
 				}
 				continue;
+			}
+			
+			// Timers code
+			if (inputBroken[0].equalsIgnoreCase("timer")) {
+				String name = "";
+			
+				if (inputBroken.length > 1 && inputBroken[1].length() > 0 ) {
+					name = inputBroken[1];
+				} else {
+					System.out.println("");
+					System.out.print("What do you want to call the timer? ");
+					name = readInput();
+				}
+				
+				if (name.equals("")) {
+					System.out.println("No name provided");
+				} else {
+					System.out.println("Adding Timer " + name);
+					timerList.add(name);
+				}
+				
+				continue;
+				
 			}
 			
 			int selector = 0;
