@@ -85,12 +85,27 @@ The String is in the form: <number><scale>
 
 So in the config file below, I can use 85C as a cutoff temperature and it'll turn off when it goes above 85C
 
+System Temperature
+============
+
+System can be enabled during setup by entering "system" (no quotes) at the prompt.
+
 Also, to enable the System Temperature reading, please add
 
-``` system_temp = true ```
+``` <system /> ```
 
-In the [general] section of the configuration file.
+In the <general> section of the configuration file.
 
+Timers
+=========
+
+During setup you can add custom timers, just use:
+
+```
+timer <name>
+```
+
+At the command prompt, if you don't enter a name it will prompt you for one.
 
 Config File
 =========
