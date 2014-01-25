@@ -51,65 +51,64 @@ public final class OutputControl implements Runnable {
 				return;
 			}
 
-			while(true) {
-	
 			try {
-				if(fGPIOc != null && !fGPIOc.equals("") && Cool_SSR == null) {
-					Cool_SSR = new OutPin(fGPIOc);
-				}
-				if(fGPIOh != null && !fGPIOh.equals("") && Heat_SSR == null) {
-					Heat_SSR = new OutPin(fGPIOh);
-				}
-				BrewServer.log.info("Fduty: "+fDuty);
-				if(fDuty == 0) {
-					allOff();
-					Thread.sleep(fTimeh);
-				} else if(fDuty == 100) {
-					heatOn();
-					Thread.sleep(fTimeh);
-				} else if(fDuty == -100) {
-					// check to see if we've slept long enough
-					Long lTime = System.currentTimeMillis() - coolStopTime;
-					
-					if ((lTime /1000) > cool_delay) {
-						// not slept enough
-						break;
+				while(true) {
+				
+					if(fGPIOc != null && !fGPIOc.equals("") && Cool_SSR == null) {
+						Cool_SSR = new OutPin(fGPIOc);
 					}
-
-					coolOn();
-					Thread.sleep(fTimec);
-					allOff();
-
-					coolStopTime = System.currentTimeMillis();
-				} else if (fDuty > 0) {
-					// calc the on off time
-					duty = fDuty/100;
-					on_time = duty * fTimeh;
-					off_time = fTimeh * (1-duty);
-					BrewServer.log.info("On: " + on_time + " Off; " + off_time);
-					heatOn();
-					Thread.sleep((int)on_time);
-
-					allOff();
-					Thread.sleep((int)off_time);
-				} else if (fDuty < 0) {
-					// calc the on off time
-					duty = Math.abs(fDuty)/100;
-					on_time = duty * fTimec;
-					on_time = duty * fTimec;
-					off_time = fTimec * (1-duty);
-
-					coolOn();
-					Thread.sleep((int)on_time);
-
-					allOff();
-					Thread.sleep((int)off_time);
-					coolStopTime = System.currentTimeMillis();
-				}
+					if(fGPIOh != null && !fGPIOh.equals("") && Heat_SSR == null) {
+						Heat_SSR = new OutPin(fGPIOh);
+					}
+					BrewServer.log.info("Fduty: "+fDuty);
+					if(fDuty == 0) {
+						allOff();
+						Thread.sleep(fTimeh);
+					} else if(fDuty == 100) {
+						heatOn();
+						Thread.sleep(fTimeh);
+					} else if(fDuty == -100) {
+						// check to see if we've slept long enough
+						Long lTime = System.currentTimeMillis() - coolStopTime;
+						
+						if ((lTime /1000) > cool_delay) {
+							// not slept enough
+							break;
+						}
+	
+						coolOn();
+						Thread.sleep(fTimec);
+						allOff();
+	
+						coolStopTime = System.currentTimeMillis();
+					} else if (fDuty > 0) {
+						// calc the on off time
+						duty = fDuty/100;
+						on_time = duty * fTimeh;
+						off_time = fTimeh * (1-duty);
+						BrewServer.log.info("On: " + on_time + " Off; " + off_time);
+						heatOn();
+						Thread.sleep((int)on_time);
+	
+						allOff();
+						Thread.sleep((int)off_time);
+					} else if (fDuty < 0) {
+						// calc the on off time
+						duty = Math.abs(fDuty)/100;
+						on_time = duty * fTimec;
+						on_time = duty * fTimec;
+						off_time = fTimec * (1-duty);
+	
+						coolOn();
+						Thread.sleep((int)on_time);
+	
+						allOff();
+						Thread.sleep((int)off_time);
+						coolStopTime = System.currentTimeMillis();
+					}
+				} // end the while loop
 			} catch (InterruptedException e) {
 				// Sleep interrupted
-				// disable the outputs
-				allOff();
 				coolStopTime = System.currentTimeMillis();
 				System.out.print("Wakeup in " + fName);
 			} catch (RuntimeException e) {
@@ -117,7 +116,6 @@ public final class OutputControl implements Runnable {
 				e.printStackTrace();
 				return;
 			}
-		}
 		} catch (InvalidGPIOException e1) {
 			System.out.println(e1.getMessage());
 			e1.printStackTrace();
@@ -204,9 +202,11 @@ public final class OutputControl implements Runnable {
 	private void allDisable() {
 		if(Heat_SSR != null) {
 			Heat_SSR.close();
+			Heat_SSR = null;
 		}
 		if(Cool_SSR != null) {
 			Cool_SSR.close();
+			Cool_SSR = null;
 		}
 	}
 	

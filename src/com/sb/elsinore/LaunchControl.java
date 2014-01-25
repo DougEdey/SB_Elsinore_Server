@@ -1044,7 +1044,7 @@ public final class LaunchControl {
 					tTemp.setName(name);
 					if (GPIO != "GPIO1" && GPIO != "GPIO7") {
 						addPIDToConfig(tTemp.getProbe(), name, GPIO);
-					} else {
+					} else if (tTemp.getTemp() != -999) {
 						System.out.println("No valid GPIO Value found, adding as a temperature only probe");
 						addTempToConfig(tTemp.getProbe(), name);
 					}
@@ -1255,7 +1255,7 @@ public final class LaunchControl {
 			
 			while (dirIt.hasNext()) {
 				dir = dirIt.next();
-				if (dir.startsWith("/2")) {
+				if (dir.startsWith("/28")) {
 					// we have a "good' directory, I'm only aware that directories starting with a number of 2 are good
 					// got a directory, check for a temp
 					System.out.println("Checking for " + dir);
@@ -1582,7 +1582,9 @@ public final class LaunchControl {
 				
 		Element device = addTempToConfig(probe, name);
 		
-		setElementText(device, "gpio", GPIO);
+		if (device != null) {
+			setElementText(device, "gpio", GPIO);
+		}
 		
 		return device;
 			
@@ -1595,6 +1597,10 @@ public final class LaunchControl {
 	 */
 	public static Element addTempToConfig(String probe, String name) {
 		
+		if (probe.equalsIgnoreCase(name)) {
+			System.out.println("Probe: " + probe + " is not setup, not saving");
+			return null;
+		}
 		// save any changes
 		System.out.println("Saving " + name + " with probe " + probe);
 		// save any changes
