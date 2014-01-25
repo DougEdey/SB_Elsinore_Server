@@ -574,6 +574,17 @@ public final class LaunchControl {
 				setupOWFS();
 			}
 			
+			if(getFirstElement(config, "system") != null) {
+				Temp tTemp = new Temp("system", "");
+				tempList.add(tTemp);
+				BrewServer.log.info("Adding " + tTemp.getName());
+				// setup the scale for each temp probe
+				tTemp.setScale(scale);
+				// setup the threads
+				Thread tThread = new Thread(tTemp);
+				tempThreads.add(tThread);
+				tThread.start();
+			}
 		} catch (NumberFormatException nfe) {
 			System.out.print("Number format problem!");
 			nfe.printStackTrace();
@@ -1010,6 +1021,24 @@ public final class LaunchControl {
 				
 				continue;
 				
+			}
+			
+			// General system temperature code
+			if (inputBroken[0].equalsIgnoreCase("system")) {
+				System.out.println("Adding System Temperature");
+				Element general = getFirstElement(null, "general");
+				
+				if (general == null) {
+					general = addNewElement(null, "general");
+				}
+				
+				Element system = getFirstElement(general, "system");
+				
+				if (system == null) {
+					system = addNewElement(general, "system");
+				}
+				
+				continue;
 			}
 			
 			int selector = 0;
