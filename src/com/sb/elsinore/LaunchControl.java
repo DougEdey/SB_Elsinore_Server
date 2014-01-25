@@ -2109,6 +2109,10 @@ public final class LaunchControl {
 	private static NodeList getAllNodes(Element baseNode, String nodeName) {
 		
 		if (baseNode == null) {
+			if( configDoc == null) {
+				setupConfigDoc();
+			}
+			
 			baseNode = configDoc.getDocumentElement();
 		}
 		

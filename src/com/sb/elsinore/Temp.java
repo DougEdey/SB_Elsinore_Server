@@ -493,7 +493,7 @@ public final class Temp implements Runnable {
 					
 				}
 				
-				if (tVolume == -1) {
+				if (tVolume == -1 && curKey != null && prevKey != null) {
 					// Try to extrapolate
 					double volRange = curKey - prevKey;
 					double readingRange = curValue - prevValue;
