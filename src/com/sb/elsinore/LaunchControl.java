@@ -1590,6 +1590,29 @@ public final class LaunchControl {
 				}
 			}
 		}
+		
+		// Save the Pumps
+		if (pumpList.size() > 0 ) {
+			
+			Element pumpsElement = getFirstElement(null, "pumps");
+			
+			if (pumpsElement == null) {
+				pumpsElement = addNewElement(null, "pumps");
+			}
+			
+			Iterator<Pump> pumpIt = pumpList.iterator();
+			
+			while (pumpIt.hasNext()) {
+				
+				Pump tPump = pumpIt.next();
+				
+				if (getFirstElementByXpath(null, "/elsinore/pumps/" +tPump.name) == null) {
+					// No timer by this name
+					Element newTimer = addNewElement(pumpsElement, tPump.name);
+					newTimer.appendChild(configDoc.createTextNode(tPump.getGPIO()));
+				}
+			}
+		}
 	}
 	
 	/******
