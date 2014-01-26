@@ -91,7 +91,7 @@ public final class Temp implements Runnable {
 		
 			File probePath = new File("/sys/bus/w1/devices/" + aName + "/w1_slave");
 			
-			// Lets assume that OWFS has "." seperated names
+			// Lets assume that OWFS has "." separated names
 			if (!probePath.exists() && aName.indexOf(".") != 2) {
 				String newAddress[] = aName.split("\\.|-");
 				
@@ -106,7 +106,7 @@ public final class Temp implements Runnable {
 					devAddress.append(newAddress[1].subSequence(2, 4));
 					devAddress.append(newAddress[1].subSequence(0, 2));
 					
-					String fixedAddress = devFamily.toString() + "." + devAddress.toString().toUpperCase();
+					String fixedAddress = devFamily.toString() + "." + devAddress.toString().toLowerCase();
 					
 					System.out.println("Converted address: " + fixedAddress);
 					
