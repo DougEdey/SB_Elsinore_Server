@@ -53,7 +53,29 @@ public final class Temp implements Runnable {
 				aName = aName.replace("-", ".");
 				BrewServer.log.info("Using OWFS for " + aName + "/temperature");
 				if ("" == LaunchControl.readOWFSPath(aName + "/temperature")) {
-					BrewServer.log.severe("This is not a temperature probe " + aName);
+					String newAddress[] = aName.split("\\.|-");
+					
+					if (newAddress.length == 2) {
+						String devFamily = newAddress[0];
+						StringBuilder devAddress = new StringBuilder();
+						
+						devAddress.append(newAddress[1].subSequence(10, 12));
+						devAddress.append(newAddress[1].subSequence(8, 10));
+						devAddress.append(newAddress[1].subSequence(6, 8));
+						devAddress.append(newAddress[1].subSequence(4, 6));
+						devAddress.append(newAddress[1].subSequence(2, 4));
+						devAddress.append(newAddress[1].subSequence(0, 2));
+						
+						String fixedAddress = devFamily.toString() + "." + devAddress.toString().toUpperCase();
+						
+						System.out.println("Converted address: " + fixedAddress);
+						
+						aName = fixedAddress;
+						if ("" == LaunchControl.readOWFSPath(aName + "/temperature")) {
+							BrewServer.log.severe("This is not a temperature probe " + aName);
+						}
+					} 
+					
 				}
 				
 			} catch ( OwfsException e) {
@@ -437,6 +459,7 @@ public final class Temp implements Runnable {
 					pinValue = Double.parseDouble(LaunchControl.readOWFSPath(volumeAddress + "/volt." + volumeOffset));
 				} catch (Exception e) {
 					BrewServer.log.log(Level.SEVERE, "Could not update the volume reading from OWFS", e);
+					
 					LaunchControl.setupOWFS();
 					return 0.0;
 				}
