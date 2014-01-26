@@ -1,11 +1,11 @@
 package com.sb.elsinore;
 import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -15,7 +15,7 @@ import org.json.simple.JSONObject;
 
 public final class BrewDay {
 
-	Map<String, Object> timers = new HashMap<String, Object>();
+	Map<String, Object> timers = new ConcurrentHashMap<String, Object>();
 
 	// generate the date time parameters
 	DateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd");
