@@ -55,7 +55,8 @@ public final class Temp implements Runnable {
 				if ("" == LaunchControl.readOWFSPath(aName + "/temperature")) {
 					String newAddress[] = aName.split("\\.|-");
 					
-					if (newAddress.length == 2) {
+					// OWFS contains "-", W1 contained "."
+					if (newAddress.length == 2 && aName.indexOf("-") != 2) {
 						String devFamily = newAddress[0];
 						StringBuilder devAddress = new StringBuilder();
 						
@@ -87,6 +88,34 @@ public final class Temp implements Runnable {
 			
 			fProbe = null;
 		} else {
+		
+			File probePath = new File("/sys/bus/w1/devices/" + aName + "/w1_slave");
+			
+			// Lets assume that OWFS has "." seperated names
+			if (!probePath.exists() && aName.indexOf(".") != 2) {
+				String newAddress[] = aName.split("\\.|-");
+				
+				if (newAddress.length == 2) {
+					String devFamily = newAddress[0];
+					StringBuilder devAddress = new StringBuilder();
+					
+					devAddress.append(newAddress[1].subSequence(10, 12));
+					devAddress.append(newAddress[1].subSequence(8, 10));
+					devAddress.append(newAddress[1].subSequence(6, 8));
+					devAddress.append(newAddress[1].subSequence(4, 6));
+					devAddress.append(newAddress[1].subSequence(2, 4));
+					devAddress.append(newAddress[1].subSequence(0, 2));
+					
+					String fixedAddress = devFamily.toString() + "." + devAddress.toString().toUpperCase();
+					
+					System.out.println("Converted address: " + fixedAddress);
+					
+					aName = fixedAddress;
+					
+					probePath = null;	
+				}
+				
+			} 
 			fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
 		}
 		
