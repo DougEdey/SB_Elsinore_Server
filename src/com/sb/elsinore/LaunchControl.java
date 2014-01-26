@@ -862,20 +862,25 @@ public final class LaunchControl {
 		for ( File currentFile : listOfFiles) {
 			if (currentFile.isDirectory() && !currentFile.getName().startsWith("w1_bus_master")) {
 				// Check to see if theres a non temp probe (DS18x20)
-				if (!currentFile.getName().contains("/28")) {
+				if (!currentFile.getName().contains("/28") && owfsPort != null) {
 					System.out.println("Detected a non temp probe, do you want to switch to OWFS? [y/N]");
 					String t = readInput();
 					if (t.toLowerCase().startsWith("y")) {
 						if (owfsConnection == null) {
 							createOWFS();
 						}
-
+						
 						useOWFS = true;
+						
 						tempList.clear();
 						listOWFSDevices();
 						return;
 					}
 				}
+				
+				owfsServer = null;
+				owfsPort = null;
+				
 				// got a directory, check for a temp
 				System.out.println("Checking for " + currentFile.getName());
 				Temp currentTemp = new Temp(currentFile.getName(), currentFile.getName());
@@ -1068,24 +1073,26 @@ public final class LaunchControl {
 					input = readInput();
 					try {
 						GPIO = input;
-						// try to parse the GPIO to determine the type
-						Pattern pinPattern = Pattern.compile("(GPIO)([0-9])_([0-9]*)");
-						Pattern pinPatternAlt = Pattern.compile("(GPIO)?([0-9]*)");
 						
-						Matcher pinMatcher = pinPattern.matcher(GPIO);
-						
-						if(pinMatcher.groupCount() > 0) {
-							// Beagleboard style input
-							System.out.println("Matched GPIO pinout for Beagleboard: " + input + ". OS: " + System.getProperty("os.name"));
-						} else {
-							pinMatcher = pinPatternAlt.matcher(GPIO);
+						if (!GPIO.equals("")) {
+							// try to parse the GPIO to determine the type
+							Pattern pinPattern = Pattern.compile("(GPIO)([0-9])_([0-9]+)");
+							Pattern pinPatternAlt = Pattern.compile("(GPIO)?([0-9]+)");
+							
+							Matcher pinMatcher = pinPattern.matcher(GPIO);
+							
 							if(pinMatcher.groupCount() > 0) {
-								System.out.println("Direct GPIO Pinout detected. OS: " + System.getProperty("os.name"));
+								// Beagleboard style input
+								System.out.println("Matched GPIO pinout for Beagleboard: " + input + ". OS: " + System.getProperty("os.name"));
 							} else {
-								System.out.println("Could not match the GPIO!");							
+								pinMatcher = pinPatternAlt.matcher(GPIO);
+								if(pinMatcher.groupCount() > 0) {
+									System.out.println("Direct GPIO Pinout detected. OS: " + System.getProperty("os.name"));
+								} else {
+									System.out.println("Could not match the GPIO!");							
+								}
 							}
 						}
-						
 					} catch (NumberFormatException n) {
 						// not a GPIO
 
@@ -1094,7 +1101,8 @@ public final class LaunchControl {
 					// Check for Valid GPIO values
 					Temp tTemp = tempList.get(selector-1);
 					tTemp.setName(name);
-					if (GPIO != "GPIO1" && GPIO != "GPIO7") {
+					
+					if (!GPIO.equals("") && !GPIO.equals("GPIO1") && !GPIO.equals("GPIO7")) {
 						addPIDToConfig(tTemp.getProbe(), name, GPIO);
 					} else if (tTemp.getTemp() != -999) {
 						System.out.println("No valid GPIO Value found, adding as a temperature only probe");
@@ -1103,8 +1111,10 @@ public final class LaunchControl {
 					
 					if (tTemp.volumeBase != null) {
 						if (tTemp.volumeAIN != -1) {
+							System.out.println("Saving AIN" + tTemp.volumeAIN);
 							saveVolume(tTemp.getName(), tTemp.volumeAIN, tTemp.getVolumeUnit(), tTemp.volumeBase);
 						} else if (tTemp.volumeAddress != null && tTemp.volumeOffset != null) {
+							System.out.println("Saving Volume " + tTemp.volumeAddress + " - " + tTemp.volumeOffset);
 							saveVolume(tTemp.getName(), tTemp.volumeAddress, tTemp.volumeOffset, 
 									tTemp.getVolumeUnit(), tTemp.volumeBase);
 						} else {
@@ -1120,6 +1130,8 @@ public final class LaunchControl {
 			} catch (NumberFormatException e) {
 				// not a number
 				e.printStackTrace();
+			} catch (Exception ne) {
+				ne.printStackTrace();
 			}
 		}
 
@@ -1529,8 +1541,9 @@ public final class LaunchControl {
 	 */
 	public void saveSettings() {
 		if (configDoc == null) {
-			initializeConfig();
+			setupConfigDoc();
 		}
+		
 		// go through the list of PIDs and save each
 		for(PID n : pidList) {
 			if(n != null) {
@@ -1560,21 +1573,23 @@ public final class LaunchControl {
 		}
 		
 		// Save the timers
-		Element timersElement = getFirstElement(null, "timers");
-		
-		if (timersElement == null) {
-			timersElement = addNewElement(null, "timers");
-		}
-		
-		for (String t : timerList) {
+		if (timerList.size() > 0 ) {
 			
-			if (getFirstElementByXpath(null, "/elsinore/timers/timer[@id='" + t + "']") == null) {
-				// No timer by this name
-				Element newTimer = addNewElement(timersElement, "timer");
-				newTimer.setAttribute("id", t);
+			Element timersElement = getFirstElement(null, "timers");
+			
+			if (timersElement == null) {
+				timersElement = addNewElement(null, "timers");
+			}
+			
+			for (String t : timerList) {
+				
+				if (getFirstElementByXpath(null, "/elsinore/timers/timer[@id='" + t + "']") == null) {
+					// No timer by this name
+					Element newTimer = addNewElement(timersElement, "timer");
+					newTimer.setAttribute("id", t);
+				}
 			}
 		}
-		
 	}
 	
 	/******
@@ -1769,7 +1784,7 @@ public final class LaunchControl {
 	/******
 	 * Helper method to initialize the configuration
 	 */
-	private void initializeConfig() {
+	private static void initializeConfig() {
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		//dbFactory.setAttribute( "http://java.sun.com/xml/jaxp/properties/schemaSource", "elsinore.xsd");
 		DocumentBuilder dBuilder = null;
@@ -2167,7 +2182,7 @@ public final class LaunchControl {
 	private static NodeList getAllNodes(Element baseNode, String nodeName) {
 		
 		if (baseNode == null) {
-			if( configDoc == null) {
+			if (configDoc == null) {
 				setupConfigDoc();
 			}
 			
@@ -2193,6 +2208,10 @@ public final class LaunchControl {
 	
 	private static Element addNewElement(Element baseNode, String nodeName) {
 		
+		if (configDoc == null) {
+			setupConfigDoc();
+		}
+		
 		Element newElement = configDoc.createElement(nodeName);
 		System.out.println("Creating element of " + nodeName);
 		
@@ -2212,6 +2231,10 @@ public final class LaunchControl {
 		
 		Element tElement = null;
 		
+		if (configDoc == null) {
+			return null;
+		}
+		
 		try {
 			expr = xpath.compile(xpathIn);
 			NodeList tList = (NodeList) expr.evaluate(configDoc, XPathConstants.NODESET);
@@ -2220,8 +2243,10 @@ public final class LaunchControl {
 			}
 		} catch (XPathExpressionException e) {
 			// TODO Auto-generated catch block
-			System.exit(-1);
+			System.out.println(" Bad XPATH: " + xpathIn);
 			e.printStackTrace();
+			System.exit(-1);
+			
 		}
 		
 		return tElement;
