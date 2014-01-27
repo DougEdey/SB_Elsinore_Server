@@ -630,7 +630,7 @@ public final class LaunchControl {
 		
 		for(int i = 0; i < pumps.getLength(); i++) {
 			Element curPump = (Element) pumps.item(i);
-			String pumpName = curPump.getNodeName();
+			String pumpName = curPump.getNodeName().replace("_", " ");
 			String gpio = curPump.getTextContent();
 			try {
 				pumpList.add(new Pump(pumpName, gpio));
@@ -1606,9 +1606,9 @@ public final class LaunchControl {
 				
 				Pump tPump = pumpIt.next();
 				
-				if (getFirstElementByXpath(null, "/elsinore/pumps/" +tPump.name) == null) {
+				if (getFirstElementByXpath(null, "/elsinore/pumps/" +tPump.getNodeName()) == null) {
 					// No timer by this name
-					Element newTimer = addNewElement(pumpsElement, tPump.name);
+					Element newTimer = addNewElement(pumpsElement, tPump.getNodeName());
 					newTimer.appendChild(configDoc.createTextNode(tPump.getGPIO()));
 				}
 			}
@@ -1900,7 +1900,8 @@ public final class LaunchControl {
 				if (e.getNodeName().equalsIgnoreCase("general")) {
 					continue;
 				} else if (e.getNodeName().equalsIgnoreCase("pumps")) {
-					parsePumps(e); 
+					//parsePumps(e);
+					continue;
 				} else if (e.getNodeName().equalsIgnoreCase("timers")) {
 					parseTimers(e); 
 				} else if (e.getNodeName().equalsIgnoreCase("device")) {

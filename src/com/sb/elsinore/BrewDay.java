@@ -29,7 +29,11 @@ public final class BrewDay {
 	// not checking the existing data for now, to allow multiple brew days without restarting the server
 	Date parseDateString(String dateString) {
 		Date dDate = null;
-
+		
+		if (dateString == null) {
+			return dDate;
+		}
+		
 		// this better be a datestamp string
 		try {
 			dDate = new Date(Long.parseLong(dateString));
@@ -73,23 +77,15 @@ public final class BrewDay {
 	}
 
 	public void startTimer(String name, String startIn) {
-		if (startIn == null || startIn.equals("null")) {
-			timers.put(name, null);
-		} else {
-			Entry<String, Date> startEntry = 
-					new AbstractMap.SimpleEntry<String, Date>("start", parseDateString(startIn));
-			setTimer(name, startEntry);
-		}
+		Entry<String, Date> startEntry = 
+				new AbstractMap.SimpleEntry<String, Date>("start", parseDateString(startIn));
+		setTimer(name, startEntry);
 	}
 
 	public void stopTimer(String name, String stopIn) {
-		if (stopIn == null || stopIn.equals("null")) {
-			timers.put(name, null);
-		} else {
-			Entry<String, Date> startEntry = 
-					new AbstractMap.SimpleEntry<String, Date>("end", parseDateString(stopIn));
-			setTimer(name, startEntry);
-		}
+		Entry<String, Date> stopEntry = 
+				new AbstractMap.SimpleEntry<String, Date>("end", parseDateString(stopIn));
+		setTimer(name, stopEntry);
 	}
 	
 	// Updated
@@ -146,7 +142,9 @@ public final class BrewDay {
 				
 				while (dateIt.hasNext()) {
 					Entry<String, Date> dateEntry = dateIt.next();
-					timerJSON.put(dateEntry.getKey(), lFormat.format(dateEntry.getValue()));
+					if (dateEntry.getValue() != null) {
+						timerJSON.put(dateEntry.getKey(), lFormat.format(dateEntry.getValue()));
+					}
 				}
 				
 				status.put(e.getKey(), timerJSON);
