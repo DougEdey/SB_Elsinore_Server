@@ -468,6 +468,14 @@ public final class PID implements Runnable {
 	public void shutdown() {
 		if(OC != null && outputThread != null) {
 			outputThread.interrupt();
+			while (!outputThread.isInterrupted()) {
+				BrewServer.log.warning("Waiting for OC thread to terminate " + getName() );
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					BrewServer.log.warning(getName() + " interrupted during shutdown");
+				}
+			}
 			OC.shutdown();
 		}
 		

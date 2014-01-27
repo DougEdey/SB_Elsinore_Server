@@ -192,21 +192,29 @@ public final class OutputControl implements Runnable {
 		cool_status = false;
 		heat_status = false;
 		if(Heat_SSR != null) {
-			Heat_SSR.setValue(false);
+			synchronized(Heat_SSR) {
+				Heat_SSR.setValue(false);
+			}
 		}
 		if(Cool_SSR != null) {
-			Cool_SSR.setValue(false);
+			synchronized(Cool_SSR) {
+				Cool_SSR.setValue(false);
+			}
 		}
 	}
 
 	private void allDisable() {
 		if(Heat_SSR != null) {
-			Heat_SSR.close();
-			Heat_SSR = null;
+			synchronized(Heat_SSR) {
+				Heat_SSR.close();
+				Heat_SSR = null;
+			}
 		}
 		if(Cool_SSR != null) {
-			Cool_SSR.close();
-			Cool_SSR = null;
+			synchronized(Cool_SSR) {
+				Cool_SSR.close();
+				Cool_SSR = null;
+			}
 		}
 	}
 	
