@@ -26,7 +26,11 @@ public class Pump {
 	}
 	
 	public boolean getStatus() {
-		return output.getValue().equals("1");
+		try {
+			return output.getValue().equals("1");
+		} catch (Exception e) {
+			return false;
+		}
 	}
 	
 	public void turnOn() {

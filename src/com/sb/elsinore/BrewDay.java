@@ -20,7 +20,7 @@ public final class BrewDay {
 	// generate the date time parameters
 	DateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd");
 	DateFormat sFormat = new SimpleDateFormat("HH:mm:ss");
-	DateFormat lFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+	DateFormat lFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 	
 	// the actual dates
 	Date updated = null;

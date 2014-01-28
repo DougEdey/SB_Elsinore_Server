@@ -107,19 +107,21 @@ public final class OutputControl implements Runnable {
 						coolStopTime = System.currentTimeMillis();
 					}
 				} // end the while loop
-			} catch (InterruptedException e) {
-				// Sleep interrupted
-				coolStopTime = System.currentTimeMillis();
-				System.out.print("Wakeup in " + fName);
+			
 			} catch (RuntimeException e) {
 				BrewServer.log.warning("Could not control the GPIO Pin during loop. Did you start as root?");
 				e.printStackTrace();
 				return;
 			}
+		} catch (InterruptedException e) {
+			// Sleep interrupted
+			coolStopTime = System.currentTimeMillis();
+			System.out.print("Wakeup in " + fName);
 		} catch (InvalidGPIOException e1) {
 			System.out.println(e1.getMessage());
 			e1.printStackTrace();
 		} finally {
+			BrewServer.log.warning(fName + " turning off outputs" );
 			allOff();
 		}
    }
@@ -192,6 +194,7 @@ public final class OutputControl implements Runnable {
 		cool_status = false;
 		heat_status = false;
 		if(Heat_SSR != null) {
+			BrewServer.log.warning("Waiting for Heat SSR to synchronize");
 			synchronized(Heat_SSR) {
 				Heat_SSR.setValue(false);
 			}
@@ -205,6 +208,7 @@ public final class OutputControl implements Runnable {
 
 	private void allDisable() {
 		if(Heat_SSR != null) {
+			BrewServer.log.warning("Waiting for Heat SSR to synchronize");
 			synchronized(Heat_SSR) {
 				Heat_SSR.close();
 				Heat_SSR = null;

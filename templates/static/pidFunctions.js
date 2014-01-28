@@ -317,10 +317,11 @@ function checkTimer(val, stage) {
 		} else {
 			$("#"+stage).hide();
 			$("#"+stage+"Timer").show();
-			$("#"+stage+"Timer").tinyTimer({from: startTime});
+			$("#"+stage+"Timer").tinyTimer({from: startTime.toString()});
 		}
 	} else {
 		$("#"+stage+"Timer").hide();
+		$("#"+stage)[0].innerHTML = "Start " + stage;
 	}
 }
 
