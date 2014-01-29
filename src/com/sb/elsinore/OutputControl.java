@@ -194,7 +194,6 @@ public final class OutputControl implements Runnable {
 		cool_status = false;
 		heat_status = false;
 		if(Heat_SSR != null) {
-			BrewServer.log.warning("Waiting for Heat SSR to synchronize");
 			synchronized(Heat_SSR) {
 				Heat_SSR.setValue(false);
 			}
@@ -208,7 +207,6 @@ public final class OutputControl implements Runnable {
 
 	private void allDisable() {
 		if(Heat_SSR != null) {
-			BrewServer.log.warning("Waiting for Heat SSR to synchronize");
 			synchronized(Heat_SSR) {
 				Heat_SSR.close();
 				Heat_SSR = null;
