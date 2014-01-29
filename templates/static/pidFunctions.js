@@ -253,14 +253,14 @@ function toggleDiv(id) {
 function setTimer(button, stage) {
 	// get the current Datestamp
 	var curDate = Date.now();
-	if(button.innerHTML.toLowerCase() == ("Start " + stage).toLowerCase()) {
+	if(button.innerHTML == ("Start " + stage)) {
 		$("#" + stage).hide();
 		$("#"+stage+"Timer").show();
-		formdata = stage.toLowerCase() + "Start=" + curDate;
+		formdata = stage + "Start=" + curDate;
 	} else {
 		$("#"+stage).show();
 		$("#"+stage+"Timer").hide();
-		formdata = stage.toLowerCase()+"End=" + curDate;
+		formdata = stage+"End=" + curDate;
 	}
 	
 	formdata +="&updated=" + curDate;
@@ -278,7 +278,7 @@ function setTimer(button, stage) {
 function resetTimer(button, stage) {
 	// get the current Datestamp
 	var curDate = Date.now();
-	formdata = stage.toLowerCase()+"End=null&" + stage.toLowerCase() +"Start=null" ;
+	formdata = stage+"End=null&" + stage +"Start=null" ;
 
 	formdata +="&updated=" + curDate;
 	
