@@ -27,7 +27,7 @@ public final class Temp implements Runnable {
 	
 	public void save() {
 		if (name != null && !name.equals("")) {
-			LaunchControl.addTempToConfigStatic(probeName, name);
+			LaunchControl.addTempToConfig(probeName, name);
 		}
 	}
 	
@@ -53,7 +53,30 @@ public final class Temp implements Runnable {
 				aName = aName.replace("-", ".");
 				BrewServer.log.info("Using OWFS for " + aName + "/temperature");
 				if ("" == LaunchControl.readOWFSPath(aName + "/temperature")) {
-					BrewServer.log.severe("This is not a temperature probe " + aName);
+					String newAddress[] = aName.split("\\.|-");
+					
+					// OWFS contains "-", W1 contained "."
+					if (newAddress.length == 2 && aName.indexOf("-") != 2) {
+						String devFamily = newAddress[0];
+						StringBuilder devAddress = new StringBuilder();
+						
+						devAddress.append(newAddress[1].subSequence(10, 12));
+						devAddress.append(newAddress[1].subSequence(8, 10));
+						devAddress.append(newAddress[1].subSequence(6, 8));
+						devAddress.append(newAddress[1].subSequence(4, 6));
+						devAddress.append(newAddress[1].subSequence(2, 4));
+						devAddress.append(newAddress[1].subSequence(0, 2));
+						
+						String fixedAddress = devFamily.toString() + "." + devAddress.toString().toUpperCase();
+						
+						System.out.println("Converted address: " + fixedAddress);
+						
+						aName = fixedAddress;
+						if ("" == LaunchControl.readOWFSPath(aName + "/temperature")) {
+							BrewServer.log.severe("This is not a temperature probe " + aName);
+						}
+					} 
+					
 				}
 				
 			} catch ( OwfsException e) {
@@ -65,6 +88,34 @@ public final class Temp implements Runnable {
 			
 			fProbe = null;
 		} else {
+		
+			File probePath = new File("/sys/bus/w1/devices/" + aName + "/w1_slave");
+			
+			// Lets assume that OWFS has "." separated names
+			if (!probePath.exists() && aName.indexOf(".") != 2) {
+				String newAddress[] = aName.split("\\.|-");
+				
+				if (newAddress.length == 2) {
+					String devFamily = newAddress[0];
+					StringBuilder devAddress = new StringBuilder();
+					
+					devAddress.append(newAddress[1].subSequence(10, 12));
+					devAddress.append(newAddress[1].subSequence(8, 10));
+					devAddress.append(newAddress[1].subSequence(6, 8));
+					devAddress.append(newAddress[1].subSequence(4, 6));
+					devAddress.append(newAddress[1].subSequence(2, 4));
+					devAddress.append(newAddress[1].subSequence(0, 2));
+					
+					String fixedAddress = devFamily.toString() + "." + devAddress.toString().toLowerCase();
+					
+					System.out.println("Converted address: " + fixedAddress);
+					
+					aName = fixedAddress;
+					
+					probePath = null;	
+				}
+				
+			} 
 			fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
 		}
 		
@@ -437,6 +488,7 @@ public final class Temp implements Runnable {
 					pinValue = Double.parseDouble(LaunchControl.readOWFSPath(volumeAddress + "/volt." + volumeOffset));
 				} catch (Exception e) {
 					BrewServer.log.log(Level.SEVERE, "Could not update the volume reading from OWFS", e);
+					
 					LaunchControl.setupOWFS();
 					return 0.0;
 				}
@@ -493,7 +545,7 @@ public final class Temp implements Runnable {
 					
 				}
 				
-				if (tVolume == -1) {
+				if (tVolume == -1 && curKey != null && prevKey != null) {
 					// Try to extrapolate
 					double volRange = curKey - prevKey;
 					double readingRange = curValue - prevValue;

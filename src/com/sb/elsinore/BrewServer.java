@@ -8,7 +8,7 @@ import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
+
 
 import com.sb.elsinore.NanoHTTPD.Response.Status;
 
@@ -16,7 +16,6 @@ public class BrewServer extends NanoHTTPD {
 	
 	
 	private File rootDir;
-	private FileHandler fileHandler;
     public final static Logger log = Logger.getLogger("com.sb.manager.Server");
 
 
@@ -86,7 +85,10 @@ public class BrewServer extends NanoHTTPD {
                 
         }
 
-		rootDir = new File(System.getProperty("user.dir"));
+		rootDir = new File(BrewServer.class.getProtectionDomain().getCodeSource()
+				.getLocation().getPath()).getParentFile();
+		System.out.println("Root Directory is: " + rootDir.toString());
+				
 		if(rootDir.exists() && rootDir.isDirectory()) {
 			BrewServer.log.info("Root directory: " + rootDir.toString());
 		}
@@ -212,8 +214,14 @@ public class BrewServer extends NanoHTTPD {
 				while (it.hasNext()) {
 					e = it.next();
 					
-					if (e.getKey().endsWith("Start") || e.getKey().endsWith("End")) {
-						brewDay.setTimer(e.getKey(), e.getValue());
+					if (e.getKey().endsWith("Start")) {
+						int trimEnd = e.getKey().length() - 5;
+						String name = e.getKey().substring(0, trimEnd);
+						brewDay.startTimer(name, e.getValue());
+					} else if (e.getKey().endsWith("End"))  {
+						int trimEnd = e.getKey().length() - 3;
+						String name = e.getKey().substring(0, trimEnd);
+						brewDay.stopTimer(name, e.getValue());
 					}
 				}
 

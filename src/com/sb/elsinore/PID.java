@@ -15,7 +15,8 @@ import java.util.regex.Pattern;
 
 public final class PID implements Runnable {
 	private OutputControl OC = null;
-
+	private Thread outputThread = null;
+	
 	// inner class to hold the settings
 	public class Settings {
 		public double duty_cycle, cycle_time, proportional, integral, derivative, set_point;
@@ -130,7 +131,7 @@ public final class PID implements Runnable {
 		// create the Output if needed
 		if(!fGPIO.equals("")) {
 			OC = new OutputControl(fName, fGPIO, heatSetting.cycle_time);	
-			Thread outputThread = new Thread(OC);
+			outputThread = new Thread(OC);
 			outputThread.start();
 		} else {
 			return;
@@ -465,17 +466,19 @@ public final class PID implements Runnable {
 	 * Used as a shutdown hook to close off everything
 	 */
 	public void shutdown() {
-		if (this.getName() != null && !getName().equals("")) {
-			LaunchControl.savePID(this.getName(), heatSetting, fGPIO, auxGPIO);
-		}
-		
-		if(OC != null) {
+		if(OC != null && outputThread != null) {
+			outputThread.interrupt();
 			OC.shutdown();
 		}
 		
 		if (auxPin != null) {
 			auxPin.close();
 		}
+		
+		if (this.getName() != null && !getName().equals("")) {
+			LaunchControl.savePID(this.getName(), heatSetting, fGPIO, auxGPIO);
+		}
+		
 	}
 
 	// set the cool values

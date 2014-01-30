@@ -13,7 +13,7 @@ public class Pump {
 	public OutPin output = null;
 	
 	public Pump(String name, String pinName) throws InvalidGPIOException {
-		this.name = name;
+		this.name = name.replace("_", " ");
 		try {
 			output = new OutPin(pinName);
 		} catch (InvalidGPIOException e) {
@@ -26,7 +26,11 @@ public class Pump {
 	}
 	
 	public boolean getStatus() {
-		return output.getValue().equals("1");
+		try {
+			return output.getValue().equals("1");
+		} catch (Exception e) {
+			return false;
+		}
 	}
 	
 	public void turnOn() {
@@ -45,5 +49,9 @@ public class Pump {
 	public String getGPIO() {
 		// TODO Auto-generated method stub
 		return output.getGPIOName();
+	}
+
+	public String getNodeName() {
+		return name.replace(" ", "_");
 	}
 }

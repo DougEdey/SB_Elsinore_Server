@@ -17,10 +17,11 @@ function waitForMsg(){
 				vessel = key;
 				
 				if (vessel == "brewday") {
-					checkTimer(val, "mash");
-					checkTimer(val, "sparge");
-					checkTimer(val, "boil");
-					checkTimer(val, "chill");
+					$.each(val, function(timerName, timerStatus) {
+						checkTimer(timerStatus, timerName);
+					});
+					return true;
+					
 				}
 				
 				if(vessel == "pumps") {
@@ -33,7 +34,7 @@ function waitForMsg(){
 							jQuery('button[id^="' + pumpName + '"]')[0].style.background="#666666";
 							jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" OFF";
 						}
-					})
+					});
 					return true;
 				}
 
@@ -252,14 +253,14 @@ function toggleDiv(id) {
 function setTimer(button, stage) {
 	// get the current Datestamp
 	var curDate = Date.now();
-	if(button.innerHTML.toLowerCase() == ("Start " + stage).toLowerCase()) {
+	if(button.innerHTML == ("Start " + stage)) {
 		$("#" + stage).hide();
 		$("#"+stage+"Timer").show();
-		formdata = stage.toLowerCase() + "Start=" + curDate;
+		formdata = stage + "Start=" + curDate;
 	} else {
 		$("#"+stage).show();
 		$("#"+stage+"Timer").hide();
-		formdata = stage.toLowerCase()+"End=" + curDate;
+		formdata = stage+"End=" + curDate;
 	}
 	
 	formdata +="&updated=" + curDate;
@@ -277,11 +278,7 @@ function setTimer(button, stage) {
 function resetTimer(button, stage) {
 	// get the current Datestamp
 	var curDate = Date.now();
-	$("#"+stage)[0].innerHTML = "Start " + stage;
-	
-	$("#"+stage).show();
-	$("#"+stage+"Timer").hide();
-	formdata = stage.toLowerCase()+"End=null&" + stage.toLowerCase() +"Start=null" ;
+	formdata = stage+"End=null&" + stage +"Start=null" ;
 
 	formdata +="&updated=" + curDate;
 	
@@ -290,19 +287,25 @@ function resetTimer(button, stage) {
 		type: 'POST',
 		data: formdata,
 		success: function(data) {data = null}
-	});	
+	});
+	
+	$("#"+stage)[0].innerHTML = "Start " + stage;
+	
+	$("#"+stage).show();
+	$("#"+stage+"Timer").hide();
+	
 	window.disableUpdates = 0;
 	return false;
 }
 
 function checkTimer(val, stage) {
 	// Check for a boil timing
-	if (stage + "Start" in val) {
-		var startTime = new Date(val[stage+"Start"]);
+	if ("start" in val) {
+		var startTime = new Date(val["start"]);
 		
 		// boil has been started, has it been finished
-		if (stage + "End" in val) {
-			var endTime = new Date(val[stage+"End"]);
+		if ("end" in val) {
+			var endTime = new Date(val["end"]);
 			var diffTime = endTime - startTime;
 			var hours = Math.floor(diffTime/(1000*60*60));
 			diffTime -= hours * 1000*60*60;
@@ -314,10 +317,11 @@ function checkTimer(val, stage) {
 		} else {
 			$("#"+stage).hide();
 			$("#"+stage+"Timer").show();
-			$("#"+stage+"Timer").tinyTimer({from: startTime});
+			$("#"+stage+"Timer").tinyTimer({from: startTime.toString()});
 		}
 	} else {
 		$("#"+stage+"Timer").hide();
+		$("#"+stage)[0].innerHTML = "Start " + stage;
 	}
 }
 
