@@ -180,6 +180,7 @@ public class ServeHTML {
 				controller += "<div id=\"" + device + "-controls\" class='controller'>" + lineSep + 	
 					"<div id=\"" + device + "-gage\" class='gage'></div>" + lineSep +
 					"<form id=\""+ device + "-form\" class=\"controlPanelForm\" >" + lineSep +
+					"<input type='hidden' name=\"mode\"/>" + 
 					"<div class=\"holo-buttons\">" + lineSep +
 					"<button id=\"" + device + "-modeAuto\" class=\"holo-button modeclass\" onclick='disable(this); selectAuto(this); return false;'>Auto</button>" + lineSep +
 					"<button id=\"" + device + "-modeManual\" class=\"holo-button modeclass\" onclick='disable(this); selectManual(this); return false;'>Manual</button>" + lineSep +
@@ -191,7 +192,7 @@ public class ServeHTML {
                     	"<tr id='"+ device + "-SP' class='holo-field'>" + lineSep +
 	                    	"<td id='"+ device + "-labelSP' >Set Point</td>"+ lineSep +
 	                    	"<td id=\"" + device + "-setpoint\">" + lineSep +
-	                    		"<input class='inputBox setpoint' type=\"text\" name=\"" + device + "-setpoint\"  maxlength = \"4\" size =\"4\" value=\"\" style=\"text-align: left;\"/>" +
+	                    		"<input class='inputBox setpoint' type=\"text\" name=\"setpoint\"  maxlength = \"4\" size =\"4\" value=\"\" style=\"text-align: left;\"/>" +
 	                    	"</td>" + lineSep +
 	                    	"<td id='"+ device + "-unitSP'><div id='tempUnit'>F</div></td>"+ lineSep +
 	                    "</tr>" + lineSep +
@@ -201,7 +202,7 @@ public class ServeHTML {
                     		"<td id='"+ device + "-labelDC' >Duty Cycle</td>" + lineSep +
                     
                     		"<td id=\"" + device + "-dutycycle\">" + lineSep +
-                    			"<input class='inputBox dutycycle' name=\"" + device + "-dutycycle\" maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
+                    			"<input class='inputBox dutycycle' name=\"dutycycle\" maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
                     		"</td>" + lineSep +
                     	"<td id='"+ device + "-unitDC'>%</td><br />"+ 
                     	"</tr>" + lineSep +
@@ -210,7 +211,7 @@ public class ServeHTML {
                     	"<tr id='"+ device + "-DT' class='holo-field'>" + lineSep +
                     	"<td id='"+ device + "-labelDT' >Duty Time:</td>" + lineSep +
                  			"<td id=\"" + device + "-cycletime\">" + lineSep +
-                 				"<input class='inputBox dutytime' name=\"" + device + "-cycletime\" maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
+                 				"<input class='inputBox dutytime' name=\"cycletime\" maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
                  			"</td>" + lineSep +
                  		"<td id='"+ device + "-unitDT'>secs</td>"+ 
                  		"</tr>" + lineSep +
@@ -219,7 +220,7 @@ public class ServeHTML {
 	                    "<tr id='"+ device + "-p' class='holo-field'>" + lineSep +
 	                    "<td id='"+ device + "-labelp' >P</td>" + lineSep +
 		                    "<td id=\"" + device + "-pinput\">" + lineSep +
-		                    "	<input class='inputBox p' name=\"" + device + "-p\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
+		                    "	<input class='inputBox p' name=\"p\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
 		                    "</td>" + lineSep +
 		                    "<td id='"+ device + "-unitP'>secs#176<div id='tempUnit'>F</div></td>"+ 
 		                "</tr>" + lineSep +
@@ -228,7 +229,7 @@ public class ServeHTML {
 	                    "<br />" + "<tr id='"+ device + "-i' class='holo-field'>" + lineSep +
 	                    "<td id='"+ device + "-labeli' >I</td>" + lineSep +
 		                    "<td id=\"" + device + "-iinput\">" + lineSep +
-		                    "	<input class='inputBox i' name=\"" + device + "-i\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
+		                    "	<input class='inputBox i' name=\"i\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
 		                    "</td>" + lineSep +
 		                    "<td id='"+ device + "-unitI'>&#176<div id='tempUnit'>F</div></td>" +
 		                "</tr>" + lineSep +  
@@ -237,7 +238,7 @@ public class ServeHTML {
 	                    "<br />" + "<tr id='"+ device + "-d' class='holo-field'>" + lineSep +
 	                    "<td id='"+ device + "-labeld' >D</td>" + lineSep +
 		        			"<td id=\"" + device + "-dinput\">" + lineSep +
-				                    "	<input class='inputBox d ' name=\"" + device + "-d\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
+				                    "	<input class='inputBox d ' name=\"d\"  maxlength = \"6\" size =\"6\" value=\"\" style=\"text-align: left;\"/>" +
 							"</td>" + lineSep +
 							"<td id='"+ device + "-unitD'>secs</td>" +
 						"</tr>" + lineSep +	
