@@ -9,6 +9,10 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.JSONParser;
 
 import com.sb.elsinore.NanoHTTPD.Response.Status;
 
@@ -59,7 +63,7 @@ public class BrewServer extends NanoHTTPD {
 
 		super(port);
 		// just serve up on port 8080 for now
-		System.out.println("Launching on port " + port);
+		BrewServer.log.info("Launching on port " + port);
 		
 		
 		//setup the logging handlers
@@ -87,7 +91,7 @@ public class BrewServer extends NanoHTTPD {
 
 		rootDir = new File(BrewServer.class.getProtectionDomain().getCodeSource()
 				.getLocation().getPath()).getParentFile();
-		System.out.println("Root Directory is: " + rootDir.toString());
+		BrewServer.log.info("Root Directory is: " + rootDir.toString());
 				
 		if(rootDir.exists() && rootDir.isDirectory()) {
 			BrewServer.log.info("Root directory: " + rootDir.toString());
@@ -104,10 +108,44 @@ public class BrewServer extends NanoHTTPD {
 			// parms contains the properties here
 			if(uri.toLowerCase().equals("/updatepid")) {
 				// parse the values if possible
-
-				String temp, mode = "off";
+				
+				String temp, mode = "off", inputUnit = null;
 				double dTemp, duty = 0, cycle = 4, setpoint = 175, p = 0, i = 0, d = 0;
-				BrewServer.log.info(parms.toString());
+				Set<Entry<String, String>> incomingParams = parms.entrySet();
+				Iterator<Entry<String, String>> it = incomingParams.iterator();
+				Entry<String, String> param = null;
+				JSONObject incomingData = null;
+				
+				JSONParser parser = new JSONParser();
+				
+				// Try to Parse JSON Data
+				while (it.hasNext()) {
+					param = it.next();
+					BrewServer.log.info("Key: " + param.getKey());
+					BrewServer.log.info("Entry: " + param.getValue());
+					try {
+						Object parsedData = parser.parse(param.getValue());
+						if (parsedData instanceof JSONArray) {
+							incomingData = (JSONObject) ((JSONArray)parsedData).get(0);
+						} else {
+							incomingData = (JSONObject) parsedData;
+							inputUnit = param.getKey();
+						}
+					} catch (Exception e) {
+						BrewServer.log.info("couldn't read " + param.getValue() + " as a JSON Value " + e.getMessage());
+					}
+				
+				}
+			
+				if (incomingData != null) {
+					// Use the JSON Data
+					BrewServer.log.info("Found valid data for " + inputUnit);
+					parms = incomingData;
+				} else {
+					inputUnit = parms.get("form");
+				}
+				
+				// Fall back to the old style
 				if(parms.containsKey("dutycycle")) {
 					temp = parms.get("dutycycle");
 					try {
@@ -179,7 +217,7 @@ public class BrewServer extends NanoHTTPD {
 					BrewServer.log.info("Mode: " + mode);
 				}
 
-				String inputUnit = parms.get("form");
+				
 				BrewServer.log.info("Form: " + inputUnit);
 
 				PID tPID = LaunchControl.findPID(inputUnit);
@@ -187,7 +225,7 @@ public class BrewServer extends NanoHTTPD {
 					BrewServer.log.info(mode +":" + duty + ":" + cycle +":"+ setpoint +":"+ p+":"+ i+":"+ d );
 					tPID.updateValues(mode, duty, cycle, setpoint, p, i, d );
 				} else {
-					BrewServer.log.info("Attempted to update a non existent PID, " + inputUnit + ". Please check your client");
+					BrewServer.log.warning("Attempted to update a non existent PID, " + inputUnit + ". Please check your client");
 				}
 				return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated PID" );
 			}

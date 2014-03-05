@@ -1,3 +1,20 @@
+$.fn.serializeObject = function()
+{
+    var o = {};
+    var a = this.serializeArray();
+    $.each(a, function() {
+        if (o[this.name] !== undefined) {
+            if (!o[this.name].push) {
+                o[this.name] = [o[this.name]];
+            }
+            o[this.name].push(this.value || '');
+        } else {
+            o[this.name] = this.value || '';
+        }
+    });
+    return o;
+};
+
 function waitForMsg(){
 	if (window.disableUpdates) {
 		return false;
@@ -80,8 +97,12 @@ function waitForMsg(){
 				}
 
 				// setup the values
+				var vesselDiv = 'form[id="'+vessel+'-form"]';
+				
 				var mode = val.mode.charAt(0).toUpperCase() + val.mode.slice(1);
-				if (Window.mode != mode ) {
+				var currentMode = jQuery(vesselDiv  + ' input[name="dutycycle"]');
+				
+				if (jQuery(vesselDiv  + ' input[name="dutycycle"]') != mode ) {
 				
 					if(mode== "Off") {
 						selectOff(vessel);
@@ -92,6 +113,8 @@ function waitForMsg(){
 					if(mode == "Manual") {
 						selectManual(vessel);
 					}
+					
+					jQuery(vesselDiv  + '  input[name="dutycycle"]').val(mode);
 				}
 				mode = null;
 				if(val.actualduty != null) {
@@ -102,21 +125,22 @@ function waitForMsg(){
 
 			
 				jQuery('div[id="tempUnit"]').text(val.scale);
-				jQuery('input[name="'+vessel+'-dutycycle"]').val(val.duty);
-				jQuery('input[name="'+vessel+'-cycletime"]').val(val.cycle);
-				jQuery('input[name="'+vessel+'-setpoint"]').val(val.setpoint);
-				jQuery('input[name="'+vessel+'-p"]').val(val.p);
-				jQuery('input[name="'+vessel+'-i"]').val(val.i);
-				jQuery('input[name="'+vessel+'-d"]').val(val.k);
+				
+				jQuery(vesselDiv  + ' input[name="dutycycle"]').val(val.duty);
+				jQuery(vesselDiv  + ' input[name="cycletime"]').val(val.cycle);
+				jQuery(vesselDiv  + ' input[name="setpoint"]').val(val.setpoint);
+				jQuery(vesselDiv  + ' input[name="p"]').val(val.p);
+				jQuery(vesselDiv  + ' input[name="i"]').val(val.i);
+				jQuery(vesselDiv  + ' > input[name="d"]').val(val.k);
 				
 				// Aux Mode check
 				if ("auxStatus" in val) {
 					if (val.auxStatus == "on" || val.auxStatus == "1") {
-						jQuery("button[id='" + vessel + "Aux'")[0].style.background = "red";
-						jQuery("button[id='" + vessel + "Aux'")[0].innerHTML = "Aux ON"
+						jQuery(vesselDiv  + ' button[id="Aux"]')[0].style.background = "red";
+						jQuery(vesselDiv  + ' button[id="Aux"]')[0].innerHTML = "Aux ON"
 					} else {
-						jQuery("button[id='" + vessel + "Aux'")[0].style.background = "#666666";
-						jQuery("button[id='" + vessel + "Aux'")[0].innerHTML = "Aux OFF"
+						jQuery(vesselDiv  + ' button[id="Aux"]')[0].style.background = "#666666";
+						jQuery(vesselDiv  + ' button[id="Aux"]')[0].innerHTML = "Aux OFF"
 					}
 				}
 				
@@ -131,14 +155,17 @@ function waitForMsg(){
 }
 
 function selectOff(vessel) {
-	Window.mode = "off";
+
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
 		i = v.indexOf("-");
 		vessel = v.substr(0, i);
 		v = null;
 	}
-
+	
+	var vesselDiv = 'form[id="'+vessel+'-form"]';
+	$(vesselDiv + ' input[name="mode"]').val("off"); 
+	
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="red";
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="#666666";
@@ -155,7 +182,7 @@ function selectOff(vessel) {
 }
 
 function selectAuto(vessel) {
-	Window.mode = "auto";
+	
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
 		i = v.indexOf("-");
@@ -163,6 +190,9 @@ function selectAuto(vessel) {
 		v = null;
 	}
 
+	var vesselDiv = 'form[id="'+vessel+'-form"]';
+	$(vesselDiv + ' input[name="mode"]').val("auto");
+	
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="red";
@@ -179,13 +209,16 @@ function selectAuto(vessel) {
 }
 
 function selectManual(vessel) {
-	Window.mode = "manual";
+	
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
 		i = v.indexOf("-");
 		vessel = v.substr(0, i);
 		v = null;
 	}
+	
+	var vesselDiv = 'form[id="'+vessel+'-form"]';
+	$(vesselDiv + ' input[name="mode"]').val("manual");
 
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="red";
@@ -203,16 +236,19 @@ function selectManual(vessel) {
 }
 
 function submitForm(form){
-	formdata = jQuery(form).serialize();
-	vessel = form.id.substring(0, form.id.indexOf("-form"));
-	var find = vessel + '-';
-	formdata = formdata.replace(new RegExp(find, 'g'), '');
-	formdata = formdata.replace(new RegExp('&d=', 'g'), '&k=');
-	formdata = "form=" + vessel + "&" + "mode=" + Window.mode + "&" +formdata;
+
+	var vessel = form.id.substring(0, form.id.indexOf("-form"));
+	var formdata = {};
+	
+	formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
+	$.extend(formdata[vessel], {"name":"mode", "value":Window.mode});
+	//formdata = ;
+	
 	$.ajax({ 
 		url: 'updatepid',
 		type: 'POST',
 		data: formdata,
+		dataType: 'json',
 		success: function(data) {data = null}
 	});	
 	window.disableUpdates = 0;

@@ -15,6 +15,7 @@ Setup Instructions
 [Beaglebone Black](extras/BeagleboneBlackSetup.md)
 
 [RaspberryPi](extras/RaspberryPiSetup.md)
+[HBT Thread for RaspberryPi setup](http://www.homebrewtalk.com/f170/raspberry-pi-strangebrew-elsinore-basic-setup-463590/#post5961579)
 
 Startup Instructions
 ====================
