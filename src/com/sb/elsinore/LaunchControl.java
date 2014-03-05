@@ -945,7 +945,7 @@ public final class LaunchControl {
 				
 				saveConfigFile(configFileName + ".new");
 				
-				System.out.println("Config file updated. Please copy it from rpibrew.cfg.new to rpibrew.cfg to use the data");
+				System.out.println("Config file updated. Please copy it from "+configFileName+".new to "+configFileName+" to use the data");
 				System.out.println("You may need to do this as root");
 				
 				System.exit(0);
