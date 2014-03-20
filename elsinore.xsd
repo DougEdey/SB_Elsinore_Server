@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+    <xs:element name="elsinore">
+        <xs:complexType>
+            <xs:choice maxOccurs="unbounded">
+                <xs:element ref="device"/>
+                <xs:element ref="general"/>
+                <xs:element ref="timers"/>
+            </xs:choice>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="device">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:sequence minOccurs="0">
+                    <xs:element ref="volume-unit"/>
+                    <xs:element ref="volume-address"/>
+                    <xs:element ref="volume-offset"/>
+                    <xs:element maxOccurs="unbounded" ref="volume"/>
+                </xs:sequence>
+                <xs:element ref="probe"/>
+                <xs:sequence minOccurs="0">
+                    <xs:element ref="duty_cycle"/>
+                    <xs:element ref="cycle_time"/>
+                    <xs:element ref="set_point"/>
+                    <xs:element ref="proportional"/>
+                    <xs:element ref="integral"/>
+                    <xs:element ref="derivative"/>
+                    <xs:element ref="gpio"/>
+                </xs:sequence>
+            </xs:sequence>
+            <xs:attribute name="id" use="required" type="xs:NCName"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="volume-unit" type="xs:NCName"/>
+    <xs:element name="volume-address" type="xs:NMTOKEN"/>
+    <xs:element name="volume-offset" type="xs:NCName"/>
+    <xs:element name="volume">
+        <xs:complexType>
+            <xs:simpleContent>
+                <xs:extension base="xs:decimal">
+                    <xs:attribute name="vol" use="required" type="xs:decimal"/>
+                </xs:extension>
+            </xs:simpleContent>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="probe" type="xs:NMTOKEN"/>
+    <xs:element name="duty_cycle" type="xs:decimal"/>
+    <xs:element name="cycle_time" type="xs:decimal"/>
+    <xs:element name="set_point" type="xs:decimal"/>
+    <xs:element name="proportional" type="xs:decimal"/>
+    <xs:element name="integral" type="xs:decimal"/>
+    <xs:element name="derivative" type="xs:decimal"/>
+    <xs:element name="gpio" type="xs:NCName"/>
+    <xs:element name="general">
+        <xs:complexType/>
+    </xs:element>
+    <xs:element name="timers">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs="unbounded" ref="time"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="time">
+        <xs:complexType>
+            <xs:attribute name="name" use="required" type="xs:NCName"/>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

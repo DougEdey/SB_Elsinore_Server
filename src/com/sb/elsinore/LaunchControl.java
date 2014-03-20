@@ -1181,24 +1181,26 @@ public final class LaunchControl {
 		NodeList tList = null;
 		Element tempElement = null;
 		
-		if (owfsServer != null) {
-			tempElement = getFirstElement(generalElement, "owfs_server");
+		if (useOWFS) {
+			if (owfsServer != null) {
+				tempElement = getFirstElement(generalElement, "owfs_server");
+				
+				if (tempElement == null) {
+					tempElement = addNewElement(generalElement, "owfs_server");
+				} 
+				
+				tempElement.setTextContent(owfsServer);
+			}
 			
-			if (tempElement == null) {
-				tempElement = addNewElement(generalElement, "owfs_server");
-			} 
-			
-			tempElement.setTextContent(owfsServer);
-		}
-		
-		if (owfsPort != null) {
-			tempElement = getFirstElement(generalElement, "owfs_port");
-			
-			if (tempElement == null) {
-				tempElement = addNewElement(generalElement, "owfs_port");
-			} 
-			
-			tempElement.setTextContent(Integer.toString(owfsPort));
+			if (owfsPort != null) {
+				tempElement = getFirstElement(generalElement, "owfs_port");
+				
+				if (tempElement == null) {
+					tempElement = addNewElement(generalElement, "owfs_port");
+				} 
+				
+				tempElement.setTextContent(Integer.toString(owfsPort));
+			}
 		}
 		
 		try {
