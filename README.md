@@ -12,9 +12,10 @@ The system is based off the Dallas One Wire protocol for the temperature probes 
 
 Setup Instructions
 ====================
-[Beaglebone Black](extras/BeagleboneBlackSetup.md)
+[Beaglebone Black](http://dougedey.github.io/2014/03/22/BeagleBoneBlack-Setup/)
 
-[RaspberryPi](extras/RaspberryPiSetup.md)
+[RaspberryPi](http://dougedey.github.io/2014/03/22/RaspberryPi-Setup/)
+
 
 [More indepth RPi Documentation](http://dougedey.github.io/2014/03/22/Raspberry-Pi-Basic-Setup/)
 [HBT Thread for RaspberryPi setup](http://www.homebrewtalk.com/f170/raspberry-pi-strangebrew-elsinore-basic-setup-463590/#post5961579)
