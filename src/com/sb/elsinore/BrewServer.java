@@ -100,12 +100,55 @@ public class BrewServer extends NanoHTTPD {
 
 	}
 
+	private boolean updateMashProfile(Map<String, String> parms) {
+		String inputUnit = null;
+		Set<Entry<String, String>> incomingParams = parms.entrySet();
+		Iterator<Entry<String, String>> it = incomingParams.iterator();
+		Entry<String, String> param = null;
+		JSONObject incomingData = null;
+		
+		JSONParser parser = new JSONParser();
+		
+		// Try to Parse JSON Data
+		while (it.hasNext()) {
+			param = it.next();
+			BrewServer.log.info("Key: " + param.getKey());
+			BrewServer.log.info("Entry: " + param.getValue());
+			try {
+				Object parsedData = parser.parse(param.getValue());
+				if (parsedData instanceof JSONArray) {
+					incomingData = (JSONObject) ((JSONArray)parsedData).get(0);
+				} else {
+					incomingData = (JSONObject) parsedData;
+					inputUnit = param.getKey();
+				}
+			} catch (Exception e) {
+				BrewServer.log.info("couldn't read " + param.getValue() + " as a JSON Value " + e.getMessage());
+			}
+		
+		}
+	
+		if (incomingData != null) {
+			// Use the JSON Data
+			BrewServer.log.info("Found valid data for " + inputUnit);
+			parms = incomingData;
+		}
+		return true;
+	}
+	
 	public Response serve( String uri, Method method,  Map<String, String> header, Map<String, String> parms, Map<String, String> files)
 	{
 
 		BrewServer.log.info("URL : " + uri + " method: " + method);
 		if(method == Method.POST) {
 			// parms contains the properties here
+			if(uri.toLowerCase().equals("/mashprofile")) {
+				if (updateMashProfile(parms)) {
+					return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated MashProfile" );
+				}
+				return new NanoHTTPD.Response( Status.BAD_REQUEST, MIME_HTML, "Failed to update Mashprofile" );
+			}
+			
 			if(uri.toLowerCase().equals("/updatepid")) {
 				// parse the values if possible
 				
