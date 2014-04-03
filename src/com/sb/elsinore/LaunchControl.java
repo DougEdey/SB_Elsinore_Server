@@ -75,10 +75,12 @@ public final class LaunchControl {
 	public static List<Temp> tempList = new ArrayList<Temp>();
 	public static List<Pump> pumpList = new ArrayList<Pump>();
 	public static List<String> timerList = new ArrayList<String>(); 
+	public static MashControl mashObject = null;
 	
 	/* Temperature and PID threads */
 	private List<Thread> tempThreads = new ArrayList<Thread>();
 	private List<Thread> pidThreads = new ArrayList<Thread>();
+	private Thread mashThread = null;
 	
 	/* ConfigParser details, need to investigate moving to a better ini parser */
 	private static ConfigParser configCfg = null;
@@ -203,6 +205,11 @@ public final class LaunchControl {
 						n.shutdown();
 					}
 				}
+				
+				if (mashObject != null) {
+					mashObject.shutdownFlag = true;
+				}
+				
 				saveConfigFile();
 			}
 		});
@@ -406,6 +413,14 @@ public final class LaunchControl {
 			
 			rObj.put("pumps", tJSON);
 		}
+		
+		// Check for mash steps
+		if (mashObject != null && mashObject.mashStepList.size() > 0) {
+			rObj.put("mash", mashObject.getJSONData());
+		} else {
+			rObj.put("mash", "Unset");
+		}
+		
 		return rObj.toString();
 	}
 		

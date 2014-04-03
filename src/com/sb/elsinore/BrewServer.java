@@ -105,7 +105,7 @@ public class BrewServer extends NanoHTTPD {
 		Set<Entry<String, String>> incomingParams = parms.entrySet();
 		Iterator<Entry<String, String>> it = incomingParams.iterator();
 		Entry<String, String> param = null;
-		JSONObject incomingData = null;
+		JSONObject incomingData = new JSONObject();
 		
 		JSONParser parser = new JSONParser();
 		
@@ -115,12 +115,11 @@ public class BrewServer extends NanoHTTPD {
 			BrewServer.log.info("Key: " + param.getKey());
 			BrewServer.log.info("Entry: " + param.getValue());
 			try {
-				Object parsedData = parser.parse(param.getValue());
+				Object parsedData = parser.parse(param.getKey());
 				if (parsedData instanceof JSONArray) {
 					incomingData = (JSONObject) ((JSONArray)parsedData).get(0);
 				} else {
 					incomingData = (JSONObject) parsedData;
-					inputUnit = param.getKey();
 				}
 			} catch (Exception e) {
 				BrewServer.log.info("couldn't read " + param.getValue() + " as a JSON Value " + e.getMessage());
@@ -131,7 +130,55 @@ public class BrewServer extends NanoHTTPD {
 		if (incomingData != null) {
 			// Use the JSON Data
 			BrewServer.log.info("Found valid data for " + inputUnit);
-			parms = incomingData;
+			System.out.println(incomingData.toJSONString());
+			
+			if (LaunchControl.mashObject == null) {
+				LaunchControl.mashObject = new MashControl();
+			}
+			
+			// Default to Fahrenheit
+			String temp_unit = "F";
+			if (incomingData.containsKey("temp_unit")) {
+				temp_unit = incomingData.get("temp_unit").toString();
+				incomingData.remove("temp_unit");
+			}
+			
+			if (incomingData.containsKey("pid")) {
+				LaunchControl.mashObject.outputControl = incomingData.get("pid").toString();
+				incomingData.remove("pid");
+			}
+			
+			// Iterate through the JSON
+			for (Object key: incomingData.keySet()) {
+				String cKey = key.toString();
+			
+				try {
+					int stepCount = Integer.parseInt(cKey);
+					// We have a good step count, parse the value
+					JSONObject valueObj = (JSONObject) incomingData.get(key);
+					
+					int duration = Integer.parseInt(valueObj.get("duration").toString());
+					double temp = Double.parseDouble(valueObj.get("temp").toString());
+					
+					String method = valueObj.get("method").toString();
+					String type = valueObj.get("type").toString();
+					
+					// Add the step
+					MashStep newStep = LaunchControl.mashObject.addMashStep(stepCount);
+					newStep.setDuration(duration);
+					newStep.setTemp(temp);
+					newStep.setMethod(method);
+					newStep.setType(type);
+					
+					BrewServer.log.info(newStep.toString());
+					
+				} catch (NumberFormatException e) {
+					// Couldn't work out what this is
+					BrewServer.log.warning("Couldn't parse " + cKey);
+					BrewServer.log.warning(incomingData.get(key).toString());
+				}
+			}
+			
 		}
 		return true;
 	}

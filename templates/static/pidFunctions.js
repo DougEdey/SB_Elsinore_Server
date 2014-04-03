@@ -15,6 +15,30 @@ $.fn.serializeObject = function()
     return o;
 };
 
+/**
+ * Return an Object sorted by it's Key
+ */
+var sortObjectByKey = function(obj){
+    var keys = [];
+    var sorted_obj = {};
+
+    for(var key in obj){
+        if(obj.hasOwnProperty(key)){
+            keys.push(key);
+        }
+    }
+
+    // sort keys
+    keys.sort();
+
+    // create new array based on Sorted Keys
+    jQuery.each(keys, function(i, key){
+        sorted_obj[key] = obj[key];
+    });
+
+    return sorted_obj;
+};
+
 function waitForMsg(){
 	if (window.disableUpdates) {
 		return false;
@@ -39,6 +63,29 @@ function waitForMsg(){
 					});
 					return true;
 					
+				}
+
+				// New Feature! Mash Profile!
+				if (vessel == "mash") {
+					val = sortObjectByKey(val);
+					if ($("#mashTable"+val['pid']).length == 0) {
+						table = "<table id='mashTable"+val['pid']+"' class='table'>";
+						table += "<tbody><tr>"
+						table += "<th colspan='2'>Mash Step</th>";
+						table += "<th>Temp</th>";
+						table += "<th>Time</th>";
+						table += "</tr><tbody></table>";
+
+						$("#"+val['pid']).append(table);
+
+					}
+
+					$.each(val, function(mashStep, mashData) {
+						if (mashStep != 'pid') {
+							addMashStep(mashStep, mashData, val['pid']);
+						}
+					});
+					return true;
 				}
 				
 				if(vessel == "pumps") {
@@ -370,4 +417,21 @@ function toggleAux(PIDName) {
 	});	
 	window.disableUpdates = 0;
 	return false;
+}
+
+function addMashStep(mashStep, mashData, pid) {
+	// Mashstep is the int position
+	// mashData contains the actual data to be displayed
+	var mashStepRow = $("#mashRow"+pid+"-"+mashStep);
+	if (mashStepRow.length == 0) {
+		// Add a new row to the Mash Table
+		tableRow = "<tr id='mashRow"+pid+"-"+mashStep+"'>";
+		tableRow += ("<td>"+mashData['type']+"</td>");
+		tableRow += ("<td>"+mashData['method']+"</td>");
+		tableRow += ("<td>"+mashData['target_temp']+mashData['target_temp_unit']+"</td>");
+		tableRow += ("<td>"+mashData['duration']+"</td>");
+		tableRow += ("</tr>");
+
+		mashStepRow = $("#mashTable"+pid +" > tbody > tr").eq(mashStep).after(tableRow);
+	}
 }
