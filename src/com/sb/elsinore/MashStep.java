@@ -6,6 +6,7 @@ public class MashStep {
     // Default ot Fahrenheit
     private String tempUnit = "F";
     private double targetTemp = 0.0;
+    private double variance = 2.0;
     private int duration = 0;
     private String method = "";
     private String type = "";
@@ -39,6 +40,36 @@ public class MashStep {
         } else {
             // Current unit is C, user wants F
             return CtoF(this.targetTemp);
+        }
+    }
+    
+    public double getUpperTargetTempAs(String unit) {
+        double maxTemp = this.targetTemp + this.variance;
+        if (this.tempUnit.equalsIgnoreCase(unit)) {
+            return maxTemp;
+        }
+        
+        if (this.tempUnit.equals("F")) {
+            // Current Unit is F, user wants C
+            return FtoC(maxTemp);
+        } else {
+            // Current unit is C, user wants F
+            return CtoF(maxTemp);
+        }
+    }
+    
+    public double getLowerTargetTempAs(String unit) {
+        double lowTemp = this.targetTemp - this.variance;
+        if (this.tempUnit.equalsIgnoreCase(unit)) {
+            return lowTemp;
+        }
+        
+        if (this.tempUnit.equals("F")) {
+            // Current Unit is F, user wants C
+            return FtoC(lowTemp);
+        } else {
+            // Current unit is C, user wants F
+            return CtoF(lowTemp);
         }
     }
     
