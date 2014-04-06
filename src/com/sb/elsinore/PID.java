@@ -468,7 +468,8 @@ public final class PID implements Runnable {
     /**
      * Settings for the heating and cooling.
      */
-    private Settings heatSetting, coldSetting;
+    Settings heatSetting;
+    private Settings coldSetting;
     /**
      * The aux output pin.
      */
@@ -501,6 +502,13 @@ public final class PID implements Runnable {
     private double gmaHLIM = 100.0,
     gmaLLIM = -100.0;
 
+    /**
+     * @return Get the current temp probe (for saving)
+     */
+    public Temp getTemp() {
+        return fTemp;
+    }
+    
     /*****
      * Calculate the current PID Duty.
      * @param avgTemp The current average temperature

@@ -180,7 +180,7 @@ public class BrewServer extends NanoHTTPD {
                     LaunchControl.addMashControl(mControl);
                 }
 
-                mControl.outputControl = pid;
+                mControl.setOutputControl(pid);
                 incomingData.remove("pid");
             } else {
                 BrewServer.LOG.warning("Couldn't find the PID for this update");

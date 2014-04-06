@@ -127,7 +127,7 @@ public class MashControl implements Runnable {
             currentStepPosition = mashEntry.getKey();
         }
 
-        PID currentPID = LaunchControl.findPID(outputControl);
+        PID currentPID = LaunchControl.findPID(getOutputControl());
 
         while (true) {
             // Is there a step and an output control?
@@ -197,7 +197,7 @@ public class MashControl implements Runnable {
                 Thread.sleep(10000);
             } catch (InterruptedException e) {
                 // We got woken up.
-                if (shutdownFlag) {
+                if (isShutdownFlag()) {
                     return;
                 }
             }
@@ -273,7 +273,7 @@ public class MashControl implements Runnable {
     public final JSONObject getJSONData() {
         JSONObject masterObject = new JSONObject();
         DateFormat lFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-        masterObject.put("pid", this.outputControl);
+        masterObject.put("pid", this.getOutputControl());
 
         for (Entry<Integer, MashStep> e : mashStepList.entrySet()) {
             MashStep step = e.getValue();
@@ -303,5 +303,33 @@ public class MashControl implements Runnable {
         }
 
         return masterObject;
+    }
+
+    /**
+     * @return Is the shutdown flag set?
+     */
+    public final boolean isShutdownFlag() {
+        return shutdownFlag;
+    }
+
+    /**
+     * @param newFlag Value to set the shutdown flag to
+     */
+    public final void setShutdownFlag(final boolean newFlag) {
+        this.shutdownFlag = newFlag;
+    }
+
+    /**
+     * @return the outputControl
+     */
+    public final String getOutputControl() {
+        return outputControl;
+    }
+
+    /**
+     * @param newControl the outputControl to set
+     */
+    public final void setOutputControl(final String newControl) {
+        this.outputControl = newControl;
     }
 }

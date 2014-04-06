@@ -316,7 +316,7 @@ public final class LaunchControl {
 
                 if (mashList.size() > 0) {
                     for (MashControl m: mashList) {
-                        m.shutdownFlag = true;
+                        m.setShutdownFlag(true);
                     }
                 }
 
@@ -542,7 +542,7 @@ public final class LaunchControl {
         if (mashList.size() > 0) {
             tJSON = new JSONObject();
             for (MashControl m: mashList) {
-                tJSON.put(m.outputControl, m.getJSONData());
+                tJSON.put(m.getOutputControl(), m.getJSONData());
             }
             rObj.put("mash", tJSON);
         } else {
@@ -1313,20 +1313,20 @@ public final class LaunchControl {
                     addTempToConfig(tTemp.getProbe(), name);
                 }
 
-                if (tTemp.volumeBase != null) {
-                    if (tTemp.volumeAIN != -1) {
-                        System.out.println("Saving AIN" + tTemp.volumeAIN);
-                        saveVolume(tTemp.getName(), tTemp.volumeAIN,
-                                tTemp.getVolumeUnit(), tTemp.volumeBase);
-                    } else if (tTemp.volumeAddress != null
-                            && tTemp.volumeOffset != null) {
+                if (tTemp.getVolumeBase() != null) {
+                    if (tTemp.getVolumeAIN() != -1) {
+                        System.out.println("Saving AIN" + tTemp.getVolumeAIN());
+                        saveVolume(tTemp.getName(), tTemp.getVolumeAIN(),
+                                tTemp.getVolumeUnit(), tTemp.getVolumeBase());
+                    } else if (tTemp.getVolumeAddress() != null
+                            && tTemp.getVolumeOffset() != null) {
                         System.out.println("Saving Volume "
-                            + tTemp.volumeAddress + " - "
-                            + tTemp.volumeOffset
+                            + tTemp.getVolumeAddress() + " - "
+                            + tTemp.getVolumeOffset()
                         );
-                        saveVolume(tTemp.getName(), tTemp.volumeAddress,
-                                tTemp.volumeOffset, tTemp.getVolumeUnit(),
-                                tTemp.volumeBase);
+                        saveVolume(tTemp.getName(), tTemp.getVolumeAddress(),
+                                tTemp.getVolumeOffset(), tTemp.getVolumeUnit(),
+                                tTemp.getVolumeBase());
                     } else {
                         BrewServer.LOG.info("No valid volume probe found");
                     }
@@ -1742,15 +1742,15 @@ public final class LaunchControl {
         }
 
         // Check to see if we actually added anything first
-        if (tempObject.volumeBase != null) {
-            if (tempObject.volumeAIN != -1) {
-                saveVolume(tempObject.getName(), tempObject.volumeAIN,
-                        tempObject.getVolumeUnit(), tempObject.volumeBase);
-            } else if (tempObject.volumeAddress != null
-                    && tempObject.volumeOffset != null) {
-                saveVolume(tempObject.getName(), tempObject.volumeAddress,
-                        tempObject.volumeOffset,
-                        tempObject.getVolumeUnit(), tempObject.volumeBase);
+        if (tempObject.getVolumeBase() != null) {
+            if (tempObject.getVolumeAIN() != -1) {
+                saveVolume(tempObject.getName(), tempObject.getVolumeAIN(),
+                        tempObject.getVolumeUnit(), tempObject.getVolumeBase());
+            } else if (tempObject.getVolumeAddress() != null
+                    && tempObject.getVolumeOffset() != null) {
+                saveVolume(tempObject.getName(), tempObject.getVolumeAddress(),
+                        tempObject.getVolumeOffset(),
+                        tempObject.getVolumeUnit(), tempObject.getVolumeBase());
             } else {
                 BrewServer.LOG.info("No valid volume probe found");
             }
@@ -1858,18 +1858,20 @@ public final class LaunchControl {
                             n.getGPIO(), n.getAuxGPIO());
 
                     // Do we need to save the volume information
-                    if (n.fTemp.volumeBase != null) {
-                        if (n.fTemp.volumeAIN != -1) {
-                            saveVolume(n.fTemp.getName(), n.fTemp.volumeAIN,
-                                n.fTemp.getVolumeUnit(),
-                                n.fTemp.volumeBase
+                    Temp fTemp = n.getTemp();
+                    if (fTemp.getVolumeBase() != null) {
+                        if (fTemp.getVolumeAIN() != -1) {
+                            saveVolume(fTemp.getName(), fTemp.getVolumeAIN(),
+                                fTemp.getVolumeUnit(),
+                                fTemp.getVolumeBase()
                             );
-                        } else if (n.fTemp.volumeAddress != null
-                                && n.fTemp.volumeOffset != null) {
-                            saveVolume(n.fTemp.getName(), n.fTemp.volumeAddress,
-                                n.fTemp.volumeOffset,
-                                n.fTemp.getVolumeUnit(),
-                                n.fTemp.volumeBase
+                        } else if (fTemp.getVolumeAddress() != null
+                                && fTemp.getVolumeOffset() != null) {
+                            saveVolume(fTemp.getName(),
+                                fTemp.getVolumeAddress(),
+                                fTemp.getVolumeOffset(),
+                                fTemp.getVolumeUnit(),
+                                fTemp.getVolumeBase()
                             );
                         } else {
                             BrewServer.LOG.info("No valid volume probe found");
@@ -2718,10 +2720,10 @@ public final class LaunchControl {
      * @param mControl The new mashControl to add
      */
     public static void addMashControl(final MashControl mControl) {
-        if (findMashControl(mControl.outputControl) != null) {
+        if (findMashControl(mControl.getOutputControl()) != null) {
             BrewServer.LOG.warning(
                     "Duplicate Mash Profile detected! Not adding: "
-                    + mControl.outputControl);
+                    + mControl.getOutputControl());
             return;
         }
         mashList.add(mControl);
@@ -2745,7 +2747,7 @@ public final class LaunchControl {
      */
     public static MashControl findMashControl(final String pid) {
         for (MashControl m: mashList) {
-            if (m.outputControl.equalsIgnoreCase(pid)) {
+            if (m.getOutputControl().equalsIgnoreCase(pid)) {
                 return m;
             }
         }

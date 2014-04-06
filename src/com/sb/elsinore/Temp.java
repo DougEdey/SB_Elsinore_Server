@@ -799,6 +799,34 @@ public final class Temp implements Runnable {
         return this.volumeUnit;
     }
 
+    /**
+     * @return The analogue input
+     */
+    public int getVolumeAIN() {
+        return this.volumeAIN;
+    }
+
+    /**
+     * @return Get the volume address
+     */
+    public String getVolumeAddress() {
+        return this.volumeAddress;
+    }
+
+    /**
+     * @return The current volume offset
+     */
+    public String getVolumeOffset() {
+        return this.volumeOffset;
+    }
+
+    /**
+     * @return The current volume base map
+     */
+    public ConcurrentHashMap<Double, Double> getVolumeBase() {
+        return this.volumeBase;
+    }
+
     /*****
      * Helper function to return a map of the current status.
      * @return The current status of the temperature probe.
