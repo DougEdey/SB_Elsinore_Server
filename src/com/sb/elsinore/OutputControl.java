@@ -1,115 +1,162 @@
 package com.sb.elsinore;
-import jGPIO.*;
+import jGPIO.InvalidGPIOException;
+import jGPIO.OutPin;
+import jGPIO.GPIO;
 
+/**
+ * OutputControl controls multiple output GPIOs.
+ * Heat_SSR is a GPIO pin that represents a heating output.
+ * Cool_SSR is a GPIO pin that represents a cooling output.
+ * @author Doug Edey
+ *
+ */
 public final class OutputControl implements Runnable {
 
-   public OutputControl ( String aName, String fGPIO, double heat_time ){
+    /**
+     * Constructor for a heat only pin.
+     * @param aName Name of this instance.
+     * @param fGPIO the heating GPIO pin.
+     * @param heatTime the duty time for the heating output.
+     */
+   public OutputControl(final String aName, final String fGPIO,
+           final double heatTime) {
            // just for heating
-        fName = aName;
-        fGPIOh = fGPIO.toLowerCase();
-        setHTime(heat_time);
+        this.fName = aName;
+        this.fGPIOh = fGPIO.toLowerCase();
+        setHTime(heatTime);
    }
 
-
-   public OutputControl ( String aName, String GPIO_heat, double heat_time, String GPIO_cool, double cool_time, double cool_delay ){
+   /**
+    * Create a heating and cooling output.
+    * @param aName The name of this instance
+    * @param gpioHeat The heating GPIO pin.
+    * @param heatTime The heating cycle time.
+    * @param gpioCool The cooling GPIO pin
+    * @param coolTime The cooling cycle time
+    * @param inCoolDelay The delay between cooling start/stop calls.
+    */
+   public OutputControl(final String aName, final String gpioHeat,
+           final double heatTime, final String gpioCool,
+           final double coolTime, final double inCoolDelay) {
            // just for heating and cooling
-        fName = aName;
-        fGPIOc = GPIO_cool.toLowerCase();
-        fGPIOh = GPIO_heat.toLowerCase();
-        setHTime(heat_time);
-        setCTime(cool_time);
-        setCDelay(cool_delay);
+        this.fName = aName;
+        this.fGPIOc = gpioCool.toLowerCase();
+        this.fGPIOh = gpioHeat.toLowerCase();
+        setHTime(heatTime);
+        setCTime(coolTime);
+        setCDelay(inCoolDelay);
    }
 
-   public void setCool(String GPIO, double time, double delay) {     
-        fGPIOc = GPIO;
+   /**
+    * Set the current cooling information.
+    * @param gpio The GPIO to use for the cooling output
+    * @param time The cycle time for the cooling output
+    * @param delay The delay between cooling start/stop calls.
+    */
+   public void setCool(final String gpio, final double time,
+           final double delay) {
+        fGPIOc = gpio;
         setCTime(time);
         setCDelay(delay);
    }
 
 
+   /**
+    * The main loop that checks and activates the outputs.
+    * Based on the duty cycle and time.
+    */
+   @Override
    public void run() {
         double duty;
-        double on_time, off_time;
-        
+        double onTime, offTime;
+
         try {
-            BrewServer.LOG.info("Starting the ("+fGPIOh+") heating output: " + GPIO.getPinNumber(fGPIOh));    
+            BrewServer.LOG.info(
+                "Starting the (" + this.fGPIOh + ") heating output: "
+                + GPIO.getPinNumber(this.fGPIOh));
             try {
-                
-                if(fGPIOc != null && !fGPIOh.equals("")) {
-                    Heat_SSR = new OutPin(fGPIOh);
-                    BrewServer.LOG.info("Started the heating output: " + GPIO.getPinNumber(fGPIOh));
+
+                if (fGPIOc != null && !this.fGPIOh.equals("")) {
+                    this.heatSSR = new OutPin(this.fGPIOh);
+                    BrewServer.LOG.info("Started the heating output: "
+                        + GPIO.getPinNumber(this.fGPIOh));
                 }
-        
-                if(fGPIOc != null && !fGPIOc.equals("")) {
-                    Cool_SSR = new OutPin(fGPIOc);
+
+                if (this.fGPIOc != null && !this.fGPIOc.equals("")) {
+                    this.coolSSR = new OutPin(this.fGPIOc);
                 }
             } catch (RuntimeException e) {
-                
-                BrewServer.LOG.warning("Could not control the GPIO Pin. Did you start as root?");
+
+                BrewServer.LOG.warning(
+                    "Could not control the GPIO Pin. Did you start as root?");
                 e.printStackTrace();
                 return;
             }
 
             try {
-                while(true) {
-                
-                    if(fGPIOc != null && !fGPIOc.equals("") && Cool_SSR == null) {
-                        Cool_SSR = new OutPin(fGPIOc);
+                while (true) {
+
+                    if (this.fGPIOc != null && !this.fGPIOc.equals("")
+                        && this.coolSSR == null) {
+                        this.coolSSR = new OutPin(this.fGPIOc);
                     }
-                    if(fGPIOh != null && !fGPIOh.equals("") && Heat_SSR == null) {
-                        Heat_SSR = new OutPin(fGPIOh);
+                    if (this.fGPIOh != null && !this.fGPIOh.equals("")
+                        && this.heatSSR == null) {
+                        this.heatSSR = new OutPin(this.fGPIOh);
                     }
-                    BrewServer.LOG.info("Fduty: "+fDuty);
-                    if(fDuty == 0) {
+                    BrewServer.LOG.info("Fduty: " + this.fDuty);
+                    if (this.fDuty == 0) {
                         allOff();
-                        Thread.sleep(fTimeh);
-                    } else if(fDuty == 100) {
+                        Thread.sleep(this.fTimeh);
+                    } else if (this.fDuty == 100) {
                         heatOn();
                         Thread.sleep(fTimeh);
-                    } else if(fDuty == -100) {
+                    } else if (this.fDuty == -100) {
                         // check to see if we've slept long enough
                         Long lTime = System.currentTimeMillis() - coolStopTime;
-                        
-                        if ((lTime /1000) > cool_delay) {
+
+                        if ((lTime / 1000) > this.coolDelay) {
                             // not slept enough
                             break;
                         }
-    
+
                         coolOn();
                         Thread.sleep(fTimec);
                         allOff();
-    
+
                         coolStopTime = System.currentTimeMillis();
                     } else if (fDuty > 0) {
                         // calc the on off time
-                        duty = fDuty/100;
-                        on_time = duty * fTimeh;
-                        off_time = fTimeh * (1-duty);
-                        BrewServer.LOG.info("On: " + on_time + " Off; " + off_time);
+                        duty = fDuty / 100;
+                        onTime = duty * fTimeh;
+                        offTime = fTimeh * (1 - duty);
+                        BrewServer.LOG.info("On: " + onTime
+                            + " Off; " + offTime);
                         heatOn();
-                        Thread.sleep((int)on_time);
-    
+                        Thread.sleep((int) onTime);
+
                         allOff();
-                        Thread.sleep((int)off_time);
+                        Thread.sleep((int) offTime);
                     } else if (fDuty < 0) {
                         // calc the on off time
-                        duty = Math.abs(fDuty)/100;
-                        on_time = duty * fTimec;
-                        on_time = duty * fTimec;
-                        off_time = fTimec * (1-duty);
-    
+                        duty = Math.abs(fDuty) / 100;
+                        onTime = duty * fTimec;
+                        onTime = duty * fTimec;
+                        offTime = fTimec * (1 - duty);
+
                         coolOn();
-                        Thread.sleep((int)on_time);
-    
+                        Thread.sleep((int) onTime);
+
                         allOff();
-                        Thread.sleep((int)off_time);
+                        Thread.sleep((int) offTime);
                         coolStopTime = System.currentTimeMillis();
                     }
                 } // end the while loop
-            
+
             } catch (RuntimeException e) {
-                BrewServer.LOG.warning("Could not control the GPIO Pin during loop. Did you start as root?");
+                BrewServer.LOG.warning(
+                    "Could not control the GPIO Pin during loop."
+                    + " Did you start as root?");
                 e.printStackTrace();
                 return;
             }
@@ -121,121 +168,194 @@ public final class OutputControl implements Runnable {
             System.out.println(e1.getMessage());
             e1.printStackTrace();
         } finally {
-            BrewServer.LOG.warning(fName + " turning off outputs" );
+            BrewServer.LOG.warning(fName + " turning off outputs");
             allOff();
         }
-   }
+    }
 
+    /**
+     * Shutdown the thread.
+     */
     public void shutdown() {
         BrewServer.LOG.info("Shutting down OC");
         allOff();
         allDisable();
     }
 
+    /**
+     * @return The current status of this object.
+     */
    public String getStatus() {
-        if (cool_status) {
+        if (coolStatus) {
             return "cooling";
         }
 
-        if (heat_status) {
+        if (heatStatus) {
             return "heating";
         }
       return "off";
    }
-    
-    public synchronized void setDuty(double duty) {
-        fDuty = duty;
+
+   /**
+    * @param duty The duty to set this control with.
+    */
+    public synchronized void setDuty(final double duty) {
+        this.fDuty = duty;
         BrewServer.LOG.info("IN: " + duty + " OUT: " + fDuty);
     }
-    
-    public void setHTime(double time) {
+
+    /**
+     * @param time The heating time in seconds.
+     */
+    public void setHTime(final double time) {
         // time is coming in in seconds
-        fTimeh = (int)time*1000;
+        this.fTimeh = (int) time * 1000;
     }
 
-    public void setCTime(double time) {
+    /**
+     * @param time The new cooling time in seconds.
+     */
+    public void setCTime(final double time) {
         // time is coming in in seconds
-        fTimec = (int)time*1000;
+        this.fTimec = (int) time * 1000;
     }
 
-    public void setCDelay(double time) {
+    /**
+     * @param time The cooling delay time in minutes.
+     */
+    public void setCDelay(final double time) {
         // delay is coming in in minutes
-        cool_delay = (int)time*1000*60;
+        this.coolDelay = (int) time * 1000 * 60;
     }
 
+    /**
+     * Turn the heat output on.
+     */
     private void heatOn() {
-        cool_status = false;
-        heat_status = true;
-        
-        if(Cool_SSR == null && Heat_SSR == null) {
+        this.coolStatus = false;
+        this.heatStatus = true;
+
+        if (this.coolSSR == null && this.heatSSR == null) {
             BrewServer.LOG.info("No SSRs to turn on");
         }
-        
-        if(Cool_SSR != null) {
-            Cool_SSR.setValue(false);
+
+        if (this.coolSSR != null) {
+            this.coolSSR.setValue(false);
         }
-        if(Heat_SSR != null) {
-            Heat_SSR.setValue(true);
+
+        if (this.heatSSR != null) {
+            this.heatSSR.setValue(true);
         }
     }
 
+    /**
+     * Turn the cool output on.
+     */
     private void coolOn() {
-        cool_status = true;
-        heat_status = false;
-        if(Heat_SSR != null) {
-            Heat_SSR.setValue(false);
+        this.coolStatus = true;
+        this.heatStatus = false;
+
+        if (this.heatSSR != null) {
+            this.heatSSR.setValue(false);
         }
-        if(Cool_SSR != null) {
-            Cool_SSR.setValue(true);
+
+        if (this.coolSSR != null) {
+            this.coolSSR.setValue(true);
         }
     }
-    
+
+    /**
+     * Turn off all the ouputs.
+     */
     private void allOff() {
-        cool_status = false;
-        heat_status = false;
-        if(Heat_SSR != null) {
-            synchronized(Heat_SSR) {
-                Heat_SSR.setValue(false);
+        this.coolStatus = false;
+        this.heatStatus = false;
+
+        if (this.heatSSR != null) {
+            synchronized (this.heatSSR) {
+                this.heatSSR.setValue(false);
             }
         }
-        if(Cool_SSR != null) {
-            synchronized(Cool_SSR) {
-                Cool_SSR.setValue(false);
+        if (this.coolSSR != null) {
+            synchronized (this.coolSSR) {
+                this.coolSSR.setValue(false);
             }
         }
     }
 
+    /**
+     * Disable all outputs.
+     */
     private void allDisable() {
-        if(Heat_SSR != null) {
-            synchronized(Heat_SSR) {
-                Heat_SSR.close();
-                Heat_SSR = null;
+        if (this.heatSSR != null) {
+            synchronized (this.heatSSR) {
+                this.heatSSR.close();
+                this.heatSSR = null;
             }
         }
-        if(Cool_SSR != null) {
-            synchronized(Cool_SSR) {
-                Cool_SSR.close();
-                Cool_SSR = null;
+
+        if (this.coolSSR != null) {
+            synchronized (this.coolSSR) {
+                this.coolSSR.close();
+                this.coolSSR = null;
             }
         }
     }
-    
+
     // PRIVATE ////
-    private OutPin Heat_SSR = null;
-    private OutPin Cool_SSR = null;
+    /**
+     * The heating output pin.
+     */
+    private OutPin heatSSR = null;
+    /**
+     * The cooling output pin.
+     */
+    private OutPin coolSSR = null;
+    /**
+     * The name of this output.
+     */
     private String fName;
+    /**
+     * The raw GPIO heating pin name.
+     */
     private String fGPIOh = "";
+    /**
+     * The raw GPIO cooling pin name.
+     */
     private String fGPIOc = "";
+    /**
+     * The heating cycle time.
+     */
     private int fTimeh;
+    /**
+     * The cooling cycle time.
+     */
     private int fTimec;
-    private int cool_delay;
+    /**
+     * The delay between cooling start/stop calls.
+     */
+    private int coolDelay;
+    /**
+     * The Duty cycle.
+     */
     private double fDuty;
-    private boolean cool_status = false;
-    private boolean heat_status = false;
+    /**
+     * The cooling status flag.
+     */
+    private boolean coolStatus = false;
+    /**
+     * The Heating status flag.
+     */
+    private boolean heatStatus = false;
+    /**
+     * The timestamp for when the cooling element was stopped.
+     */
     private long coolStopTime = -1;
-    
+
+    /**
+     * @return The current duty cycle
+     */
     public synchronized double getDuty() {
-        // TODO Auto-generated method stub
         return fDuty;
     }
 }
