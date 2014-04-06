@@ -215,7 +215,7 @@ public final class LaunchControl {
      * @param arguments List of arguments from the command line
      */
     public static void main(final String... arguments) {
-        BrewServer.log.info("Running Brewery Controller.");
+        BrewServer.LOG.info("Running Brewery Controller.");
 
         int port = DEFAULT_PORT;
 
@@ -248,7 +248,7 @@ public final class LaunchControl {
                                 startupCommand.getOptionValue("port"));
                         port = t;
                     } catch (NumberFormatException e) {
-                        BrewServer.log.warning(
+                        BrewServer.LOG.warning(
                                 "Couldn't parse port value as an integer: "
                                 + startupCommand.getOptionValue("port"));
                         System.exit(-1);
@@ -266,7 +266,7 @@ public final class LaunchControl {
             }
         }
         LaunchControl lc = new LaunchControl(port);
-        BrewServer.log.warning("Started LaunchControl: " + lc.toString());
+        BrewServer.LOG.warning("Started LaunchControl: " + lc.toString());
     }
 
     /*******
@@ -328,7 +328,7 @@ public final class LaunchControl {
         readConfig();
 
         // Debug info before launching the BrewServer itself
-        BrewServer.log.log(Level.INFO, "CONFIG READ COMPLETED***********");
+        BrewServer.LOG.log(Level.INFO, "CONFIG READ COMPLETED***********");
         sRunner = new ServerRunner(BrewServer.class, port);
         sRunner.run();
 
@@ -375,19 +375,19 @@ public final class LaunchControl {
      * @param feedID The FeedID to get
      */
     private void startCosm(final String apiKey, final int feedID) {
-        BrewServer.log.info("API: " + apiKey + " Feed: " + feedID);
+        BrewServer.LOG.info("API: " + apiKey + " Feed: " + feedID);
         cosm = new Cosm(apiKey);
         if (cosm == null) {
-            BrewServer.log.warning("Couldn't connect to PACHUBE/COSM");
+            BrewServer.LOG.warning("Couldn't connect to PACHUBE/COSM");
             return;
         }
 
         // get the data feed
         try {
             cosmFeed = cosm.getFeed(feedID, true);
-            BrewServer.log.info("Got " + cosmFeed.getTitle());
+            BrewServer.LOG.info("Got " + cosmFeed.getTitle());
         } catch (CosmException e) {
-            BrewServer.log.warning("Couldn't get the feed: " + e.getMessage());
+            BrewServer.LOG.warning("Couldn't get the feed: " + e.getMessage());
             return;
         }
 
@@ -586,7 +586,7 @@ public final class LaunchControl {
                         && configCfg.getBoolean("general", "system_temp")) {
                     Temp tTemp = new Temp("system", "");
                     tempList.add(tTemp);
-                    BrewServer.log.info("Adding " + tTemp.getName());
+                    BrewServer.LOG.info("Adding " + tTemp.getName());
                     // setup the scale for each temp probe
                     tTemp.setScale(scale);
                     // setup the threads
@@ -596,13 +596,13 @@ public final class LaunchControl {
                 }
             } catch (NoSectionException e) {
                 // impossible
-                BrewServer.log.warning("Section Missing! " + e.getMessage());
+                BrewServer.LOG.warning("Section Missing! " + e.getMessage());
             } catch (NoOptionException e) {
                 // Impossible
-                BrewServer.log.warning("Option Missing! " + e.getMessage());
+                BrewServer.LOG.warning("Option Missing! " + e.getMessage());
             } catch (InterpolationException e) {
                 // Impossible
-                BrewServer.log.warning("Interapolation Exception! "
+                BrewServer.LOG.warning("Interapolation Exception! "
                         + e.getMessage());
             }
 
@@ -644,7 +644,7 @@ public final class LaunchControl {
 
                     owfsServer = config.get(input, "owfs_server");
                     owfsPort = config.getInt(input, "owfs_port");
-                    BrewServer.log.log(Level.INFO, "Setup OWFS at "
+                    BrewServer.LOG.log(Level.INFO, "Setup OWFS at "
                             +  owfsServer + ":" + owfsPort);
 
                     setupOWFS();
@@ -737,7 +737,7 @@ public final class LaunchControl {
 
 
             if (owfsServer != null && owfsPort != null) {
-                BrewServer.log.log(
+                BrewServer.LOG.log(
                         Level.INFO,
                         "Setup OWFS at " +  owfsServer + ":" + owfsPort);
 
@@ -748,7 +748,7 @@ public final class LaunchControl {
             if (getFirstElement(config, "system") != null) {
                 Temp tTemp = new Temp("system", "");
                 tempList.add(tTemp);
-                BrewServer.log.info("Adding " + tTemp.getName());
+                BrewServer.LOG.info("Adding " + tTemp.getName());
                 // setup the scale for each temp probe
                 tTemp.setScale(scale);
                 // setup the threads
@@ -890,14 +890,14 @@ public final class LaunchControl {
 
         // Startup the thread
         if (probe == null || probe.equals("0")) {
-            BrewServer.log.info("No Probe specified for " + input);
+            BrewServer.LOG.info("No Probe specified for " + input);
             return;
         }
 
         // input is the name we'll use from here on out
         Temp tTemp = new Temp(input, probe);
         tempList.add(tTemp);
-        BrewServer.log.info("Adding " + tTemp.getName()
+        BrewServer.LOG.info("Adding " + tTemp.getName()
                 + " GPIO is (" + gpio + ")");
 
         // setup the scale for each temp probe
@@ -913,7 +913,7 @@ public final class LaunchControl {
         tThread.start();
 
         if (gpio != null && !gpio.equals("")) {
-            BrewServer.log.info("Adding PID with GPIO: " + gpio);
+            BrewServer.LOG.info("Adding PID with GPIO: " + gpio);
             PID tPID = new PID(tTemp, input, duty, cycle, p, i, d, gpio);
 
             if (auxPin != null && !auxPin.equals("")) {
@@ -973,7 +973,7 @@ public final class LaunchControl {
         tData = new Datastream();
         // always setup for Fahrenheit
 
-        BrewServer.log.info("Creating new feed");
+        BrewServer.LOG.info("Creating new feed");
         List<String> lTags = new ArrayList<String>();
 
         lTags.add("Elsinore");
@@ -987,7 +987,7 @@ public final class LaunchControl {
         try {
             cosm.createDatastream(cosmFeed.getId(), tData);
         } catch (CosmException e) {
-            BrewServer.log.info("Failed to create stream:" + e.getMessage()
+            BrewServer.LOG.info("Failed to create stream:" + e.getMessage()
                     + " - " + cosmFeed.getId());
 
             return null;
@@ -1328,10 +1328,10 @@ public final class LaunchControl {
                                 tTemp.volumeOffset, tTemp.getVolumeUnit(),
                                 tTemp.volumeBase);
                     } else {
-                        BrewServer.log.info("No valid volume probe found");
+                        BrewServer.LOG.info("No valid volume probe found");
                     }
                 } else {
-                    BrewServer.log.info("No Volume base set");
+                    BrewServer.LOG.info("No Volume base set");
                 }
 
             } else {
@@ -1639,7 +1639,7 @@ public final class LaunchControl {
         if (owfsConnection == null) {
             setupOWFS();
             if (owfsConnection == null) {
-                BrewServer.log.info("no OWFS connection");
+                BrewServer.LOG.info("no OWFS connection");
             }
         }
         try {
@@ -1752,10 +1752,10 @@ public final class LaunchControl {
                         tempObject.volumeOffset,
                         tempObject.getVolumeUnit(), tempObject.volumeBase);
             } else {
-                BrewServer.log.info("No valid volume probe found");
+                BrewServer.LOG.info("No valid volume probe found");
             }
         } else {
-            BrewServer.log.info("No Volume base set");
+            BrewServer.LOG.info("No Volume base set");
         }
 
         saveSettings();
@@ -1872,10 +1872,10 @@ public final class LaunchControl {
                                 n.fTemp.volumeBase
                             );
                         } else {
-                            BrewServer.log.info("No valid volume probe found");
+                            BrewServer.LOG.info("No valid volume probe found");
                         }
                     } else {
-                        BrewServer.log.info("No Volume base set");
+                        BrewServer.LOG.info("No Volume base set");
                     }
                 }
             }
@@ -2079,7 +2079,7 @@ public final class LaunchControl {
             final String volumeUnit,
             final ConcurrentHashMap<Double, Double> volumeBase) {
 
-        BrewServer.log.info("Saving volume for " + name);
+        BrewServer.LOG.info("Saving volume for " + name);
 
         // save any changes
         Element device = saveVolumeMeasurements(name, volumeBase, volumeUnit);
@@ -2122,7 +2122,7 @@ public final class LaunchControl {
                 volumeBase.entrySet().iterator();
         while (volIter.hasNext()) {
             Entry<Double, Double> entry = volIter.next();
-            BrewServer.log.info("Looking for volume entry: "
+            BrewServer.LOG.info("Looking for volume entry: "
                 + entry.getKey().toString());
 
             tElement = getFirstElementByXpath(null,
@@ -2267,7 +2267,7 @@ public final class LaunchControl {
                 p = 0.0, i = 0.0, d = 0.0;
         int analoguePin = -1;
 
-        BrewServer.log.info("Parsing : " + input);
+        BrewServer.LOG.info("Parsing : " + input);
         try {
             if (config.hasSection(input)) {
                 if (config.hasOption(input, "probe")) {
@@ -2393,7 +2393,7 @@ public final class LaunchControl {
 
         String deviceName = config.getAttribute("id");
 
-        BrewServer.log.info("Parsing XML Device: " + deviceName);
+        BrewServer.LOG.info("Parsing XML Device: " + deviceName);
         try {
             Element tElement = getFirstElement(config, "probe");
             if (tElement != null) {
@@ -2549,7 +2549,7 @@ public final class LaunchControl {
             destination = new FileOutputStream(destFile).getChannel();
             destination.transferFrom(source, 0, source.size());
         } catch (IOException e) {
-            BrewServer.log.warning("Failed to copy file: "
+            BrewServer.LOG.warning("Failed to copy file: "
                     + e.getLocalizedMessage());
             throw e;
         } finally {
@@ -2574,7 +2574,7 @@ public final class LaunchControl {
             configDoc = dBuilder.newDocument();
             configDoc.appendChild(configDoc.createElement("elsinore"));
         } catch (ParserConfigurationException e1) {
-            BrewServer.log.info("Error creating the new document: "
+            BrewServer.LOG.info("Error creating the new document: "
                     + e1.getMessage());
             e1.printStackTrace();
         }
@@ -2719,7 +2719,7 @@ public final class LaunchControl {
      */
     public static void addMashControl(final MashControl mControl) {
         if (findMashControl(mControl.outputControl) != null) {
-            BrewServer.log.warning(
+            BrewServer.LOG.warning(
                     "Duplicate Mash Profile detected! Not adding: "
                     + mControl.outputControl);
             return;

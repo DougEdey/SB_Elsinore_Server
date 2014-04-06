@@ -61,18 +61,18 @@ public final class BrewDay {
         try {
             dDate = new Date(Long.parseLong(dateString));
         } catch (NumberFormatException e) {
-            BrewServer.log.log(Level.INFO, "Error: " + dateString
+            BrewServer.LOG.log(Level.INFO, "Error: " + dateString
                 + " could not be parsed as a long, trying date", e);
             try {
                 dDate = lFormat.parse(dateString);
             } catch (ParseException p) {
-                BrewServer.log.info("Could not parse date, giving up ya hoser");
+                BrewServer.LOG.info("Could not parse date, giving up ya hoser");
             }
         }
 
         // check to see if we're null
         if (dDate == null) {
-            BrewServer.log.info("Unparseable string provided " + dateString);
+            BrewServer.LOG.info("Unparseable string provided " + dateString);
         }
         return dDate;
     }
@@ -180,11 +180,11 @@ public final class BrewDay {
     public void addTimer(final String name) {
 
         if (timers.containsKey(name)) {
-            BrewServer.log.info("Timer: " + name + " exists");
+            BrewServer.LOG.info("Timer: " + name + " exists");
             return;
         }
         timers.put(name, null);
-        BrewServer.log.info("Added new timer: " + name);
+        BrewServer.LOG.info("Added new timer: " + name);
     }
 
     /**

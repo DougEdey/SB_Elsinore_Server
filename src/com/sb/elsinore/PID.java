@@ -64,20 +64,20 @@ public final class PID implements Runnable {
         
         Matcher pinMatcher = pinPattern.matcher(GPIO);
         
-        BrewServer.log.info("Matches: " + pinMatcher.groupCount());
+        BrewServer.LOG.info("Matches: " + pinMatcher.groupCount());
         
         if(pinMatcher.groupCount() > 0) {
             // Beagleboard style input
-            BrewServer.log.info("Matched GPIO pinout for Beagleboard: " + GPIO + ". OS: " + System.getProperty("os.level"));
+            BrewServer.LOG.info("Matched GPIO pinout for Beagleboard: " + GPIO + ". OS: " + System.getProperty("os.level"));
             return GPIO;
         } else {
             pinMatcher = pinPatternAlt.matcher(GPIO);
             if(pinMatcher.groupCount() > 0) {
-                BrewServer.log.info("Direct GPIO Pinout detected. OS: " + System.getProperty("os.level"));
+                BrewServer.LOG.info("Direct GPIO Pinout detected. OS: " + System.getProperty("os.level"));
                 // The last group (should be the second group) gives us the GPIO number
                 return pinMatcher.group(pinMatcher.groupCount());
             } else {
-                BrewServer.log.info("Could not match the GPIO!");
+                BrewServer.LOG.info("Could not match the GPIO!");
                 return "";
             }
         }
@@ -99,11 +99,11 @@ public final class PID implements Runnable {
         }
         heatSetting.cycle_time = cycle;
         heatSetting.set_point = setpoint;
-        BrewServer.log.info(heatSetting.proportional + ": " + heatSetting.integral + ": " + heatSetting.derivative);
+        BrewServer.LOG.info(heatSetting.proportional + ": " + heatSetting.integral + ": " + heatSetting.derivative);
         heatSetting.proportional = p;
         heatSetting.integral = i;
         heatSetting.derivative = d;
-        BrewServer.log.info(heatSetting.proportional + ": " + heatSetting.integral + ": " + heatSetting.derivative);    
+        BrewServer.LOG.info(heatSetting.proportional + ": " + heatSetting.integral + ": " + heatSetting.derivative);    
         LaunchControl.savePID(this.fName, heatSetting, fGPIO, auxGPIO);
         return;
     }
@@ -125,7 +125,7 @@ public final class PID implements Runnable {
      * Main loop for using a PID Thread
      */
     public void run() {
-        BrewServer.log.info( "Running " + fName + " PID." );
+        BrewServer.LOG.info( "Running " + fName + " PID." );
         // setup the first time
         previousTime = System.currentTimeMillis();
         // create the Output if needed
@@ -142,10 +142,10 @@ public final class PID implements Runnable {
             try {
                 auxPin = new OutPin(auxGPIO);
             } catch (InvalidGPIOException e) {
-                BrewServer.log.log(Level.SEVERE, "Couldn't parse " + auxGPIO + " as a valid GPIO");
+                BrewServer.LOG.log(Level.SEVERE, "Couldn't parse " + auxGPIO + " as a valid GPIO");
                 System.exit(-1);
             } catch (RuntimeException e) {
-                BrewServer.log.log(Level.SEVERE, "Couldn't setup " + auxGPIO + " as a valid GPIO");
+                BrewServer.LOG.log(Level.SEVERE, "Couldn't setup " + auxGPIO + " as a valid GPIO");
                 System.exit(-1);
             }
         }
@@ -172,7 +172,7 @@ public final class PID implements Runnable {
                         // we have the current temperature
                         if (mode.equals("auto")) {
                             heatSetting.calculatedDuty = calcPID_reg4(temp_avg, true);
-                            BrewServer.log.info("Calculated: " + heatSetting.calculatedDuty);
+                            BrewServer.LOG.info("Calculated: " + heatSetting.calculatedDuty);
                             OC.setDuty(heatSetting.calculatedDuty);
                         } else if (mode.equals("manual")) {
                             OC.setDuty(heatSetting.duty_cycle);
@@ -183,7 +183,7 @@ public final class PID implements Runnable {
                         
                         OC.setHTime(heatSetting.cycle_time);
 
-                        BrewServer.log.info(mode + ": " + fName + " status: " + fTemp_F + " duty cycle: " + OC.getDuty());
+                        BrewServer.LOG.info(mode + ": " + fName + " status: " + fTemp_F + " duty cycle: " + OC.getDuty());
                     }
                     //notify all waiters of the change of state
                 }
@@ -232,7 +232,7 @@ public final class PID implements Runnable {
         this.auxGPIO = detectGPIO(gpio);
         
         if (auxGPIO == null || auxGPIO.equals("")) {
-            BrewServer.log.log(Level.WARNING, "Could not detect GPIO as valid: " + gpio);
+            BrewServer.LOG.log(Level.WARNING, "Could not detect GPIO as valid: " + gpio);
         }
         
     }
@@ -242,10 +242,10 @@ public final class PID implements Runnable {
         if (auxPin != null) {
             // If the value if "1" we set it to false
             // If the value is not "1" we set it to true
-            BrewServer.log.info("Aux Pin is being set to: "  + !auxPin.getValue().equals("1"));
+            BrewServer.LOG.info("Aux Pin is being set to: "  + !auxPin.getValue().equals("1"));
             auxPin.setValue(!auxPin.getValue().equals("1"));
         } else {
-            BrewServer.log.info("Aux Pin is not set for " + this.fName);
+            BrewServer.LOG.info("Aux Pin is not set for " + this.fName);
         }
     }
     
@@ -440,7 +440,7 @@ public final class PID implements Runnable {
         integralFactor = (integralFactor - errorFactor) * dt;
         derivativeFactor = (errorFactor - previous_error)/dt;
         
-        BrewServer.log.info("DT: " + dt + " Error: " + errorFactor + " integral: " + integralFactor + " derivative: " + derivativeFactor);
+        BrewServer.LOG.info("DT: " + dt + " Error: " + errorFactor + " integral: " + integralFactor + " derivative: " + derivativeFactor);
         
         
         output = heatSetting.proportional*errorFactor 

@@ -34,7 +34,7 @@ public final class Temp implements Runnable {
     public Temp (String input, String aName ) {
     
         
-        BrewServer.log.info("Adding" + aName);
+        BrewServer.LOG.info("Adding" + aName);
         if (input.equalsIgnoreCase("system")) {
             File tempFile = new File(RPI_SYSTEM_TEMP);
             if (tempFile.exists()) {
@@ -44,14 +44,14 @@ public final class Temp implements Runnable {
                 if (tempFile.exists()) {
                     fProbe = BBB_SYSTEM_TEMP;
                 } else {
-                    BrewServer.log.info("Couldn't find a valid system temperature probe");
+                    BrewServer.LOG.info("Couldn't find a valid system temperature probe");
                     return;
                 }
             }
         } else if (LaunchControl.getOWFS() != null) {
             try {
                 aName = aName.replace("-", ".");
-                BrewServer.log.info("Using OWFS for " + aName + "/temperature");
+                BrewServer.LOG.info("Using OWFS for " + aName + "/temperature");
                 if ("" == LaunchControl.readOWFSPath(aName + "/temperature")) {
                     String newAddress[] = aName.split("\\.|-");
                     
@@ -73,14 +73,14 @@ public final class Temp implements Runnable {
                         
                         aName = fixedAddress;
                         if ("" == LaunchControl.readOWFSPath(aName + "/temperature")) {
-                            BrewServer.log.severe("This is not a temperature probe " + aName);
+                            BrewServer.LOG.severe("This is not a temperature probe " + aName);
                         }
                     } 
                     
                 }
                 
             } catch ( OwfsException e) {
-                BrewServer.log.log(Level.SEVERE, "This is not a temperature probe!", e);
+                BrewServer.LOG.log(Level.SEVERE, "This is not a temperature probe!", e);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -121,7 +121,7 @@ public final class Temp implements Runnable {
         
         probeName = aName;
         name = input;
-        BrewServer.log.info(probeName + " added.");
+        BrewServer.LOG.info(probeName + " added.");
     }
 
     public void run() {
@@ -188,7 +188,7 @@ public final class Temp implements Runnable {
             }
             
         } else {
-            BrewServer.log.severe(cutoffTemp + " doesn't match " + TEMP_REGEXP.pattern());
+            BrewServer.LOG.severe(cutoffTemp + " doesn't match " + TEMP_REGEXP.pattern());
         }
     }
 
@@ -298,7 +298,7 @@ public final class Temp implements Runnable {
         currentError = null;
     
         if ( cutoffTemp != -999 && currentTemp >= cutoffTemp) {
-            BrewServer.log.log(Level.SEVERE, currentTemp + ": ****** CUT OFF TEMPERATURE (" + cutoffTemp + ") EXCEEDED *****");
+            BrewServer.LOG.log(Level.SEVERE, currentTemp + ": ****** CUT OFF TEMPERATURE (" + cutoffTemp + ") EXCEEDED *****");
             System.exit(-1);
         }
         return result;
@@ -311,20 +311,20 @@ public final class Temp implements Runnable {
         try {
             rawTemp =  LaunchControl.readOWFSPath(probeName + "/temperature");
             if (rawTemp == null || rawTemp.equals("")) {
-                BrewServer.log.severe("Couldn't find the probe " + probeName + " for " + name);
+                BrewServer.LOG.severe("Couldn't find the probe " + probeName + " for " + name);
             } else {
                 temp = Double.parseDouble(rawTemp);
             }
         } catch (IOException e) {
             currentError = "Couldn't read " + probeName;
-            BrewServer.log.log(Level.SEVERE, currentError, e);
+            BrewServer.LOG.log(Level.SEVERE, currentError, e);
         } catch (OwfsException e) {
             currentError = "Couldn't read " + probeName;
-            BrewServer.log.log(Level.SEVERE, currentError, e);
+            BrewServer.LOG.log(Level.SEVERE, currentError, e);
             LaunchControl.setupOWFS();
         } catch (NumberFormatException e) {
             currentError = "Couldn't parse" + rawTemp;
-            BrewServer.log.log(Level.SEVERE, currentError, e);
+            BrewServer.LOG.log(Level.SEVERE, currentError, e);
         }
         
         return temp;
@@ -385,23 +385,23 @@ public final class Temp implements Runnable {
         volumeOffset = offset;
         offset = offset.toUpperCase();
         try { 
-            BrewServer.log.log(Level.INFO, "Volume ADC at: " + volumeAddress + " - " + offset);
+            BrewServer.LOG.log(Level.INFO, "Volume ADC at: " + volumeAddress + " - " + offset);
             String temp = LaunchControl.readOWFSPath(volumeAddress + "/volt." + offset);
             if (temp.equals("")) {
-                BrewServer.log.severe("Couldn't read the Volume from " + volumeAddress + "/volt. " + offset);
+                BrewServer.LOG.severe("Couldn't read the Volume from " + volumeAddress + "/volt. " + offset);
             } else {
-                BrewServer.log.log(Level.INFO, "Volume reads " + temp);
+                BrewServer.LOG.log(Level.INFO, "Volume reads " + temp);
             }
         } catch (IOException e) {
-            BrewServer.log.log(Level.SEVERE, "IOException when access the ADC over 1wire", e);
+            BrewServer.LOG.log(Level.SEVERE, "IOException when access the ADC over 1wire", e);
         } catch (OwfsException e) {
-            BrewServer.log.log(Level.SEVERE, "OWFSException when access the ADC over 1wire", e);
+            BrewServer.LOG.log(Level.SEVERE, "OWFSException when access the ADC over 1wire", e);
         }
                 
         if (volumeConstant != 0.0 && volumeMultiplier != 0.0) {
-            BrewServer.log.info("Volume constants and multiplier are good");
+            BrewServer.LOG.info("Volume constants and multiplier are good");
         } else {
-            BrewServer.log.info("Volume constants and multiplier show there's no change in the pressure sensor");
+            BrewServer.LOG.info("Volume constants and multiplier show there's no change in the pressure sensor");
         }
 
     }
@@ -487,7 +487,7 @@ public final class Temp implements Runnable {
                 try {
                     pinValue = Double.parseDouble(LaunchControl.readOWFSPath(volumeAddress + "/volt." + volumeOffset));
                 } catch (Exception e) {
-                    BrewServer.log.log(Level.SEVERE, "Could not update the volume reading from OWFS", e);
+                    BrewServer.LOG.log(Level.SEVERE, "Could not update the volume reading from OWFS", e);
                     
                     LaunchControl.setupOWFS();
                     return 0.0;
@@ -508,7 +508,7 @@ public final class Temp implements Runnable {
                 // No VolumeBase setup, so we're probably calibrating
                 return pinValue;
             } catch (Exception e) {
-                BrewServer.log.log(Level.SEVERE, "Uncaught exception when creating the volume set", e);
+                BrewServer.LOG.log(Level.SEVERE, "Uncaught exception when creating the volume set", e);
                 System.exit(-1);
             }
             
@@ -632,7 +632,7 @@ public final class Temp implements Runnable {
     }
     
     public void addVolumeMeasurement(Double key, Double value) {
-        BrewServer.log.info("Adding " + key + " with value " + value);
+        BrewServer.LOG.info("Adding " + key + " with value " + value);
         if (volumeBase == null ) {
             volumeBase = new ConcurrentHashMap<Double, Double>();
         }

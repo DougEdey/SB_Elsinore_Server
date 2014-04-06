@@ -95,7 +95,7 @@ public class MashControl implements Runnable {
                 if (mashEntry != null) {
                     currentStep = mashEntry.getValue();
                     currentStepPosition = mashEntry.getKey();
-                    BrewServer.log.warning("Found an active mash step: " + currentStepPosition);
+                    BrewServer.LOG.warning("Found an active mash step: " + currentStepPosition);
                 }
             }
             
@@ -105,16 +105,16 @@ public class MashControl implements Runnable {
                 
                 // Does the times need to be changed?
                 double currentTempF = currentPID.getTempProbe().getTempF();
-                BrewServer.log.warning("Current Temp: " + currentTempF + 
+                BrewServer.LOG.warning("Current Temp: " + currentTempF + 
                         " Target: " + currentStep.getTargetTempAs("F"));
                 
                 // Give ourselves a 2F range, this can be changed in the future
                 if ((currentTempF - varianceF) <= currentStep.getTargetTempAs("F")
                         && (currentTempF + varianceF) >= currentStep.getTargetTempAs("F")) {
-                    BrewServer.log.warning("Target mash temp");
+                    BrewServer.LOG.warning("Target mash temp");
                     
                     if (currentStep.getStart() == null) {
-                        BrewServer.log.warning("Setting start date");
+                        BrewServer.LOG.warning("Setting start date");
                         // We've hit the target step temp, set the start date
                         DateTime tDate = new DateTime();
                         currentStep.setStart(tDate.toDate());
@@ -125,7 +125,7 @@ public class MashControl implements Runnable {
                         
                     } else if (currentStep.getTargetEnd() != null 
                             && cDate.compareTo(currentStep.getTargetEnd()) >= 0) {
-                        BrewServer.log.warning("End Temp hit");
+                        BrewServer.LOG.warning("End Temp hit");
                         // Over or equal to the target end time, deactivate
                         currentStep.deactivate(true);
                         // Get the next step target time
@@ -167,13 +167,13 @@ public class MashControl implements Runnable {
         
         // Do we have a value
         if (mashEntry == null) {
-            BrewServer.log.warning("Index out of bounds");
+            BrewServer.LOG.warning("Index out of bounds");
             return false;
         }
         
         // Now we can reset the others
         if (!deactivateStep(-1)) {
-            BrewServer.log.warning("Couldn't disable all the mash steps");
+            BrewServer.LOG.warning("Couldn't disable all the mash steps");
             return false;
         }
         
@@ -189,7 +189,7 @@ public class MashControl implements Runnable {
         
             // Do we have a value
             if (mashEntry == null) {
-                BrewServer.log.warning("Index out of bounds");
+                BrewServer.LOG.warning("Index out of bounds");
                 return false;
             }
             mashEntry.deactivate();

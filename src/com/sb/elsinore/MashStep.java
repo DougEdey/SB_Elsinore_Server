@@ -126,7 +126,7 @@ public class MashStep {
     
     public void setDuration(int newDuration) {
         if (newDuration <= 0) {
-            BrewServer.log.warning("Invalid duration " + newDuration + " supplied");
+            BrewServer.LOG.warning("Invalid duration " + newDuration + " supplied");
             return;
         }
         
@@ -149,7 +149,7 @@ public class MashStep {
     public void setStart(Date newStart) {
         if (newStart != null && endTime != null 
                 && newStart.compareTo(endTime) >= 0) {
-            BrewServer.log.warning("New start date is greater than the end date");
+            BrewServer.LOG.warning("New start date is greater than the end date");
             return;
         }
         
@@ -161,7 +161,7 @@ public class MashStep {
     public void setEnd(Date newEnd) {
         if (newEnd != null && startTime != null
                 && newEnd.compareTo(startTime) <= 0) {
-            BrewServer.log.warning("New end date is less than than the start date");
+            BrewServer.LOG.warning("New end date is less than than the start date");
             return;
         }
         
@@ -174,7 +174,7 @@ public class MashStep {
                 && newTarget.compareTo(startTime) <= 0) {
             System.out.println(newTarget);
             System.out.println(startTime);
-            BrewServer.log.warning("New target date is less than than the start date");
+            BrewServer.LOG.warning("New target date is less than than the start date");
             return;
         }
         System.out.println("Setting target time: " + newTarget);

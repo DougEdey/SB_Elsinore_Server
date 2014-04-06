@@ -33,12 +33,12 @@ public final class OutputControl implements Runnable {
         double on_time, off_time;
         
         try {
-            BrewServer.log.info("Starting the ("+fGPIOh+") heating output: " + GPIO.getPinNumber(fGPIOh));    
+            BrewServer.LOG.info("Starting the ("+fGPIOh+") heating output: " + GPIO.getPinNumber(fGPIOh));    
             try {
                 
                 if(fGPIOc != null && !fGPIOh.equals("")) {
                     Heat_SSR = new OutPin(fGPIOh);
-                    BrewServer.log.info("Started the heating output: " + GPIO.getPinNumber(fGPIOh));
+                    BrewServer.LOG.info("Started the heating output: " + GPIO.getPinNumber(fGPIOh));
                 }
         
                 if(fGPIOc != null && !fGPIOc.equals("")) {
@@ -46,7 +46,7 @@ public final class OutputControl implements Runnable {
                 }
             } catch (RuntimeException e) {
                 
-                BrewServer.log.warning("Could not control the GPIO Pin. Did you start as root?");
+                BrewServer.LOG.warning("Could not control the GPIO Pin. Did you start as root?");
                 e.printStackTrace();
                 return;
             }
@@ -60,7 +60,7 @@ public final class OutputControl implements Runnable {
                     if(fGPIOh != null && !fGPIOh.equals("") && Heat_SSR == null) {
                         Heat_SSR = new OutPin(fGPIOh);
                     }
-                    BrewServer.log.info("Fduty: "+fDuty);
+                    BrewServer.LOG.info("Fduty: "+fDuty);
                     if(fDuty == 0) {
                         allOff();
                         Thread.sleep(fTimeh);
@@ -86,7 +86,7 @@ public final class OutputControl implements Runnable {
                         duty = fDuty/100;
                         on_time = duty * fTimeh;
                         off_time = fTimeh * (1-duty);
-                        BrewServer.log.info("On: " + on_time + " Off; " + off_time);
+                        BrewServer.LOG.info("On: " + on_time + " Off; " + off_time);
                         heatOn();
                         Thread.sleep((int)on_time);
     
@@ -109,7 +109,7 @@ public final class OutputControl implements Runnable {
                 } // end the while loop
             
             } catch (RuntimeException e) {
-                BrewServer.log.warning("Could not control the GPIO Pin during loop. Did you start as root?");
+                BrewServer.LOG.warning("Could not control the GPIO Pin during loop. Did you start as root?");
                 e.printStackTrace();
                 return;
             }
@@ -121,13 +121,13 @@ public final class OutputControl implements Runnable {
             System.out.println(e1.getMessage());
             e1.printStackTrace();
         } finally {
-            BrewServer.log.warning(fName + " turning off outputs" );
+            BrewServer.LOG.warning(fName + " turning off outputs" );
             allOff();
         }
    }
 
     public void shutdown() {
-        BrewServer.log.info("Shutting down OC");
+        BrewServer.LOG.info("Shutting down OC");
         allOff();
         allDisable();
     }
@@ -145,7 +145,7 @@ public final class OutputControl implements Runnable {
     
     public synchronized void setDuty(double duty) {
         fDuty = duty;
-        BrewServer.log.info("IN: " + duty + " OUT: " + fDuty);
+        BrewServer.LOG.info("IN: " + duty + " OUT: " + fDuty);
     }
     
     public void setHTime(double time) {
@@ -168,7 +168,7 @@ public final class OutputControl implements Runnable {
         heat_status = true;
         
         if(Cool_SSR == null && Heat_SSR == null) {
-            BrewServer.log.info("No SSRs to turn on");
+            BrewServer.LOG.info("No SSRs to turn on");
         }
         
         if(Cool_SSR != null) {
