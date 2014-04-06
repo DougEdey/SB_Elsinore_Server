@@ -10,6 +10,8 @@ import java.util.Map.Entry;
 import org.joda.time.*;
 import org.json.simple.JSONObject;
 
+import com.sun.org.apache.xpath.internal.patterns.StepPattern;
+
 
 
 /********************
@@ -72,9 +74,13 @@ public class MashControl implements Runnable {
 	public void run() {
 		// Run through and update the times based on the currently active step
 		Entry <Integer, MashStep> mashEntry = getCurrentMashStep();
-		MashStep currentStep = mashEntry.getValue();
+
+		MashStep currentStep = null;
 		Integer currentStepPosition = -1;
-		if (currentStep == null) {
+		
+		// active step
+		if (mashEntry != null) {
+			currentStep = mashEntry.getValue();
 			currentStepPosition = mashEntry.getKey();
 		}
 		
@@ -83,25 +89,43 @@ public class MashControl implements Runnable {
 		while (true) {
 			// Is there a step and an output control?
 			if (currentStep != null && currentPID != null) {
+				mashEntry = getCurrentMashStep();
+
+				// active step
+				if (mashEntry != null) {
+					currentStep = mashEntry.getValue();
+					currentStepPosition = mashEntry.getKey();
+					BrewServer.log.warning("Found an active mash step: " + currentStepPosition);
+				}
+			}
+			
+			if (currentStep != null && currentPID != null) {
 				// Do stuff with the active step
 				Date cDate = new Date();
 				
 				// Does the times need to be changed?
 				double currentTempF = currentPID.getTempProbe().getTempF();
+				BrewServer.log.warning("Current Temp: " + currentTempF + 
+						" Target: " + currentStep.getTargetTempAs("F"));
+				
 				// Give ourselves a 2F range, this can be changed in the future
-				if ((currentTempF - varianceF) >= currentStep.getTargetTempAs("F")
-						&& (currentTempF + varianceF) <= currentStep.getTargetTempAs("F")) {
+				if ((currentTempF - varianceF) <= currentStep.getTargetTempAs("F")
+						&& (currentTempF + varianceF) >= currentStep.getTargetTempAs("F")) {
+					BrewServer.log.warning("Target mash temp");
 					
 					if (currentStep.getStart() == null) {
+						BrewServer.log.warning("Setting start date");
 						// We've hit the target step temp, set the start date
 						DateTime tDate = new DateTime();
 						currentStep.setStart(tDate.toDate());
 						
 						// set the target End Date stamp
-						tDate.plusMinutes(currentStep.getDuration());
+						tDate = tDate.plusMinutes(currentStep.getDuration());
 						currentStep.setTargetEnd(tDate.toDate());
 						
-					} else if (cDate.compareTo(currentStep.getTargetEnd()) >= 0) {
+					} else if (currentStep.getTargetEnd() != null 
+							&& cDate.compareTo(currentStep.getTargetEnd()) >= 0) {
+						BrewServer.log.warning("End Temp hit");
 						// Over or equal to the target end time, deactivate
 						currentStep.deactivate(true);
 						// Get the next step target time
@@ -120,8 +144,8 @@ public class MashControl implements Runnable {
 					String tScale = currentPID.getTempProbe().getScale();
 					currentPID.setTemp(currentStep.getTargetTempAs(tScale));
 				}
-			}
-			
+			} 
+		
 			try {
 				// Sleep for 10 seconds
 				Thread.sleep(10000);
@@ -137,22 +161,47 @@ public class MashControl implements Runnable {
 	private void setPIDTemp(PID p, MashStep m) {
 	}
 	
-	public void activateStep(Integer position) {
+	public boolean activateStep(Integer position) {
 		// deactivate all the steps first
 		MashStep mashEntry = getMashStep(position);
 		
 		// Do we have a value
 		if (mashEntry == null) {
 			BrewServer.log.warning("Index out of bounds");
-			return;
+			return false;
 		}
 		
 		// Now we can reset the others
-		for(Entry<Integer, MashStep> mEntry : mashStepList.entrySet()) {
-			mEntry.getValue().deactivate(false);
+		if (!deactivateStep(-1)) {
+			BrewServer.log.warning("Couldn't disable all the mash steps");
+			return false;
 		}
 		
 		mashEntry.activate();
+		return true;
+	}
+	
+	public boolean deactivateStep(Integer position) {
+		// deactivate all the steps first
+		
+		if (position >= 0) {
+			MashStep mashEntry = getMashStep(position);
+		
+			// Do we have a value
+			if (mashEntry == null) {
+				BrewServer.log.warning("Index out of bounds");
+				return false;
+			}
+			mashEntry.deactivate();
+		} else {
+			// Now we can reset the others
+			for(Entry<Integer, MashStep> mEntry : mashStepList.entrySet()) {
+				mEntry.getValue().deactivate(false);
+			}
+			
+		}
+		
+		return true;
 	}
 	
 	public String getJSONDataString() {
@@ -172,6 +221,10 @@ public class MashControl implements Runnable {
 			mashstep.put("duration", step.getDuration());
 			mashstep.put("method", step.getMethod());
 			mashstep.put("type", step.getType());
+		
+			if (step.isActive()) {
+				mashstep.put("active", true);
+			}
 			
 			try {
 				mashstep.put("start_time", lFormat.format(step.getStart()));

@@ -15,6 +15,7 @@ import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 
 import com.sb.elsinore.NanoHTTPD.Response.Status;
+import com.sb.elsinore.LaunchControl;
 
 public class BrewServer extends NanoHTTPD {
 	
@@ -132,9 +133,7 @@ public class BrewServer extends NanoHTTPD {
 			BrewServer.log.info("Found valid data for " + inputUnit);
 			System.out.println(incomingData.toJSONString());
 			
-			if (LaunchControl.mashObject == null) {
-				LaunchControl.mashObject = new MashControl();
-			}
+			MashControl mControl = null;
 			
 			// Default to Fahrenheit
 			String temp_unit = "F";
@@ -143,9 +142,23 @@ public class BrewServer extends NanoHTTPD {
 				incomingData.remove("temp_unit");
 			}
 			
+			String pid = null;
+			
 			if (incomingData.containsKey("pid")) {
-				LaunchControl.mashObject.outputControl = incomingData.get("pid").toString();
+				pid = incomingData.get("pid").toString();
+				mControl = LaunchControl.findMashControl(pid);
+				
+				if (mControl == null) {
+					// Add a new MashControl to the list
+					mControl = new MashControl();
+					LaunchControl.addMashControl(mControl);
+				}
+				
+				mControl.outputControl = pid;
 				incomingData.remove("pid");
+			} else {
+				BrewServer.log.warning("Couldn't find the PID for this update");
+				return false;
 			}
 			
 			// Iterate through the JSON
@@ -164,7 +177,7 @@ public class BrewServer extends NanoHTTPD {
 					String type = valueObj.get("type").toString();
 					
 					// Add the step
-					MashStep newStep = LaunchControl.mashObject.addMashStep(stepCount);
+					MashStep newStep = mControl.addMashStep(stepCount);
 					newStep.setDuration(duration);
 					newStep.setTemp(temp);
 					newStep.setMethod(method);
@@ -178,8 +191,83 @@ public class BrewServer extends NanoHTTPD {
 					BrewServer.log.warning(incomingData.get(key).toString());
 				}
 			}
-			
+			LaunchControl.startMashControl(pid);
 		}
+		return true;
+	}
+	
+	private boolean toggleMashProfile (Map<String, String> parameters) {
+		
+		String pid = null;
+		if (parameters.containsKey("pid")) {
+			pid = parameters.get("pid");
+		} else {
+			BrewServer.log.warning("No PID provided to toggle Mash Profile");
+			return false;
+		}
+		
+		boolean activate = false;
+		if (parameters.containsKey("status")) {
+			if (parameters.get("status").equalsIgnoreCase("activate")) {
+				activate = true;
+			}
+		} else {
+			BrewServer.log.warning("No Status provided to toggle Mash Profile");
+			return false;
+		}
+		
+		int position = -1;
+		if (parameters.containsKey("position")) {
+			try {
+				position = Integer.parseInt(parameters.get("position"));
+			} catch (NumberFormatException e) {
+				BrewServer.log.warning("Couldn't parse positional argument: " + parameters.get("position"));
+				return false;
+			}
+		}
+		
+		MashControl mObj = LaunchControl.findMashControl(pid);
+		
+		if (mObj == null) {
+			return false;
+		}
+		
+		Entry<Integer, MashStep> mashEntry = mObj.getCurrentMashStep();
+		
+		// No active mash step
+		int stepToUse = -1;
+		if (mashEntry == null) {
+			if (position >= 0) {
+				stepToUse = position;
+				BrewServer.log.warning("Using initial mash step for " + pid + " at position " + position);
+			} else {
+				// No position wanted, activate the first step
+				stepToUse = 0;
+				BrewServer.log.warning("Using initial mash step for " + pid);
+			}
+		} else {
+			// We have a mash step position
+			if (position >= 0) {
+				stepToUse = position;
+				BrewServer.log.warning("Using mash step for " + pid + " at position " + position);
+			} if (!activate) {
+				// We're de-activating everything
+				stepToUse = -1;
+			} else {
+				BrewServer.log.warning("A mash is in progress for " + pid + " but no positional argument is set");
+				return false;
+			}
+		}
+		
+		if (stepToUse >= 0 && activate) {
+		
+			mObj.activateStep(stepToUse);
+			BrewServer.log.warning("Activated " + pid + " step at " + stepToUse);
+		} else {
+			mObj.deactivateStep(stepToUse);
+			BrewServer.log.warning("Deactivated " + pid + " step at " + stepToUse);
+		}
+		
 		return true;
 	}
 	
@@ -193,12 +281,21 @@ public class BrewServer extends NanoHTTPD {
 				if (updateMashProfile(parms)) {
 					return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated MashProfile" );
 				}
+				// TODO: Report Errors
 				return new NanoHTTPD.Response( Status.BAD_REQUEST, MIME_HTML, "Failed to update Mashprofile" );
+			}
+			
+			if (uri.toLowerCase().equals("/togglemash")) {
+				if (toggleMashProfile(parms)) {
+					return new NanoHTTPD.Response(Status.OK, MIME_HTML, "Toggled mash profile");
+				}
+				// TODO: Report Errors
+				return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML, "Failed to toggle MashProfile");
 			}
 			
 			if(uri.toLowerCase().equals("/updatepid")) {
 				// parse the values if possible
-				
+				// TODO: Break this out into a function
 				String temp, mode = "off", inputUnit = null;
 				double dTemp, duty = 0, cycle = 4, setpoint = 175, p = 0, i = 0, d = 0;
 				Set<Entry<String, String>> incomingParams = parms.entrySet();

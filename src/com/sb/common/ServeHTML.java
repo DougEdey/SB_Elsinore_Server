@@ -76,13 +76,13 @@ public class ServeHTML {
 		if (pumps != null && pumps.size() > 0) {
 			Iterator<Pump> pumpIterator = pumps.iterator();
 			
-			pumpContent = "<div id='pumps' class=\"panel panel-info\">" + lineSep;	
+			pumpContent = "<div id='pumps'><div class=\"panel panel-info\">" + lineSep;	
 			pumpContent += "<div id=\"pumps-title\" class=\"title panel-heading \">Pumps</div>";
 			pumpContent += "<div id=\"pumps-body\" class=\"panel-body\">";
 			while (pumpIterator.hasNext()) {
 				pumpContent += addPump(pumpIterator.next().getName());
 			}
-			pumpContent += lineSep + "</div>";
+			pumpContent += lineSep + "</div></div>";
 			pumpContent += lineSep + " </div>" + lineSep;
 		}
 		

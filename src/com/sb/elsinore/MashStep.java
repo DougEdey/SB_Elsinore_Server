@@ -17,60 +17,60 @@ public class MashStep {
 	
 	// GETTERS
 	public boolean isActive() {
-		return active;
+		return this.active;
 	}
 	
 	public String getTempUnit() {
-		return tempUnit;
+		return this.tempUnit;
 	}
 	
 	public double getTargetTemp() {
-		return getTargetTempAs(tempUnit);
+		return getTargetTempAs(this.tempUnit);
 	}
 	
 	public double getTargetTempAs(String unit) {
-		if (tempUnit.equalsIgnoreCase(unit)) {
-			return targetTemp;
+		if (this.tempUnit.equalsIgnoreCase(unit)) {
+			return this.targetTemp;
 		}
 		
-		if (tempUnit.equals("F")) {
+		if (this.tempUnit.equals("F")) {
 			// Current Unit is F, user wants C
-			return FtoC(targetTemp);
+			return FtoC(this.targetTemp);
 		} else {
 			// Current unit is C, user wants F
-			return CtoF(targetTemp);
+			return CtoF(this.targetTemp);
 		}
 	}
 	
 	public int getDuration() {
-		return duration;
+		return this.duration;
 	}
 	
 	public String getMethod() {
-		return method;
+		return this.method;
 	}
 	
 	public String getType() {
-		return type;
+		return this.type;
 	}
 	
 	public Date getStart() {
-		return startTime;
+		return this.startTime;
 	}
 	
 	public Date getTargetEnd() {
-		return targetEndTime;
+		return this.targetEndTime;
 	}
 	
 	public Date getEnd() {
-		return endTime;
+		return this.endTime;
 	}
 	
 	
 	// SETTERS
 	
 	public void activate() {
-		active = true;		
+		this.active = true;		
 	}
 	
 	public void deactivate(boolean clear) {
@@ -90,20 +90,20 @@ public class MashStep {
 	
 	// Set the new temperature unit and convert if need be
 	public void setTempUnit(String newUnit, boolean convert) {
-		if (tempUnit.equalsIgnoreCase(newUnit)) {
+		if (this.tempUnit.equalsIgnoreCase(newUnit)) {
 			// Nothing to do here
 			return;
 		}
 		
 		if (tempUnit.equalsIgnoreCase("F")) {
 			// Old if F, new must be C
-			targetTemp = FtoC(targetTemp);
+			this.targetTemp = FtoC(targetTemp);
 		} else {
 			// Old is C, new must be F
-			targetTemp = CtoF(targetTemp);
+			this.targetTemp = CtoF(targetTemp);
 		}
 		
-		tempUnit = newUnit.toUpperCase();
+		this.tempUnit = newUnit.toUpperCase();
 		
 		return;
 	}
@@ -117,7 +117,7 @@ public class MashStep {
 	}
 	
 	public void setTemp(double newTemp) {
-		targetTemp = newTemp;
+		this.targetTemp = newTemp;
 	}
 	
 	public void increaseTemp(double incrValue) {
@@ -130,7 +130,7 @@ public class MashStep {
 			return;
 		}
 		
-		duration = newDuration;
+		this.duration = newDuration;
 	}
 	
 	/*********************
@@ -139,11 +139,11 @@ public class MashStep {
 	 * @param newMethod
 	 */
 	public void setMethod(String newMethod) {
-		method = newMethod;
+		this.method = newMethod;
 	}
 	
 	public void setType(String newType) {
-		type = newType;
+		this.type = newType;
 	}
 	
 	public void setStart(Date newStart) {
@@ -154,7 +154,7 @@ public class MashStep {
 		}
 		
 		// If it's null we can reset it
-		startTime = newStart;
+		this.startTime = newStart;
 		
 	}
 	
@@ -166,15 +166,19 @@ public class MashStep {
 		}
 		
 		// If it's null we can reset it
-		endTime = newEnd;
+		this.endTime = newEnd;
 	}
 	
 	public void setTargetEnd(Date newTarget) {
 		if (newTarget != null && startTime != null 
 				&& newTarget.compareTo(startTime) <= 0) {
+			System.out.println(newTarget);
+			System.out.println(startTime);
 			BrewServer.log.warning("New target date is less than than the start date");
 			return;
 		}
+		System.out.println("Setting target time: " + newTarget);
+		this.targetEndTime = newTarget;
 	}
 	
 	@Override

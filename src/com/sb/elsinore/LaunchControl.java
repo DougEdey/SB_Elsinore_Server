@@ -75,12 +75,12 @@ public final class LaunchControl {
 	public static List<Temp> tempList = new ArrayList<Temp>();
 	public static List<Pump> pumpList = new ArrayList<Pump>();
 	public static List<String> timerList = new ArrayList<String>(); 
-	public static MashControl mashObject = null;
+	private static List<MashControl> mashList = new ArrayList<MashControl>();
 	
 	/* Temperature and PID threads */
 	private List<Thread> tempThreads = new ArrayList<Thread>();
 	private List<Thread> pidThreads = new ArrayList<Thread>();
-	private Thread mashThread = null;
+	private static List<Thread> mashThreads = new ArrayList<Thread>();
 	
 	/* ConfigParser details, need to investigate moving to a better ini parser */
 	private static ConfigParser configCfg = null;
@@ -206,8 +206,10 @@ public final class LaunchControl {
 					}
 				}
 				
-				if (mashObject != null) {
-					mashObject.shutdownFlag = true;
+				if (mashList.size() > 0) {
+					for (MashControl m: mashList) {
+						m.shutdownFlag = true;
+					}
 				}
 				
 				saveConfigFile();
@@ -415,8 +417,12 @@ public final class LaunchControl {
 		}
 		
 		// Check for mash steps
-		if (mashObject != null && mashObject.mashStepList.size() > 0) {
-			rObj.put("mash", mashObject.getJSONData());
+		if (mashList.size() > 0) {
+			tJSON = new JSONObject();
+			for (MashControl m: mashList) {
+				tJSON.put(m.outputControl, m.getJSONData());
+			}
+			rObj.put("mash", tJSON);
 		} else {
 			rObj.put("mash", "Unset");
 		}
@@ -758,8 +764,6 @@ public final class LaunchControl {
 
 			}
 		}
-
-
 	}
 
 	/******
@@ -2309,5 +2313,26 @@ public final class LaunchControl {
 		tElement.setTextContent(textContent);
 		
 		baseNode.appendChild(tElement);
+	}
+	
+	public static void addMashControl(MashControl mControl) {
+		mashList.add(mControl);
+	}
+	
+	public static void startMashControl(String pid) {
+		MashControl mControl = findMashControl(pid);
+		Thread mThread = new Thread(mControl);
+		mashThreads.add(mThread);
+		mThread.start();
+	}
+	
+	public static MashControl findMashControl(String pid) {
+		for (MashControl m: mashList) {
+			if (m.outputControl.equalsIgnoreCase(pid)) {
+				return m;
+			}
+		}
+		
+		return null;
 	}
 }
