@@ -2752,4 +2752,12 @@ public final class LaunchControl {
 
         return null;
     }
+
+    /**
+     * Get the current OWFS connection.
+     * @return The current OWFS Connection object
+     */
+    public static OwfsConnection getOWFS() {
+        return owfsConnection;
+    }
 }

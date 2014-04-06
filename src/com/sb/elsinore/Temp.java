@@ -48,7 +48,7 @@ public final class Temp implements Runnable {
                     return;
                 }
             }
-        } else if (LaunchControl.owfsConnection != null) {
+        } else if (LaunchControl.getOWFS() != null) {
             try {
                 aName = aName.replace("-", ".");
                 BrewServer.log.info("Using OWFS for " + aName + "/temperature");
