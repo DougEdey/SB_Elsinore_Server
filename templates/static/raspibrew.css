@@ -22,7 +22,7 @@ div.controlPanel {
 
 
 .temp {
-	display: table-row;
+	display: block;
 }
 
 .gage {
