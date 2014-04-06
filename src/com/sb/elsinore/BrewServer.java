@@ -18,21 +18,21 @@ import com.sb.elsinore.NanoHTTPD.Response.Status;
 import com.sb.elsinore.LaunchControl;
 
 public class BrewServer extends NanoHTTPD {
-	
-	
-	private File rootDir;
+    
+    
+    private File rootDir;
     public final static Logger log = Logger.getLogger("com.sb.manager.Server");
 
 
-	/**
+    /**
      * Hashtable mapping (String)FILENAME_EXTENSION -> (String)MIME_TYPE
      */
     private static final Map<String, String> MIME_TYPES = new HashMap<String, String>() {/**
-		 * 
-		 */
-		private static final long serialVersionUID = 1L;
+         * 
+         */
+        private static final long serialVersionUID = 1L;
 
-	{
+    {
         put("css", "text/css");
         put("htm", "text/html");
         put("html", "text/html");
@@ -60,14 +60,14 @@ public class BrewServer extends NanoHTTPD {
     }};
 
     
-	public BrewServer (int port) throws IOException{
+    public BrewServer (int port) throws IOException{
 
-		super(port);
-		// just serve up on port 8080 for now
-		BrewServer.log.info("Launching on port " + port);
-		
-		
-		//setup the logging handlers
+        super(port);
+        // just serve up on port 8080 for now
+        BrewServer.log.info("Launching on port " + port);
+        
+        
+        //setup the logging handlers
         Handler[] lH = log.getHandlers();
         for (Handler h : lH) {
                 h.setLevel(Level.INFO);
@@ -78,434 +78,434 @@ public class BrewServer extends NanoHTTPD {
                 
                 // default level, this can be changed
                 try {
-                	log.info("Debug System property: "+System.getProperty("debug"));
-                	if (System.getProperty("debug").equalsIgnoreCase("INFO")) {
-                	
-                		log.setLevel(Level.INFO);
-                		log.info("Enabled logging at an info level");
-                	} 
+                    log.info("Debug System property: "+System.getProperty("debug"));
+                    if (System.getProperty("debug").equalsIgnoreCase("INFO")) {
+                    
+                        log.setLevel(Level.INFO);
+                        log.info("Enabled logging at an info level");
+                    } 
                 } catch (NullPointerException e) {
-                	log.setLevel(Level.WARNING);
+                    log.setLevel(Level.WARNING);
                 }
                 
         }
 
-		rootDir = new File(BrewServer.class.getProtectionDomain().getCodeSource()
-				.getLocation().getPath()).getParentFile();
-		BrewServer.log.info("Root Directory is: " + rootDir.toString());
-				
-		if(rootDir.exists() && rootDir.isDirectory()) {
-			BrewServer.log.info("Root directory: " + rootDir.toString());
-		}
+        rootDir = new File(BrewServer.class.getProtectionDomain().getCodeSource()
+                .getLocation().getPath()).getParentFile();
+        BrewServer.log.info("Root Directory is: " + rootDir.toString());
+                
+        if(rootDir.exists() && rootDir.isDirectory()) {
+            BrewServer.log.info("Root directory: " + rootDir.toString());
+        }
 
 
-	}
+    }
 
-	private boolean updateMashProfile(Map<String, String> parms) {
-		String inputUnit = null;
-		Set<Entry<String, String>> incomingParams = parms.entrySet();
-		Iterator<Entry<String, String>> it = incomingParams.iterator();
-		Entry<String, String> param = null;
-		JSONObject incomingData = new JSONObject();
-		
-		JSONParser parser = new JSONParser();
-		
-		// Try to Parse JSON Data
-		while (it.hasNext()) {
-			param = it.next();
-			BrewServer.log.info("Key: " + param.getKey());
-			BrewServer.log.info("Entry: " + param.getValue());
-			try {
-				Object parsedData = parser.parse(param.getKey());
-				if (parsedData instanceof JSONArray) {
-					incomingData = (JSONObject) ((JSONArray)parsedData).get(0);
-				} else {
-					incomingData = (JSONObject) parsedData;
-				}
-			} catch (Exception e) {
-				BrewServer.log.info("couldn't read " + param.getValue() + " as a JSON Value " + e.getMessage());
-			}
-		
-		}
-	
-		if (incomingData != null) {
-			// Use the JSON Data
-			BrewServer.log.info("Found valid data for " + inputUnit);
-			System.out.println(incomingData.toJSONString());
-			
-			MashControl mControl = null;
-			
-			// Default to Fahrenheit
-			String temp_unit = "F";
-			if (incomingData.containsKey("temp_unit")) {
-				temp_unit = incomingData.get("temp_unit").toString();
-				incomingData.remove("temp_unit");
-			}
-			
-			String pid = null;
-			
-			if (incomingData.containsKey("pid")) {
-				pid = incomingData.get("pid").toString();
-				mControl = LaunchControl.findMashControl(pid);
-				
-				if (mControl == null) {
-					// Add a new MashControl to the list
-					mControl = new MashControl();
-					LaunchControl.addMashControl(mControl);
-				}
-				
-				mControl.outputControl = pid;
-				incomingData.remove("pid");
-			} else {
-				BrewServer.log.warning("Couldn't find the PID for this update");
-				return false;
-			}
-			
-			// Iterate through the JSON
-			for (Object key: incomingData.keySet()) {
-				String cKey = key.toString();
-			
-				try {
-					int stepCount = Integer.parseInt(cKey);
-					// We have a good step count, parse the value
-					JSONObject valueObj = (JSONObject) incomingData.get(key);
-					
-					int duration = Integer.parseInt(valueObj.get("duration").toString());
-					double temp = Double.parseDouble(valueObj.get("temp").toString());
-					
-					String method = valueObj.get("method").toString();
-					String type = valueObj.get("type").toString();
-					
-					// Add the step
-					MashStep newStep = mControl.addMashStep(stepCount);
-					newStep.setDuration(duration);
-					newStep.setTemp(temp);
-					newStep.setMethod(method);
-					newStep.setType(type);
-					
-					BrewServer.log.info(newStep.toString());
-					
-				} catch (NumberFormatException e) {
-					// Couldn't work out what this is
-					BrewServer.log.warning("Couldn't parse " + cKey);
-					BrewServer.log.warning(incomingData.get(key).toString());
-				}
-			}
-			LaunchControl.startMashControl(pid);
-		}
-		return true;
-	}
-	
-	private boolean toggleMashProfile (Map<String, String> parameters) {
-		
-		String pid = null;
-		if (parameters.containsKey("pid")) {
-			pid = parameters.get("pid");
-		} else {
-			BrewServer.log.warning("No PID provided to toggle Mash Profile");
-			return false;
-		}
-		
-		boolean activate = false;
-		if (parameters.containsKey("status")) {
-			if (parameters.get("status").equalsIgnoreCase("activate")) {
-				activate = true;
-			}
-		} else {
-			BrewServer.log.warning("No Status provided to toggle Mash Profile");
-			return false;
-		}
-		
-		int position = -1;
-		if (parameters.containsKey("position")) {
-			try {
-				position = Integer.parseInt(parameters.get("position"));
-			} catch (NumberFormatException e) {
-				BrewServer.log.warning("Couldn't parse positional argument: " + parameters.get("position"));
-				return false;
-			}
-		}
-		
-		MashControl mObj = LaunchControl.findMashControl(pid);
-		
-		if (mObj == null) {
-			return false;
-		}
-		
-		Entry<Integer, MashStep> mashEntry = mObj.getCurrentMashStep();
-		
-		// No active mash step
-		int stepToUse = -1;
-		if (mashEntry == null) {
-			if (position >= 0) {
-				stepToUse = position;
-				BrewServer.log.warning("Using initial mash step for " + pid + " at position " + position);
-			} else {
-				// No position wanted, activate the first step
-				stepToUse = 0;
-				BrewServer.log.warning("Using initial mash step for " + pid);
-			}
-		} else {
-			// We have a mash step position
-			if (position >= 0) {
-				stepToUse = position;
-				BrewServer.log.warning("Using mash step for " + pid + " at position " + position);
-			} if (!activate) {
-				// We're de-activating everything
-				stepToUse = -1;
-			} else {
-				BrewServer.log.warning("A mash is in progress for " + pid + " but no positional argument is set");
-				return false;
-			}
-		}
-		
-		if (stepToUse >= 0 && activate) {
-		
-			mObj.activateStep(stepToUse);
-			BrewServer.log.warning("Activated " + pid + " step at " + stepToUse);
-		} else {
-			mObj.deactivateStep(stepToUse);
-			BrewServer.log.warning("Deactivated " + pid + " step at " + stepToUse);
-		}
-		
-		return true;
-	}
-	
-	public Response serve( String uri, Method method,  Map<String, String> header, Map<String, String> parms, Map<String, String> files)
-	{
+    private boolean updateMashProfile(Map<String, String> parms) {
+        String inputUnit = null;
+        Set<Entry<String, String>> incomingParams = parms.entrySet();
+        Iterator<Entry<String, String>> it = incomingParams.iterator();
+        Entry<String, String> param = null;
+        JSONObject incomingData = new JSONObject();
+        
+        JSONParser parser = new JSONParser();
+        
+        // Try to Parse JSON Data
+        while (it.hasNext()) {
+            param = it.next();
+            BrewServer.log.info("Key: " + param.getKey());
+            BrewServer.log.info("Entry: " + param.getValue());
+            try {
+                Object parsedData = parser.parse(param.getKey());
+                if (parsedData instanceof JSONArray) {
+                    incomingData = (JSONObject) ((JSONArray)parsedData).get(0);
+                } else {
+                    incomingData = (JSONObject) parsedData;
+                }
+            } catch (Exception e) {
+                BrewServer.log.info("couldn't read " + param.getValue() + " as a JSON Value " + e.getMessage());
+            }
+        
+        }
+    
+        if (incomingData != null) {
+            // Use the JSON Data
+            BrewServer.log.info("Found valid data for " + inputUnit);
+            System.out.println(incomingData.toJSONString());
+            
+            MashControl mControl = null;
+            
+            // Default to Fahrenheit
+            String temp_unit = "F";
+            if (incomingData.containsKey("temp_unit")) {
+                temp_unit = incomingData.get("temp_unit").toString();
+                incomingData.remove("temp_unit");
+            }
+            
+            String pid = null;
+            
+            if (incomingData.containsKey("pid")) {
+                pid = incomingData.get("pid").toString();
+                mControl = LaunchControl.findMashControl(pid);
+                
+                if (mControl == null) {
+                    // Add a new MashControl to the list
+                    mControl = new MashControl();
+                    LaunchControl.addMashControl(mControl);
+                }
+                
+                mControl.outputControl = pid;
+                incomingData.remove("pid");
+            } else {
+                BrewServer.log.warning("Couldn't find the PID for this update");
+                return false;
+            }
+            
+            // Iterate through the JSON
+            for (Object key: incomingData.keySet()) {
+                String cKey = key.toString();
+            
+                try {
+                    int stepCount = Integer.parseInt(cKey);
+                    // We have a good step count, parse the value
+                    JSONObject valueObj = (JSONObject) incomingData.get(key);
+                    
+                    int duration = Integer.parseInt(valueObj.get("duration").toString());
+                    double temp = Double.parseDouble(valueObj.get("temp").toString());
+                    
+                    String method = valueObj.get("method").toString();
+                    String type = valueObj.get("type").toString();
+                    
+                    // Add the step
+                    MashStep newStep = mControl.addMashStep(stepCount);
+                    newStep.setDuration(duration);
+                    newStep.setTemp(temp);
+                    newStep.setMethod(method);
+                    newStep.setType(type);
+                    
+                    BrewServer.log.info(newStep.toString());
+                    
+                } catch (NumberFormatException e) {
+                    // Couldn't work out what this is
+                    BrewServer.log.warning("Couldn't parse " + cKey);
+                    BrewServer.log.warning(incomingData.get(key).toString());
+                }
+            }
+            LaunchControl.startMashControl(pid);
+        }
+        return true;
+    }
+    
+    private boolean toggleMashProfile (Map<String, String> parameters) {
+        
+        String pid = null;
+        if (parameters.containsKey("pid")) {
+            pid = parameters.get("pid");
+        } else {
+            BrewServer.log.warning("No PID provided to toggle Mash Profile");
+            return false;
+        }
+        
+        boolean activate = false;
+        if (parameters.containsKey("status")) {
+            if (parameters.get("status").equalsIgnoreCase("activate")) {
+                activate = true;
+            }
+        } else {
+            BrewServer.log.warning("No Status provided to toggle Mash Profile");
+            return false;
+        }
+        
+        int position = -1;
+        if (parameters.containsKey("position")) {
+            try {
+                position = Integer.parseInt(parameters.get("position"));
+            } catch (NumberFormatException e) {
+                BrewServer.log.warning("Couldn't parse positional argument: " + parameters.get("position"));
+                return false;
+            }
+        }
+        
+        MashControl mObj = LaunchControl.findMashControl(pid);
+        
+        if (mObj == null) {
+            return false;
+        }
+        
+        Entry<Integer, MashStep> mashEntry = mObj.getCurrentMashStep();
+        
+        // No active mash step
+        int stepToUse = -1;
+        if (mashEntry == null) {
+            if (position >= 0) {
+                stepToUse = position;
+                BrewServer.log.warning("Using initial mash step for " + pid + " at position " + position);
+            } else {
+                // No position wanted, activate the first step
+                stepToUse = 0;
+                BrewServer.log.warning("Using initial mash step for " + pid);
+            }
+        } else {
+            // We have a mash step position
+            if (position >= 0) {
+                stepToUse = position;
+                BrewServer.log.warning("Using mash step for " + pid + " at position " + position);
+            } if (!activate) {
+                // We're de-activating everything
+                stepToUse = -1;
+            } else {
+                BrewServer.log.warning("A mash is in progress for " + pid + " but no positional argument is set");
+                return false;
+            }
+        }
+        
+        if (stepToUse >= 0 && activate) {
+        
+            mObj.activateStep(stepToUse);
+            BrewServer.log.warning("Activated " + pid + " step at " + stepToUse);
+        } else {
+            mObj.deactivateStep(stepToUse);
+            BrewServer.log.warning("Deactivated " + pid + " step at " + stepToUse);
+        }
+        
+        return true;
+    }
+    
+    public Response serve( String uri, Method method,  Map<String, String> header, Map<String, String> parms, Map<String, String> files)
+    {
 
-		BrewServer.log.info("URL : " + uri + " method: " + method);
-		if(method == Method.POST) {
-			// parms contains the properties here
-			if(uri.toLowerCase().equals("/mashprofile")) {
-				if (updateMashProfile(parms)) {
-					return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated MashProfile" );
-				}
-				// TODO: Report Errors
-				return new NanoHTTPD.Response( Status.BAD_REQUEST, MIME_HTML, "Failed to update Mashprofile" );
-			}
-			
-			if (uri.toLowerCase().equals("/togglemash")) {
-				if (toggleMashProfile(parms)) {
-					return new NanoHTTPD.Response(Status.OK, MIME_HTML, "Toggled mash profile");
-				}
-				// TODO: Report Errors
-				return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML, "Failed to toggle MashProfile");
-			}
-			
-			if(uri.toLowerCase().equals("/updatepid")) {
-				// parse the values if possible
-				// TODO: Break this out into a function
-				String temp, mode = "off", inputUnit = null;
-				double dTemp, duty = 0, cycle = 4, setpoint = 175, p = 0, i = 0, d = 0;
-				Set<Entry<String, String>> incomingParams = parms.entrySet();
-				Iterator<Entry<String, String>> it = incomingParams.iterator();
-				Entry<String, String> param = null;
-				JSONObject incomingData = null;
-				
-				JSONParser parser = new JSONParser();
-				
-				// Try to Parse JSON Data
-				while (it.hasNext()) {
-					param = it.next();
-					BrewServer.log.info("Key: " + param.getKey());
-					BrewServer.log.info("Entry: " + param.getValue());
-					try {
-						Object parsedData = parser.parse(param.getValue());
-						if (parsedData instanceof JSONArray) {
-							incomingData = (JSONObject) ((JSONArray)parsedData).get(0);
-						} else {
-							incomingData = (JSONObject) parsedData;
-							inputUnit = param.getKey();
-						}
-					} catch (Exception e) {
-						BrewServer.log.info("couldn't read " + param.getValue() + " as a JSON Value " + e.getMessage());
-					}
-				
-				}
-			
-				if (incomingData != null) {
-					// Use the JSON Data
-					BrewServer.log.info("Found valid data for " + inputUnit);
-					parms = incomingData;
-				} else {
-					inputUnit = parms.get("form");
-				}
-				
-				// Fall back to the old style
-				if(parms.containsKey("dutycycle")) {
-					temp = parms.get("dutycycle");
-					try {
-						dTemp = Double.parseDouble(temp);
-						duty = dTemp;
-						BrewServer.log.info("Duty cycle: " + duty);
-					} catch (NumberFormatException nfe) {
-						System.out.print("Bad duty");
-					}
-				}
-				
-				if(parms.containsKey("cycletime")) {
-					temp = parms.get("cycletime");
-					try {
-						dTemp = Double.parseDouble(temp);
-						cycle = dTemp;
-						BrewServer.log.info("Cycle time: " + cycle);
-					} catch (NumberFormatException nfe) {
-						BrewServer.log.info("Bad cycle");
-					}
-				}
-				
-				if(parms.containsKey("setpoint")) {
-					temp = parms.get("setpoint");
-					try {
-						dTemp = Double.parseDouble(temp);
-						setpoint = dTemp;
-						BrewServer.log.info("Set Point: " + setpoint);
-					} catch (NumberFormatException nfe) {
-						BrewServer.log.info("Bad setpoint");
-					}
-				}
-				
-				if(parms.containsKey("p")) {
-					temp = parms.get("p");
-					try {
-						dTemp = Double.parseDouble(temp);
-						p = dTemp;
-						BrewServer.log.info("P: " + p);
-					} catch (NumberFormatException nfe) {
-						BrewServer.log.info("Bad p");
-					}
-				}
-				
-				if(parms.containsKey("i")) {
-					temp = parms.get("i");
-					try {
-						dTemp = Double.parseDouble(temp);
-						i = dTemp;
-						BrewServer.log.info("I: " + i);
-					} catch (NumberFormatException nfe) {
-						BrewServer.log.info("Bad i");
-					}
-				}
-				
-				if(parms.containsKey("d")) {
-					temp = parms.get("d");
-					try {
-						dTemp = Double.parseDouble(temp);
-						d =  dTemp;
-						BrewServer.log.info("D: " + d);
-					} catch (NumberFormatException nfe) {
-						BrewServer.log.info("Bad d");
-					}
-				}
-				
-				if(parms.containsKey("mode")) {
-					mode = parms.get("mode");
-					BrewServer.log.info("Mode: " + mode);
-				}
+        BrewServer.log.info("URL : " + uri + " method: " + method);
+        if(method == Method.POST) {
+            // parms contains the properties here
+            if(uri.toLowerCase().equals("/mashprofile")) {
+                if (updateMashProfile(parms)) {
+                    return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated MashProfile" );
+                }
+                // TODO: Report Errors
+                return new NanoHTTPD.Response( Status.BAD_REQUEST, MIME_HTML, "Failed to update Mashprofile" );
+            }
+            
+            if (uri.toLowerCase().equals("/togglemash")) {
+                if (toggleMashProfile(parms)) {
+                    return new NanoHTTPD.Response(Status.OK, MIME_HTML, "Toggled mash profile");
+                }
+                // TODO: Report Errors
+                return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML, "Failed to toggle MashProfile");
+            }
+            
+            if(uri.toLowerCase().equals("/updatepid")) {
+                // parse the values if possible
+                // TODO: Break this out into a function
+                String temp, mode = "off", inputUnit = null;
+                double dTemp, duty = 0, cycle = 4, setpoint = 175, p = 0, i = 0, d = 0;
+                Set<Entry<String, String>> incomingParams = parms.entrySet();
+                Iterator<Entry<String, String>> it = incomingParams.iterator();
+                Entry<String, String> param = null;
+                JSONObject incomingData = null;
+                
+                JSONParser parser = new JSONParser();
+                
+                // Try to Parse JSON Data
+                while (it.hasNext()) {
+                    param = it.next();
+                    BrewServer.log.info("Key: " + param.getKey());
+                    BrewServer.log.info("Entry: " + param.getValue());
+                    try {
+                        Object parsedData = parser.parse(param.getValue());
+                        if (parsedData instanceof JSONArray) {
+                            incomingData = (JSONObject) ((JSONArray)parsedData).get(0);
+                        } else {
+                            incomingData = (JSONObject) parsedData;
+                            inputUnit = param.getKey();
+                        }
+                    } catch (Exception e) {
+                        BrewServer.log.info("couldn't read " + param.getValue() + " as a JSON Value " + e.getMessage());
+                    }
+                
+                }
+            
+                if (incomingData != null) {
+                    // Use the JSON Data
+                    BrewServer.log.info("Found valid data for " + inputUnit);
+                    parms = incomingData;
+                } else {
+                    inputUnit = parms.get("form");
+                }
+                
+                // Fall back to the old style
+                if(parms.containsKey("dutycycle")) {
+                    temp = parms.get("dutycycle");
+                    try {
+                        dTemp = Double.parseDouble(temp);
+                        duty = dTemp;
+                        BrewServer.log.info("Duty cycle: " + duty);
+                    } catch (NumberFormatException nfe) {
+                        System.out.print("Bad duty");
+                    }
+                }
+                
+                if(parms.containsKey("cycletime")) {
+                    temp = parms.get("cycletime");
+                    try {
+                        dTemp = Double.parseDouble(temp);
+                        cycle = dTemp;
+                        BrewServer.log.info("Cycle time: " + cycle);
+                    } catch (NumberFormatException nfe) {
+                        BrewServer.log.info("Bad cycle");
+                    }
+                }
+                
+                if(parms.containsKey("setpoint")) {
+                    temp = parms.get("setpoint");
+                    try {
+                        dTemp = Double.parseDouble(temp);
+                        setpoint = dTemp;
+                        BrewServer.log.info("Set Point: " + setpoint);
+                    } catch (NumberFormatException nfe) {
+                        BrewServer.log.info("Bad setpoint");
+                    }
+                }
+                
+                if(parms.containsKey("p")) {
+                    temp = parms.get("p");
+                    try {
+                        dTemp = Double.parseDouble(temp);
+                        p = dTemp;
+                        BrewServer.log.info("P: " + p);
+                    } catch (NumberFormatException nfe) {
+                        BrewServer.log.info("Bad p");
+                    }
+                }
+                
+                if(parms.containsKey("i")) {
+                    temp = parms.get("i");
+                    try {
+                        dTemp = Double.parseDouble(temp);
+                        i = dTemp;
+                        BrewServer.log.info("I: " + i);
+                    } catch (NumberFormatException nfe) {
+                        BrewServer.log.info("Bad i");
+                    }
+                }
+                
+                if(parms.containsKey("d")) {
+                    temp = parms.get("d");
+                    try {
+                        dTemp = Double.parseDouble(temp);
+                        d =  dTemp;
+                        BrewServer.log.info("D: " + d);
+                    } catch (NumberFormatException nfe) {
+                        BrewServer.log.info("Bad d");
+                    }
+                }
+                
+                if(parms.containsKey("mode")) {
+                    mode = parms.get("mode");
+                    BrewServer.log.info("Mode: " + mode);
+                }
 
-				
-				BrewServer.log.info("Form: " + inputUnit);
+                
+                BrewServer.log.info("Form: " + inputUnit);
 
-				PID tPID = LaunchControl.findPID(inputUnit);
-				if(tPID != null) {
-					BrewServer.log.info(mode +":" + duty + ":" + cycle +":"+ setpoint +":"+ p+":"+ i+":"+ d );
-					tPID.updateValues(mode, duty, cycle, setpoint, p, i, d );
-				} else {
-					BrewServer.log.warning("Attempted to update a non existent PID, " + inputUnit + ". Please check your client");
-				}
-				return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated PID" );
-			}
+                PID tPID = LaunchControl.findPID(inputUnit);
+                if(tPID != null) {
+                    BrewServer.log.info(mode +":" + duty + ":" + cycle +":"+ setpoint +":"+ p+":"+ i+":"+ d );
+                    tPID.updateValues(mode, duty, cycle, setpoint, p, i, d );
+                } else {
+                    BrewServer.log.warning("Attempted to update a non existent PID, " + inputUnit + ". Please check your client");
+                }
+                return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated PID" );
+            }
 
-			if(uri.toLowerCase().equals("/updateday")) {
-				// we're storing the data for the brew day
-				String tempDateStamp;
+            if(uri.toLowerCase().equals("/updateday")) {
+                // we're storing the data for the brew day
+                String tempDateStamp;
 
-				BrewDay brewDay = LaunchControl.getBrewDay();
+                BrewDay brewDay = LaunchControl.getBrewDay();
 
-				// updated date
-				if(parms.containsKey("updated")) {
-					tempDateStamp = parms.get("updated");
-					brewDay.setUpdated(tempDateStamp);
-				} else {
-					// we don't have an updated datestamp. Don't do anything for now
-					return new NanoHTTPD.Response( Status.OK, MIME_HTML, "No update datestamp, not updating a thang! YA HOSER!" );
-				}
+                // updated date
+                if(parms.containsKey("updated")) {
+                    tempDateStamp = parms.get("updated");
+                    brewDay.setUpdated(tempDateStamp);
+                } else {
+                    // we don't have an updated datestamp. Don't do anything for now
+                    return new NanoHTTPD.Response( Status.OK, MIME_HTML, "No update datestamp, not updating a thang! YA HOSER!" );
+                }
 
-				Iterator<Entry<String, String>> it = parms.entrySet().iterator();
-				
-				Entry<String, String> e = null;
-				
-				while (it.hasNext()) {
-					e = it.next();
-					
-					if (e.getKey().endsWith("Start")) {
-						int trimEnd = e.getKey().length() - 5;
-						String name = e.getKey().substring(0, trimEnd);
-						brewDay.startTimer(name, e.getValue());
-					} else if (e.getKey().endsWith("End"))  {
-						int trimEnd = e.getKey().length() - 3;
-						String name = e.getKey().substring(0, trimEnd);
-						brewDay.stopTimer(name, e.getValue());
-					}
-				}
+                Iterator<Entry<String, String>> it = parms.entrySet().iterator();
+                
+                Entry<String, String> e = null;
+                
+                while (it.hasNext()) {
+                    e = it.next();
+                    
+                    if (e.getKey().endsWith("Start")) {
+                        int trimEnd = e.getKey().length() - 5;
+                        String name = e.getKey().substring(0, trimEnd);
+                        brewDay.startTimer(name, e.getValue());
+                    } else if (e.getKey().endsWith("End"))  {
+                        int trimEnd = e.getKey().length() - 3;
+                        String name = e.getKey().substring(0, trimEnd);
+                        brewDay.stopTimer(name, e.getValue());
+                    }
+                }
 
-				return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated Brewday" );
-			}
-			
-			if(uri.toLowerCase().equals("/updatepump")) {
-				if(parms.containsKey("toggle")) {
-					String pumpname = parms.get("toggle");
-					Pump tempPump = LaunchControl.findPump(pumpname);
-					if (tempPump != null) {
-						if(tempPump.getStatus()) {
-							tempPump.turnOff();
-						} else {
-							tempPump.turnOn();
-						}
-						return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated Pump" );
-					} else {
-						log.warning("Invalid pump: " + pumpname + " provided.");
-					}
-				}
-			}
-			
-			if(uri.toLowerCase().equals("/toggleaux")) {
-				if(parms.containsKey("toggle")) {
-					String pidname = parms.get("toggle");
-					PID tempPID = LaunchControl.findPID(pidname);
-					if (tempPID != null) {
-						tempPID.toggleAux();
-						return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated Aux for " + pidname );
-					} else {
-						log.warning("Invalid PID: " + pidname + " provided.");
-					}
-				}
-			}
-		}
-		
-		if(uri.toLowerCase().equals("/getstatus")) {
-			
-			return new NanoHTTPD.Response( Status.OK, MIME_HTML, LaunchControl.getJSONStatus() );
-		}
-				
-		if (uri.toLowerCase().equals("/controller")) {
-			return new NanoHTTPD.Response( Status.OK, MIME_HTML, LaunchControl.getControlPage());
-		}
-		
-		if (uri.toLowerCase().equals("/timers")) {
-			return new NanoHTTPD.Response( Status.OK, MIME_HTML, LaunchControl.getBrewDay().brewDayStatus().toString());
-		}
-		
-		if(new File(rootDir, uri).exists()) {
+                return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated Brewday" );
+            }
+            
+            if(uri.toLowerCase().equals("/updatepump")) {
+                if(parms.containsKey("toggle")) {
+                    String pumpname = parms.get("toggle");
+                    Pump tempPump = LaunchControl.findPump(pumpname);
+                    if (tempPump != null) {
+                        if(tempPump.getStatus()) {
+                            tempPump.turnOff();
+                        } else {
+                            tempPump.turnOn();
+                        }
+                        return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated Pump" );
+                    } else {
+                        log.warning("Invalid pump: " + pumpname + " provided.");
+                    }
+                }
+            }
+            
+            if(uri.toLowerCase().equals("/toggleaux")) {
+                if(parms.containsKey("toggle")) {
+                    String pidname = parms.get("toggle");
+                    PID tempPID = LaunchControl.findPID(pidname);
+                    if (tempPID != null) {
+                        tempPID.toggleAux();
+                        return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Updated Aux for " + pidname );
+                    } else {
+                        log.warning("Invalid PID: " + pidname + " provided.");
+                    }
+                }
+            }
+        }
+        
+        if(uri.toLowerCase().equals("/getstatus")) {
+            
+            return new NanoHTTPD.Response( Status.OK, MIME_HTML, LaunchControl.getJSONStatus() );
+        }
+                
+        if (uri.toLowerCase().equals("/controller")) {
+            return new NanoHTTPD.Response( Status.OK, MIME_HTML, LaunchControl.getControlPage());
+        }
+        
+        if (uri.toLowerCase().equals("/timers")) {
+            return new NanoHTTPD.Response( Status.OK, MIME_HTML, LaunchControl.getBrewDay().brewDayStatus().toString());
+        }
+        
+        if(new File(rootDir, uri).exists()) {
             return serveFile(uri, header, rootDir);
-		}
+        }
 
-		BrewServer.log.info("Invalid URI: " + uri);
-		return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Unrecognized URL");
-	}
+        BrewServer.log.info("Invalid URI: " + uri);
+        return new NanoHTTPD.Response( Status.OK, MIME_HTML, "Unrecognized URL");
+    }
 
-	/**
+    /**
      * Serves file from homeDir and its' subdirectories (only). Uses only URI, ignores all headers and HTTP parameters.
      */
     public Response serveFile(String uri, Map<String, String> header, File homeDir) {
