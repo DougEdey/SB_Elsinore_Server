@@ -277,7 +277,7 @@ public class ServeHTML {
         
         timers += "<div class='panel-body'>";
             
-        for (String timer : LaunchControl.timerList) {
+        for (String timer : LaunchControl.getTimerList()) {
             // Mash button
             timers += "<div><span class='holo-button pump' id=\""+ timer + "\" type=\"submit\" "
                     + "value=\""+ timer + "Timer\" onclick='setTimer(this, \""+ timer + "\"); waitForMsg(); return false;'>"

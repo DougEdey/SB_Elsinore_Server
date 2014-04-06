@@ -2760,4 +2760,12 @@ public final class LaunchControl {
     public static OwfsConnection getOWFS() {
         return owfsConnection;
     }
+
+    /**
+     * Helper to get the current list of timers.
+     * @return The current list of timers.
+     */
+    public static List<String> getTimerList() {
+        return timerList;
+    }
 }
