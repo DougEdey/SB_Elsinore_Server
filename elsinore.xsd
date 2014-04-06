@@ -29,7 +29,7 @@
                     <xs:element ref="gpio"/>
                 </xs:sequence>
             </xs:sequence>
-            <xs:attribute name="id" use="required" type="xs:NCName"/>
+            <xs:attribute name="id" use="required" type="xs:string"/>
         </xs:complexType>
     </xs:element>
     <xs:element name="volume-unit" type="xs:NCName"/>
@@ -64,7 +64,7 @@
     </xs:element>
     <xs:element name="time">
         <xs:complexType>
-            <xs:attribute name="name" use="required" type="xs:NCName"/>
+            <xs:attribute name="name" use="required" type="xs:string"/>
         </xs:complexType>
     </xs:element>
 </xs:schema>
