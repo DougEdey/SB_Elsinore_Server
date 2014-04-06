@@ -3,3 +3,6 @@
 #Hide the maven build folder
 target
 bin
+
+# Hide any swap/temp files
+*.swp
