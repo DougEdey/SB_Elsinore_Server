@@ -15,6 +15,30 @@ $.fn.serializeObject = function()
     return o;
 };
 
+/**
+ * Return an Object sorted by it's Key
+ */
+var sortObjectByKey = function(obj){
+    var keys = [];
+    var sorted_obj = {};
+
+    for(var key in obj){
+        if(obj.hasOwnProperty(key)){
+            keys.push(key);
+        }
+    }
+
+    // sort keys
+    keys.sort();
+
+    // create new array based on Sorted Keys
+    jQuery.each(keys, function(i, key){
+        sorted_obj[key] = obj[key];
+    });
+
+    return sorted_obj;
+};
+
 function waitForMsg(){
 	if (window.disableUpdates) {
 		return false;
@@ -39,6 +63,47 @@ function waitForMsg(){
 					});
 					return true;
 					
+				}
+
+				// New Feature! Mash Profile!
+				if (vessel == "mash") {
+					if (this == 'Unset') {
+						return true;
+					}
+					val = sortObjectByKey(val);
+
+					$.each(val, function(mashPID, mashDetails) {
+						// Iterate the list of mash Lists
+
+						if ($("#mashTable"+mashPID).length == 0) {
+							table = "<table id='mashTable"+mashPID+"' class='table'>";
+							table += "<tbody class='tbody'><tr>"
+							table += "<th colspan='2'>Mash Step</th>";
+							table += "<th>Temp</th>";
+							table += "<th>Time</th>";
+							table += "</tr><tbody></table>";
+							table += "<button class='btn btn-success' id='mashButton-"+mashPID+"' type='button' onclick='mashToggle(this)'>Activate</button>";
+							table += "<br/>";
+	
+							$("#"+mashPID).append(table);
+	
+						}
+	
+						$.each(mashDetails, function(mashStep, mashData) {
+							if (mashStep != 'pid') {
+								addMashStep(mashStep, mashData, mashPID);
+							}
+							return true;
+						});
+
+						if ($("#mashTable"+mashPID).find('.success').length > 0) {
+							$("#mashButton-" + mashPID).text("Disable");
+						} else {
+							$("#mashButton-" + mashPID).text("Activate");
+						}
+
+						return true;
+					});
 				}
 				
 				if(vessel == "pumps") {
@@ -266,6 +331,27 @@ function submitPump(pumpStatus) {
 		  return false;
 }
 
+function mashToggle(button, position) {
+	// Parse out the PID from the controller
+	var pid = button.id.replace("mashButton-", "");
+	postData = {};
+	postData['pid'] = pid;
+	postData['status'] = button.innerText.toLowerCase();
+
+	if (position !== 'undefined') {
+		postData['position'] = position;
+	}
+
+	$.ajax({
+			url: 'toggleMash',
+			type: 'POST',
+			data: postData,
+			success: function(data) {data = null}
+	});
+	return false;
+	
+}
+
 function pad(n, width, z) {
 	z = z || '0';
 	n = n + '';
@@ -370,4 +456,46 @@ function toggleAux(PIDName) {
 	});	
 	window.disableUpdates = 0;
 	return false;
+}
+
+function addMashStep(mashStep, mashData, pid) {
+	// Mashstep is the int position
+	// mashData contains the actual data to be displayed
+	var mashStepRow = $("#mashRow"+pid+"-"+mashStep);
+	if (mashStepRow.length == 0) {
+		// Add a new row to the Mash Table
+		tableRow = "<tr id='mashRow"+pid+"-"+mashStep+"'>";
+		tableRow += ("<td>"+mashData['type']+"</td>");
+		tableRow += ("<td>"+mashData['method']+"</td>");
+		tableRow += ("<td>"+mashData['target_temp']+mashData['target_temp_unit']+"</td>");
+		tableRow += ("<td id='mashTimer"+pid+"'>"+mashData['duration']+"</td>");
+		tableRow += ("</tr>");
+
+		mashStepRow = $("#mashTable"+pid +" > tbody > tr").eq(mashStep).after(tableRow);
+		mashStepRow = mashStepRow.next();
+	}
+
+	// Do we have a start time?
+	if ("start_time" in mashData) {
+		// if there's an end time, we can show the actual time difference
+		if ("end_time" in mashData) {
+			startDate = new Date(mashData['start_time']);
+			endDate = new Date(mashData['end_time']);
+			diff = Math.abs(endDate - startDate);
+			seconds = diff/1000;
+			minutes = Math.floor(seconds/60);
+			seconds = seconds - (minutes * 60);
+
+			mashStepRow.find("#mashTimer"+pid).text(minutes + ":" + pad(seconds, 2, 0));
+		} else {
+			// start the timer
+			mashStepRow.find("#mashTimer"+pid).tinyTimer({to: mashData['target_time'].toString()});
+		}
+	}
+	// active the current row if needs be
+	if ("active" in mashData) {
+		mashStepRow.addClass('success');
+	} else {
+		mashStepRow.removeClass('success');
+	}
 }

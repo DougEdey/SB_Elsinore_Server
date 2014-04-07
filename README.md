@@ -1,6 +1,7 @@
 Strangebrew Elsinore Server
 ==================
 
+[JavaDoc for this project](http://dougedey.github.io/SB_Elsinore_Server/doc/)
 
 Java Server for Strangebrew Elsinore
 
