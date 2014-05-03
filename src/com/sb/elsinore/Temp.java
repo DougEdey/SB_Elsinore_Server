@@ -337,7 +337,7 @@ public final class Temp implements Runnable {
         if (scale.equals("F")) {
             return currentTemp;
         }
-        return (currentTemp-32) /(9.0*5.0);
+        return (currentTemp - 32) / (9.0 * 5.0);
     }
 
     /**
@@ -347,7 +347,7 @@ public final class Temp implements Runnable {
         if (scale.equals("C")) {
             return currentTemp;
         }
-        return (9.0/5.0)*currentTemp + 32;
+        return (9.0 / 5.0) * currentTemp + 32;
     }
 
     /**
@@ -355,7 +355,7 @@ public final class Temp implements Runnable {
      * @return temp in celsius
      */
     public double fToC(final double temp) {
-        return (temp-32) /(9.0*5.0);
+        return (temp - 32) / (9.0 * 5.0);
     }
 
     /**
@@ -363,7 +363,7 @@ public final class Temp implements Runnable {
      * @return temp in Fahrenheit
      */
     public double cToF(final double temp) {
-        return (9.0/5.0)*temp + 32;
+        return (9.0 / 5.0) * temp + 32;
     }
 
     /**
@@ -454,13 +454,13 @@ public final class Temp implements Runnable {
                 line = br.readLine();
                 // last value should be t=
                 int t = line.indexOf("t=");
-                temp = line.substring(t+2);
+                temp = line.substring(t + 2);
                 double tTemp = Double.parseDouble(temp);
-                this.currentTemp = tTemp/1000;
+                this.currentTemp = tTemp / 1000;
                 this.currentError = null;
             } else {
                 // System Temperature
-                this.currentTemp = Double.parseDouble(line)/1000;
+                this.currentTemp = Double.parseDouble(line) / 1000;
             }
 
         } catch (IOException ie) {

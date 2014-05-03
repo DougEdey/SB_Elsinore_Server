@@ -86,11 +86,11 @@ public final class LaunchControl {
      */
     private static final int DEFAULT_PORT = 8080;
     /**
-     * The pump parameters length for creating the config
+     * The pump parameters length for creating the config.
      */
     private static final int PUMP_PARAM_LENGTH = 3;
     /**
-     * The Minimum number of volume data points
+     * The Minimum number of volume data points.
      */
     private static final int MIN_VOLUME_SIZE = 3;
 
@@ -491,18 +491,26 @@ public final class LaunchControl {
 
         // iterate the thread lists
         // use the temp list to determine if we have a PID to go with
+        JSONObject vesselJSON = new JSONObject();
+
         for (Temp t : tempList) {
             /* Check for a PID */
             PID tPid = findPID(t.getName());
             tJSON = new JSONObject();
-            if (tPid != null) {
-                tJSON.putAll(tPid.getMapStatus());
-            }
 
             // Add the temp to the JSON Map
-            tJSON.putAll(t.getMapStatus());
+            JSONObject tJSONTemp = new JSONObject();
+            tJSONTemp.putAll(t.getMapStatus());
+            tJSON.put("tempprobe", tJSONTemp);
 
-            rObj.put(t.getName(), tJSON);
+            if (tPid != null) {
+                JSONObject tJSONPID = new JSONObject();
+                tJSONPID.putAll(tPid.getMapStatus());
+                tJSON.put("pidstatus", tJSONPID);
+            }
+
+            // Add the JSON object with the PID Name
+            vesselJSON.put(t.getName(), tJSON);
 
             // update COSM
             if (cosmFeed != null) {
@@ -521,11 +529,14 @@ public final class LaunchControl {
                 }
 
             }
-
-            if (brewDay != null) {
-                rObj.put("brewday", brewDay.brewDayStatus());
-            }
         }
+
+        rObj.put("vessels", vesselJSON);
+
+        if (brewDay != null) {
+            rObj.put("brewday", brewDay.brewDayStatus());
+        }
+
 
         // generate the list of pumps
         if (pumpList != null && pumpList.size() > 0) {
@@ -930,7 +941,6 @@ public final class LaunchControl {
             try {
                 tTemp.setupVolumes(analoguePin, volumeUnits);
             } catch (InvalidGPIOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         } else if (dsAddress != null && dsOffset != null) {
@@ -1445,7 +1455,6 @@ public final class LaunchControl {
             System.out.println("Could not transformer file");
             e.printStackTrace();
         } catch (XPathExpressionException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -1514,7 +1523,6 @@ public final class LaunchControl {
             System.out.println("Could not transformer file");
             e.printStackTrace();
         } catch (XPathExpressionException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -1528,7 +1536,6 @@ public final class LaunchControl {
             try {
                 owfsConnection.disconnect();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -1618,10 +1625,8 @@ public final class LaunchControl {
                 }
             }
         } catch (OwfsException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
