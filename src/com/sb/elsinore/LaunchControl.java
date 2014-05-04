@@ -46,6 +46,7 @@ import org.ini4j.ConfigParser;
 import org.ini4j.ConfigParser.InterpolationException;
 import org.ini4j.ConfigParser.NoOptionException;
 import org.ini4j.ConfigParser.NoSectionException;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.owfs.jowfsclient.Enums.OwPersistence;
 import org.owfs.jowfsclient.OwfsConnection;
@@ -491,7 +492,7 @@ public final class LaunchControl {
 
         // iterate the thread lists
         // use the temp list to determine if we have a PID to go with
-        JSONObject vesselJSON = new JSONObject();
+        JSONArray vesselJSON = new JSONArray();
 
         for (Temp t : tempList) {
             /* Check for a PID */
@@ -501,6 +502,7 @@ public final class LaunchControl {
             // Add the temp to the JSON Map
             JSONObject tJSONTemp = new JSONObject();
             tJSONTemp.putAll(t.getMapStatus());
+            tJSON.put("name", t.getName());
             tJSON.put("tempprobe", tJSONTemp);
 
             if (tPid != null) {
@@ -510,7 +512,7 @@ public final class LaunchControl {
             }
 
             // Add the JSON object with the PID Name
-            vesselJSON.put(t.getName(), tJSON);
+            vesselJSON.add(tJSON);
 
             // update COSM
             if (cosmFeed != null) {
