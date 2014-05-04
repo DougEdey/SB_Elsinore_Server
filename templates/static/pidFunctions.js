@@ -479,6 +479,10 @@ function toggleAux(PIDName) {
 function addMashStep(mashStep, mashData, pid) {
 	// Mashstep is the int position
 	// mashData contains the actual data to be displayed
+	if (mashStep == "mashstep" || "index" in mashData) {
+		mashStep = mashData['index'];
+	}
+	
 	var mashStepRow = $("#mashRow"+pid+"-"+mashStep);
 	if (mashStepRow.length == 0) {
 		// Add a new row to the Mash Table
