@@ -439,7 +439,11 @@ function resetTimer(button, stage) {
 }
 
 function checkTimer(val, stage) {
-	// Check for a boil timing
+
+	if ("name" in val) {
+		stage = val.name;
+	}
+	
 	if ("start" in val) {
 		var startTime = new Date(val["start"]);
 		

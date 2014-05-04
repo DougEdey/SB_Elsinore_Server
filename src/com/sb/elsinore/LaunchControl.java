@@ -336,7 +336,7 @@ public final class LaunchControl {
         Iterator<Temp> iterator = tempList.iterator();
         while (iterator.hasNext()) {
             // launch all the PIDs first
-            // since they will launch the temp theads too
+            // since they will launch the temperature threads too
             Temp tTemp = iterator.next();
             findPID(tTemp.getName());
         }
@@ -536,7 +536,6 @@ public final class LaunchControl {
         if (brewDay != null) {
             rObj.put("brewday", brewDay.brewDayStatus());
         }
-
 
         // generate the list of pumps
         if (pumpList != null && pumpList.size() > 0) {
@@ -846,7 +845,6 @@ public final class LaunchControl {
         try {
             timerList = config.options(input);
             // TODO: Add in countup/countdown detection
-
         } catch (NoSectionException nse) {
             // we shouldn't get here!
             nse.printStackTrace();
