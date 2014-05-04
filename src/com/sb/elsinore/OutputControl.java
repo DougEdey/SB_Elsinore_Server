@@ -1,4 +1,6 @@
 package com.sb.elsinore;
+import java.math.BigDecimal;
+
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
 import jGPIO.GPIO;
@@ -13,17 +15,23 @@ import jGPIO.GPIO;
 public final class OutputControl implements Runnable {
 
     /**
+     * Private magic numbers.
+     */
+    private static BigDecimal THOUSAND = new BigDecimal(1000);
+    private static BigDecimal SIXTY = new BigDecimal(60);
+    private static BigDecimal HUNDRED = new BigDecimal(100);
+    /**
      * Constructor for a heat only pin.
      * @param aName Name of this instance.
      * @param fGPIO the heating GPIO pin.
-     * @param heatTime the duty time for the heating output.
+     * @param cycle_time the duty time for the heating output.
      */
    public OutputControl(final String aName, final String fGPIO,
-           final double heatTime) {
+           final BigDecimal cycle_time) {
            // just for heating
         this.fName = aName;
         this.fGPIOh = fGPIO.toLowerCase();
-        setHTime(heatTime);
+        setHTime(cycle_time);
    }
 
    /**
@@ -36,8 +44,8 @@ public final class OutputControl implements Runnable {
     * @param inCoolDelay The delay between cooling start/stop calls.
     */
    public OutputControl(final String aName, final String gpioHeat,
-           final double heatTime, final String gpioCool,
-           final double coolTime, final double inCoolDelay) {
+           final BigDecimal heatTime, final String gpioCool,
+           final BigDecimal coolTime, final BigDecimal inCoolDelay) {
            // just for heating and cooling
         this.fName = aName;
         this.fGPIOc = gpioCool.toLowerCase();
@@ -50,13 +58,13 @@ public final class OutputControl implements Runnable {
    /**
     * Set the current cooling information.
     * @param gpio The GPIO to use for the cooling output
-    * @param time The cycle time for the cooling output
+    * @param duty The cycle time for the cooling output
     * @param delay The delay between cooling start/stop calls.
     */
-   public void setCool(final String gpio, final double time,
-           final double delay) {
+   public void setCool(final String gpio, final BigDecimal duty,
+           final BigDecimal delay) {
         fGPIOc = gpio;
-        setCTime(time);
+        setCTime(duty);
         setCDelay(delay);
    }
 
@@ -67,8 +75,8 @@ public final class OutputControl implements Runnable {
     */
    @Override
    public void run() {
-        double duty;
-        double onTime, offTime;
+        BigDecimal duty;
+        BigDecimal onTime, offTime;
 
         try {
             BrewServer.LOG.info(
@@ -105,51 +113,51 @@ public final class OutputControl implements Runnable {
                         this.heatSSR = new OutPin(this.fGPIOh);
                     }
                     BrewServer.LOG.info("Fduty: " + this.fDuty);
-                    if (this.fDuty == 0) {
+                    if (this.fDuty.compareTo(BigDecimal.ZERO) == 0) {
                         allOff();
-                        Thread.sleep(this.fTimeh);
-                    } else if (this.fDuty == 100) {
+                        Thread.sleep(this.fTimeh.intValue());
+                    } else if (this.fDuty.compareTo(HUNDRED) == 0) {
                         heatOn();
-                        Thread.sleep(fTimeh);
-                    } else if (this.fDuty == -100) {
+                        Thread.sleep(fTimeh.intValue());
+                    } else if (this.fDuty.compareTo(HUNDRED.negate()) == 0) {
                         // check to see if we've slept long enough
-                        Long lTime = System.currentTimeMillis() - coolStopTime;
+                        BigDecimal lTime = new BigDecimal(System.currentTimeMillis())
+                            .subtract(coolStopTime);
 
-                        if ((lTime / 1000) > this.coolDelay) {
+                        if ((lTime.divide(THOUSAND)).compareTo(this.coolDelay) > 0) {
                             // not slept enough
                             break;
                         }
 
                         coolOn();
-                        Thread.sleep(fTimec);
+                        Thread.sleep(fTimec.intValue());
                         allOff();
 
-                        coolStopTime = System.currentTimeMillis();
-                    } else if (fDuty > 0) {
+                        coolStopTime = BigDecimal.valueOf(System.currentTimeMillis());
+                    } else if (fDuty.compareTo(BigDecimal.ZERO) > 0) {
                         // calc the on off time
-                        duty = fDuty / 100;
-                        onTime = duty * fTimeh;
-                        offTime = fTimeh * (1 - duty);
+                        duty = fDuty.divide(HUNDRED);
+                        onTime = duty.multiply(fTimeh);
+                        offTime = fTimeh.multiply(BigDecimal.ONE.subtract(duty));
                         BrewServer.LOG.info("On: " + onTime
                             + " Off; " + offTime);
                         heatOn();
-                        Thread.sleep((int) onTime);
+                        Thread.sleep(onTime.intValue());
 
                         allOff();
-                        Thread.sleep((int) offTime);
-                    } else if (fDuty < 0) {
+                        Thread.sleep(offTime.intValue());
+                    } else if (fDuty.compareTo(BigDecimal.ZERO) < 0) {
                         // calc the on off time
-                        duty = Math.abs(fDuty) / 100;
-                        onTime = duty * fTimec;
-                        onTime = duty * fTimec;
-                        offTime = fTimec * (1 - duty);
+                        duty = fDuty.abs().divide(HUNDRED);
+                        onTime = duty.multiply(fTimec);
+                        offTime = fTimeh.multiply(BigDecimal.ONE.subtract(duty));
 
                         coolOn();
-                        Thread.sleep((int) onTime);
+                        Thread.sleep(onTime.intValue());
 
                         allOff();
-                        Thread.sleep((int) offTime);
-                        coolStopTime = System.currentTimeMillis();
+                        Thread.sleep(offTime.intValue());
+                        coolStopTime = new BigDecimal(System.currentTimeMillis());
                     }
                 } // end the while loop
 
@@ -162,7 +170,7 @@ public final class OutputControl implements Runnable {
             }
         } catch (InterruptedException e) {
             // Sleep interrupted
-            coolStopTime = System.currentTimeMillis();
+            coolStopTime = new BigDecimal(System.currentTimeMillis());
             System.out.print("Wakeup in " + fName);
         } catch (InvalidGPIOException e1) {
             System.out.println(e1.getMessage());
@@ -199,7 +207,7 @@ public final class OutputControl implements Runnable {
    /**
     * @param duty The duty to set this control with.
     */
-    public synchronized void setDuty(final double duty) {
+    public synchronized void setDuty(final BigDecimal duty) {
         this.fDuty = duty;
         BrewServer.LOG.info("IN: " + duty + " OUT: " + fDuty);
     }
@@ -207,25 +215,25 @@ public final class OutputControl implements Runnable {
     /**
      * @param time The heating time in seconds.
      */
-    public void setHTime(final double time) {
+    public void setHTime(final BigDecimal time) {
         // time is coming in in seconds
-        this.fTimeh = (int) time * 1000;
+        this.fTimeh = time.multiply(THOUSAND);
     }
 
     /**
      * @param time The new cooling time in seconds.
      */
-    public void setCTime(final double time) {
+    public void setCTime(final BigDecimal time) {
         // time is coming in in seconds
-        this.fTimec = (int) time * 1000;
+        this.fTimec = time.multiply(THOUSAND);
     }
 
     /**
      * @param time The cooling delay time in minutes.
      */
-    public void setCDelay(final double time) {
+    public void setCDelay(final BigDecimal time) {
         // delay is coming in in minutes
-        this.coolDelay = (int) time * 1000 * 60;
+        this.coolDelay = time.multiply(THOUSAND).multiply(SIXTY);
     }
 
     /**
@@ -326,19 +334,19 @@ public final class OutputControl implements Runnable {
     /**
      * The heating cycle time.
      */
-    private int fTimeh;
+    private BigDecimal fTimeh;
     /**
      * The cooling cycle time.
      */
-    private int fTimec;
+    private BigDecimal fTimec;
     /**
      * The delay between cooling start/stop calls.
      */
-    private int coolDelay;
+    private BigDecimal coolDelay;
     /**
      * The Duty cycle.
      */
-    private double fDuty;
+    private BigDecimal fDuty;
     /**
      * The cooling status flag.
      */
@@ -350,12 +358,12 @@ public final class OutputControl implements Runnable {
     /**
      * The timestamp for when the cooling element was stopped.
      */
-    private long coolStopTime = -1;
+    private BigDecimal coolStopTime = new BigDecimal(0);
 
     /**
      * @return The current duty cycle
      */
-    public synchronized double getDuty() {
+    public synchronized BigDecimal getDuty() {
         return fDuty;
     }
 }
