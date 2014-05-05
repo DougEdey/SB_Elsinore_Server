@@ -1,5 +1,7 @@
 package com.sb.elsinore;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -8,6 +10,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 
 import org.joda.time.DateTime;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 
@@ -248,7 +251,7 @@ public class MashControl implements Runnable {
             }
             mashEntry.deactivate();
         } else {
-            // Otherwise deacctivate all the steps
+            // Otherwise deactivate all the steps
             for (Entry<Integer, MashStep> mEntry : mashStepList.entrySet()) {
                 mEntry.getValue().deactivate(false);
             }
@@ -262,7 +265,14 @@ public class MashControl implements Runnable {
      * @return The String representing the current state.
      */
     public final String getJSONDataString() {
-        return getJSONData().toJSONString();
+        StringWriter out = new StringWriter();
+        try {
+            getJSONData().writeJSONString(out);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return out.toString();
     }
 
     /**
@@ -270,14 +280,15 @@ public class MashControl implements Runnable {
      * @return The JSONObject representing the current state.
      */
     @SuppressWarnings("unchecked")
-    public final JSONObject getJSONData() {
-        JSONObject masterObject = new JSONObject();
+    public final JSONArray getJSONData() {
+        JSONArray masterArray = new JSONArray();
         DateFormat lFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-        masterObject.put("pid", this.getOutputControl());
+        //masterArray.put("pid", this.getOutputControl());
 
         for (Entry<Integer, MashStep> e : mashStepList.entrySet()) {
             MashStep step = e.getValue();
             JSONObject mashstep = new JSONObject();
+            mashstep.put("index", e.getKey());
             mashstep.put("target_temp", step.getTargetTemp());
             mashstep.put("target_temp_unit", step.getTempUnit());
             mashstep.put("duration", step.getDuration());
@@ -299,10 +310,10 @@ public class MashControl implements Runnable {
                     + npe.getLocalizedMessage());
             }
 
-            masterObject.put(e.getKey(), mashstep);
+            masterArray.add(mashstep);
         }
 
-        return masterObject;
+        return masterArray;
     }
 
     /**

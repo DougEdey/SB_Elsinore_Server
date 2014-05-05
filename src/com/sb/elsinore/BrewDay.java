@@ -7,10 +7,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 /**
@@ -192,8 +195,8 @@ public final class BrewDay {
      * @return A JSONObject representing the status
      */
     @SuppressWarnings("unchecked")
-    public JSONObject brewDayStatus() {
-        JSONObject status = new JSONObject();
+    public JSONArray brewDayStatus() {
+        JSONArray status = new JSONArray();
 
         Iterator<Entry<String, Object>> it = timers.entrySet().iterator();
 
@@ -203,19 +206,15 @@ public final class BrewDay {
             e = it.next();
             if (e.getValue() != null) {
 
-                // iterate the child hashmap
+                // iterate the child hash map
                 HashMap<String, Date> valueEntry =
                         (HashMap<String, Date>) e.getValue();
                 Iterator<Entry<String, Date>> dateIt =
                         valueEntry.entrySet().iterator();
 
                 // get the Timer Name Object
-                JSONObject timerJSON = (JSONObject) status.get(e.getKey());
-
-                // Add one if there's not an object
-                if (timerJSON == null) {
-                    timerJSON = new JSONObject();
-                }
+                JSONObject timerJSON = new JSONObject();
+                timerJSON.put("name", e.getKey());
 
                 while (dateIt.hasNext()) {
                     Entry<String, Date> dateEntry = dateIt.next();
@@ -225,10 +224,26 @@ public final class BrewDay {
                     }
                 }
 
-                status.put(e.getKey(), timerJSON);
+                status.add(timerJSON);
             }
         }
 
         return status;
     }
+
+    /**
+     * Return the current state of this Brewday as a JSON string.
+     * @return The String representing the current timers.
+     */
+    public String getJSONDataString() {
+        StringWriter out = new StringWriter();
+        try {
+            brewDayStatus().writeJSONString(out);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return out.toString();
+    }
+
 }

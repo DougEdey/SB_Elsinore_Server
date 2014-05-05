@@ -2,6 +2,7 @@ package com.sb.elsinore;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
@@ -17,6 +18,10 @@ import java.util.regex.Pattern;
  */
 public final class PID implements Runnable {
 
+    /**
+     * Thousand BigDecimal multiplier.
+     */
+    private BigDecimal THOUSAND = new BigDecimal(1000);
     /**
      * The output control that's used.
      */
@@ -35,7 +40,7 @@ public final class PID implements Runnable {
         /**
          * values to hold the settings.
          */
-        public double duty_cycle, cycle_time, proportional,
+        public BigDecimal duty_cycle, cycle_time, proportional,
             integral, derivative, set_point, calculatedDuty;
 
         /**
@@ -43,7 +48,7 @@ public final class PID implements Runnable {
          */
         public Settings() {
             duty_cycle = cycle_time = proportional =
-                    integral = derivative = set_point = 0.0;
+                    integral = derivative = set_point = new BigDecimal(0.0);
         }
     }
 
@@ -58,18 +63,18 @@ public final class PID implements Runnable {
      * @param d Differential value
      * @param gpio GPIO to be used to control the output
      */
-    public PID(final Temp aTemp, final String aName, final double aDuty,
-            final double aTime, final double p, final double i,
-            final double d, final String gpio) {
+    public PID(final Temp aTemp, final String aName, final BigDecimal aDuty,
+            final BigDecimal aTime, final BigDecimal p, final BigDecimal i,
+            final BigDecimal d, final String gpio) {
         this.mode = "off";
         this.heatSetting = new Settings();
-        this.heatSetting.set_point = 175;
+        this.heatSetting.set_point = new BigDecimal(175);
         this.heatSetting.duty_cycle = aDuty;
         this.heatSetting.cycle_time = aTime;
         this.heatSetting.proportional = p;
         this.heatSetting.integral = i;
         this.heatSetting.derivative = d;
-        this.heatSetting.calculatedDuty = 0.0;
+        this.heatSetting.calculatedDuty = new BigDecimal(0.0);
 
         this.fName = aName;
         this.fTemp = aTemp;
@@ -121,9 +126,9 @@ public final class PID implements Runnable {
      * @param i Integral Value
      * @param d Differential value
      */
-    public void updateValues(final String m, final double duty,
-            final double cycle, final double setpoint, final double p,
-            final double i, final double d) {
+    public void updateValues(final String m, final BigDecimal duty,
+            final BigDecimal cycle, final BigDecimal setpoint, final BigDecimal p,
+            final BigDecimal i, final BigDecimal d) {
         this.mode = m;
         if (this.mode.equals("manual")) {
             this.heatSetting.duty_cycle = duty;
@@ -162,7 +167,7 @@ public final class PID implements Runnable {
     public void run() {
         BrewServer.LOG.info("Running " + this.fName + " PID.");
         // setup the first time
-        this.previousTime = System.currentTimeMillis();
+        this.previousTime = new BigDecimal(System.currentTimeMillis());
         // create the Output if needed
         if (!this.fGPIO.equals("")) {
             this.outputControl =
@@ -194,7 +199,7 @@ public final class PID implements Runnable {
                 synchronized (this.fTemp) {
                     // do the bulk of the work here
                     this.fTempC = this.fTemp.getTempC();
-                    this.currentTime = this.fTemp.getTime();
+                    this.currentTime = new BigDecimal(this.fTemp.getTime());
                     this.fTempF = this.fTemp.getTempF();
                     // if the GPIO is blank we do not need to do any of this;
                     if (this.fGPIO != "") {
@@ -204,7 +209,7 @@ public final class PID implements Runnable {
 
                         tempList.add(fTemp.getTemp());
 
-                        double tempAvg = calcAverage();
+                        BigDecimal tempAvg = calcAverage();
 
 
                         // we have the current temperature
@@ -218,7 +223,7 @@ public final class PID implements Runnable {
                         } else if (mode.equals("manual")) {
                             this.outputControl.setDuty(heatSetting.duty_cycle);
                         } else if (mode.equals("off")) {
-                            this.outputControl.setDuty(0);
+                            this.outputControl.setDuty(BigDecimal.ZERO);
                         }
                         // determine if the heat needs to be on or off
                         this.outputControl.setHTime(heatSetting.cycle_time);
@@ -243,11 +248,11 @@ public final class PID implements Runnable {
      * Set the duty time in %.
      * @param duty Duty Cycle percentage
      */
-    public void setDuty(double duty) {
-        if (duty > 100) {
-            duty = 100;
-        } else if (duty < -100) {
-            duty = -100;
+    public void setDuty(BigDecimal duty) {
+        if (duty.doubleValue() > 100) {
+            duty = new BigDecimal(100);
+        } else if (duty.doubleValue() < -100) {
+            duty = new BigDecimal(-100);
         }
 
         heatSetting.duty_cycle = duty;
@@ -257,9 +262,9 @@ public final class PID implements Runnable {
      * Set the target temperature for the auto mode.
      * @param temp The new temperature in F.
      */
-    public void setTemp(double temp) {
-        if (temp < 0) {
-            temp = 0;
+    public void setTemp(BigDecimal temp) {
+        if (temp.doubleValue() < 0) {
+            temp = BigDecimal.ZERO;
         }
         heatSetting.set_point = temp;
     }
@@ -304,7 +309,7 @@ public final class PID implements Runnable {
      * Set the proportional value.
      * @param p the new proportional value
      */
-    public void setP(final double p) {
+    public void setP(final BigDecimal p) {
         heatSetting.proportional = p;
     }
 
@@ -312,7 +317,7 @@ public final class PID implements Runnable {
      * Set the integral value.
      * @param i The new Integral.
      */
-    public void setI(final double i) {
+    public void setI(final BigDecimal i) {
         heatSetting.integral = i;
     }
 
@@ -320,7 +325,7 @@ public final class PID implements Runnable {
      * Set the differential value.
      * @param d The new differential
      */
-    public void setD(final double d) {
+    public void setD(final BigDecimal d) {
         heatSetting.derivative = d;
     }
 
@@ -335,14 +340,14 @@ public final class PID implements Runnable {
     /**
      * @return Get the temperature in celsius.
      */
-    public double getTempC() {
+    public BigDecimal getTempC() {
         return fTempC;
     }
 
     /**
      * @return Get the temperature in fahrenheit
      */
-    public double getTempF() {
+    public BigDecimal getTempF() {
         return fTempC;
     }
 
@@ -363,42 +368,42 @@ public final class PID implements Runnable {
     /**
      * @return Get the current duty cycle percentage
      */
-    public double getDuty() {
+    public BigDecimal getDuty() {
         return heatSetting.duty_cycle;
     }
 
     /**
      * @return  Get the current Duty Cycle Time
      */
-    public double getCycle() {
+    public BigDecimal getCycle() {
         return heatSetting.cycle_time;
     }
 
     /**
      * @return Get the PID Target temperature
      */
-    public double getSetPoint() {
+    public BigDecimal getSetPoint() {
         return heatSetting.set_point;
     }
 
     /**
      * @return Get the current proportional value
      */
-    public double getP() {
+    public BigDecimal getP() {
         return heatSetting.proportional;
     }
 
     /**
      * @return  Get the current Integral value
      */
-    public double getI() {
+    public BigDecimal getI() {
         return heatSetting.integral;
     }
 
     /**
      * @return Get the current Differential value
      */
-    public double getD() {
+    public BigDecimal getD() {
         return heatSetting.derivative;
     }
 
@@ -421,19 +426,19 @@ public final class PID implements Runnable {
     /**
      * Store the previous timestamp for the update.
      */
-    private long previousTime = 0;
+    private BigDecimal previousTime = new BigDecimal(0);
 
     /**
      * @return Calculate the average of the current temp list
      */
-    private double calcAverage() {
+    private BigDecimal calcAverage() {
         int size = tempList.size();
 
-        double total = 0.0;
-        for (double t : tempList) {
-            total += t;
+        BigDecimal total = new BigDecimal(0.0);
+        for (BigDecimal t : tempList) {
+            total = total.add(t);
         }
-        return total / size;
+        return total.divide(BigDecimal.valueOf(size));
     }
 
     /**
@@ -447,7 +452,7 @@ public final class PID implements Runnable {
     /**
      * The current temperature in F and C.
      */
-    private double fTempF, fTempC;
+    private BigDecimal fTempF, fTempC;
     /**
      * The GPIO String values.
      */
@@ -455,7 +460,7 @@ public final class PID implements Runnable {
     /**
      * The previous five temperature readings.
      */
-    private List<Double> tempList = new ArrayList<Double>();
+    private List<BigDecimal> tempList = new ArrayList<BigDecimal>();
 
     /**
      * Various strings.
@@ -464,7 +469,7 @@ public final class PID implements Runnable {
     /**
      * The current timestamp.
      */
-    private long currentTime = System.currentTimeMillis();
+    private BigDecimal currentTime = new BigDecimal(System.currentTimeMillis());
     /**
      * Settings for the heating and cooling.
      */
@@ -478,29 +483,29 @@ public final class PID implements Runnable {
     /**
      *  Temp values for PID calculation.
      */
-    private double errorFactor = 0.0;
+    private BigDecimal errorFactor = new BigDecimal(0.0);
     /**
      *  Temp values for PID calculation.
      */
-    private double previousError = 0.0;
+    private BigDecimal previousError = new BigDecimal(0.0);
     /**
      *  Temp values for PID calculation.
      */
-    private double integralFactor = 0.0;
+    private BigDecimal integralFactor = new BigDecimal(0.0);
     /**
      *  Temp values for PID calculation.
      */
-    private double derivativeFactor = 0.0;
+    private BigDecimal derivativeFactor = new BigDecimal(0.0);
     /**
      *  Temp values for PID calculation.
      */
-    private double output = 0.0;
+    private BigDecimal output = new BigDecimal(0.0);
 
     /**
      * Max and min limiters.
      */
-    private double gmaHLIM = 100.0,
-    gmaLLIM = -100.0;
+    private BigDecimal gmaHLIM = new BigDecimal(100.0),
+    gmaLLIM = new BigDecimal(-100.0);
 
     /**
      * @return Get the current temp probe (for saving)
@@ -515,36 +520,36 @@ public final class PID implements Runnable {
      * @param enable  Enable the output
      * @return  A Double of the duty cycle %
      */
-    private double calcPIDreg4(final double avgTemp, final boolean enable) {
-        this.currentTime = System.currentTimeMillis();
-        if (previousTime == 0.0) {
+    private BigDecimal calcPIDreg4(final BigDecimal avgTemp, final boolean enable) {
+        this.currentTime = new BigDecimal(System.currentTimeMillis());
+        if (previousTime.compareTo(BigDecimal.ZERO) == 0) {
             previousTime = currentTime;
         }
-        double dt = (currentTime - previousTime) / 1000;
-        if (dt == 0.0 || Double.isNaN(dt)) {
+        BigDecimal dt = currentTime.subtract(previousTime).divide(THOUSAND);
+        if (dt.compareTo(BigDecimal.ZERO) == 0) {
             return outputControl.getDuty();
         }
 
-        this.errorFactor = heatSetting.set_point - avgTemp;
-        this.integralFactor = (integralFactor - errorFactor) * dt;
-        this.derivativeFactor = (errorFactor - previousError) / dt;
+        this.errorFactor = heatSetting.set_point.subtract(avgTemp);
+        this.integralFactor = integralFactor.subtract(errorFactor).multiply(dt);
+        this.derivativeFactor = errorFactor.subtract(previousError).multiply(dt);
 
         BrewServer.LOG.info("DT: " + dt + " Error: " + errorFactor
             + " integral: " + integralFactor
             + " derivative: " + derivativeFactor);
 
-        this.output = heatSetting.proportional * errorFactor
-                + heatSetting.integral * integralFactor
-                + heatSetting.derivative * derivativeFactor;
+        this.output = heatSetting.proportional.multiply(errorFactor)
+                .add(heatSetting.integral.multiply(integralFactor))
+                .add(heatSetting.derivative.multiply(derivativeFactor));
 
         previousError = errorFactor;
 
         // limit y[k] to GMA_HLIM and GMA_LLIM
-        if (output > gmaHLIM) {
+        if (output.compareTo(gmaHLIM) > 0) {
             this.output = gmaHLIM;
         }
 
-        if (output < gmaLLIM) {
+        if (output.compareTo(gmaLLIM) < 0) {
             this.output = gmaLLIM;
         }
         this.previousTime = currentTime;
@@ -581,8 +586,8 @@ public final class PID implements Runnable {
      * @param i the integral value
      * @param d the differential value
      */
-    public void setCool(final String gpio, final int duty, final double delay,
-            final double p, final double i, final double d) {
+    public void setCool(final String gpio, final BigDecimal duty, final BigDecimal delay,
+            final BigDecimal p, final BigDecimal i, final BigDecimal d) {
         // set the values
         int j = 0;
         // Wait for the Output to turn on.

@@ -123,100 +123,122 @@ function waitForMsg(){
 				if(window.disableUpdates) {
 					return false;
 				}
-				temp = parseFloat(val.temp).toFixed(2);
 				
-				// check to see if we have a valid vessel
-				if (isNaN(temp)) {
-					return true;
-				}
-
-				scale = val.scale;
-
-				// set the current temp scale
-				Temp = parseFloat(temp).toFixed(2);
-				int = Math.floor(Temp);
-				dec = Temp % 1;
-				dec = dec.toString().substr(1,3);
-				GaugeDisplay[vessel].setValue(pad(int, 3, 0) + "" + dec);
-				jQuery("#"+vessel+"-tempStatus").text(temp);
-				// cleanup
-				dec = null;
-				temp = null;
-				Temp = null;
-				
-				// Check for an error message
-				if ("errorMessage" in val) {
-					jQuery("#" + vessel + "-error").text(val.errorMessage);
-					jQuery("#" + vessel + "-error").show();
-				} else {
-					jQuery("#" + vessel + "-error").hide();
-				}
-				
-				// Check for the volume
-				if ("volume" in val) {
-					jQuery("#" + vessel + "-volume").text(parseFloat(val.volume).toFixed(2) + " " + val.volumeUnits);
-				}
-				
-				if(!("gpio" in val )) {
-					return; // nothing else to do
-				}
-
-				// setup the values
-				var vesselDiv = 'form[id="'+vessel+'-form"]';
-				
-				var mode = val.mode.charAt(0).toUpperCase() + val.mode.slice(1);
-				var currentMode = jQuery(vesselDiv  + ' input[name="dutycycle"]');
-				
-				if (jQuery(vesselDiv  + ' input[name="dutycycle"]') != mode ) {
-				
-					if(mode== "Off") {
-						selectOff(vessel);
-					}
-					if(mode == "Auto") {
-						selectAuto(vessel);
-					}
-					if(mode == "Manual") {
-						selectManual(vessel);
-					}
+				if (vessel == "vessels") {
+					$.each(val, function(vesselName, vesselStatus) {
+						// This should always be there
+						if ("name" in vesselStatus) {
+							vesselName = vesselStatus.name;
+						}
+						
+						if ("tempprobe" in vesselStatus) {
+							updateTempProbe(vesselName, vesselStatus.tempprobe);
+						}
+						if ("pidstatus" in vesselStatus) {
+							updatePIDStatus(vesselName, vesselStatus.pidstatus);
+						}	
+					})
 					
-					jQuery(vesselDiv  + '  input[name="dutycycle"]').val(mode);
 				}
-				mode = null;
-				if(val.actualduty != null) {
-					Gauges[vessel].refresh(val.actualduty); 				
-				} else {
-					Gauges[vessel].refresh(val.duty); 
-				}
-
-			
-				jQuery('div[id="tempUnit"]').text(val.scale);
-				
-				jQuery(vesselDiv  + ' input[name="dutycycle"]').val(val.duty);
-				jQuery(vesselDiv  + ' input[name="cycletime"]').val(val.cycle);
-				jQuery(vesselDiv  + ' input[name="setpoint"]').val(val.setpoint);
-				jQuery(vesselDiv  + ' input[name="p"]').val(val.p);
-				jQuery(vesselDiv  + ' input[name="i"]').val(val.i);
-				jQuery(vesselDiv  + ' > input[name="d"]').val(val.k);
-				
-				// Aux Mode check
-				if ("auxStatus" in val) {
-					if (val.auxStatus == "on" || val.auxStatus == "1") {
-						jQuery(vesselDiv  + ' button[id="Aux"]')[0].style.background = "red";
-						jQuery(vesselDiv  + ' button[id="Aux"]')[0].innerHTML = "Aux ON"
-					} else {
-						jQuery(vesselDiv  + ' button[id="Aux"]')[0].style.background = "#666666";
-						jQuery(vesselDiv  + ' button[id="Aux"]')[0].innerHTML = "Aux OFF"
-					}
-				}
-				
-				window.disableUpdates = 0;
 			})
+			
 			vessel = null;
 			data = null;
+				
 		}
 	})
 	setTimeout(waitForMsg, 1000); 
 	
+}
+
+function updateTempProbe(vessel, val) {
+
+	temp = parseFloat(val.temp).toFixed(2);
+	
+	// check to see if we have a valid vessel
+	if (isNaN(temp)) {
+		return true;
+	}
+
+	scale = val.scale;
+
+	// set the current temp scale
+	Temp = parseFloat(temp).toFixed(2);
+	int = Math.floor(Temp);
+	dec = Temp % 1;
+	dec = dec.toString().substr(1,3);
+	GaugeDisplay[vessel].setValue(pad(int, 3, 0) + "" + dec);
+	jQuery("#"+vessel+"-tempStatus").text(temp);
+	// cleanup
+	dec = null;
+	temp = null;
+	Temp = null;
+	
+	// Check for an error message
+	if ("errorMessage" in val) {
+		jQuery("#" + vessel + "-error").text(val.errorMessage);
+		jQuery("#" + vessel + "-error").show();
+	} else {
+		jQuery("#" + vessel + "-error").hide();
+	}
+	
+	// Check for the volume
+	if ("volume" in val) {
+		jQuery("#" + vessel + "-volume").text(parseFloat(val.volume).toFixed(2) + " " + val.volumeUnits);
+	}
+}
+
+function updatePIDStatus(vessel, val) {
+	// setup the values
+	var vesselDiv = 'form[id="'+vessel+'-form"]';
+	
+	var mode = val.mode.charAt(0).toUpperCase() + val.mode.slice(1);
+	var currentMode = jQuery(vesselDiv  + ' input[name="dutycycle"]');
+	
+	if (jQuery(vesselDiv  + ' input[name="dutycycle"]') != mode ) {
+	
+		if(mode== "Off") {
+			selectOff(vessel);
+		}
+		if(mode == "Auto") {
+			selectAuto(vessel);
+		}
+		if(mode == "Manual") {
+			selectManual(vessel);
+		}
+		
+		jQuery(vesselDiv  + '  input[name="dutycycle"]').val(mode);
+	}
+	mode = null;
+	if(val.actualduty != null) {
+		Gauges[vessel].refresh(val.actualduty); 				
+	} else {
+		Gauges[vessel].refresh(val.duty); 
+	}
+
+
+	jQuery('div[id="tempUnit"]').text(val.scale);
+	
+	jQuery(vesselDiv  + ' input[name="dutycycle"]').val(val.duty);
+	jQuery(vesselDiv  + ' input[name="cycletime"]').val(val.cycle);
+	jQuery(vesselDiv  + ' input[name="setpoint"]').val(val.setpoint);
+	jQuery(vesselDiv  + ' input[name="p"]').val(val.p);
+	jQuery(vesselDiv  + ' input[name="i"]').val(val.i);
+	jQuery(vesselDiv  + ' > input[name="d"]').val(val.k);
+	
+	// Aux Mode check
+	if ("auxStatus" in val) {
+		if (val.auxStatus == "on" || val.auxStatus == "1") {
+			jQuery(vesselDiv  + ' button[id="Aux"]')[0].style.background = "red";
+			jQuery(vesselDiv  + ' button[id="Aux"]')[0].innerHTML = "Aux ON"
+		} else {
+			jQuery(vesselDiv  + ' button[id="Aux"]')[0].style.background = "#666666";
+			jQuery(vesselDiv  + ' button[id="Aux"]')[0].innerHTML = "Aux OFF"
+		}
+	}
+	
+	window.disableUpdates = 0;
+
 }
 
 function selectOff(vessel) {
@@ -421,7 +443,11 @@ function resetTimer(button, stage) {
 }
 
 function checkTimer(val, stage) {
-	// Check for a boil timing
+
+	if ("name" in val) {
+		stage = val.name;
+	}
+	
 	if ("start" in val) {
 		var startTime = new Date(val["start"]);
 		
@@ -461,6 +487,10 @@ function toggleAux(PIDName) {
 function addMashStep(mashStep, mashData, pid) {
 	// Mashstep is the int position
 	// mashData contains the actual data to be displayed
+	if (mashStep == "mashstep" || "index" in mashData) {
+		mashStep = mashData['index'];
+	}
+	
 	var mashStepRow = $("#mashRow"+pid+"-"+mashStep);
 	if (mashStepRow.length == 0) {
 		// Add a new row to the Mash Table

@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,6 +47,7 @@ import org.ini4j.ConfigParser;
 import org.ini4j.ConfigParser.InterpolationException;
 import org.ini4j.ConfigParser.NoOptionException;
 import org.ini4j.ConfigParser.NoSectionException;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.owfs.jowfsclient.Enums.OwPersistence;
 import org.owfs.jowfsclient.OwfsConnection;
@@ -86,11 +88,11 @@ public final class LaunchControl {
      */
     private static final int DEFAULT_PORT = 8080;
     /**
-     * The pump parameters length for creating the config
+     * The pump parameters length for creating the config.
      */
     private static final int PUMP_PARAM_LENGTH = 3;
     /**
-     * The Minimum number of volume data points
+     * The Minimum number of volume data points.
      */
     private static final int MIN_VOLUME_SIZE = 3;
 
@@ -336,7 +338,7 @@ public final class LaunchControl {
         Iterator<Temp> iterator = tempList.iterator();
         while (iterator.hasNext()) {
             // launch all the PIDs first
-            // since they will launch the temp theads too
+            // since they will launch the temperature threads too
             Temp tTemp = iterator.next();
             findPID(tTemp.getName());
         }
@@ -491,23 +493,32 @@ public final class LaunchControl {
 
         // iterate the thread lists
         // use the temp list to determine if we have a PID to go with
+        JSONArray vesselJSON = new JSONArray();
+
         for (Temp t : tempList) {
             /* Check for a PID */
             PID tPid = findPID(t.getName());
             tJSON = new JSONObject();
-            if (tPid != null) {
-                tJSON.putAll(tPid.getMapStatus());
-            }
 
             // Add the temp to the JSON Map
-            tJSON.putAll(t.getMapStatus());
+            JSONObject tJSONTemp = new JSONObject();
+            tJSONTemp.putAll(t.getMapStatus());
+            tJSON.put("name", t.getName());
+            tJSON.put("tempprobe", tJSONTemp);
 
-            rObj.put(t.getName(), tJSON);
+            if (tPid != null) {
+                JSONObject tJSONPID = new JSONObject();
+                tJSONPID.putAll(tPid.getMapStatus());
+                tJSON.put("pidstatus", tJSONPID);
+            }
+
+            // Add the JSON object with the PID Name
+            vesselJSON.add(tJSON);
 
             // update COSM
             if (cosmFeed != null) {
                 Datastream tData = findDatastream(t.getName());
-                tData.setCurrentValue(Double.toString(t.getTemp()));
+                tData.setCurrentValue(t.getTemp().toString());
                 Unit tUnit = new Unit();
                 tUnit.setType("temp");
                 tUnit.setSymbol(t.getScale());
@@ -521,10 +532,12 @@ public final class LaunchControl {
                 }
 
             }
+        }
 
-            if (brewDay != null) {
-                rObj.put("brewday", brewDay.brewDayStatus());
-            }
+        rObj.put("vessels", vesselJSON);
+
+        if (brewDay != null) {
+            rObj.put("brewday", brewDay.brewDayStatus());
         }
 
         // generate the list of pumps
@@ -835,7 +848,6 @@ public final class LaunchControl {
         try {
             timerList = config.options(input);
             // TODO: Add in countup/countdown detection
-
         } catch (NoSectionException nse) {
             // we shouldn't get here!
             nse.printStackTrace();
@@ -879,14 +891,14 @@ public final class LaunchControl {
      * @param volumeArray The volumeArray map for calculations
      */
     private void startDevice(final String input, final String probe,
-            final String gpio, final double duty,
-            final double cycle, final double setpoint,
-            final double p, final double i,
-            final double d, final String cutoffTemp,
+            final String gpio, final BigDecimal duty,
+            final BigDecimal cycle, final BigDecimal setpoint,
+            final BigDecimal p, final BigDecimal i,
+            final BigDecimal d, final String cutoffTemp,
             final String auxPin, final String volumeUnits,
             final int analoguePin, final String dsAddress,
             final String dsOffset,
-            final ConcurrentHashMap<Double, Double> volumeArray) {
+            final ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray) {
 
         // Startup the thread
         if (probe == null || probe.equals("0")) {
@@ -930,7 +942,6 @@ public final class LaunchControl {
             try {
                 tTemp.setupVolumes(analoguePin, volumeUnits);
             } catch (InvalidGPIOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         } else if (dsAddress != null && dsOffset != null) {
@@ -940,11 +951,11 @@ public final class LaunchControl {
         }
 
         if (volumeArray != null && volumeArray.size() >= MIN_VOLUME_SIZE) {
-            Iterator<Entry<Double, Double>> volIter =
+            Iterator<Entry<BigDecimal, BigDecimal>> volIter =
                     volumeArray.entrySet().iterator();
 
             while (volIter.hasNext()) {
-                Entry<Double, Double> entry = volIter.next();
+                Entry<BigDecimal, BigDecimal> entry = volIter.next();
                 tTemp.addVolumeMeasurement(entry.getKey(), entry.getValue());
             }
         }
@@ -1307,7 +1318,7 @@ public final class LaunchControl {
                 if (!gpio.equals("") && !gpio.equals("GPIO1")
                         && !gpio.equals("GPIO7")) {
                     addPIDToConfig(tTemp.getProbe(), name, gpio);
-                } else if (tTemp.getTemp() != -999) {
+                } else if (tTemp.getTemp().equals(Temp.ERROR_TEMP)) {
                     System.out.println("No valid GPIO Value found,"
                             + " adding as a temperature only probe");
                     addTempToConfig(tTemp.getProbe(), name);
@@ -1445,7 +1456,6 @@ public final class LaunchControl {
             System.out.println("Could not transformer file");
             e.printStackTrace();
         } catch (XPathExpressionException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -1514,7 +1524,6 @@ public final class LaunchControl {
             System.out.println("Could not transformer file");
             e.printStackTrace();
         } catch (XPathExpressionException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -1528,7 +1537,6 @@ public final class LaunchControl {
             try {
                 owfsConnection.disconnect();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -1618,10 +1626,8 @@ public final class LaunchControl {
                 }
             }
         } catch (OwfsException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -1735,8 +1741,8 @@ public final class LaunchControl {
                 break;
             }
 
-            Double currentVolume = Double.parseDouble(line.trim());
-            Double currentValue = tempObject.updateVolume();
+            BigDecimal currentVolume = new BigDecimal(line.trim());
+            BigDecimal currentValue = tempObject.updateVolume();
 
             tempObject.addVolumeMeasurement(currentVolume, currentValue);
         }
@@ -1806,9 +1812,9 @@ public final class LaunchControl {
             // launch all the PIDs first,
             // since they will launch the temp theads too
             Temp tTemp = iterator.next();
-            Double currentTemp = tTemp.updateTemp();
+            BigDecimal currentTemp = tTemp.updateTemp();
             System.out.print(i.toString() + ") " + tTemp.getName());
-            if (currentTemp == -999) {
+            if (currentTemp.equals(Temp.ERROR_TEMP)) {
                   System.out.println(" doesn't have a valid temperature");
             } else {
                 System.out.println(" " + currentTemp);
@@ -1966,17 +1972,17 @@ public final class LaunchControl {
                 + " with ID " + device.getAttribute("id"));
 
         setElementText(device, "duty_cycle",
-                Double.toString(settings.duty_cycle));
+                settings.duty_cycle.toString());
         setElementText(device, "cycle_time",
-                Double.toString(settings.cycle_time));
+                settings.cycle_time.toString());
         setElementText(device, "set_point",
-                Double.toString(settings.set_point));
+                settings.set_point.toString());
         setElementText(device, "proportional",
-                Double.toString(settings.proportional));
+                settings.proportional.toString());
         setElementText(device, "integral",
-                Double.toString(settings.integral));
+                settings.integral.toString());
         setElementText(device, "derivative",
-                Double.toString(settings.derivative));
+                settings.derivative.toString());
         setElementText(device, "gpio",
                 gpio);
 
@@ -2043,15 +2049,15 @@ public final class LaunchControl {
      * @param address the the one Wire ADC converter
      * @param offset The 1wire input (A/B/C/D)
      * @param volumeUnit The units for the volume (free text string)
-     * @param volumeBase Hashmap of the volume ranges and readings
+     * @param concurrentHashMap Hashmap of the volume ranges and readings
      */
     private void saveVolume(final String name, final String address,
             final String offset, final String volumeUnit,
-            final ConcurrentHashMap<Double, Double> volumeBase) {
+            final ConcurrentHashMap<BigDecimal, BigDecimal> concurrentHashMap) {
 
         System.out.println("Saving volume for " + name);
 
-        Element device = saveVolumeMeasurements(name, volumeBase, volumeUnit);
+        Element device = saveVolumeMeasurements(name, concurrentHashMap, volumeUnit);
 
         // Units for the Volume OneWire Address
         Element tElement = getFirstElement(device, "volume-address");
@@ -2075,16 +2081,16 @@ public final class LaunchControl {
      * @param name Device name
      * @param volumeAIN Analogue input pin
      * @param volumeUnit The units for the volume (free text string)
-     * @param volumeBase Hashmap of the volume ranges and readings
+     * @param concurrentHashMap Hashmap of the volume ranges and readings
      */
     private void saveVolume(final String name, final int volumeAIN,
             final String volumeUnit,
-            final ConcurrentHashMap<Double, Double> volumeBase) {
+            final ConcurrentHashMap<BigDecimal, BigDecimal> concurrentHashMap) {
 
         BrewServer.LOG.info("Saving volume for " + name);
 
         // save any changes
-        Element device = saveVolumeMeasurements(name, volumeBase, volumeUnit);
+        Element device = saveVolumeMeasurements(name, concurrentHashMap, volumeUnit);
 
         Element tElement = getFirstElement(device, "volume-pin");
         if (tElement == null) {
@@ -2103,7 +2109,7 @@ public final class LaunchControl {
      * @return The element that was created
      */
     public Element saveVolumeMeasurements(final String name,
-            final ConcurrentHashMap<Double, Double> volumeBase,
+            final ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase,
             final String volumeUnit) {
         Element device = getFirstElementByXpath(null,
                 "/elsinore/device[@id='" + name + "']");
@@ -2120,10 +2126,10 @@ public final class LaunchControl {
         }
         tElement.setTextContent(volumeUnit.toString());
 
-        Iterator<Entry<Double, Double>> volIter =
+        Iterator<Entry<BigDecimal, BigDecimal>> volIter =
                 volumeBase.entrySet().iterator();
         while (volIter.hasNext()) {
-            Entry<Double, Double> entry = volIter.next();
+            Entry<BigDecimal, BigDecimal> entry = volIter.next();
             BrewServer.LOG.info("Looking for volume entry: "
                 + entry.getKey().toString());
 
@@ -2263,10 +2269,11 @@ public final class LaunchControl {
         String volumeUnits = "Litres";
         String dsAddress = null, dsOffset = null;
         String cutoffTemp = null, auxPin = null;
-        ConcurrentHashMap<Double, Double> volumeArray =
-                new ConcurrentHashMap<Double, Double>();
-        double duty = 0.0, cycle = 0.0, setpoint = 0.0,
-                p = 0.0, i = 0.0, d = 0.0;
+        ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray =
+                new ConcurrentHashMap<BigDecimal, BigDecimal>();
+        BigDecimal duty = new BigDecimal(0), cycle = new BigDecimal(0.0),
+                setpoint = new BigDecimal(0.0), p = new BigDecimal(0.0),
+                i = new BigDecimal(0.0), d = new BigDecimal(0.0);
         int analoguePin = -1;
 
         BrewServer.LOG.info("Parsing : " + input);
@@ -2279,22 +2286,22 @@ public final class LaunchControl {
                     gpio = config.get(input, "gpio");
                 }
                 if (config.hasOption(input, "duty_cycle")) {
-                    duty = config.getDouble(input, "duty_cycle");
+                    duty = new BigDecimal(config.getDouble(input, "duty_cycle"));
                 }
                 if (config.hasOption(input, "cycle_time")) {
-                    cycle = config.getDouble(input, "cycle_time");
+                    cycle = new BigDecimal(config.getDouble(input, "cycle_time"));
                 }
                 if (config.hasOption(input, "set_point")) {
-                    setpoint = config.getDouble(input, "set_point");
+                    setpoint = new BigDecimal(config.getDouble(input, "set_point"));
                 }
                 if (config.hasOption(input, "proportional")) {
-                    p = config.getDouble(input, "proportional");
+                    p = new BigDecimal(config.getDouble(input, "proportional"));
                 }
                 if (config.hasOption(input, "integral")) {
-                    i = config.getDouble(input, "integral");
+                    i = new BigDecimal(config.getDouble(input, "integral"));
                 }
                 if (config.hasOption(input, "derivative")) {
-                    d = config.getDouble(input, "derivative");
+                    d = new BigDecimal(config.getDouble(input, "derivative"));
                 }
                 if (config.hasOption(input, "cutoff")) {
                     cutoffTemp = config.get(input, "cutoff");
@@ -2333,9 +2340,9 @@ public final class LaunchControl {
                     }
 
                     try {
-                        double volValue = Double.parseDouble(curOption);
-                        double volReading =
-                                config.getDouble(volumeSection, curOption);
+                        BigDecimal volValue = new BigDecimal(curOption);
+                        BigDecimal volReading =
+                                new BigDecimal(config.getDouble(volumeSection, curOption));
                         volumeArray.put(volValue, volReading);
                         // we can parse this as an integer
                     } catch (NumberFormatException e) {
@@ -2387,10 +2394,12 @@ public final class LaunchControl {
         String volumeUnits = "Litres";
         String dsAddress = null, dsOffset = null;
         String cutoffTemp = null, auxPin = null;
-        ConcurrentHashMap<Double, Double> volumeArray =
-                new ConcurrentHashMap<Double, Double>();
-        double duty = 0.0, cycle = 0.0, setpoint = 0.0,
-                p = 0.0, i = 0.0, d = 0.0;
+        ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray =
+                new ConcurrentHashMap<BigDecimal, BigDecimal>();
+        BigDecimal duty = new BigDecimal(0), cycle = new BigDecimal(0.0),
+                setpoint = new BigDecimal(0.0), p = new BigDecimal(0.0),
+                i = new BigDecimal(0.0), d = new BigDecimal(0.0);
+
         int analoguePin = -1;
 
         String deviceName = config.getAttribute("id");
@@ -2409,32 +2418,32 @@ public final class LaunchControl {
 
             tElement = getFirstElement(config, "duty_cycle");
             if (tElement != null) {
-                duty = Double.parseDouble(tElement.getTextContent());
+                duty = new BigDecimal(tElement.getTextContent());
             }
 
             tElement = getFirstElement(config, "cycle_time");
             if (tElement != null) {
-                cycle = Double.parseDouble(tElement.getTextContent());
+                cycle = new BigDecimal(tElement.getTextContent());
             }
 
             tElement = getFirstElement(config, "set_point");
             if (tElement != null) {
-                setpoint = Double.parseDouble(tElement.getTextContent());
+                setpoint = new BigDecimal(tElement.getTextContent());
             }
 
             tElement = getFirstElement(config, "proportional");
             if (tElement != null) {
-                p = Double.parseDouble(tElement.getTextContent());
+                p = new BigDecimal(tElement.getTextContent());
             }
 
             tElement = getFirstElement(config, "integral");
             if (tElement != null) {
-                i = Double.parseDouble(tElement.getTextContent());
+                i = new BigDecimal(tElement.getTextContent());
             }
 
             tElement = getFirstElement(config, "derivative");
             if (tElement != null) {
-                d = Double.parseDouble(tElement.getTextContent());
+                d = new BigDecimal(tElement.getTextContent());
             }
 
             tElement = getFirstElement(config, "cutoff");
@@ -2460,9 +2469,9 @@ public final class LaunchControl {
 
                     // Append the volume to the array
                     try {
-                        double volValue = Double.parseDouble(
+                        BigDecimal volValue = new BigDecimal(
                                 curOption.getAttribute("vol"));
-                        double volReading = Double.parseDouble(
+                        BigDecimal volReading = new BigDecimal(
                                 curOption.getTextContent());
 
                         volumeArray.put(volValue, volReading);
