@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.util.Map;
 import java.util.HashMap;
@@ -198,7 +199,7 @@ public class BrewServer extends NanoHTTPD {
 
                     int duration = Integer.parseInt(
                             valueObj.get("duration").toString());
-                    double temp = Double.parseDouble(
+                    BigDecimal temp = new BigDecimal(
                             valueObj.get("temp").toString());
 
                     String method = valueObj.get("method").toString();
@@ -322,8 +323,8 @@ public class BrewServer extends NanoHTTPD {
     @SuppressWarnings("unchecked")
     private boolean updatePID(final Map<String, String> params) {
         String temp, mode = "off", inputUnit = null;
-        double dTemp, duty = 0, cycle = 0,
-            setpoint = 0, p = 0, i = 0, d = 0;
+        BigDecimal dTemp = null, duty = null, cycle = null,
+            setpoint = null, p = null, i = null, d = null;
         Set<Entry<String, String>> incomingParams = params.entrySet();
         Map<String, String> parms;
         Iterator<Entry<String, String>> it = incomingParams.iterator();
@@ -363,7 +364,7 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("dutycycle")) {
             temp = parms.get("dutycycle");
             try {
-                dTemp = Double.parseDouble(temp);
+                dTemp = new BigDecimal(temp);
                 duty = dTemp;
                 BrewServer.LOG.info("Duty cycle: " + duty);
             } catch (NumberFormatException nfe) {
@@ -374,7 +375,7 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("cycletime")) {
             temp = parms.get("cycletime");
             try {
-                dTemp = Double.parseDouble(temp);
+                dTemp = new BigDecimal(temp);
                 cycle = dTemp;
                 BrewServer.LOG.info("Cycle time: " + cycle);
             } catch (NumberFormatException nfe) {
@@ -385,7 +386,7 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("setpoint")) {
             temp = parms.get("setpoint");
             try {
-                dTemp = Double.parseDouble(temp);
+                dTemp = new BigDecimal(temp);
                 setpoint = dTemp;
                 BrewServer.LOG.info("Set Point: " + setpoint);
             } catch (NumberFormatException nfe) {
@@ -396,7 +397,7 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("p")) {
             temp = parms.get("p");
             try {
-                dTemp = Double.parseDouble(temp);
+                dTemp = new BigDecimal(temp);
                 p = dTemp;
                 BrewServer.LOG.info("P: " + p);
             } catch (NumberFormatException nfe) {
@@ -407,7 +408,7 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("i")) {
             temp = parms.get("i");
             try {
-                dTemp = Double.parseDouble(temp);
+                dTemp = new BigDecimal(temp);
                 i = dTemp;
                 BrewServer.LOG.info("I: " + i);
             } catch (NumberFormatException nfe) {
@@ -418,7 +419,7 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("d")) {
             temp = parms.get("d");
             try {
-                dTemp = Double.parseDouble(temp);
+                dTemp = new BigDecimal(temp);
                 d =  dTemp;
                 BrewServer.LOG.info("D: " + d);
             } catch (NumberFormatException nfe) {
