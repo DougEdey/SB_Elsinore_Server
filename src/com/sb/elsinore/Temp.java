@@ -471,13 +471,15 @@ public final class Temp implements Runnable {
                 // last value should be t=
                 int t = line.indexOf("t=");
                 temp = line.substring(t + 2);
-                double tTemp = Double.parseDouble(temp);
-                this.currentTemp = BigDecimal.valueOf(tTemp / 1000);
+                BigDecimal tTemp = new BigDecimal(temp);
+                this.currentTemp = tTemp.divide(BigDecimal.TEN
+                        .multiply(BigDecimal.TEN.multiply(BigDecimal.TEN)));
                 this.currentError = null;
             } else {
                 // System Temperature
-                double tTemp = Double.parseDouble(line);
-                this.currentTemp = BigDecimal.valueOf(tTemp / 1000);
+                BigDecimal tTemp = new BigDecimal(line);
+                this.currentTemp = tTemp.divide(BigDecimal.TEN
+                        .multiply(BigDecimal.TEN.multiply(BigDecimal.TEN)));
             }
 
         } catch (IOException ie) {
