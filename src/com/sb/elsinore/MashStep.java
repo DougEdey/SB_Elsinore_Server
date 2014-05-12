@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -16,11 +17,11 @@ public class MashStep {
     /**
      * Target temperature for the mash step.
      */
-    private double targetTemp = 0.0;
+    private BigDecimal targetTemp = new BigDecimal(0.0);
     /**
      * The Variance of the mashStep. Default to 2.0
      */
-    private double variance = 2.0;
+    private BigDecimal variance = new BigDecimal(2.0);
     /**
      * The duration of the mash step.
      */
@@ -69,7 +70,7 @@ public class MashStep {
     /**
      * @return The current target temperature
      */
-    public final double getTargetTemp() {
+    public final BigDecimal getTargetTemp() {
         return getTargetTempAs(this.tempUnit);
     }
 
@@ -77,17 +78,17 @@ public class MashStep {
      * @param unit The Unit to get the current temperature in.
      * @return The current temperature in the specified unit.
      */
-    public final double getTargetTempAs(final String unit) {
+    public final BigDecimal getTargetTempAs(final String unit) {
         if (this.tempUnit.equalsIgnoreCase(unit)) {
             return this.targetTemp;
         }
 
         if (this.tempUnit.equals("F")) {
             // Current Unit is F, user wants C
-            return fToC(this.targetTemp);
+            return Temp.fToC(this.targetTemp);
         } else {
             // Current unit is C, user wants F
-            return cToF(this.targetTemp);
+            return Temp.cToF(this.targetTemp);
         }
     }
 
@@ -95,18 +96,18 @@ public class MashStep {
      * @param unit The unit to get the upper target in.
      * @return The upper target temperature in the specified unit.
      */
-    public final double getUpperTargetTempAs(final String unit) {
-        double maxTemp = this.targetTemp + this.variance;
+    public final BigDecimal getUpperTargetTempAs(final String unit) {
+        BigDecimal maxTemp = this.targetTemp.add(this.variance);
         if (this.tempUnit.equalsIgnoreCase(unit)) {
             return maxTemp;
         }
 
         if (this.tempUnit.equals("F")) {
             // Current Unit is F, user wants C
-            return fToC(maxTemp);
+            return Temp.fToC(maxTemp);
         } else {
             // Current unit is C, user wants F
-            return cToF(maxTemp);
+            return Temp.cToF(maxTemp);
         }
     }
 
@@ -114,18 +115,18 @@ public class MashStep {
      * @param unit The unit to get the lower target in.
      * @return The lower target temperature in the specified unit.
      */
-    public final double getLowerTargetTempAs(final String unit) {
-        double lowTemp = this.targetTemp - this.variance;
+    public final BigDecimal getLowerTargetTempAs(final String unit) {
+        BigDecimal lowTemp = this.targetTemp.subtract(this.variance);
         if (this.tempUnit.equalsIgnoreCase(unit)) {
             return lowTemp;
         }
 
         if (this.tempUnit.equals("F")) {
             // Current Unit is F, user wants C
-            return fToC(lowTemp);
+            return Temp.fToC(lowTemp);
         } else {
             // Current unit is C, user wants F
-            return cToF(lowTemp);
+            return Temp.cToF(lowTemp);
         }
     }
 
@@ -219,10 +220,10 @@ public class MashStep {
 
         if (tempUnit.equalsIgnoreCase("F")) {
             // Old if F, new must be C
-            this.targetTemp = fToC(targetTemp);
+            this.targetTemp = Temp.fToC(targetTemp);
         } else {
             // Old is C, new must be F
-            this.targetTemp = cToF(targetTemp);
+            this.targetTemp = Temp.cToF(targetTemp);
         }
 
         this.tempUnit = newUnit.toUpperCase();
@@ -231,28 +232,10 @@ public class MashStep {
     }
 
     /**
-     * Convert Fahrenheit to Celsuis.
-     * @param currentTemp The fahrenheit value to convert
-     * @return The converted value.
-     */
-    public final double fToC(final double currentTemp) {
-        return (currentTemp - 32) / (9.0 * 5.0);
-    }
-
-    /**
-     * Convert Celsius to Fahrenheit.
-     * @param currentTemp The celsius value to convert
-     * @return The converted value.
-     */
-    public final double cToF(final double currentTemp) {
-        return (9.0 / 5.0) * currentTemp + 32;
-    }
-
-    /**
      * Set the current target temp.
      * @param newTemp The target temp to set this step to.
      */
-    public final void setTemp(final double newTemp) {
+    public final void setTemp(final BigDecimal newTemp) {
         this.targetTemp = newTemp;
     }
 
@@ -260,8 +243,8 @@ public class MashStep {
      * Increase the target temperature by a value.
      * @param incrValue The value to increase the target temp by.
      */
-    public final void increaseTemp(final double incrValue) {
-        setTemp(targetTemp + incrValue);
+    public final void increaseTemp(final BigDecimal incrValue) {
+        setTemp(targetTemp.add(incrValue));
     }
 
     /**

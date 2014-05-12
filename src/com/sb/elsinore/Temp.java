@@ -225,6 +225,7 @@ public final class Temp implements Runnable {
      * @param cutoffInput String describing the temperature
      */
     public void setCutoffTemp(final String cutoffInput) {
+        BrewServer.LOG.warning("CutOff Temperate for " + this.name + " is " + cutoffInput);
         Matcher tempMatcher = tempRegexp.matcher(cutoffInput);
 
         if (tempMatcher.find()) {
@@ -325,23 +326,28 @@ public final class Temp implements Runnable {
      * @param s Value to set the temperature unit to.
      */
     public void setScale(final String s) {
+        BrewServer.LOG.warning("Cut off is: " + this.cutoffTemp);
+
         if (s.equalsIgnoreCase("F")) {
             // Do we need to convert the cutoff temp
-            if (!cutoffTemp.equals(-999) && !scale.equalsIgnoreCase(s)) {
+            if (cutoffTemp.compareTo(ERROR_TEMP) != 0
+                    && !scale.equalsIgnoreCase(s)) {
                 this.cutoffTemp = cToF(cutoffTemp);
             }
 
             this.scale = s;
         }
-        if (s.equalsIgnoreCase("C"))
-        {
+
+        if (s.equalsIgnoreCase("C")) {
             // Do we need to convert the cutoff temp
-            if (!cutoffTemp.equals(-999) && !scale.equalsIgnoreCase(s)) {
+            if (cutoffTemp.compareTo(ERROR_TEMP) != 0
+                    && !scale.equalsIgnoreCase(s)) {
                 this.cutoffTemp = fToC(cutoffTemp);
             }
 
             this.scale = s;
         }
+        BrewServer.LOG.warning("Cut off is now: " + this.cutoffTemp);
     }
 
     /**
@@ -368,7 +374,7 @@ public final class Temp implements Runnable {
      * @param temp temperature to convert in Fahrenheit
      * @return temp in celsius
      */
-    public BigDecimal fToC(final BigDecimal temp) {
+    public static BigDecimal fToC(final BigDecimal currentTemp) {
         return currentTemp.subtract(FREEZING).multiply(F_TO_C_MULT);
     }
 
@@ -376,7 +382,7 @@ public final class Temp implements Runnable {
      * @param temp temperature to convert in Celsius
      * @return temp in Fahrenheit
      */
-    public BigDecimal cToF(final BigDecimal temp) {
+    public static BigDecimal cToF(final BigDecimal currentTemp) {
         return currentTemp.add(FREEZING).multiply(C_TO_F_MULT);
     }
 
@@ -471,13 +477,15 @@ public final class Temp implements Runnable {
                 // last value should be t=
                 int t = line.indexOf("t=");
                 temp = line.substring(t + 2);
-                double tTemp = Double.parseDouble(temp);
-                this.currentTemp = BigDecimal.valueOf(tTemp / 1000);
+                BigDecimal tTemp = new BigDecimal(temp);
+                this.currentTemp = tTemp.divide(BigDecimal.TEN
+                        .multiply(BigDecimal.TEN.multiply(BigDecimal.TEN)));
                 this.currentError = null;
             } else {
                 // System Temperature
-                double tTemp = Double.parseDouble(line);
-                this.currentTemp = BigDecimal.valueOf(tTemp / 1000);
+                BigDecimal tTemp = new BigDecimal(line);
+                this.currentTemp = tTemp.divide(BigDecimal.TEN
+                        .multiply(BigDecimal.TEN.multiply(BigDecimal.TEN)));
             }
 
         } catch (IOException ie) {

@@ -304,21 +304,27 @@ public final class LaunchControl {
             public void run() {
 
                 saveSettings();
-                for (Temp t : tempList) {
-                    if (t != null) {
-                        t.save();
+                synchronized (tempList) {
+                    for (Temp t : tempList) {
+                        if (t != null) {
+                            t.save();
+                        }
                     }
                 }
 
-                for (PID n : pidList) {
-                    if (n != null) {
-                        n.shutdown();
+                synchronized (pidList) {
+                    for (PID n : pidList) {
+                        if (n != null) {
+                            n.shutdown();
+                        }
                     }
                 }
 
-                if (mashList.size() > 0) {
-                    for (MashControl m: mashList) {
-                        m.setShutdownFlag(true);
+                synchronized (mashList) {
+                    if (mashList.size() > 0) {
+                        for (MashControl m: mashList) {
+                            m.setShutdownFlag(true);
+                        }
                     }
                 }
 
@@ -1659,7 +1665,7 @@ public final class LaunchControl {
             }
         }
 
-        return result;
+        return result.trim();
     }
 
     /*********

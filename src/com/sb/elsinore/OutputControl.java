@@ -172,6 +172,7 @@ public final class OutputControl implements Runnable {
             // Sleep interrupted
             coolStopTime = new BigDecimal(System.currentTimeMillis());
             System.out.print("Wakeup in " + fName);
+            e.printStackTrace();
         } catch (InvalidGPIOException e1) {
             System.out.println(e1.getMessage());
             e1.printStackTrace();
