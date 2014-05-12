@@ -40,8 +40,13 @@ public final class PID implements Runnable {
         /**
          * values to hold the settings.
          */
-        public BigDecimal duty_cycle, cycle_time, proportional,
-            integral, derivative, set_point, calculatedDuty;
+        public BigDecimal duty_cycle = new BigDecimal(0),
+            cycle_time = new BigDecimal(0),
+            proportional = new BigDecimal(0),
+            integral = new BigDecimal(0),
+            derivative = new BigDecimal(0),
+            set_point = new BigDecimal(0),
+            calculatedDuty = new BigDecimal(0);
 
         /**
          * Default constructor.
@@ -81,6 +86,21 @@ public final class PID implements Runnable {
 
         this.fGPIO = detectGPIO(gpio);
 
+    }
+
+    /**
+     * Create a new PID with minimal information.
+     * @param aTemp The Temperature probe object to use
+     * @param aName The Name of this PID
+     * @param gpio The GPIO Pin to use.
+     */
+    public PID(final Temp aTemp, final String aName, final String gpio) {
+        this.fName = aName;
+        this.fTemp = aTemp;
+
+        this.fGPIO = detectGPIO(gpio);
+        this.mode = "off";
+        this.heatSetting = new Settings();
     }
 
     /**
@@ -420,7 +440,6 @@ public final class PID implements Runnable {
     public String getName() {
         return fTemp.getName();
     }
-
 
   //PRIVATE ///
     /**

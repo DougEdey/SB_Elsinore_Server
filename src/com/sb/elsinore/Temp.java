@@ -225,7 +225,7 @@ public final class Temp implements Runnable {
      * @param cutoffInput String describing the temperature
      */
     public void setCutoffTemp(final String cutoffInput) {
-        BrewServer.LOG.warning("CutOff Temperate for " + this.name + " is " + cutoffInput);
+
         Matcher tempMatcher = tempRegexp.matcher(cutoffInput);
 
         if (tempMatcher.find()) {
@@ -303,6 +303,7 @@ public final class Temp implements Runnable {
      * The input pin to read.
      */
     private InPin volumePin = null;
+    private boolean stopVolumeLogging;
 
     /**
      * @return Get the current temperature
@@ -648,10 +649,19 @@ public final class Temp implements Runnable {
                     pinValue = new BigDecimal(
                         LaunchControl.readOWFSPath(
                             volumeAddress + "/volt." + volumeOffset));
+                    if (this.stopVolumeLogging) {
+                        BrewServer.LOG.log(Level.SEVERE,
+                            "Recovered volume level reading for " + this.name);
+                        this.stopVolumeLogging = false;
+                    }
                 } catch (Exception e) {
-                    BrewServer.LOG.log(Level.SEVERE,
+                    if (!this.stopVolumeLogging) {
+                        BrewServer.LOG.log(Level.SEVERE,
                             "Could not update the volume reading from OWFS", e);
+                        this.stopVolumeLogging = true;
+                    }
                     LaunchControl.setupOWFS();
+
                     return BigDecimal.ZERO;
                 }
 

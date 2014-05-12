@@ -1,7 +1,7 @@
 .controller {
         margin:2px 0 1px 1px;
         text-align:center;
-        display: inline-block;
+        display: inline-table;
 }
 
 

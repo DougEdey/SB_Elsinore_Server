@@ -316,6 +316,94 @@ public class BrewServer extends NanoHTTPD {
     }
 
     /**
+     * Read the incoming parameters and edit the vessel as appropriate.
+     * @param params The parameters from the client.
+     * @return True is success, false if failure.
+     */
+    private boolean editVessel(final Map<String, String> params) {
+        String oldName = "", newName = "", gpio = "";
+        String inputUnit = "";
+
+        Set<Entry<String, String>> incomingParams = params.entrySet();
+        Map<String, String> parms;
+        Iterator<Entry<String, String>> it = incomingParams.iterator();
+        Entry<String, String> param = null;
+        JSONObject incomingData = null;
+        JSONParser parser = new JSONParser();
+
+        // Try to Parse JSON Data
+        while (it.hasNext()) {
+            param = it.next();
+            BrewServer.LOG.info("Key: " + param.getKey());
+            BrewServer.LOG.info("Entry: " + param.getValue());
+            try {
+                Object parsedData = parser.parse(param.getValue());
+                if (parsedData instanceof JSONArray) {
+                    incomingData = (JSONObject) ((JSONArray) parsedData).get(0);
+                } else {
+                    incomingData = (JSONObject) parsedData;
+                    inputUnit = param.getKey();
+                }
+            } catch (Exception e) {
+                BrewServer.LOG.info("couldn't read " + param.getValue()
+                    + " as a JSON Value " + e.getMessage());
+            }
+        }
+
+        if (incomingData != null) {
+            // Use the JSON Data
+            BrewServer.LOG.info("Found valid data for " + inputUnit);
+            parms = (Map<String, String>) incomingData;
+        } else {
+            inputUnit = params.get("form");
+            parms = params;
+        }
+
+        // Fall back to the old style
+        if (parms.containsKey("new_name")) {
+            newName = parms.get("new_name");
+        }
+
+        if (parms.containsKey("new_gpio")) {
+            gpio = parms.get("new_gpio");
+        }
+
+        if (inputUnit.equals("")) {
+            BrewServer.LOG.warning("No Valid input unit");
+            return false;
+        }
+
+        Temp tProbe = LaunchControl.findTemp(inputUnit);
+        PID tPID = LaunchControl.findPID(inputUnit);
+
+        if (tProbe != null && !newName.equals("")) {
+            tProbe.setName(newName);
+            BrewServer.LOG.warning("Updated temp name " + newName);
+        }
+
+        if (tPID != null && !newName.equals("")) {
+            tPID.getTemp().setName(newName);
+            BrewServer.LOG.warning("Updated PID Name" + newName);
+        }
+
+        if (newName.equals("")) {
+            newName = inputUnit;
+        }
+
+        if (!gpio.equals("")) {
+            // The GPIO is Set.
+            if (tPID == null) {
+                // No PID already, create one.
+                tPID = new PID(tProbe, newName, gpio);
+                LaunchControl.addPID(tPID);
+                BrewServer.LOG.warning("Create PID");
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Read the incoming parameters and update the PID as appropriate.
      * @param params The parameters from the client
      * @return True if success, false if failure
@@ -323,8 +411,13 @@ public class BrewServer extends NanoHTTPD {
     @SuppressWarnings("unchecked")
     private boolean updatePID(final Map<String, String> params) {
         String temp, mode = "off", inputUnit = null;
-        BigDecimal dTemp = null, duty = null, cycle = null,
-            setpoint = null, p = null, i = null, d = null;
+        BigDecimal dTemp = new BigDecimal(0),
+            duty = new BigDecimal(0),
+            cycle = new BigDecimal(0),
+            setpoint = new BigDecimal(0),
+            p = new BigDecimal(0),
+            i = new BigDecimal(0),
+            d = new BigDecimal(0);
         Set<Entry<String, String>> incomingParams = params.entrySet();
         Map<String, String> parms;
         Iterator<Entry<String, String>> it = incomingParams.iterator();
@@ -485,6 +578,15 @@ public class BrewServer extends NanoHTTPD {
                     MIME_HTML, "Failed to toggle MashProfile");
             }
 
+            if (uri.toLowerCase().equals("/editdevice")) {
+                if (editVessel(parms)) {
+                    return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                        "Editted Vessel");
+                } else {
+                    return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
+                            "Failed to Edit Vessel. Please check logs");
+                }
+            }
             if (uri.toLowerCase().equals("/updatepid")) {
                 // parse the values if possible
                 // TODO: Break this out into a function

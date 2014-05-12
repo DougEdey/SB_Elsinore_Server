@@ -136,7 +136,9 @@ function waitForMsg(){
 						}
 						if ("pidstatus" in vesselStatus) {
 							updatePIDStatus(vesselName, vesselStatus.pidstatus);
-						}	
+						} else {
+							hidePIDForm(vesselName);
+						}
 					})
 					
 				}
@@ -188,9 +190,36 @@ function updateTempProbe(vessel, val) {
 	}
 }
 
+function editDevice(element) {
+	var vessel = element.id.substring(0, element.id.indexOf("-title"));
+	var vesselDiv = element.id;
+	var gpio = $('#' + vesselDiv  + ' input[name="gpio"]').val();
+	
+	// Insert a couple of new form elements
+	$('#' + vesselDiv).append("<div id='"+vessel+"-edit'>"
+		+ "<form id='" + vessel + "-edit' name='" + vessel + "-edit'>"
+		+ "<input type='text' name='new_name' id='new_name' value='"+vessel+"' />"
+		+ "<input type='text' name='new_gpio' id='new_gpio' value-'"+gpio+"' />"
+		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
+		+ "onclick='submitForm(this.form); location.reload();'>Update</button>"
+		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
+		+ "onclick='cancelEdit(vessel); waitForMsg(); return false;'>Cancel</button>"
+		+ "</form>"
+		+ "</div>");
+}
+
+function cancelEdit(vessel) {
+	$('#'+vessel+'-edit').empty().remove();
+}
+
+function hidePIDForm(vessel) {
+	$("#" + vessel + "-controls").hide();
+}
+
 function updatePIDStatus(vessel, val) {
 	// setup the values
 	var vesselDiv = 'form[id="'+vessel+'-form"]';
+	$("#" + vessel + "-controls").show();
 	
 	var mode = val.mode.charAt(0).toUpperCase() + val.mode.slice(1);
 	var currentMode = jQuery(vesselDiv  + ' input[name="dutycycle"]');
@@ -224,17 +253,21 @@ function updatePIDStatus(vessel, val) {
 	jQuery(vesselDiv  + ' input[name="setpoint"]').val(val.setpoint);
 	jQuery(vesselDiv  + ' input[name="p"]').val(val.p);
 	jQuery(vesselDiv  + ' input[name="i"]').val(val.i);
-	jQuery(vesselDiv  + ' > input[name="d"]').val(val.k);
+	jQuery(vesselDiv  + ' input[name="d"]').val(val.k);
+	jQuery(vesselDiv  + ' input[name="gpio"]').val(val.gpio);
 	
 	// Aux Mode check
 	if ("auxStatus" in val) {
+		jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').show();
 		if (val.auxStatus == "on" || val.auxStatus == "1") {
-			jQuery(vesselDiv  + ' button[id="Aux"]')[0].style.background = "red";
-			jQuery(vesselDiv  + ' button[id="Aux"]')[0].innerHTML = "Aux ON"
+			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').style.background = "red";
+			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').innerHTML = "Aux ON"
 		} else {
-			jQuery(vesselDiv  + ' button[id="Aux"]')[0].style.background = "#666666";
-			jQuery(vesselDiv  + ' button[id="Aux"]')[0].innerHTML = "Aux OFF"
+			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').style.background = "#666666";
+			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').innerHTML = "Aux OFF"
 		}
+	} else {
+		jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').hide();
 	}
 	
 	window.disableUpdates = 0;
@@ -324,20 +357,41 @@ function selectManual(vessel) {
 
 function submitForm(form){
 
-	var vessel = form.id.substring(0, form.id.indexOf("-form"));
-	var formdata = {};
+	// Are we updating the data?
+	if (form.id.indexOf("-form") != -1) {
+		var vessel = form.id.substring(0, form.id.indexOf("-form"));
+		
+		var formdata = {};
+		
+		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
+		$.extend(formdata[vessel], {"name":"mode", "value":Window.mode});
+		//formdata = ;
+		
+		$.ajax({ 
+			url: 'updatepid',
+			type: 'POST',
+			data: formdata,
+			dataType: 'json',
+			success: function(data) {data = null}
+		});
+	} else if (form.id.indexOf("-edit") != -1) {
+		// We're editing
+		var vessel = form.id.substring(0, form.id.indexOf("-edit"));
+		var formdata = {}
+		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
+		$.ajax({ 
+			url: 'editdevice',
+			type: 'POST',
+			data: formdata,
+			dataType: 'json',
+			success: function(data) {data = null}
+		});
+	} else {
+		// Another form...
+		console.log("Unrecognised form: " + form.id);
+		return;
+	}
 	
-	formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
-	$.extend(formdata[vessel], {"name":"mode", "value":Window.mode});
-	//formdata = ;
-	
-	$.ajax({ 
-		url: 'updatepid',
-		type: 'POST',
-		data: formdata,
-		dataType: 'json',
-		success: function(data) {data = null}
-	});	
 	window.disableUpdates = 0;
 	return false;
 }

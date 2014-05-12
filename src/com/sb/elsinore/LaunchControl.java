@@ -1012,6 +1012,23 @@ public final class LaunchControl {
         return tData;
     }
 
+    /******
+     * Find the Temp Probe in the current list.
+     * @param name The Temp to find
+     * @return The Temp object
+     */
+    public static Temp findTemp(final String name) {
+        // search based on the input name
+        Iterator<Temp> iterator = tempList.iterator();
+        Temp tTemp = null;
+        while (iterator.hasNext()) {
+            tTemp = iterator.next();
+            if (tTemp.getName().equalsIgnoreCase(name)) {
+                return tTemp;
+            }
+        }
+        return null;
+    }
 
     /******
      * Find the PID in the current list.
@@ -1029,6 +1046,14 @@ public final class LaunchControl {
             }
         }
         return null;
+    }
+
+    /**
+     * Add a PID to the list.
+     * @param newPID PID to add.
+     */
+    public static void addPID(final PID newPID) {
+        pidList.add(newPID);
     }
 
     /**************
