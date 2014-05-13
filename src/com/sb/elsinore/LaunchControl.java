@@ -2662,10 +2662,10 @@ public final class LaunchControl {
             System.out.println("Creating on configDoc base");
             trueBase = configDoc.getDocumentElement();
         } else {
-            System.out.println("on " + baseNode.getNodeName());
+            System.out.println("on " + trueBase.getNodeName());
         }
 
-        newElement = (Element) baseNode.appendChild(newElement);
+        newElement = (Element) trueBase.appendChild(newElement);
 
         return newElement;
     }
