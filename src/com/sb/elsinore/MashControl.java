@@ -2,6 +2,7 @@ package com.sb.elsinore;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -151,13 +152,13 @@ public class MashControl implements Runnable {
                 Date cDate = new Date();
 
                 // Does the times need to be changed?
-                double currentTempF = currentPID.getTempProbe().getTempF();
+                BigDecimal currentTempF = currentPID.getTempProbe().getTempF();
                 BrewServer.LOG.warning("Current Temp: " + currentTempF
                         + " Target: " + currentStep.getTargetTempAs("F"));
 
                 // Give ourselves a 2F range, this can be changed in the future
-                if (currentTempF <= currentStep.getUpperTargetTempAs("F")
-                    && currentTempF >= currentStep.getLowerTargetTempAs("F")) {
+                if (currentTempF.doubleValue() <= currentStep.getUpperTargetTempAs("F").doubleValue()
+                    && currentTempF.doubleValue() >= currentStep.getLowerTargetTempAs("F").doubleValue()) {
                     BrewServer.LOG.warning("Target mash temp");
 
                     if (currentStep.getStart() == null) {
