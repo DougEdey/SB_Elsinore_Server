@@ -15,6 +15,15 @@ $.fn.serializeObject = function()
     return o;
 };
 
+function sleep(milliseconds) {
+  var start = new Date().getTime();
+  for (var i = 0; i < 1e7; i++) {
+    if ((new Date().getTime() - start) > milliseconds){
+      break;
+    }
+  }
+}
+
 /**
  * Return an Object sorted by it's Key
  */
@@ -201,7 +210,7 @@ function editDevice(element) {
 		+ "<input type='text' name='new_name' id='new_name' value='"+vessel+"' />"
 		+ "<input type='text' name='new_gpio' id='new_gpio' value-'"+gpio+"' />"
 		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
-		+ "onclick='submitForm(this.form); location.reload();'>Update</button>"
+		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>Update</button>"
 		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
 		+ "onclick='cancelEdit(vessel); waitForMsg(); return false;'>Cancel</button>"
 		+ "</form>"

@@ -120,11 +120,11 @@ public final class LaunchControl {
     /**
      *  Temperature Thread list.
      */
-    private List<Thread> tempThreads = new ArrayList<Thread>();
+    private static List<Thread> tempThreads = new ArrayList<Thread>();
     /**
      * PID Thread List.
      */
-    private List<Thread> pidThreads = new ArrayList<Thread>();
+    private static List<Thread> pidThreads = new ArrayList<Thread>();
     /**
      * Mash Threads list.
      */
@@ -166,7 +166,7 @@ public final class LaunchControl {
     /**
      * The Default scale to be used.
      */
-    private String scale = "F";
+    private static String scale = "F";
 
     /**
      * The BrewDay object to manage timers.
@@ -491,8 +491,12 @@ public final class LaunchControl {
      * This is the current Status of the PIDs, Temps, Pumps, etc...
      * @return The JSON String of the current status.
      */
+    private static int count = 0;
     @SuppressWarnings("unchecked")
     public static String getJSONStatus() {
+        if (count > 1) {
+            
+        }
         // get each setting add it to the JSON
         JSONObject rObj = new JSONObject();
         JSONObject tJSON = null;
@@ -591,6 +595,7 @@ public final class LaunchControl {
 
         if (configDoc == null && configCfg == null) {
             createConfig();
+            // Startup the brewery with the basic temp list
             return;
         }
 
@@ -1091,7 +1096,7 @@ public final class LaunchControl {
      * List the One Wire devices from the standard one wire file system.
      * in /sys/bus/w1/devices, basic access
      */
-    private void listOneWireSys() {
+    private static void listOneWireSys() {
         // try to access the list of 1-wire devices
         File w1Folder = new File("/sys/bus/w1/devices/");
         if (!w1Folder.exists()) {
@@ -1129,6 +1134,8 @@ public final class LaunchControl {
                         listOWFSDevices();
                         return;
                     }
+                    // Skip this iteration
+                    continue;
                 }
 
                 owfsServer = null;
@@ -1136,6 +1143,12 @@ public final class LaunchControl {
 
                 // got a directory, check for a temp
                 System.out.println("Checking for " + currentFile.getName());
+
+                // Check to see if this probe exists
+                if (probeExists(currentFile.getName())) {
+                    continue;
+                }
+
                 Temp currentTemp = new Temp(
                         currentFile.getName(), currentFile.getName());
                 tempList.add(currentTemp);
@@ -1149,6 +1162,13 @@ public final class LaunchControl {
         }
     }
 
+    private static void updateDeviceList() {
+        if (useOWFS) {
+            listOWFSDevices();
+        } else {
+            listOneWireSys();
+        }
+    }
     /**********
      * Setup the configuration.
      * We get here if the configuration file doesn't exist.
@@ -1159,11 +1179,8 @@ public final class LaunchControl {
             createOWFS();
         }
 
-        if (useOWFS) {
-            listOWFSDevices();
-        } else {
-            listOneWireSys();
-        }
+        updateDeviceList();
+        
         if (tempList.size() == 0) {
             System.out.println("Could not find any one wire devices\n"
                     + "Please check you have the correct modules setup");
@@ -1179,12 +1196,12 @@ public final class LaunchControl {
         System.out.println("Use \"pump <name> <gpio>\" to add a pump");
         System.out.println("Type \"volume\" to start volume calibration");
         System.out.println("Type \"timer <name>\" to add a timer");
-        String input = "";
-        String[] inputBroken;
+       
 
         /******
          * REPL - not well written, but it works
-         */
+         String input = "";
+        String[] inputBroken;
         while (true) {
             System.out.print(">");
             input = "";
@@ -1268,7 +1285,7 @@ public final class LaunchControl {
 
             // Read the device in.
             addConfigDevice(inputBroken);
-        }
+        }*/
     }
 
     /**
@@ -1585,7 +1602,7 @@ public final class LaunchControl {
     /**
      * Create the OWFS Connection to the server (owserver).
      */
-    private void createOWFS() {
+    private static void createOWFS() {
 
         System.out.println("Creating the OWFS configuration.");
         System.out.println("What is the OWFS server host?"
@@ -1626,7 +1643,7 @@ public final class LaunchControl {
      * List the One-Wire devices in OWFS.
      * Much more fully featured access
      */
-    private void listOWFSDevices() {
+    private static void listOWFSDevices() {
         try {
             List<String> owfsDirs = owfsConnection.listDirectory("/");
             if (owfsDirs.size() > 0) {
@@ -1644,7 +1661,10 @@ public final class LaunchControl {
                      I'm only aware that directories starting with
                      a number of 28 are good
                      got a directory, check for a temp */
-
+                    dir = dir.substring(1);
+                    if (probeExists(dir)) {
+                        continue;
+                    }
                     System.out.println("Checking for " + dir);
                     Temp currentTemp = new Temp(dir, dir);
                     tempList.add(currentTemp);
@@ -1661,6 +1681,20 @@ public final class LaunchControl {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Check to see if this probe already exists.
+     * @param address to check
+     * @return true if the probe is setup.
+     */
+    public static boolean probeExists(final String address) {
+        for (Temp t: tempList) {
+            if (t.getProbe().equals(address)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /***********
@@ -1803,7 +1837,7 @@ public final class LaunchControl {
      * Helper function to read the user input and tidy it up.
      * @return Trimmed String representing the UserInput
      */
-    private String readInput() {
+    private static String readInput() {
         BufferedReader br =
                 new BufferedReader(new InputStreamReader(System.in));
         String input = "";
@@ -1844,6 +1878,7 @@ public final class LaunchControl {
             // since they will launch the temp theads too
             Temp tTemp = iterator.next();
             BigDecimal currentTemp = tTemp.updateTemp();
+
             System.out.print(i.toString() + ") " + tTemp.getName());
             if (currentTemp.equals(Temp.ERROR_TEMP)) {
                   System.out.println(" doesn't have a valid temperature");
@@ -2687,10 +2722,10 @@ public final class LaunchControl {
             System.out.println("Creating on configDoc base");
             trueBase = configDoc.getDocumentElement();
         } else {
-            System.out.println("on " + baseNode.getNodeName());
+            System.out.println("on " + trueBase.getNodeName());
         }
 
-        newElement = (Element) baseNode.appendChild(newElement);
+        newElement = (Element) trueBase.appendChild(newElement);
 
         return newElement;
     }

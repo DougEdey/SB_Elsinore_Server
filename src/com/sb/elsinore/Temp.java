@@ -68,15 +68,15 @@ public final class Temp implements Runnable {
 
     /**
      * Standard constructor.
-     * @param input The probe name or input name.
+     * @param name The probe name or input name.
      *  Use "system" to create a system temperature probe
-     * @param inName The name of this temperature probe.
+     * @param inProbe The address of this temperature probe.
      */
-    public Temp(final String input, final String inName) {
+    public Temp(final String name, final String inProbe) {
 
-        String aName = inName;
+        String aName = inProbe;
         BrewServer.LOG.info("Adding" + aName);
-        if (input.equalsIgnoreCase("system")) {
+        if (name.equalsIgnoreCase("system")) {
             File tempFile = new File(rpiSystemTemp);
             if (tempFile.exists()) {
                 fProbe = rpiSystemTemp;
@@ -161,12 +161,12 @@ public final class Temp implements Runnable {
                     probePath = null;
                 }
             }
-            fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
+            this.fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
         }
 
-        probeName = aName;
-        name = input;
-        BrewServer.LOG.info(probeName + " added.");
+        this.probeName = aName;
+        this.name = name.replace(".", "-");
+        BrewServer.LOG.info(this.probeName + " added.");
     }
 
     /**
