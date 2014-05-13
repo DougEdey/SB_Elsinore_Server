@@ -883,6 +883,53 @@ public final class LaunchControl {
     }
 
     /**
+     * Add a new pump to the server.
+     * @param name The name of the pump to add.
+     * @param gpio The GPIO to add
+     */
+    public static void addPump(final String name, final String gpio) {
+        if (name.equals("") || gpio.equals("")
+                || pumpExists(name)) {
+            return;
+        }
+
+        try {
+            Pump p = new Pump(name, gpio);
+            pumpList.add(p);
+        } catch (InvalidGPIOException g) {
+            return;
+        }
+
+    }
+
+    /**
+     * Check to see if a pump with the given name exists.
+     * @param name The name of the pump to check
+     * @return True if the pump exists.
+     */
+    public static boolean pumpExists(final String name) {
+        for (Pump p: pumpList) {
+            if (p.getName().equals("name")) {
+                return true;
+            }
+        }
+        return false;
+    }
+    /**
+     * Add a new timer to the list.
+     * @param name The name of the timer.
+     * @param mode The mode of the timer.
+     */
+    public static void addTimer(final String name, final String mode) {
+        // Mode is a placeholder for now
+        if (timerList.contains(name) || name.equals("")) {
+            return;
+        }
+
+        timerList.add(name);
+    }
+
+    /**
      * Startup a PID device.
      * @param input The name of the PID.
      * @param probe The One-Wire probe address

@@ -321,7 +321,153 @@ public class BrewServer extends NanoHTTPD {
      * @return True is success, false if failure.
      */
     private boolean editVessel(final Map<String, String> params) {
+        String auxpin = "", newName = "", gpio = "";
+        String inputUnit = "";
+
+        Set<Entry<String, String>> incomingParams = params.entrySet();
+        Map<String, String> parms;
+        Iterator<Entry<String, String>> it = incomingParams.iterator();
+        Entry<String, String> param = null;
+        JSONObject incomingData = null;
+        JSONParser parser = new JSONParser();
+
+        // Try to Parse JSON Data
+        while (it.hasNext()) {
+            param = it.next();
+            BrewServer.LOG.info("Key: " + param.getKey());
+            BrewServer.LOG.info("Entry: " + param.getValue());
+            try {
+                Object parsedData = parser.parse(param.getValue());
+                if (parsedData instanceof JSONArray) {
+                    incomingData = (JSONObject) ((JSONArray) parsedData).get(0);
+                } else {
+                    incomingData = (JSONObject) parsedData;
+                    inputUnit = param.getKey();
+                }
+            } catch (Exception e) {
+                BrewServer.LOG.info("couldn't read " + param.getValue()
+                    + " as a JSON Value " + e.getMessage());
+            }
+        }
+
+        if (incomingData != null) {
+            // Use the JSON Data
+            BrewServer.LOG.info("Found valid data for " + inputUnit);
+            parms = (Map<String, String>) incomingData;
+        } else {
+            inputUnit = params.get("form");
+            parms = params;
+        }
+
+        // Fall back to the old style
+        if (parms.containsKey("new_name")) {
+            newName = parms.get("new_name");
+        }
+
+        if (parms.containsKey("new_gpio")) {
+            gpio = parms.get("new_gpio");
+        }
+        
+        if (parms.containsKey("auxpin")) {
+            auxpin = parms.get("auxpin");
+        }
+
+        if (inputUnit.equals("")) {
+            BrewServer.LOG.warning("No Valid input unit");
+            return false;
+        }
+
+        Temp tProbe = LaunchControl.findTemp(inputUnit);
+        PID tPID = LaunchControl.findPID(inputUnit);
+
+        if (tProbe != null && !newName.equals("")) {
+            tProbe.setName(newName);
+            BrewServer.LOG.warning("Updated temp name " + newName);
+        }
+
+        if (tPID != null && !newName.equals("")) {
+            tPID.getTemp().setName(newName);
+            BrewServer.LOG.warning("Updated PID Name" + newName);
+        }
+
+        if (newName.equals("")) {
+            newName = inputUnit;
+        }
+
+        if (!gpio.equals("")) {
+            // The GPIO is Set.
+            if (tPID == null) {
+                // No PID already, create one.
+                tPID = new PID(tProbe, newName, gpio);
+                tPID.setAux(auxpin);
+                LaunchControl.addPID(tPID);
+                BrewServer.LOG.warning("Create PID");
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Add a new timer to the brewery.
+     * @param params The parameter list
+     * @return True if added ok
+     */
+    private boolean addTimer(final Map<String, String> params) {
         String oldName = "", newName = "", gpio = "";
+        String inputUnit = "";
+
+        Set<Entry<String, String>> incomingParams = params.entrySet();
+        Map<String, String> parms;
+        Iterator<Entry<String, String>> it = incomingParams.iterator();
+        Entry<String, String> param = null;
+        JSONObject incomingData = null;
+        JSONParser parser = new JSONParser();
+
+        // Try to Parse JSON Data
+        while (it.hasNext()) {
+            param = it.next();
+            BrewServer.LOG.info("Key: " + param.getKey());
+            BrewServer.LOG.info("Entry: " + param.getValue());
+            try {
+                Object parsedData = parser.parse(param.getValue());
+                if (parsedData instanceof JSONArray) {
+                    incomingData = (JSONObject) ((JSONArray) parsedData).get(0);
+                } else {
+                    incomingData = (JSONObject) parsedData;
+                    inputUnit = param.getKey();
+                }
+            } catch (Exception e) {
+                BrewServer.LOG.info("couldn't read " + param.getValue()
+                    + " as a JSON Value " + e.getMessage());
+            }
+        }
+
+        if (incomingData != null) {
+            // Use the JSON Data
+            BrewServer.LOG.info("Found valid data for " + inputUnit);
+            parms = (Map<String, String>) incomingData;
+        } else {
+            inputUnit = params.get("form");
+            parms = params;
+        }
+
+        // Fall back to the old style
+        if (parms.containsKey("new_name")) {
+            newName = parms.get("new_name");
+        }
+
+        LaunchControl.addTimer(newName, "");
+        return true;
+    }
+
+    /**
+     * Add a new pump to the brewery.
+     * @param params The parameter list
+     * @return True if added ok
+     */
+    private boolean addPump(final Map<String, String> params) {
+        String newName = "", gpio = "";
         String inputUnit = "";
 
         Set<Entry<String, String>> incomingParams = params.entrySet();
@@ -368,38 +514,7 @@ public class BrewServer extends NanoHTTPD {
             gpio = parms.get("new_gpio");
         }
 
-        if (inputUnit.equals("")) {
-            BrewServer.LOG.warning("No Valid input unit");
-            return false;
-        }
-
-        Temp tProbe = LaunchControl.findTemp(inputUnit);
-        PID tPID = LaunchControl.findPID(inputUnit);
-
-        if (tProbe != null && !newName.equals("")) {
-            tProbe.setName(newName);
-            BrewServer.LOG.warning("Updated temp name " + newName);
-        }
-
-        if (tPID != null && !newName.equals("")) {
-            tPID.getTemp().setName(newName);
-            BrewServer.LOG.warning("Updated PID Name" + newName);
-        }
-
-        if (newName.equals("")) {
-            newName = inputUnit;
-        }
-
-        if (!gpio.equals("")) {
-            // The GPIO is Set.
-            if (tPID == null) {
-                // No PID already, create one.
-                tPID = new PID(tProbe, newName, gpio);
-                LaunchControl.addPID(tPID);
-                BrewServer.LOG.warning("Create PID");
-            }
-        }
-
+        LaunchControl.addPump(newName, gpio);
         return true;
     }
 
@@ -540,7 +655,7 @@ public class BrewServer extends NanoHTTPD {
 
         return true;
     }
-    
+
     /**
      * The main method that checks the data coming into the server.
      * @param uri The URI requested
@@ -683,6 +798,14 @@ public class BrewServer extends NanoHTTPD {
         if (uri.toLowerCase().equals("/timers")) {
             return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                 LaunchControl.getBrewDay().brewDayStatus().toString());
+        }
+
+        if (uri.toLowerCase().equals("/addPump")) {
+            addPump(parms);
+        }
+
+        if (uri.toLowerCase().equals("/addTimer")) {
+            addTimer(parms);
         }
 
         if (new File(rootDir, uri).exists()) {

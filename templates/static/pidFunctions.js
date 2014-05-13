@@ -200,15 +200,23 @@ function updateTempProbe(vessel, val) {
 }
 
 function editDevice(element) {
+	// Is the edit form already displayed
 	var vessel = element.id.substring(0, element.id.indexOf("-title"));
+	var vesselEditForm = $('#'+vessel+'-edit');
+	if (vesselEditForm.val() != undefined) {
+		return;
+	}
+	
 	var vesselDiv = element.id;
 	var gpio = $('#' + vesselDiv  + ' input[name="gpio"]').val();
+	var auxgpio = $('#' + vesselDiv  + ' input[name="auxgpio"]').val();
 	
 	// Insert a couple of new form elements
 	$('#' + vesselDiv).append("<div id='"+vessel+"-edit'>"
 		+ "<form id='" + vessel + "-edit' name='" + vessel + "-edit'>"
-		+ "<input type='text' name='new_name' id='new_name' value='"+vessel+"' />"
-		+ "<input type='text' name='new_gpio' id='new_gpio' value-'"+gpio+"' />"
+		+ "<input type='text' name='new_name' id='new_name' value='"+vessel+"' /><br/>"
+		+ "<input type='text' name='new_gpio' id='new_gpio' value-'"+gpio+"' placeholder='GPIO'/><br/>"
+		+ "<input type='text' name='aux_gpio' id='aux_gpio' value-'"+auxgpio+"' placeholder='Aux GPIO' /><br/>"
 		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
 		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>Update</button>"
 		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
@@ -406,14 +414,41 @@ function submitForm(form){
 }
 
 function submitPump(pumpStatus) {
-		  $.ajax({
-					 url: 'updatepump',
-		  			type: 'POST',
-		  			data: "toggle=" + pumpStatus.id,
-					success: function(data) {data = null}
-			});	
-		  window.disableUpdates = 0;
-		  return false;
+	$.ajax({
+		url: 'updatepump',
+		type: 'POST',
+		data: "toggle=" + pumpStatus.id,
+		success: function(data) {data = null}
+	});	
+	window.disableUpdates = 0;
+	return false;
+}
+
+function addPump() {
+	var newname = prompt("New pump name");
+	var gpio = prompt("GPIO Pin");
+	
+	$.ajax({
+		url: 'addpump',
+		type: 'POST',
+		data: "new_name=" + newname + "&new_gpio=" + gpio,
+		success: function(data) {data = null}
+	});	
+	window.disableUpdates = 0;
+	return false;
+}
+
+function addTimer() {
+	var newname = prompt("New Timer Name");
+	
+	$.ajax({
+		url: 'addtimer',
+		type: 'POST',
+		data: "new_name=" + newname,
+		success: function(data) {data = null}
+	});	
+	window.disableUpdates = 0;
+	return false;
 }
 
 function mashToggle(button, position) {

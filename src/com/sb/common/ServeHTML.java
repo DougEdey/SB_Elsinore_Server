@@ -118,6 +118,10 @@ public class ServeHTML {
             while (pumpIterator.hasNext()) {
                 pumpContent += addPump(pumpIterator.next().getName());
             }
+            
+            pumpContent += "<span class='holo-button pump' id=\"New\" type=\"submit\""
+                    + "onclick='addPump(); sleep(2000); location.reload();'>"
+                    + "Add New Pump</span>";
             pumpContent += lineSep + "</div></div>";
             pumpContent += lineSep + " </div>" + lineSep;
         }
@@ -362,6 +366,7 @@ public class ServeHTML {
             + "Aux ON</button><br />";
 
         controller += "<input type='hidden' id='gpio' name='gpio' />"
+            + "<input type='hidden' id='auxgpio' name='auxgpio' />"
             + "<button class='holo-button modeclass'"
             + " id=\"sendcommand\" type=\"submit\""
             + " value=\"SubmitCommand\""
@@ -429,6 +434,10 @@ public class ServeHTML {
                     + "Reset " + timer
                 + "</span></div><br /><br />";
         }
+
+        timers += "<span class='holo-button pump' id=\"New\" type=\"submit\""
+                + "onclick='addTimer(); sleep(2000); location.reload();'>"
+                + "Add New Timer</span>";
 
         timers += "</div>" // panel body
                 + "</div>"; // panel
