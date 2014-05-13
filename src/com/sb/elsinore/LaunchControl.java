@@ -1164,10 +1164,10 @@ public final class LaunchControl {
                     && !currentFile.getName().startsWith("w1_bus_master")) {
 
                 // Check to see if theres a non temp probe (DS18x20)
-                if (!currentFile.getName().contains("/28")
-                        && owfsPort != null) {
+                if (!currentFile.getName().startsWith("28")
+                        && !useOWFS) {
                     System.out.println(
-                            "Detected a non temp probe.\n"
+                            "Detected a non temp probe." + currentFile.getName() + "\n"
                             + "Do you want to switch to OWFS? [y/N]");
                     String t = readInput();
                     if (t.toLowerCase().startsWith("y")) {

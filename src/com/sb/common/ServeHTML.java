@@ -104,27 +104,26 @@ public class ServeHTML {
 
         // Add in the pumps
         // Declare this outside as an empty string since not everyone has these
-        String pumpContent = "";
+        String pumpContent =
+            "<div id='pumps'><div class=\"panel panel-info\">" + lineSep;
+        pumpContent +=
+            "<div id=\"pumps-title\" class=\"title panel-heading \">"
+            + "Pumps</div>";
+        pumpContent += "<div id=\"pumps-body\" class=\"panel-body\">";
+
         if (pumps != null && pumps.size() > 0) {
             Iterator<Pump> pumpIterator = pumps.iterator();
-
-            pumpContent =
-                "<div id='pumps'><div class=\"panel panel-info\">" + lineSep;
-            pumpContent +=
-                "<div id=\"pumps-title\" class=\"title panel-heading \">"
-                + "Pumps</div>";
-            pumpContent += "<div id=\"pumps-body\" class=\"panel-body\">";
 
             while (pumpIterator.hasNext()) {
                 pumpContent += addPump(pumpIterator.next().getName());
             }
-            
-            pumpContent += "<span class='holo-button pump' id=\"New\" type=\"submit\""
-                    + "onclick='addPump(); sleep(2000); location.reload();'>"
-                    + "Add New Pump</span>";
-            pumpContent += lineSep + "</div></div>";
-            pumpContent += lineSep + " </div>" + lineSep;
+
         }
+        pumpContent += "<span class='holo-button pump' id=\"New\" type=\"submit\""
+                + "onclick='addPump(); sleep(2000); location.reload();'>"
+                + "Add New Pump</span>";
+        pumpContent += lineSep + "</div></div>";
+        pumpContent += lineSep + " </div>" + lineSep;
 
         // TODO: Update this for custom page ordering, we should be able to do this quickly and easily
         page += pidContent;

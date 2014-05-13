@@ -367,7 +367,7 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("new_gpio")) {
             gpio = parms.get("new_gpio");
         }
-        
+
         if (parms.containsKey("auxpin")) {
             auxpin = parms.get("auxpin");
         }
@@ -800,11 +800,11 @@ public class BrewServer extends NanoHTTPD {
                 LaunchControl.getBrewDay().brewDayStatus().toString());
         }
 
-        if (uri.toLowerCase().equals("/addPump")) {
+        if (uri.toLowerCase().equals("/addpump")) {
             addPump(parms);
         }
 
-        if (uri.toLowerCase().equals("/addTimer")) {
+        if (uri.toLowerCase().equals("/addtimer")) {
             addTimer(parms);
         }
 
