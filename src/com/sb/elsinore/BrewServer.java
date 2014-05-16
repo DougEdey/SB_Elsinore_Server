@@ -1,5 +1,7 @@
 package com.sb.elsinore;
 
+import jGPIO.InvalidGPIOException;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -22,6 +24,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import com.sb.elsinore.NanoHTTPD.Response.Status;
+import com.sb.elsinore.NanoHTTPD.Response;
 
 /**
  * A custom HTTP server for Elsinore.
@@ -76,6 +79,7 @@ public class BrewServer extends NanoHTTPD {
             put("zip", "application/octet-stream");
             put("exe", "application/octet-stream");
             put("class", "application/octet-stream");
+            put("json", "application/json");
         }
     };
 
@@ -320,7 +324,7 @@ public class BrewServer extends NanoHTTPD {
      * @param params The parameters from the client.
      * @return True is success, false if failure.
      */
-    private boolean editVessel(final Map<String, String> params) {
+    private Response editVessel(final Map<String, String> params) {
         String auxpin = "", newName = "", gpio = "";
         String inputUnit = "";
 
@@ -330,6 +334,7 @@ public class BrewServer extends NanoHTTPD {
         Entry<String, String> param = null;
         JSONObject incomingData = null;
         JSONParser parser = new JSONParser();
+        String error_msg = "No Changes Made";
 
         // Try to Parse JSON Data
         while (it.hasNext()) {
@@ -374,7 +379,7 @@ public class BrewServer extends NanoHTTPD {
 
         if (inputUnit.equals("")) {
             BrewServer.LOG.warning("No Valid input unit");
-            return false;
+            error_msg = "No Valid Input Unit";
         }
 
         Temp tProbe = LaunchControl.findTemp(inputUnit);
@@ -402,10 +407,29 @@ public class BrewServer extends NanoHTTPD {
                 tPID.setAux(auxpin);
                 LaunchControl.addPID(tPID);
                 BrewServer.LOG.warning("Create PID");
+                return new Response(Status.OK, MIME_TYPES.get("txt"),
+                    "PID Added");
+            } else if (!tPID.getGPIO().equals(gpio)) {
+                // We have a PID, set it to the new value
+                tPID.setGPIO(gpio);
+                return new Response(Status.OK, MIME_TYPES.get("txt"),
+                        "PID Updated");
             }
         }
 
-        return true;
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Add or update a Temperature probe to the system,"
+            + " incoming object"
+            + " should be a JSON Literal of \nold_name: {details}");
+        usage.put("new_name", "The name of the Temperature Probe to add");
+        usage.put("new_gpio", "The GPIO for the PID to work on");
+        usage.put("aux_gpio", "The Auxilliary GPIO for the PID to work on");
+        usage.put("Error", "Invalid parameters passed " + error_msg
+            + " = " + params.toString());
+        
+        return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
+            usage.toJSONString());
+
     }
 
     /**
@@ -413,7 +437,7 @@ public class BrewServer extends NanoHTTPD {
      * @param params The parameter list
      * @return True if added ok
      */
-    private boolean addTimer(final Map<String, String> params) {
+    private Response addTimer(final Map<String, String> params) {
         String oldName = "", newName = "", gpio = "";
         String inputUnit = "";
 
@@ -457,8 +481,19 @@ public class BrewServer extends NanoHTTPD {
             newName = parms.get("new_name");
         }
 
-        LaunchControl.addTimer(newName, "");
-        return true;
+        if (LaunchControl.addTimer(newName, "")) {
+            return new Response(Status.OK, MIME_TYPES.get("txt"),
+                "Timer Added");
+        }
+
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Add a new pump to the system.");
+        usage.put("new_name", "The name of the timer to add");
+        usage.put("mode", "The mode for the timer, increment, or decrement (optional)");
+        usage.put("Error", "Invalid parameters passed " + params.toString());
+
+        return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
+            usage.toJSONString());
     }
 
     /**
@@ -466,7 +501,7 @@ public class BrewServer extends NanoHTTPD {
      * @param params The parameter list
      * @return True if added ok
      */
-    private boolean addPump(final Map<String, String> params) {
+    private Response addPump(final Map<String, String> params) {
         String newName = "", gpio = "";
         String inputUnit = "";
 
@@ -514,8 +549,18 @@ public class BrewServer extends NanoHTTPD {
             gpio = parms.get("new_gpio");
         }
 
-        LaunchControl.addPump(newName, gpio);
-        return true;
+        if (LaunchControl.addPump(newName, gpio)) {
+            return new Response(Status.OK, MIME_TYPES.get("txt"), "Pump Added");
+        }
+
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Add a new pump to the system");
+        usage.put("new_name", "The name of the pump to add");
+        usage.put("new_gpio", "The GPIO for the pump to work on");
+        usage.put("Error", "Invalid parameters passed " + params.toString());
+        
+        return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
+            usage.toJSONString());
     }
 
     /**
@@ -524,7 +569,7 @@ public class BrewServer extends NanoHTTPD {
      * @return True if success, false if failure
      */
     @SuppressWarnings("unchecked")
-    private boolean updatePID(final Map<String, String> params) {
+    private Response updatePID(final Map<String, String> params) {
         String temp, mode = "off", inputUnit = null;
         BigDecimal dTemp = new BigDecimal(0),
             duty = new BigDecimal(0),
@@ -559,6 +604,8 @@ public class BrewServer extends NanoHTTPD {
             }
         }
 
+        JSONObject sub_usage = new JSONObject();
+
         if (incomingData != null) {
             // Use the JSON Data
             BrewServer.LOG.info("Found valid data for " + inputUnit);
@@ -569,6 +616,7 @@ public class BrewServer extends NanoHTTPD {
         }
 
         // Fall back to the old style
+        sub_usage.put("dutycycle", "The new duty cycle % to set");
         if (parms.containsKey("dutycycle")) {
             temp = parms.get("dutycycle");
             try {
@@ -580,6 +628,7 @@ public class BrewServer extends NanoHTTPD {
             }
         }
 
+        sub_usage.put("dutycycle", "The new cycle time in seconds to set");
         if (parms.containsKey("cycletime")) {
             temp = parms.get("cycletime");
             try {
@@ -591,6 +640,7 @@ public class BrewServer extends NanoHTTPD {
             }
         }
 
+        sub_usage.put("setpoint", "The new target temperature to set");
         if (parms.containsKey("setpoint")) {
             temp = parms.get("setpoint");
             try {
@@ -602,6 +652,7 @@ public class BrewServer extends NanoHTTPD {
             }
         }
 
+        sub_usage.put("p", "The new proportional value to set");
         if (parms.containsKey("p")) {
             temp = parms.get("p");
             try {
@@ -613,6 +664,7 @@ public class BrewServer extends NanoHTTPD {
             }
         }
 
+        sub_usage.put("p", "The new integral value to set");
         if (parms.containsKey("i")) {
             temp = parms.get("i");
             try {
@@ -624,6 +676,7 @@ public class BrewServer extends NanoHTTPD {
             }
         }
 
+        sub_usage.put("p", "The new differential value to set");
         if (parms.containsKey("d")) {
             temp = parms.get("d");
             try {
@@ -635,6 +688,7 @@ public class BrewServer extends NanoHTTPD {
             }
         }
 
+        sub_usage.put("mode", "The new mode to set");
         if (parms.containsKey("mode")) {
             mode = parms.get("mode");
             BrewServer.LOG.info("Mode: " + mode);
@@ -642,18 +696,26 @@ public class BrewServer extends NanoHTTPD {
 
         BrewServer.LOG.info("Form: " + inputUnit);
 
+        JSONObject usage = new JSONObject();
+        usage.put(":PIDname", sub_usage);
+
         PID tPID = LaunchControl.findPID(inputUnit);
         if (tPID != null) {
             BrewServer.LOG.info(mode + ":" + duty + ":" + cycle + ":" + setpoint
                 + ":" + p + ":" + i + ":" + d);
             tPID.updateValues(mode, duty, cycle, setpoint, p, i, d);
+            return new Response(Status.OK,
+                MIME_HTML, "PID " + inputUnit + " updated");
         } else {
             BrewServer.LOG.warning("Attempted to update a non existent PID, "
                     + inputUnit + ". Please check your client");
-            return false;
+            usage.put("Error", "Non existent PID specified: " + inputUnit);
+            return new Response(
+                Status.BAD_REQUEST,
+                MIME_TYPES.get("json"),
+                usage.toJSONString());
         }
 
-        return true;
     }
 
     /**
@@ -694,24 +756,12 @@ public class BrewServer extends NanoHTTPD {
             }
 
             if (uri.toLowerCase().equals("/editdevice")) {
-                if (editVessel(parms)) {
-                    return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                        "Editted Vessel");
-                } else {
-                    return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
-                            "Failed to Edit Vessel. Please check logs");
-                }
+                return editVessel(parms);
             }
             if (uri.toLowerCase().equals("/updatepid")) {
                 // parse the values if possible
                 // TODO: Break this out into a function
-                if (updatePID(parms)) {
-                    return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                        "Updated PID");
-                } else {
-                    return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
-                            "Failed to update PID. Please check logs");
-                }
+                return updatePID(parms);
             }
 
             if (uri.toLowerCase().equals("/updateday")) {
@@ -765,7 +815,9 @@ public class BrewServer extends NanoHTTPD {
                         return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                             "Updated Pump");
                     } else {
-                        LOG.warning("Invalid pump: " + pumpname + " provided.");
+                        return new Response(Status.BAD_REQUEST,
+                            MIME_TYPES.get("txt"),
+                            "Invalid pump: " + pumpname + " provided.");
                     }
                 }
             }
@@ -801,19 +853,41 @@ public class BrewServer extends NanoHTTPD {
         }
 
         if (uri.toLowerCase().equals("/addpump")) {
-            addPump(parms);
+            return addPump(parms);
         }
 
         if (uri.toLowerCase().equals("/addtimer")) {
-            addTimer(parms);
+            return addTimer(parms);
         }
 
-        if (new File(rootDir, uri).exists()) {
+        if (uri.toLowerCase().equals("/addvolpoint")) {
+            return addVolumePoint(parms);
+        }
+
+        if (!uri.equals("") && new File(rootDir, uri).exists()) {
             return serveFile(uri, header, rootDir);
         }
 
+        JSONObject usage = new JSONObject();
+        usage.put("controller", "Get the main controller page");
+        usage.put("getstatus", "Get the current status as a JSON object");
+        usage.put("timers", "Get the current timer status");
+
+        usage.put("addpump", "Add a new pump");
+        usage.put("addtimer", "Add a new timer");
+        usage.put("addvolpoint", "Add a new volume point");
+
+        usage.put("toggleaux", "toggle an aux output");
+        usage.put("mashprofile", "Set a mash profile for the output");
+        usage.put("editdevice", "Edit the settings on a device");
+
+        usage.put("updatepid", "Update the PID Settings");
+        usage.put("updateday", "Update the brewday information");
+        usage.put("updatepump", "Change the pump status off/on");
+
         BrewServer.LOG.info("Invalid URI: " + uri);
-        return new NanoHTTPD.Response(Status.OK, MIME_HTML, "Unrecognized URL");
+        return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+            usage.toJSONString());
     }
 
     /**
@@ -1061,4 +1135,117 @@ public class BrewServer extends NanoHTTPD {
         return newUri;
     }
 
+    /**
+     * Add a new data point for the volume reading.
+     * @param params List of parameters, must include "name" and "volume".
+     *  Optional: probe details for onewire or direct ADC
+     * @return A NanoHTTPD response
+     */
+    private Response addVolumePoint(Map<String, String> params) {
+        JSONObject usage = new JSONObject();
+
+        usage.put("name", "Temperature probe name to add a volume point to");
+        usage.put("volume",
+                "Volume that is in the vessel to add a datapoint for");
+        usage.put("units",
+                "The Volume units to use (only required when setting up)");
+        usage.put("onewire_address",
+                "The one wire address to be used for analogue reads");
+        usage.put("onewire_offset",
+                "The one wire offset to be used for analogue reads");
+        usage.put("adc_pin",
+                "The ADC Pin to be used for analogue reads");
+
+
+        String name = params.get("name");
+        String volume = params.get("volume");
+        String units = params.get("units");
+
+        String onewire_add = params.get("onewire_address");
+        String onewire_offset = params.get("onewire_offset");
+        String adc_pin = params.get("adc_pin");
+
+        String error_msg = "";
+
+        if (name == null || volume == null) {
+            error_msg = "No name or volume supplied";
+            usage.put("Error", "Invalid parameters: " + error_msg);
+            return new Response(Response.Status.BAD_REQUEST,
+                    MIME_TYPES.get("json"), usage.toJSONString());
+        }
+
+        // We have a name and volume, lookup the temp probe
+        Temp t = LaunchControl.findTemp(name);
+        if (t == null) {
+            error_msg = "Invalid temperature probe name supplied ("
+                + name + ")";
+            usage.put("Error", "Invalid parameters: " + error_msg);
+            return new Response(Response.Status.BAD_REQUEST,
+                    MIME_TYPES.get("json"), usage.toJSONString());
+        }
+        // We have a temp probe, check to see if there's a valid volume input
+        if (!t.hasVolume()) {
+            if (onewire_add == null && onewire_offset == null
+                    && adc_pin == null) {
+                error_msg =
+                  "No volume input setup, and no valid volume inputs provided";
+                usage.put("Error", "Invalid parameters: " + error_msg);
+                return new Response(Response.Status.BAD_REQUEST,
+                        MIME_TYPES.get("json"), usage.toJSONString());
+            }
+
+            // Check for ADC Pin
+            if (adc_pin != null) {
+                int adcpin = Integer.parseInt(adc_pin);
+                if (0 < adcpin  || adcpin > 7) {
+                    error_msg = "Invalid ADC Pin offset";
+                    usage.put("Error", "Invalid parameters: " + error_msg);
+                    return new Response(Response.Status.BAD_REQUEST,
+                            MIME_TYPES.get("json"), usage.toJSONString());
+                }
+                try {
+                    if (!t.setupVolumes(adcpin, units)) {
+                        error_msg = "Could not setup volumes for " + adcpin
+                            + " Units: " + units;
+                        usage.put("Error", "Invalid parameters: " + error_msg);
+                        return new Response(Response.Status.BAD_REQUEST,
+                            MIME_TYPES.get("json"), usage.toJSONString());
+                    }
+                } catch (InvalidGPIOException g) {
+                    error_msg = "Invalid GPIO Pin " + g.getMessage();
+                        usage.put("Error", "Invalid parameters: " + error_msg);
+                        return new Response(Response.Status.BAD_REQUEST,
+                            MIME_TYPES.get("json"), usage.toJSONString());
+                }
+
+            } else if (onewire_add != null && onewire_offset != null) {
+                // Setup Onewire pin
+                if (!t.setupVolumes(onewire_add, onewire_offset, units)) {
+                    error_msg = "Could not setup volumes for " + onewire_add
+                            + " offset: " + onewire_offset + " Units: " + units;
+                    usage.put("Error", "Invalid parameters: " + error_msg);
+                    return new Response(Response.Status.BAD_REQUEST,
+                            MIME_TYPES.get("json"), usage.toJSONString());
+                }
+            }
+        }
+
+        // Should be good to go now
+        try {
+            BigDecimal actualVol = new BigDecimal(volume);
+            if (t.addVolumeMeasurement(actualVol)) {
+                return new Response(Response.Status.OK,
+                    MIME_TYPES.get("json"), "{Result: 'OK'}");
+            }
+        } catch (NumberFormatException nfe) {
+            error_msg = "Could not setup volumes for " + volume
+                + " Units: " + units;
+            usage.put("Error", "Invalid parameters: " + error_msg);
+            return new Response(Response.Status.BAD_REQUEST,
+                    MIME_TYPES.get("json"), usage.toJSONString());
+        }
+
+        return new Response(Response.Status.BAD_REQUEST,
+                MIME_TYPES.get("json"), usage.toJSONString());
+    }
 }

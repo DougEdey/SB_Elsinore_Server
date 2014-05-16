@@ -653,4 +653,16 @@ public final class PID implements Runnable {
 
         return statusMap;
     }
+
+    /**
+     * Set the GPIO to a new pin, shutdown the old one first.
+     * @param gpio The new GPIO to use
+     */
+    public void setGPIO(final String gpio) {
+        // Close down the existing OutputControl
+        this.outputControl.shutdown();
+        this.fGPIO = gpio;
+        this.outputControl = new OutputControl(
+            this.fName, this.fGPIO, this.heatSetting.cycle_time);
+    }
 }
