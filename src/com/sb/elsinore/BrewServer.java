@@ -732,107 +732,106 @@ public class BrewServer extends NanoHTTPD {
         final Map<String, String> files) {
 
         BrewServer.LOG.info("URL : " + uri + " method: " + method);
-        if (method == Method.POST) {
-            // parms contains the properties here
-            if (uri.toLowerCase().equals("/mashprofile")) {
-                if (updateMashProfile(parms)) {
-                    return new NanoHTTPD.Response(
-                        Status.OK, MIME_HTML, "Updated MashProfile");
-                }
-                // TODO: Report Errors
+        
+        // parms contains the properties here
+        if (uri.toLowerCase().equals("/mashprofile")) {
+            if (updateMashProfile(parms)) {
                 return new NanoHTTPD.Response(
-                    Status.BAD_REQUEST, MIME_HTML,
-                    "Failed to update Mashprofile");
+                    Status.OK, MIME_HTML, "Updated MashProfile");
             }
+            // TODO: Report Errors
+            return new NanoHTTPD.Response(
+                Status.BAD_REQUEST, MIME_HTML,
+                "Failed to update Mashprofile");
+        }
 
-            if (uri.toLowerCase().equals("/togglemash")) {
-                if (toggleMashProfile(parms)) {
-                    return new NanoHTTPD.Response(Status.OK,
-                        MIME_HTML, "Toggled mash profile");
-                }
-                // TODO: Report Errors
-                return new NanoHTTPD.Response(Status.BAD_REQUEST,
-                    MIME_HTML, "Failed to toggle MashProfile");
+        if (uri.toLowerCase().equals("/togglemash")) {
+            if (toggleMashProfile(parms)) {
+                return new NanoHTTPD.Response(Status.OK,
+                    MIME_HTML, "Toggled mash profile");
             }
+            // TODO: Report Errors
+            return new NanoHTTPD.Response(Status.BAD_REQUEST,
+                MIME_HTML, "Failed to toggle MashProfile");
+        }
 
-            if (uri.toLowerCase().equals("/editdevice")) {
-                return editVessel(parms);
-            }
-            if (uri.toLowerCase().equals("/updatepid")) {
-                // parse the values if possible
-                // TODO: Break this out into a function
-                return updatePID(parms);
-            }
+        if (uri.toLowerCase().equals("/editdevice")) {
+            return editVessel(parms);
+        }
+        if (uri.toLowerCase().equals("/updatepid")) {
+            // parse the values if possible
+            return updatePID(parms);
+        }
 
-            if (uri.toLowerCase().equals("/updateday")) {
-                // we're storing the data for the brew day
-                String tempDateStamp;
-                BrewDay brewDay = LaunchControl.getBrewDay();
+        if (uri.toLowerCase().equals("/updateday")) {
+            // we're storing the data for the brew day
+            String tempDateStamp;
+            BrewDay brewDay = LaunchControl.getBrewDay();
 
-                // updated date
-                if (parms.containsKey("updated")) {
-                    tempDateStamp = parms.get("updated");
-                    brewDay.setUpdated(tempDateStamp);
-                } else {
-                    // we don't have an updated datestamp
-                    return new NanoHTTPD.Response( Status.OK, MIME_HTML,
-                        "No update datestamp, not updating a thang! YA HOSER!");
-                }
-
-                Iterator<Entry<String, String>> it =
-                    parms.entrySet().iterator();
-                Entry<String, String> e = null;
-
-                while (it.hasNext()) {
-                    e = it.next();
-
-                    if (e.getKey().endsWith("Start")) {
-                        int trimEnd = e.getKey().length() - "Start".length();
-                        String name = e.getKey().substring(0, trimEnd);
-                        brewDay.startTimer(name, e.getValue());
-                    } else if (e.getKey().endsWith("End"))  {
-                        int trimEnd = e.getKey().length() - "End".length();
-                        String name = e.getKey().substring(0, trimEnd);
-                        brewDay.stopTimer(name, e.getValue());
-                    }
-                }
-
+            // updated date
+            if (parms.containsKey("updated")) {
+                tempDateStamp = parms.get("updated");
+                brewDay.setUpdated(tempDateStamp);
+            } else {
+                // we don't have an updated datestamp
                 return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                    "Updated Brewday");
+                    "No update datestamp, not updating a thang! YA HOSER!");
             }
 
-            if (uri.toLowerCase().equals("/updatepump")) {
-                if (parms.containsKey("toggle")) {
-                    String pumpname = parms.get("toggle");
-                    Pump tempPump = LaunchControl.findPump(pumpname);
-                    if (tempPump != null) {
-                        if (tempPump.getStatus()) {
-                            tempPump.turnOff();
-                        } else {
-                            tempPump.turnOn();
-                        }
+            Iterator<Entry<String, String>> it =
+                parms.entrySet().iterator();
+            Entry<String, String> e = null;
 
-                        return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                            "Updated Pump");
-                    } else {
-                        return new Response(Status.BAD_REQUEST,
-                            MIME_TYPES.get("txt"),
-                            "Invalid pump: " + pumpname + " provided.");
-                    }
+            while (it.hasNext()) {
+                e = it.next();
+
+                if (e.getKey().endsWith("Start")) {
+                    int trimEnd = e.getKey().length() - "Start".length();
+                    String name = e.getKey().substring(0, trimEnd);
+                    brewDay.startTimer(name, e.getValue());
+                } else if (e.getKey().endsWith("End"))  {
+                    int trimEnd = e.getKey().length() - "End".length();
+                    String name = e.getKey().substring(0, trimEnd);
+                    brewDay.stopTimer(name, e.getValue());
                 }
             }
 
-            if (uri.toLowerCase().equals("/toggleaux")) {
-                if (parms.containsKey("toggle")) {
-                    String pidname = parms.get("toggle");
-                    PID tempPID = LaunchControl.findPID(pidname);
-                    if (tempPID != null) {
-                        tempPID.toggleAux();
-                        return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                            "Updated Aux for " + pidname);
+            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                "Updated Brewday");
+        }
+
+        if (uri.toLowerCase().equals("/updatepump")) {
+            if (parms.containsKey("toggle")) {
+                String pumpname = parms.get("toggle");
+                Pump tempPump = LaunchControl.findPump(pumpname);
+                if (tempPump != null) {
+                    if (tempPump.getStatus()) {
+                        tempPump.turnOff();
                     } else {
-                        LOG.warning("Invalid PID: " + pidname + " provided.");
+                        tempPump.turnOn();
                     }
+
+                    return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                        "Updated Pump");
+                } else {
+                    return new Response(Status.BAD_REQUEST,
+                        MIME_TYPES.get("txt"),
+                        "Invalid pump: " + pumpname + " provided.");
+                }
+            }
+        }
+
+        if (uri.toLowerCase().equals("/toggleaux")) {
+            if (parms.containsKey("toggle")) {
+                String pidname = parms.get("toggle");
+                PID tempPID = LaunchControl.findPID(pidname);
+                if (tempPID != null) {
+                    tempPID.toggleAux();
+                    return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                        "Updated Aux for " + pidname);
+                } else {
+                    LOG.warning("Invalid PID: " + pidname + " provided.");
+                    return new Response("No valid PID name supplied " + pidname + " for toggle=");
                 }
             }
         }
