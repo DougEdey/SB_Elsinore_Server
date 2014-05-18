@@ -518,10 +518,7 @@ public final class LaunchControl {
             tJSON.put("name", t.getName());
             tJSON.put("tempprobe", tJSONTemp);
 
-            System.out.println("Address " + t.getVolumeAddress());
-            System.out.println("Offset " + t.getVolumeOffset());
             if (t.hasVolume()) {
-                System.out.println("Volume is valid");
                 JSONObject volumeJSON = new JSONObject();
                 volumeJSON.put("volume", t.getVolume());
                 volumeJSON.put("units", t.getVolumeUnit());
@@ -531,7 +528,7 @@ public final class LaunchControl {
                     volumeJSON.put("address", t.getVolumeAddress());
                     volumeJSON.put("offset", t.getVolumeOffset());
                 }
-                
+
                 tJSON.put("volume", volumeJSON);
             }
 
