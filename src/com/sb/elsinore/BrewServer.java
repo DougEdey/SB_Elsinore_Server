@@ -84,6 +84,47 @@ public class BrewServer extends NanoHTTPD {
     };
 
 
+    public Map<String, String> ParseParams(Map<String, String> params) {
+        Set<Entry<String, String>> incomingParams = params.entrySet();
+        Map<String, String> parms;
+        Iterator<Entry<String, String>> it = incomingParams.iterator();
+        Entry<String, String> param = null;
+        JSONObject incomingData = null;
+        JSONParser parser = new JSONParser();
+        String inputUnit = null;
+
+        // Try to Parse JSON Data
+        while (it.hasNext()) {
+            param = it.next();
+            BrewServer.LOG.info("Key: " + param.getKey());
+            BrewServer.LOG.info("Entry: " + param.getValue());
+            try {
+                Object parsedData = parser.parse(param.getValue());
+                if (parsedData instanceof JSONArray) {
+                    incomingData = (JSONObject) ((JSONArray) parsedData).get(0);
+                } else {
+                    incomingData = (JSONObject) parsedData;
+                    inputUnit = param.getKey();
+                }
+            } catch (Exception e) {
+                BrewServer.LOG.info("couldn't read " + param.getValue()
+                    + " as a JSON Value " + e.getMessage());
+            }
+        }
+
+        if (incomingData != null) {
+            // Use the JSON Data
+            BrewServer.LOG.info("Found valid data for " + inputUnit);
+            parms = (Map<String, String>) incomingData;
+        } else {
+            inputUnit = params.get("form");
+            parms = params;
+            parms.put("inputunit", inputUnit);
+        }
+
+        return parms;
+
+    }
     /**
      * Constructor to create the HTTP Server.
      * @param port The port to run on
@@ -570,7 +611,7 @@ public class BrewServer extends NanoHTTPD {
      */
     @SuppressWarnings("unchecked")
     private Response updatePID(final Map<String, String> params) {
-        String temp, mode = "off", inputUnit = null;
+        String temp, mode = "off";
         BigDecimal dTemp = new BigDecimal(0),
             duty = new BigDecimal(0),
             cycle = new BigDecimal(0),
@@ -578,42 +619,10 @@ public class BrewServer extends NanoHTTPD {
             p = new BigDecimal(0),
             i = new BigDecimal(0),
             d = new BigDecimal(0);
-        Set<Entry<String, String>> incomingParams = params.entrySet();
-        Map<String, String> parms;
-        Iterator<Entry<String, String>> it = incomingParams.iterator();
-        Entry<String, String> param = null;
-        JSONObject incomingData = null;
-        JSONParser parser = new JSONParser();
-
-        // Try to Parse JSON Data
-        while (it.hasNext()) {
-            param = it.next();
-            BrewServer.LOG.info("Key: " + param.getKey());
-            BrewServer.LOG.info("Entry: " + param.getValue());
-            try {
-                Object parsedData = parser.parse(param.getValue());
-                if (parsedData instanceof JSONArray) {
-                    incomingData = (JSONObject) ((JSONArray) parsedData).get(0);
-                } else {
-                    incomingData = (JSONObject) parsedData;
-                    inputUnit = param.getKey();
-                }
-            } catch (Exception e) {
-                BrewServer.LOG.info("couldn't read " + param.getValue()
-                    + " as a JSON Value " + e.getMessage());
-            }
-        }
 
         JSONObject sub_usage = new JSONObject();
-
-        if (incomingData != null) {
-            // Use the JSON Data
-            BrewServer.LOG.info("Found valid data for " + inputUnit);
-            parms = (Map<String, String>) incomingData;
-        } else {
-            inputUnit = params.get("form");
-            parms = params;
-        }
+        Map<String, String> parms = ParseParams(params);
+        String inputUnit = parms.get("inputunit");
 
         // Fall back to the old style
         sub_usage.put("dutycycle", "The new duty cycle % to set");
@@ -814,6 +823,9 @@ public class BrewServer extends NanoHTTPD {
                     return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                         "Updated Pump");
                 } else {
+                    JSONObject usage = new JSONObject();
+                    usage.put("Error", "Invalid name supplied: " + pumpname);
+                    usage.put("toggle", "The name of the Pump to toggle on/off");
                     return new Response(Status.BAD_REQUEST,
                         MIME_TYPES.get("txt"),
                         "Invalid pump: " + pumpname + " provided.");
@@ -831,7 +843,10 @@ public class BrewServer extends NanoHTTPD {
                         "Updated Aux for " + pidname);
                 } else {
                     LOG.warning("Invalid PID: " + pidname + " provided.");
-                    return new Response("No valid PID name supplied " + pidname + " for toggle=");
+                    JSONObject usage = new JSONObject();
+                    usage.put("Error", "Invalid name supplied: " + pidname);
+                    usage.put("toggle", "The name of the PID to toggle the aux output for");
+                    return new Response(usage.toJSONString());
                 }
             }
         }
@@ -1142,7 +1157,8 @@ public class BrewServer extends NanoHTTPD {
      */
     private Response addVolumePoint(Map<String, String> params) {
         JSONObject usage = new JSONObject();
-
+        Map<String, String> parms = ParseParams(params);
+        String inputUnit = parms.get("inputunit");
         usage.put("name", "Temperature probe name to add a volume point to");
         usage.put("volume",
                 "Volume that is in the vessel to add a datapoint for");
@@ -1155,14 +1171,14 @@ public class BrewServer extends NanoHTTPD {
         usage.put("adc_pin",
                 "The ADC Pin to be used for analogue reads");
 
+        System.out.println(params);
+        String name = parms.get("name").trim();
+        String volume = parms.get("volume").trim();
+        String units = parms.get("units").trim();
 
-        String name = params.get("name");
-        String volume = params.get("volume");
-        String units = params.get("units");
-
-        String onewire_add = params.get("onewire_address");
-        String onewire_offset = params.get("onewire_offset");
-        String adc_pin = params.get("adc_pin");
+        String onewire_add = parms.get("onewire_address").trim();
+        String onewire_offset = parms.get("onewire_offset").trim();
+        String adc_pin = parms.get("adc_pin").trim();
 
         String error_msg = "";
 
@@ -1194,7 +1210,7 @@ public class BrewServer extends NanoHTTPD {
             }
 
             // Check for ADC Pin
-            if (adc_pin != null) {
+            if (adc_pin != null && !adc_pin.equals("")) {
                 int adcpin = Integer.parseInt(adc_pin);
                 if (0 < adcpin  || adcpin > 7) {
                     error_msg = "Invalid ADC Pin offset";
@@ -1217,7 +1233,8 @@ public class BrewServer extends NanoHTTPD {
                             MIME_TYPES.get("json"), usage.toJSONString());
                 }
 
-            } else if (onewire_add != null && onewire_offset != null) {
+            } else if (onewire_add != null && onewire_offset != null
+                && !onewire_add.equals("") && !onewire_offset.equals("")) {
                 // Setup Onewire pin
                 if (!t.setupVolumes(onewire_add, onewire_offset, units)) {
                     error_msg = "Could not setup volumes for " + onewire_add
@@ -1234,7 +1251,7 @@ public class BrewServer extends NanoHTTPD {
             BigDecimal actualVol = new BigDecimal(volume);
             if (t.addVolumeMeasurement(actualVol)) {
                 return new Response(Response.Status.OK,
-                    MIME_TYPES.get("json"), "{Result: 'OK'}");
+                    MIME_TYPES.get("json"), "{'Result': 'OK'}");
             }
         } catch (NumberFormatException nfe) {
             error_msg = "Could not setup volumes for " + volume

@@ -791,12 +791,25 @@ public final class Temp implements Runnable {
      */
     public boolean addVolumeMeasurement(final BigDecimal volume) {
         // record 10 readings and average it
-        int maxReads = 10;
-        int total = 0;
-        for (int i = 0; i < maxReads; i++) {
+        BigDecimal maxReads = BigDecimal.TEN;
+        BigDecimal total = new BigDecimal(0);
+        
+        for (int i = 0; i < maxReads.intValue(); i++) {
             try {
                 try {
-                    total += Integer.parseInt(volumePin.readValue());
+                    if (this.volumePin != null) {
+                        total = total.add(new BigDecimal(
+                            this.volumePin.readValue()));
+                    } else {
+                        try {
+                            total = total.add(new BigDecimal(
+                                LaunchControl.readOWFSPath(
+                                    volumeAddress + "/volt." + volumeOffset)));
+                        } catch (OwfsException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
                 } catch (RuntimeException re) {
                     re.printStackTrace();
                     return false;
@@ -819,12 +832,13 @@ public final class Temp implements Runnable {
         }
 
         // read in ten values
-        BigDecimal avgValue = BigDecimal.valueOf(total / maxReads);
-
-        volumeBase.put(volume, avgValue);
+        BigDecimal avgValue = total.divide(maxReads);
 
         System.out.println("Read " + avgValue + " for "
                 + volume + " " + volumeUnit.toString());
+
+        this.addVolumeMeasurement(volume, avgValue);
+
         return true;
     }
 
@@ -916,13 +930,6 @@ public final class Temp implements Runnable {
         statusMap.put("temp", getTemp());
         statusMap.put("elapsed", getTime());
         statusMap.put("scale", getScale());
-
-        BigDecimal tVolume = getVolume();
-        if (volumeMeasurement
-                && tVolume.compareTo(BigDecimal.ONE.negate()) > 0) {
-            statusMap.put("volume", tVolume);
-            statusMap.put("volumeUnits", getVolumeUnit());
-        }
 
         if (currentError != null) {
             statusMap.put("error", currentError);

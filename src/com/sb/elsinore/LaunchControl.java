@@ -518,6 +518,23 @@ public final class LaunchControl {
             tJSON.put("name", t.getName());
             tJSON.put("tempprobe", tJSONTemp);
 
+            System.out.println("Address " + t.getVolumeAddress());
+            System.out.println("Offset " + t.getVolumeOffset());
+            if (t.hasVolume()) {
+                System.out.println("Volume is valid");
+                JSONObject volumeJSON = new JSONObject();
+                volumeJSON.put("volume", t.getVolume());
+                volumeJSON.put("units", t.getVolumeUnit());
+                if (t.getVolumeAIN() >= 0) {
+                    volumeJSON.put("ain", t.getVolumeAIN());
+                } else {
+                    volumeJSON.put("address", t.getVolumeAddress());
+                    volumeJSON.put("offset", t.getVolumeOffset());
+                }
+                
+                tJSON.put("volume", volumeJSON);
+            }
+
             if (tPid != null) {
                 JSONObject tJSONPID = new JSONObject();
                 tJSONPID.putAll(tPid.getMapStatus());
@@ -1692,7 +1709,38 @@ public final class LaunchControl {
             device.setAttribute("id", name);
         }
 
-        setElementText(device, "probe", probe);
+        Temp t = LaunchControl.findTemp(name);
+
+        if (t != null) {
+            setElementText(device, "probe", t.getProbe());
+
+            System.out.println("Checking for volume");
+            if (t.hasVolume()) {
+                System.out.println("Saving volume");
+                setElementText(device, "volume-units", t.getVolumeUnit());
+                if (t.getVolumeAIN() >= 0) {
+                    setElementText(device, "volume-ain",
+                        Integer.toString(t.getVolumeAIN()));
+                } else {
+                    setElementText(device, "volume-address",
+                        t.getVolumeAddress());
+                    setElementText(device, "volume-offset",
+                        t.getVolumeOffset());
+                }
+
+                ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase =
+                        t.getVolumeBase();
+
+                // Iterate over the entries
+                for (Entry<BigDecimal, BigDecimal> e: volumeBase.entrySet()) {
+                    System.out.println("Saving volume point " + e.getKey() + " value " + e.getValue());
+                    Element volEntry = addNewElement(device, "volume");
+                    volEntry.setAttribute("vol", e.getKey().toString());
+                    volEntry.setTextContent(e.getValue().toString());
+                    device.appendChild(volEntry);
+                }
+            }
+        }
         return device;
     }
 
