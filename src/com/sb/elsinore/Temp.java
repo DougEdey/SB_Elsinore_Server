@@ -68,15 +68,15 @@ public final class Temp implements Runnable {
 
     /**
      * Standard constructor.
-     * @param input The probe name or input name.
+     * @param name The probe name or input name.
      *  Use "system" to create a system temperature probe
-     * @param inName The name of this temperature probe.
+     * @param inProbe The address of this temperature probe.
      */
-    public Temp(final String input, final String inName) {
+    public Temp(final String name, final String inProbe) {
 
-        String aName = inName;
+        String aName = inProbe;
         BrewServer.LOG.info("Adding" + aName);
-        if (input.equalsIgnoreCase("system")) {
+        if (name.equalsIgnoreCase("system")) {
             File tempFile = new File(rpiSystemTemp);
             if (tempFile.exists()) {
                 fProbe = rpiSystemTemp;
@@ -161,12 +161,12 @@ public final class Temp implements Runnable {
                     probePath = null;
                 }
             }
-            fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
+            this.fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
         }
 
-        probeName = aName;
-        name = input;
-        BrewServer.LOG.info(probeName + " added.");
+        this.probeName = aName;
+        this.name = name.replace(".", "-");
+        BrewServer.LOG.info(this.probeName + " added.");
     }
 
     /**
@@ -225,7 +225,7 @@ public final class Temp implements Runnable {
      * @param cutoffInput String describing the temperature
      */
     public void setCutoffTemp(final String cutoffInput) {
-        BrewServer.LOG.warning("CutOff Temperate for " + this.name + " is " + cutoffInput);
+
         Matcher tempMatcher = tempRegexp.matcher(cutoffInput);
 
         if (tempMatcher.find()) {
@@ -303,6 +303,7 @@ public final class Temp implements Runnable {
      * The input pin to read.
      */
     private InPin volumePin = null;
+    private boolean stopVolumeLogging;
 
     /**
      * @return Get the current temperature
@@ -518,8 +519,16 @@ public final class Temp implements Runnable {
      * @param offset Device offset input.
      * @param unit The volume unit to read as.
      */
-    public void setupVolumes(final String address, final String offset,
+    public boolean setupVolumes(final String address, final String offset,
             final String unit) {
+        // start a volume measurement at the same time
+        if (unit == null
+            || (!unit.equals(VolumeUnits.LITRES)
+            && !unit.equals(VolumeUnits.UK_GALLONS)
+            && !unit.equals(VolumeUnits.US_GALLONS))) {
+            return false;
+        }
+
         this.volumeMeasurement = true;
         this.volumeUnit = unit;
         this.volumeAddress = address.replace("-", ".");
@@ -530,37 +539,53 @@ public final class Temp implements Runnable {
                 "Volume ADC at: " + volumeAddress + " - " + offset);
             String temp =
                 LaunchControl.readOWFSPath(volumeAddress + "/volt." + offset);
+
+            // Check to make sure we can read OK
             if (temp.equals("")) {
                 BrewServer.LOG.severe(
                     "Couldn't read the Volume from " + volumeAddress
                     + "/volt." + offset);
+                return false;
             } else {
                 BrewServer.LOG.log(Level.INFO, "Volume reads " + temp);
             }
         } catch (IOException e) {
             BrewServer.LOG.log(Level.SEVERE,
                 "IOException when access the ADC over 1wire", e);
+            return false;
         } catch (OwfsException e) {
             BrewServer.LOG.log(Level.SEVERE,
                 "OWFSException when access the ADC over 1wire", e);
+            return false;
         }
+
+        return true;
     }
 
     /**
      * Setup volumes for AIN pins.
      * @param analogPin The AIN pin number
      * @param unit The volume unit
+     * @return True is setup OK
      * @throws InvalidGPIOException If the Pin cannot be setup
      */
-    public void setupVolumes(final int analogPin, final String unit)
+    public boolean setupVolumes(final int analogPin, final String unit)
             throws InvalidGPIOException {
         // start a volume measurement at the same time
+        if (unit == null
+            || (!unit.equals(VolumeUnits.LITRES)
+            && !unit.equals(VolumeUnits.UK_GALLONS)
+            && !unit.equals(VolumeUnits.US_GALLONS))) {
+            return false;
+        }
+
         this.volumeMeasurement = true;
         this.volumeUnit = unit;
 
         try {
             this.volumePin = new InPin(analogPin, Direction.ANALOGUE);
         } catch (InvalidGPIOException e) {
+            this.volumeMeasurement = false;
             System.out.println("Invalid Analog GPIO specified " + analogPin);
             throw(e);
         }
@@ -571,6 +596,8 @@ public final class Temp implements Runnable {
                 || volumeMultiplier.compareTo(BigDecimal.ZERO) >= 0) {
             this.volumeMeasurement = false;
         }
+
+        return this.volumeMeasurement;
 
     }
 
@@ -648,10 +675,19 @@ public final class Temp implements Runnable {
                     pinValue = new BigDecimal(
                         LaunchControl.readOWFSPath(
                             volumeAddress + "/volt." + volumeOffset));
+                    if (this.stopVolumeLogging) {
+                        BrewServer.LOG.log(Level.SEVERE,
+                            "Recovered volume level reading for " + this.name);
+                        this.stopVolumeLogging = false;
+                    }
                 } catch (Exception e) {
-                    BrewServer.LOG.log(Level.SEVERE,
+                    if (!this.stopVolumeLogging) {
+                        BrewServer.LOG.log(Level.SEVERE,
                             "Could not update the volume reading from OWFS", e);
+                        this.stopVolumeLogging = true;
+                    }
                     LaunchControl.setupOWFS();
+
                     return BigDecimal.ZERO;
                 }
 
@@ -751,43 +787,59 @@ public final class Temp implements Runnable {
     /**
      * Append a volume measurement to the current list of calibrated values.
      * @param volume Volume measurement to record.
+     * @return True if added OK.
      */
-    public void addVolumeMeasurement(final BigDecimal volume) {
+    public boolean addVolumeMeasurement(final BigDecimal volume) {
         // record 10 readings and average it
-        int maxReads = 10;
-        int total = 0;
-        for (int i = 0; i < maxReads; i++) {
+        BigDecimal maxReads = BigDecimal.TEN;
+        BigDecimal total = new BigDecimal(0);
+        
+        for (int i = 0; i < maxReads.intValue(); i++) {
             try {
                 try {
-                    total += Integer.parseInt(volumePin.readValue());
+                    if (this.volumePin != null) {
+                        total = total.add(new BigDecimal(
+                            this.volumePin.readValue()));
+                    } else {
+                        try {
+                            total = total.add(new BigDecimal(
+                                LaunchControl.readOWFSPath(
+                                    volumeAddress + "/volt." + volumeOffset)));
+                        } catch (OwfsException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
                 } catch (RuntimeException re) {
                     re.printStackTrace();
-                    return;
+                    return false;
                 } catch (IOException e) {
                     e.printStackTrace();
-                    return;
+                    return false;
                 }
             } catch (NumberFormatException  e) {
                 System.out.println("Bad Analog input value!");
-                return;
+                return false;
             }
 
             try {
                 Thread.sleep(200);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+
             }
 
         }
 
         // read in ten values
-        BigDecimal avgValue = BigDecimal.valueOf(total / maxReads);
-
-        volumeBase.put(volume, avgValue);
+        BigDecimal avgValue = total.divide(maxReads);
 
         System.out.println("Read " + avgValue + " for "
                 + volume + " " + volumeUnit.toString());
-        return;
+
+        this.addVolumeMeasurement(volume, avgValue);
+
+        return true;
     }
 
     /**
@@ -851,6 +903,23 @@ public final class Temp implements Runnable {
         return this.volumeBase;
     }
 
+    /**
+     * Check to see if this object has a valid volume input.
+     * @return true if there's a valid volume input on this class
+     */
+    public boolean hasVolume() {
+        if (this.volumeAddress != null && !this.volumeAddress.equals("")
+                && this.volumeOffset != null && !this.volumeOffset.equals("")) {
+            return true;
+        }
+
+        if (this.volumeAIN != -1) {
+            return true;
+        }
+
+        return false;
+    }
+
     /*****
      * Helper function to return a map of the current status.
      * @return The current status of the temperature probe.
@@ -861,13 +930,6 @@ public final class Temp implements Runnable {
         statusMap.put("temp", getTemp());
         statusMap.put("elapsed", getTime());
         statusMap.put("scale", getScale());
-
-        BigDecimal tVolume = getVolume();
-        if (volumeMeasurement
-                && tVolume.compareTo(BigDecimal.ONE.negate()) > 0) {
-            statusMap.put("volume", tVolume);
-            statusMap.put("volumeUnits", getVolumeUnit());
-        }
 
         if (currentError != null) {
             statusMap.put("error", currentError);

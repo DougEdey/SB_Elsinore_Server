@@ -15,6 +15,15 @@ $.fn.serializeObject = function()
     return o;
 };
 
+function sleep(milliseconds) {
+  var start = new Date().getTime();
+  for (var i = 0; i < 1e7; i++) {
+    if ((new Date().getTime() - start) > milliseconds){
+      break;
+    }
+  }
+}
+
 /**
  * Return an Object sorted by it's Key
  */
@@ -136,7 +145,15 @@ function waitForMsg(){
 						}
 						if ("pidstatus" in vesselStatus) {
 							updatePIDStatus(vesselName, vesselStatus.pidstatus);
-						}	
+						} else {
+							hidePIDForm(vesselName);
+						}
+						
+						if ("volume" in vesselStatus) {
+							updateVolumeStatus(vesselName, vesselStatus.volume);
+						} else {
+							jQuery("#" + vesselName + "-volume").text("No Volume");
+						}
 					})
 					
 				}
@@ -182,15 +199,101 @@ function updateTempProbe(vessel, val) {
 		jQuery("#" + vessel + "-error").hide();
 	}
 	
-	// Check for the volume
-	if ("volume" in val) {
-		jQuery("#" + vessel + "-volume").text(parseFloat(val.volume).toFixed(2) + " " + val.volumeUnits);
+}
+
+function updateVolumeStatus(vessel, status) {
+	jQuery("#" + vessel + "-volume").text(parseFloat(status.volume).toFixed(2) + " " + status.units);
+	jQuery("#" + vessel + ' input[name="vol_units"]').val(status.units);
+	
+	var vesselDiv = '[id="'+vessel+'-form"]';
+	
+	if ("ain" in status) {
+		jQuery(vesselDiv  + ' input[name="vol_ain"]').val(status.ain);
+		jQuery(vesselDiv  + ' input[name="vol_add"]').val("");
+		jQuery(vesselDiv  + ' input[name="vol_off"]').val("");
+	} else if ("vol_add" in status) {
+		jQuery(vesselDiv  + ' input[name="vol_add"]').val(status.address);
+		jQuery(vesselDiv  + ' input[name="vol_off"]').val(status.offset);
+		jQuery(vesselDiv  + ' input[name="vol_ain"]').val("");
+	} else {
+		jQuery(vesselDiv  + ' input[name="vol_ain"]').val("");
+		jQuery(vesselDiv  + ' input[name="vol_add"]').val("");
+		jQuery(vesselDiv  + ' input[name="vol_off"]').val("");
 	}
+	
+}
+
+function editVolume(element) {
+	// Is the edit form already displayed
+	var vessel = element.id.substring(0, element.id.indexOf("-volume"));
+	var vesselEditForm = $('#'+vessel+'-editVol');
+	if (vesselEditForm.val() != undefined) {
+		return;
+	}
+	
+	var vesselDiv = vessel + "-volume";
+	var volPin = $('#' + vessel  + ' input[name="vol_ain"]').val();
+	var volAdd = $('#' + vessel  + ' input[name="vol_add"]').val();
+	var volOff = $('#' + vessel  + ' input[name="vol_off"]').val();
+	var volUnits = $('#' + vessel  + ' input[name="vol_units"]').val();
+	
+	window.disableUpdates = 1;
+	
+	// Insert a couple of new form elements
+	$('#' + vesselDiv).append("<div id='"+vessel+"-editVol'>"
+		+ "<form id='" + vessel + "-editVol' name='" + vessel + "-edit'>"
+		+ "<input type='hidden' name='name' id='name' value='"+vessel+"'/><br/>"
+		+ "<input type='text' name='adc_pin' id='adc_pin' value='"+volPin+"' placeholder='AIN Pin'/><br/>"
+		+ "<input type='text' name='onewire_address' id='onewire_address' value='"+volAdd+"' placeholder='DS2450 Address' /><br/>"
+		+ "<input type='text' name='onewire_offset' id='onewire_offset' value='"+volOff+"' placeholder='DS2450 Offset' /><br/>"
+		+ "<input type='text' name='volume' id='volume' value='' placeholder='New Volume' /><br/>"
+		+ "<input type='text' name='units' id='units' value='' value='"+volUnits+"' placeholder='Litres' /><br/>"
+		+ "<button id='updateVol-"+vessel+"' class='holo-button modeclass' "
+		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>Update</button>"
+		+ "<button id='cancelVol-"+vessel+"' class='holo-button modeclass' "
+		+ "onclick='cancelVolEdit(vessel); waitForMsg(); return false;'>Cancel</button>"
+		+ "</form>"
+		+ "</div>");
+}
+
+function editDevice(element) {
+	// Is the edit form already displayed
+	var vessel = element.id.substring(0, element.id.indexOf("-title"));
+	var vesselEditForm = $('#'+vessel+'-edit');
+	if (vesselEditForm.val() != undefined) {
+		return;
+	}
+	
+	var vesselDiv = element.id;
+	var gpio = $('#' + vesselDiv  + ' input[name="gpio"]').val();
+	var auxgpio = $('#' + vesselDiv  + ' input[name="auxgpio"]').val();
+	
+	// Insert a couple of new form elements
+	$('#' + vesselDiv).append("<div id='"+vessel+"-edit'>"
+		+ "<form id='" + vessel + "-edit' name='" + vessel + "-edit'>"
+		+ "<input type='text' name='new_name' id='new_name' value='"+vessel+"' /><br/>"
+		+ "<input type='text' name='new_gpio' id='new_gpio' value='"+gpio+"' placeholder='GPIO'/><br/>"
+		+ "<input type='text' name='aux_gpio' id='aux_gpio' value='"+auxgpio+"' placeholder='Aux GPIO' /><br/>"
+		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
+		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>Update</button>"
+		+ "<button id='cancel-"+vessel+"' class='holo-button modeclass' "
+		+ "onclick='cancelEdit(vessel); waitForMsg(); return false;'>Cancel</button>"
+		+ "</form>"
+		+ "</div>");
+}
+
+function cancelEdit(vessel) {
+	$('#'+vessel+'-edit').empty().remove();
+}
+
+function hidePIDForm(vessel) {
+	$("#" + vessel + "-controls").hide();
 }
 
 function updatePIDStatus(vessel, val) {
 	// setup the values
 	var vesselDiv = 'form[id="'+vessel+'-form"]';
+	$("#" + vessel + "-controls").show();
 	
 	var mode = val.mode.charAt(0).toUpperCase() + val.mode.slice(1);
 	var currentMode = jQuery(vesselDiv  + ' input[name="dutycycle"]');
@@ -224,17 +327,21 @@ function updatePIDStatus(vessel, val) {
 	jQuery(vesselDiv  + ' input[name="setpoint"]').val(val.setpoint);
 	jQuery(vesselDiv  + ' input[name="p"]').val(val.p);
 	jQuery(vesselDiv  + ' input[name="i"]').val(val.i);
-	jQuery(vesselDiv  + ' > input[name="d"]').val(val.k);
+	jQuery(vesselDiv  + ' input[name="d"]').val(val.k);
+	jQuery(vesselDiv  + ' input[name="gpio"]').val(val.gpio);
 	
 	// Aux Mode check
 	if ("auxStatus" in val) {
+		jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').show();
 		if (val.auxStatus == "on" || val.auxStatus == "1") {
-			jQuery(vesselDiv  + ' button[id="Aux"]')[0].style.background = "red";
-			jQuery(vesselDiv  + ' button[id="Aux"]')[0].innerHTML = "Aux ON"
+			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').style.background = "red";
+			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').innerHTML = "Aux ON"
 		} else {
-			jQuery(vesselDiv  + ' button[id="Aux"]')[0].style.background = "#666666";
-			jQuery(vesselDiv  + ' button[id="Aux"]')[0].innerHTML = "Aux OFF"
+			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').style.background = "#666666";
+			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').innerHTML = "Aux OFF"
 		}
+	} else {
+		jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').hide();
 	}
 	
 	window.disableUpdates = 0;
@@ -324,33 +431,92 @@ function selectManual(vessel) {
 
 function submitForm(form){
 
-	var vessel = form.id.substring(0, form.id.indexOf("-form"));
-	var formdata = {};
+	// Are we updating the data?
+	if (form.id.indexOf("-form") != -1) {
+		var vessel = form.id.substring(0, form.id.indexOf("-form"));
+		
+		var formdata = {};
+		
+		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
+		$.extend(formdata[vessel], {"name":"mode", "value":Window.mode});
+		//formdata = ;
+		
+		$.ajax({ 
+			url: 'updatepid',
+			type: 'POST',
+			data: formdata,
+			dataType: 'json',
+			success: function(data) {data = null}
+		});
+	} else if (form.id.indexOf("-editVol") != -1) {
+		var vessel = form.id.substring(0, form.id.indexOf("-editVol"));
+		var formdata = {}
+		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
+		$.ajax({ 
+			url: 'addvolpoint',
+			type: 'POST',
+			data: formdata,
+			dataType: 'json',
+			success: function(data) {data = null}
+		});
+	} else if (form.id.indexOf("-edit") != -1) {
+		// We're editing
+		var vessel = form.id.substring(0, form.id.indexOf("-edit"));
+		var formdata = {}
+		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
+		$.ajax({ 
+			url: 'editdevice',
+			type: 'POST',
+			data: formdata,
+			dataType: 'json',
+			success: function(data) {data = null}
+		});
+	} else {
+		// Another form...
+		console.log("Unrecognised form: " + form.id);
+		return;
+	}
 	
-	formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
-	$.extend(formdata[vessel], {"name":"mode", "value":Window.mode});
-	//formdata = ;
-	
-	$.ajax({ 
-		url: 'updatepid',
+	window.disableUpdates = 0;
+	return false;
+}
+
+function submitPump(pumpStatus) {
+	$.ajax({
+		url: 'updatepump',
 		type: 'POST',
-		data: formdata,
-		dataType: 'json',
+		data: "toggle=" + pumpStatus.id,
 		success: function(data) {data = null}
 	});	
 	window.disableUpdates = 0;
 	return false;
 }
 
-function submitPump(pumpStatus) {
-		  $.ajax({
-					 url: 'updatepump',
-		  			type: 'POST',
-		  			data: "toggle=" + pumpStatus.id,
-					success: function(data) {data = null}
-			});	
-		  window.disableUpdates = 0;
-		  return false;
+function addPump() {
+	var newname = prompt("New pump name");
+	var gpio = prompt("GPIO Pin");
+	
+	$.ajax({
+		url: 'addpump',
+		type: 'POST',
+		data: "new_name=" + newname + "&new_gpio=" + gpio,
+		success: function(data) {data = null}
+	});	
+	window.disableUpdates = 0;
+	return false;
+}
+
+function addTimer() {
+	var newname = prompt("New Timer Name");
+	
+	$.ajax({
+		url: 'addtimer',
+		type: 'POST',
+		data: "new_name=" + newname,
+		success: function(data) {data = null}
+	});	
+	window.disableUpdates = 0;
+	return false;
 }
 
 function mashToggle(button, position) {

@@ -9,6 +9,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -87,6 +89,7 @@ public final class LaunchControl {
      * The default port to serve on, can be overridden with -p <port>.
      */
     private static final int DEFAULT_PORT = 8080;
+    private int server_port = 8080;
     /**
      * The pump parameters length for creating the config.
      */
@@ -120,11 +123,11 @@ public final class LaunchControl {
     /**
      *  Temperature Thread list.
      */
-    private List<Thread> tempThreads = new ArrayList<Thread>();
+    private static List<Thread> tempThreads = new ArrayList<Thread>();
     /**
      * PID Thread List.
      */
-    private List<Thread> pidThreads = new ArrayList<Thread>();
+    private static List<Thread> pidThreads = new ArrayList<Thread>();
     /**
      * Mash Threads list.
      */
@@ -166,7 +169,7 @@ public final class LaunchControl {
     /**
      * The Default scale to be used.
      */
-    private String scale = "F";
+    private static String scale = "F";
 
     /**
      * The BrewDay object to manage timers.
@@ -218,7 +221,6 @@ public final class LaunchControl {
      */
     public static void main(final String... arguments) {
         BrewServer.LOG.info("Running Brewery Controller.");
-
         int port = DEFAULT_PORT;
 
         if (arguments.length > 0) {
@@ -297,7 +299,7 @@ public final class LaunchControl {
      * @param port The port to start the server on.
      */
     public LaunchControl(final int port) {
-
+        this.server_port = port;
         // Create the shutdown hooks for all the threads
         // to make sure we close off the GPIO connections
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -337,7 +339,7 @@ public final class LaunchControl {
 
         // Debug info before launching the BrewServer itself
         BrewServer.LOG.log(Level.INFO, "CONFIG READ COMPLETED***********");
-        sRunner = new ServerRunner(BrewServer.class, port);
+        sRunner = new ServerRunner(BrewServer.class, this.server_port);
         sRunner.run();
 
         // iterate the list of Threads to kick off any PIDs
@@ -491,8 +493,12 @@ public final class LaunchControl {
      * This is the current Status of the PIDs, Temps, Pumps, etc...
      * @return The JSON String of the current status.
      */
+    private static int count = 0;
     @SuppressWarnings("unchecked")
     public static String getJSONStatus() {
+        if (count > 1) {
+            
+        }
         // get each setting add it to the JSON
         JSONObject rObj = new JSONObject();
         JSONObject tJSON = null;
@@ -511,6 +517,20 @@ public final class LaunchControl {
             tJSONTemp.putAll(t.getMapStatus());
             tJSON.put("name", t.getName());
             tJSON.put("tempprobe", tJSONTemp);
+
+            if (t.hasVolume()) {
+                JSONObject volumeJSON = new JSONObject();
+                volumeJSON.put("volume", t.getVolume());
+                volumeJSON.put("units", t.getVolumeUnit());
+                if (t.getVolumeAIN() >= 0) {
+                    volumeJSON.put("ain", t.getVolumeAIN());
+                } else {
+                    volumeJSON.put("address", t.getVolumeAddress());
+                    volumeJSON.put("offset", t.getVolumeOffset());
+                }
+
+                tJSON.put("volume", volumeJSON);
+            }
 
             if (tPid != null) {
                 JSONObject tJSONPID = new JSONObject();
@@ -591,6 +611,7 @@ public final class LaunchControl {
 
         if (configDoc == null && configCfg == null) {
             createConfig();
+            // Startup the brewery with the basic temp list
             return;
         }
 
@@ -878,6 +899,57 @@ public final class LaunchControl {
     }
 
     /**
+     * Add a new pump to the server.
+     * @param name The name of the pump to add.
+     * @param gpio The GPIO to add
+     * @return True if added OK
+     */
+    public static boolean addPump(final String name, final String gpio) {
+        if (name.equals("") || gpio.equals("")
+                || pumpExists(name)) {
+            return false;
+        }
+
+        try {
+            Pump p = new Pump(name, gpio);
+            pumpList.add(p);
+        } catch (InvalidGPIOException g) {
+            return false;
+        }
+
+        return true;
+
+    }
+
+    /**
+     * Check to see if a pump with the given name exists.
+     * @param name The name of the pump to check
+     * @return True if the pump exists.
+     */
+    public static boolean pumpExists(final String name) {
+        for (Pump p: pumpList) {
+            if (p.getName().equals("name")) {
+                return true;
+            }
+        }
+        return false;
+    }
+    /**
+     * Add a new timer to the list.
+     * @param name The name of the timer.
+     * @param mode The mode of the timer.
+     */
+    public static boolean addTimer(final String name, final String mode) {
+        // Mode is a placeholder for now
+        if (timerList.contains(name) || name.equals("")) {
+            return false;
+        }
+
+        timerList.add(name);
+        return true;
+    }
+
+    /**
      * Startup a PID device.
      * @param input The name of the PID.
      * @param probe The One-Wire probe address
@@ -1012,6 +1084,23 @@ public final class LaunchControl {
         return tData;
     }
 
+    /******
+     * Find the Temp Probe in the current list.
+     * @param name The Temp to find
+     * @return The Temp object
+     */
+    public static Temp findTemp(final String name) {
+        // search based on the input name
+        Iterator<Temp> iterator = tempList.iterator();
+        Temp tTemp = null;
+        while (iterator.hasNext()) {
+            tTemp = iterator.next();
+            if (tTemp.getName().equalsIgnoreCase(name)) {
+                return tTemp;
+            }
+        }
+        return null;
+    }
 
     /******
      * Find the PID in the current list.
@@ -1029,6 +1118,14 @@ public final class LaunchControl {
             }
         }
         return null;
+    }
+
+    /**
+     * Add a PID to the list.
+     * @param newPID PID to add.
+     */
+    public static void addPID(final PID newPID) {
+        pidList.add(newPID);
     }
 
     /**************
@@ -1066,7 +1163,7 @@ public final class LaunchControl {
      * List the One Wire devices from the standard one wire file system.
      * in /sys/bus/w1/devices, basic access
      */
-    private void listOneWireSys() {
+    private static void listOneWireSys() {
         // try to access the list of 1-wire devices
         File w1Folder = new File("/sys/bus/w1/devices/");
         if (!w1Folder.exists()) {
@@ -1087,10 +1184,10 @@ public final class LaunchControl {
                     && !currentFile.getName().startsWith("w1_bus_master")) {
 
                 // Check to see if theres a non temp probe (DS18x20)
-                if (!currentFile.getName().contains("/28")
-                        && owfsPort != null) {
+                if (!currentFile.getName().startsWith("28")
+                        && !useOWFS) {
                     System.out.println(
-                            "Detected a non temp probe.\n"
+                            "Detected a non temp probe." + currentFile.getName() + "\n"
                             + "Do you want to switch to OWFS? [y/N]");
                     String t = readInput();
                     if (t.toLowerCase().startsWith("y")) {
@@ -1104,6 +1201,8 @@ public final class LaunchControl {
                         listOWFSDevices();
                         return;
                     }
+                    // Skip this iteration
+                    continue;
                 }
 
                 owfsServer = null;
@@ -1111,6 +1210,12 @@ public final class LaunchControl {
 
                 // got a directory, check for a temp
                 System.out.println("Checking for " + currentFile.getName());
+
+                // Check to see if this probe exists
+                if (probeExists(currentFile.getName())) {
+                    continue;
+                }
+
                 Temp currentTemp = new Temp(
                         currentFile.getName(), currentFile.getName());
                 tempList.add(currentTemp);
@@ -1124,6 +1229,13 @@ public final class LaunchControl {
         }
     }
 
+    private static void updateDeviceList() {
+        if (useOWFS) {
+            listOWFSDevices();
+        } else {
+            listOneWireSys();
+        }
+    }
     /**********
      * Setup the configuration.
      * We get here if the configuration file doesn't exist.
@@ -1134,11 +1246,8 @@ public final class LaunchControl {
             createOWFS();
         }
 
-        if (useOWFS) {
-            listOWFSDevices();
-        } else {
-            listOneWireSys();
-        }
+        updateDeviceList();
+
         if (tempList.size() == 0) {
             System.out.println("Could not find any one wire devices\n"
                     + "Please check you have the correct modules setup");
@@ -1150,319 +1259,15 @@ public final class LaunchControl {
         }
 
         displaySensors();
-        System.out.println("Select the input, enter \"r\" to refresh");
-        System.out.println("Use \"pump <name> <gpio>\" to add a pump");
-        System.out.println("Type \"volume\" to start volume calibration");
-        System.out.println("Type \"timer <name>\" to add a timer");
-        String input = "";
-        String[] inputBroken;
-
-        /******
-         * REPL - not well written, but it works
-         */
-        while (true) {
-            System.out.print(">");
-            input = "";
-             //  open up standard input
-            input = readInput();
-            // parse the input and determine where to throw the data
-            inputBroken = input.split(" ");
-            // is the first value something we recognize?
-            if (inputBroken[0].equalsIgnoreCase("quit")) {
-                quitConfigSetup();
-            }
-
-            if (inputBroken[0].startsWith("r")
-                    || inputBroken[0].startsWith("R")) {
-                System.out.println("Refreshing...");
-                displaySensors();
-                continue;
-            }
-
-            // Read in the pumps
-            if (inputBroken[0].equalsIgnoreCase("pump")) {
-                if (inputBroken.length != PUMP_PARAM_LENGTH
-                        || inputBroken[1].length() == 0
-                        || inputBroken[2].length() == 0) {
-                    System.out.println("Not enough parameters to add a pump");
-                    System.out.println("pump <name> <gpio>");
-                    continue;
-                }
-
-                try {
-                    GPIO.getPinNumber(inputBroken[2]);
-                } catch (InvalidGPIOException e) {
-                    System.out.println(e.getMessage());
-                    continue;
-                }
-
-                // We should be good to go now
-                Element pumpElement = getFirstElement(null, "pumps");
-
-                if (pumpElement == null) {
-                    pumpElement = addNewElement(null, "pumps");
-                }
-
-                Element newPump = addNewElement(pumpElement, inputBroken[1]);
-                newPump.appendChild(configDoc.createTextNode(inputBroken[2]));
-                pumpElement.appendChild(newPump);
-
-                System.out.println("Added " + inputBroken[1]
-                        + " pump on GPIO pin " + inputBroken[2]);
-                displayPumps();
-                continue;
-            }
-
-            if (inputBroken[0].equalsIgnoreCase("volume")) {
-                System.out.println(
-                    "Adding volume details, please select the vessel to use:");
-                displaySensors();
-                input = readInput();
-                inputBroken = input.split(" ");
-                try {
-                    int vesselNumber = Integer.parseInt(inputBroken[0]);
-                    calibrateVessel(tempList.get(vesselNumber - 1));
-                } catch (NumberFormatException e) {
-                    System.out.println("Couldn't read "
-                            + inputBroken[0] + " as an integer");
-                }
-                continue;
-            }
-
-            // Timers code
-            if (inputBroken[0].equalsIgnoreCase("timer")) {
-                addConfigTimer(inputBroken);
-                continue;
-            }
-
-            // General system temperature code
-            if (inputBroken[0].equalsIgnoreCase("system")) {
-                addConfigSystemTemp(inputBroken);
-                continue;
-            }
-
-            // Read the device in.
-            addConfigDevice(inputBroken);
-        }
-    }
-
-    /**
-     * Adds a device to the configuration.
-     * @param currentInput The exploded input.
-     */
-    private void addConfigDevice(final String[] currentInput) {
-        int selector = 0;
-        String input = null;
-        String[] inputBroken = currentInput;
+        InetAddress addr;
         try {
-            selector = Integer.parseInt(inputBroken[0]);
-            // we parsed ok
-            if (selector > 0 && selector <= tempList.size()) {
-                // we have a valid input
-                String name = "";
-                String gpio = "";
-
-                if (inputBroken.length > 1) {
-                    name = inputBroken[1];
-                } else {
-                    System.out.println("Please name the input: ");
-                    input = readInput();
-                    inputBroken = input.split(" ");
-                    if (inputBroken.length > 0) {
-                        name = inputBroken[0];
-                    }
-                }
-
-                displayGPIO();
-
-                System.out.println("Adding "
-                    + tempList.get(selector - 1).getName() + " as " + name);
-                System.out.println(
-                        "To make this a PID add the GPIO number now\n"
-                        + "Or anything else for a temp probe only: ");
-                input = readInput();
-                try {
-                    gpio = input;
-
-                    if (!gpio.equals("")) {
-                        // try to parse the GPIO to determine the type
-                        Pattern pinPattern =
-                                Pattern.compile("(GPIO)([0-9])_([0-9]+)");
-                        Pattern pinPatternAlt =
-                                Pattern.compile("(GPIO)?([0-9]+)");
-
-                        Matcher pinMatcher = pinPattern.matcher(gpio);
-
-                        if (pinMatcher.groupCount() > 0) {
-                            // Beagleboard style input
-                            System.out.println(
-                                    "Matched GPIO pinout for Beagleboard: "
-                                    + input + ". OS: "
-                                    + System.getProperty("os.name")
-                            );
-                        } else {
-                            pinMatcher = pinPatternAlt.matcher(gpio);
-                            if (pinMatcher.groupCount() > 0) {
-                                System.out.println(
-                                        "Direct GPIO Pinout detected. OS: "
-                                        + System.getProperty("os.name"));
-                            } else {
-                                System.out.println("Could not match the GPIO!");
-                            }
-                        }
-                    }
-                } catch (NumberFormatException n) {
-                    // not a GPIO
-                    System.out.println("Couldn't get a direct GPIO number");
-                }
-
-                // Check for Valid GPIO values
-                Temp tTemp = tempList.get(selector - 1);
-                tTemp.setName(name);
-
-                // Block off special GPIO Values
-                if (!gpio.equals("") && !gpio.equals("GPIO1")
-                        && !gpio.equals("GPIO7")) {
-                    addPIDToConfig(tTemp.getProbe(), name, gpio);
-                } else if (tTemp.getTemp().equals(Temp.ERROR_TEMP)) {
-                    System.out.println("No valid GPIO Value found,"
-                            + " adding as a temperature only probe");
-                    addTempToConfig(tTemp.getProbe(), name);
-                }
-
-                if (tTemp.getVolumeBase() != null) {
-                    if (tTemp.getVolumeAIN() != -1) {
-                        System.out.println("Saving AIN" + tTemp.getVolumeAIN());
-                        saveVolume(tTemp.getName(), tTemp.getVolumeAIN(),
-                                tTemp.getVolumeUnit(), tTemp.getVolumeBase());
-                    } else if (tTemp.getVolumeAddress() != null
-                            && tTemp.getVolumeOffset() != null) {
-                        System.out.println("Saving Volume "
-                            + tTemp.getVolumeAddress() + " - "
-                            + tTemp.getVolumeOffset()
-                        );
-                        saveVolume(tTemp.getName(), tTemp.getVolumeAddress(),
-                                tTemp.getVolumeOffset(), tTemp.getVolumeUnit(),
-                                tTemp.getVolumeBase());
-                    } else {
-                        BrewServer.LOG.info("No valid volume probe found");
-                    }
-                } else {
-                    BrewServer.LOG.info("No Volume base set");
-                }
-
-            } else {
-                System.out.println("Input number (" + input
-                        + ") is not valid\n");
-            }
-        } catch (NumberFormatException e) {
-            // not a number
-            e.printStackTrace();
-        } catch (Exception ne) {
-            ne.printStackTrace();
-        }
-    }
-
-    /**
-     * Add the system temperature to the configuration.
-     * @param inputBroken The read in input.
-     */
-    private void addConfigSystemTemp(final String[] inputBroken) {
-        System.out.println("Adding System Temperature");
-        Element general = getFirstElement(null, "general");
-
-        if (general == null) {
-            general = addNewElement(null, "general");
-        }
-
-        Element system = getFirstElement(general, "system");
-
-        if (system == null) {
-            system = addNewElement(general, "system");
-        }
-    }
-
-    /**
-     * Add a timer via the configuration setup.
-     * @param inputBroken The exploded input string.
-     */
-    private void addConfigTimer(final String[] inputBroken) {
-        String name = "";
-
-        if (inputBroken.length > 1 && inputBroken[1].length() > 0) {
-            name = inputBroken[1];
-        } else {
-            System.out.println("");
-            System.out.print("What do you want to call the timer? ");
-            name = readInput();
-        }
-
-        if (name.equals("")) {
-            System.out.println("No name provided");
-        } else {
-            System.out.println("Adding Timer " + name);
-            timerList.add(name);
-        }
-    }
-
-    /**
-     * Quit the configuration setup.
-     */
-    private void quitConfigSetup() {
-        saveSettings();
-        System.out.println("Quitting");
-        System.out.println("Updating config file, please check it in "
-                + configFileName + ".new");
-
-        saveConfigFile(configFileName + ".new");
-
-        System.out.println("Config file updated. Please copy it from "
-                + configFileName + ".new to " + configFileName
-                + " to use the data");
-        System.out.println("You may need to do this as root");
-
-        System.exit(0);
-    }
-
-    /**
-     * Save the configuration to the specified file as XML.
-     * @param outFileName The file to save the configuration to.
-     */
-    private void saveConfigFile(final String outFileName) {
-        File configOut = new File(outFileName);
-
-        try {
-            TransformerFactory transformerFactory =
-                    TransformerFactory.newInstance();
-
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty(
-                    "{http://xml.apache.org/xslt}indent-amount", "2");
-
-            XPath xp = XPathFactory.newInstance().newXPath();
-            NodeList nl = (NodeList)
-                    xp.evaluate("//text()[normalize-space(.)='']",
-                            configDoc, XPathConstants.NODESET);
-
-            // Reset the existing configuration file.
-            // This should be changed to allow updates.
-            for (int i = 0; i < nl.getLength(); ++i) {
-                Node node = nl.item(i);
-                node.getParentNode().removeChild(node);
-            }
-
-            DOMSource source = new DOMSource(configDoc);
-            StreamResult configResult = new StreamResult(configOut);
-            transformer.transform(source, configResult);
-        } catch (TransformerConfigurationException e) {
-            System.out.println("Could not transform config file");
-            e.printStackTrace();
-        } catch (TransformerException e) {
-            System.out.println("Could not transformer file");
-            e.printStackTrace();
-        } catch (XPathExpressionException e) {
-            e.printStackTrace();
+            addr = InetAddress.getLocalHost();
+            String webURL = "http://" + addr.getHostName() + ":"
+                    + this.server_port + "/controller";
+            System.out.println("Please go to the Web UI to the web UI "
+                    + webURL);
+        } catch (UnknownHostException e) {
+            System.out.println("Couldn't get localhost information.");
         }
     }
 
@@ -1560,7 +1365,7 @@ public final class LaunchControl {
     /**
      * Create the OWFS Connection to the server (owserver).
      */
-    private void createOWFS() {
+    private static void createOWFS() {
 
         System.out.println("Creating the OWFS configuration.");
         System.out.println("What is the OWFS server host?"
@@ -1587,10 +1392,10 @@ public final class LaunchControl {
             generalElement = addNewElement(null, "general");
         }
 
-        Element tempElement = addNewElement(null, "owfs_server");
+        Element tempElement = addNewElement(generalElement, "owfs_server");
         tempElement.setTextContent(owfsServer);
 
-        tempElement = addNewElement(null, "owfs_port");
+        tempElement = addNewElement(generalElement, "owfs_port");
         tempElement.setTextContent(Integer.toString(owfsPort));
 
         // Create the connection
@@ -1601,7 +1406,7 @@ public final class LaunchControl {
      * List the One-Wire devices in OWFS.
      * Much more fully featured access
      */
-    private void listOWFSDevices() {
+    private static void listOWFSDevices() {
         try {
             List<String> owfsDirs = owfsConnection.listDirectory("/");
             if (owfsDirs.size() > 0) {
@@ -1619,7 +1424,10 @@ public final class LaunchControl {
                      I'm only aware that directories starting with
                      a number of 28 are good
                      got a directory, check for a temp */
-
+                    dir = dir.substring(1);
+                    if (probeExists(dir)) {
+                        continue;
+                    }
                     System.out.println("Checking for " + dir);
                     Temp currentTemp = new Temp(dir, dir);
                     tempList.add(currentTemp);
@@ -1636,6 +1444,20 @@ public final class LaunchControl {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Check to see if this probe already exists.
+     * @param address to check
+     * @return true if the probe is setup.
+     */
+    public static boolean probeExists(final String address) {
+        for (Temp t: tempList) {
+            if (t.getProbe().equals(address)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /***********
@@ -1668,117 +1490,11 @@ public final class LaunchControl {
         return result.trim();
     }
 
-    /*********
-     * Calibrate the vessel specified using a REPL loop.
-     * @param tempObject The temperature object to calibrate to
-     */
-    private void calibrateVessel(final Temp tempObject) {
-        int ain = -1;
-        String volumeUnit = null;
-
-        System.out.println("Calibrating " +  tempObject.getName());
-        System.out.print("Please enter the volume unit>");
-
-        String line = readInput();
-        volumeUnit = line;
-
-        System.out.print(
-                "\nPlease select the Analogue Input number or 1wire Address>");
-        line = readInput();
-
-        // setup these here just incase
-        String address = null;
-        String offset = null;
-
-        try {
-            ain = Integer.parseInt(line);
-        } catch (NumberFormatException nfe) {
-            System.out.println("Couldn't read '" + line
-                + "' as an integer So I'll treat it as an address for 1wire"
-            );
-
-            address = line;
-            // Check to see if the address exists
-            if (owfsConnection == null) {
-                createOWFS();
-            }
-
-            System.out.print(
-                "\nWhat's the Offset for the 1Wire input? (Q cancels):"
-            );
-            offset = readInput().trim();
-            if (offset.startsWith("q")) {
-                System.out.println("Exitting");
-                System.exit(0);
-            }
-
-        }
-
-        try {
-            if (ain != -1) {
-                tempObject.setupVolumes(ain, volumeUnit);
-            }
-
-            if (address != null && offset != null) {
-                tempObject.setupVolumes(address, offset, volumeUnit);
-            }
-        } catch (InvalidGPIOException e) {
-            System.out.println("Something is wrong with the analog input ("
-                    + ain + ") selected");
-            return;
-        }
-
-        System.out.println(
-                "This will loop until you type 'q' (no quotes) to continue");
-        System.out.println(
-                "Add liquid, wait for the level to settle,"
-                + " then type the amount you currently have in.");
-        System.out.println(
-                "For instance, add 1G of water, then type '1'<Enter>"
-                + ", add another 1G of water and type '2'<enter>");
-        System.out.println("Until you are done calibrating");
-
-        // REPL
-        while (true) {
-            System.out.print(">");
-            line = readInput();
-
-            if (line.startsWith("q")) {
-                break;
-            }
-
-            BigDecimal currentVolume = new BigDecimal(line.trim());
-            BigDecimal currentValue = tempObject.updateVolume();
-
-            tempObject.addVolumeMeasurement(currentVolume, currentValue);
-        }
-
-        // Check to see if we actually added anything first
-        if (tempObject.getVolumeBase() != null) {
-            if (tempObject.getVolumeAIN() != -1) {
-                saveVolume(tempObject.getName(), tempObject.getVolumeAIN(),
-                        tempObject.getVolumeUnit(), tempObject.getVolumeBase());
-            } else if (tempObject.getVolumeAddress() != null
-                    && tempObject.getVolumeOffset() != null) {
-                saveVolume(tempObject.getName(), tempObject.getVolumeAddress(),
-                        tempObject.getVolumeOffset(),
-                        tempObject.getVolumeUnit(), tempObject.getVolumeBase());
-            } else {
-                BrewServer.LOG.info("No valid volume probe found");
-            }
-        } else {
-            BrewServer.LOG.info("No Volume base set");
-        }
-
-        saveSettings();
-    }
-
-
     /*******
      * Helper function to read the user input and tidy it up.
      * @return Trimmed String representing the UserInput
      */
-    private String readInput() {
+    private static String readInput() {
         BufferedReader br =
                 new BufferedReader(new InputStreamReader(System.in));
         String input = "";
@@ -1788,19 +1504,6 @@ public final class LaunchControl {
             System.out.println("IO error trying to read your input: " + input);
         }
         return input.trim();
-    }
-
-    /*******
-     * Prints the list of pumps to STDOUT.
-     */
-    private void displayPumps() {
-        System.out.println("The following pumps are configured:");
-        Iterator<Pump> iterator = pumpList.iterator();
-
-        while (iterator.hasNext()) {
-            Pump tPump = iterator.next();
-            System.out.println(tPump.getName() + " on GPIO" + tPump.getGPIO());
-        }
     }
 
     /*******
@@ -1819,6 +1522,7 @@ public final class LaunchControl {
             // since they will launch the temp theads too
             Temp tTemp = iterator.next();
             BigDecimal currentTemp = tTemp.updateTemp();
+
             System.out.print(i.toString() + ") " + tTemp.getName());
             if (currentTemp.equals(Temp.ERROR_TEMP)) {
                   System.out.println(" doesn't have a valid temperature");
@@ -1827,27 +1531,6 @@ public final class LaunchControl {
             }
             i++;
         }
-    }
-
-    /*****
-     * Prints the GPIO Pinout for the RPi.
-     */
-    private void displayGPIO() {
-        System.out.println("GPIO Values, use the outer values");
-        System.out.println(" USE     |PHYSICAL |USE");
-        System.out.println("  NA     |  1 * 2  | NA");
-        System.out.println(" GPIO0/2 |  3 * 4  | NA");
-        System.out.println(" GPIO1/3 |  5 * 6  | NA");
-        System.out.println("  NA     |  7 * 8  | GPIO14");
-        System.out.println("  NA     |  9 * 10 | GPIO15");
-        System.out.println("  GPIO17 | 11 * 12 | GPIO18 ");
-        System.out.println("GPIO21/27| 13 * 14 | NA ");
-        System.out.println("  GPIO22 | 15 * 16 | GPIO23");
-        System.out.println(" NA      | 17 * 18 | GPIO24");
-        System.out.println(" GPIO10  | 19 * 20 | NA ");
-        System.out.println(" GPIO9   | 21 * 22 | GPIO25");
-        System.out.println(" GPIO11  | 23 * 24 | GPIO8 ");
-        System.out.println(" NA      | 25 * 26 | GPIO7 ");
     }
 
     /*****
@@ -1999,28 +1682,6 @@ public final class LaunchControl {
         saveConfigFile();
     }
 
-
-    /****
-     * Add the specified basic PID info to the Config.
-     * @param probe Probe address
-     * @param name Device Name
-     * @param gpio GPIO to be used to control the Output
-     * @return The new element created in the config file.
-     */
-    private Element addPIDToConfig(final String probe, final String name,
-            final String gpio) {
-
-        System.out.println("Saving " + name + " with GPIO " + gpio);
-
-        Element device = addTempToConfig(probe, name);
-
-        if (device != null) {
-            setElementText(device, "gpio", gpio);
-        }
-
-        return device;
-    }
-
     /*******
      * Add a temperature device to the configuration file.
      * @param probe The probe address.
@@ -2045,7 +1706,38 @@ public final class LaunchControl {
             device.setAttribute("id", name);
         }
 
-        setElementText(device, "probe", probe);
+        Temp t = LaunchControl.findTemp(name);
+
+        if (t != null) {
+            setElementText(device, "probe", t.getProbe());
+
+            System.out.println("Checking for volume");
+            if (t.hasVolume()) {
+                System.out.println("Saving volume");
+                setElementText(device, "volume-units", t.getVolumeUnit());
+                if (t.getVolumeAIN() >= 0) {
+                    setElementText(device, "volume-ain",
+                        Integer.toString(t.getVolumeAIN()));
+                } else {
+                    setElementText(device, "volume-address",
+                        t.getVolumeAddress());
+                    setElementText(device, "volume-offset",
+                        t.getVolumeOffset());
+                }
+
+                ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase =
+                        t.getVolumeBase();
+
+                // Iterate over the entries
+                for (Entry<BigDecimal, BigDecimal> e: volumeBase.entrySet()) {
+                    System.out.println("Saving volume point " + e.getKey() + " value " + e.getValue());
+                    Element volEntry = addNewElement(device, "volume");
+                    volEntry.setAttribute("vol", e.getKey().toString());
+                    volEntry.setTextContent(e.getValue().toString());
+                    device.appendChild(volEntry);
+                }
+            }
+        }
         return device;
     }
 
@@ -2063,7 +1755,8 @@ public final class LaunchControl {
 
         System.out.println("Saving volume for " + name);
 
-        Element device = saveVolumeMeasurements(name, concurrentHashMap, volumeUnit);
+        Element device = saveVolumeMeasurements(
+                name, concurrentHashMap, volumeUnit);
 
         // Units for the Volume OneWire Address
         Element tElement = getFirstElement(device, "volume-address");
