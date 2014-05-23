@@ -384,7 +384,7 @@ public final class Temp implements Runnable {
      * @return temp in Fahrenheit
      */
     public static BigDecimal cToF(final BigDecimal currentTemp) {
-        return currentTemp.add(FREEZING).multiply(C_TO_F_MULT);
+        return currentTemp.multiply(C_TO_F_MULT).add(FREEZING);
     }
 
     /**
