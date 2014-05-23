@@ -372,19 +372,23 @@ public final class Temp implements Runnable {
     }
 
     /**
-     * @param temp temperature to convert in Fahrenheit
-     * @return temp in celsius
+     * @param currentTemp temperature to convert in Fahrenheit
+     * @return Temperature in celsius
      */
     public static BigDecimal fToC(final BigDecimal currentTemp) {
-        return currentTemp.subtract(FREEZING).multiply(F_TO_C_MULT);
+        BigDecimal t = currentTemp.subtract(FREEZING);
+        t = t.multiply(F_TO_C_MULT);
+        return t;
     }
 
     /**
-     * @param temp temperature to convert in Celsius
-     * @return temp in Fahrenheit
+     * @param currentTemp temperature to convert in Celsius
+     * @return Temperature in Fahrenheit
      */
     public static BigDecimal cToF(final BigDecimal currentTemp) {
-        return currentTemp.multiply(C_TO_F_MULT).add(FREEZING);
+        BigDecimal t = currentTemp.multiply(C_TO_F_MULT);
+        t = t.add(FREEZING);
+        return t;
     }
 
     /**
