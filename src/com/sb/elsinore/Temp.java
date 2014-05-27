@@ -37,8 +37,7 @@ public final class Temp implements Runnable {
      * C_TO_F_MULT: Multiplier to convert C to F.
      * FREEZING: The freezing point of Fahrenheit.
      */
-    public static BigDecimal F_TO_C_MULT = new BigDecimal(5/9);
-    public static BigDecimal C_TO_F_MULT = new BigDecimal(9/5);
+    
     public static BigDecimal FREEZING = new BigDecimal(32);
     public static BigDecimal ERROR_TEMP = new BigDecimal(-999);
 
@@ -372,19 +371,23 @@ public final class Temp implements Runnable {
     }
 
     /**
-     * @param temp temperature to convert in Fahrenheit
-     * @return temp in celsius
+     * @param currentTemp temperature to convert in Fahrenheit
+     * @return Temperature in celsius
      */
     public static BigDecimal fToC(final BigDecimal currentTemp) {
-        return currentTemp.subtract(FREEZING).multiply(F_TO_C_MULT);
+        BigDecimal t = currentTemp.subtract(FREEZING);
+        t = t.multiply(new BigDecimal(5)).divide(new BigDecimal(9));
+        return t;
     }
 
     /**
-     * @param temp temperature to convert in Celsius
-     * @return temp in Fahrenheit
+     * @param currentTemp temperature to convert in Celsius
+     * @return Temperature in Fahrenheit
      */
     public static BigDecimal cToF(final BigDecimal currentTemp) {
-        return currentTemp.add(FREEZING).multiply(C_TO_F_MULT);
+        BigDecimal t = currentTemp.multiply(new BigDecimal(9)).divide(new BigDecimal(5));
+        t = t.add(FREEZING);
+        return t;
     }
 
     /**
