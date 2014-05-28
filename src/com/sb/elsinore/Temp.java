@@ -1,4 +1,5 @@
 package com.sb.elsinore;
+import com.sb.util.MathUtil;
 import jGPIO.GPIO.Direction;
 import jGPIO.InPin;
 import jGPIO.InvalidGPIOException;
@@ -376,7 +377,7 @@ public final class Temp implements Runnable {
      */
     public static BigDecimal fToC(final BigDecimal currentTemp) {
         BigDecimal t = currentTemp.subtract(FREEZING);
-        t = t.multiply(new BigDecimal(5)).divide(new BigDecimal(9));
+        t = MathUtil.divide(MathUtil.multiply(t, 5),9);
         return t;
     }
 
@@ -385,7 +386,7 @@ public final class Temp implements Runnable {
      * @return Temperature in Fahrenheit
      */
     public static BigDecimal cToF(final BigDecimal currentTemp) {
-        BigDecimal t = currentTemp.multiply(new BigDecimal(9)).divide(new BigDecimal(5));
+        BigDecimal t = MathUtil.divide(MathUtil.multiply(currentTemp, 9),5);
         t = t.add(FREEZING);
         return t;
     }
@@ -482,14 +483,12 @@ public final class Temp implements Runnable {
                 int t = line.indexOf("t=");
                 temp = line.substring(t + 2);
                 BigDecimal tTemp = new BigDecimal(temp);
-                this.currentTemp = tTemp.divide(BigDecimal.TEN
-                        .multiply(BigDecimal.TEN.multiply(BigDecimal.TEN)));
+                this.currentTemp = MathUtil.divide(tTemp, 1000);
                 this.currentError = null;
             } else {
                 // System Temperature
                 BigDecimal tTemp = new BigDecimal(line);
-                this.currentTemp = tTemp.divide(BigDecimal.TEN
-                        .multiply(BigDecimal.TEN.multiply(BigDecimal.TEN)));
+                this.currentTemp = MathUtil.divide(tTemp, 1000);
             }
 
         } catch (IOException ie) {
@@ -629,7 +628,7 @@ public final class Temp implements Runnable {
                 BigDecimal keyDiff = pairs.getKey().subtract(prevPair.getKey());
                 BigDecimal valueDiff =
                         pairs.getValue().subtract(prevPair.getValue());
-                BigDecimal newMultiplier = valueDiff.divide(keyDiff);
+                BigDecimal newMultiplier = MathUtil.divide(valueDiff, keyDiff);
                 BigDecimal newConstant =
                         pairs.getValue().subtract(valueDiff.multiply(keyDiff));
 
@@ -736,8 +735,7 @@ public final class Temp implements Runnable {
                         // assume it's linear
                         BigDecimal volRange = curKey.subtract(prevKey);
                         BigDecimal readingRange = curValue.subtract(prevValue);
-                        BigDecimal ratio = pinValue.subtract(prevValue)
-                                .divide(readingRange);
+                        BigDecimal ratio = MathUtil.divide(pinValue.subtract(prevValue),readingRange);
                         BigDecimal volDiff = ratio.multiply(volRange);
                         tVolume = volDiff.add(prevKey);
                     }
@@ -748,8 +746,7 @@ public final class Temp implements Runnable {
                     // Try to extrapolate
                     BigDecimal volRange = curKey.subtract(prevKey);
                     BigDecimal readingRange = curValue.subtract(prevValue);
-                    BigDecimal ratio = pinValue.subtract(prevValue)
-                            .divide(readingRange);
+                    BigDecimal ratio = MathUtil.divide(pinValue.subtract(prevValue),readingRange);
                     BigDecimal volDiff = ratio.multiply(volRange);
                     tVolume = volDiff.add(prevKey);
                 }
@@ -835,8 +832,8 @@ public final class Temp implements Runnable {
         }
 
         // read in ten values
-        BigDecimal avgValue = total.divide(maxReads);
-
+        BigDecimal avgValue = MathUtil.divide(total, maxReads);
+        
         System.out.println("Read " + avgValue + " for "
                 + volume + " " + volumeUnit.toString());
 

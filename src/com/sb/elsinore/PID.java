@@ -1,4 +1,5 @@
 package com.sb.elsinore;
+import com.sb.util.MathUtil;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
 
@@ -453,11 +454,17 @@ public final class PID implements Runnable {
     private BigDecimal calcAverage() {
         int size = tempList.size();
 
+        if ( size == 0 )
+        {
+            return new BigDecimal(-999.0);
+        }
+        
         BigDecimal total = new BigDecimal(0.0);
         for (BigDecimal t : tempList) {
             total = total.add(t);
         }
-        return total.divide(BigDecimal.valueOf(size));
+        
+        return MathUtil.divide(total,size);
     }
 
     /**
@@ -544,7 +551,7 @@ public final class PID implements Runnable {
         if (previousTime.compareTo(BigDecimal.ZERO) == 0) {
             previousTime = currentTime;
         }
-        BigDecimal dt = currentTime.subtract(previousTime).divide(THOUSAND);
+        BigDecimal dt = MathUtil.divide(currentTime.subtract(previousTime),THOUSAND);
         if (dt.compareTo(BigDecimal.ZERO) == 0) {
             return outputControl.getDuty();
         }

@@ -1,4 +1,5 @@
 package com.sb.elsinore;
+import com.sb.util.MathUtil;
 import java.math.BigDecimal;
 
 import jGPIO.InvalidGPIOException;
@@ -124,7 +125,7 @@ public final class OutputControl implements Runnable {
                         BigDecimal lTime = new BigDecimal(System.currentTimeMillis())
                             .subtract(coolStopTime);
 
-                        if ((lTime.divide(THOUSAND)).compareTo(this.coolDelay) > 0) {
+                        if (MathUtil.divide(lTime,THOUSAND).compareTo(this.coolDelay) > 0) {
                             // not slept enough
                             break;
                         }
@@ -136,7 +137,7 @@ public final class OutputControl implements Runnable {
                         coolStopTime = BigDecimal.valueOf(System.currentTimeMillis());
                     } else if (fDuty.compareTo(BigDecimal.ZERO) > 0) {
                         // calc the on off time
-                        duty = fDuty.divide(HUNDRED);
+                        duty = MathUtil.divide(fDuty,HUNDRED);
                         onTime = duty.multiply(fTimeh);
                         offTime = fTimeh.multiply(BigDecimal.ONE.subtract(duty));
                         BrewServer.LOG.info("On: " + onTime
@@ -148,7 +149,7 @@ public final class OutputControl implements Runnable {
                         Thread.sleep(offTime.intValue());
                     } else if (fDuty.compareTo(BigDecimal.ZERO) < 0) {
                         // calc the on off time
-                        duty = fDuty.abs().divide(HUNDRED);
+                        duty = MathUtil.divide(fDuty.abs(),HUNDRED);
                         onTime = duty.multiply(fTimec);
                         offTime = fTimeh.multiply(BigDecimal.ONE.subtract(duty));
 
