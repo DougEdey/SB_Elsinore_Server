@@ -557,7 +557,7 @@ public final class PID implements Runnable {
         }
 
         this.errorFactor = heatSetting.set_point.subtract(avgTemp);
-        this.integralFactor = integralFactor.subtract(errorFactor).multiply(dt);
+        this.integralFactor = integralFactor.add(errorFactor.multiply(dt));
         this.derivativeFactor = errorFactor.subtract(previousError).multiply(dt);
 
         BrewServer.LOG.info("DT: " + dt + " Error: " + errorFactor
