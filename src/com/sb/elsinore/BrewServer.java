@@ -119,6 +119,10 @@ public class BrewServer extends NanoHTTPD {
         } else {
             inputUnit = params.get("form");
             parms = params;
+        }
+        
+        if( inputUnit != null )
+        {
             parms.put("inputunit", inputUnit);
         }
 
@@ -163,7 +167,7 @@ public class BrewServer extends NanoHTTPD {
             BrewServer.class.getProtectionDomain().getCodeSource()
             .getLocation().getPath()).getParentFile();
         LOG.info("Root Directory is: " + rootDir.toString());
-
+        
         if (rootDir.exists() && rootDir.isDirectory()) {
             LOG.info("Root directory: " + rootDir.toString());
         }
@@ -852,7 +856,7 @@ public class BrewServer extends NanoHTTPD {
         }
 
         if (uri.toLowerCase().equals("/getstatus")) {
-            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
                     LaunchControl.getJSONStatus());
         }
 
