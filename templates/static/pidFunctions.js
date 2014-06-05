@@ -328,7 +328,7 @@ function updatePIDStatus(vessel, val) {
 	jQuery(vesselDiv  + ' input[name="setpoint"]').val(val.setpoint);
 	jQuery(vesselDiv  + ' input[name="p"]').val(val.p);
 	jQuery(vesselDiv  + ' input[name="i"]').val(val.i);
-	jQuery(vesselDiv  + ' input[name="d"]').val(val.k);
+	jQuery(vesselDiv  + ' input[name="d"]').val(val.d);
 	jQuery(vesselDiv  + ' input[name="gpio"]').val(val.gpio);
 	
 	// Disable some stuff
