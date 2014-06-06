@@ -312,7 +312,7 @@ public class ServeHTML {
                 + lineSep
                 + "<td id=\"" + device + "-cycletime\">" + lineSep
                 + "<input class='inputBox dutytime' name=\"cycletime\""
-                    + " maxlength = \"6\" size =\"6\" value=\"\" readonly=\"true\""
+                    + " maxlength = \"6\" size =\"6\" value=\"\""
                     + " style=\"text-align: left;\"/>"
                 + "</td>" + lineSep
                 + "<td id='" + device + "-unitDT'>secs</td>"
