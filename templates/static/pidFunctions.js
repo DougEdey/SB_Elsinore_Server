@@ -224,6 +224,9 @@ function updateVolumeStatus(vessel, status) {
 }
 
 function editVolume(element) {
+
+	window.disableUpdates = 1;
+	
 	// Is the edit form already displayed
 	var vessel = element.id.substring(0, element.id.indexOf("-volume"));
 	var vesselEditForm = $('#'+vessel+'-editVol');
@@ -236,8 +239,6 @@ function editVolume(element) {
 	var volAdd = $('#' + vessel  + ' input[name="vol_add"]').val();
 	var volOff = $('#' + vessel  + ' input[name="vol_off"]').val();
 	var volUnits = $('#' + vessel  + ' input[name="vol_units"]').val();
-	
-	window.disableUpdates = 1;
 	
 	// Insert a couple of new form elements
 	$('#' + vesselDiv).append("<div id='"+vessel+"-editVol'>"
@@ -327,8 +328,16 @@ function updatePIDStatus(vessel, val) {
 	jQuery(vesselDiv  + ' input[name="setpoint"]').val(val.setpoint);
 	jQuery(vesselDiv  + ' input[name="p"]').val(val.p);
 	jQuery(vesselDiv  + ' input[name="i"]').val(val.i);
-	jQuery(vesselDiv  + ' input[name="d"]').val(val.k);
+	jQuery(vesselDiv  + ' input[name="d"]').val(val.d);
 	jQuery(vesselDiv  + ' input[name="gpio"]').val(val.gpio);
+	
+	// Disable some stuff
+	jQuery(vesselDiv  + ' input[name="dutycycle"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="cycletime"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="setpoint"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="p"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="i"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="d"]').prop("disabled", true);
 	
 	// Aux Mode check
 	if ("auxStatus" in val) {
@@ -548,6 +557,18 @@ function pad(n, width, z) {
 
 function disable(input) {
 	window.disableUpdates = 1;
+	
+	// setup the values
+	var vessel = input.id.substring(0, input.id.indexOf("-mode"));
+	var vesselDiv = 'form[id="'+vessel+'-form"]';
+	
+	jQuery(vesselDiv  + ' input[name="dutycycle"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="cycletime"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="setpoint"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="p"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="i"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="d"]').prop("disabled", false);
+	return false;
 }
 
 function toggleDiv(id) {

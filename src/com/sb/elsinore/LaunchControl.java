@@ -1729,12 +1729,17 @@ public final class LaunchControl {
                         t.getVolumeBase();
 
                 // Iterate over the entries
-                for (Entry<BigDecimal, BigDecimal> e: volumeBase.entrySet()) {
-                    System.out.println("Saving volume point " + e.getKey() + " value " + e.getValue());
-                    Element volEntry = addNewElement(device, "volume");
-                    volEntry.setAttribute("vol", e.getKey().toString());
-                    volEntry.setTextContent(e.getValue().toString());
-                    device.appendChild(volEntry);
+
+                if (volumeBase != null) {
+                    for (Entry<BigDecimal, BigDecimal> e
+                            : volumeBase.entrySet()) {
+                        System.out.println("Saving volume point " + e.getKey()
+                                + " value " + e.getValue());
+                        Element volEntry = addNewElement(device, "volume");
+                        volEntry.setAttribute("vol", e.getKey().toString());
+                        volEntry.setTextContent(e.getValue().toString());
+                        device.appendChild(volEntry);
+                    }
                 }
             }
         }

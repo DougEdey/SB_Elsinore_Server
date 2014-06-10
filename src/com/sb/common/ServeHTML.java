@@ -274,6 +274,7 @@ public class ServeHTML {
             + lineSep
             + "</div>" + lineSep
             + "<table id='pidInput' class='labels table'>"
+
             // Set Point
             + "<tr id='" + device + "-SP' class='holo-field'>"
             + lineSep
@@ -325,7 +326,7 @@ public class ServeHTML {
                     + " maxlength = \"6\" size =\"6\" value=\"\""
                     + " style=\"text-align: left;\"/>"
                 + "</td>" + lineSep
-                + "<td id='" + device + "-unitP'>secs#176"
+                + "<td id='" + device + "-unitP'>secs/&#176"
                     + "<div id='tempUnit'>F</div>"
                 + "</td>"
             + "</tr>" + lineSep
