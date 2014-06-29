@@ -4,11 +4,11 @@ import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
 
 /**
- * A helper class for pump control. not very complex.
- * Designed to control a single GPIO pin with a
- * straight forward on/off functionality
+ * A helper class for pump control. not very complex. Designed to control a
+ * single GPIO pin with a straight forward on/off functionality
+ * 
  * @author Doug Edey
- *
+ * 
  */
 public class Pump {
 
@@ -20,12 +20,17 @@ public class Pump {
      * the outpin for the pump.
      */
     private OutPin output = null;
+    private boolean invertOutput = false;
 
     /**
      * The Constructor.
-     * @param newName The name of this pump
-     * @param pinName The GPIO pin name
-     * @throws InvalidGPIOException If there's a problem opening the GPIO.
+     * 
+     * @param newName
+     *            The name of this pump
+     * @param pinName
+     *            The GPIO pin name
+     * @throws InvalidGPIOException
+     *             If there's a problem opening the GPIO.
      */
     public Pump(final String newName, final String pinName)
             throws InvalidGPIOException {
@@ -37,6 +42,19 @@ public class Pump {
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
+
+        String temp = null;
+
+        try {
+            temp = System.getProperty("invert_outputs");
+        } catch (Exception e) {
+            // In case get property fails
+        }
+
+        if (temp != null) {
+            this.invertOutput = true;
+        }
+
     }
 
     /**
@@ -54,14 +72,22 @@ public class Pump {
      * Turn on the pump.
      */
     public final void turnOn() {
-        output.setValue(true);
+        if (this.invertOutput) {
+            output.setValue(false);
+        } else {
+            output.setValue(true);
+        }
     }
 
     /**
      * Turn off the pump.
      */
     public final void turnOff() {
-        output.setValue(false);
+        if (this.invertOutput) {
+            output.setValue(true);
+        } else {
+            output.setValue(false);
+        }
     }
 
     /**
