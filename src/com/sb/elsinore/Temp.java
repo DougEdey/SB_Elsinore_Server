@@ -176,7 +176,7 @@ public final class Temp implements Runnable {
 
         while (true) {
             if (updateTemp() == ERROR_TEMP) {
-                if (fProbe == null || fProbe.equals(
+                if (fProbe != null && fProbe.equals(
                         "/sys/class/thermal/thermal_zone0/temp")) {
                     return;
                 }
@@ -454,6 +454,7 @@ public final class Temp implements Runnable {
             if (rawTemp == null || rawTemp.equals("")) {
                 BrewServer.LOG.severe(
                     "Couldn't find the probe " + probeName + " for " + name);
+                LaunchControl.setupOWFS();
             } else {
                 temp = new BigDecimal(rawTemp);
             }
@@ -697,6 +698,7 @@ public final class Temp implements Runnable {
                             "Could not update the volume reading from OWFS", e);
                         this.stopVolumeLogging = true;
                     }
+                    BrewServer.LOG.info("Reconnecting OWFS");
                     LaunchControl.setupOWFS();
 
                     return BigDecimal.ZERO;
