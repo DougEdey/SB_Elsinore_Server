@@ -631,6 +631,7 @@ public final class LaunchControl {
                     tTemp.setScale(scale);
                     // setup the threads
                     Thread tThread = new Thread(tTemp);
+                    tThread.setName("Temp_system");
                     tempThreads.add(tThread);
                     tThread.start();
                 }
@@ -793,6 +794,7 @@ public final class LaunchControl {
                 tTemp.setScale(scale);
                 // setup the threads
                 Thread tThread = new Thread(tTemp);
+                tThread.setName("Temp_" + tTemp.getName());
                 tempThreads.add(tThread);
                 tThread.start();
             }
@@ -999,6 +1001,7 @@ public final class LaunchControl {
 
         // setup the threads
         Thread tThread = new Thread(tTemp);
+        tThread.setName("Temp_" + tTemp.getName());
         tempThreads.add(tThread);
         tThread.start();
 
@@ -1012,6 +1015,7 @@ public final class LaunchControl {
 
             pidList.add(tPID);
             Thread pThread = new Thread(tPID);
+            pThread.setName("PID_"  + tTemp.getName());
             pidThreads.add(pThread);
             pThread.start();
         }
@@ -1223,6 +1227,7 @@ public final class LaunchControl {
                 currentTemp.setScale(scale);
                 // setup the threads
                 Thread tThread = new Thread(currentTemp);
+                tThread.setName("Temp_"+currentTemp.getName());
                 tempThreads.add(tThread);
                 tThread.start();
             }
@@ -1435,6 +1440,7 @@ public final class LaunchControl {
                     currentTemp.setScale(scale);
                     // setup the threads
                     Thread tThread = new Thread(currentTemp);
+                    tThread.setName("Temp_"+currentTemp.getName());
                     tempThreads.add(tThread);
                     tThread.start();
                 }
@@ -2449,6 +2455,7 @@ public final class LaunchControl {
     public static void startMashControl(final String pid) {
         MashControl mControl = findMashControl(pid);
         Thread mThread = new Thread(mControl);
+        mThread.setName("Mash Thread");
         mashThreads.add(mThread);
         mThread.start();
     }

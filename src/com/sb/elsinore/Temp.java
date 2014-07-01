@@ -41,7 +41,7 @@ public final class Temp implements Runnable {
     
     public static BigDecimal FREEZING = new BigDecimal(32);
     public static BigDecimal ERROR_TEMP = new BigDecimal(-999);
-
+    private boolean badTemp = false;
     /**
      * Base path for BBB System Temp.
      */
@@ -176,7 +176,7 @@ public final class Temp implements Runnable {
 
         while (true) {
             if (updateTemp() == ERROR_TEMP) {
-                if (fProbe == null || fProbe.equals(
+                if (fProbe != null && fProbe.equals(
                         "/sys/class/thermal/thermal_zone0/temp")) {
                     return;
                 }
@@ -404,6 +404,9 @@ public final class Temp implements Runnable {
     public BigDecimal updateTemp() {
         BigDecimal result = ERROR_TEMP;
 
+        if (badTemp) {
+            System.out.println("Trying to recover " + this.getName());
+        }
         if (fProbe == null) {
             result = updateTempFromOWFS();
         } else {
@@ -411,7 +414,13 @@ public final class Temp implements Runnable {
         }
 
         if (result.equals(ERROR_TEMP)) {
+            badTemp = true;
             return result;
+        }
+
+        if (badTemp) {
+            badTemp = false;
+            BrewServer.LOG.warning("Recovered temperature reading for " + this.getName());
         }
 
         // OWFS/One wire always uses Celsius
@@ -445,6 +454,7 @@ public final class Temp implements Runnable {
             if (rawTemp == null || rawTemp.equals("")) {
                 BrewServer.LOG.severe(
                     "Couldn't find the probe " + probeName + " for " + name);
+                LaunchControl.setupOWFS();
             } else {
                 temp = new BigDecimal(rawTemp);
             }
@@ -688,6 +698,7 @@ public final class Temp implements Runnable {
                             "Could not update the volume reading from OWFS", e);
                         this.stopVolumeLogging = true;
                     }
+                    BrewServer.LOG.info("Reconnecting OWFS");
                     LaunchControl.setupOWFS();
 
                     return BigDecimal.ZERO;

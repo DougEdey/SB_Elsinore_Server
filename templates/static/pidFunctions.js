@@ -266,21 +266,48 @@ function editDevice(element) {
 	}
 	
 	var vesselDiv = element.id;
-	var gpio = $('#' + vesselDiv  + ' input[name="gpio"]').val();
-	var auxgpio = $('#' + vesselDiv  + ' input[name="auxgpio"]').val();
+	var gpio = $('#' + vessel  + ' input[name="gpio"]').val();
+	var auxgpio = $('#' + vessel  + ' input[name="auxgpio"]').val();
 	
 	// Insert a couple of new form elements
 	$('#' + vesselDiv).append("<div id='"+vessel+"-edit'>"
 		+ "<form id='" + vessel + "-edit' name='" + vessel + "-edit'>"
 		+ "<input type='text' name='new_name' id='new_name' value='"+vessel+"' /><br/>"
-		+ "<input type='text' name='new_gpio' id='new_gpio' value='"+gpio+"' placeholder='GPIO'/><br/>"
-		+ "<input type='text' name='aux_gpio' id='aux_gpio' value='"+auxgpio+"' placeholder='Aux GPIO' /><br/>"
+		+ "<input type='text' name='new_gpio' id='new_gpio' onblur='validate_gpio(this)' " +
+				"value='"+gpio+"' placeholder='GPIO_X(_Y)'/><br/>"
+		+ "<input type='text' name='aux_gpio' id='aux_gpio' onblur='validate_gpio(this)' " +
+				"value='"+auxgpio+"' placeholder='Aux GPIO_X(_Y)' /><br/>"
 		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
 		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>Update</button>"
 		+ "<button id='cancel-"+vessel+"' class='holo-button modeclass' "
 		+ "onclick='cancelEdit(vessel); waitForMsg(); return false;'>Cancel</button>"
 		+ "</form>"
 		+ "</div>");
+}
+
+function validate_gpio(gpio_input) {
+	if ((typeof gpio_input) != "string") {
+		gpio_string = gpio_input.value
+	} else {
+		gpio_string = gpio_input;
+	}
+	
+	gpio_string = gpio_string.toLowerCase().trim();
+	
+	if (gpio_string == "") {
+		return true;
+	}
+	
+	if (gpio_string.match(/(gpio)([\d]+)(_[\d]+)$/)) {
+		return true;
+	}
+	
+	if (gpio_string.match(/(gpio)([\d]+)$/)) {
+		return true;
+	}
+	
+	alert('Invalid GPIO pin. Please use GPIO<x> or GPIO<bank>_<offset>');
+	return false;
 }
 
 function cancelEdit(vessel) {
@@ -503,7 +530,12 @@ function submitPump(pumpStatus) {
 
 function addPump() {
 	var newname = prompt("New pump name");
-	var gpio = prompt("GPIO Pin");
+	var gpio =  "";
+		
+	while (gpio == "" || !validate_gpio(gpio)) {
+		gpio = prompt("GPIO Pin (GPIO_x(_y)");
+	}	
+	
 	
 	$.ajax({
 		url: 'addpump',
