@@ -609,7 +609,16 @@ public abstract class NanoHTTPD {
          * Adds given line to the header.
          */
         public void addHeader(String name, String value) {
+            if( header.containsKey(name) )
+            {
+                header.remove(name);
+            }
             header.put(name, value);
+        }
+        
+        public String getHeader(String name)
+        {
+            return header.get(name);
         }
 
         /**

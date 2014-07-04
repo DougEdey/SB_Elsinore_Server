@@ -373,11 +373,11 @@ public final class OutputControl implements Runnable {
     /**
      * The delay between cooling start/stop calls.
      */
-    private BigDecimal coolDelay;
+    private BigDecimal coolDelay = new BigDecimal(1000*60); //One Minute Default to prevent code from erroring out when this is not set.
     /**
-     * The Duty cycle.
+     * The Duty cycle.  Initialized to ZERO to prevent use of duty before it is set.
      */
-    private BigDecimal fDuty;
+    private BigDecimal fDuty = BigDecimal.ZERO;
     /**
      * The cooling status flag.
      */

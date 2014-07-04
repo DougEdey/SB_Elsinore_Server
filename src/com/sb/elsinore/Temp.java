@@ -483,7 +483,8 @@ public final class Temp implements Runnable {
         try {
             br = new BufferedReader(new FileReader(fProbe));
             String line = br.readLine();
-            if (line.contains("NO")) {
+            
+            if (line == null || line.contains("NO")) {
                 // bad CRC, do nothing
                 this.currentError = "Bad CRC from " + fProbe;
             } else if (line.contains("YES")) {

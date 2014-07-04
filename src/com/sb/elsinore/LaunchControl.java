@@ -151,6 +151,8 @@ public final class LaunchControl {
      * The BrewServer runner object that'll be used.
      */
     private static ServerRunner sRunner = null;
+    
+    private static StatusRecorder recorder = null;
 
     /* Private fields to hold data for various functions */
     /**
@@ -331,12 +333,22 @@ public final class LaunchControl {
                 }
 
                 saveConfigFile();
+                
+                if( recorder != null )
+                {
+                    recorder.stop();
+                }
             }
         });
 
         // See if we have an active configuration file
         readConfig();
 
+        BrewServer.LOG.log(Level.INFO, "Starting Status Recorder");
+        
+        recorder = new StatusRecorder();
+        recorder.start();
+        
         // Debug info before launching the BrewServer itself
         BrewServer.LOG.log(Level.INFO, "CONFIG READ COMPLETED***********");
         sRunner = new ServerRunner(BrewServer.class, this.server_port);
@@ -350,7 +362,7 @@ public final class LaunchControl {
             Temp tTemp = iterator.next();
             findPID(tTemp.getName());
         }
-
+        
         // Old way to close off the System
         System.out.println("Waiting for input... Type 'quit' to exit");
         String input = "";
