@@ -1,0 +1,134 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>Live Data Graph</title>
+	<link href="/templates/static/graph/flot.css" rel="stylesheet" type="text/css">
+	
+	<script language="javascript" type="text/javascript" src="/templates/static/jquery.js"></script>
+	<script language="javascript" type="text/javascript" src="/templates/static/jquery.flot.js"></script>
+	<script language="javascript" type="text/javascript" src="/templates/static/jquery.flot.time.js"></script>
+	<script type="text/javascript">
+
+	$(function() {
+
+		var options = {
+			lines: {
+				show: true
+			},
+			points: {
+				show: true
+			},
+			xaxis: {
+				mode: "time",
+				timeformat: "%y/%m/%d %H:%M:%S"
+			}
+		};
+
+		var data = [];
+
+		$.plot("#placeholder", data, options);
+
+		// Fetch one series, adding to what we already have
+
+		var alreadyFetched = {};
+
+		$("button.fetchSeries").click(function () {
+
+			var button = $(this);
+
+			// Find the URL in the link right next to us, then fetch the data
+
+			var dataurl = button.siblings("a").attr("href");
+
+			function onDataReceived(series) {
+
+				// Extract the first coordinate pair; jQuery has parsed it, so
+				// the data is now just an ordinary JavaScript object
+
+				var firstcoordinate = "(" + series.data[0][0] + ", " + series.data[0][1] + ")";
+				button.siblings("span").text("Fetched " + series.label + ", first point: " + firstcoordinate);
+
+				// Push the new data onto our existing data array
+
+				if (!alreadyFetched[series.label]) {
+					alreadyFetched[series.label] = true;
+					data.push(series);
+				}
+
+				$.plot("#placeholder", data, options);
+			}
+
+			$.ajax({
+				url: dataurl,
+				type: "GET",
+				dataType: "json",
+				success: onDataReceived
+			});
+		});
+
+		// Initiate a recurring data update
+
+		
+			data = [];
+			alreadyFetched = {};
+
+			$.plot("#placeholder", data, options);
+
+
+			function fetchData() {
+
+				
+
+				function onDataReceived(series) {
+
+					// Load all the data in one pass; if we only got partial
+					// data we could merge it with what we already have.
+
+					data = [ series ];
+					$.plot("#placeholder", series, options);
+				}
+
+				// Normally we call the same URL - a script connected to a
+				// database - but in this case we only have static example
+				// files, so we need to modify the URL.
+
+				$.ajax({
+					url: "/graph-data/",
+					type: "GET",
+					dataType: "json",
+					success: onDataReceived
+				});
+
+				setTimeout(fetchData, 1000);
+				
+			}
+
+			setTimeout(fetchData, 1000);
+		
+
+		// Load the first series by default, so we don't have an empty plot
+
+		
+		// Add the Flot version string to the footer
+
+		$("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
+	});
+
+	</script>
+</head>
+<body>
+
+	<div id="header">
+		<h2>Live Data vs Time</h2>
+	</div>
+
+	<div id="content">
+
+		<div class="demo-container">
+			<div id="placeholder" class="demo-placeholder"></div>
+		</div>
+
+
+</body>
+</html>
