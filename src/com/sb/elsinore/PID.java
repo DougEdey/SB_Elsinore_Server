@@ -33,6 +33,11 @@ public final class PID implements Runnable {
      */
     private Thread outputThread = null;
     private boolean invertOutput = false;
+    
+    /* Hysteria Settings */
+    private BigDecimal max = new BigDecimal(0);
+    private BigDecimal min = new BigDecimal(0);
+    private BigDecimal minTime = new BigDecimal(0);
 
     /**
      * Inner class to hold the current settings.
@@ -58,50 +63,6 @@ public final class PID implements Runnable {
             duty_cycle = cycle_time = proportional =
                     integral = derivative = set_point = new BigDecimal(0.0);
         }
-    }
-
-    /******
-     * Create a new PID.
-     * @param aTemp Temperature Object to use
-     * @param aName Name of the PID
-     * @param aDuty Duty Cycle % being set
-     * @param aTime Cycle Time in seconds
-     * @param p Proportional value
-     * @param i Integral Value
-     * @param d Differential value
-     * @param gpio GPIO to be used to control the output
-     */
-    public PID(final Temp aTemp, final String aName, final BigDecimal aDuty,
-            final BigDecimal aTime, final BigDecimal p, final BigDecimal i,
-            final BigDecimal d, final String gpio) {
-        this.mode = "off";
-        this.heatSetting = new Settings();
-        this.heatSetting.set_point = new BigDecimal(175);
-        this.heatSetting.duty_cycle = aDuty;
-        this.heatSetting.cycle_time = aTime;
-        this.heatSetting.proportional = p;
-        this.heatSetting.integral = i;
-        this.heatSetting.derivative = d;
-        this.heatSetting.calculatedDuty = new BigDecimal(0.0);
-
-        this.fName = aName;
-        this.fTemp = aTemp;
-
-        this.fGPIO = detectGPIO(gpio);
-        
-        String temp = null;
-        
-        try {
-            temp = System.getProperty("invert_outputs");
-        } catch (Exception e) {
-            // Incase get property fails
-        }
-        
-        if (temp != null) {
-            this.invertOutput = true;
-        }
-        
-
     }
 
     /**
@@ -196,6 +157,29 @@ public final class PID implements Runnable {
                 + " - Temp: " + getTempC();
     }
 
+    /**
+     * Set the PID to hysteria mode.
+     * @param newMax   The maximum value to disable heating at
+     * @param newMin   The minimum value to start heating at
+     * @param newMinTime The minimum amount of time to keep the burner on for
+     */
+    public void setHysteria(final BigDecimal newMax,
+        final BigDecimal newMin, final BigDecimal newMinTime) {
+
+        if (newMax.compareTo(newMin) <= 0) {
+            throw new NumberFormatException(
+                    "Min value is less than the max value");
+        }
+
+        if (newMinTime.compareTo(BigDecimal.ZERO) < 0) {
+            throw new NumberFormatException("Min Time is negative");
+        }
+
+        this.mode = "hysteria";
+        this.max = newMax;
+        this.min = newMin;
+        this.minTime = newMinTime;
+    }
 
     /***
      * Main loop for using a PID Thread.
@@ -235,8 +219,9 @@ public final class PID implements Runnable {
                 synchronized (this.fTemp) {
                     // do the bulk of the work here
                     this.fTempC = this.fTemp.getTempC();
-                    this.currentTime = new BigDecimal(this.fTemp.getTime());
                     this.fTempF = this.fTemp.getTempF();
+                    this.currentTime = new BigDecimal(this.fTemp.getTime());
+                    
                     // if the GPIO is blank we do not need to do any of this;
                     if (this.fGPIO != "") {
                         if (this.tempList.size() >= 5) {
@@ -256,14 +241,38 @@ public final class PID implements Runnable {
                                 + heatSetting.calculatedDuty);
                             this.outputControl.setDuty(
                                 heatSetting.calculatedDuty);
+                            this.outputControl.setHTime(heatSetting.cycle_time);
                         } else if (mode.equals("manual")) {
                             this.outputControl.setDuty(heatSetting.duty_cycle);
                         } else if (mode.equals("off")) {
                             this.outputControl.setDuty(BigDecimal.ZERO);
+                            this.outputControl.setHTime(heatSetting.cycle_time);
+                        } else if (mode.equals("hysteria")) {
+                            // Set the duty cycle to be 100, we can wake it up when we want to
+                            if (this.getTempF().compareTo(this.min) < 0) {
+                                this.hysteriaStartTime = this.currentTime;
+                                this.outputControl.setDuty(new BigDecimal(100));
+                                this.outputControl.setHTime(this.minTime.multiply(new BigDecimal(60)));
+                                // Make sure the thread wakes up for the new settings
+                                this.outputThread.interrupt();
+                                
+                            } else if (this.getTempF().compareTo(this.max) >= 0) {
+                                
+                                // We're over the maximum temp, but should we wake up the thread?
+                                BigDecimal timeDiff = this.currentTime.subtract(this.hysteriaStartTime);
+                                timeDiff = timeDiff.divide(THOUSAND).divide(new BigDecimal(60));
+                                // TimeDiff is now in minutes
+                                
+                                if (timeDiff.compareTo(this.minTime) >= 0) {
+                                    // Make sure the thread wakes up for the new settings    
+                                    this.outputControl.setDuty(BigDecimal.ZERO);
+                                    this.outputThread.interrupt();
+                                }
+                            }
+                        
+                            
                         }
-                        // determine if the heat needs to be on or off
-                        this.outputControl.setHTime(heatSetting.cycle_time);
-
+                   
                         BrewServer.LOG.info(mode + ": " + fName + " status: "
                             + fTempF + " duty cycle: "
                             + this.outputControl.getDuty());
@@ -516,6 +525,7 @@ public final class PID implements Runnable {
      * The current timestamp.
      */
     private BigDecimal currentTime = new BigDecimal(System.currentTimeMillis());
+    private BigDecimal hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
     /**
      * Settings for the heating and cooling.
      */

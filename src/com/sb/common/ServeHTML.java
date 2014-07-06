@@ -260,6 +260,12 @@ public class ServeHTML {
                 + " selectAuto(this);"
                 + " return false;'>Auto</button>"
             + lineSep
+            + "<button id=\"" + device + "-modeHysteria\""
+            + " class=\"holo-button modeclass\""
+            + " onclick='disable(this);"
+            + " selectHysteria(this);"
+            + " return false;'>Hysteria</button>"
+        + lineSep
             + "<button id=\"" + device + "-modeManual\""
                 + " class=\"holo-button modeclass\""
                 + " onclick='disable(this);"

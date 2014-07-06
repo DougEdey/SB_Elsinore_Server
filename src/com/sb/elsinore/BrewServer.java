@@ -626,7 +626,10 @@ public class BrewServer extends NanoHTTPD {
             setpoint = new BigDecimal(0),
             p = new BigDecimal(0),
             i = new BigDecimal(0),
-            d = new BigDecimal(0);
+            d = new BigDecimal(0),
+            min = new BigDecimal(0),
+            max = new BigDecimal(0),
+            time = new BigDecimal(0);
 
         JSONObject sub_usage = new JSONObject();
         Map<String, String> parms = ParseParams(params);
@@ -711,6 +714,39 @@ public class BrewServer extends NanoHTTPD {
             BrewServer.LOG.info("Mode: " + mode);
         }
 
+        sub_usage.put("min", "The minimum temperature to enable the output (HYSTERIA)");
+        if (parms.containsKey("min")) {
+            try {
+                dTemp = new BigDecimal(parms.get("min"));
+                min = dTemp;
+                BrewServer.LOG.info("Min: " + mode);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad minimum");
+            }
+        }
+
+        sub_usage.put("max", "The maximum temperature to disable the output (HYSTERIA)");
+        if (parms.containsKey("max")) {
+            try {
+                dTemp = new BigDecimal(parms.get("max"));
+                max = dTemp;
+                BrewServer.LOG.info("Max: " + mode);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad maximum");
+            }
+        }
+
+        sub_usage.put("time", "The minimum time when enabling the output (HYSTERIA)");
+        if (parms.containsKey("time")) {
+            try {
+                dTemp = new BigDecimal(parms.get("time"));
+                time = dTemp;
+                BrewServer.LOG.info("Time: " + time);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad time");
+            }
+        }
+
         BrewServer.LOG.info("Form: " + inputUnit);
 
         JSONObject usage = new JSONObject();
@@ -718,9 +754,13 @@ public class BrewServer extends NanoHTTPD {
 
         PID tPID = LaunchControl.findPID(inputUnit);
         if (tPID != null) {
-            BrewServer.LOG.info(mode + ":" + duty + ":" + cycle + ":" + setpoint
-                + ":" + p + ":" + i + ":" + d);
-            tPID.updateValues(mode, duty, cycle, setpoint, p, i, d);
+            if (mode.equalsIgnoreCase("hysteria")) {
+                tPID.setHysteria(max, min, time);
+            } else {
+                BrewServer.LOG.info(mode + ":" + duty + ":" + cycle + ":" + setpoint
+                    + ":" + p + ":" + i + ":" + d);
+                tPID.updateValues(mode, duty, cycle, setpoint, p, i, d);
+            }
             return new Response(Status.OK,
                 MIME_HTML, "PID " + inputUnit + " updated");
         } else {

@@ -339,6 +339,9 @@ function updatePIDStatus(vessel, val) {
 		if(mode == "Auto") {
 			selectAuto(vessel);
 		}
+		if(mode == "Hysteria") {
+			selectHysteria(vessel);
+		}
 		if(mode == "Manual") {
 			selectManual(vessel);
 		}
@@ -404,6 +407,7 @@ function selectOff(vessel) {
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="red";
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="#666666";
+	jQuery('button[id^="'+vessel+'-modeHysteria"]')[0].style.background="#666666";
 
 	jQuery('tr[id="'+vessel+'-SP"]').hide();
 	jQuery('tr[id="'+vessel+'-DT"]').hide();
@@ -411,6 +415,10 @@ function selectOff(vessel) {
 	jQuery('tr[id="'+vessel+'-p"]').hide();
 	jQuery('tr[id="'+vessel+'-i"]').hide();
 	jQuery('tr[id="'+vessel+'-d"]').hide();
+	jQuery('tr[id="'+vessel+'-min"]').hide();
+	jQuery('tr[id="'+vessel+'-max"]').hide();
+	jQuery('tr[id="'+vessel+'-time"]').hide();
+
 
 	vessel = null;
 	return false;
@@ -430,6 +438,7 @@ function selectAuto(vessel) {
 	
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
+	jQuery('button[id^="'+vessel+'-modeHysteria"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="red";
 
 	jQuery('tr[id="'+vessel+'-SP"]').show();
@@ -438,6 +447,40 @@ function selectAuto(vessel) {
 	jQuery('tr[id="'+vessel+'-p"]').show();
 	jQuery('tr[id="'+vessel+'-i"]').show();
 	jQuery('tr[id="'+vessel+'-d"]').show();
+	jQuery('tr[id="'+vessel+'-min"]').hide();
+	jQuery('tr[id="'+vessel+'-max"]').hide();
+	jQuery('tr[id="'+vessel+'-time"]').hide();
+
+	vessel = null;
+	return false;
+}
+
+function selectHysteria(vessel) {
+	
+	if((typeof vessel) != "string") {
+		var v = vessel.id;
+		i = v.indexOf("-");
+		vessel = v.substr(0, i);
+		v = null;
+	}
+
+	var vesselDiv = 'form[id="'+vessel+'-form"]';
+	$(vesselDiv + ' input[name="mode"]').val("hysteria");
+	
+	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
+	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
+	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="#666666";
+	jQuery('button[id^="'+vessel+'-modeHysteria"]')[0].style.background="red";
+
+	jQuery('tr[id="'+vessel+'-SP"]').hide();
+	jQuery('tr[id="'+vessel+'-DT"]').hide();
+	jQuery('tr[id="'+vessel+'-DC"]').hide();
+	jQuery('tr[id="'+vessel+'-p"]').hide();
+	jQuery('tr[id="'+vessel+'-i"]').hide();
+	jQuery('tr[id="'+vessel+'-d"]').hide();
+	jQuery('tr[id="'+vessel+'-min"]').show();
+	jQuery('tr[id="'+vessel+'-max"]').show();
+	jQuery('tr[id="'+vessel+'-time"]').show();
 
 	vessel = null;
 	return false;
@@ -458,6 +501,7 @@ function selectManual(vessel) {
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="red";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="#666666";
+	jQuery('button[id^="'+vessel+'-modeHysteria"]')[0].style.background="#666666";
 
 	jQuery('tr[id="'+vessel+'-SP"]').hide();
 	jQuery('tr[id="'+vessel+'-DT"]').show();
@@ -465,6 +509,10 @@ function selectManual(vessel) {
 	jQuery('tr[id="'+vessel+'-p"]').hide();
 	jQuery('tr[id="'+vessel+'-i"]').hide();
 	jQuery('tr[id="'+vessel+'-d"]').hide();
+	jQuery('tr[id="'+vessel+'-min"]').hide();
+	jQuery('tr[id="'+vessel+'-max"]').hide();
+	jQuery('tr[id="'+vessel+'-time"]').hide();
+
 
 	vessel = null;
 	return false;
