@@ -234,7 +234,7 @@ public class ServeHTML {
             + "</div>"
             + "<div class=\"panel-body\">" + lineSep
             + " <canvas id=\"" + device + "-tempGauge\" class=\"gauge\""
-            + " width=\"300\" height=\"140\">" + lineSep
+            + " width=\"300\" height=\"140\" onClick=\"showGraph(this)\">" + lineSep
             + "</canvas>" + lineSep
             + "<div id='" + device + "-tempSummary'>Temperature("
                 + "<div id='tempUnit'>F</div>): " + lineSep

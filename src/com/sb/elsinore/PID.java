@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 import com.sb.util.MathUtil;
+
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
 
@@ -31,6 +32,7 @@ public final class PID implements Runnable {
      * The Output control thread.
      */
     private Thread outputThread = null;
+    private boolean invertOutput = false;
 
     /**
      * Inner class to hold the current settings.
@@ -86,6 +88,19 @@ public final class PID implements Runnable {
         this.fTemp = aTemp;
 
         this.fGPIO = detectGPIO(gpio);
+        
+        String temp = null;
+        
+        try {
+            temp = System.getProperty("invert_outputs");
+        } catch (Exception e) {
+            // Incase get property fails
+        }
+        
+        if (temp != null) {
+            this.invertOutput = true;
+        }
+        
 
     }
 
@@ -313,7 +328,12 @@ public final class PID implements Runnable {
             // If the value is not "1" we set it to true
             BrewServer.LOG.info("Aux Pin is being set to: "
                     + !auxPin.getValue().equals("1"));
-            auxPin.setValue(!auxPin.getValue().equals("1"));
+
+            if (this.invertOutput) {
+                auxPin.setValue(!auxPin.getValue().equals("0"));
+            } else {
+                auxPin.setValue(!auxPin.getValue().equals("1"));
+            }
         } else {
             BrewServer.LOG.info("Aux Pin is not set for " + this.fName);
         }

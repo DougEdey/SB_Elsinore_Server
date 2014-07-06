@@ -880,120 +880,7 @@ public class BrewServer extends NanoHTTPD {
         }
         
         if (uri.toLowerCase().startsWith("/graph-data")) {
-            //Read CSV files and make a JSON Response
-            
-            //Assume live for now until we can build a UI to deal with this
-            boolean live = true;
-            
-            //If Live - read newest set
-            String directory = null;
-            if( live )
-            {
-                
-                long newest = 0;
-                File file = new File("graph-data/");
-                if ( file.isDirectory() )
-                {
-                    File[] contents = file.listFiles();
-                    for( File content : contents)
-                    {
-                        String name = content.getName();
-                        try
-                        {
-                            long current = Long.parseLong(name);
-                            if( current > newest )
-                            {
-                                newest = current;
-                            }
-                        }
-                        catch(NumberFormatException nfe)
-                        {
-                            //Skip
-                        }
-                    }
-                }
-                
-                directory = String.valueOf(newest);
-            }
-            
-            //Else Read based on time
-            
-            
-            //Get files from directory
-            File directoryFile = new File("graph-data/"+directory);
-            
-            File[] contents = directoryFile.listFiles();
-            StringBuilder json = new StringBuilder("[");
-            
-            for(File content : contents)
-            {
-                if( content.getName().endsWith(".csv"))
-                {
-                    if( json.length() > 1 )
-                    {
-                        json.append(',');
-                    }
-                    json.append("{\"label\":\"");
-                    String name = content.getName();
-                    //Strip of .csv
-                    name = name.substring(0, name.length()-4);
-                    name = name.replace('-', ' ');
-                    json.append(name);
-                    json.append("\",\"data\":[");
-                    
-                    String lastLine=null;
-                    BufferedReader reader = null;
-                    try
-                    {
-                        reader = new BufferedReader(new FileReader(content));
-                        String line;
-                        boolean first = true;
-                            while ((line = reader.readLine()) != null) {
-                                if( !first )
-                                {
-                                    json.append(',');
-                                }
-                                json.append('[');
-                                json.append(line);
-                                json.append(']');
-                                first = false;
-                                lastLine = line;
-                            }
-                        
-                    }
-                    catch(Exception e)
-                    {
-                        
-                    }
-                    finally
-                    {
-                        if( reader != null )
-                        {
-                            try
-                            {
-                                reader.close();
-                            }
-                            catch(Exception e)
-                            {
-
-                            }
-                        }
-                    }
-                    
-                    if ( live && lastLine != null)
-                    {
-                        //Repeat the last point since the series only prints data when it changes.  Otherwise this won't look 'live'
-                        json.append(",["+System.currentTimeMillis()+","+lastLine.split(",")[1]+"]");
-                    }
-                    
-                    json.append("]}");
-                }
-                
-            }
-            json.append(']');
-            
-            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                json.toString());
+            return getGraphData(parms);
             
         }
 
@@ -1394,5 +1281,141 @@ public class BrewServer extends NanoHTTPD {
 
         return new Response(Response.Status.BAD_REQUEST,
                 MIME_TYPES.get("json"), usage.toJSONString());
+    }
+
+    /**
+     * Get the graph data 
+     * @param params A list of specific parameters
+     * @return the JSON Response data
+     */
+    public NanoHTTPD.Response getGraphData(Map<String, String> params) {
+        Map<String, String> parms = ParseParams(params);
+        // Have we been asked for a size?
+        int size = 1000;
+
+        if (parms.containsKey("size")) {
+            try {
+                size = Integer.parseInt((String) params.get("size"));
+            } catch (NumberFormatException nfe) {
+                size = 1000;
+            }
+        }
+
+        String vessel = "";
+        if (parms.containsKey("vessel")) {
+            vessel = (String) parms.get("vessel");
+        }
+
+      //Read CSV files and make a JSON Response
+
+        //Assume live for now until we can build a UI to deal with this
+        boolean live = true;
+
+        //If Live - read newest set
+        String directory = null;
+        if (live) {
+
+            long newest = 0;
+            File file = new File("graph-data/");
+            if (file.isDirectory()) {
+                File[] contents = file.listFiles();
+                for (File content : contents) {
+                    String name = content.getName();
+                    try {
+                        long current = Long.parseLong(name);
+                        if (current > newest) {
+                            newest = current;
+                        }
+                    } catch (NumberFormatException nfe) {
+                        //Skip
+                    }
+                }
+            }
+            directory = String.valueOf(newest);
+        }
+
+        //Else Read based on time
+
+
+        //Get files from directory
+        File directoryFile = new File("graph-data/" + directory);
+
+        File[] contents = directoryFile.listFiles();
+        StringBuilder json = new StringBuilder("[");
+
+        for (File content : contents) {
+            if (content.getName().endsWith(".csv")
+                    && content.getName().toLowerCase().startsWith(
+                            vessel.toLowerCase())) {
+                if (json.length() > 1) {
+                    json.append(',');
+                }
+                json.append("{\"label\":\"");
+
+                String name = content.getName();
+
+                //Strip off .csv
+                name = name.substring(0, name.length() - 4);
+                name = name.replace('-', ' ');
+                json.append(name + "\"");
+
+                if (name.contains(" duty")) {
+                    json.append(", \"yaxis\": 2");
+                } else {
+                    json.append(", \"yaxis\": 1");
+                }
+
+                json.append(",\"data\":[");
+
+                String lastLine = null;
+                BufferedReader reader = null;
+                try {
+                    reader = new BufferedReader(new FileReader(content));
+                    String line;
+                    boolean first = true;
+                    int counter = 0;
+
+                    while ((line = reader.readLine()) != null) {
+                        if (counter >= size) {
+                            break;
+                        }
+
+                        if (!first) {
+                            json.append(',');
+                        }
+                        json.append('[');
+                        json.append(line);
+                        json.append(']');
+                        first = false;
+                        counter++;
+                        lastLine = line;
+                    }
+                } catch (Exception e) {
+                    // Do nothing
+                } finally {
+                    if (reader != null) {
+                        try {
+                            reader.close();
+                        } catch (Exception e) {
+
+                        }
+                    }
+                }
+
+                if (live && lastLine != null) {
+                    // Repeat the last point since the series only prints data
+                    // when it changes.  Otherwise this won't look 'live'
+                    json.append(",[" + System.currentTimeMillis() + ","
+                        + lastLine.split(",")[1] + "]");
+                }
+
+                json.append("]}");
+            }
+
+        }
+        json.append(']');
+
+        return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+            json.toString());
     }
 }

@@ -21,6 +21,9 @@ public final class OutputControl implements Runnable {
     private static BigDecimal THOUSAND = new BigDecimal(1000);
     private static BigDecimal SIXTY = new BigDecimal(60);
     private static BigDecimal HUNDRED = new BigDecimal(100);
+    
+    private boolean invertOutput = false;
+    
     /**
      * Constructor for a heat only pin.
      * @param aName Name of this instance.
@@ -32,6 +35,19 @@ public final class OutputControl implements Runnable {
            // just for heating
         this.fName = aName;
         this.fGPIOh = fGPIO.toLowerCase();
+        
+        String temp = null;
+        
+        try {
+            temp = System.getProperty("invert_outputs");
+        } catch (Exception e) {
+            // Incase get property fails
+        }
+        
+        if (temp != null) {
+            invertOutput = true;
+        }
+        
         setHTime(cycle_time);
    }
 
@@ -54,6 +70,19 @@ public final class OutputControl implements Runnable {
         setHTime(heatTime);
         setCTime(coolTime);
         setCDelay(inCoolDelay);
+
+        String temp = null;
+
+        try {
+            temp = System.getProperty("invert_outputs");
+        } catch (Exception e) {
+            // Incase get property fails
+        }
+
+        if (temp != null) {
+            invertOutput = true;
+        }
+
    }
 
    /**
@@ -250,11 +279,11 @@ public final class OutputControl implements Runnable {
         }
 
         if (this.coolSSR != null) {
-            this.coolSSR.setValue(false);
+            this.coolSet(false);
         }
 
         if (this.heatSSR != null) {
-            this.heatSSR.setValue(true);
+            this.heatSet(true);
         }
     }
 
@@ -266,11 +295,11 @@ public final class OutputControl implements Runnable {
         this.heatStatus = false;
 
         if (this.heatSSR != null) {
-            this.heatSSR.setValue(false);
+            this.heatSet(false);
         }
 
         if (this.coolSSR != null) {
-            this.coolSSR.setValue(true);
+            this.coolSet(true);
         }
     }
 
@@ -283,12 +312,12 @@ public final class OutputControl implements Runnable {
 
         if (this.heatSSR != null) {
             synchronized (this.heatSSR) {
-                this.heatSSR.setValue(false);
+                this.heatSet(false);
             }
         }
         if (this.coolSSR != null) {
             synchronized (this.coolSSR) {
-                this.coolSSR.setValue(false);
+                this.coolSet(false);
             }
         }
     }
@@ -367,6 +396,31 @@ public final class OutputControl implements Runnable {
      */
     public synchronized BigDecimal getDuty() {
         return fDuty;
+    }
+
+    private void coolSet(boolean value) {
+        if (this.coolSSR == null) {
+            return;
+        }
+
+        // invert the output if needed
+        if (this.invertOutput) {
+            value = !value;
+        }
+
+        this.coolSSR.setValue(!value);
+    }
+
+    private void heatSet(boolean value) {
+        if (this.heatSSR == null) {
+            return;
+        }
+
+        // invert the output if needed
+        if (this.invertOutput) {
+            value = !value;
+        }
+        this.heatSSR.setValue(!value);
     }
 }
 

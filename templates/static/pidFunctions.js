@@ -15,6 +15,11 @@ $.fn.serializeObject = function()
     return o;
 };
 
+function showGraph(element) {
+	var vessel = element.id.substring(0, element.id.indexOf("-tempGauge"));
+	window.open("/graph?vessel=" + vessel);
+}
+
 function sleep(milliseconds) {
   var start = new Date().getTime();
   for (var i = 0; i < 1e7; i++) {
