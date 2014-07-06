@@ -140,7 +140,7 @@ public final class PID implements Runnable {
         BrewServer.LOG.info(this.heatSetting.proportional + ": "
             + heatSetting.integral + ": " + this.heatSetting.derivative);
         LaunchControl.savePID(this.fName, this.heatSetting,
-            this.fGPIO, this.auxGPIO);
+            this.fGPIO, this.auxGPIO, this.min, this.max, this.minTime);
         return;
     }
 
@@ -163,10 +163,11 @@ public final class PID implements Runnable {
      * @param newMin   The minimum value to start heating at
      * @param newMinTime The minimum amount of time to keep the burner on for
      */
-    public void setHysteria(final BigDecimal newMax,
-        final BigDecimal newMin, final BigDecimal newMinTime) {
+    public void setHysteria(final BigDecimal newMin,
+        final BigDecimal newMax, final BigDecimal newMinTime) {
 
-        if (newMax.compareTo(newMin) <= 0) {
+        if (newMax.compareTo(BigDecimal.ZERO) <= 0 
+                && newMax.compareTo(newMin) <= 0) {
             throw new NumberFormatException(
                     "Min value is less than the max value");
         }
@@ -249,23 +250,32 @@ public final class PID implements Runnable {
                             this.outputControl.setHTime(heatSetting.cycle_time);
                         } else if (mode.equals("hysteria")) {
                             // Set the duty cycle to be 100, we can wake it up when we want to
-                            if (this.getTempF().compareTo(this.min) < 0) {
+                            BrewServer.LOG.info("Checking current temp against " + this.min + " and " + this.max);
+                            if (this.getTempF().compareTo(this.min) < 0 
+                                    && this.outputControl.getDuty().compareTo(new BigDecimal(100)) < 0) {
+                                BrewServer.LOG.info("Current temp is less than the minimum temp, turning on 100");
                                 this.hysteriaStartTime = this.currentTime;
-                                this.outputControl.setDuty(new BigDecimal(100));
+                                this.heatSetting.duty_cycle = new BigDecimal(100);
+                                this.outputControl.setDuty(this.heatSetting.duty_cycle);
                                 this.outputControl.setHTime(this.minTime.multiply(new BigDecimal(60)));
+                                
                                 // Make sure the thread wakes up for the new settings
                                 this.outputThread.interrupt();
                                 
-                            } else if (this.getTempF().compareTo(this.max) >= 0) {
-                                
+                            } else if (this.getTempF().compareTo(this.max) >= 0
+                                    && this.outputControl.getDuty().compareTo(BigDecimal.ZERO) != 0) {
+                                BrewServer.LOG.info("Current temp is more than the max temp");
                                 // We're over the maximum temp, but should we wake up the thread?
                                 BigDecimal timeDiff = this.currentTime.subtract(this.hysteriaStartTime);
                                 timeDiff = timeDiff.divide(THOUSAND).divide(new BigDecimal(60));
                                 // TimeDiff is now in minutes
                                 
                                 if (timeDiff.compareTo(this.minTime) >= 0) {
+                                    BrewServer.LOG.info("Slep for long enough, turning off");
                                     // Make sure the thread wakes up for the new settings    
-                                    this.outputControl.setDuty(BigDecimal.ZERO);
+
+                                    this.heatSetting.duty_cycle = BigDecimal.ZERO;
+                                    this.outputControl.setDuty(this.heatSetting.duty_cycle);
                                     this.outputThread.interrupt();
                                 }
                             }
@@ -619,6 +629,7 @@ public final class PID implements Runnable {
      */
     public void shutdown() {
         if (outputControl != null && outputThread != null) {
+            this.outputControl.shuttingDown = true;
             this.outputThread.interrupt();
             this.outputControl.shutdown();
         }
@@ -629,7 +640,7 @@ public final class PID implements Runnable {
 
         if (this.getName() != null && !getName().equals("")) {
             LaunchControl.savePID(
-                this.getName(), heatSetting, fGPIO, auxGPIO);
+                this.getName(), heatSetting, fGPIO, auxGPIO, min, max, minTime);
         }
     }
 
@@ -680,6 +691,9 @@ public final class PID implements Runnable {
         statusMap.put("p", getP());
         statusMap.put("i", getI());
         statusMap.put("d", getD());
+        statusMap.put("min", this.min);
+        statusMap.put("max", this.max);
+        statusMap.put("time", this.minTime);
         statusMap.put("status", getStatus());
 
         if (auxPin != null) {
@@ -701,5 +715,17 @@ public final class PID implements Runnable {
         this.fGPIO = gpio;
         this.outputControl = new OutputControl(
             this.fName, this.fGPIO, this.heatSetting.cycle_time);
+    }
+
+    public BigDecimal getMin() {
+        return this.min;
+    }
+
+    public BigDecimal getMax() {
+        return this.min;
+    }
+
+    public BigDecimal getTime() {
+        return this.minTime;
     }
 }

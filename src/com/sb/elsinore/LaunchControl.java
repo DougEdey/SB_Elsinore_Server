@@ -990,7 +990,8 @@ public final class LaunchControl {
             final BigDecimal d, final String cutoffTemp,
             final String auxPin, final String volumeUnits,
             final int analoguePin, final String dsAddress,
-            final String dsOffset,
+            final String dsOffset, final BigDecimal min,
+            final BigDecimal max, final BigDecimal time,
             final ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray) {
 
         // Startup the thread
@@ -1020,7 +1021,10 @@ public final class LaunchControl {
 
         if (gpio != null && !gpio.equals("")) {
             BrewServer.LOG.info("Adding PID with GPIO: " + gpio);
-            PID tPID = new PID(tTemp, input, duty, cycle, p, i, d, gpio);
+            PID tPID = new PID(tTemp, input, gpio);
+            tPID.setHysteria(min, max, time);
+            tPID.updateValues("off", duty, cycle, setpoint, p, i, d);
+
 
             if (auxPin != null && !auxPin.equals("")) {
                 tPID.setAux(auxPin);
@@ -1569,7 +1573,8 @@ public final class LaunchControl {
                 } else {
                     System.out.println("Saving PID " + n.getName());
                     savePID(n.getName(), n.heatSetting,
-                            n.getGPIO(), n.getAuxGPIO());
+                            n.getGPIO(), n.getAuxGPIO(), n.getMin(),
+                            n.getMax(), n.getTime());
 
                     // Do we need to save the volume information
                     Temp fTemp = n.getTemp();
@@ -1653,7 +1658,8 @@ public final class LaunchControl {
      * @param auxGPIO The auxiliary GPIO.
      */
     public static void savePID(final String name, final PID.Settings settings,
-            final String gpio, final String auxGPIO) {
+            final String gpio, final String auxGPIO,
+            final BigDecimal min, final BigDecimal max, final BigDecimal time) {
 
         if (name == null || name.equals("")) {
             new Throwable().printStackTrace();
@@ -1693,6 +1699,12 @@ public final class LaunchControl {
                 settings.derivative.toString());
         setElementText(device, "gpio",
                 gpio);
+        setElementText(device, "min",
+                min.toString());
+        setElementText(device, "max",
+                max.toString());
+        setElementText(device, "time",
+                time.toString());
 
         if (auxGPIO != null) {
             setElementText(device, "aux", auxGPIO);
@@ -1996,7 +2008,9 @@ public final class LaunchControl {
                 new ConcurrentHashMap<BigDecimal, BigDecimal>();
         BigDecimal duty = new BigDecimal(0), cycle = new BigDecimal(0.0),
                 setpoint = new BigDecimal(0.0), p = new BigDecimal(0.0),
-                i = new BigDecimal(0.0), d = new BigDecimal(0.0);
+                i = new BigDecimal(0.0), d = new BigDecimal(0.0),
+                min = new BigDecimal(0.0), max = new BigDecimal(0.0),
+                time = new BigDecimal(0.0);
         int analoguePin = -1;
 
         BrewServer.LOG.info("Parsing : " + input);
@@ -2026,12 +2040,24 @@ public final class LaunchControl {
                 if (config.hasOption(input, "derivative")) {
                     d = new BigDecimal(config.getDouble(input, "derivative"));
                 }
+                
+                if (config.hasOption(input, "min")) {
+                    min = new BigDecimal(config.getDouble(input, "min"));
+                }
+                if (config.hasOption(input, "max")) {
+                    max = new BigDecimal(config.getDouble(input, "max"));
+                }
+                if (config.hasOption(input, "time")) {
+                    time = new BigDecimal(config.getDouble(input, "time"));
+                }
+                
                 if (config.hasOption(input, "cutoff")) {
                     cutoffTemp = config.get(input, "cutoff");
                 }
                 if (config.hasOption(input, "aux")) {
                     auxPin = config.get(input, "aux");
                 }
+                
             }
 
             // Check to see if there is a volume section
@@ -2104,7 +2130,7 @@ public final class LaunchControl {
         }
         startDevice(input, probe, gpio, duty, cycle, setpoint, p, i, d,
                 cutoffTemp, auxPin, volumeUnits, analoguePin, dsAddress,
-                dsOffset, volumeArray);
+                dsOffset, min, max, time, volumeArray);
     }
 
     /**
@@ -2121,7 +2147,9 @@ public final class LaunchControl {
                 new ConcurrentHashMap<BigDecimal, BigDecimal>();
         BigDecimal duty = new BigDecimal(0), cycle = new BigDecimal(0.0),
                 setpoint = new BigDecimal(0.0), p = new BigDecimal(0.0),
-                i = new BigDecimal(0.0), d = new BigDecimal(0.0);
+                i = new BigDecimal(0.0), d = new BigDecimal(0.0),
+                min = new BigDecimal(0.0), max = new BigDecimal(0.0),
+                time = new BigDecimal(0.0);
 
         int analoguePin = -1;
 
@@ -2167,6 +2195,21 @@ public final class LaunchControl {
             tElement = getFirstElement(config, "derivative");
             if (tElement != null) {
                 d = new BigDecimal(tElement.getTextContent());
+            }
+
+            tElement = getFirstElement(config, "min");
+            if (tElement != null) {
+                min = new BigDecimal(tElement.getTextContent());
+            }
+
+            tElement = getFirstElement(config, "max");
+            if (tElement != null) {
+                max = new BigDecimal(tElement.getTextContent());
+            }
+
+            tElement = getFirstElement(config, "time");
+            if (tElement != null) {
+                time = new BigDecimal(tElement.getTextContent());
             }
 
             tElement = getFirstElement(config, "cutoff");
@@ -2259,7 +2302,7 @@ public final class LaunchControl {
 
         startDevice(deviceName, probe, gpio, duty, cycle, setpoint, p, i, d,
                 cutoffTemp, auxPin, volumeUnits, analoguePin,
-                dsAddress, dsOffset, volumeArray);
+                dsAddress, dsOffset, min, max, time, volumeArray);
     }
 
     /**

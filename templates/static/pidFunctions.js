@@ -364,6 +364,9 @@ function updatePIDStatus(vessel, val) {
 	jQuery(vesselDiv  + ' input[name="p"]').val(val.p);
 	jQuery(vesselDiv  + ' input[name="i"]').val(val.i);
 	jQuery(vesselDiv  + ' input[name="d"]').val(val.d);
+	jQuery(vesselDiv  + ' input[name="min"]').val(val.min);
+	jQuery(vesselDiv  + ' input[name="max"]').val(val.max);
+	jQuery(vesselDiv  + ' input[name="time"]').val(val.time);
 	jQuery(vesselDiv  + ' input[name="gpio"]').val(val.gpio);
 	
 	// Disable some stuff
@@ -373,6 +376,9 @@ function updatePIDStatus(vessel, val) {
 	jQuery(vesselDiv  + ' input[name="p"]').prop("disabled", true);
 	jQuery(vesselDiv  + ' input[name="i"]').prop("disabled", true);
 	jQuery(vesselDiv  + ' input[name="d"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="min"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="max"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="time"]').prop("disabled", true);
 	
 	// Aux Mode check
 	if ("auxStatus" in val) {
@@ -653,6 +659,9 @@ function disable(input) {
 	jQuery(vesselDiv  + ' input[name="p"]').prop("disabled", false);
 	jQuery(vesselDiv  + ' input[name="i"]').prop("disabled", false);
 	jQuery(vesselDiv  + ' input[name="d"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="min"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="max"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="time"]').prop("disabled", false);
 	return false;
 }
 

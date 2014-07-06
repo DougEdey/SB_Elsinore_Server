@@ -755,7 +755,7 @@ public class BrewServer extends NanoHTTPD {
         PID tPID = LaunchControl.findPID(inputUnit);
         if (tPID != null) {
             if (mode.equalsIgnoreCase("hysteria")) {
-                tPID.setHysteria(max, min, time);
+                tPID.setHysteria(min, max, time);
             } else {
                 BrewServer.LOG.info(mode + ":" + duty + ":" + cycle + ":" + setpoint
                     + ":" + p + ":" + i + ":" + d);

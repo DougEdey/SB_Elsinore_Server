@@ -23,6 +23,7 @@ public final class OutputControl implements Runnable {
     private static BigDecimal HUNDRED = new BigDecimal(100);
     
     private boolean invertOutput = false;
+    public boolean shuttingDown = false;
     
     /**
      * Constructor for a heat only pin.
@@ -142,52 +143,59 @@ public final class OutputControl implements Runnable {
                         && this.heatSSR == null) {
                         this.heatSSR = new OutPin(this.fGPIOh);
                     }
-                    BrewServer.LOG.info("Fduty: " + this.fDuty);
-                    if (this.fDuty.compareTo(BigDecimal.ZERO) == 0) {
-                        allOff();
-                        Thread.sleep(this.fTimeh.intValue());
-                    } else if (this.fDuty.compareTo(HUNDRED) == 0) {
-                        heatOn();
-                        Thread.sleep(fTimeh.intValue());
-                    } else if (this.fDuty.compareTo(HUNDRED.negate()) == 0) {
-                        // check to see if we've slept long enough
-                        BigDecimal lTime = new BigDecimal(System.currentTimeMillis())
-                            .subtract(coolStopTime);
-
-                        if (MathUtil.divide(lTime,THOUSAND).compareTo(this.coolDelay) > 0) {
-                            // not slept enough
-                            break;
+                    try {
+                        BrewServer.LOG.info("Fduty: " + this.fDuty);
+                        if (this.fDuty.compareTo(BigDecimal.ZERO) == 0) {
+                            allOff();
+                            Thread.sleep(this.fTimeh.intValue());
+                        } else if (this.fDuty.compareTo(HUNDRED) == 0) {
+                            heatOn();
+                            Thread.sleep(fTimeh.intValue());
+                        } else if (this.fDuty.compareTo(HUNDRED.negate()) == 0) {
+                            // check to see if we've slept long enough
+                            BigDecimal lTime = new BigDecimal(System.currentTimeMillis())
+                                .subtract(coolStopTime);
+    
+                            if (MathUtil.divide(lTime,THOUSAND).compareTo(this.coolDelay) > 0) {
+                                // not slept enough
+                                break;
+                            }
+    
+                            coolOn();
+                            Thread.sleep(fTimec.intValue());
+                            allOff();
+    
+                            coolStopTime = BigDecimal.valueOf(System.currentTimeMillis());
+                        } else if (fDuty.compareTo(BigDecimal.ZERO) > 0) {
+                            // calc the on off time
+                            duty = MathUtil.divide(fDuty,HUNDRED);
+                            onTime = duty.multiply(fTimeh);
+                            offTime = fTimeh.multiply(BigDecimal.ONE.subtract(duty));
+                            BrewServer.LOG.info("On: " + onTime
+                                + " Off; " + offTime);
+                            heatOn();
+                            Thread.sleep(onTime.intValue());
+    
+                            allOff();
+                            Thread.sleep(offTime.intValue());
+                        } else if (fDuty.compareTo(BigDecimal.ZERO) < 0) {
+                            // calc the on off time
+                            duty = MathUtil.divide(fDuty.abs(),HUNDRED);
+                            onTime = duty.multiply(fTimec);
+                            offTime = fTimeh.multiply(BigDecimal.ONE.subtract(duty));
+    
+                            coolOn();
+                            Thread.sleep(onTime.intValue());
+    
+                            allOff();
+                            Thread.sleep(offTime.intValue());
+                            coolStopTime = new BigDecimal(System.currentTimeMillis());
                         }
-
-                        coolOn();
-                        Thread.sleep(fTimec.intValue());
-                        allOff();
-
-                        coolStopTime = BigDecimal.valueOf(System.currentTimeMillis());
-                    } else if (fDuty.compareTo(BigDecimal.ZERO) > 0) {
-                        // calc the on off time
-                        duty = MathUtil.divide(fDuty,HUNDRED);
-                        onTime = duty.multiply(fTimeh);
-                        offTime = fTimeh.multiply(BigDecimal.ONE.subtract(duty));
-                        BrewServer.LOG.info("On: " + onTime
-                            + " Off; " + offTime);
-                        heatOn();
-                        Thread.sleep(onTime.intValue());
-
-                        allOff();
-                        Thread.sleep(offTime.intValue());
-                    } else if (fDuty.compareTo(BigDecimal.ZERO) < 0) {
-                        // calc the on off time
-                        duty = MathUtil.divide(fDuty.abs(),HUNDRED);
-                        onTime = duty.multiply(fTimec);
-                        offTime = fTimeh.multiply(BigDecimal.ONE.subtract(duty));
-
-                        coolOn();
-                        Thread.sleep(onTime.intValue());
-
-                        allOff();
-                        Thread.sleep(offTime.intValue());
-                        coolStopTime = new BigDecimal(System.currentTimeMillis());
+                    } catch (InterruptedException e) {
+                        // Sleep interrupted, why did we wakeup
+                        if (this.shuttingDown) {
+                            return;
+                        }
                     }
                 } // end the while loop
 
@@ -198,11 +206,6 @@ public final class OutputControl implements Runnable {
                 e.printStackTrace();
                 return;
             }
-        } catch (InterruptedException e) {
-            // Sleep interrupted
-            coolStopTime = new BigDecimal(System.currentTimeMillis());
-            System.out.print("Wakeup in " + fName);
-            e.printStackTrace();
         } catch (InvalidGPIOException e1) {
             System.out.println(e1.getMessage());
             e1.printStackTrace();
