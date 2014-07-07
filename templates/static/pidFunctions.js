@@ -67,7 +67,7 @@ function waitForMsg(){
 		success: function(data){
 			if(data == null) 
 				return;
-		
+			
 			$.each(data, function(key, val) {
 				vessel = key;
 				
@@ -159,16 +159,20 @@ function waitForMsg(){
 						} else {
 							jQuery("#" + vesselName + "-volume").text("No Volume");
 						}
-					})
-					
+						
+					});
+					return true;		
 				}
-			})
+			
+			});
 			
 			vessel = null;
 			data = null;
-				
+			fixWebkitHeightBug();		
 		}
-	})
+		
+	});
+	
 	setTimeout(waitForMsg, 1000); 
 	
 }
@@ -350,9 +354,9 @@ function updatePIDStatus(vessel, val) {
 	}
 	mode = null;
 	if(val.actualduty != null) {
-		Gauges[vessel].refresh(val.actualduty); 				
+		Gauges[vessel].refresh(val.actualduty, 100); 				
 	} else {
-		Gauges[vessel].refresh(val.duty); 
+		Gauges[vessel].refresh(val.duty, 100); 
 	}
 
 
@@ -810,3 +814,29 @@ function addMashStep(mashStep, mashData, pid) {
 		mashStepRow.removeClass('success');
 	}
 }
+
+function fixWebkitHeightBug(){
+	$('[id$=-gage]').each(function (index) {
+		$(this).css('display', 'none').height();
+		$(this).css('display', 'block');
+	});
+//	var svgW = 658;
+//	var svgH = 500;
+//	
+//	var curSVGW = $('#Kettle-gage svg:first-child').width();
+//	var newSVGH = heightInRatio(svgH,svgW,curSVGW);
+//	$('#Kettle-gage').children()[0].height(newSVGH);
+//
+//	function heightInRatio(oH,oW,nW){
+//
+//		return (oH / oW * nW);
+//
+//	}
+
+}
+
+$(window).resize(function() {
+
+	fixWebkitHeightBug();
+
+});

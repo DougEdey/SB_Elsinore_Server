@@ -130,7 +130,7 @@ public class ServeHTML {
         page += tempContent;
         page += pumpContent;
 
-        page += "<div id=\"tempProbes\">" + lineSep;
+        page += "<div id=\"timers\">" + lineSep;
         page += addTimers();
         page += "</div>" + lineSep;
         page += "</body>";
@@ -164,7 +164,7 @@ public class ServeHTML {
             + " src=\"/templates/static/pidFunctions.js\">"
             + "</script>" + lineSep
             + "<script type=\"text/javascript\""
-            + " src=\"/templates/static/raphael.2.1.0.min.js\">"
+            + " src=\"/templates/static/raphael.js\">"
             + "</script>" + lineSep
             + "<script type=\"text/javascript\""
             + " src=\"/templates/static/justgage.js\">"
@@ -221,7 +221,7 @@ public class ServeHTML {
 
         controller += "Gauges[\"" + device + "\"] = "
             + "new JustGage({ id: \"" + device + "-gage\","
-            + " min: 0, max:100, title:\"Cycle\" }); " + lineSep
+            + " min: 0, max:100, relativeGaugeSize: true, title:\"Cycle\" }); " + lineSep
             + "$(\"input[type='number']\").stepper();" + lineSep;
 
         controller += "});" + lineSep + lineSep
@@ -458,27 +458,27 @@ public class ServeHTML {
                     + " onclick='setTimer(this, \"" + timer + "\");"
                     + " waitForMsg(); return false;'>"
                     + "Start " + timer
-                + "</span>";
+                + "</span>" + lineSep;
 
             timers += "<span class='holo-button pump' style='display:none'"
                     + " id=\"" + timer + "Timer\" type=\"submit\" "
                     + "value=\"" + timer + "Timer\""
                     + " onclick='setTimer(this, \"" + timer + "\");"
                     + " waitForMsg(); return false;'>"
-                + "</span>";
+                + "</span>" + lineSep;
 
             timers += "<span class='holo-button pump' id=\"" + timer + "\""
                     + " type=\"submit\" "
                     + "value=\"" + timer + "Timer\""
                     + " onclick='resetTimer(this, \"" + timer + "\");"
-                    + " waitForMsg(); return false;'>"
+                    + " waitForMsg(); return false;'>" + lineSep
                     + "Reset " + timer
-                + "</span></div><br /><br />";
+                + "</span></div><br />" + lineSep;
         }
 
         timers += "<span class='holo-button pump' id=\"New\" type=\"submit\""
                 + "onclick='addTimer(); sleep(2000); location.reload();'>"
-                + "Add New Timer</span>";
+                + "Add New Timer</span>" + lineSep;
 
         timers += "</div>" // panel body
                 + "</div>"; // panel
