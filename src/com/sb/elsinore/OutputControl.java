@@ -37,18 +37,19 @@ public final class OutputControl implements Runnable {
         this.fName = aName;
         this.fGPIOh = fGPIO.toLowerCase();
         
-        String temp = null;
+        String invOut = null;
         
         try {
-            temp = System.getProperty("invert_outputs");
+            invOut = System.getProperty("invert_outputs");
+
+            if (invOut != null) {
+                System.out.println("Inverting outputs");
+                invertOutput = true;
+            }
         } catch (Exception e) {
             // Incase get property fails
+            
         }
-        
-        if (temp != null) {
-            invertOutput = true;
-        }
-        
         setHTime(cycle_time);
    }
 
@@ -411,7 +412,7 @@ public final class OutputControl implements Runnable {
             value = !value;
         }
 
-        this.coolSSR.setValue(!value);
+        this.coolSSR.setValue(value);
     }
 
     private void heatSet(boolean value) {
@@ -423,7 +424,8 @@ public final class OutputControl implements Runnable {
         if (this.invertOutput) {
             value = !value;
         }
-        this.heatSSR.setValue(!value);
+        
+        this.heatSSR.setValue(value);
     }
 }
 

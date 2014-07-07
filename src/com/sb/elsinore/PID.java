@@ -176,12 +176,15 @@ public final class PID implements Runnable {
             throw new NumberFormatException("Min Time is negative");
         }
 
-        this.mode = "hysteria";
         this.max = newMax;
         this.min = newMin;
         this.minTime = newMinTime;
     }
 
+    
+    public void useHysteria() {
+        this.mode = "hysteria";
+    }
     /***
      * Main loop for using a PID Thread.
      */
