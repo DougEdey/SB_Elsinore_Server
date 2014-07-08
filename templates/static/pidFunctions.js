@@ -67,7 +67,7 @@ function waitForMsg(){
 		success: function(data){
 			if(data == null) 
 				return;
-		
+			
 			$.each(data, function(key, val) {
 				vessel = key;
 				
@@ -159,16 +159,20 @@ function waitForMsg(){
 						} else {
 							jQuery("#" + vesselName + "-volume").text("No Volume");
 						}
-					})
-					
+						
+					});
+					return true;		
 				}
-			})
+			
+			});
 			
 			vessel = null;
 			data = null;
-				
+			fixWebkitHeightBug();		
 		}
-	})
+		
+	});
+	
 	setTimeout(waitForMsg, 1000); 
 	
 }
@@ -339,6 +343,9 @@ function updatePIDStatus(vessel, val) {
 		if(mode == "Auto") {
 			selectAuto(vessel);
 		}
+		if(mode == "Hysteria") {
+			selectHysteria(vessel);
+		}
 		if(mode == "Manual") {
 			selectManual(vessel);
 		}
@@ -347,9 +354,9 @@ function updatePIDStatus(vessel, val) {
 	}
 	mode = null;
 	if(val.actualduty != null) {
-		Gauges[vessel].refresh(val.actualduty); 				
+		Gauges[vessel].refresh(val.actualduty, 100); 				
 	} else {
-		Gauges[vessel].refresh(val.duty); 
+		Gauges[vessel].refresh(val.duty, 100); 
 	}
 
 
@@ -361,6 +368,9 @@ function updatePIDStatus(vessel, val) {
 	jQuery(vesselDiv  + ' input[name="p"]').val(val.p);
 	jQuery(vesselDiv  + ' input[name="i"]').val(val.i);
 	jQuery(vesselDiv  + ' input[name="d"]').val(val.d);
+	jQuery(vesselDiv  + ' input[name="min"]').val(val.min);
+	jQuery(vesselDiv  + ' input[name="max"]').val(val.max);
+	jQuery(vesselDiv  + ' input[name="time"]').val(val.time);
 	jQuery(vesselDiv  + ' input[name="gpio"]').val(val.gpio);
 	
 	// Disable some stuff
@@ -370,6 +380,9 @@ function updatePIDStatus(vessel, val) {
 	jQuery(vesselDiv  + ' input[name="p"]').prop("disabled", true);
 	jQuery(vesselDiv  + ' input[name="i"]').prop("disabled", true);
 	jQuery(vesselDiv  + ' input[name="d"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="min"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="max"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="time"]').prop("disabled", true);
 	
 	// Aux Mode check
 	if ("auxStatus" in val) {
@@ -404,6 +417,7 @@ function selectOff(vessel) {
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="red";
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="#666666";
+	jQuery('button[id^="'+vessel+'-modeHysteria"]')[0].style.background="#666666";
 
 	jQuery('tr[id="'+vessel+'-SP"]').hide();
 	jQuery('tr[id="'+vessel+'-DT"]').hide();
@@ -411,6 +425,10 @@ function selectOff(vessel) {
 	jQuery('tr[id="'+vessel+'-p"]').hide();
 	jQuery('tr[id="'+vessel+'-i"]').hide();
 	jQuery('tr[id="'+vessel+'-d"]').hide();
+	jQuery('tr[id="'+vessel+'-min"]').hide();
+	jQuery('tr[id="'+vessel+'-max"]').hide();
+	jQuery('tr[id="'+vessel+'-time"]').hide();
+
 
 	vessel = null;
 	return false;
@@ -430,6 +448,7 @@ function selectAuto(vessel) {
 	
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
+	jQuery('button[id^="'+vessel+'-modeHysteria"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="red";
 
 	jQuery('tr[id="'+vessel+'-SP"]').show();
@@ -438,6 +457,40 @@ function selectAuto(vessel) {
 	jQuery('tr[id="'+vessel+'-p"]').show();
 	jQuery('tr[id="'+vessel+'-i"]').show();
 	jQuery('tr[id="'+vessel+'-d"]').show();
+	jQuery('tr[id="'+vessel+'-min"]').hide();
+	jQuery('tr[id="'+vessel+'-max"]').hide();
+	jQuery('tr[id="'+vessel+'-time"]').hide();
+
+	vessel = null;
+	return false;
+}
+
+function selectHysteria(vessel) {
+	
+	if((typeof vessel) != "string") {
+		var v = vessel.id;
+		i = v.indexOf("-");
+		vessel = v.substr(0, i);
+		v = null;
+	}
+
+	var vesselDiv = 'form[id="'+vessel+'-form"]';
+	$(vesselDiv + ' input[name="mode"]').val("hysteria");
+	
+	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
+	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
+	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="#666666";
+	jQuery('button[id^="'+vessel+'-modeHysteria"]')[0].style.background="red";
+
+	jQuery('tr[id="'+vessel+'-SP"]').hide();
+	jQuery('tr[id="'+vessel+'-DT"]').hide();
+	jQuery('tr[id="'+vessel+'-DC"]').hide();
+	jQuery('tr[id="'+vessel+'-p"]').hide();
+	jQuery('tr[id="'+vessel+'-i"]').hide();
+	jQuery('tr[id="'+vessel+'-d"]').hide();
+	jQuery('tr[id="'+vessel+'-min"]').show();
+	jQuery('tr[id="'+vessel+'-max"]').show();
+	jQuery('tr[id="'+vessel+'-time"]').show();
 
 	vessel = null;
 	return false;
@@ -458,6 +511,7 @@ function selectManual(vessel) {
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="red";
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="#666666";
+	jQuery('button[id^="'+vessel+'-modeHysteria"]')[0].style.background="#666666";
 
 	jQuery('tr[id="'+vessel+'-SP"]').hide();
 	jQuery('tr[id="'+vessel+'-DT"]').show();
@@ -465,6 +519,10 @@ function selectManual(vessel) {
 	jQuery('tr[id="'+vessel+'-p"]').hide();
 	jQuery('tr[id="'+vessel+'-i"]').hide();
 	jQuery('tr[id="'+vessel+'-d"]').hide();
+	jQuery('tr[id="'+vessel+'-min"]').hide();
+	jQuery('tr[id="'+vessel+'-max"]').hide();
+	jQuery('tr[id="'+vessel+'-time"]').hide();
+
 
 	vessel = null;
 	return false;
@@ -605,6 +663,9 @@ function disable(input) {
 	jQuery(vesselDiv  + ' input[name="p"]').prop("disabled", false);
 	jQuery(vesselDiv  + ' input[name="i"]').prop("disabled", false);
 	jQuery(vesselDiv  + ' input[name="d"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="min"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="max"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="time"]').prop("disabled", false);
 	return false;
 }
 
@@ -753,3 +814,29 @@ function addMashStep(mashStep, mashData, pid) {
 		mashStepRow.removeClass('success');
 	}
 }
+
+function fixWebkitHeightBug(){
+	$('[id$=-gage]').each(function (index) {
+		$(this).css('display', 'none').height();
+		$(this).css('display', 'block');
+	});
+//	var svgW = 658;
+//	var svgH = 500;
+//	
+//	var curSVGW = $('#Kettle-gage svg:first-child').width();
+//	var newSVGH = heightInRatio(svgH,svgW,curSVGW);
+//	$('#Kettle-gage').children()[0].height(newSVGH);
+//
+//	function heightInRatio(oH,oW,nW){
+//
+//		return (oH / oW * nW);
+//
+//	}
+
+}
+
+$(window).resize(function() {
+
+	fixWebkitHeightBug();
+
+});

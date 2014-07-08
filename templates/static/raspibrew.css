@@ -26,6 +26,7 @@ div.controlPanel {
 }
 
 .gage {
+	display:block;
 	width: 200px;
 	height: 140px;
 	margin-left: auto;

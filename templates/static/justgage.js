@@ -2,9 +2,24 @@
  * JustGage - this is work-in-progress, unreleased, unofficial code, so it might not work top-notch :)
  * Check http://www.justgage.com for official releases
  * Licensed under MIT.
- * @author Bojan Djuricic  (@Toorshia)
+ * @author Bojan Djuricic (@Toorshia)
  *
  * LATEST UPDATES
+ *
+ * -----------------------------
+ * March 16, 2014.
+ * -----------------------------
+     * fix - https://github.com/toorshia/justgage/issues/112
+ * 
+ * -----------------------------
+ * February 16, 2014.
+ * -----------------------------
+     * fix - https://github.com/toorshia/justgage/issues/102
+
+ * -----------------------------
+ * April 25, 2013.
+ * -----------------------------
+     * use HTML5 data-* attributes of the DOM Element to render the gauge (which overrides the constructor options).
 
  * -----------------------------
  * April 18, 2013.
@@ -80,10 +95,30 @@
 
  JustGage = function(config) {
 
-  // if (!config.id) {alert("Missing id parameter for gauge!"); return false;}
-  // if (!document.getElementById(config.id)) {alert("No element with id: \""+config.id+"\" found!"); return false;}
-
   var obj = this;
+
+  // Helps in case developer wants to debug it. unobtrusive
+  if (config === null || config ===  undefined) {
+      console.log('* justgage: Make sure to pass options to the constructor!');
+      return false;
+  }
+
+  var node;
+
+  if (config.id !== null && config.id !== undefined) {
+    node= document.getElementById(config.id);
+      if (!node) {
+        console.log('* justgage: No element with id : %s found', config.id);
+        return false;
+    }
+  } else if (config.parentNode !== null && config.parentNode !== undefined) {
+    node = config.parentNode;
+  } else {
+      console.log('* justgage: Make sure to pass the existing element id or parentNode to the constructor.');
+      return false;
+  }
+
+  var dataset = node.dataset ? node.dataset : {};
 
   // configurable parameters
   obj.config =
@@ -94,167 +129,167 @@
 
     // parentNode : node object
     // this is container element
-    parentNode : (config.parentNode) ? config.parentNode : null,
+    parentNode : obj.kvLookup('parentNode', config, dataset, null),
 
     // width : int
     // gauge width
-    width : (config.width) ? config.width : null,
+    width : obj.kvLookup('width', config, dataset, null),
 
     // height : int
     // gauge height
-    height : (config.height) ? config.height : null,
+    height : obj.kvLookup('height', config, dataset, null),
 
     // title : string
     // gauge title
-    title : (config.title) ? config.title : "",
+    title : obj.kvLookup('title', config, dataset, ""),
 
     // titleFontColor : string
     // color of gauge title
-    titleFontColor : (config.titleFontColor) ? config.titleFontColor : "#999999",
+    titleFontColor : obj.kvLookup('titleFontColor', config, dataset,  "#999999"),
 
-    // value : int
+    // value : float
     // value gauge is showing
-    value : (config.value) ? config.value : 0,
+    value : obj.kvLookup('value', config, dataset, 0, 'float'),
 
     // valueFontColor : string
     // color of label showing current value
-    valueFontColor : (config.valueFontColor) ? config.valueFontColor : "#010101",
+    valueFontColor : obj.kvLookup('valueFontColor', config, dataset, "#010101"),
 
     // symbol : string
     // special symbol to show next to value
-    symbol : (config.symbol) ? config.symbol : "",
+    symbol : obj.kvLookup('symbol', config, dataset, ''),
 
-    // min : int
+    // min : float
     // min value
-    min : (config.min !== undefined) ? parseFloat(config.min) : 0,
+    min : obj.kvLookup('min', config, dataset, 0, 'float'),
 
-    // max : int
+    // max : float
     // max value
-    max : (config.max !== undefined) ? parseFloat(config.max) : 100,
+    max : obj.kvLookup('max', config, dataset, 100, 'float'),
 
     // humanFriendlyDecimal : int
     // number of decimal places for our human friendly number to contain
-    humanFriendlyDecimal : (config.humanFriendlyDecimal) ? config.humanFriendlyDecimal : 0,
+    humanFriendlyDecimal : obj.kvLookup('humanFriendlyDecimal', config, dataset, 0),
 
     // textRenderer: func
     // function applied before rendering text
-    textRenderer  : (config.textRenderer) ? config.textRenderer : null,
+    textRenderer  : obj.kvLookup('textRenderer', config, dataset, null),
 
     // gaugeWidthScale : float
     // width of the gauge element
-    gaugeWidthScale : (config.gaugeWidthScale) ? config.gaugeWidthScale : 1.0,
+    gaugeWidthScale : obj.kvLookup('gaugeWidthScale', config, dataset, 1.0),
 
     // gaugeColor : string
     // background color of gauge element
-    gaugeColor : (config.gaugeColor) ? config.gaugeColor : "#edebeb",
+    gaugeColor : obj.kvLookup('gaugeColor', config, dataset, "#edebeb"),
 
     // label : string
     // text to show below value
-    label : (config.label) ? config.label : "",
+    label : obj.kvLookup('label', config, dataset, ''),
 
     // labelFontColor : string
     // color of label showing label under value
-    labelFontColor : (config.labelFontColor) ? config.labelFontColor : "#b3b3b3",
+    labelFontColor : obj.kvLookup('labelFontColor', config, dataset, "#b3b3b3"),
 
     // shadowOpacity : int
     // 0 ~ 1
-    shadowOpacity : (config.shadowOpacity) ? config.shadowOpacity : 0.2,
+    shadowOpacity : obj.kvLookup('shadowOpacity', config, dataset, 0.2),
 
     // shadowSize: int
     // inner shadow size
-    shadowSize : (config.shadowSize) ? config.shadowSize : 5,
+    shadowSize : obj.kvLookup('shadowSize', config, dataset, 5),
 
     // shadowVerticalOffset : int
     // how much shadow is offset from top
-    shadowVerticalOffset : (config.shadowVerticalOffset) ? config.shadowVerticalOffset : 3,
+    shadowVerticalOffset : obj.kvLookup('shadowVerticalOffset', config, dataset, 3),
 
     // levelColors : string[]
     // colors of indicator, from lower to upper, in RGB format
-    levelColors : (config.levelColors) ? config.levelColors : [
-    "#a9d70b",
-    "#f9c802",
-    "#ff0000"
-    ],
+    levelColors : obj.kvLookup('levelColors', config, dataset, [ "#a9d70b", "#f9c802", "#ff0000" ], 'array', ','),
 
     // startAnimationTime : int
     // length of initial animation
-    startAnimationTime : (config.startAnimationTime) ? config.startAnimationTime : 700,
+    startAnimationTime : obj.kvLookup('startAnimationTime', config, dataset, 700),
 
     // startAnimationType : string
     // type of initial animation (linear, >, <,  <>, bounce)
-    startAnimationType : (config.startAnimationType) ? config.startAnimationType : ">",
+    startAnimationType : obj.kvLookup('startAnimationType', config, dataset, '>'),
 
     // refreshAnimationTime : int
     // length of refresh animation
-    refreshAnimationTime : (config.refreshAnimationTime) ? config.refreshAnimationTime : 700,
+    refreshAnimationTime : obj.kvLookup('refreshAnimationTime', config, dataset, 700),
 
     // refreshAnimationType : string
     // type of refresh animation (linear, >, <,  <>, bounce)
-    refreshAnimationType : (config.refreshAnimationType) ? config.refreshAnimationType : ">",
+    refreshAnimationType : obj.kvLookup('refreshAnimationType', config, dataset, '>'),
 
     // donutStartAngle : int
     // angle to start from when in donut mode
-    donutStartAngle : (config.donutStartAngle) ? config.donutStartAngle : 90,
+    donutStartAngle : obj.kvLookup('donutStartAngle', config, dataset, 90),
 
     // valueMinFontSize : int
     // absolute minimum font size for the value
-    valueMinFontSize : config.valueMinFontSize || 16,
+    valueMinFontSize : obj.kvLookup('valueMinFontSize', config, dataset, 16),
 
     // titleMinFontSize
     // absolute minimum font size for the title
-    titleMinFontSize : config.titleMinFontSize || 10,
+    titleMinFontSize : obj.kvLookup('titleMinFontSize', config, dataset, 10),
 
     // labelMinFontSize
     // absolute minimum font size for the label
-    labelMinFontSize : config.labelMinFontSize || 10,
+    labelMinFontSize : obj.kvLookup('labelMinFontSize', config, dataset, 10),
 
     // minLabelMinFontSize
     // absolute minimum font size for the minimum label
-    minLabelMinFontSize : config.minLabelMinFontSize || 10,
+    minLabelMinFontSize : obj.kvLookup('minLabelMinFontSize', config, dataset, 10),
 
     // maxLabelMinFontSize
     // absolute minimum font size for the maximum label
-    maxLabelMinFontSize : config.maxLabelMinFontSize || 10,
+    maxLabelMinFontSize : obj.kvLookup('maxLabelMinFontSize', config, dataset, 10),
 
     // hideValue : bool
     // hide value text
-    hideValue : (config.hideValue) ? config.hideValue : false,
+    hideValue : obj.kvLookup('hideValue', config, dataset, false),
 
     // hideMinMax : bool
     // hide min and max values
-    hideMinMax : (config.hideMinMax) ? config.hideMinMax : false,
+    hideMinMax : obj.kvLookup('hideMinMax', config, dataset, false),
 
     // hideInnerShadow : bool
     // hide inner shadow
-    hideInnerShadow : (config.hideInnerShadow) ? config.hideInnerShadow : false,
+    hideInnerShadow : obj.kvLookup('hideInnerShadow', config, dataset, false),
 
     // humanFriendly : bool
     // convert large numbers for min, max, value to human friendly (e.g. 1234567 -> 1.23M)
-    humanFriendly : (config.humanFriendly) ? config.humanFriendly : false,
+    humanFriendly : obj.kvLookup('humanFriendly', config, dataset, false),
 
     // noGradient : bool
     // whether to use gradual color change for value, or sector-based
-    noGradient : (config.noGradient) ? config.noGradient : false,
+    noGradient : obj.kvLookup('noGradient', config, dataset, false),
 
     // donut : bool
     // show full donut gauge
-    donut : (config.donut) ? config.donut : false,
+    donut : obj.kvLookup('donut', config, dataset, false),
 
     // relativeGaugeSize : bool
     // whether gauge size should follow changes in container element size
-    relativeGaugeSize : (config.relativeGaugeSize) ? config.relativeGaugeSize : false,
+    relativeGaugeSize : obj.kvLookup('relativeGaugeSize', config, dataset, false),
 
     // counter : bool
     // animate level number change
-    counter : (config.counter) ? config.counter : false,
+    counter : obj.kvLookup('counter', config, dataset, false),
 
     // decimals : int
     // number of digits after floating point
-    decimals : (config.decimals) ? config.decimals : 0,
+    decimals : obj.kvLookup('decimals', config, dataset, 0),
 
     // customSectors : [] of objects
     // number of digits after floating point
-    customSectors : (config.customSectors) ? config.customSectors : []
+    customSectors : obj.kvLookup('customSectors', config, dataset, []),
+
+    // formatNumber: boolean
+    // formats numbers with commas where appropriate
+    formatNumber : obj.kvLookup('formatNumber', config, dataset, false)
   };
 
   // variables
@@ -285,7 +320,7 @@
   // overflow values
   if (obj.config.value > obj.config.max) obj.config.value = obj.config.max;
   if (obj.config.value < obj.config.min) obj.config.value = obj.config.min;
-  obj.originalValue = config.value;
+  obj.originalValue = obj.kvLookup('value', config, dataset, -1, 'float');
 
   // create canvas
   if (obj.config.id !== null && (document.getElementById(obj.config.id)) !== null) {
@@ -457,7 +492,7 @@
   };
 
   // var clear
-  canvasW, canvasH, widgetW, widgetH, aspect, dx, dy, titleFontSize, titleX, titleY, valueFontSize, valueX, valueY, labelFontSize, labelX, labelY, minFontSize, minX, minY, maxFontSize, maxX, maxY = null
+  canvasW, canvasH, widgetW, widgetH, aspect, dx, dy, titleFontSize, titleX, titleY, valueFontSize, valueX, valueY, labelFontSize, labelX, labelY, minFontSize, minX, minY, maxFontSize, maxX, maxY = null;
 
   // pki - custom attribute for generating gauge paths
   obj.canvas.customAttributes.pki = function (value, min, max, w, h, dx, dy, gws, donut) {
@@ -473,11 +508,11 @@
       Cy = h / 1.95 + dy;
 
       Xo = w / 2 + dx + Ro * Math.cos(alpha);
-      Yo = h - (h - Cy) + 0 - Ro * Math.sin(alpha);
+      Yo = h - (h - Cy) - Ro * Math.sin(alpha);
       Xi = w / 2 + dx + Ri * Math.cos(alpha);
-      Yi = h - (h - Cy) + 0 - Ri * Math.sin(alpha);
+      Yi = h - (h - Cy) - Ri * Math.sin(alpha);
 
-      path += "M" + (Cx - Ri) + "," + Cy + " ";
+      path = "M" + (Cx - Ri) + "," + Cy + " ";
       path += "L" + (Cx - Ro) + "," + Cy + " ";
       if (value > ((max - min) / 2)) {
         path += "A" + Ro + "," + Ro + " 0 0 1 " + (Cx + Ro) + "," + Cy + " ";
@@ -501,11 +536,11 @@
       Cy = h / 1.25 + dy;
 
       Xo = w / 2 + dx + Ro * Math.cos(alpha);
-      Yo = h - (h - Cy) + 0 - Ro * Math.sin(alpha);
+      Yo = h - (h - Cy) - Ro * Math.sin(alpha);
       Xi = w / 2 + dx + Ri * Math.cos(alpha);
-      Yi = h - (h - Cy) + 0 - Ri * Math.sin(alpha);
+      Yi = h - (h - Cy) - Ri * Math.sin(alpha);
 
-      path += "M" + (Cx - Ri) + "," + Cy + " ";
+      path = "M" + (Cx - Ri) + "," + Cy + " ";
       path += "L" + (Cx - Ro) + "," + Cy + " ";
       path += "A" + Ro + "," + Ro + " 0 0 1 " + Xo + "," + Yo + " ";
       path += "L" + Xi + "," + Yi + " ";
@@ -591,7 +626,11 @@
 
   // min
   obj.txtMinimum = obj.config.min;
-  if( obj.config.humanFriendly ) obj.txtMinimum = humanFriendlyNumber( obj.config.min, obj.config.humanFriendlyDecimal );
+  if( obj.config.humanFriendly ) {
+    obj.txtMinimum = humanFriendlyNumber( obj.config.min, obj.config.humanFriendlyDecimal );
+  } else if ( obj.config.formatNumber ) {
+    obj.txtMinimum = formatNumber( obj.config.min );
+  }
   obj.txtMin = obj.canvas.text(obj.params.minX, obj.params.minY, obj.txtMinimum);
   obj.txtMin.attr({
     "font-size":obj.params.minFontSize,
@@ -604,7 +643,11 @@
 
   // max
   obj.txtMaximum = obj.config.max;
-  if( obj.config.humanFriendly ) obj.txtMaximum = humanFriendlyNumber( obj.config.max, obj.config.humanFriendlyDecimal );
+  if( obj.config.formatNumber ) {
+    obj.txtMaximum = formatNumber( obj.txtMaximum );
+  } else if( obj.config.humanFriendly ) {
+    obj.txtMaximum = humanFriendlyNumber( obj.config.max, obj.config.humanFriendlyDecimal );
+  }
   obj.txtMax = obj.canvas.text(obj.params.maxX, obj.params.maxY, obj.txtMaximum);
   obj.txtMax.attr({
     "font-size":obj.params.maxFontSize,
@@ -618,7 +661,10 @@
   var defs = obj.canvas.canvas.childNodes[1];
   var svg = "http://www.w3.org/2000/svg";
 
-  if (ie < 9) {
+  if (ie !== 'undefined' && ie < 9 ) {
+    // VML mode - no SVG & SVG filter support
+  }
+  else if (ie !== 'undefined') {
     onCreateElementNsReady(function() {
       obj.generateShadow(svg, defs);
     });
@@ -634,6 +680,8 @@
     obj.originalValue = obj.config.textRenderer(obj.originalValue);
   } else if(obj.config.humanFriendly) {
     obj.originalValue = humanFriendlyNumber( obj.originalValue, obj.config.humanFriendlyDecimal ) + obj.config.symbol;
+  } else if(obj.config.formatNumber) {
+    obj.originalValue = formatNumber(obj.originalValue) + obj.config.symbol;
   } else {
     obj.originalValue = (obj.originalValue * 1).toFixed(obj.config.decimals) + obj.config.symbol;
   }
@@ -646,6 +694,8 @@
         obj.txtValue.attr("text", obj.config.textRenderer(Math.floor(currentValue[0])));
       } else if(obj.config.humanFriendly) {
         obj.txtValue.attr("text", humanFriendlyNumber( Math.floor(currentValue[0]), obj.config.humanFriendlyDecimal ) + obj.config.symbol);
+      } else if(obj.config.formatNumber) {
+        obj.txtValue.attr("text", formatNumber(Math.floor(currentValue[0])) + obj.config.symbol);
       } else {
         obj.txtValue.attr("text", (currentValue[0] * 1).toFixed(obj.config.decimals) + obj.config.symbol);
       }
@@ -683,6 +733,48 @@
   obj.txtLabel.animate({"fill-opacity":"1"}, obj.config.startAnimationTime, obj.config.startAnimationType);
 };
 
+//
+// tiny helper function to lookup value of a key from two hash tables
+// if none found, return defaultvalue
+//
+// key: string
+// tablea: object
+// tableb: DOMStringMap|object
+// defval: string|integer|float|null
+// datatype: return datatype
+// delimiter: delimiter to be used in conjunction with datatype formatting
+//
+JustGage.prototype.kvLookup = function(key, tablea, tableb, defval, datatype, delimiter) {
+  var val = defval;
+  var canConvert = false;
+  if (!(key === null || key === undefined)) {
+      if (tableb !== null && tableb !== undefined && typeof tableb === "object" && key in tableb) {
+          val = tableb[key];
+          canConvert = true;
+      } else if (tablea !== null && tablea !== undefined && typeof tablea === "object" && key in tablea) {
+          val = tablea[key];
+          canConvert = true;
+      } else {
+          val = defval;
+      }
+      if (canConvert === true) {
+          if (datatype !== null && datatype !== undefined) {
+              switch(datatype) {
+                  case 'int':
+                    val = parseInt(val, 10);
+                    break;
+                  case 'float':
+                    val = parseFloat(val);
+                    break;
+                  default:
+                    break;
+              }
+          }
+      }
+  }
+  return val;
+};
+
 /** Refresh gauge level */
 JustGage.prototype.refresh = function(val, max) {
 
@@ -694,7 +786,11 @@ JustGage.prototype.refresh = function(val, max) {
     obj.config.max = max;
 
     obj.txtMaximum = obj.config.max;
-    if( obj.config.humanFriendly ) obj.txtMaximum = humanFriendlyNumber( obj.config.max, obj.config.humanFriendlyDecimal );
+    if( obj.config.humanFriendly ) {
+      obj.txtMaximum = humanFriendlyNumber( obj.config.max, obj.config.humanFriendlyDecimal );
+    } else if( obj.config.formatNumber ) {
+      obj.txtMaximum = formatNumber( obj.config.max );
+    }
     obj.txtMax.attr({"text" : obj.txtMaximum});
     setDy(obj.txtMax, obj.params.maxFontSize, obj.params.maxY);
   }
@@ -710,6 +806,8 @@ JustGage.prototype.refresh = function(val, max) {
     displayVal = obj.config.textRenderer(displayVal);
   } else if( obj.config.humanFriendly ) {
     displayVal = humanFriendlyNumber( displayVal, obj.config.humanFriendlyDecimal ) + obj.config.symbol;
+  } else if( obj.config.formatNumber ) {
+    displayVal = formatNumber((displayVal * 1).toFixed(obj.config.decimals)) + obj.config.symbol;
   } else {
     displayVal = (displayVal * 1).toFixed(obj.config.decimals) + obj.config.symbol;
   }
@@ -822,7 +920,7 @@ function getColor(val, pct, col, noGradient, custSec) {
   if (no === 1) return col[0];
   inc = (noGradient) ? (1 / no) : (1 / (no - 1));
   colors = [];
-  for (var i = 0; i < col.length; i++) {
+  for (i = 0; i < col.length; i++) {
     percentage = (noGradient) ? (inc * (i + 1)) : (inc * i);
     rval = parseInt((cutHex(col[i])).substring(0,2),16);
     gval = parseInt((cutHex(col[i])).substring(2,4),16);
@@ -859,7 +957,7 @@ function getColor(val, pct, col, noGradient, custSec) {
 
 /** Fix Raphael display:none tspan dy attribute bug */
 function setDy(elem, fontSize, txtYpos) {
-  if (!ie || ie > 9) {
+  if ((!ie || ie > 9) && elem.node.firstChild.attributes.dy) {
     elem.node.firstChild.attributes.dy.value = 0;
   }
 }
@@ -888,6 +986,13 @@ function humanFriendlyNumber( n, d ) {
    }
  }
  return n;
+}
+
+/** Format numbers with commas - From: http://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript */
+function formatNumber(x) {
+    var parts = x.toString().split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
 }
 
 /**  Get style  */

@@ -130,7 +130,7 @@ public class ServeHTML {
         page += tempContent;
         page += pumpContent;
 
-        page += "<div id=\"tempProbes\">" + lineSep;
+        page += "<div id=\"timers\">" + lineSep;
         page += addTimers();
         page += "</div>" + lineSep;
         page += "</body>";
@@ -164,7 +164,7 @@ public class ServeHTML {
             + " src=\"/templates/static/pidFunctions.js\">"
             + "</script>" + lineSep
             + "<script type=\"text/javascript\""
-            + " src=\"/templates/static/raphael.2.1.0.min.js\">"
+            + " src=\"/templates/static/raphael.js\">"
             + "</script>" + lineSep
             + "<script type=\"text/javascript\""
             + " src=\"/templates/static/justgage.js\">"
@@ -221,7 +221,7 @@ public class ServeHTML {
 
         controller += "Gauges[\"" + device + "\"] = "
             + "new JustGage({ id: \"" + device + "-gage\","
-            + " min: 0, max:100, title:\"Cycle\" }); " + lineSep
+            + " min: 0, max:100, relativeGaugeSize: true, title:\"Cycle\" }); " + lineSep
             + "$(\"input[type='number']\").stepper();" + lineSep;
 
         controller += "});" + lineSep + lineSep
@@ -260,6 +260,12 @@ public class ServeHTML {
                 + " selectAuto(this);"
                 + " return false;'>Auto</button>"
             + lineSep
+            + "<button id=\"" + device + "-modeHysteria\""
+            + " class=\"holo-button modeclass\""
+            + " onclick='disable(this);"
+            + " selectHysteria(this);"
+            + " return false;'>Hysteria</button>"
+        + lineSep + "<br />"
             + "<button id=\"" + device + "-modeManual\""
                 + " class=\"holo-button modeclass\""
                 + " onclick='disable(this);"
@@ -332,7 +338,6 @@ public class ServeHTML {
             + "</tr>" + lineSep
 
                 // I
-            + "<br />"
             + "<tr id='" + device + "-i' class='holo-field'>" + lineSep
                 + "<td id='" + device + "-labeli' >I</td>" + lineSep
                 + "<td id=\"" + device + "-iinput\">" + lineSep
@@ -345,7 +350,6 @@ public class ServeHTML {
             + "</tr>" + lineSep
 
                 // D
-            + "<br />"
             + "<tr id='" + device + "-d' class='holo-field'>" + lineSep
                 + "<td id='" + device + "-labeld' >D</td>" + lineSep
                 + "<td id=\"" + device + "-dinput\">" + lineSep
@@ -354,6 +358,38 @@ public class ServeHTML {
                     + " style=\"text-align: left;\"/>"
                 + "</td>" + lineSep
                 + "<td id='" + device + "-unitD'>secs</td>"
+            + "</tr>" + lineSep
+            // min
+            + "<tr id='" + device + "-min' class='holo-field'>" + lineSep
+                + "<td id='" + device + "-labelMin' >Min</td>" + lineSep
+                + "<td id=\"" + device + "-mininput\">" + lineSep
+                    + "\t<input class='inputBox min' name=\"min\""
+                    + " maxlength = \"6\" size =\"6\" value=\"\""
+                    + " style=\"text-align: left;\"/>"
+                + "</td>" + lineSep
+                + "<td id='" + device + "-unitMin'>&#176"
+                    + "<div id='tempUnit'>F</div></td>"
+            + "</tr>" + lineSep
+            // max
+            + "<tr id='" + device + "-max' class='holo-field'>" + lineSep
+                + "<td id='" + device + "-labelMin' >Max</td>" + lineSep
+                + "<td id=\"" + device + "-maxinput\">" + lineSep
+                    + "\t<input class='inputBox max' name=\"max\""
+                    + " maxlength = \"6\" size =\"6\" value=\"\""
+                    + " style=\"text-align: left;\"/>"
+                + "</td>" + lineSep
+                + "<td id='" + device + "-unitMax'>&#176"
+                    + "<div id='tempUnit'>F</div></td>"
+            + "</tr>" + lineSep
+            // minTime
+            + "<tr id='" + device + "-time' class='holo-field'>" + lineSep
+                + "<td id='" + device + "-labelTime' >Time</td>" + lineSep
+                + "<td id=\"" + device + "-timeinput\">" + lineSep
+                    + "\t<input class='inputBox time' name=\"time\""
+                    + " maxlength = \"6\" size =\"6\" value=\"\""
+                    + " style=\"text-align: left;\"/>"
+                + "</td>" + lineSep
+                + "<td id='" + device + "-unitTime'>Minutes</td>"
             + "</tr>" + lineSep
         + "</table>" + lineSep
         + "<div class='holo-buttons'>" + lineSep;
@@ -422,27 +458,27 @@ public class ServeHTML {
                     + " onclick='setTimer(this, \"" + timer + "\");"
                     + " waitForMsg(); return false;'>"
                     + "Start " + timer
-                + "</span>";
+                + "</span>" + lineSep;
 
             timers += "<span class='holo-button pump' style='display:none'"
                     + " id=\"" + timer + "Timer\" type=\"submit\" "
                     + "value=\"" + timer + "Timer\""
                     + " onclick='setTimer(this, \"" + timer + "\");"
                     + " waitForMsg(); return false;'>"
-                + "</span>";
+                + "</span>" + lineSep;
 
             timers += "<span class='holo-button pump' id=\"" + timer + "\""
                     + " type=\"submit\" "
                     + "value=\"" + timer + "Timer\""
                     + " onclick='resetTimer(this, \"" + timer + "\");"
-                    + " waitForMsg(); return false;'>"
+                    + " waitForMsg(); return false;'>" + lineSep
                     + "Reset " + timer
-                + "</span></div><br /><br />";
+                + "</span></div><br />" + lineSep;
         }
 
         timers += "<span class='holo-button pump' id=\"New\" type=\"submit\""
                 + "onclick='addTimer(); sleep(2000); location.reload();'>"
-                + "Add New Timer</span>";
+                + "Add New Timer</span>" + lineSep;
 
         timers += "</div>" // panel body
                 + "</div>"; // panel
