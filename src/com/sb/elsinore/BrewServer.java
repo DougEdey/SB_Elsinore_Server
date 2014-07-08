@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -25,6 +27,7 @@ import org.json.simple.parser.JSONParser;
 
 import com.sb.elsinore.NanoHTTPD.Response.Status;
 import com.sb.elsinore.NanoHTTPD.Response;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.FileReader;
@@ -1413,24 +1416,30 @@ public class BrewServer extends NanoHTTPD {
                 try {
                     reader = new BufferedReader(new FileReader(content));
                     String line;
-                    boolean first = true;
-                    int counter = 0;
+
+                    List<String> textArray = new ArrayList<String>();
 
                     while ((line = reader.readLine()) != null) {
-                        if (counter >= size) {
-                            break;
-                        }
 
-                        if (!first) {
-                            json.append(',');
-                        }
-                        json.append('[');
-                        json.append(line);
-                        json.append(']');
-                        first = false;
-                        counter++;
+                        textArray.add('[' + line + ']');
                         lastLine = line;
                     }
+
+                    if (textArray.size() > size) {
+                        textArray = textArray.subList(
+                                textArray.size() - size, textArray.size());
+                    }
+
+                    StringBuffer sb = new StringBuffer();
+                    for (String s: textArray) {
+                        if (!s.matches(" *")) {
+                            //empty string are ""; " "; "  "; and so on
+                            sb.append(s);
+                            sb.append(",");
+                        }
+                    }
+                    json.append(sb.toString());
+
                 } catch (Exception e) {
                     // Do nothing
                 } finally {
