@@ -13,7 +13,7 @@
 
 	function getParams() {
 
-	  var params = window.location.search.substring(1).split('& '),
+	  var params = window.location.search.substring(1).split('&'),
 	    i = 0,
 	    pair = null,
 	    result = {};
@@ -27,7 +27,7 @@
 	}
 
 	$(function() {
-
+		$("#view_all_points").attr('href', window.location.href + '&size=0');
 		var options = {
 			lines: {
 				show: true
@@ -140,6 +140,7 @@
 		// Add the Flot version string to the footer
 
 		$("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
+		
 	});
 
 	</script>
@@ -154,7 +155,10 @@
 
 		<div class="demo-container">
 			<div id="placeholder" class="demo-placeholder"></div>
+			<a id="view_all_points" href="">View all history</a>
+			<a id="view_all_inputs" href="/graph?&size=0">View all inputs</a>
 		</div>
+	</div>
 
 
 </body>
