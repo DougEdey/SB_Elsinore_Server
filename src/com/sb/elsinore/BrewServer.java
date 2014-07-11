@@ -1425,17 +1425,21 @@ public class BrewServer extends NanoHTTPD {
                         lastLine = line;
                     }
 
-                    if (textArray.size() > size) {
+                    if (size > 0 && textArray.size() > size) {
                         textArray = textArray.subList(
                                 textArray.size() - size, textArray.size());
                     }
 
                     StringBuffer sb = new StringBuffer();
-                    for (String s: textArray) {
+                    String s = null;
+                    for (int i = 0; i < textArray.size(); i++) {
+                        s = textArray.get(i);
                         if (!s.matches(" *")) {
                             //empty string are ""; " "; "  "; and so on
                             sb.append(s);
-                            sb.append(",");
+                            if (i < textArray.size() - 1) {
+                                sb.append(",");
+                            }
                         }
                     }
                     json.append(sb.toString());
