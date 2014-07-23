@@ -714,7 +714,10 @@ public final class PID implements Runnable {
      */
     public void setGPIO(final String gpio) {
         // Close down the existing OutputControl
-        this.outputControl.shutdown();
+        if (this.outputControl != null) {
+            this.outputControl.shutdown();
+        }
+        
         this.fGPIO = gpio;
         this.outputControl = new OutputControl(
             this.fName, this.fGPIO, this.heatSetting.cycle_time);
