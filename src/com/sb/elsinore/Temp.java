@@ -479,6 +479,8 @@ public final class Temp implements Runnable {
     public BigDecimal updateTempFromFile() {
         BufferedReader br = null;
         String temp = null;
+        
+        BigDecimal newTemperature = null;
 
         try {
             br = new BufferedReader(new FileReader(fProbe));
@@ -494,12 +496,12 @@ public final class Temp implements Runnable {
                 int t = line.indexOf("t=");
                 temp = line.substring(t + 2);
                 BigDecimal tTemp = new BigDecimal(temp);
-                this.currentTemp = MathUtil.divide(tTemp, 1000);
+                newTemperature = MathUtil.divide(tTemp, 1000);
                 this.currentError = null;
             } else {
                 // System Temperature
                 BigDecimal tTemp = new BigDecimal(line);
-                this.currentTemp = MathUtil.divide(tTemp, 1000);
+                newTemperature = MathUtil.divide(tTemp, 1000);
             }
 
         } catch (IOException ie) {
@@ -523,7 +525,11 @@ public final class Temp implements Runnable {
                 }
             }
         }
-        return currentTemp;
+        if( newTemperature == null )
+        {
+            newTemperature = getTempC();
+        }
+        return newTemperature;
     }
 
     /**
