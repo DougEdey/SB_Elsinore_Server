@@ -1147,6 +1147,9 @@ public final class LaunchControl {
      */
     public static void addPID(final PID newPID) {
         pidList.add(newPID);
+        Thread pThread = new Thread(newPID);
+        pThread.start();
+        pidThreads.add(pThread);
     }
 
     /**************
