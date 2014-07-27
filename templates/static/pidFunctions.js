@@ -73,10 +73,13 @@ function waitForMsg(){
 				
 				// Check for an error message
 				if ("message" == vessel) {
-					jQuery("#error").text(val);
-					jQuery("#error").show();
-				} else {
-					jQuery("#error").hide();
+					if (val.length > 0) {
+						jQuery("#messages-body").html(val);
+						jQuery("#messages").css('display', 'block');
+						jQuery("#messages").show();
+					} else {
+						jQuery("#messages").hide();
+					}
 				}
 				
 				if (vessel == "brewday") {
@@ -848,3 +851,23 @@ $(window).resize(function() {
 	fixWebkitHeightBug();
 
 });
+
+function checkUpdates() {
+	 $.ajax({
+		 url: 'checkGit',
+			type: 'POST',
+		success: function(data) {data = null}
+	});	
+	window.disableUpdates = 0;
+	return false;
+}
+
+function updateElsinore() {
+	 $.ajax({
+		 url: 'restartUpdate',
+			type: 'POST',
+		success: function(data) {data = null}
+	});	
+	window.disableUpdates = 0;
+	return false;
+}

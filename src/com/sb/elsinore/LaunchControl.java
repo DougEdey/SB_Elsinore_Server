@@ -70,6 +70,7 @@ import Cosm.Unit;
 
 import com.sb.common.ServeHTML;
 import com.sb.elsinore.StatusRecorder;
+import com.sb.elsinore.NanoHTTPD.Response.Status;
 
 /**
  * LaunchControl is the core class of Elsinore.
@@ -2680,9 +2681,66 @@ public final class LaunchControl {
 
         if (!headSha.equals(currentSha)) {
             LaunchControl.setMessage(
-                    "Update Available. <div onClick='updateElsinore()'>Click Here to Update</div>");
+                "Update Available. "
+                + "<span class='holo-button' id=\"UpdatesFromGit\""
+                + " type=\"submit\""
+                + " onClick='updateElsinore();'>"
+                + "Click here to update</span>");
         }
 
+    }
+
+    /**
+     * Update from git and restart.
+     * @return
+     */
+    public static void updateFromGit() {
+      //Build command
+        File jarLocation = null;
+
+        jarLocation = new File(LaunchControl.class.getProtectionDomain()
+                .getCodeSource().getLocation().getPath()).getParentFile();
+
+        System.out.println("Updating from Head");
+        List<String> commands = new ArrayList<String>();
+        commands.add("git");
+        commands.add("pull");
+        ProcessBuilder pb = new ProcessBuilder(commands);
+        pb.directory(jarLocation);
+        pb.redirectErrorStream(true);
+        Process process = null;
+        try {
+            process = pb.start();
+        } catch (IOException e3) {
+            System.out.println("Couldn't check remote git SHA");
+            e3.printStackTrace();
+            LaunchControl.setMessage("Failed to update from Git");
+            return;
+        }
+
+        StringBuilder out = new StringBuilder();
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
+        String line = null, previous = null;
+
+        try {
+            while ((line = br.readLine()) != null) {
+                if (!line.equals(previous)) {
+                    previous = line;
+                    out.append(line).append('\n');
+                    System.out.println(line);
+                }
+            }
+        } catch (IOException e2) {
+            System.out.println("Couldn't update from GIT");
+            e2.printStackTrace();
+            LaunchControl.setMessage(out.toString());
+            return;
+        }
+        LaunchControl.setMessage(out.toString());
+        System.out.println(out.toString());
+        
+        System.exit(128);
     }
 
     static void setMessage(String message) {

@@ -795,7 +795,7 @@ public class BrewServer extends NanoHTTPD {
         BrewServer.LOG.info("URL : " + uri + " method: " + method);
         
         // parms contains the properties here
-        if (uri.toLowerCase().equals("/mashprofile")) {
+        if (uri.equalsIgnoreCase("/mashprofile")) {
             if (updateMashProfile(parms)) {
                 return new NanoHTTPD.Response(
                     Status.OK, MIME_HTML, "Updated MashProfile");
@@ -806,7 +806,7 @@ public class BrewServer extends NanoHTTPD {
                 "Failed to update Mashprofile");
         }
 
-        if (uri.toLowerCase().equals("/togglemash")) {
+        if (uri.equalsIgnoreCase("/togglemash")) {
             if (toggleMashProfile(parms)) {
                 return new NanoHTTPD.Response(Status.OK,
                     MIME_HTML, "Toggled mash profile");
@@ -816,15 +816,15 @@ public class BrewServer extends NanoHTTPD {
                 MIME_HTML, "Failed to toggle MashProfile");
         }
 
-        if (uri.toLowerCase().equals("/editdevice")) {
+        if (uri.equalsIgnoreCase("/editdevice")) {
             return editVessel(parms);
         }
-        if (uri.toLowerCase().equals("/updatepid")) {
+        if (uri.equalsIgnoreCase("/updatepid")) {
             // parse the values if possible
             return updatePID(parms);
         }
 
-        if (uri.toLowerCase().equals("/updateday")) {
+        if (uri.equalsIgnoreCase("/updateday")) {
             // we're storing the data for the brew day
             String tempDateStamp;
             BrewDay brewDay = LaunchControl.getBrewDay();
@@ -861,7 +861,7 @@ public class BrewServer extends NanoHTTPD {
                 "Updated Brewday");
         }
 
-        if (uri.toLowerCase().equals("/updatepump")) {
+        if (uri.equalsIgnoreCase("/updatepump")) {
             if (parms.containsKey("toggle")) {
                 String pumpname = parms.get("toggle");
                 Pump tempPump = LaunchControl.findPump(pumpname);
@@ -885,7 +885,7 @@ public class BrewServer extends NanoHTTPD {
             }
         }
 
-        if (uri.toLowerCase().equals("/toggleaux")) {
+        if (uri.equalsIgnoreCase("/toggleaux")) {
             if (parms.containsKey("toggle")) {
                 String pidname = parms.get("toggle");
                 PID tempPID = LaunchControl.findPID(pidname);
@@ -903,22 +903,22 @@ public class BrewServer extends NanoHTTPD {
             }
         }
 
-        if (uri.toLowerCase().equals("/getstatus")) {
+        if (uri.equalsIgnoreCase("/getstatus")) {
             return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
                     LaunchControl.getJSONStatus());
         }
 
-        if (uri.toLowerCase().equals("/controller")) {
+        if (uri.equalsIgnoreCase("/controller")) {
             return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                 LaunchControl.getControlPage());
         }
 
-        if (uri.toLowerCase().equals("/timers")) {
+        if (uri.equalsIgnoreCase("/timers")) {
             return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                 LaunchControl.getBrewDay().brewDayStatus().toString());
         }
         
-        if (uri.toLowerCase().equals("/graph")) {
+        if (uri.equalsIgnoreCase("/graph")) {
             
             return serveFile("/templates/static/graph/graph.html", header, rootDir);
         }
@@ -928,22 +928,28 @@ public class BrewServer extends NanoHTTPD {
             
         }
 
-        if (uri.toLowerCase().equals("/addpump")) {
+        if (uri.equalsIgnoreCase("/addpump")) {
             return addPump(parms);
         }
 
-        if (uri.toLowerCase().equals("/addtimer")) {
+        if (uri.equalsIgnoreCase("/addtimer")) {
             return addTimer(parms);
         }
 
-        if (uri.toLowerCase().equals("/addvolpoint")) {
+        if (uri.equalsIgnoreCase("/addvolpoint")) {
             return addVolumePoint(parms);
         }
 
-        if (uri.toLowerCase().equals("/checkgit")) {
+        if (uri.equalsIgnoreCase("/checkgit")) {
             LaunchControl.checkForUpdates();
             return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                    "{'Status':'OK'}");
+                    "{Status:'OK'}");
+        }
+
+        if (uri.equalsIgnoreCase("/restartupdate")) {
+            LaunchControl.updateFromGit();
+            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+                    "{Status:'OK'}");
         }
 
         if (!uri.equals("") && new File(rootDir, uri).exists()) {
