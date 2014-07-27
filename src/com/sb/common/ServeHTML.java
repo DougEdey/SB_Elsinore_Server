@@ -69,7 +69,9 @@ public class ServeHTML {
                 + "<meta name=\"viewport\" content=\"width=device-width,"
                 + " initial-scale=1.0\">" + lineSep
                 + getHeader() + lineSep + "</head><body>" + lineSep
-                + addJS() + lineSep;
+                + addJS() + lineSep
+                + "<div id=\"error\" class-\"panel-error\">"
+                + "</div><br />";
 
         Iterator<Entry<String, String>> devIterator =
                 devices.entrySet().iterator();

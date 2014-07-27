@@ -71,6 +71,14 @@ function waitForMsg(){
 			$.each(data, function(key, val) {
 				vessel = key;
 				
+				// Check for an error message
+				if ("message" == vessel) {
+					jQuery("#error").text(val);
+					jQuery("#error").show();
+				} else {
+					jQuery("#error").hide();
+				}
+				
 				if (vessel == "brewday") {
 					$.each(val, function(timerName, timerStatus) {
 						checkTimer(timerStatus, timerName);

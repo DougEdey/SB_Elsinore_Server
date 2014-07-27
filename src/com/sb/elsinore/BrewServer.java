@@ -940,6 +940,12 @@ public class BrewServer extends NanoHTTPD {
             return addVolumePoint(parms);
         }
 
+        if (uri.toLowerCase().equals("/checkgit")) {
+            LaunchControl.checkForUpdates();
+            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+                    "{'Status':'OK'}");
+        }
+
         if (!uri.equals("") && new File(rootDir, uri).exists()) {
             return serveFile(uri, header, rootDir);
         }
