@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.PID;
 import com.sb.elsinore.Pump;
@@ -71,6 +73,20 @@ public class ServeHTML {
                 + getHeader() + lineSep + "</head><body>" + lineSep
                 + addJS() + lineSep;
 
+        // For displaying any info from the server
+        String messageContent =
+            "<div id='messages' style='display:none'>"
+            + "<div class=\"panel panel-warning\">" + lineSep;
+        messageContent +=
+            "<div id=\"messages-title\" class=\"title panel-heading \">"
+            + "Pumps</div>";
+        messageContent += "<div id=\"messages-body\" class=\"panel-body\">"
+                + "</div>"
+                + "</div>"
+                + "</div>";
+
+        page += messageContent;
+
         Iterator<Entry<String, String>> devIterator =
                 devices.entrySet().iterator();
 
@@ -79,7 +95,7 @@ public class ServeHTML {
         while (devIterator.hasNext()) {
             Entry<String, String> pairs =
                     (Entry<String, String>) devIterator.next();
-            String devName = pairs.getKey();
+            String devName = pairs.getKey().replace(" ", "_");
             String devType = pairs.getValue();
             if (devType.equalsIgnoreCase("PID")) {
                 pidContent += addController(devName, devType);
@@ -95,6 +111,7 @@ public class ServeHTML {
             Entry<String, String> pairs =
                     (Entry<String, String>) devIterator.next();
             String devName = (String) pairs.getKey();
+            devName = devName.replace(" ", "_");
             String devType = (String) pairs.getValue();
             if (!devType.equalsIgnoreCase("PID")) {
                 tempContent += addController(devName, devType);
@@ -119,13 +136,15 @@ public class ServeHTML {
             }
 
         }
-        pumpContent += "<span class='holo-button pump' id=\"New\" type=\"submit\""
+        pumpContent += "<span class='holo-button pump' id=\"New\""
+                + " type=\"submit\""
                 + "onclick='addPump(); sleep(2000); location.reload();'>"
                 + "Add New Pump</span>";
         pumpContent += lineSep + "</div></div>";
         pumpContent += lineSep + " </div>" + lineSep;
 
-        // TODO: Update this for custom page ordering, we should be able to do this quickly and easily
+        // TODO: Update this for custom page ordering,
+        // we should be able to do this quickly and easily
         page += pidContent;
         page += tempContent;
         page += pumpContent;
@@ -133,6 +152,11 @@ public class ServeHTML {
         page += "<div id=\"timers\">" + lineSep;
         page += addTimers();
         page += "</div>" + lineSep;
+        page += "<br /> <br /><div><span class='holo-button' id=\"CheckUpdates\""
+                + " type=\"submit\""
+                + " onClick='checkUpdates();'>"
+                + "Check for Updates</span>"
+                + "</div>";
         page += "</body>";
         return page;
     }
@@ -229,7 +253,7 @@ public class ServeHTML {
 
         controller += "<div id=\"" + device
             + "-title\" class=\"title panel-heading \""
-            + " ondblclick='editDevice(this)' >" + device + "</div>"
+            + " ondblclick='editDevice(this)' >" + device.replace("_", " ") + "</div>"
             + "<div id=\"" + device + "-error\" class-\"panel-error\">"
             + "</div>"
             + "<div class=\"panel-body\">" + lineSep

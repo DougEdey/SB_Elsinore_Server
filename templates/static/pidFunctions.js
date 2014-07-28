@@ -71,6 +71,17 @@ function waitForMsg(){
 			$.each(data, function(key, val) {
 				vessel = key;
 				
+				// Check for an error message
+				if ("message" == vessel) {
+					if (val.length > 0) {
+						jQuery("#messages-body").html(val);
+						jQuery("#messages").css('display', 'block');
+						jQuery("#messages").show();
+					} else {
+						jQuery("#messages").hide();
+					}
+				}
+				
 				if (vessel == "brewday") {
 					$.each(val, function(timerName, timerStatus) {
 						checkTimer(timerStatus, timerName);
@@ -140,6 +151,7 @@ function waitForMsg(){
 				
 				if (vessel == "vessels") {
 					$.each(val, function(vesselName, vesselStatus) {
+						
 						// This should always be there
 						if ("name" in vesselStatus) {
 							vesselName = vesselStatus.name;
@@ -840,3 +852,23 @@ $(window).resize(function() {
 	fixWebkitHeightBug();
 
 });
+
+function checkUpdates() {
+	 $.ajax({
+		 url: 'checkGit',
+			type: 'POST',
+		success: function(data) {data = null}
+	});	
+	window.disableUpdates = 0;
+	return false;
+}
+
+function updateElsinore() {
+	 $.ajax({
+		 url: 'restartUpdate',
+			type: 'POST',
+		success: function(data) {data = null}
+	});	
+	window.disableUpdates = 0;
+	return false;
+}

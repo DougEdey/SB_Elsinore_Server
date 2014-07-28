@@ -81,7 +81,7 @@
         <dependency>
             <groupId>jGPIO</groupId>
             <artifactId>jGPIO</artifactId>
-            <version>0.0.2-SNAPSHOT</version>
+            <version>0.0.3-SNAPSHOT</version>
         </dependency>
         
         <dependency>
@@ -103,6 +103,13 @@
             <artifactId>commons-cli</artifactId>
             <version>1.2</version>
         </dependency>
+        
+        <dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.3.2</version>
+		</dependency>
+        
        
     </dependencies>
     

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.net.InetAddress;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.ini4j.ConfigParser;
 import org.ini4j.ConfigParser.InterpolationException;
 import org.ini4j.ConfigParser.NoOptionException;
@@ -69,6 +71,7 @@ import Cosm.Unit;
 
 import com.sb.common.ServeHTML;
 import com.sb.elsinore.StatusRecorder;
+import com.sb.elsinore.NanoHTTPD.Response.Status;
 
 /**
  * LaunchControl is the core class of Elsinore.
@@ -217,6 +220,7 @@ public final class LaunchControl {
      * Xpath Expression static for the helpers.
      */
     private static XPathExpression expr = null;
+    private static String message = null;
 
     /*****
      * Main method to launch the brewery.
@@ -528,7 +532,7 @@ public final class LaunchControl {
             // Add the temp to the JSON Map
             JSONObject tJSONTemp = new JSONObject();
             tJSONTemp.putAll(t.getMapStatus());
-            tJSON.put("name", t.getName());
+            tJSON.put("name", t.getName().replace(" ", "_"));
             tJSON.put("tempprobe", tJSONTemp);
 
             if (t.hasVolume()) {
@@ -601,6 +605,9 @@ public final class LaunchControl {
             rObj.put("mash", "Unset");
         }
 
+        if (LaunchControl.getMessage() != null) {
+            rObj.put("message", LaunchControl.getMessage());
+        }
         return rObj.toString();
     }
 
@@ -2548,5 +2555,200 @@ public final class LaunchControl {
      */
     public static List<String> getTimerList() {
         return timerList;
+    }
+
+    public static void checkForUpdates() {
+        //Build command
+        File jarLocation = null;
+
+        jarLocation = new File(LaunchControl.class.getProtectionDomain()
+                .getCodeSource().getLocation().getPath()).getParentFile();
+
+
+        List<String> commands = new ArrayList<String>();
+        commands.add("git");
+        commands.add("fetch");
+        ProcessBuilder pb = new ProcessBuilder(commands);
+        pb.directory(jarLocation);
+        pb.redirectErrorStream(true);
+        Process process = null;
+        try {
+            process = pb.start();
+        } catch (IOException e3) {
+            System.out.println("Couldn't check remote git SHA");
+            e3.printStackTrace();
+            return;
+        }
+
+        commands = new ArrayList<String>();
+        commands.add("git");
+        //Add arguments
+        commands.add("rev-parse");
+        commands.add("HEAD");
+        LaunchControl.setMessage("Checking for updates from git...");
+        System.out.println("Checking for updates from the head repo");
+
+        //Run macro on target
+        pb = new ProcessBuilder(commands);
+        pb.directory(jarLocation);
+        pb.redirectErrorStream(true);
+        process = null;
+        try {
+            process = pb.start();
+        } catch (IOException e3) {
+            System.out.println("Couldn't check remote git SHA");
+            e3.printStackTrace();
+            return;
+        }
+
+        //Read output
+        StringBuilder out = new StringBuilder();
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
+        String line = null, previous = null;
+        String currentSha = null;
+
+        try {
+            while ((line = br.readLine()) != null) {
+                if (!line.equals(previous)) {
+                    previous = line;
+                    if (Pattern.matches("[0-9a-f]{5,40}", line)) {
+                        currentSha = line;
+                    }
+                    out.append(line).append('\n');
+                    System.out.println(line);
+                }
+            }
+        } catch (IOException e2) {
+            System.out.println("Couldn't read a line when checking local SHA");
+            e2.printStackTrace();
+            return;
+        }
+
+        if (currentSha == null) {
+            System.out.println("Couldn't check Head revision");
+            LaunchControl.setMessage("Couldn't check head revision");
+            return;
+        }
+
+        //Build command for head check
+
+        commands = new ArrayList<String>();
+        commands.add("git");
+        //Add arguments
+        commands.add("rev-parse");
+        commands.add("origin");
+        //Run macro on target
+        pb = new ProcessBuilder(commands);
+        pb.directory(jarLocation);
+        pb.redirectErrorStream(true);
+        try {
+            process = pb.start();
+        } catch (IOException e1) {
+            System.out.println("Couldn't check remote SHA");
+            e1.printStackTrace();
+            return;
+        }
+
+        //Read output
+        out = new StringBuilder();
+        br = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
+        line = null; previous = null;
+        String headSha = null;
+
+        try {
+            while ((line = br.readLine()) != null) {
+                if (!line.equals(previous)) {
+                    previous = line;
+                    if (Pattern.matches("[0-9a-f]{5,40}", line)) {
+                        headSha = line;
+                    }
+                    out.append(line).append('\n');
+                    System.out.println(line);
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Couldn't read remote head revision output");
+            e.printStackTrace();
+            return;
+        }
+
+        if (headSha == null) {
+            System.out.println("Couldn't check ORIGIN revision");
+            LaunchControl.setMessage("Couldn't check ORIGIN revision");
+            return;
+        }
+
+        if (!headSha.equals(currentSha)) {
+            LaunchControl.setMessage(
+                "Update Available. "
+                + "<span class='holo-button' id=\"UpdatesFromGit\""
+                + " type=\"submit\""
+                + " onClick='updateElsinore();'>"
+                + "Click here to update</span>");
+        }
+
+    }
+
+    /**
+     * Update from git and restart.
+     * @return
+     */
+    public static void updateFromGit() {
+      //Build command
+        File jarLocation = null;
+
+        jarLocation = new File(LaunchControl.class.getProtectionDomain()
+                .getCodeSource().getLocation().getPath()).getParentFile();
+
+        System.out.println("Updating from Head");
+        List<String> commands = new ArrayList<String>();
+        commands.add("git");
+        commands.add("pull");
+        ProcessBuilder pb = new ProcessBuilder(commands);
+        pb.directory(jarLocation);
+        pb.redirectErrorStream(true);
+        Process process = null;
+        try {
+            process = pb.start();
+        } catch (IOException e3) {
+            System.out.println("Couldn't check remote git SHA");
+            e3.printStackTrace();
+            LaunchControl.setMessage("Failed to update from Git");
+            return;
+        }
+
+        StringBuilder out = new StringBuilder();
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
+        String line = null, previous = null;
+
+        try {
+            while ((line = br.readLine()) != null) {
+                if (!line.equals(previous)) {
+                    previous = line;
+                    out.append(line).append('\n');
+                    System.out.println(line);
+                }
+            }
+        } catch (IOException e2) {
+            System.out.println("Couldn't update from GIT");
+            e2.printStackTrace();
+            LaunchControl.setMessage(out.toString());
+            return;
+        }
+        LaunchControl.setMessage(out.toString());
+        System.out.println(out.toString());
+        
+        System.exit(128);
+    }
+
+    static void setMessage(String message) {
+        LaunchControl.message = message;
+    }
+
+    static String getMessage() {
+        return LaunchControl.message;
     }
 }
