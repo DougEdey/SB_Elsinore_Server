@@ -46,6 +46,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.ini4j.ConfigParser;
 import org.ini4j.ConfigParser.InterpolationException;
 import org.ini4j.ConfigParser.NoOptionException;
@@ -531,7 +532,7 @@ public final class LaunchControl {
             // Add the temp to the JSON Map
             JSONObject tJSONTemp = new JSONObject();
             tJSONTemp.putAll(t.getMapStatus());
-            tJSON.put("name", t.getName());
+            tJSON.put("name", t.getName().replace(" ", "_"));
             tJSON.put("tempprobe", tJSONTemp);
 
             if (t.hasVolume()) {

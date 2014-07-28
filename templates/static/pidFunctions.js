@@ -151,6 +151,7 @@ function waitForMsg(){
 				
 				if (vessel == "vessels") {
 					$.each(val, function(vesselName, vesselStatus) {
+						
 						// This should always be there
 						if ("name" in vesselStatus) {
 							vesselName = vesselStatus.name;

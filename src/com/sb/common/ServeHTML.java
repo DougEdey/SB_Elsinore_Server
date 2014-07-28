@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.PID;
 import com.sb.elsinore.Pump;
@@ -93,7 +95,7 @@ public class ServeHTML {
         while (devIterator.hasNext()) {
             Entry<String, String> pairs =
                     (Entry<String, String>) devIterator.next();
-            String devName = pairs.getKey();
+            String devName = pairs.getKey().replace(" ", "_");
             String devType = pairs.getValue();
             if (devType.equalsIgnoreCase("PID")) {
                 pidContent += addController(devName, devType);
@@ -109,6 +111,7 @@ public class ServeHTML {
             Entry<String, String> pairs =
                     (Entry<String, String>) devIterator.next();
             String devName = (String) pairs.getKey();
+            devName = devName.replace(" ", "_");
             String devType = (String) pairs.getValue();
             if (!devType.equalsIgnoreCase("PID")) {
                 tempContent += addController(devName, devType);
@@ -250,7 +253,7 @@ public class ServeHTML {
 
         controller += "<div id=\"" + device
             + "-title\" class=\"title panel-heading \""
-            + " ondblclick='editDevice(this)' >" + device + "</div>"
+            + " ondblclick='editDevice(this)' >" + device.replace("_", " ") + "</div>"
             + "<div id=\"" + device + "-error\" class-\"panel-error\">"
             + "</div>"
             + "<div class=\"panel-body\">" + lineSep
