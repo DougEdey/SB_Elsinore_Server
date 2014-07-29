@@ -87,7 +87,7 @@ public class ServeHTML {
             "<div id='messages' style='display:none'>"
             + "<div class=\"panel panel-warning\">" + lineSep;
         messageContent +=
-            "<div id=\"messages-title\" class=\"title panel-heading \">"
+            "<div id=\"messages-title\" class=\"title panel-heading\">"
             + "Server Message</div>";
         messageContent += "<div id=\"messages-body\" class=\"panel-body\">"
                 + "</div>"
@@ -133,7 +133,7 @@ public class ServeHTML {
         String pumpContent =
             "<div id='pumps'><div class=\"panel panel-info\">" + lineSep;
         pumpContent +=
-            "<div id=\"pumps-title\" class=\"title panel-heading \">"
+            "<div id=\"pumps-titled\" class=\"title panel-heading \">"
             + "Pumps</div>";
         pumpContent += "<div id=\"pumps-body\" class=\"panel-body\">";
 
