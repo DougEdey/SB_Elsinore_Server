@@ -88,7 +88,7 @@ public class ServeHTML {
             + "<div class=\"panel panel-warning\">" + lineSep;
         messageContent +=
             "<div id=\"messages-title\" class=\"title panel-heading \">"
-            + "Pumps</div>";
+            + "Server Message</div>";
         messageContent += "<div id=\"messages-body\" class=\"panel-body\">"
                 + "</div>"
                 + "</div>"
