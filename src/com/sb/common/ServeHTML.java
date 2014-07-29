@@ -71,7 +71,16 @@ public class ServeHTML {
                 + "<meta name=\"viewport\" content=\"width=device-width,"
                 + " initial-scale=1.0\">" + lineSep
                 + getHeader() + lineSep + "</head><body>" + lineSep
-                + addJS() + lineSep;
+                + addJS() + lineSep
+                + "<div class=\"page-header\">"
+                + "<h1 onDblClick='editBreweryName();'><div id='breweryname'>Elsinore</div> "
+                + "<small id='brewerysubtext'>"
+                    + "<a href='http://dougedey.github.io/SB_Elsinore_Server/'>"
+                    + "StrangeBrew Elsinore"
+                    + "</a>"
+                + "</small>"
+                + "</h1>"
+                + "</div>";
 
         // For displaying any info from the server
         String messageContent =

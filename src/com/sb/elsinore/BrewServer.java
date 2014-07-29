@@ -917,15 +917,14 @@ public class BrewServer extends NanoHTTPD {
             return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                 LaunchControl.getBrewDay().brewDayStatus().toString());
         }
-        
+
         if (uri.equalsIgnoreCase("/graph")) {
-            
-            return serveFile("/templates/static/graph/graph.html", header, rootDir);
+            return serveFile("/templates/static/graph/graph.html",
+                    header, rootDir);
         }
-        
+
         if (uri.toLowerCase().startsWith("/graph-data")) {
             return getGraphData(parms);
-            
         }
 
         if (uri.equalsIgnoreCase("/addpump")) {
@@ -948,6 +947,12 @@ public class BrewServer extends NanoHTTPD {
 
         if (uri.equalsIgnoreCase("/restartupdate")) {
             LaunchControl.updateFromGit();
+            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+                    "{Status:'OK'}");
+        }
+
+        if (uri.equalsIgnoreCase("/setbreweryname")) {
+            updateBreweryName(parms);
             return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
                     "{Status:'OK'}");
         }
@@ -1340,7 +1345,7 @@ public class BrewServer extends NanoHTTPD {
     }
 
     /**
-     * Get the graph data 
+     * Get the graph data.
      * @param params A list of specific parameters
      * @return the JSON Response data
      */
@@ -1483,5 +1488,29 @@ public class BrewServer extends NanoHTTPD {
 
         return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
             json.toString());
+    }
+
+    /**
+     * Read the incoming parameters and update the name as appropriate.
+     * @param params The parameters from the client
+     * @return True if success, false if failure
+     */
+    @SuppressWarnings("unchecked")
+    private Response updateBreweryName(final Map<String, String> params) {
+
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Set the brewery name");
+        usage.put("name", "The new brewery name");
+
+        Map<String, String> parms = ParseParams(params);
+        String newName = parms.get("name");
+
+        if (newName != null && newName != "" && newName.length() > 0) {
+            LaunchControl.setName(newName);
+        }
+
+        return new Response(Response.Status.BAD_REQUEST,
+                MIME_TYPES.get("json"), usage.toJSONString());
+
     }
 }

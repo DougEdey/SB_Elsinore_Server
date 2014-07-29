@@ -71,6 +71,17 @@ function waitForMsg(){
 			$.each(data, function(key, val) {
 				vessel = key;
 				
+				// Check for the brewery name
+				if ("breweryName" == vessel) {
+					if (val != null && val.length > 0 && val != "") {
+						window.breweryName = val;
+						jQuery("#breweryname").text(val);
+					} else {
+						window.breweryName = "Elsinore";
+						jQuery("#breweryname").text("Elsinore");
+					}
+				}
+				
 				// Check for an error message
 				if ("message" == vessel) {
 					if (val.length > 0) {
@@ -80,6 +91,7 @@ function waitForMsg(){
 					} else {
 						jQuery("#messages").hide();
 					}
+					return true;
 				}
 				
 				if (vessel == "brewday") {
@@ -871,4 +883,19 @@ function updateElsinore() {
 	});	
 	window.disableUpdates = 0;
 	return false;
+}
+
+function editBreweryName() {
+	
+	var newName = prompt("What would you like to call your brewery?", window.breweryName);
+	if (newName.length == 0 || newName == "" || newName == window.breweryName) {
+		return;
+	}
+	 $.ajax({
+		 url: 'setBreweryName',
+			type: 'POST',
+			data: 'name=' + newName,
+		success: function(data) {data = null}
+	});	
+	
 }

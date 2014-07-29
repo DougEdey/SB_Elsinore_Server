@@ -222,6 +222,8 @@ public final class LaunchControl {
     private static XPathExpression expr = null;
     private static String message = null;
 
+    private static String breweryName = null;
+
     /*****
      * Main method to launch the brewery.
      * @param arguments List of arguments from the command line
@@ -514,11 +516,13 @@ public final class LaunchControl {
     @SuppressWarnings("unchecked")
     public static String getJSONStatus() {
         if (count > 1) {
-            
+
         }
         // get each setting add it to the JSON
         JSONObject rObj = new JSONObject();
         JSONObject tJSON = null;
+
+        rObj.put("breweryName", LaunchControl.getName());
 
         // iterate the thread lists
         // use the temp list to determine if we have a PID to go with
@@ -736,7 +740,13 @@ public final class LaunchControl {
 
         try {
 
-            Element tElement = getFirstElement(config, "scale");
+            Element tElement = getFirstElement(config, "brewery_name");
+
+            if (tElement != null) {
+                breweryName = tElement.getTextContent();
+            }
+
+            tElement = getFirstElement(config, "scale");
             if (tElement != null) {
                 scale = tElement.getTextContent();
             }
@@ -1315,6 +1325,16 @@ public final class LaunchControl {
         }
 
         Element tempElement = null;
+
+        if (breweryName != null && !breweryName.equals("")) {
+            tempElement = getFirstElement(generalElement, "brewery_name");
+
+            if (tempElement == null) {
+                tempElement = addNewElement(generalElement, "brewery_name");
+            }
+
+            tempElement.setTextContent(breweryName);
+        }
 
         if (useOWFS) {
             if (owfsServer != null) {
@@ -2740,7 +2760,7 @@ public final class LaunchControl {
         }
         LaunchControl.setMessage(out.toString());
         System.out.println(out.toString());
-        
+
         System.exit(128);
     }
 
@@ -2750,5 +2770,16 @@ public final class LaunchControl {
 
     static String getMessage() {
         return LaunchControl.message;
+    }
+
+    static String getName() {
+        return LaunchControl.breweryName;
+    }
+
+    static void setName(String newName) {
+        BrewServer.LOG.info(
+                "Updating brewery name from "
+                 + LaunchControl.breweryName + " to " + newName);
+        LaunchControl.breweryName = newName;
     }
 }
