@@ -250,9 +250,10 @@ public final class LaunchControl {
                     configFileName = startupCommand.getOptionValue("config");
                 }
 
-                if (startupCommand.hasOption("gpio_definitions")) {
-                    System.setProperty("gpio_definitions",
-                            startupCommand.getOptionValue("gpio_definitions"));
+                if (startupCommand.hasOption("gpiodefinitions")) {
+                    System.out.println("Setting property file to: "+ startupCommand.getOptionValue("gpiodefinitions"));
+                    System.setProperty("gpiodefinitions",
+                            startupCommand.getOptionValue("gpiodefinitions"));
                 }
 
                 if (startupCommand.hasOption("port")) {
@@ -299,7 +300,7 @@ public final class LaunchControl {
         startupOptions.addOption("p", "port", true,
                 "Specify the port to run the webserver on");
 
-        startupOptions.addOption("g", "gpio_definitions", false,
+        startupOptions.addOption("g", "gpiodefinitions", true,
         "specify the GPIO Definitions file if you're on Kernel 3.8 or above");
     }
 
