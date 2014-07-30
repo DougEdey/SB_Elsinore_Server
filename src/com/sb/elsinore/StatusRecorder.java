@@ -242,6 +242,14 @@ public class StatusRecorder implements Runnable {
      */
     protected final boolean compare(final Object previousValue,
             final Object currentValue) {
+        if (previousValue == null && currentValue == null) {
+            return true;
+        }
+
+        if (previousValue == null || currentValue == null) {
+            return false;
+        }
+
         if (previousValue instanceof JSONObject
                 && currentValue instanceof JSONObject) {
             if (isDifferent((JSONObject) previousValue,
