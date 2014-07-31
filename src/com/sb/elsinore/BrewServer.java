@@ -966,6 +966,7 @@ public class BrewServer extends NanoHTTPD {
             return serveFile(uri, header, rootDir);
         }
 
+        System.out.println("Unidentified URL: " + uri);
         JSONObject usage = new JSONObject();
         usage.put("controller", "Get the main controller page");
         usage.put("getstatus", "Get the current status as a JSON object");

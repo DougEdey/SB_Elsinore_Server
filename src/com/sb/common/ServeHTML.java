@@ -80,6 +80,11 @@ public class ServeHTML {
                     + "</a>"
                 + "</small>"
                 + "</h1>"
+                + "<div class='imageheader'>"
+                + "</div>"
+                + "<div id='select_logo' class='holo-button'>"
+                + "<input type='file' id='logo'/>"
+                + "</div>"
                 + "</div>";
 
         // For displaying any info from the server
@@ -208,13 +213,16 @@ public class ServeHTML {
             + "<script type=\"text/javascript\""
             + " src=\"/templates/static/bootstrap-3.0.0/js/bootstrap.min.js\">"
             + "</script>" + lineSep
+            + "<script src=\"/templates/static/file/jquery.ui.widget.js\"></script>"
+            + "<script src=\"/templates/static/file/jquery.iframe-transport.js\"></script>"
+            + "<script src=\"/templates/static/file/jquery.fileupload.js\"></script>"
             + "<script type=\"text/javascript\">" + lineSep
             + "var update = 1;" + lineSep
             + "var GaugeDisplay = {}; " + lineSep
             + "var Gauges = {}; " + lineSep
             + "//long polling - wait for message" + lineSep
             + "jQuery(document).ready(function() {" + lineSep
-            + "    waitForMsg();" + lineSep
+            + "    setup();" + lineSep
             + "});" + lineSep
             + "</script>";
 
