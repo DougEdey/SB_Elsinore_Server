@@ -39,6 +39,7 @@ public final class PID implements Runnable {
     private BigDecimal min = new BigDecimal(0);
     private BigDecimal minTime = new BigDecimal(0);
 
+    private boolean running = true;
     /**
      * Inner class to hold the current settings.
      * @author Doug Edey
@@ -218,7 +219,7 @@ public final class PID implements Runnable {
         }
 
         // Main loop
-        while (true) {
+        while (running) {
             try {
                 synchronized (this.fTemp) {
                     // do the bulk of the work here
@@ -733,5 +734,11 @@ public final class PID implements Runnable {
 
     public BigDecimal getTime() {
         return this.minTime;
+    }
+
+    public void stop() {
+        System.out.println("Shutting down " + this.getName());
+        running = false;
+        Thread.currentThread().interrupt();
     }
 }

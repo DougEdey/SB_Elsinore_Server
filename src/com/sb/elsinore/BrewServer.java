@@ -467,6 +467,11 @@ public class BrewServer extends NanoHTTPD {
                 return new Response(Status.OK, MIME_TYPES.get("txt"),
                         "PID Updated");
             }
+        } else {
+            if (tPID != null) {
+                LaunchControl.deletePID(tPID);
+                tPID.setGPIO("");
+            }
         }
 
         JSONObject usage = new JSONObject();
