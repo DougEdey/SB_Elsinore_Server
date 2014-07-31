@@ -80,12 +80,11 @@ public class ServeHTML {
                     + "</a>"
                 + "</small>"
                 + "</h1>"
-                + "<div class='imageheader'>"
+                + "<div class='imageheader'><img height=\"200\" width=\"200\" id='brewerylogo' src='' style='display:none;'/>"
+                + "<br/>"
+                + "<input type='file' id='logo' data-url='uploadImage'/>"
                 + "</div>"
-                + "<div id='select_logo' class='holo-button'>"
-                + "<input type='file' id='logo'/>"
-                + "</div>"
-                + "</div>";
+                + "</div><br />";
 
         // For displaying any info from the server
         String messageContent =

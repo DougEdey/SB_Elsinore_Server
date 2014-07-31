@@ -84,6 +84,11 @@ div[id$='-tempStatus'] {
 	display: inline-block;
 }
 
+.imageheader {
+	float: right;
+}
+
+
 #tempUnit {
 	display:inline-block;
 }

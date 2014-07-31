@@ -1,6 +1,19 @@
 function setup() {
 	//$("#logo").css('opacity','0');
 
+	$.ajax({
+	    url:'brewerImage.gif',
+	    type:'HEAD',
+	    error: function()
+	    {
+	    	$('#brewerylogo').css('display', 'none');
+	    },
+	    success: function()
+	    {
+	        $('#brewerylogo').attr('src', 'brewerImage.gif');
+	        $('#brewerylogo').css('display', 'block');
+	    }
+	});
 
     $('#logo').fileupload({
         dataType: 'json',
