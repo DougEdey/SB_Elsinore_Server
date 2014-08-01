@@ -138,7 +138,7 @@ public final class Temp implements Runnable {
                 new File("/sys/bus/w1/devices/" + aName + "/w1_slave");
 
             // Lets assume that OWFS has "." separated names
-            if (!probePath.exists() && aName.indexOf(".") != 2) {
+            if (!probePath.exists() && aName.indexOf(".") != -1) {
                 String[] newAddress = aName.split("\\.|-");
 
                 if (newAddress.length == 2) {

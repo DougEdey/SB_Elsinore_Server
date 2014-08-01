@@ -229,12 +229,14 @@ select.holo-spinner option { height: 32px; border-top: 1px #444 solid; }
 {
 	box-shadow: 0 0 0 4px rgba(50,165,207,0.5);
 	outline:0;
+	cursor: pointer;
 }
 
 .holo-button.active,
 .holo-buttons :active
 {
 	background-color: #32a5cf!important;
+	cursor: pointer;
 }
 
 @media screen and (min-height: 45em) { /*720px*/

@@ -222,6 +222,8 @@ public final class LaunchControl {
     private static XPathExpression expr = null;
     private static String message = null;
 
+    private static String breweryName = null;
+
     /*****
      * Main method to launch the brewery.
      * @param arguments List of arguments from the command line
@@ -248,9 +250,10 @@ public final class LaunchControl {
                     configFileName = startupCommand.getOptionValue("config");
                 }
 
-                if (startupCommand.hasOption("gpio_definitions")) {
-                    System.setProperty("gpio_definitions",
-                            startupCommand.getOptionValue("gpio_definitions"));
+                if (startupCommand.hasOption("gpiodefinitions")) {
+                    System.out.println("Setting property file to: "+ startupCommand.getOptionValue("gpiodefinitions"));
+                    System.setProperty("gpiodefinitions",
+                            startupCommand.getOptionValue("gpiodefinitions"));
                 }
 
                 if (startupCommand.hasOption("port")) {
@@ -297,7 +300,7 @@ public final class LaunchControl {
         startupOptions.addOption("p", "port", true,
                 "Specify the port to run the webserver on");
 
-        startupOptions.addOption("g", "gpio_definitions", false,
+        startupOptions.addOption("g", "gpiodefinitions", true,
         "specify the GPIO Definitions file if you're on Kernel 3.8 or above");
     }
 
@@ -514,11 +517,13 @@ public final class LaunchControl {
     @SuppressWarnings("unchecked")
     public static String getJSONStatus() {
         if (count > 1) {
-            
+
         }
         // get each setting add it to the JSON
         JSONObject rObj = new JSONObject();
         JSONObject tJSON = null;
+
+        rObj.put("breweryName", LaunchControl.getName());
 
         // iterate the thread lists
         // use the temp list to determine if we have a PID to go with
@@ -736,7 +741,13 @@ public final class LaunchControl {
 
         try {
 
-            Element tElement = getFirstElement(config, "scale");
+            Element tElement = getFirstElement(config, "brewery_name");
+
+            if (tElement != null) {
+                breweryName = tElement.getTextContent();
+            }
+
+            tElement = getFirstElement(config, "scale");
             if (tElement != null) {
                 scale = tElement.getTextContent();
             }
@@ -1029,7 +1040,13 @@ public final class LaunchControl {
         if (gpio != null && !gpio.equals("")) {
             BrewServer.LOG.info("Adding PID with GPIO: " + gpio);
             PID tPID = new PID(tTemp, input, gpio);
-            tPID.setHysteria(min, max, time);
+            try {
+                tPID.setHysteria(min, max, time);
+            } catch (NumberFormatException nfe) {
+                System.out.println(
+                        "Invalid options when setting up Hysteria: "
+                                + nfe.getMessage());
+            }
             tPID.updateValues("off", duty, cycle, setpoint, p, i, d);
 
 
@@ -1316,6 +1333,16 @@ public final class LaunchControl {
 
         Element tempElement = null;
 
+        if (breweryName != null && !breweryName.equals("")) {
+            tempElement = getFirstElement(generalElement, "brewery_name");
+
+            if (tempElement == null) {
+                tempElement = addNewElement(generalElement, "brewery_name");
+            }
+
+            tempElement.setTextContent(breweryName);
+        }
+
         if (useOWFS) {
             if (owfsServer != null) {
                 tempElement = getFirstElement(generalElement, "owfs_server");
@@ -1574,41 +1601,40 @@ public final class LaunchControl {
             setupConfigDoc();
         }
 
-        // go through the list of PIDs and save each
-        for (PID n : pidList) {
-            if (n != null) {
+        // go through the list of Temps and save each one
+        for (Temp fTemp : tempList) {
+            fTemp.save();
 
-                if (n.getName().equals("")) {
-                    continue;
+            PID n = LaunchControl.findPID(fTemp.getName());
+            if (n == null || n.getName().equals("")) {
+                // Delete the info
+                deletePIDConfig(fTemp.getName());
+            } else {
+                System.out.println("Saving PID " + n.getName());
+                savePID(n.getName(), n.heatSetting,
+                        n.getGPIO(), n.getAuxGPIO(), n.getMin(),
+                        n.getMax(), n.getTime());
+            }
+
+            if (fTemp.getVolumeBase() != null) {
+                if (fTemp.getVolumeAIN() != -1) {
+                    saveVolume(fTemp.getName(), fTemp.getVolumeAIN(),
+                        fTemp.getVolumeUnit(),
+                        fTemp.getVolumeBase()
+                    );
+                } else if (fTemp.getVolumeAddress() != null
+                        && fTemp.getVolumeOffset() != null) {
+                    saveVolume(fTemp.getName(),
+                        fTemp.getVolumeAddress(),
+                        fTemp.getVolumeOffset(),
+                        fTemp.getVolumeUnit(),
+                        fTemp.getVolumeBase()
+                    );
                 } else {
-                    System.out.println("Saving PID " + n.getName());
-                    savePID(n.getName(), n.heatSetting,
-                            n.getGPIO(), n.getAuxGPIO(), n.getMin(),
-                            n.getMax(), n.getTime());
-
-                    // Do we need to save the volume information
-                    Temp fTemp = n.getTemp();
-                    if (fTemp.getVolumeBase() != null) {
-                        if (fTemp.getVolumeAIN() != -1) {
-                            saveVolume(fTemp.getName(), fTemp.getVolumeAIN(),
-                                fTemp.getVolumeUnit(),
-                                fTemp.getVolumeBase()
-                            );
-                        } else if (fTemp.getVolumeAddress() != null
-                                && fTemp.getVolumeOffset() != null) {
-                            saveVolume(fTemp.getName(),
-                                fTemp.getVolumeAddress(),
-                                fTemp.getVolumeOffset(),
-                                fTemp.getVolumeUnit(),
-                                fTemp.getVolumeBase()
-                            );
-                        } else {
-                            BrewServer.LOG.info("No valid volume probe found");
-                        }
-                    } else {
-                        BrewServer.LOG.info("No Volume base set");
-                    }
+                    BrewServer.LOG.info("No valid volume probe found");
                 }
+            } else {
+                BrewServer.LOG.info("No Volume base set");
             }
         }
 
@@ -1657,6 +1683,40 @@ public final class LaunchControl {
                 }
             }
         }
+    }
+    
+    public static void deletePIDConfig(String name) {
+        if (configDoc == null) {
+            return;
+        }
+
+        // save any changes
+        Element device = getFirstElementByXpath(null,
+                "/elsinore/device[@id='" + name + "']");
+        if (device == null) {
+            return;
+        }
+
+        // Save the config  to the configuration file
+        System.out.println("Deleting the PID information for " + name);
+
+        System.out.println("Using base node " + device.getNodeName()
+                + " with ID " + device.getAttribute("id"));
+
+        deleteElement(device, "duty_cycle");
+        deleteElement(device, "cycle_time");
+        deleteElement(device, "set_point");
+        deleteElement(device, "proportional");
+        deleteElement(device, "integral");
+        deleteElement(device, "derivative");
+        deleteElement(device, "gpio");
+        deleteElement(device, "min");
+        deleteElement(device, "max");
+        deleteElement(device, "time");
+        deleteElement(device, "aux");
+
+        saveConfigFile();
+
     }
 
     /******
@@ -2501,6 +2561,27 @@ public final class LaunchControl {
     }
 
     /**
+     * Delete the named element from the baseNode.
+     * @param baseNode The Node to delete a child from
+     * @param elementName The child element name to delete
+     */
+    private static void deleteElement(Element baseNode,
+            String elementName) {
+        Element trueBase = baseNode;
+        if (baseNode == null) {
+            trueBase = configDoc.getDocumentElement();
+        }
+
+        Element tElement = getFirstElement(trueBase, elementName);
+        if (tElement == null) {
+            return;
+        }
+
+        trueBase.removeChild(tElement);
+
+    }
+
+    /**
      * Add a MashControl object to the master mash control list.
      * @param mControl The new mashControl to add
      */
@@ -2740,7 +2821,7 @@ public final class LaunchControl {
         }
         LaunchControl.setMessage(out.toString());
         System.out.println(out.toString());
-        
+
         System.exit(128);
     }
 
@@ -2750,5 +2831,22 @@ public final class LaunchControl {
 
     static String getMessage() {
         return LaunchControl.message;
+    }
+
+    static String getName() {
+        return LaunchControl.breweryName;
+    }
+
+    static void setName(String newName) {
+        BrewServer.LOG.info(
+                "Updating brewery name from "
+                 + LaunchControl.breweryName + " to " + newName);
+        LaunchControl.breweryName = newName;
+    }
+
+    public static void deletePID(PID tPID) {
+        tPID.stop();
+        pidList.remove(tPID);
+        
     }
 }

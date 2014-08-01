@@ -152,45 +152,60 @@ public final class OutputControl implements Runnable {
                         } else if (this.fDuty.compareTo(HUNDRED) == 0) {
                             heatOn();
                             Thread.sleep(fTimeh.intValue());
-                        } else if (this.fDuty.compareTo(HUNDRED.negate()) == 0) {
+                        } else if (this.fDuty.compareTo(
+                                HUNDRED.negate()) == 0) {
                             // check to see if we've slept long enough
-                            BigDecimal lTime = new BigDecimal(System.currentTimeMillis())
+                            BigDecimal lTime = new BigDecimal(
+                                    System.currentTimeMillis())
                                 .subtract(coolStopTime);
-    
-                            if (MathUtil.divide(lTime,THOUSAND).compareTo(this.coolDelay) > 0) {
+
+                            if (MathUtil.divide(lTime, THOUSAND)
+                                    .compareTo(this.coolDelay) > 0) {
                                 // not slept enough
                                 break;
                             }
-    
+
                             coolOn();
                             Thread.sleep(fTimec.intValue());
                             allOff();
-    
-                            coolStopTime = BigDecimal.valueOf(System.currentTimeMillis());
+
+                            coolStopTime = BigDecimal.valueOf(
+                                    System.currentTimeMillis());
                         } else if (fDuty.compareTo(BigDecimal.ZERO) > 0) {
-                            // calc the on off time
-                            duty = MathUtil.divide(fDuty,HUNDRED);
-                            onTime = duty.multiply(fTimeh);
-                            offTime = fTimeh.multiply(BigDecimal.ONE.subtract(duty));
-                            BrewServer.LOG.info("On: " + onTime
-                                + " Off; " + offTime);
-                            heatOn();
-                            Thread.sleep(onTime.intValue());
-    
-                            allOff();
-                            Thread.sleep(offTime.intValue());
+                            if (this.heatSSR != null) {
+                                // calc the on off time
+                                duty = MathUtil.divide(fDuty, HUNDRED);
+                                onTime = duty.multiply(fTimeh);
+                                offTime = fTimeh.multiply(
+                                        BigDecimal.ONE.subtract(duty));
+                                BrewServer.LOG.info("On: " + onTime
+                                    + " Off; " + offTime);
+                                heatOn();
+                                Thread.sleep(onTime.intValue());
+
+                                allOff();
+                                Thread.sleep(offTime.intValue());
+                            } else {
+                                fDuty = BigDecimal.ZERO;
+                            }
                         } else if (fDuty.compareTo(BigDecimal.ZERO) < 0) {
-                            // calc the on off time
-                            duty = MathUtil.divide(fDuty.abs(),HUNDRED);
-                            onTime = duty.multiply(fTimec);
-                            offTime = fTimeh.multiply(BigDecimal.ONE.subtract(duty));
-    
-                            coolOn();
-                            Thread.sleep(onTime.intValue());
-    
-                            allOff();
-                            Thread.sleep(offTime.intValue());
-                            coolStopTime = new BigDecimal(System.currentTimeMillis());
+                            if (this.coolSSR != null) {
+                                // calc the on off time
+                                duty = MathUtil.divide(fDuty.abs(), HUNDRED);
+                                onTime = duty.multiply(fTimec);
+                                offTime = fTimec.multiply(
+                                        BigDecimal.ONE.subtract(duty));
+
+                                coolOn();
+                                Thread.sleep(onTime.intValue());
+
+                                allOff();
+                                Thread.sleep(offTime.intValue());
+                                coolStopTime = new BigDecimal(
+                                        System.currentTimeMillis());
+                            } else {
+                                fDuty = BigDecimal.ZERO;
+                            }
                         }
                     } catch (InterruptedException e) {
                         // Sleep interrupted, why did we wakeup
@@ -369,11 +384,11 @@ public final class OutputControl implements Runnable {
     /**
      * The heating cycle time.
      */
-    private BigDecimal fTimeh;
+    private BigDecimal fTimeh = BigDecimal.ZERO;
     /**
      * The cooling cycle time.
      */
-    private BigDecimal fTimec;
+    private BigDecimal fTimec = BigDecimal.ZERO;
     /**
      * The delay between cooling start/stop calls.
      */

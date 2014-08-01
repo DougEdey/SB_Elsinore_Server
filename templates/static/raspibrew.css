@@ -67,11 +67,27 @@ p.plottitle {
 		text-align: center;
 		width: 700px;
 }
-	 
+
+div[id='breweryname'] {
+	cursor: pointer;
+}	 	 
+
+div[id$='-title'] {
+	cursor: pointer;
+}
+
+canvas[id$='-tempGauge'] {
+	cursor: pointer;
+}	 	 
 
 div[id$='-tempStatus'] {
 	display: inline-block;
 }
+
+.imageheader {
+	float: right;
+}
+
 
 #tempUnit {
 	display:inline-block;

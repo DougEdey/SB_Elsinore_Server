@@ -1,3 +1,46 @@
+function setup() {
+	//$("#logo").css('opacity','0');
+
+	$.ajax({
+	    url:'brewerImage.gif',
+	    type:'HEAD',
+	    error: function()
+	    {
+	    	$('#brewerylogo').css('display', 'none');
+	    },
+	    success: function()
+	    {
+	        $('#brewerylogo').attr('src', 'brewerImage.gif');
+	        $('#brewerylogo').css('display', 'block');
+	    }
+	});
+
+    $('#logo').fileupload({
+        dataType: 'json',
+        done: function (e, data) {
+            $.each(data.result.files, function (index, file) {
+                $('<p/>').text(file.name).appendTo(document.body);
+            });
+        }
+    });
+
+	//$("#select_logo").click(function(){
+		//$("#logo").trigger('click');
+//		var $file = $("#logo")[0];
+//		readFile($file.files[0]).done(function(fileData){
+//		   var formData = form.find(":input:not('#file')").serializeArray();
+//		   formData.file = [fileData, $file.files[0].name];
+//		   upload('uploadimage', formData).done(function(){ alert("successfully uploaded!"); });
+//		});
+//	   return false;
+//	});
+	
+	waitForMsg();
+}
+
+
+
+
 $.fn.serializeObject = function()
 {
     var o = {};
@@ -71,6 +114,17 @@ function waitForMsg(){
 			$.each(data, function(key, val) {
 				vessel = key;
 				
+				// Check for the brewery name
+				if ("breweryName" == vessel) {
+					if (val != null && val.length > 0 && val != "") {
+						window.breweryName = val;
+						jQuery("#breweryname").text(val);
+					} else {
+						window.breweryName = "Elsinore";
+						jQuery("#breweryname").text("Elsinore");
+					}
+				}
+				
 				// Check for an error message
 				if ("message" == vessel) {
 					if (val.length > 0) {
@@ -80,6 +134,7 @@ function waitForMsg(){
 					} else {
 						jQuery("#messages").hide();
 					}
+					return true;
 				}
 				
 				if (vessel == "brewday") {
@@ -872,3 +927,96 @@ function updateElsinore() {
 	window.disableUpdates = 0;
 	return false;
 }
+
+function editBreweryName() {
+	
+	var newName = prompt("What would you like to call your brewery?", window.breweryName);
+	if (newName.length == 0 || newName == "" || newName == window.breweryName) {
+		return;
+	}
+	 $.ajax({
+		 url: 'setBreweryName',
+			type: 'POST',
+			data: 'name=' + newName,
+		success: function(data) {data = null}
+	});	
+	
+}
+
+function readFile(file){
+   var loader = new FileReader();
+   var def = $.Deferred(), promise = def.promise();
+
+   //--- provide classic deferred interface
+   loader.onload = function (e) { def.resolve(e.target.result); };
+   loader.onprogress = loader.onloadstart = function (e) { def.notify(e); };
+   loader.onerror = loader.onabort = function (e) { def.reject(e); };
+   promise.abort = function () { return loader.abort.apply(loader, arguments); };
+
+   loader.readAsBinaryString(file);
+
+   return promise;
+}
+
+function upload(url, data){
+    var def = $.Deferred(), promise = def.promise();
+    var mul = buildMultipart(data);
+    var req = $.ajax({
+        url: url,
+        data: mul.data,
+        processData: false,
+        type: "post",
+        async: true,
+        contentType: "multipart/form-data; boundary="+mul.bound,
+        xhr: function() {
+            var xhr = jQuery.ajaxSettings.xhr();
+            if (xhr.upload) {
+
+                xhr.upload.addEventListener('progress', function(event) {
+                    var percent = 0;
+                    var position = event.loaded || event.position; /*event.position is deprecated*/
+                    var total = event.total;
+                    if (event.lengthComputable) {
+                        percent = Math.ceil(position / total * 100);
+                        def.notify(percent);
+                    }                    
+                }, false);
+            }
+            return xhr;
+        }
+    });
+    req.done(function(){ def.resolve.apply(def, arguments); })
+       .fail(function(){ def.reject.apply(def, arguments); });
+
+    promise.abort = function(){ return req.abort.apply(req, arguments); }
+
+    return promise;
+}
+
+var buildMultipart = function(data){
+    var key, crunks = [], bound = false;
+    while (!bound) {
+        bound = $.md5 ? $.md5(new Date().valueOf()) : (new Date().valueOf());
+        for (key in data) if (~data[key].indexOf(bound)) { bound = false; continue; }
+    }
+
+    for (var key = 0, l = data.length; key < l; key++){
+        if (typeof(data[key].value) !== "string") {
+            crunks.push("--"+bound+"\r\n"+
+                "Content-Disposition: form-data; name=\""+data[key].name+"\"; filename=\""+data[key].value[1]+"\"\r\n"+
+                "Content-Type: application/octet-stream\r\n"+
+                "Content-Transfer-Encoding: binary\r\n\r\n"+
+                data[key].value[0]);
+        }else{
+            crunks.push("--"+bound+"\r\n"+
+                "Content-Disposition: form-data; name=\""+data[key].name+"\"\r\n\r\n"+
+                data[key].value);
+        }
+    }
+
+    return {
+        bound: bound,
+        data: crunks.join("\r\n")+"\r\n--"+bound+"--"
+    };
+};
+
