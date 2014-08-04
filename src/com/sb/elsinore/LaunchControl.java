@@ -1609,7 +1609,7 @@ public final class LaunchControl {
             if (n == null || n.getName().equals("")) {
                 // Delete the info
                 deletePIDConfig(fTemp.getName());
-            } else {
+            } else if (!n.getName().equals(fTemp.getProbe())){
                 System.out.println("Saving PID " + n.getName());
                 savePID(n.getName(), n.heatSetting,
                         n.getGPIO(), n.getAuxGPIO(), n.getMin(),
