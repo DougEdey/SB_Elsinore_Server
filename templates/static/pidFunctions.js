@@ -219,11 +219,12 @@ function waitForMsg(){
 							updatePIDStatus(vesselName, vesselStatus.pidstatus);
 							
 							// Hide the gauge if needs be
-							if (vesselStatus.pidstatus.status == "off") {
+							if (vesselStatus.pidstatus.mode == "off") {
 								//Gauges[vessel].refresh(val.actualduty, 100); 				
 								$('div[id^="'+vesselName+'-gage"]').hide();
 							} else {
-								Gauges[vesselName].refresh(val.duty, 100); 
+								$('div[id^="'+vesselName+'-gage"]').show();
+								Gauges[vesselName].refresh(vesselStatus.pidstatus.duty, 100); 
 							}
 						} else {
 							hidePIDForm(vesselName);
