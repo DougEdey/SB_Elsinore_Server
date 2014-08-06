@@ -151,7 +151,7 @@ public class ServeHTML {
         }
         pumpContent += "<span class='holo-button pump' id=\"New\""
                 + " type=\"submit\""
-                + "onclick='addPump(); sleep(2000); location.reload();'>"
+                + "onclick='addPump()'>"
                 + "Add New Pump</span>";
         pumpContent += lineSep + "</div></div>";
         pumpContent += lineSep + " </div>" + lineSep;
@@ -517,7 +517,7 @@ public class ServeHTML {
         }
 
         timers += "<span class='holo-button pump' id=\"New\" type=\"submit\""
-                + "onclick='addTimer(); sleep(2000); location.reload();'>"
+                + "onclick='addTimer();'>"
                 + "Add New Timer</span>" + lineSep;
 
         timers += "</div>" // panel body

@@ -670,26 +670,92 @@ function submitPump(pumpStatus) {
 }
 
 function addPump() {
-	var newname = prompt("New pump name");
-	var gpio =  "";
-		
-	while (gpio == "" || !validate_gpio(gpio)) {
-		gpio = prompt("GPIO Pin (GPIO_x(_y)");
-	}	
+	// Is the edit form already displayed
+	var pumpEditForm = $('#pumps-add');
+	if (pumpEditForm.val() != undefined) {
+		return;
+	}
 	
+	var pumpDiv = "pumps-titled";
+	
+	// Insert a couple of new form elements
+	$('#pumps-titled').append("<div id='pumps-add'>"
+		+ "<form id='pumps-add-form' name='pumps-add'>"
+		+ "<input type='text' name='new_name' id='new_name' value='' /><br/>"
+		+ "<input type='text' name='new_gpio' id='new_gpio' onblur='validate_gpio(this)' " +
+				"value='' placeholder='GPIO_X(_Y)'/><br/>"
+		+ "<button id='add-pump' class='holo-button modeclass' "
+		+ "onclick='submitNewPump(this.form); return false;'>Add</button>"
+		+ "<button id='cancel-add-pump' class='holo-button modeclass' "
+		+ "onclick='cancelAddPump(); waitForMsg(); return false;'>Cancel</button>"
+		+ "</form>"
+		+ "</div>");
+	return false;
+}
+
+function cancelAddPump() {
+	$('#pumps-add').empty().remove();
+	return false;
+}
+
+function submitNewPump(form) {
+	var data = JSON.stringify(jQuery(form).serializeObject());
+	
+	if (form["new_name"].value == null || form["new_name"].value == "") {
+		alert("The new pump name can't be blank");
+		return false;
+	}
+	
+	if (form["new_gpio"].value == null || form["new_gpio"].value == "") {
+		alert("The new pump GPIO can't be blank");
+		return false;
+	}
 	
 	$.ajax({
 		url: 'addpump',
 		type: 'POST',
-		data: "new_name=" + newname + "&new_gpio=" + gpio,
+		data: data,
 		success: function(data) {data = null}
 	});	
 	window.disableUpdates = 0;
+	sleep(2000); 
+	location.reload();
 	return false;
 }
 
 function addTimer() {
-	var newname = prompt("New Timer Name");
+	// Is the edit form already displayed
+	var timerEditForm = $('#timer-add');
+	if (timerEditForm.val() != undefined) {
+		return false;
+	}
+	
+	// Insert a couple of new form elements
+	$('#timers > .panel > .title').append("<div id='timer-add'>"
+		+ "<form id='timer-add-form' name='timer-add'>"
+		+ "<input type='text' name='new_name' id='new_name' value='' /><br/>"
+		+ "<button id='add-timer' class='holo-button modeclass' "
+		+ "onclick='submitNewTimer(this.form); return false;'>Add</button>"
+		+ "<button id='cancel-add-timer' class='holo-button modeclass' "
+		+ "onclick='cancelAddTimer(); waitForMsg(); return false;'>Cancel</button>"
+		+ "</form>"
+		+ "</div>");
+	return false;
+	
+}
+
+function cancelAddTimer() {
+	$('#timer-add').empty().remove();
+	return false;
+}
+
+function submitNewTimer(form) {
+	var data = JSON.stringify(jQuery(form).serializeObject());
+	
+	if (form["new_name"].value == null || form["new_name"].value == "") {
+		alert("The new timer name can't be blank");
+		return false;
+	}
 	
 	$.ajax({
 		url: 'addtimer',
@@ -698,6 +764,7 @@ function addTimer() {
 		success: function(data) {data = null}
 	});	
 	window.disableUpdates = 0;
+	
 	return false;
 }
 
