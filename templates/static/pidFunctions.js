@@ -224,7 +224,13 @@ function waitForMsg(){
 								$('div[id^="'+vesselName+'-gage"]').hide();
 							} else {
 								$('div[id^="'+vesselName+'-gage"]').show();
-								Gauges[vesselName].refresh(vesselStatus.pidstatus.duty, 100); 
+								if ("actualduty" in vesselStatus.pidstatus) {
+									Gauges[vesselName].refresh(
+											vesselStatus.pidstatus.actualduty, 100);
+								} else {
+									Gauges[vesselName].refresh(
+											vesselStatus.pidstatus.duty, 100);
+								}
 							}
 						} else {
 							hidePIDForm(vesselName);
