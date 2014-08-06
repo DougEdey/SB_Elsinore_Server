@@ -217,6 +217,21 @@ function waitForMsg(){
 						}
 						if ("pidstatus" in vesselStatus) {
 							updatePIDStatus(vesselName, vesselStatus.pidstatus);
+							
+							// Hide the gauge if needs be
+							if (vesselStatus.pidstatus.mode == "off") {
+								//Gauges[vessel].refresh(val.actualduty, 100); 				
+								$('div[id^="'+vesselName+'-gage"]').hide();
+							} else {
+								$('div[id^="'+vesselName+'-gage"]').show();
+								if ("actualduty" in vesselStatus.pidstatus) {
+									Gauges[vesselName].refresh(
+											vesselStatus.pidstatus.actualduty, 100);
+								} else {
+									Gauges[vesselName].refresh(
+											vesselStatus.pidstatus.duty, 100);
+								}
+							}
 						} else {
 							hidePIDForm(vesselName);
 						}
@@ -226,6 +241,7 @@ function waitForMsg(){
 						} else {
 							jQuery("#" + vesselName + "-volume").text("No Volume");
 						}
+						
 						
 					});
 					return true;		
@@ -420,12 +436,6 @@ function updatePIDStatus(vessel, val) {
 		jQuery(vesselDiv  + '  input[name="dutycycle"]').val(mode);
 	}
 	
-	if(val.actualduty != null || mode == "Off") {
-		//Gauges[vessel].refresh(val.actualduty, 100); 				
-		$('div[id^="'+vessel+'-gage"]').hide();
-	} else {
-		Gauges[vessel].refresh(val.duty, 100); 
-	}
 	mode = null;
 
 	jQuery('div[id="tempUnit"]').text(val.scale);
@@ -498,7 +508,6 @@ function selectOff(vessel) {
 	jQuery('tr[id="'+vessel+'-max"]').hide();
 	jQuery('tr[id="'+vessel+'-time"]').hide();
 
-	$('div[id^="'+vessel+'-gage"]').hide();
 	vessel = null;
 	return false;
 }
@@ -514,7 +523,6 @@ function selectAuto(vessel) {
 
 	var vesselDiv = 'form[id="'+vessel+'-form"]';
 	$(vesselDiv + ' input[name="mode"]').val("auto");
-	$('div[id^="'+vessel+'-gage"]').show();
 	
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
@@ -546,7 +554,6 @@ function selectHysteria(vessel) {
 
 	var vesselDiv = 'form[id="'+vessel+'-form"]';
 	$(vesselDiv + ' input[name="mode"]').val("hysteria");
-	$('div[id^="'+vessel+'-gage"]').show();
 	
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="#666666";
@@ -578,7 +585,6 @@ function selectManual(vessel) {
 	
 	var vesselDiv = 'form[id="'+vessel+'-form"]';
 	$(vesselDiv + ' input[name="mode"]').val("manual");
-	$('div[id^="'+vessel+'-gage"]').show();
 
 	jQuery('button[id^="'+vessel+'-modeOff"]')[0].style.background="#666666";
 	jQuery('button[id^="'+vessel+'-modeManual"]')[0].style.background="red";
