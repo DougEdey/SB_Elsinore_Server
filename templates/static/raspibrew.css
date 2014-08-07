@@ -240,3 +240,11 @@ font-weight:bold;
     background-position: center bottom;
     bottom: 0;
 }
+
+div[id='timers'] > .panel > .panel-body > div {
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-left: auto;
+	margin-right:auto;
+	width:90%;
+}
