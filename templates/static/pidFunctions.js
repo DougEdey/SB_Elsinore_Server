@@ -760,11 +760,12 @@ function submitNewTimer(form) {
 	$.ajax({
 		url: 'addtimer',
 		type: 'POST',
-		data: "new_name=" + newname,
+		data: data,
 		success: function(data) {data = null}
 	});	
 	window.disableUpdates = 0;
-	
+	sleep(2000); 
+	location.reload();
 	return false;
 }
 
@@ -1099,3 +1100,89 @@ var buildMultipart = function(data){
     };
 };
 
+/******************************
+* Drag And Drop functionality *
+******************************/
+
+function dragPump(ev) {
+	ev.dataTransfer.setData("pumpname", ev.target.childNodes[0].id);
+}
+
+function dropPump(ev) {
+	ev.preventDefault();
+	var pumpName = ev.dataTransfer.getData("pumpname");
+	
+	if (pumpName.indexOf("div-") != 0) {
+		pumpName = "div-" + pumpName;
+	}
+	
+	var refNode = ev.target.parentElement;
+	refNode.parentNode.insertBefore(document.getElementById(pumpName), refNode.nextSibling);
+	
+	// TODO: Update the server with the new location
+	var newOrder = "";
+	$("[id^='div-Pump'").each(function(index) {
+		var divID = this.id;
+		
+		if (divID.indexOf('div-') == 0) {
+			divID = divID.substring(4);
+		}
+		
+		newOrder += divID + "=" + index + "&";
+	});
+	
+	$.ajax({
+		 url: 'updatePumpOrder',
+			type: 'POST',
+			data: newOrder,
+		success: function(data) {data = null}
+	});
+	
+	// DONE!
+}
+
+function allowDropPump(ev) {
+	ev.preventDefault();
+}
+// END OF PUMPS
+
+function dragTimer(ev) {
+	ev.dataTransfer.setData("timername", ev.target.childNodes[0].id);
+}
+
+function dropTimer(ev) {
+	ev.preventDefault();
+	var timerName = ev.dataTransfer.getData("timername");
+	
+	if (timerName.indexOf("div-") != 0) {
+		timerName = "div-" + timerName;
+	}
+	
+	var refNode = ev.target.parentElement;
+	refNode.parentNode.insertBefore(document.getElementById(timerName), refNode.nextSibling);
+	
+	// TODO: Update the server with the new location
+	var newOrder = "";
+	$("div[id='timers'] > .panel > .panel-body > div").each(function(index) {
+		var divID = this.id;
+		
+		if (divID.indexOf('div-') == 0) {
+			divID = divID.substring(4);
+		}
+		
+		newOrder += divID + "=" + index + "&";
+	});
+	
+	$.ajax({
+		 url: 'updateTimerOrder',
+			type: 'POST',
+			data: newOrder,
+		success: function(data) {data = null}
+	});
+	
+	// DONE!
+}
+
+function allowDropTimer(ev) {
+	ev.preventDefault();
+}

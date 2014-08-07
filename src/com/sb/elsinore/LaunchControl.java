@@ -16,6 +16,7 @@ import java.net.UnknownHostException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -118,7 +119,7 @@ public final class LaunchControl {
     /**
      * List of Timers.
      */
-    private static List<String> timerList = new ArrayList<String>();
+    private static List<Timer> timerList = new ArrayList<Timer>();
     /**
      * List of MashControl profiles.
      */
@@ -901,6 +902,16 @@ public final class LaunchControl {
             Element curPump = (Element) pumps.item(i);
             String pumpName = curPump.getNodeName().replace("_", " ");
             String gpio = curPump.getTextContent();
+            int position = -1;
+            String tempString = curPump.getAttribute("position");
+            if (tempString == null) {
+                try {
+                    position = Integer.parseInt(tempString);
+                } catch (NumberFormatException nfe) {
+                    BrewServer.LOG.warning(
+                            "Couldn't parse pump " + pumpName + " position: " + tempString);
+                }
+            }
             try {
                 pumpList.add(new Pump(pumpName, gpio));
             } catch (InvalidGPIOException e) {
@@ -927,7 +938,10 @@ public final class LaunchControl {
         }
 
         try {
-            timerList = config.options(input);
+            for (String s: config.options(input)) {
+                timerList.add(new Timer(s));
+            }
+
             // TODO: Add in countup/countdown detection
         } catch (NoSectionException nse) {
             // we shouldn't get here!
@@ -937,7 +951,7 @@ public final class LaunchControl {
 
     /**
      * Parse the list of timers in an XML Element.
-     * 
+     *
      * @param config
      *            the Element containing the timers
      */
@@ -946,11 +960,22 @@ public final class LaunchControl {
             return;
         }
         NodeList timers = config.getChildNodes();
-        timerList = new ArrayList<String>();
+        timerList = new ArrayList<Timer>();
 
         for (int i = 0; i < timers.getLength(); i++) {
             Element tElement = (Element) timers.item(i);
-            timerList.add(tElement.getAttribute("id"));
+            Timer temp = new Timer(tElement.getAttribute("id"));
+            if (tElement.getAttribute("position") != null) {
+                try {
+                    temp.setPosition(
+                        Integer.parseInt(
+                            tElement.getAttribute("position")));
+                } catch (NumberFormatException nfe) {
+                    // Couldn't parse. Move on.
+                }
+            }
+
+            timerList.add(temp);
         }
     }
 
@@ -1009,7 +1034,7 @@ public final class LaunchControl {
             return false;
         }
 
-        timerList.add(name);
+        timerList.add(new Timer(name));
         return true;
     }
 
@@ -1230,7 +1255,7 @@ public final class LaunchControl {
 
     /**************
      * Find the Pump in the current list.
-     * 
+     *
      * @param name
      *            The pump to find
      * @return return the PUMP object
@@ -1248,9 +1273,29 @@ public final class LaunchControl {
         return null;
     }
 
+    /**************
+     * Find the Timer in the current list.
+     *
+     * @param name
+     *            The timer to find
+     * @return return the Timer object
+     */
+    public static Timer findTimer(final String name) {
+        // search based on the input name
+        Iterator<Timer > iterator = timerList.iterator();
+        Timer tTimer = null;
+        while (iterator.hasNext()) {
+            tTimer = iterator.next();
+            if (tTimer.getName().equalsIgnoreCase(name)) {
+                return tTimer;
+            }
+        }
+        return null;
+    }
+
     /********
      * Get the BrewDay object. Create one if there is no brewday object.
-     * 
+     *
      * @return The current brewday object.
      */
     public static BrewDay getBrewDay() {
@@ -1698,13 +1743,22 @@ public final class LaunchControl {
                 timersElement = addNewElement(null, "timers");
             }
 
-            for (String t : timerList) {
+            Node childTimer = timersElement.getFirstChild();
+            while (childTimer != null) {
+                timersElement.removeChild(childTimer);
+                childTimer = timersElement.getFirstChild();
+            }
 
-                if (getFirstElementByXpath(null, "/elsinore/timers/timer[@id='"
-                        + t + "']") == null) {
+            for (Timer t : timerList) {
+
+                Element timerElement = getFirstElementByXpath(
+                        null, "/elsinore/timers/timer[@id='"
+                        + t + "']");
+                if (timerElement == null) {
                     // No timer by this name
                     Element newTimer = addNewElement(timersElement, "timer");
-                    newTimer.setAttribute("id", t);
+                    newTimer.setAttribute("id", t.getName());
+                    newTimer.setAttribute("position", "" + t.getPosition());
                 }
             }
         }
@@ -1718,6 +1772,12 @@ public final class LaunchControl {
                 pumpsElement = addNewElement(null, "pumps");
             }
 
+            Node childPumps = pumpsElement.getFirstChild();
+            while (childPumps != null) {
+                pumpsElement.removeChild(childPumps);
+                childPumps= pumpsElement.getFirstChild();
+            }
+
             Iterator<Pump> pumpIt = pumpList.iterator();
 
             while (pumpIt.hasNext()) {
@@ -1727,10 +1787,11 @@ public final class LaunchControl {
                 if (getFirstElementByXpath(null,
                         "/elsinore/pumps/" + tPump.getNodeName()) == null) {
                     // No timer by this name
-                    Element newTimer = addNewElement(pumpsElement,
+                    Element newPump = addNewElement(pumpsElement,
                             tPump.getNodeName());
-                    newTimer.appendChild(configDoc.createTextNode(tPump
+                    newPump.appendChild(configDoc.createTextNode(tPump
                             .getGPIO()));
+                    newPump.setAttribute("position", "" + tPump.getPosition());
                 }
             }
         }
@@ -2720,7 +2781,8 @@ public final class LaunchControl {
      * 
      * @return The current list of timers.
      */
-    public static List<String> getTimerList() {
+    public static List<Timer> getTimerList() {
+        Collections.sort(timerList);
         return timerList;
     }
 

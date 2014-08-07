@@ -981,6 +981,14 @@ public class BrewServer extends NanoHTTPD {
             return updateBreweryImage(files);
         }
 
+        if (uri.equalsIgnoreCase("/updatepumporder")) {
+            return updatePumpOrder(parms);
+        }
+
+        if (uri.equalsIgnoreCase("/updatetimerorder")) {
+            return updateTimerOrder(parms);
+        }
+
         System.out.println("Unidentified URL: " + uri);
         JSONObject usage = new JSONObject();
         usage.put("controller", "Get the main controller page");
@@ -1581,5 +1589,70 @@ public class BrewServer extends NanoHTTPD {
         return new Response(Response.Status.BAD_REQUEST,
                 MIME_TYPES.get("json"), usage.toJSONString());
 
+    }
+
+    private Response updatePumpOrder(Map<String, String> parms) {
+        Map<String, String> params = ParseParams(parms);
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Re-order the pumps");
+        usage.put(":name=:position", "The new orders, starting at 0");
+
+        for (Map.Entry<String, String> entry: params.entrySet()) {
+            if (entry.getKey().equals("NanoHttpd.QUERY_STRING")) {
+                continue;
+            }
+            Pump tPump = LaunchControl.findPump(entry.getKey());
+            // Make Sure we're aware of this pump
+            if (tPump == null) {
+                LaunchControl.setMessage(
+                        "Couldn't find Pump: " + entry.getKey());
+                continue;
+            }
+            
+            try {
+                tPump.setPosition(Integer.parseInt(entry.getValue()));
+            } catch (NumberFormatException nfe) {
+                LaunchControl.setMessage(
+                        "Couldn't parse " + entry.getValue() + " as an integer");
+            }
+        }
+        return new Response(Response.Status.OK,
+                MIME_TYPES.get("json"), usage.toJSONString());
+    }
+    
+    private Response updateTimerOrder(Map<String, String> parms) {
+
+        Map<String, String> params = ParseParams(parms);
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Re-order the timers");
+        usage.put(":name=:position", "The new orders, starting at 0");
+
+        if (params.size() == 0) {
+            return new Response(Response.Status.BAD_REQUEST,
+                    MIME_TYPES.get("json"), usage.toJSONString());
+        }
+
+        for (Map.Entry<String, String> entry: params.entrySet()) {
+            if (entry.getKey().equals("NanoHttpd.QUERY_STRING")) {
+                continue;
+            }
+
+            Timer tTimer = LaunchControl.findTimer(entry.getKey());
+            // Make Sure we're aware of this pump
+            if (tTimer == null) {
+                LaunchControl.setMessage(
+                        "Couldn't find Timer: " + entry.getKey());
+                continue;
+            }
+
+            try {
+                tTimer.setPosition(Integer.parseInt(entry.getValue()));
+            } catch (NumberFormatException nfe) {
+                LaunchControl.setMessage(
+                        "Couldn't parse " + entry.getValue() + " as an integer");
+            }
+        }
+        return new Response(Response.Status.OK,
+                MIME_TYPES.get("json"), usage.toJSONString());
     }
 }

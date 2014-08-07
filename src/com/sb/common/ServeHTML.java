@@ -1,5 +1,6 @@
 package com.sb.common;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,6 +11,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.PID;
 import com.sb.elsinore.Pump;
+import com.sb.elsinore.Timer;
 
 
 /**
@@ -141,6 +143,7 @@ public class ServeHTML {
             + "Pumps</div>";
         pumpContent += "<div id=\"pumps-body\" class=\"panel-body\">";
 
+        Collections.sort(pumps);
         if (pumps != null && pumps.size() > 0) {
             Iterator<Pump> pumpIterator = pumps.iterator();
 
@@ -472,10 +475,15 @@ public class ServeHTML {
      */
     final String addPump(final String pumpName) {
         String pumpDetails = lineSep;
-        pumpDetails += "<button class='holo-button pump' id=\""
+        pumpDetails += "<div id='div-" + pumpName + "'"
+                + " ondragstart='dragPump(event);' draggable='true'"
+                + " ondrop='dropPump(event);'"
+                + " ondragover='allowDropPump(event);'>"
+
+                + "<button class='holo-button pump' id=\""
                 + pumpName + "\" type=\"submit\" value=\"SubmitCommand\""
                 + " onClick='submitPump(this); waitForMsg(); return false;'>"
-                + pumpName + "</button>" + lineSep;
+                + pumpName + "</button></div>" + lineSep;
         return pumpDetails;
     }
 
@@ -490,30 +498,34 @@ public class ServeHTML {
 
         timers += "<div class='panel-body'>";
 
-        for (String timer : LaunchControl.getTimerList()) {
+        for (Timer timer : LaunchControl.getTimerList()) {
             // Mash button
-            timers += "<div><span class='holo-button pump' id=\""
-                + timer + "\" type=\"submit\" "
-                + "value=\"" + timer + "Timer\""
-                    + " onclick='setTimer(this, \"" + timer + "\");"
+            timers += "<div id='div-" + timer.getName() + "'"
+                + " ondragstart='dragTimer(event);' draggable='true'"
+                + " ondrop='dropTimer(event);'"
+                + " ondragover='allowDropTimer(event);'>"
+                + "<span class='holo-button pump' id=\""
+                + timer.getName() + "\" type=\"submit\" "
+                + "value=\"" + timer.getName() + "Timer\""
+                    + " onclick='setTimer(this, \"" + timer.getName() + "\");"
                     + " waitForMsg(); return false;'>"
-                    + "Start " + timer
+                    + "Start " + timer.getName()
                 + "</span>" + lineSep;
 
             timers += "<span class='holo-button pump' style='display:none'"
-                    + " id=\"" + timer + "Timer\" type=\"submit\" "
-                    + "value=\"" + timer + "Timer\""
-                    + " onclick='setTimer(this, \"" + timer + "\");"
+                    + " id=\"" + timer.getName() + "Timer\" type=\"submit\" "
+                    + "value=\"" + timer.getName() + "Timer\""
+                    + " onclick='setTimer(this, \"" + timer.getName() + "\");"
                     + " waitForMsg(); return false;'>"
                 + "</span>" + lineSep;
 
-            timers += "<span class='holo-button pump' id=\"" + timer + "\""
+            timers += "<span class='holo-button pump' id=\"" + timer.getName() + "\""
                     + " type=\"submit\" "
-                    + "value=\"" + timer + "Timer\""
-                    + " onclick='resetTimer(this, \"" + timer + "\");"
+                    + "value=\"" + timer.getName() + "Timer\""
+                    + " onclick='resetTimer(this, \"" + timer.getName() + "\");"
                     + " waitForMsg(); return false;'>" + lineSep
-                    + "Reset " + timer
-                + "</span></div><br />" + lineSep;
+                    + "Reset " + timer.getName()
+                + "</span></div>" + lineSep;
         }
 
         timers += "<span class='holo-button pump' id=\"New\" type=\"submit\""

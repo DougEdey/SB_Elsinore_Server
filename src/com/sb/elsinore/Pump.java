@@ -10,7 +10,7 @@ import jGPIO.OutPin;
  * @author Doug Edey
  * 
  */
-public class Pump {
+public class Pump implements Comparable<Pump> {
 
     /**
      * Current pump name.
@@ -21,6 +21,7 @@ public class Pump {
      */
     private OutPin output = null;
     private boolean invertOutput = false;
+    private int position = -1;
 
     /**
      * The Constructor.
@@ -109,5 +110,22 @@ public class Pump {
      */
     public final String getNodeName() {
         return name.replace(" ", "_");
+    }
+
+    /**
+     * Set the new position of this pump.
+     * @param newPos The new position to use.
+     */
+    public void setPosition(int newPos) {
+        this.position = newPos;
+    }
+
+    public int getPosition() {
+        return this.position;
+    }
+
+    @Override
+    public int compareTo(Pump o) {
+        return Integer.compare(this.position, o.getPosition());
     }
 }
