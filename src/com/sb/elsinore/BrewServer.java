@@ -985,8 +985,16 @@ public class BrewServer extends NanoHTTPD {
             return updatePumpOrder(parms);
         }
 
+        if (uri.equalsIgnoreCase("/deletepump")) {
+            return deletePump(parms);
+        }
+
         if (uri.equalsIgnoreCase("/updatetimerorder")) {
             return updateTimerOrder(parms);
+        }
+
+        if (uri.equalsIgnoreCase("/deletetimer")) {
+            return deleteTimer(parms);
         }
 
         System.out.println("Unidentified URL: " + uri);
@@ -1597,6 +1605,8 @@ public class BrewServer extends NanoHTTPD {
         usage.put("Usage", "Re-order the pumps");
         usage.put(":name=:position", "The new orders, starting at 0");
 
+        Status status = Response.Status.BAD_REQUEST;
+
         for (Map.Entry<String, String> entry: params.entrySet()) {
             if (entry.getKey().equals("NanoHttpd.QUERY_STRING")) {
                 continue;
@@ -1608,18 +1618,40 @@ public class BrewServer extends NanoHTTPD {
                         "Couldn't find Pump: " + entry.getKey());
                 continue;
             }
-            
+
             try {
                 tPump.setPosition(Integer.parseInt(entry.getValue()));
             } catch (NumberFormatException nfe) {
                 LaunchControl.setMessage(
                         "Couldn't parse " + entry.getValue() + " as an integer");
             }
+            status = Response.Status.OK;
         }
-        return new Response(Response.Status.OK,
+        return new Response(status,
                 MIME_TYPES.get("json"), usage.toJSONString());
     }
-    
+
+    /**
+     * Delete a pump.
+     * @param parms
+     * @return
+     */
+    private Response deletePump(Map<String, String> parms) {
+        Map<String, String> params = ParseParams(parms);
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Delete the specified pump");
+        usage.put("name=:pump", "The pump to delete");
+        Status status = Response.Status.OK;
+
+        // find the pump
+        String pumpName = params.get("name");
+        if (pumpName != null) {
+            LaunchControl.deletePump(pumpName);
+        }
+        return new Response(status, MIME_TYPES.get("json"),
+                usage.toJSONString());
+    }
+
     private Response updateTimerOrder(Map<String, String> parms) {
 
         Map<String, String> params = ParseParams(parms);
@@ -1654,5 +1686,26 @@ public class BrewServer extends NanoHTTPD {
         }
         return new Response(Response.Status.OK,
                 MIME_TYPES.get("json"), usage.toJSONString());
+    }
+
+    /**
+     * Delete a timer.
+     * @param parms
+     * @return
+     */
+    private Response deleteTimer(Map<String, String> parms) {
+        Map<String, String> params = ParseParams(parms);
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Delete the specified timer");
+        usage.put("name=:timer", "The timer to delete");
+        Status status = Response.Status.OK;
+
+        // find the pump
+        String timerName = params.get("name");
+        if (timerName != null) {
+            LaunchControl.deleteTimer(timerName);
+        }
+        return new Response(status, MIME_TYPES.get("json"),
+                usage.toJSONString());
     }
 }

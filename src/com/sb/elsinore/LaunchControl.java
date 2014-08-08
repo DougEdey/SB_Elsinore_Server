@@ -1273,6 +1273,24 @@ public final class LaunchControl {
         return null;
     }
 
+    /**
+     * Delete the specified pump.
+     * @param name The pump to delete.
+     */
+    public static void deletePump(final String name) {
+        // search based on the input name
+        synchronized (pumpList) {
+            Iterator<Pump> iterator = pumpList.iterator();
+            Pump tPump = null;
+            while (iterator.hasNext()) {
+                tPump = iterator.next();
+                if (tPump.getName().equalsIgnoreCase(name)) {
+                    pumpList.remove(tPump);
+                }
+            }
+        }
+    }
+
     /**************
      * Find the Timer in the current list.
      *
@@ -1291,6 +1309,26 @@ public final class LaunchControl {
             }
         }
         return null;
+    }
+
+    /**************
+     * Delete the Timer in the current list.
+     *
+     * @param name
+     *            The timer to delete
+     */
+    public static void deleteTimer(final String name) {
+        // search based on the input name
+        synchronized (timerList) {
+            Iterator<Timer > iterator = timerList.iterator();
+            Timer tTimer = null;
+            while (iterator.hasNext()) {
+                tTimer = iterator.next();
+                if (tTimer.getName().equalsIgnoreCase(name)) {
+                    timerList.remove(tTimer);
+                }
+            }
+        }
     }
 
     /********
