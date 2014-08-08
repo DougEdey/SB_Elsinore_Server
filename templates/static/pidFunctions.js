@@ -828,7 +828,7 @@ function toggleDiv(id) {
 function setTimer(button, stage) {
 	// get the current Datestamp
 	var curDate = Date.now();
-	if(button.innerHTML == ("Start " + stage)) {
+	if(button.innerHTML == "Start") {
 		$("#" + stage).hide();
 		$("#"+stage+"Timer").show();
 		formdata = stage + "Start=" + curDate;
@@ -864,7 +864,7 @@ function resetTimer(button, stage) {
 		success: function(data) {data = null}
 	});
 	
-	$("#"+stage)[0].innerHTML = "Start " + stage;
+	$("#"+stage)[0].innerHTML = "Start";
 	
 	$("#"+stage).show();
 	$("#"+stage+"Timer").hide();
@@ -892,7 +892,7 @@ function checkTimer(val, stage) {
 			diffTime -= mins * 1000*60;
 			$("#"+stage).show();
 			$("#"+stage+"Timer").hide();
-			$("#"+stage)[0].innerHTML = stage + ": " + hours + ":" + mins + ":" + diffTime/1000;
+			$("#"+stage)[0].innerHTML = hours + ":" + mins + ":" + diffTime/1000;
 		} else {
 			$("#"+stage).hide();
 			$("#"+stage+"Timer").show();
@@ -900,7 +900,7 @@ function checkTimer(val, stage) {
 		}
 	} else {
 		$("#"+stage+"Timer").hide();
-		$("#"+stage)[0].innerHTML = "Start " + stage;
+		$("#"+stage)[0].innerHTML = "Start";
 	}
 }
 
@@ -1106,6 +1106,7 @@ var buildMultipart = function(data){
 
 function dragPump(ev) {
 	ev.dataTransfer.setData("pumpname", ev.target.childNodes[0].id);
+	$('#NewPump')[0].innerHTML = "Delete Pump";
 }
 
 function dropPump(ev) {
@@ -1130,7 +1131,7 @@ function dropPump(ev) {
 		
 		newOrder += divID + "=" + index + "&";
 	});
-	
+	$('#NewPump')[0].innerHTML = "Add New Pump";
 	$.ajax({
 		 url: 'updatePumpOrder',
 			type: 'POST',
@@ -1144,10 +1145,32 @@ function dropPump(ev) {
 function allowDropPump(ev) {
 	ev.preventDefault();
 }
+
+function dropDeletePump(ev) {
+	ev.preventDefault();
+	var pumpName = ev.dataTransfer.getData("pumpname");
+	
+	if (pumpName.indexOf("div-") != 0) {
+		basePumpName = pumpName;
+		pumpName = "div-" + pumpName;
+	}
+	
+	$('[id="'+pumpName+'"]').empty().remove();
+	
+	var newOrder = "name=" + basePumpName;
+	$('#NewPump')[0].innerHTML = "Add New Pump";
+	$.ajax({
+		 url: 'deletePump',
+			type: 'POST',
+			data: newOrder,
+		success: function(data) {data = null}
+	});
+}
 // END OF PUMPS
 
 function dragTimer(ev) {
-	ev.dataTransfer.setData("timername", ev.target.childNodes[0].id);
+	ev.dataTransfer.setData("timername", ev.target.childNodes[1].id);
+	$('#NewTimer')[0].innerHTML = "Delete Timer";
 }
 
 function dropTimer(ev) {
@@ -1172,7 +1195,7 @@ function dropTimer(ev) {
 		
 		newOrder += divID + "=" + index + "&";
 	});
-	
+	$('#NewTimer')[0].innerHTML = "Add New Timer";
 	$.ajax({
 		 url: 'updateTimerOrder',
 			type: 'POST',
@@ -1185,4 +1208,25 @@ function dropTimer(ev) {
 
 function allowDropTimer(ev) {
 	ev.preventDefault();
+}
+
+function dropDeleteTimer(ev) {
+	ev.preventDefault();
+	var timerName = ev.dataTransfer.getData("timername");
+	
+	if (timerName.indexOf("div-") != 0) {
+		baseTimerName = timerName;
+		timerName = "div-" + timerName;
+	}
+	
+	$('[id="'+timerName+'"]').empty().remove();
+	var newOrder = "name="+baseTimerName;
+	
+	$('#NewTimer')[0].innerHTML = "Add New Timer";
+	$.ajax({
+		 url: 'deleteTimer',
+			type: 'POST',
+			data: newOrder,
+		success: function(data) {data = null}
+	});
 }

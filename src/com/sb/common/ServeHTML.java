@@ -152,8 +152,10 @@ public class ServeHTML {
             }
 
         }
-        pumpContent += "<span class='holo-button pump' id=\"New\""
+        pumpContent += "<span class='holo-button pump' id=\"NewPump\""
                 + " type=\"submit\""
+                + "ondrop='dropDeletePump(event);' "
+                + "ondragover='allowDropTimer(event);'"
                 + "onclick='addPump()'>"
                 + "Add New Pump</span>";
         pumpContent += lineSep + "</div></div>";
@@ -504,12 +506,13 @@ public class ServeHTML {
                 + " ondragstart='dragTimer(event);' draggable='true'"
                 + " ondrop='dropTimer(event);'"
                 + " ondragover='allowDropTimer(event);'>"
+                + "<div class='timerName holo'>" + timer.getName() + "</div>"
                 + "<span class='holo-button pump' id=\""
                 + timer.getName() + "\" type=\"submit\" "
                 + "value=\"" + timer.getName() + "Timer\""
                     + " onclick='setTimer(this, \"" + timer.getName() + "\");"
                     + " waitForMsg(); return false;'>"
-                    + "Start " + timer.getName()
+                    + "Start"
                 + "</span>" + lineSep;
 
             timers += "<span class='holo-button pump' style='display:none'"
@@ -519,17 +522,20 @@ public class ServeHTML {
                     + " waitForMsg(); return false;'>"
                 + "</span>" + lineSep;
 
-            timers += "<span class='holo-button pump' id=\"" + timer.getName() + "\""
+            timers += "<span class='holo-button pump' id=\""
+                    + timer.getName() + "\""
                     + " type=\"submit\" "
                     + "value=\"" + timer.getName() + "Timer\""
                     + " onclick='resetTimer(this, \"" + timer.getName() + "\");"
                     + " waitForMsg(); return false;'>" + lineSep
-                    + "Reset " + timer.getName()
+                    + "Reset"
                 + "</span></div>" + lineSep;
         }
 
-        timers += "<span class='holo-button pump' id=\"New\" type=\"submit\""
-                + "onclick='addTimer();'>"
+        timers += "<span class='holo-button pump' id=\"NewTimer\" type=\"submit\""
+                + "onclick='addTimer();' "
+                + "ondrop='dropDeleteTimer(event);' "
+                + "ondragover='allowDropTimer(event);' >"
                 + "Add New Timer</span>" + lineSep;
 
         timers += "</div>" // panel body
