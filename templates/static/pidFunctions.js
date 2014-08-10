@@ -154,8 +154,7 @@ function waitForMsg(){
 
 					$.each(val, function(mashPID, mashDetails) {
 						// Iterate the list of mash Lists
-
-						
+						addMashTable(mashPID);
 						$.each(mashDetails, function(mashStep, mashData) {
 							if (mashStep != 'pid') {
 								addMashStep(mashStep, mashData, mashPID);
@@ -205,24 +204,7 @@ function waitForMsg(){
 						
 						if ("pidstatus" in vesselStatus) {
 
-							if ($("#mashTable"+vesselName).length == 0) {
-								table = "<table id='mashTable"+vesselName+"' class='table'>";
-								table += "<tbody class='tbody'><tr>";
-								table += "<th colspan='2'>Mash Step</th>";
-								table += "<th>Temp</th>";
-								table += "<th>Time</th>";
-								table += "</tr><tbody></table>";
-								table += "<button class='btn btn-success' id='addMash-"+vesselName
-									+"' type='button' onclick='addNewMashStep(this)' "
-									+ "ondrop='dropDeleteMashStep(event);' "
-									+ "ondragover='allowDropMashStep(event);'>Add</button>";
-								table += "<button class='btn btn-success' id='mashButton-"+vesselName
-									+"' type='button' onclick='mashToggle(this)'>Activate</button>";
-								table += "<br id='mashTable"+vesselName+"footer'/>";
-
-								$("#"+vesselName+"-gage").after(table);
-
-							}
+							addMashTable(vesselName);
 
 							updatePIDStatus(vesselName, vesselStatus.pidstatus);
 							
@@ -268,6 +250,26 @@ function waitForMsg(){
 	
 }
 
+function addMashTable(vesselName) {
+	if ($("#mashTable"+vesselName).length == 0) {
+		table = "<table id='mashTable"+vesselName+"' class='table'>";
+		table += "<tbody class='tbody'><tr>";
+		table += "<th colspan='2'>Mash Step</th>";
+		table += "<th>Temp</th>";
+		table += "<th>Time</th>";
+		table += "</tr><tbody></table>";
+		table += "<button class='btn btn-success' id='addMash-"+vesselName
+			+"' type='button' onclick='addNewMashStep(this)' "
+			+ "ondrop='dropDeleteMashStep(event);' "
+			+ "ondragover='allowDropMashStep(event);'>Add</button>";
+		table += "<button class='btn btn-success' id='mashButton-"+vesselName
+			+"' type='button' onclick='mashToggle(this)'>Activate</button>";
+		table += "<br id='mashTable"+vesselName+"footer'/>";
+
+		$("#"+vesselName+"-gage").after(table);
+
+	}
+}
 function updateTempProbe(vessel, val) {
 
 	temp = parseFloat(val.temp).toFixed(2);
@@ -996,7 +998,7 @@ function addMashStep(mashStep, mashData, pid) {
 		tableRow += ("<td id='mashTimer"+pid+"'>"+mashData['duration']+"</td>");
 		tableRow += ("</tr>");
 
-		mashStepRow = $("#mashTable"+pid +" > tbody > tr").eq(mashStep).after(tableRow);
+		mashStepRow = $("#mashTable"+pid +" > tbody > tr").eq(mashStep-1).after(tableRow);
 		mashStepRow = mashStepRow.next();
 	}
 
@@ -1326,7 +1328,7 @@ function dragMashStep(ev) {
 	var divID = ev.target.id;
 	
 	// Explode out
-	var vessel = getVesselFromMashStep(divID);
+	var vessel = getVesselFromMashStep(divID.substring(7));
 	//var position = getPositionFromMashStep(divID);
 	ev.dataTransfer.setData("mashStepname", divID);
 	$('#addMash-'+vessel)[0].innerHTML = "Delete";
@@ -1335,22 +1337,25 @@ function dragMashStep(ev) {
 function dropMashStep(ev) {
 	ev.preventDefault();
 	var mashStepName = ev.dataTransfer.getData("mashStepname");
-	var vessel = getVesselFromMashStep(mashStepName);
+	var vessel = getVesselFromMashStep(mashStepName.substring(7));
 	var position = getPositionFromMashStep(mashStepName);
 	
 	var refNode = ev.target.parentElement;
 	refNode.parentNode.insertBefore(document.getElementById(mashStepName), refNode.nextSibling);
 	
-	var newOrder = "";
+	var newOrder = "pid="+vessel+"&";
 	$("#mashTable"+vessel+" > tbody > tr").each(function(index) {
 		var divID = this.id;
+		if (divID == "") {
+			return;
+		}
 		
 		var oldStep = getPositionFromMashStep(divID);		
-		newOrder += oldstep + "=" + index + "&";
+		newOrder += (parseInt(oldStep)-1) + "=" + (parseInt(index)-1) + "&";
 	});
 	$('#addMash-'+vessel)[0].innerHTML = "Add";
 	$.ajax({
-		 url: 'updateMashStepOrder',
+		 url: 'reordermashprofile',
 			type: 'POST',
 			data: newOrder,
 		success: function(data) {data = null}

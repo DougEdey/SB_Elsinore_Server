@@ -1004,9 +1004,12 @@ public class BrewServer extends NanoHTTPD {
                 return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                         "Toggled mash profile");
             }
-            // TODO: Report Errors
             return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
                     "Failed to toggle MashProfile");
+        }
+
+        if (uri.equalsIgnoreCase("/reordermashprofile")) {
+            return reorderMashProfile(parms);
         }
 
         if (uri.equalsIgnoreCase("/editdevice")) {
