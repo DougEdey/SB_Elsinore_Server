@@ -17,22 +17,21 @@ import org.json.simple.JSONValue;
  */
 public class StatusRecorder implements Runnable {
 
+    private static final double THRESHOLD = .15d;
+    private static final long SLEEP = 1000 * 5; // 5 seconds - is this too fast?
     private JSONObject lastStatus = null;
     private long lastStatusTime = 0;
     private String logFile = null;
     private Thread thread;
-    private static final long SLEEP = 1000 * 5; // 5 seconds - is this too fast?
     private long startTime = 0;
-    
     private HashMap<String, Status> temperatureMap;
-    private HashMap<String, Status> dutyMap; 
-    
+    private HashMap<String, Status> dutyMap;
     boolean writeRawLog = false;
 
     /**
      * Start the thread.
      */
-    public  final void start() {
+    public final void start() {
         if (thread == null || !thread.isAlive()) {
             temperatureMap = new HashMap();
             dutyMap = new HashMap();
@@ -86,11 +85,10 @@ public class StatusRecorder implements Runnable {
                 if (lastStatus == null || isDifferent(lastStatus, newStatus)) {
                     //For now just log the whole status
                     //Eventually we may want multiple logs, etc.
-                    if( writeRawLog )
-                    {
+                    if (writeRawLog) {
                         writeToLog(newStatus, fileExists);
                     }
-                    
+
                     Date now = new Date();
 
 //                    if (lastStatus != null
@@ -121,6 +119,7 @@ public class StatusRecorder implements Runnable {
 
     /**
      * Save the status to the directory.
+     *
      * @param now The current date to save the datapoint for.
      * @param newStatus The JSON Status object to dump
      * @param directory The graph data directory.
@@ -138,19 +137,17 @@ public class StatusRecorder implements Runnable {
                 if (vessel.containsKey("tempprobe")) {
                     String temp = ((JSONObject) vessel.get("tempprobe"))
                             .get("temp").toString();
-                    
-                    
+
+
                     Status lastStatus = temperatureMap.get(name);
-                    if( lastStatus == null )
-                    {
+                    if (lastStatus == null) {
                         lastStatus = new Status("-999", now);
                     }
-                    
-                    if( lastStatus.isDifferentEnough(temp)) {
+
+                    if (lastStatus.isDifferentEnough(temp)) {
                         File tempFile = new File(directory + name + "-temp.csv");
-                        if( now - lastStatus.timestamp > SLEEP*1.5)
-                        {
-                            appendToLog(tempFile, now-SLEEP + "," + lastStatus.value + "\r\n");
+                        if (now - lastStatus.timestamp > SLEEP * 1.5) {
+                            appendToLog(tempFile, now - SLEEP + "," + lastStatus.value + "\r\n");
                         }
                         appendToLog(tempFile, now + "," + temp + "\r\n");
                         temperatureMap.put(name, new Status(temp, now));
@@ -165,18 +162,16 @@ public class StatusRecorder implements Runnable {
                     } else if (!pid.get("mode").equals("off")) {
                         duty = pid.get("duty").toString();
                     }
-                    
+
                     Status lastStatus = dutyMap.get(name);
-                    if( lastStatus == null )
-                    {
+                    if (lastStatus == null) {
                         lastStatus = new Status("-999", now);
                     }
-                    
-                    if( ! duty.equals(lastStatus.value) ) {
+
+                    if (!duty.equals(lastStatus.value)) {
                         File dutyFile = new File(directory + name + "-duty.csv");
-                        if( now - lastStatus.timestamp > SLEEP*1.5)
-                        {
-                            appendToLog(dutyFile, now-SLEEP + "," + lastStatus.value + "\r\n");
+                        if (now - lastStatus.timestamp > SLEEP * 1.5) {
+                            appendToLog(dutyFile, now - SLEEP + "," + lastStatus.value + "\r\n");
                         }
                         appendToLog(dutyFile, now + "," + duty + "\r\n");
                         dutyMap.put(name, new Status(duty, now));
@@ -189,6 +184,7 @@ public class StatusRecorder implements Runnable {
 
     /**
      * Save the string to the log file.
+     *
      * @param file The file object to save to
      * @param toAppend The string to add to the file
      */
@@ -214,9 +210,10 @@ public class StatusRecorder implements Runnable {
 
     /**
      * Write a JSON object to the log file.
+     *
      * @param status The JSON Object to log
-     * @param fileExists If the file exists, prepend a ","
-     * otherwise an open brace "["
+     * @param fileExists If the file exists, prepend a "," otherwise an open
+     * brace "["
      */
     protected final void writeToLog(final JSONObject status,
             final boolean fileExists) {
@@ -226,6 +223,7 @@ public class StatusRecorder implements Runnable {
 
     /**
      * Check to see if the objects are different.
+     *
      * @param previous The first object to check.
      * @param current The second object to check
      * @return True if the objects are different
@@ -236,8 +234,7 @@ public class StatusRecorder implements Runnable {
             return true;
         }
 
-        for (Iterator<Object> it = previous.keySet().iterator(); it.hasNext();)
-        {
+        for (Iterator<Object> it = previous.keySet().iterator(); it.hasNext();) {
             Object key = it.next();
             if (!"elapsed".equals(key)) {
                 Object previousValue = previous.get(key);
@@ -253,6 +250,7 @@ public class StatusRecorder implements Runnable {
 
     /**
      * Check to see if the JSONArrays are different.
+     *
      * @param previous The first JSONArray to check
      * @param current The second JSONArray to check.
      * @return True if the JSONArrays are different
@@ -277,6 +275,7 @@ public class StatusRecorder implements Runnable {
 
     /**
      * Compare two generic objects.
+     *
      * @param previousValue First object to check
      * @param currentValue Second object to check
      * @return True if the objects are different, false if the same.
@@ -311,48 +310,30 @@ public class StatusRecorder implements Runnable {
 
         return false;
     }
-    
-    
+
     private class Status {
-        
+
         public long timestamp;
         public String value;
         public int count = 0;
-        
+
         public Status(String value, long timestamp) {
             this.value = value;
             this.timestamp = timestamp;
         }
-        
-        public boolean isDifferentEnough(String newValue)
-        {
-            boolean retVal = true;
-            
-            if( count < 2 )
-            {
-                try
-                {
-                    double oldVal = Double.valueOf(value);
-                    double newVal = Double.valueOf(newValue);
-                    retVal = Math.abs(oldVal - newVal) > .15d;
-                }
-                catch(Throwable t)
-                {
 
-                }
+        public boolean isDifferentEnough(String newValue) {
+            boolean retVal = false;
+
+            try {
+                double oldVal = Double.valueOf(value);
+                double newVal = Double.valueOf(newValue);
+                retVal = Math.abs(oldVal - newVal) > THRESHOLD;
+            } catch (Throwable t) {
             }
-            if( newValue.equals(value) )
-            {
-                count = 0;
-                retVal = false;
-            }
-            else
-            {
-                count++;
-            }
-            
+
             return retVal;
-            
+
         }
     }
 }
