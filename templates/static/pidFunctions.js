@@ -1,6 +1,6 @@
 function setup() {
 	//$("#logo").css('opacity','0');
-
+	window.heightFixed = 0;
 	$.ajax({
 	    url:'brewerImage.gif',
 	    type:'HEAD',
@@ -131,10 +131,15 @@ function waitForMsg(){
 						val += "<br/><button id='clearMessage' class='holo-button modeclass' "
 							+ "onclick='clearStatus(); return false;'>Clear</button>";
 						jQuery("#messages-body").html(val);
-						jQuery("#messages").css('display', 'block');
-						jQuery("#messages").show();
+						
+						if (!$("#messages").is(":visible")) {
+							jQuery("#messages").css('display', 'block');
+							jQuery("#messages").show();
+						}
 					} else {
-						jQuery("#messages").hide();
+						if ($("#messages").is(":visible")) {
+							jQuery("#messages").hide();
+						}
 					}
 					return true;
 				}
@@ -1030,23 +1035,17 @@ function addMashStep(mashStep, mashData, pid) {
 }
 
 function fixWebkitHeightBug(){
+	if (window.heightFixed == 1) {
+		return;
+	}
+	
 	$('[id$=-gage]').each(function (index) {
 		if ($(this).css('display') == 'none') {return;}
 		$(this).css('display', 'none').height();
 		$(this).css('display', 'block');
 	});
-//	var svgW = 658;
-//	var svgH = 500;
-//	
-//	var curSVGW = $('#Kettle-gage svg:first-child').width();
-//	var newSVGH = heightInRatio(svgH,svgW,curSVGW);
-//	$('#Kettle-gage').children()[0].height(newSVGH);
-//
-//	function heightInRatio(oH,oW,nW){
-//
-//		return (oH / oW * nW);
-//
-//	}
+	
+	window.heightFixed = 1;
 
 }
 
