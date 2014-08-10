@@ -980,6 +980,10 @@ public class BrewServer extends NanoHTTPD {
 
         BrewServer.LOG.info("URL : " + uri + " method: " + method);
 
+        if (uri.equalsIgnoreCase("/clearStatus")) {
+            LaunchControl.setMessage("");
+        }
+
         // parms contains the properties here
         if (uri.equalsIgnoreCase("/mashprofile")) {
             if (updateMashProfile(parms)) {

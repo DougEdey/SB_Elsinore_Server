@@ -128,6 +128,8 @@ function waitForMsg(){
 				// Check for an error message
 				if ("message" == vessel) {
 					if (val.length > 0) {
+						val += "<br/><button id='clearMessage' class='holo-button modeclass' "
+							+ "onclick='clearStatus(); return false;'>Clear</button>";
 						jQuery("#messages-body").html(val);
 						jQuery("#messages").css('display', 'block');
 						jQuery("#messages").show();
@@ -1382,6 +1384,14 @@ function dropDeleteMashStep(ev) {
 		 url: 'delMashStep',
 			type: 'POST',
 			data: newOrder,
+		success: function(data) {data = null}
+	});
+}
+
+function clearStatus() {
+	$.ajax({
+		 url: 'clearStatus',
+			type: 'POST',
 		success: function(data) {data = null}
 	});
 }

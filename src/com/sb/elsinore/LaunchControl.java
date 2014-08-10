@@ -18,9 +18,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -1741,6 +1743,19 @@ public final class LaunchControl {
             setupConfigDoc();
         }
 
+        // Delete the existing PIDs and Temps.
+        NodeList devList = getElementsByXpath(null, "/elsinore/device");
+
+        Set<Element> delElements = new HashSet<Element>();
+        // Can't delete directly from the nodelist, concurrency issues.
+        for (int i = 0; i < devList.getLength(); i++) {
+            delElements.add((Element) devList.item(i));
+        }
+        // now we can delete them.
+        for (Element e: delElements) {
+            e.getParentNode().removeChild(e);
+        }
+
         // go through the list of Temps and save each one
         for (Temp fTemp : tempList) {
             fTemp.save();
@@ -1864,7 +1879,6 @@ public final class LaunchControl {
         deleteElement(device, "max");
         deleteElement(device, "time");
         deleteElement(device, "aux");
-
         saveConfigFile();
 
     }
@@ -2671,8 +2685,40 @@ public final class LaunchControl {
     }
 
     /**
+     * Returns all the elements using an Xpath Search.
+     *
+     * @param baseNode
+     *            The base node to search on. if null, use the document root.
+     * @param xpathIn
+     *            The Xpath to search.
+     * @return The first matching element
+     */
+    private static NodeList getElementsByXpath(final Element baseNode,
+            final String xpathIn) {
+
+        NodeList tList = null;
+
+        if (configDoc == null) {
+            return null;
+        }
+
+        try {
+            expr = xpath.compile(xpathIn);
+            tList = (NodeList) expr.evaluate(configDoc,
+                    XPathConstants.NODESET);
+        } catch (XPathExpressionException e) {
+            System.out.println(" Bad XPATH: " + xpathIn);
+            e.printStackTrace();
+            System.exit(-1);
+
+        }
+
+        return tList;
+    }
+
+    /**
      * Returns the first element using an Xpath Search.
-     * 
+     *
      * @param baseNode
      *            The base node to search on. if null, use the document root.
      * @param xpathIn
@@ -2684,23 +2730,12 @@ public final class LaunchControl {
 
         Element tElement = null;
 
-        if (configDoc == null) {
-            return null;
+        NodeList tList = getElementsByXpath(baseNode, xpathIn);
+
+        if (tList.getLength() > 0) {
+            tElement = (Element) tList.item(0);
         }
 
-        try {
-            expr = xpath.compile(xpathIn);
-            NodeList tList = (NodeList) expr.evaluate(configDoc,
-                    XPathConstants.NODESET);
-            if (tList.getLength() > 0) {
-                tElement = (Element) tList.item(0);
-            }
-        } catch (XPathExpressionException e) {
-            System.out.println(" Bad XPATH: " + xpathIn);
-            e.printStackTrace();
-            System.exit(-1);
-
-        }
 
         return tElement;
 
@@ -2760,7 +2795,7 @@ public final class LaunchControl {
 
     /**
      * Add a MashControl object to the master mash control list.
-     * 
+     *
      * @param mControl
      *            The new mashControl to add
      */
@@ -2776,14 +2811,14 @@ public final class LaunchControl {
 
     /**
      * Start the mashControl thread associated with the PID.
-     * 
+     *
      * @param pid
      *            The PID to find the mash control thread for.
      */
     public static void startMashControl(final String pid) {
         MashControl mControl = findMashControl(pid);
         Thread mThread = new Thread(mControl);
-        mThread.setName("Mash-Thread["+pid+"]");
+        mThread.setName("Mash-Thread[" + pid + "]");
         mashThreads.add(mThread);
         mThread.start();
     }
@@ -2807,7 +2842,7 @@ public final class LaunchControl {
 
     /**
      * Get the current OWFS connection.
-     * 
+     *
      * @return The current OWFS Connection object
      */
     public static OwfsConnection getOWFS() {
@@ -2816,7 +2851,7 @@ public final class LaunchControl {
 
     /**
      * Helper to get the current list of timers.
-     * 
+     *
      * @return The current list of timers.
      */
     public static List<Timer> getTimerList() {
@@ -2824,6 +2859,9 @@ public final class LaunchControl {
         return timerList;
     }
 
+    /**
+     * Check GIT for updates and update the UI.
+     */
     public static void checkForUpdates() {
         // Build command
         File jarLocation = null;
@@ -2918,7 +2956,8 @@ public final class LaunchControl {
 
         // Read output
         out = new StringBuilder();
-        br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        br = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
         line = null;
         previous = null;
         String headSha = null;
@@ -2956,8 +2995,8 @@ public final class LaunchControl {
     }
 
     /**
-     * Update from git and restart.
-     * 
+     * Update from GIT and restart.
+     *
      * @return
      */
     public static void updateFromGit() {
@@ -3009,30 +3048,52 @@ public final class LaunchControl {
         System.exit(128);
     }
 
+    /**
+     * Set the system message for the UI.
+     * @param message The message to set.
+     */
     static void setMessage(String message) {
         LaunchControl.message = message;
     }
 
+    /**
+     * Get the current message.
+     * @return The current message.
+     */
     static String getMessage() {
         return LaunchControl.message;
     }
 
+    /**
+     * @return The brewery name.
+     */
     static String getName() {
         return LaunchControl.breweryName;
     }
 
-    static void setName(String newName) {
+    /**
+     * Set the brewery name.
+     * @param newName New brewery name.
+     */
+    static void setName(final String newName) {
         BrewServer.LOG.info("Updating brewery name from "
                 + LaunchControl.breweryName + " to " + newName);
         LaunchControl.breweryName = newName;
     }
 
+    /**
+     * Delete the PID from the list.
+     * @param tPID The PID object to delete.
+     */
     public static void deletePID(PID tPID) {
         tPID.stop();
         pidList.remove(tPID);
-
     }
-    
+
+    /**
+     * Get the system temperature scale.
+     * @return The system temperature scale.
+     */
     public static String getScale() {
         return scale;
     }
