@@ -1371,15 +1371,15 @@ function allowDropMashStep(ev) {
 function dropDeleteMashStep(ev) {
 	ev.preventDefault();
 	var mashStepName = ev.dataTransfer.getData("mashstepname");
-	var vessel = getVesselFromMashStep(mashStepName);
+	var vessel = getVesselFromMashStep(mashStepName.substring(7));
 	var position = getPositionFromMashStep(mashStepName);
 	
 	$('[id="'+mashStepName+'"]').empty().remove();
-	var newOrder = "pid=" + vessel + "&position=" + position;
+	var newOrder = "pid=" + vessel + "&position=" + (parseInt(position)-1);
 	
 	$('#addMash-'+vessel)[0].innerHTML = "Add";
 	$.ajax({
-		 url: 'deleteMashStep',
+		 url: 'delMashStep',
 			type: 'POST',
 			data: newOrder,
 		success: function(data) {data = null}
