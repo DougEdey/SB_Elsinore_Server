@@ -239,9 +239,9 @@ public class BrewServer extends NanoHTTPD {
                     // Add a new MashControl to the list
                     mControl = new MashControl();
                     LaunchControl.addMashControl(mControl);
+                    mControl.setOutputControl(pid);
                 }
 
-                mControl.setOutputControl(pid);
                 incomingData.remove("pid");
             } else {
                 BrewServer.LOG.warning("Couldn't find the PID for this update");
@@ -257,7 +257,7 @@ public class BrewServer extends NanoHTTPD {
                     // We have a good step count, parse the value
                     JSONObject valueObj = (JSONObject) incomingData.get(key);
 
-                    int duration = Integer.parseInt(valueObj.get("duration")
+                    BigDecimal duration = new BigDecimal(valueObj.get("duration")
                             .toString());
                     BigDecimal temp = new BigDecimal(valueObj.get("temp")
                             .toString());
@@ -284,10 +284,179 @@ public class BrewServer extends NanoHTTPD {
         }
         return true;
     }
+    
+    private Response addMashStep(Map<String, String> params) {
+        // Parse the response
+        // Temp unit, PID, duration, temp, method, type, step number
+        // Default to the existing temperature scale
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Add a new mashstep to the specified PID");
+        usage.put("temp_unit (optional)", 
+            "The temperature unit for the mash step (optional, defaults to the system");
+        usage.put("pid", "The PID to add the mash step to");
+        usage.put("method", "The mash step method");
+        usage.put("type", "The mash step type");
+        usage.put("duration", "The time to hold the mash step for (in minutes)");
+        usage.put("temp", "The temperature to set to the mash step to");
+        usage.put("step", "The step number");
+        params = ParseParams(params);
+        Status status = Response.Status.OK;
+        String temp_unit = LaunchControl.getScale();
 
+        if (params.containsKey("temp_unit")) {
+            temp_unit = params.get("temp_unit");
+        }
+
+        String pid = params.get("pid");
+        String method = params.get("method");
+        String type = params.get("type");
+
+        try {
+            BigDecimal duration = new BigDecimal(params.get("duration"));
+            BigDecimal temp = new BigDecimal(params.get("temp"));
+            int stepNumber = Integer.parseInt(params.get("step"));
+
+            // Double check for any issues.
+            if (pid == null) {
+                throw new IllegalStateException("Couldn't add mashstep: No PID provided");
+            }
+            if (method == null) {
+                throw new IllegalStateException("Couldn't add mashstep: No method provided");
+            }
+            if (type == null) {
+                throw new IllegalStateException("Couldn't add mashstep: No type provided");
+            }
+
+            if (LaunchControl.findPID(pid) == null) {
+                throw new IllegalStateException("Couldn't add mashstep: Couldn't find PID: " + pid);
+            }
+
+            MashControl mControl = LaunchControl.findMashControl(pid);
+
+            if (mControl == null) {
+                // Add a new MashControl to the list
+                mControl = new MashControl();
+                LaunchControl.addMashControl(mControl);
+                mControl.setOutputControl(pid);    
+                LaunchControl.startMashControl(pid);
+            }
+
+            MashStep newStep = mControl.addMashStep(stepNumber);
+            newStep.setMethod(method);
+            newStep.setType(type);
+            newStep.setDuration(duration);
+            newStep.setTemp(temp);
+            mControl.sortMashSteps();
+
+            // If this if the first step we've added, start the thread
+            
+            
+        } catch (NullPointerException nfe) {
+            LaunchControl.setMessage("Couldn't add mashstep, problem parsing values: "
+                        + params.toString() + nfe.getMessage());
+            status = Response.Status.BAD_REQUEST;
+        } catch (NumberFormatException nfe) {
+            LaunchControl.setMessage(
+                "Couldn't add mashstep, problem parsing values: "
+                        + params.toString());
+            status = Response.Status.BAD_REQUEST;
+        } catch (IllegalStateException ise) {
+            LaunchControl.setMessage(ise.getMessage());
+            status = Response.Status.BAD_REQUEST;
+        }
+
+        return new Response(status, MIME_TYPES.get("json"),
+                usage.toJSONString());
+    }
+
+    private Response reorderMashProfile(final Map<String, String> params) {
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Set the order for the mash profile.");
+        usage.put("pid", "The name of the PID to change the mash profile order on.");
+        usage.put(":old=:new", "The old position and the new position");
+        // Resort the mash profile for the PID, then sort the rest
+        String pid = params.get("pid");
+        // Do we have a PID coming in?
+        if (pid == null) {
+            LaunchControl.setMessage("No PID supplied for mash profile order sort");
+            return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
+                    usage.toJSONString());
+        }
+        // Do we have a mash control for the PID?
+        MashControl mControl = LaunchControl.findMashControl(pid);
+        if (mControl == null) {
+            LaunchControl.setMessage("No Mash specified for the PID supplied " + pid);
+            return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
+                    usage.toJSONString());
+        }
+
+        // Should be good to go, iterate and update!
+        for (Map.Entry<String, String> mEntry: params.entrySet()) {
+            try {
+                int oldPos = Integer.parseInt(mEntry.getKey());
+                int newPos = Integer.parseInt(mEntry.getValue());
+                mControl.getMashStep(oldPos).setPosition(newPos);
+            } catch (NumberFormatException nfe) {
+                LaunchControl.setMessage("Failed to parse Mash reorder value, things may get weird");
+            } catch (IndexOutOfBoundsException ie) {
+                LaunchControl.setMessage("Invalid mash position, things may get weird");
+            }
+        }
+        mControl.sortMashSteps();
+        return new Response(Status.OK, MIME_TYPES.get("json"),
+                usage.toJSONString());
+    }
+    
+    private Response delMashStep(Map<String, String> params) {
+        // Parse the response
+        // Temp unit, PID, duration, temp, method, type, step number
+        // Default to the existing temperature scale
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Add a new mashstep to the specified PID");
+        usage.put("pid", "The PID to delete the mash step from");
+        usage.put("position", "The mash step to delete");
+        Status status = Status.OK;
+
+        try {
+            String pid = params.get("pid");
+            int position = Integer.parseInt(params.get("position"));
+            MashControl mControl = LaunchControl.findMashControl(pid);
+
+            if (mControl == null) {
+                // Add a mash control
+                if (LaunchControl.findPID(pid) == null) {
+                    LaunchControl.setMessage(
+                            "Could not find the specified PID: " + pid);
+                } else {
+                    mControl = new MashControl();
+                    mControl.setOutputControl(pid);
+                }
+            }
+
+            if (mControl != null) {
+                mControl.delMashStep(position);
+            } else {
+                status = Status.BAD_REQUEST;
+            }
+        } catch (NumberFormatException nfe) {
+            LaunchControl.setMessage(
+                    "Couldn't parse the position to delete: " + params);
+            status = Status.BAD_REQUEST;
+        } catch (NullPointerException ne) {
+            LaunchControl.setMessage(
+                    "Couldn't parse the mash data to delete: " + params);
+            status = Status.BAD_REQUEST;
+        } catch (IndexOutOfBoundsException ie) {
+            LaunchControl.setMessage(
+                    "Invalid Mash step position to delete: " + ie.getMessage());
+            status = Status.BAD_REQUEST;
+        }
+
+        return new Response(status, MIME_TYPES.get("json"),
+                usage.toJSONString());
+    }
     /**
      * Toggle the state of the mash profile on/off.
-     * 
      * @param parameters
      *            The parameters from the original request.
      * @return True if set, false if there's an error
@@ -329,7 +498,7 @@ public class BrewServer extends NanoHTTPD {
             return false;
         }
 
-        Entry<Integer, MashStep> mashEntry = mObj.getCurrentMashStep();
+        MashStep mashEntry = mObj.getCurrentMashStep();
 
         // No active mash step
         int stepToUse = -1;
@@ -820,6 +989,14 @@ public class BrewServer extends NanoHTTPD {
             // TODO: Report Errors
             return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
                     "Failed to update Mashprofile");
+        }
+
+        if (uri.equalsIgnoreCase("/addmashstep")) {
+            return addMashStep(parms);
+        }
+
+        if (uri.equalsIgnoreCase("/delmashstep")) {
+            return delMashStep(parms);
         }
 
         if (uri.equalsIgnoreCase("/togglemash")) {

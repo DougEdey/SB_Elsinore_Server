@@ -2783,7 +2783,7 @@ public final class LaunchControl {
     public static void startMashControl(final String pid) {
         MashControl mControl = findMashControl(pid);
         Thread mThread = new Thread(mControl);
-        mThread.setName("Mash Thread");
+        mThread.setName("Mash-Thread["+pid+"]");
         mashThreads.add(mThread);
         mThread.start();
     }
@@ -3031,5 +3031,9 @@ public final class LaunchControl {
         tPID.stop();
         pidList.remove(tPID);
 
+    }
+    
+    public static String getScale() {
+        return scale;
     }
 }
