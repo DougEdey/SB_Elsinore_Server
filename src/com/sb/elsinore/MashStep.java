@@ -8,7 +8,7 @@ import java.util.Date;
  * @author Doug Edey
  *
  */
-public class MashStep {
+public class MashStep implements Comparable<MashStep> {
     // Default to Fahrenheit
     /**
      * The Temperature unit.
@@ -25,7 +25,7 @@ public class MashStep {
     /**
      * The duration of the mash step.
      */
-    private int duration = 0;
+    private BigDecimal duration = new BigDecimal(0);
     /**
      * The step method string.
      */
@@ -50,6 +50,11 @@ public class MashStep {
      * Flag to determine if this mash step is active.
      */
     private boolean active = false;
+    private int position = -1;
+    
+    public MashStep(int position) {
+        this.position = position;
+    }
 
     // GETTERS
     /**
@@ -133,7 +138,7 @@ public class MashStep {
     /**
      * @return The duration of the current step
      */
-    public final int getDuration() {
+    public final BigDecimal getDuration() {
         return this.duration;
     }
 
@@ -249,15 +254,15 @@ public class MashStep {
 
     /**
      * Set the step duration.
-     * @param newDuration The duration to set this step to in minutes.
+     * @param duration2 The duration to set this step to in minutes.
      */
-    public final void setDuration(final int newDuration) {
-        if (newDuration <= 0) {
+    public final void setDuration(final BigDecimal duration2) {
+        if (duration2.compareTo(BigDecimal.ZERO) <= 0) {
             BrewServer.LOG.warning("Invalid duration "
-                + newDuration + " supplied");
+                + duration2 + " supplied");
             return;
         }
-        this.duration = newDuration;
+        this.duration = duration2;
     }
 
     /*********************
@@ -335,5 +340,18 @@ public class MashStep {
     public final String toString() {
         return "Step " + this.method + " " + this.type + ", target temp "
             + this.targetTemp + this.tempUnit + " for " + this.duration;
+    }
+
+    public int getPosition() {
+        return this.position;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
+    }
+
+    @Override
+    public int compareTo(MashStep o) {
+        return Integer.compare(this.position, o.getPosition());
     }
 }

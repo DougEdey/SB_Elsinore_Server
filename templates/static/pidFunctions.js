@@ -154,21 +154,7 @@ function waitForMsg(){
 
 					$.each(val, function(mashPID, mashDetails) {
 						// Iterate the list of mash Lists
-
-						if ($("#mashTable"+mashPID).length == 0) {
-							table = "<table id='mashTable"+mashPID+"' class='table'>";
-							table += "<tbody class='tbody'><tr>"
-							table += "<th colspan='2'>Mash Step</th>";
-							table += "<th>Temp</th>";
-							table += "<th>Time</th>";
-							table += "</tr><tbody></table>";
-							table += "<button class='btn btn-success' id='mashButton-"+mashPID+"' type='button' onclick='mashToggle(this)'>Activate</button>";
-							table += "<br/>";
-	
-							$("#"+mashPID).append(table);
-	
-						}
-	
+						addMashTable(mashPID);
 						$.each(mashDetails, function(mashStep, mashData) {
 							if (mashStep != 'pid') {
 								addMashStep(mashStep, mashData, mashPID);
@@ -211,11 +197,15 @@ function waitForMsg(){
 						if ("name" in vesselStatus) {
 							vesselName = vesselStatus.name;
 						}
-						
+												
 						if ("tempprobe" in vesselStatus) {
 							updateTempProbe(vesselName, vesselStatus.tempprobe);
-						}
+						} 
+						
 						if ("pidstatus" in vesselStatus) {
+
+							addMashTable(vesselName);
+
 							updatePIDStatus(vesselName, vesselStatus.pidstatus);
 							
 							// Hide the gauge if needs be
@@ -260,6 +250,26 @@ function waitForMsg(){
 	
 }
 
+function addMashTable(vesselName) {
+	if ($("#mashTable"+vesselName).length == 0) {
+		table = "<table id='mashTable"+vesselName+"' class='table'>";
+		table += "<tbody class='tbody'><tr>";
+		table += "<th colspan='2'>Mash Step</th>";
+		table += "<th>Temp</th>";
+		table += "<th>Time</th>";
+		table += "</tr><tbody></table>";
+		table += "<button class='btn btn-success' id='addMash-"+vesselName
+			+"' type='button' onclick='addNewMashStep(this)' "
+			+ "ondrop='dropDeleteMashStep(event);' "
+			+ "ondragover='allowDropMashStep(event);'>Add</button>";
+		table += "<button class='btn btn-success' id='mashButton-"+vesselName
+			+"' type='button' onclick='mashToggle(this)'>Activate</button>";
+		table += "<br id='mashTable"+vesselName+"footer'/>";
+
+		$("#"+vesselName+"-gage").after(table);
+
+	}
+}
 function updateTempProbe(vessel, val) {
 
 	temp = parseFloat(val.temp).toFixed(2);
@@ -769,6 +779,59 @@ function submitNewTimer(form) {
 	return false;
 }
 
+function addNewMashStep(button) {
+	var pid = button.id.replace("addMash-", "");
+	// Insert a couple of new form elements
+	var tempUnit = $("#" + pid + " div >div >div[id='tempUnit']")[0].textContent;
+	$('#mashTable'+pid+"footer").after("<div id='"+pid+"-mashadd'>"
+		+ "<form id='"+pid+"-mash-add-form' name='"+pid+"-mash-add'>"
+		+ "<input type='text' name='temp' id='temp' value='' placeholder='temp' />"
+		+ "<input type='text' name='temp_unit' id='temp_unit' value='"+tempUnit+"' placeholder='temp_unit' /><br/>"
+		+ "<input type='text' name='method' id='method' value='' placeholder='method' /><br/>"
+		+ "<input type='text' name='type' id='type' value='' placeholder='type' /><br/>"
+		+ "<input type='text' name='duration' id='duration' value='' placeholder='duration' /><br/>"
+		+ "<input type='hidden' name='pid' value='" + pid + "' />"
+		+ "<input type='hidden' name='step' value='" + ($("#mashTable"+pid+" > tbody > tr").length-1) + "' />"
+		+ "<button id='add-timer' class='holo-button modeclass' "
+		+ "onclick='submitNewMashStep(this.form); return false;'>Add</button>"
+		+ "<button id='cancel-add-mash-step' class='holo-button modeclass' "
+		+ "onclick='cancelAddMashStep("+pid+"); waitForMsg(); return false;'>Cancel</button>"
+		+ "</form>"
+		+ "</div>");
+	return false;
+}
+
+function cancelAddMashStep(vessel) {
+	$("#"+pid+"-mashadd").empty();
+	return false;
+}
+
+function submitNewMashStep(form) {
+	var data = JSON.stringify(jQuery(form).serializeObject());
+	$.ajax({
+		url: 'addmashstep',
+		type: 'POST',
+		data: data,
+		success: function(data) {data = null}
+	});	
+	// Increment the step.
+	$("#"+form.id+" > input[name='step']").val(parseInt($("#"+form.id+" > input[name='step']").val())+1);
+	window.disableUpdates = 0;
+	return false;
+}
+
+function deleteMashStep(vessel, position) {
+	// Delete the mash step at the specified position
+	$.ajax({
+		url: 'delMashStep',
+		type: 'POST',
+		data: "pid=" + vessel + "&position=" + position,
+		success: function(data) {data = null}
+	});	
+	window.disableUpdates = 0;
+	return false;
+}
+
 function mashToggle(button, position) {
 	// Parse out the PID from the controller
 	var pid = button.id.replace("mashButton-", "");
@@ -925,14 +988,17 @@ function addMashStep(mashStep, mashData, pid) {
 	var mashStepRow = $("#mashRow"+pid+"-"+mashStep);
 	if (mashStepRow.length == 0) {
 		// Add a new row to the Mash Table
-		tableRow = "<tr id='mashRow"+pid+"-"+mashStep+"'>";
+		tableRow = "<tr id='mashRow"+pid+"-"+mashStep+"'"
+				+ " ondragstart='dragMashStep(event);' draggable='true'"
+                + " ondrop='dropMashStep(event);'"
+                + " ondragover='allowDropMashStep(event);'>"
 		tableRow += ("<td>"+mashData['type']+"</td>");
 		tableRow += ("<td>"+mashData['method']+"</td>");
 		tableRow += ("<td>"+mashData['target_temp']+mashData['target_temp_unit']+"</td>");
 		tableRow += ("<td id='mashTimer"+pid+"'>"+mashData['duration']+"</td>");
 		tableRow += ("</tr>");
 
-		mashStepRow = $("#mashTable"+pid +" > tbody > tr").eq(mashStep).after(tableRow);
+		mashStepRow = $("#mashTable"+pid +" > tbody > tr").eq(mashStep-1).after(tableRow);
 		mashStepRow = mashStepRow.next();
 	}
 
@@ -1225,6 +1291,95 @@ function dropDeleteTimer(ev) {
 	$('#NewTimer')[0].innerHTML = "Add New Timer";
 	$.ajax({
 		 url: 'deleteTimer',
+			type: 'POST',
+			data: newOrder,
+		success: function(data) {data = null}
+	});
+}
+
+
+// END OF TIMERS
+
+// Drag and drop functions for mash steps
+function getVesselFromMashStep(divID) {
+	if (divID.indexOf("mashStep") == 0) {
+		var temp = divID.substring(8);
+	} else {
+		var temp = divID;
+	}
+	// Explode out
+	var vessel = temp.substring(0, temp.indexOf("-"));
+	return vessel;
+}
+
+function getPositionFromMashStep(divID) {
+	if (divID.indexOf("mashStep") == 0) {
+		var temp = divID.substring(8);
+	} else {
+		var temp = divID;
+	}
+	// Explode out
+	var position = temp.substring(temp.indexOf("-") + 1 );
+	return position;
+}
+
+
+function dragMashStep(ev) {
+	var divID = ev.target.id;
+	
+	// Explode out
+	var vessel = getVesselFromMashStep(divID.substring(7));
+	//var position = getPositionFromMashStep(divID);
+	ev.dataTransfer.setData("mashStepname", divID);
+	$('#addMash-'+vessel)[0].innerHTML = "Delete";
+}
+
+function dropMashStep(ev) {
+	ev.preventDefault();
+	var mashStepName = ev.dataTransfer.getData("mashStepname");
+	var vessel = getVesselFromMashStep(mashStepName.substring(7));
+	var position = getPositionFromMashStep(mashStepName);
+	
+	var refNode = ev.target.parentElement;
+	refNode.parentNode.insertBefore(document.getElementById(mashStepName), refNode.nextSibling);
+	
+	var newOrder = "pid="+vessel+"&";
+	$("#mashTable"+vessel+" > tbody > tr").each(function(index) {
+		var divID = this.id;
+		if (divID == "") {
+			return;
+		}
+		
+		var oldStep = getPositionFromMashStep(divID);		
+		newOrder += (parseInt(oldStep)-1) + "=" + (parseInt(index)-1) + "&";
+	});
+	$('#addMash-'+vessel)[0].innerHTML = "Add";
+	$.ajax({
+		 url: 'reordermashprofile',
+			type: 'POST',
+			data: newOrder,
+		success: function(data) {data = null}
+	});
+	
+	// DONE!
+}
+
+function allowDropMashStep(ev) {
+	ev.preventDefault();
+}
+
+function dropDeleteMashStep(ev) {
+	ev.preventDefault();
+	var mashStepName = ev.dataTransfer.getData("mashstepname");
+	var vessel = getVesselFromMashStep(mashStepName.substring(7));
+	var position = getPositionFromMashStep(mashStepName);
+	
+	$('[id="'+mashStepName+'"]').empty().remove();
+	var newOrder = "pid=" + vessel + "&position=" + (parseInt(position)-1);
+	
+	$('#addMash-'+vessel)[0].innerHTML = "Add";
+	$.ajax({
+		 url: 'delMashStep',
 			type: 'POST',
 			data: newOrder,
 		success: function(data) {data = null}

@@ -3,11 +3,15 @@ package com.sb.elsinore;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.joda.time.DateTime;
@@ -48,15 +52,17 @@ public class MashControl implements Runnable {
     /**
      * The list of mash steps, position -> Step.
      */
-    private HashMap<Integer, MashStep> mashStepList =
-            new HashMap<Integer, MashStep>();
+    private ArrayList<MashStep> mashStepList =
+            new ArrayList<MashStep>();
 
     /**
      * Append a new mashstep to the list.
      * @return The new mash step
      */
     public final MashStep addMashStep() {
-        return addMashStep(mashStepList.size());
+        synchronized (mashStepList) {
+            return addMashStep(mashStepList.size());
+        }
     }
 
     /**
@@ -65,7 +71,7 @@ public class MashControl implements Runnable {
      * @return The new Mash Step
      */
     public final MashStep addMashStep(final int position) {
-        mashStepList.put(position, new MashStep());
+        mashStepList.add(new MashStep(position));
         return mashStepList.get(position);
     }
 
@@ -83,32 +89,18 @@ public class MashControl implements Runnable {
      * @return The mash step at the specified position.
      */
     public final MashStep getMashStep(final Integer position) {
-        Iterator<Entry<Integer, MashStep>> mashIt =
-                mashStepList.entrySet().iterator();
-        Entry<Integer, MashStep> e;
-
-        while (mashIt.hasNext()) {
-            e = mashIt.next();
-            if (e.getKey() == position) {
-                return e.getValue();
-            }
-        }
-        return null;
+        this.sortMashSteps();
+        return this.mashStepList.get(position);
     }
 
     /**
      * Get the current mash step that's activated.
      * @return And entry with the position and the mash step
      */
-    public final Entry<Integer, MashStep> getCurrentMashStep() {
-        Iterator<Entry<Integer, MashStep>> mashIt =
-            mashStepList.entrySet().iterator();
-        Entry<Integer, MashStep> e;
-
-        while (mashIt.hasNext()) {
-            e = mashIt.next();
-            if (e.getValue().isActive()) {
-                return e;
+    public final MashStep getCurrentMashStep() {
+        for (MashStep m: mashStepList) {
+            if (m.isActive()) {
+                return m;
             }
         }
         return null;
@@ -120,28 +112,28 @@ public class MashControl implements Runnable {
     @Override
     public final void run() {
         // Run through and update the times based on the currently active step
-        Entry <Integer, MashStep> mashEntry = getCurrentMashStep();
+        MashStep mashEntry = getCurrentMashStep();
 
         MashStep currentStep = null;
         Integer currentStepPosition = -1;
 
         // active step
         if (mashEntry != null) {
-            currentStep = mashEntry.getValue();
-            currentStepPosition = mashEntry.getKey();
+            currentStep = mashEntry;
+            currentStepPosition = mashEntry.getPosition();
         }
 
         PID currentPID = LaunchControl.findPID(getOutputControl());
 
         while (true) {
             // Is there a step and an output control?
-            if (currentStep != null && currentPID != null) {
+            if (currentStep == null && currentPID != null) {
                 mashEntry = getCurrentMashStep();
 
                 // active step
                 if (mashEntry != null) {
-                    currentStep = mashEntry.getValue();
-                    currentStepPosition = mashEntry.getKey();
+                    currentStep = mashEntry;
+                    currentStepPosition = mashEntry.getPosition();
                     BrewServer.LOG.warning("Found an active mash step: "
                         + currentStepPosition);
                 }
@@ -168,7 +160,8 @@ public class MashControl implements Runnable {
                         currentStep.setStart(tDate.toDate());
 
                         // set the target End Date stamp
-                        tDate = tDate.plusMinutes(currentStep.getDuration());
+                        BigInteger minutes = currentStep.getDuration().toBigInteger();
+                        tDate = tDate.plusMinutes(minutes.intValue());
                         currentStep.setTargetEnd(tDate.toDate());
                     }
                 }
@@ -253,8 +246,8 @@ public class MashControl implements Runnable {
             mashEntry.deactivate();
         } else {
             // Otherwise deactivate all the steps
-            for (Entry<Integer, MashStep> mEntry : mashStepList.entrySet()) {
-                mEntry.getValue().deactivate(false);
+            for (MashStep mEntry : mashStepList) {
+                mEntry.deactivate(false);
             }
         }
 
@@ -285,35 +278,35 @@ public class MashControl implements Runnable {
         JSONArray masterArray = new JSONArray();
         DateFormat lFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
         //masterArray.put("pid", this.getOutputControl());
+        synchronized (mashStepList) {
+            for (MashStep e : mashStepList) {
+                MashStep step = e;
+                JSONObject mashstep = new JSONObject();
+                mashstep.put("index", e.getPosition());
+                mashstep.put("target_temp", step.getTargetTemp());
+                mashstep.put("target_temp_unit", step.getTempUnit());
+                mashstep.put("duration", step.getDuration());
+                mashstep.put("method", step.getMethod());
+                mashstep.put("type", step.getType());
 
-        for (Entry<Integer, MashStep> e : mashStepList.entrySet()) {
-            MashStep step = e.getValue();
-            JSONObject mashstep = new JSONObject();
-            mashstep.put("index", e.getKey());
-            mashstep.put("target_temp", step.getTargetTemp());
-            mashstep.put("target_temp_unit", step.getTempUnit());
-            mashstep.put("duration", step.getDuration());
-            mashstep.put("method", step.getMethod());
-            mashstep.put("type", step.getType());
+                if (step.isActive()) {
+                    mashstep.put("active", true);
+                }
 
-            if (step.isActive()) {
-                mashstep.put("active", true);
+                try {
+                    mashstep.put("start_time", lFormat.format(step.getStart()));
+                    mashstep.put("target_time",
+                        lFormat.format(step.getTargetEnd()));
+                    mashstep.put("end_time", lFormat.format(step.getEnd()));
+                } catch (NullPointerException npe) {
+                    // We know that some of these may be null, but don't care
+                    BrewServer.LOG.info("Failed to get a date: "
+                        + npe.getLocalizedMessage());
+                }
+
+                masterArray.add(mashstep);
             }
-
-            try {
-                mashstep.put("start_time", lFormat.format(step.getStart()));
-                mashstep.put("target_time",
-                    lFormat.format(step.getTargetEnd()));
-                mashstep.put("end_time", lFormat.format(step.getEnd()));
-            } catch (NullPointerException npe) {
-                // We know that some of these may be null, but don't care
-                BrewServer.LOG.info("Failed to get a date: "
-                    + npe.getLocalizedMessage());
-            }
-
-            masterArray.add(mashstep);
         }
-
         return masterArray;
     }
 
@@ -343,5 +336,18 @@ public class MashControl implements Runnable {
      */
     public final void setOutputControl(final String newControl) {
         this.outputControl = newControl;
+    }
+
+    public void sortMashSteps() {
+        Collections.sort(this.mashStepList);
+    }
+
+    /**
+     * Delete the specified mash step
+     * @param position
+     */
+    public void delMashStep(int position) {
+        sortMashSteps();
+        this.mashStepList.remove(position);
     }
 }
