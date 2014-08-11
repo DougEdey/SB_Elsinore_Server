@@ -117,7 +117,7 @@ public final class LaunchControl {
     /**
      * List of Pumps.
      */
-    private static List<Pump> pumpList = new ArrayList<Pump>();
+    private static ArrayList<Pump> pumpList = new ArrayList<Pump>();
     /**
      * List of Timers.
      */
@@ -925,7 +925,9 @@ public final class LaunchControl {
                 }
             }
             try {
-                pumpList.add(new Pump(pumpName, gpio));
+                synchronized(pumpList) {
+                    pumpList.add(new Pump(pumpName, gpio));
+                }
             } catch (InvalidGPIOException e) {
                 System.out.println("Invalid GPIO (" + gpio
                         + ") detected for pump " + pumpName);
@@ -1007,7 +1009,9 @@ public final class LaunchControl {
 
         try {
             Pump p = new Pump(name, gpio);
-            pumpList.add(p);
+            synchronized(pumpList) {
+                pumpList.add(p);
+            }
         } catch (InvalidGPIOException g) {
             return false;
         }
@@ -1018,15 +1022,17 @@ public final class LaunchControl {
 
     /**
      * Check to see if a pump with the given name exists.
-     * 
+     *
      * @param name
      *            The name of the pump to check
      * @return True if the pump exists.
      */
     public static boolean pumpExists(final String name) {
-        for (Pump p : pumpList) {
-            if (p.getName().equals("name")) {
-                return true;
+        synchronized (pumpList) {
+            for (Pump p : pumpList) {
+                if (p.getName().equals("name")) {
+                    return true;
+                }
             }
         }
         return false;
@@ -1034,11 +1040,12 @@ public final class LaunchControl {
 
     /**
      * Add a new timer to the list.
-     * 
+     *
      * @param name
      *            The name of the timer.
      * @param mode
      *            The mode of the timer.
+     * @return True if it was added OK.
      */
     public static boolean addTimer(final String name, final String mode) {
         // Mode is a placeholder for now
@@ -1274,12 +1281,14 @@ public final class LaunchControl {
      */
     public static Pump findPump(final String name) {
         // search based on the input name
-        Iterator<Pump> iterator = pumpList.iterator();
-        Pump tPump = null;
-        while (iterator.hasNext()) {
-            tPump = iterator.next();
-            if (tPump.getName().equalsIgnoreCase(name)) {
-                return tPump;
+        synchronized (pumpList) {
+            Iterator<Pump> iterator = pumpList.iterator();
+            Pump tPump = null;
+            while (iterator.hasNext()) {
+                tPump = iterator.next();
+                if (tPump.getName().equalsIgnoreCase(name)) {
+                    return tPump;
+                }
             }
         }
         return null;
@@ -1294,12 +1303,15 @@ public final class LaunchControl {
         synchronized (pumpList) {
             Iterator<Pump> iterator = pumpList.iterator();
             Pump tPump = null;
+
             while (iterator.hasNext()) {
                 tPump = iterator.next();
                 if (tPump.getName().equalsIgnoreCase(name)) {
-                    pumpList.remove(tPump);
+                    iterator.remove();
+                    return;
                 }
             }
+
         }
     }
 
