@@ -18,9 +18,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -115,7 +117,7 @@ public final class LaunchControl {
     /**
      * List of Pumps.
      */
-    private static List<Pump> pumpList = new ArrayList<Pump>();
+    private static ArrayList<Pump> pumpList = new ArrayList<Pump>();
     /**
      * List of Timers.
      */
@@ -222,7 +224,7 @@ public final class LaunchControl {
      */
     private static XPathExpression expr = null;
     private static String message = null;
-
+    private static double recorderDiff = .15d;
     private static String breweryName = null;
 
     /*****
@@ -276,6 +278,11 @@ public final class LaunchControl {
                 if (startupCommand.hasOption("d")) {
                     System.setProperty("debug", "INFO");
                 }
+                
+                if (startupCommand.hasOption("rthreshold")) {
+                    recorderDiff = Double.parseDouble(
+                            startupCommand.getOptionValue("rthreshold"));
+                }
 
             } catch (ParseException e) {
                 System.out.println("Error when parsing the command line");
@@ -306,12 +313,16 @@ public final class LaunchControl {
 
         startupOptions
                 .addOption("g", "gpiodefinitions", true,
-                        "specify the GPIO Definitions file if you're on Kernel 3.8 or above");
+                    "specify the GPIO Definitions file if"
+                    + " you're on Kernel 3.8 or above");
+        startupOptions.addOption("rthreshold", true,
+                "specify the amount for a reading to change before "
+                + "recording the value in history");
     }
 
     /**
      * Constructor for launch control.
-     * 
+     *
      * @param port
      *            The port to start the server on.
      */
@@ -361,6 +372,7 @@ public final class LaunchControl {
         BrewServer.LOG.log(Level.INFO, "Starting Status Recorder");
 
         recorder = new StatusRecorder();
+        recorder.setThreshold(recorderDiff);
         recorder.start();
 
         // Debug info before launching the BrewServer itself
@@ -407,7 +419,7 @@ public final class LaunchControl {
 
     /************
      * Start the COSM Connection.
-     * 
+     *
      * @param apiKey
      *            User API Key from COSM
      * @param feedID
@@ -437,7 +449,7 @@ public final class LaunchControl {
 
     /*****
      * Create an image from a COSM Feed.
-     * 
+     *
      * @param startDate
      *            The start date to get the image from
      * @param endDate
@@ -913,7 +925,9 @@ public final class LaunchControl {
                 }
             }
             try {
-                pumpList.add(new Pump(pumpName, gpio));
+                synchronized(pumpList) {
+                    pumpList.add(new Pump(pumpName, gpio));
+                }
             } catch (InvalidGPIOException e) {
                 System.out.println("Invalid GPIO (" + gpio
                         + ") detected for pump " + pumpName);
@@ -995,7 +1009,9 @@ public final class LaunchControl {
 
         try {
             Pump p = new Pump(name, gpio);
-            pumpList.add(p);
+            synchronized(pumpList) {
+                pumpList.add(p);
+            }
         } catch (InvalidGPIOException g) {
             return false;
         }
@@ -1006,15 +1022,17 @@ public final class LaunchControl {
 
     /**
      * Check to see if a pump with the given name exists.
-     * 
+     *
      * @param name
      *            The name of the pump to check
      * @return True if the pump exists.
      */
     public static boolean pumpExists(final String name) {
-        for (Pump p : pumpList) {
-            if (p.getName().equals("name")) {
-                return true;
+        synchronized (pumpList) {
+            for (Pump p : pumpList) {
+                if (p.getName().equals("name")) {
+                    return true;
+                }
             }
         }
         return false;
@@ -1022,11 +1040,12 @@ public final class LaunchControl {
 
     /**
      * Add a new timer to the list.
-     * 
+     *
      * @param name
      *            The name of the timer.
      * @param mode
      *            The mode of the timer.
+     * @return True if it was added OK.
      */
     public static boolean addTimer(final String name, final String mode) {
         // Mode is a placeholder for now
@@ -1262,12 +1281,14 @@ public final class LaunchControl {
      */
     public static Pump findPump(final String name) {
         // search based on the input name
-        Iterator<Pump> iterator = pumpList.iterator();
-        Pump tPump = null;
-        while (iterator.hasNext()) {
-            tPump = iterator.next();
-            if (tPump.getName().equalsIgnoreCase(name)) {
-                return tPump;
+        synchronized (pumpList) {
+            Iterator<Pump> iterator = pumpList.iterator();
+            Pump tPump = null;
+            while (iterator.hasNext()) {
+                tPump = iterator.next();
+                if (tPump.getName().equalsIgnoreCase(name)) {
+                    return tPump;
+                }
             }
         }
         return null;
@@ -1282,12 +1303,15 @@ public final class LaunchControl {
         synchronized (pumpList) {
             Iterator<Pump> iterator = pumpList.iterator();
             Pump tPump = null;
+
             while (iterator.hasNext()) {
                 tPump = iterator.next();
                 if (tPump.getName().equalsIgnoreCase(name)) {
-                    pumpList.remove(tPump);
+                    iterator.remove();
+                    return;
                 }
             }
+
         }
     }
 
@@ -1741,6 +1765,19 @@ public final class LaunchControl {
             setupConfigDoc();
         }
 
+        // Delete the existing PIDs and Temps.
+        NodeList devList = getElementsByXpath(null, "/elsinore/device");
+
+        Set<Element> delElements = new HashSet<Element>();
+        // Can't delete directly from the nodelist, concurrency issues.
+        for (int i = 0; i < devList.getLength(); i++) {
+            delElements.add((Element) devList.item(i));
+        }
+        // now we can delete them.
+        for (Element e: delElements) {
+            e.getParentNode().removeChild(e);
+        }
+
         // go through the list of Temps and save each one
         for (Temp fTemp : tempList) {
             fTemp.save();
@@ -1801,20 +1838,21 @@ public final class LaunchControl {
             }
         }
 
+        // Delete all the pumps first
+        Element pumpsElement = getFirstElement(null, "pumps");
+
+        if (pumpsElement == null) {
+            pumpsElement = addNewElement(null, "pumps");
+        }
+
+        Node childPumps = pumpsElement.getFirstChild();
+        while (childPumps != null) {
+            pumpsElement.removeChild(childPumps);
+            childPumps = pumpsElement.getFirstChild();
+        }
+
         // Save the Pumps
         if (pumpList.size() > 0) {
-
-            Element pumpsElement = getFirstElement(null, "pumps");
-
-            if (pumpsElement == null) {
-                pumpsElement = addNewElement(null, "pumps");
-            }
-
-            Node childPumps = pumpsElement.getFirstChild();
-            while (childPumps != null) {
-                pumpsElement.removeChild(childPumps);
-                childPumps= pumpsElement.getFirstChild();
-            }
 
             Iterator<Pump> pumpIt = pumpList.iterator();
 
@@ -1864,7 +1902,6 @@ public final class LaunchControl {
         deleteElement(device, "max");
         deleteElement(device, "time");
         deleteElement(device, "aux");
-
         saveConfigFile();
 
     }
@@ -2671,8 +2708,40 @@ public final class LaunchControl {
     }
 
     /**
+     * Returns all the elements using an Xpath Search.
+     *
+     * @param baseNode
+     *            The base node to search on. if null, use the document root.
+     * @param xpathIn
+     *            The Xpath to search.
+     * @return The first matching element
+     */
+    private static NodeList getElementsByXpath(final Element baseNode,
+            final String xpathIn) {
+
+        NodeList tList = null;
+
+        if (configDoc == null) {
+            return null;
+        }
+
+        try {
+            expr = xpath.compile(xpathIn);
+            tList = (NodeList) expr.evaluate(configDoc,
+                    XPathConstants.NODESET);
+        } catch (XPathExpressionException e) {
+            System.out.println(" Bad XPATH: " + xpathIn);
+            e.printStackTrace();
+            System.exit(-1);
+
+        }
+
+        return tList;
+    }
+
+    /**
      * Returns the first element using an Xpath Search.
-     * 
+     *
      * @param baseNode
      *            The base node to search on. if null, use the document root.
      * @param xpathIn
@@ -2684,23 +2753,12 @@ public final class LaunchControl {
 
         Element tElement = null;
 
-        if (configDoc == null) {
-            return null;
+        NodeList tList = getElementsByXpath(baseNode, xpathIn);
+
+        if (tList.getLength() > 0) {
+            tElement = (Element) tList.item(0);
         }
 
-        try {
-            expr = xpath.compile(xpathIn);
-            NodeList tList = (NodeList) expr.evaluate(configDoc,
-                    XPathConstants.NODESET);
-            if (tList.getLength() > 0) {
-                tElement = (Element) tList.item(0);
-            }
-        } catch (XPathExpressionException e) {
-            System.out.println(" Bad XPATH: " + xpathIn);
-            e.printStackTrace();
-            System.exit(-1);
-
-        }
 
         return tElement;
 
@@ -2760,7 +2818,7 @@ public final class LaunchControl {
 
     /**
      * Add a MashControl object to the master mash control list.
-     * 
+     *
      * @param mControl
      *            The new mashControl to add
      */
@@ -2776,14 +2834,14 @@ public final class LaunchControl {
 
     /**
      * Start the mashControl thread associated with the PID.
-     * 
+     *
      * @param pid
      *            The PID to find the mash control thread for.
      */
     public static void startMashControl(final String pid) {
         MashControl mControl = findMashControl(pid);
         Thread mThread = new Thread(mControl);
-        mThread.setName("Mash-Thread["+pid+"]");
+        mThread.setName("Mash-Thread[" + pid + "]");
         mashThreads.add(mThread);
         mThread.start();
     }
@@ -2807,7 +2865,7 @@ public final class LaunchControl {
 
     /**
      * Get the current OWFS connection.
-     * 
+     *
      * @return The current OWFS Connection object
      */
     public static OwfsConnection getOWFS() {
@@ -2816,7 +2874,7 @@ public final class LaunchControl {
 
     /**
      * Helper to get the current list of timers.
-     * 
+     *
      * @return The current list of timers.
      */
     public static List<Timer> getTimerList() {
@@ -2824,6 +2882,9 @@ public final class LaunchControl {
         return timerList;
     }
 
+    /**
+     * Check GIT for updates and update the UI.
+     */
     public static void checkForUpdates() {
         // Build command
         File jarLocation = null;
@@ -2918,7 +2979,8 @@ public final class LaunchControl {
 
         // Read output
         out = new StringBuilder();
-        br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        br = new BufferedReader(
+                new InputStreamReader(process.getInputStream()));
         line = null;
         previous = null;
         String headSha = null;
@@ -2956,8 +3018,8 @@ public final class LaunchControl {
     }
 
     /**
-     * Update from git and restart.
-     * 
+     * Update from GIT and restart.
+     *
      * @return
      */
     public static void updateFromGit() {
@@ -3009,30 +3071,52 @@ public final class LaunchControl {
         System.exit(128);
     }
 
+    /**
+     * Set the system message for the UI.
+     * @param message The message to set.
+     */
     static void setMessage(String message) {
         LaunchControl.message = message;
     }
 
+    /**
+     * Get the current message.
+     * @return The current message.
+     */
     static String getMessage() {
         return LaunchControl.message;
     }
 
+    /**
+     * @return The brewery name.
+     */
     static String getName() {
         return LaunchControl.breweryName;
     }
 
-    static void setName(String newName) {
+    /**
+     * Set the brewery name.
+     * @param newName New brewery name.
+     */
+    static void setName(final String newName) {
         BrewServer.LOG.info("Updating brewery name from "
                 + LaunchControl.breweryName + " to " + newName);
         LaunchControl.breweryName = newName;
     }
 
+    /**
+     * Delete the PID from the list.
+     * @param tPID The PID object to delete.
+     */
     public static void deletePID(PID tPID) {
         tPID.stop();
         pidList.remove(tPID);
-
     }
-    
+
+    /**
+     * Get the system temperature scale.
+     * @return The system temperature scale.
+     */
     public static String getScale() {
         return scale;
     }

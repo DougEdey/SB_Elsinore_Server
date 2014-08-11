@@ -17,6 +17,7 @@ OPTIONS:
 	-p <port>	Port to run on
 	-g <file>	GPIO Definitions File
 	-c <config>	Config file (instead of elsinore.cfg)
+	-t <threshold>	The amount to wait for an input to change before recording it.
 	-d 	Debug logging
 EOF
 $JAVA -jar $DIR/Elsinore.jar --help
@@ -28,7 +29,7 @@ CONFIG=$DIR/elsinore.cfg
 GPIO=
 DEBUG=
 
-while getopts ":hjp:c:g:d" OPTION
+while getopts ":hjp:c:g:dt:" OPTION
 do
      case $OPTION in
          h)
@@ -49,6 +50,9 @@ do
              ;;
 	 d)
 	     DEBUG="--d"
+	     ;;
+	 t)
+	     THRESHOLD="--rthreshold $OPTARGS"
 	     ;;
          ?)
              usage
