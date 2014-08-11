@@ -224,7 +224,7 @@ public final class LaunchControl {
      */
     private static XPathExpression expr = null;
     private static String message = null;
-
+    private static double recorderDiff = .15d;
     private static String breweryName = null;
 
     /*****
@@ -278,6 +278,11 @@ public final class LaunchControl {
                 if (startupCommand.hasOption("d")) {
                     System.setProperty("debug", "INFO");
                 }
+                
+                if (startupCommand.hasOption("rthreshold")) {
+                    recorderDiff = Double.parseDouble(
+                            startupCommand.getOptionValue("rthreshold"));
+                }
 
             } catch (ParseException e) {
                 System.out.println("Error when parsing the command line");
@@ -308,12 +313,16 @@ public final class LaunchControl {
 
         startupOptions
                 .addOption("g", "gpiodefinitions", true,
-                        "specify the GPIO Definitions file if you're on Kernel 3.8 or above");
+                    "specify the GPIO Definitions file if"
+                    + " you're on Kernel 3.8 or above");
+        startupOptions.addOption("rthreshold", true,
+                "specify the amount for a reading to change before "
+                + "recording the value in history");
     }
 
     /**
      * Constructor for launch control.
-     * 
+     *
      * @param port
      *            The port to start the server on.
      */
@@ -363,6 +372,7 @@ public final class LaunchControl {
         BrewServer.LOG.log(Level.INFO, "Starting Status Recorder");
 
         recorder = new StatusRecorder();
+        recorder.setThreshold(recorderDiff);
         recorder.start();
 
         // Debug info before launching the BrewServer itself
@@ -409,7 +419,7 @@ public final class LaunchControl {
 
     /************
      * Start the COSM Connection.
-     * 
+     *
      * @param apiKey
      *            User API Key from COSM
      * @param feedID
@@ -439,7 +449,7 @@ public final class LaunchControl {
 
     /*****
      * Create an image from a COSM Feed.
-     * 
+     *
      * @param startDate
      *            The start date to get the image from
      * @param endDate
@@ -1816,20 +1826,21 @@ public final class LaunchControl {
             }
         }
 
+        // Delete all the pumps first
+        Element pumpsElement = getFirstElement(null, "pumps");
+
+        if (pumpsElement == null) {
+            pumpsElement = addNewElement(null, "pumps");
+        }
+
+        Node childPumps = pumpsElement.getFirstChild();
+        while (childPumps != null) {
+            pumpsElement.removeChild(childPumps);
+            childPumps = pumpsElement.getFirstChild();
+        }
+
         // Save the Pumps
         if (pumpList.size() > 0) {
-
-            Element pumpsElement = getFirstElement(null, "pumps");
-
-            if (pumpsElement == null) {
-                pumpsElement = addNewElement(null, "pumps");
-            }
-
-            Node childPumps = pumpsElement.getFirstChild();
-            while (childPumps != null) {
-                pumpsElement.removeChild(childPumps);
-                childPumps= pumpsElement.getFirstChild();
-            }
 
             Iterator<Pump> pumpIt = pumpList.iterator();
 

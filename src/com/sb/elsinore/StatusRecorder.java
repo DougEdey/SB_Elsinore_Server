@@ -17,7 +17,7 @@ import org.json.simple.JSONValue;
  */
 public class StatusRecorder implements Runnable {
 
-    private static final double THRESHOLD = .15d;
+    private static double THRESHOLD = .15d;
     private static final long SLEEP = 1000 * 5; // 5 seconds - is this too fast?
     private JSONObject lastStatus = null;
     private long lastStatusTime = 0;
@@ -335,5 +335,13 @@ public class StatusRecorder implements Runnable {
             return retVal;
 
         }
+    }
+
+    /**
+     * Set the Threshold for the status recorder.
+     * @param recorderDiff The threshold to use.
+     */
+    public void setThreshold(double recorderDiff) {
+        this.THRESHOLD = recorderDiff;
     }
 }
