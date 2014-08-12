@@ -8,7 +8,13 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileOwnerAttributeView;
+import java.nio.file.attribute.UserPrincipal;
+import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileTypeDetector;
 import java.util.ArrayList;
 import java.util.List;
@@ -611,6 +617,15 @@ public class BrewServer extends NanoHTTPD {
         Temp tProbe = LaunchControl.findTemp(inputUnit);
         PID tPID = LaunchControl.findPID(inputUnit);
 
+        if (tProbe == null) {
+            inputUnit = inputUnit.replace("_", " ");
+            tProbe = LaunchControl.findTemp(inputUnit);
+            tPID = LaunchControl.findPID(inputUnit);
+        }
+        if (tProbe == null) {
+            LaunchControl.setMessage("Couldn't find PID: " + inputUnit);
+        }
+
         if (tProbe != null && !newName.equals("")) {
             tProbe.setName(newName);
             BrewServer.LOG.warning("Updated temp name " + newName);
@@ -982,6 +997,8 @@ public class BrewServer extends NanoHTTPD {
 
         if (uri.equalsIgnoreCase("/clearStatus")) {
             LaunchControl.setMessage("");
+            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                    "Status Cleared");
         }
 
         // parms contains the properties here
@@ -1772,6 +1789,8 @@ public class BrewServer extends NanoHTTPD {
 
                         targetFile.setReadable(true, false);
                         targetFile.setWritable(true, false);
+
+                        LaunchControl.setFileOwner(targetFile);
                     }
                 } catch (IOException e) {
                     usage.put("error", "Bad file");

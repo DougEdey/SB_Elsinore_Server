@@ -67,12 +67,15 @@ public class StatusRecorder implements Runnable {
         String directory = "graph-data/" + startTime + "/";
         File directoryFile = new File(directory);
         directoryFile.mkdirs();
-
+        LaunchControl.setFileOwner(directoryFile.getParentFile());
+        LaunchControl.setFileOwner(directoryFile);
+        
         //Generate a new log file under the current directory
         logFile = directory + "raw.log";
 
         File file = new File(this.logFile);
         boolean fileExists = file.exists();
+        LaunchControl.setFileOwner(file);
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
@@ -150,6 +153,7 @@ public class StatusRecorder implements Runnable {
                             appendToLog(tempFile, now - SLEEP + "," + lastStatus.value + "\r\n");
                         }
                         appendToLog(tempFile, now + "," + temp + "\r\n");
+                        
                         temperatureMap.put(name, new Status(temp, now));
                     }
                 }

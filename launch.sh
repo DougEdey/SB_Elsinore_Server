@@ -1,5 +1,6 @@
 #!/bin/bash
 echo "Starting Elsinore as $(whoami)"  
+ORIGINAL_USER="$(whoami)"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 JAVA="$(which java)"
 
@@ -61,7 +62,7 @@ do
      esac
 done
 
-RUNTIME_OPTS="$PORT $GPIO $DEBUG"
+RUNTIME_OPTS="$PORT $GPIO $DEBUG --baseUser $ORIGINAL_USER"
 RC=128
 while [ $RC -eq 128 ] 
 do

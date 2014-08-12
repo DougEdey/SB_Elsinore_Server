@@ -6,6 +6,7 @@ import jGPIO.InvalidGPIOException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -14,6 +15,13 @@ import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.channels.FileChannel;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileOwnerAttributeView;
+import java.nio.file.attribute.UserPrincipal;
+import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -105,6 +113,7 @@ public final class LaunchControl {
      * The Minimum number of volume data points.
      */
     private static final int MIN_VOLUME_SIZE = 3;
+    private static String baseUser = null;
 
     /**
      * List of PIDs.
@@ -269,8 +278,8 @@ public final class LaunchControl {
                         port = t;
                     } catch (NumberFormatException e) {
                         BrewServer.LOG
-                                .warning("Couldn't parse port value as an integer: "
-                                        + startupCommand.getOptionValue("port"));
+                            .warning("Couldn't parse port value as an integer: "
+                                + startupCommand.getOptionValue("port"));
                         System.exit(-1);
                     }
                 }
@@ -278,10 +287,14 @@ public final class LaunchControl {
                 if (startupCommand.hasOption("d")) {
                     System.setProperty("debug", "INFO");
                 }
-                
+
                 if (startupCommand.hasOption("rthreshold")) {
                     recorderDiff = Double.parseDouble(
                             startupCommand.getOptionValue("rthreshold"));
+                }
+
+                if (startupCommand.hasOption("baseUser")) {
+                    baseUser = startupCommand.getOptionValue("baseUser");
                 }
 
             } catch (ParseException e) {
@@ -318,6 +331,8 @@ public final class LaunchControl {
         startupOptions.addOption("rthreshold", true,
                 "specify the amount for a reading to change before "
                 + "recording the value in history");
+        startupOptions.addOption("baseUser", true,
+                "Specify the user who should own all the files created");
     }
 
     /**
@@ -1486,6 +1501,7 @@ public final class LaunchControl {
      */
     private static void saveConfigFile() {
         File configOut = new File(configFileName);
+        LaunchControl.setFileOwner(configOut);
 
         Element generalElement = getFirstElement(null, "general");
         if (generalElement == null) {
@@ -2187,9 +2203,13 @@ public final class LaunchControl {
 
             System.out.println("Backing up config to " + configFileName
                     + ".original");
-            copyFile(new File(configFileName), new File(configFileName
-                    + ".original"));
+            File originalFile = new File(configFileName + ".original");
+            File sourceFile = new File(configFileName);
+            copyFile(sourceFile, originalFile);
 
+            LaunchControl.setFileOwner(originalFile);
+            LaunchControl.setFileOwner(sourceFile);
+            
             configCfg.read(configFileName);
             System.out.println("Created configCfg");
         } catch (IOException e) {
@@ -3119,5 +3139,38 @@ public final class LaunchControl {
      */
     public static String getScale() {
         return scale;
+    }
+
+    /**
+     * Change the file owner.
+     * @param targetFile File to change the owner for.
+     */
+    public static void setFileOwner(File targetFile) {
+        if (baseUser == null || baseUser.equals("")) {
+            return;
+        }
+        if (!targetFile.exists()) {
+            try {
+                new FileOutputStream(targetFile).close();
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+        }
+
+        Path path = Paths.get(targetFile.getAbsolutePath());
+        FileOwnerAttributeView view = Files.getFileAttributeView(path,
+                FileOwnerAttributeView.class);
+        UserPrincipalLookupService lookupService = FileSystems.getDefault()
+            .getUserPrincipalLookupService();
+        UserPrincipal userPrincipal;
+        try {
+            userPrincipal = lookupService
+                    .lookupPrincipalByName(baseUser);
+            Files.setOwner(path, userPrincipal);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 }
