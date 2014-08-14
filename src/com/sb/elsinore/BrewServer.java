@@ -139,12 +139,11 @@ public class BrewServer extends NanoHTTPD {
         }
 
         return parms;
-
     }
 
     /**
      * Constructor to create the HTTP Server.
-     * 
+     *
      * @param port
      *            The port to run on
      * @throws IOException
@@ -190,7 +189,7 @@ public class BrewServer extends NanoHTTPD {
 
     /**
      * Parse the parameters to update the MashProfile.
-     * 
+     *
      * @param parms
      *            The parameters map from the original request
      * @return True if the profile is updated successfully.
@@ -263,8 +262,8 @@ public class BrewServer extends NanoHTTPD {
                     // We have a good step count, parse the value
                     JSONObject valueObj = (JSONObject) incomingData.get(key);
 
-                    BigDecimal duration = new BigDecimal(valueObj.get("duration")
-                            .toString());
+                    BigDecimal duration = new BigDecimal(
+                            valueObj.get("duration").toString());
                     BigDecimal temp = new BigDecimal(valueObj.get("temp")
                             .toString());
 
@@ -290,14 +289,19 @@ public class BrewServer extends NanoHTTPD {
         }
         return true;
     }
-    
+
+    /**
+     * Add a mash step (and mash control if needed) to a PID.
+     * @param params The incoming parameters.
+     * @return The NanoHTTPD response to return to the browser.
+     */
     private Response addMashStep(Map<String, String> params) {
         // Parse the response
         // Temp unit, PID, duration, temp, method, type, step number
         // Default to the existing temperature scale
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Add a new mashstep to the specified PID");
-        usage.put("temp_unit (optional)", 
+        usage.put("temp_unit (optional)",
             "The temperature unit for the mash step (optional, defaults to the system");
         usage.put("pid", "The PID to add the mash step to");
         usage.put("method", "The mash step method");
@@ -307,10 +311,10 @@ public class BrewServer extends NanoHTTPD {
         usage.put("step", "The step number");
         params = ParseParams(params);
         Status status = Response.Status.OK;
-        String temp_unit = LaunchControl.getScale();
+        String tempUnit = LaunchControl.getScale();
 
         if (params.containsKey("temp_unit")) {
-            temp_unit = params.get("temp_unit");
+            tempUnit = params.get("temp_unit");
         }
 
         String pid = params.get("pid");
@@ -324,17 +328,21 @@ public class BrewServer extends NanoHTTPD {
 
             // Double check for any issues.
             if (pid == null) {
-                throw new IllegalStateException("Couldn't add mashstep: No PID provided");
+                throw new IllegalStateException(
+                        "Couldn't add mashstep: No PID provided");
             }
             if (method == null) {
-                throw new IllegalStateException("Couldn't add mashstep: No method provided");
+                throw new IllegalStateException(
+                        "Couldn't add mashstep: No method provided");
             }
             if (type == null) {
-                throw new IllegalStateException("Couldn't add mashstep: No type provided");
+                throw new IllegalStateException(
+                        "Couldn't add mashstep: No type provided");
             }
 
             if (LaunchControl.findPID(pid) == null) {
-                throw new IllegalStateException("Couldn't add mashstep: Couldn't find PID: " + pid);
+                throw new IllegalStateException(
+                        "Couldn't add mashstep: Couldn't find PID: " + pid);
             }
 
             MashControl mControl = LaunchControl.findMashControl(pid);
@@ -343,7 +351,7 @@ public class BrewServer extends NanoHTTPD {
                 // Add a new MashControl to the list
                 mControl = new MashControl();
                 LaunchControl.addMashControl(mControl);
-                mControl.setOutputControl(pid);    
+                mControl.setOutputControl(pid);
                 LaunchControl.startMashControl(pid);
             }
 
@@ -354,11 +362,9 @@ public class BrewServer extends NanoHTTPD {
             newStep.setTemp(temp);
             mControl.sortMashSteps();
 
-            // If this if the first step we've added, start the thread
-            
-            
         } catch (NullPointerException nfe) {
-            LaunchControl.setMessage("Couldn't add mashstep, problem parsing values: "
+            LaunchControl.setMessage(
+                    "Couldn't add mashstep, problem parsing values: "
                         + params.toString() + nfe.getMessage());
             status = Response.Status.BAD_REQUEST;
         } catch (NumberFormatException nfe) {
@@ -375,6 +381,11 @@ public class BrewServer extends NanoHTTPD {
                 usage.toJSONString());
     }
 
+    /**
+     * Reorder the mash steps.
+     * @param params The incoming params, check the usage.
+     * @return The Response object.
+     */
     private Response reorderMashProfile(final Map<String, String> params) {
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Set the order for the mash profile.");
@@ -412,7 +423,12 @@ public class BrewServer extends NanoHTTPD {
         return new Response(Status.OK, MIME_TYPES.get("json"),
                 usage.toJSONString());
     }
-    
+
+    /**
+     * Delete the specified mash step.
+     * @param params The details.
+     * @return The Response.
+     */
     private Response delMashStep(Map<String, String> params) {
         // Parse the response
         // Temp unit, PID, duration, temp, method, type, step number
@@ -461,6 +477,7 @@ public class BrewServer extends NanoHTTPD {
         return new Response(status, MIME_TYPES.get("json"),
                 usage.toJSONString());
     }
+
     /**
      * Toggle the state of the mash profile on/off.
      * @param parameters
@@ -551,7 +568,7 @@ public class BrewServer extends NanoHTTPD {
 
     /**
      * Read the incoming parameters and edit the vessel as appropriate.
-     * 
+     *
      * @param params
      *            The parameters from the client.
      * @return True is success, false if failure.
@@ -566,7 +583,7 @@ public class BrewServer extends NanoHTTPD {
         Entry<String, String> param = null;
         JSONObject incomingData = null;
         JSONParser parser = new JSONParser();
-        String error_msg = "No Changes Made";
+        String errorMsg = "No Changes Made";
 
         // Try to Parse JSON Data
         while (it.hasNext()) {
@@ -611,7 +628,7 @@ public class BrewServer extends NanoHTTPD {
 
         if (inputUnit.equals("")) {
             BrewServer.LOG.warning("No Valid input unit");
-            error_msg = "No Valid Input Unit";
+            errorMsg = "No Valid Input Unit";
         }
 
         Temp tProbe = LaunchControl.findTemp(inputUnit);
@@ -670,7 +687,7 @@ public class BrewServer extends NanoHTTPD {
         usage.put("new_name", "The name of the Temperature Probe to add");
         usage.put("new_gpio", "The GPIO for the PID to work on");
         usage.put("aux_gpio", "The Auxilliary GPIO for the PID to work on");
-        usage.put("Error", "Invalid parameters passed " + error_msg + " = "
+        usage.put("Error", "Invalid parameters passed " + errorMsg + " = "
                 + params.toString());
 
         return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
@@ -1007,7 +1024,7 @@ public class BrewServer extends NanoHTTPD {
                 return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                         "Updated MashProfile");
             }
-            // TODO: Report Errors
+
             return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
                     "Failed to update Mashprofile");
         }
@@ -1172,6 +1189,79 @@ public class BrewServer extends NanoHTTPD {
             updateBreweryName(parms);
             return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
                     "{Status:'OK'}");
+        }
+
+        if (uri.equalsIgnoreCase("/settheme")) {
+            String newTheme = parms.get("name");
+
+            if (newTheme == null) {
+                return new NanoHTTPD.Response(Status.BAD_REQUEST,
+                        MIME_TYPES.get("json"),
+                        "{Status:'No name provided'}");
+            }
+
+            String fileName = "/logos/" + newTheme + ".ico";
+            if (!(new File(rootDir, fileName).exists())) {
+                // It doesn't exist
+                LaunchControl.setMessage("Favicon for the new theme: "
+                        + newTheme + ", doesn't exist."
+                        + " Please add: " + fileName + " and try again");
+                return new NanoHTTPD.Response(Status.BAD_REQUEST,
+                        MIME_TYPES.get("json"),
+                        "{Status:'Favicon doesn\'t exist'}");
+            }
+
+            fileName = "/logos/" + newTheme + ".gif";
+            if (!(new File(rootDir, fileName).exists())) {
+                // It doesn't exist
+                LaunchControl.setMessage("Brewry image for the new theme: "
+                        + newTheme + ", doesn't exist."
+                        + " Please add: " + fileName + " and try again");
+                return new NanoHTTPD.Response(Status.BAD_REQUEST,
+                        MIME_TYPES.get("json"),
+                        "{Status:'Brewery Image doesn\'t exist'}");
+            }
+
+            LaunchControl.theme = newTheme;
+            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+                    "{Status:'OK'}");
+
+        }
+
+        if (uri.equalsIgnoreCase("/favicon.ico")) {
+            // Has the favicon been overridden?
+            // Check to see if there's a theme set.
+            if (LaunchControl.theme != null
+                    && !LaunchControl.theme.equals("")) {
+                if (new File(rootDir,
+                        "/logos/" + LaunchControl.theme + ".ico").exists()) {
+                    return serveFile("/logos/" + LaunchControl.theme + ".ico",
+                            header, rootDir);
+                }
+            }
+
+            if (new File(rootDir, uri).exists()) {
+                return serveFile(uri, header, rootDir);
+            }
+
+        }
+
+        if (uri.equalsIgnoreCase("/brewerImage.gif")) {
+            // Has the user uploaded a file?
+            if (new File(rootDir, uri).exists()) {
+                return serveFile(uri, header, rootDir);
+            }
+            // Check to see if there's a theme set.
+            if (LaunchControl.theme != null
+                    && !LaunchControl.theme.equals("")) {
+                if (new File(rootDir,
+                        "/logos/" + LaunchControl.theme + ".gif").exists()) {
+                    return serveFile("/logos/" + LaunchControl.theme + ".gif",
+                            header, rootDir);
+                }
+            }
+
+
         }
 
         if (!uri.equals("") && new File(rootDir, uri).exists()) {
