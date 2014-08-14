@@ -235,10 +235,11 @@ public final class LaunchControl {
     private static String message = null;
     private static double recorderDiff = .15d;
     private static String breweryName = null;
+    public static String theme = "default";
 
     /*****
      * Main method to launch the brewery.
-     * 
+     *
      * @param arguments
      *            List of arguments from the command line
      */
@@ -297,6 +298,10 @@ public final class LaunchControl {
                     baseUser = startupCommand.getOptionValue("baseUser");
                 }
 
+                if (startupCommand.hasOption("t")) {
+                    theme = startupCommand.getOptionValue("t");
+                }
+
             } catch (ParseException e) {
                 System.out.println("Error when parsing the command line");
                 e.printStackTrace();
@@ -333,6 +338,8 @@ public final class LaunchControl {
                 + "recording the value in history");
         startupOptions.addOption("baseUser", true,
                 "Specify the user who should own all the files created");
+        startupOptions.addOption("t", "theme", true,
+                "Specify the theme name");
     }
 
     /**

@@ -19,6 +19,7 @@ OPTIONS:
 	-g <file>	GPIO Definitions File
 	-c <config>	Config file (instead of elsinore.cfg)
 	-t <threshold>	The amount to wait for an input to change before recording it.
+	-l <name>	Set the default theme for elsinore.
 	-d 	Debug logging
 EOF
 $JAVA -jar $DIR/Elsinore.jar --help
@@ -30,7 +31,7 @@ CONFIG=$DIR/elsinore.cfg
 GPIO=
 DEBUG=
 
-while getopts ":hjp:c:g:dt:" OPTION
+while getopts ":hjp:c:g:dt:l:" OPTION
 do
      case $OPTION in
          h)
@@ -47,13 +48,16 @@ do
              CONFIG=$OPTARG
              ;;
          g)
-             GPIO="--gpio_definitions $OPTARGS"
+             GPIO="--gpio_definitions $OPTARG"
              ;;
 	 d)
 	     DEBUG="--d"
 	     ;;
 	 t)
-	     THRESHOLD="--rthreshold $OPTARGS"
+	     THRESHOLD="--rthreshold $OPTARG"
+	     ;;
+	 l)
+	     THEME="--theme $OPTARG"
 	     ;;
          ?)
              usage
@@ -62,7 +66,7 @@ do
      esac
 done
 
-RUNTIME_OPTS="$PORT $GPIO $DEBUG --baseUser $ORIGINAL_USER"
+RUNTIME_OPTS="$PORT $GPIO $DEBUG $THRESHOLD $THEME --baseUser $ORIGINAL_USER"
 RC=128
 while [ $RC -eq 128 ] 
 do
