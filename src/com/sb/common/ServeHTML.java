@@ -1,5 +1,6 @@
 package com.sb.common;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.HashMap;
@@ -64,6 +65,7 @@ public class ServeHTML {
      */
     public final String getPage() {
         String page = "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head>"
+            + "<link rel='shortcut icon' href=''/favicon.ico?v=2' />"
             + "<meta http-equiv='Content-Type' "
             + "content='text/html; charset=utf-8'>"
             + "<meta content='text/html; charset=UTF-8' "
@@ -499,7 +501,6 @@ public class ServeHTML {
             + "<div class='title panel-heading'>Timers</div>";
 
         timers += "<div class='panel-body'>";
-
         for (Timer timer : LaunchControl.getTimerList()) {
             // Mash button
             timers += "<div id='div-" + timer.getName() + "'"

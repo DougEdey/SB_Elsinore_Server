@@ -2,7 +2,7 @@ function setup() {
 	//$("#logo").css('opacity','0');
 	window.heightFixed = 0;
 	$.ajax({
-	    url:'brewerImage.gif',
+	    url:'/brewerImage.gif',
 	    type:'HEAD',
 	    error: function()
 	    {
@@ -10,7 +10,7 @@ function setup() {
 	    },
 	    success: function()
 	    {
-	        $('#brewerylogo').attr('src', 'brewerImage.gif');
+	        $('#brewerylogo').attr('src', '/brewerImage.gif');
 	        $('#brewerylogo').css('display', 'block');
 	    }
 	});
@@ -36,7 +36,7 @@ function setup() {
 //	});
 	
 	waitForMsg();
-}
+};
 
 
 
@@ -61,7 +61,7 @@ $.fn.serializeObject = function()
 function showGraph(element) {
 	var vessel = element.id.substring(0, element.id.indexOf("-tempGauge"));
 	window.open("/graph?vessel=" + vessel);
-}
+};
 
 function sleep(milliseconds) {
   var start = new Date().getTime();
@@ -111,54 +111,51 @@ function waitForMsg(){
 			if(data == null) 
 				return;
 			
-			$.each(data, function(key, val) {
-				vessel = key;
-				
-				// Check for the brewery name
-				if ("breweryName" == vessel) {
-					if (val != null && val.length > 0 && val != "") {
-						window.breweryName = val;
-						jQuery("#breweryname").text(val);
-					} else {
-						window.breweryName = "Elsinore";
-						jQuery("#breweryname").text("Elsinore");
-					}
+			if ("breweryName" in data) {
+				val = data.breweryName;
+				if (val != null && val.length > 0 && val != "") {
+					window.breweryName = val;
+					jQuery("#breweryname").text(val);
+				} else {
+					window.breweryName = "Elsinore";
+					jQuery("#breweryname").text("Elsinore");
 				}
+			}
+			
+			// Check for an error message
+			if ("message" in data) {
+				val = data.message;
 				
-				// Check for an error message
-				if ("message" == vessel) {
-					if (val.length > 0) {
-						val += "<br/><button id='clearMessage' class='holo-button modeclass' "
-							+ "onclick='clearStatus(); return false;'>Clear</button>";
-						jQuery("#messages-body").html(val);
-						
-						if (!$("#messages").is(":visible")) {
-							jQuery("#messages").css('display', 'block');
-							jQuery("#messages").show();
-						}
-					} else {
-						if ($("#messages").is(":visible")) {
-							jQuery("#messages").hide();
-						}
-					}
-					return true;
-				}
-				
-				if (vessel == "brewday") {
-					$.each(val, function(timerName, timerStatus) {
-						checkTimer(timerStatus, timerName);
-					});
-					return true;
+				if (val.length > 0) {
+					val += "<br/><button id='clearMessage' class='holo-button modeclass' "
+						+ "onclick='clearStatus(); return false;'>Clear</button>";
+					jQuery("#messages-body").html(val);
 					
-				}
-
-				// New Feature! Mash Profile!
-				if (vessel == "mash") {
-					if (this == 'Unset') {
-						return true;
+					if (!$("#messages").is(":visible")) {
+						jQuery("#messages").css('display', 'block');
+						jQuery("#messages").show();
 					}
-					val = sortObjectByKey(val);
+				} else {
+					if ($("#messages").is(":visible")) {
+						jQuery("#messages").hide();
+					}
+				}
+			}
+			
+			if ("brewday" in data) {
+				val = data.brewday;
+				$.each(val, function(timerName, timerStatus) {
+					checkTimer(timerStatus, timerName);
+				});
+				
+			}
 
+			if ("mash" in data) {
+				val = data.mash;
+				if (val != 'Unset') {
+					
+					val = sortObjectByKey(val);
+	
 					$.each(val, function(mashPID, mashDetails) {
 						// Iterate the list of mash Lists
 						addMashTable(mashPID);
@@ -166,93 +163,87 @@ function waitForMsg(){
 							if (mashStep != 'pid') {
 								addMashStep(mashStep, mashData, mashPID);
 							}
-							return true;
 						});
-
+	
 						if ($("#mashTable"+mashPID).find('.success').length > 0) {
 							$("#mashButton-" + mashPID).text("Disable");
 						} else {
 							$("#mashButton-" + mashPID).text("Activate");
 						}
-
-						return true;
+	
 					});
 				}
+			}
+								
+			if("pumps" in data) {
+				val = data.pumps;
+				$.each(val, function (pumpName, pumpStatus) {
+					//enable or disable the pump as required
+					if (pumpStatus) {
+						jQuery('button[id^="' + pumpName + '"]')[0].style.background="red";
+						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" ON";
+					} else {
+						jQuery('button[id^="' + pumpName + '"]')[0].style.background="#666666";
+						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" OFF";
+					}
+				});
+			}
+
+			if(window.disableUpdates) {
+				return false;
+			}
 				
-				if(vessel == "pumps") {
-					$.each(val, function (pumpName, pumpStatus) {
-						//enable or disable the pump as required
-						if (pumpStatus) {
-							jQuery('button[id^="' + pumpName + '"]')[0].style.background="red";
-							jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" ON";
+			if ("vessels" in data) {
+				val = data.vessels;
+				$.each(val, function(vesselName, vesselStatus) {
+					
+					// This should always be there
+					if ("name" in vesselStatus) {
+						vesselName = vesselStatus.name;
+					}
+											
+					if ("tempprobe" in vesselStatus) {
+						updateTempProbe(vesselName, vesselStatus.tempprobe);
+					} 
+					
+					if ("pidstatus" in vesselStatus) {
+
+						addMashTable(vesselName);
+
+						updatePIDStatus(vesselName, vesselStatus.pidstatus);
+						
+						// Hide the gauge if needs be
+						if (vesselStatus.pidstatus.mode == "off") {
+							//Gauges[vessel].refresh(val.actualduty, 100); 				
+							$('div[id^="'+vesselName+'-gage"]').hide();
 						} else {
-							jQuery('button[id^="' + pumpName + '"]')[0].style.background="#666666";
-							jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" OFF";
-						}
-					});
-					return true;
-				}
-
-				if(window.disableUpdates) {
-					return false;
-				}
-				
-				if (vessel == "vessels") {
-					$.each(val, function(vesselName, vesselStatus) {
-						
-						// This should always be there
-						if ("name" in vesselStatus) {
-							vesselName = vesselStatus.name;
-						}
-												
-						if ("tempprobe" in vesselStatus) {
-							updateTempProbe(vesselName, vesselStatus.tempprobe);
-						} 
-						
-						if ("pidstatus" in vesselStatus) {
-
-							addMashTable(vesselName);
-
-							updatePIDStatus(vesselName, vesselStatus.pidstatus);
-							
-							// Hide the gauge if needs be
-							if (vesselStatus.pidstatus.mode == "off") {
-								//Gauges[vessel].refresh(val.actualduty, 100); 				
-								$('div[id^="'+vesselName+'-gage"]').hide();
+							$('div[id^="'+vesselName+'-gage"]').show();
+							if ("actualduty" in vesselStatus.pidstatus) {
+								Gauges[vesselName].refresh(
+										vesselStatus.pidstatus.actualduty, 100);
 							} else {
-								$('div[id^="'+vesselName+'-gage"]').show();
-								if ("actualduty" in vesselStatus.pidstatus) {
-									Gauges[vesselName].refresh(
-											vesselStatus.pidstatus.actualduty, 100);
-								} else {
-									Gauges[vesselName].refresh(
-											vesselStatus.pidstatus.duty, 100);
-								}
+								Gauges[vesselName].refresh(
+										vesselStatus.pidstatus.duty, 100);
 							}
-						} else {
-							hidePIDForm(vesselName);
 						}
-						
-						if ("volume" in vesselStatus) {
-							updateVolumeStatus(vesselName, vesselStatus.volume);
-						} else {
-							jQuery("#" + vesselName + "-volume").text("No Volume");
-						}
-						
-						
-					});
-					return true;		
-				}
-			
-			});
-			
+					} else {
+						hidePIDForm(vesselName);
+					}
+					
+					if ("volume" in vesselStatus) {
+						updateVolumeStatus(vesselName, vesselStatus.volume);
+					} else {
+						jQuery("#" + vesselName + "-volume").text("No Volume");
+					}
+				});
+			}
+		
+		
 			vessel = null;
 			data = null;
 			fixWebkitHeightBug();		
 		}
-		
 	});
-	
 	setTimeout(waitForMsg, 1000); 
 	
 }

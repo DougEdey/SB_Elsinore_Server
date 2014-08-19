@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,6 +82,7 @@ import Cosm.Datastream;
 import Cosm.Feed;
 import Cosm.Unit;
 
+import com.sb.common.CollectionsUtil;
 import com.sb.common.ServeHTML;
 import com.sb.elsinore.StatusRecorder;
 import com.sb.elsinore.NanoHTTPD.Response.Status;
@@ -118,11 +120,11 @@ public final class LaunchControl {
     /**
      * List of PIDs.
      */
-    private static List<PID> pidList = new ArrayList<PID>();
+    private static ArrayList<PID> pidList = new ArrayList<PID>();
     /**
      * List of Temperature probes.
      */
-    private static List<Temp> tempList = new ArrayList<Temp>();
+    private static ArrayList<Temp> tempList = new ArrayList<Temp>();
     /**
      * List of Pumps.
      */
@@ -130,7 +132,7 @@ public final class LaunchControl {
     /**
      * List of Timers.
      */
-    private static List<Timer> timerList = new ArrayList<Timer>();
+    private static CopyOnWriteArrayList<Timer> timerList = new CopyOnWriteArrayList<Timer>();
     /**
      * List of MashControl profiles.
      */
@@ -481,15 +483,17 @@ public final class LaunchControl {
     public String getCosmImages(final String startDate, final String endDate) {
         try {
             if (cosmFeed != null) {
-                for (Temp t : tempList) {
-                    Datastream tData = findDatastream(t.getName());
-                    if (tData != null) {
-                        if (startDate == null || endDate == null) {
-                            cosm.getDatastreamImage(cosmFeed.getId(),
-                                    t.getName());
-                        } else {
-                            cosm.getDatastreamImage(cosmFeed.getId(),
-                                    t.getName(), startDate, endDate);
+                synchronized (tempList) {
+                    for (Temp t : tempList) {
+                        Datastream tData = findDatastream(t.getName());
+                        if (tData != null) {
+                            if (startDate == null || endDate == null) {
+                                cosm.getDatastreamImage(cosmFeed.getId(),
+                                        t.getName());
+                            } else {
+                                cosm.getDatastreamImage(cosmFeed.getId(),
+                                        t.getName(), startDate, endDate);
+                            }
                         }
                     }
                 }
@@ -514,14 +518,16 @@ public final class LaunchControl {
     public String getCosmXML(final String startDate, final String endDate) {
         try {
             if (cosmFeed != null) {
-                for (Temp t : tempList) {
-                    Datastream tData = findDatastream(t.getName());
-                    if (tData != null) {
-                        if (startDate == null || endDate == null) {
-                            cosm.getDatastreamXML(cosmFeed.getId(), t.getName());
-                        } else {
-                            cosm.getDatastreamXML(cosmFeed.getId(),
-                                    t.getName(), startDate, endDate);
+                synchronized (tempList) {
+                    for (Temp t : tempList) {
+                        Datastream tData = findDatastream(t.getName());
+                        if (tData != null) {
+                            if (startDate == null || endDate == null) {
+                                cosm.getDatastreamXML(cosmFeed.getId(), t.getName());
+                            } else {
+                                cosm.getDatastreamXML(cosmFeed.getId(),
+                                        t.getName(), startDate, endDate);
+                            }
                         }
                     }
                 }
@@ -536,19 +542,21 @@ public final class LaunchControl {
 
     /**
      * Call to generate the HTML to be served back to the server.
-     * 
+     *
      * @return The HTML of the controller page.
      */
     public static String getControlPage() {
         HashMap<String, String> devList = new HashMap<String, String>();
-        for (Temp t : tempList) {
-            PID tPid = findPID(t.getName());
-            String type = "Temp";
+        synchronized (tempList) {
+            for (Temp t : tempList) {
+                PID tPid = findPID(t.getName());
+                String type = "Temp";
 
-            if (tPid != null) {
-                type = "PID";
+                if (tPid != null) {
+                    type = "PID";
+                }
+                devList.put(t.getName(), type);
             }
-            devList.put(t.getName(), type);
         }
 
         ServeHTML pidServe = new ServeHTML(devList, pumpList);
@@ -577,7 +585,7 @@ public final class LaunchControl {
         // iterate the thread lists
         // use the temp list to determine if we have a PID to go with
         JSONArray vesselJSON = new JSONArray();
-
+        synchronized (tempList) {
         for (Temp t : tempList) {
             /* Check for a PID */
             PID tPid = findPID(t.getName());
@@ -630,7 +638,7 @@ public final class LaunchControl {
 
             }
         }
-
+        }
         rObj.put("vessels", vesselJSON);
 
         if (brewDay != null) {
@@ -974,10 +982,11 @@ public final class LaunchControl {
         }
 
         try {
-            for (String s: config.options(input)) {
-                timerList.add(new Timer(s));
+            synchronized (timerList) {
+                for (String s: config.options(input)) {
+                    timerList.add(new Timer(s));
+                }
             }
-
             // TODO: Add in countup/countdown detection
         } catch (NoSectionException nse) {
             // we shouldn't get here!
@@ -996,7 +1005,7 @@ public final class LaunchControl {
             return;
         }
         NodeList timers = config.getChildNodes();
-        timerList = new ArrayList<Timer>();
+        timerList = new CopyOnWriteArrayList<Timer>();
 
         for (int i = 0; i < timers.getLength(); i++) {
             Element tElement = (Element) timers.item(i);
@@ -1010,8 +1019,9 @@ public final class LaunchControl {
                     // Couldn't parse. Move on.
                 }
             }
-
-            timerList.add(temp);
+            synchronized (timerList) {
+                timerList.add(temp);
+            }
         }
     }
 
@@ -1071,11 +1081,13 @@ public final class LaunchControl {
      */
     public static boolean addTimer(final String name, final String mode) {
         // Mode is a placeholder for now
-        if (timerList.contains(name) || name.equals("")) {
-            return false;
+        synchronized (timerList) {
+            if (timerList.contains(name) || name.equals("")) {
+                return false;
+            }
+            CollectionsUtil.addInOrder(timerList, new Timer(name));
         }
 
-        timerList.add(new Timer(name));
         return true;
     }
 
@@ -1243,19 +1255,21 @@ public final class LaunchControl {
 
     /******
      * Find the Temp Probe in the current list.
-     * 
+     *
      * @param name
      *            The Temp to find
      * @return The Temp object
      */
     public static Temp findTemp(final String name) {
         // search based on the input name
-        Iterator<Temp> iterator = tempList.iterator();
-        Temp tTemp = null;
-        while (iterator.hasNext()) {
-            tTemp = iterator.next();
-            if (tTemp.getName().equalsIgnoreCase(name)) {
-                return tTemp;
+        synchronized (tempList) {
+            Iterator<Temp> iterator = tempList.iterator();
+            Temp tTemp = null;
+            while (iterator.hasNext()) {
+                tTemp = iterator.next();
+                if (tTemp.getName().equalsIgnoreCase(name)) {
+                    return tTemp;
+                }
             }
         }
         return null;
@@ -1263,19 +1277,21 @@ public final class LaunchControl {
 
     /******
      * Find the PID in the current list.
-     * 
+     *
      * @param name
      *            The PID to find
      * @return The PID object
      */
     public static PID findPID(final String name) {
         // search based on the input name
-        Iterator<PID> iterator = pidList.iterator();
-        PID tPid = null;
-        while (iterator.hasNext()) {
-            tPid = iterator.next();
-            if (tPid.getName().equalsIgnoreCase(name)) {
-                return tPid;
+        synchronized (pidList) {
+            Iterator<PID> iterator = pidList.iterator();
+            PID tPid = null;
+            while (iterator.hasNext()) {
+                tPid = iterator.next();
+                if (tPid.getName().equalsIgnoreCase(name)) {
+                    return tPid;
+                }
             }
         }
         return null;
@@ -1283,12 +1299,14 @@ public final class LaunchControl {
 
     /**
      * Add a PID to the list.
-     * 
+     *
      * @param newPID
      *            PID to add.
      */
     public static void addPID(final PID newPID) {
-        pidList.add(newPID);
+        synchronized (pidList) {
+            pidList.add(newPID);
+        }
         Thread pThread = new Thread(newPID);
         pThread.start();
         pidThreads.add(pThread);
@@ -1346,12 +1364,14 @@ public final class LaunchControl {
      */
     public static Timer findTimer(final String name) {
         // search based on the input name
-        Iterator<Timer > iterator = timerList.iterator();
-        Timer tTimer = null;
-        while (iterator.hasNext()) {
-            tTimer = iterator.next();
-            if (tTimer.getName().equalsIgnoreCase(name)) {
-                return tTimer;
+        synchronized (timerList) {
+            Iterator<Timer > iterator = timerList.iterator();
+            Timer tTimer = null;
+            while (iterator.hasNext()) {
+                tTimer = iterator.next();
+                if (tTimer.getName().equalsIgnoreCase(name)) {
+                    return tTimer;
+                }
             }
         }
         return null;
@@ -1405,7 +1425,7 @@ public final class LaunchControl {
 
         if (listOfFiles.length == 0) {
             System.out
-                    .println("No 1Wire probes found! Please check your system!");
+                .println("No 1Wire probes found! Please check your system!");
             System.exit(-1);
         }
 
@@ -1426,8 +1446,9 @@ public final class LaunchControl {
                         }
 
                         useOWFS = true;
-
-                        tempList.clear();
+                        synchronized (tempList) {
+                            tempList.clear();
+                        }
                         listOWFSDevices();
                         return;
                     }
@@ -1448,7 +1469,9 @@ public final class LaunchControl {
 
                 Temp currentTemp = new Temp(currentFile.getName(),
                         currentFile.getName());
-                tempList.add(currentTemp);
+                synchronized(tempList) {
+                    tempList.add(currentTemp);
+                }
                 // setup the scale for each temp probe
                 currentTemp.setScale(scale);
                 // setup the threads
@@ -1760,23 +1783,25 @@ public final class LaunchControl {
     private void displaySensors() {
         // iterate the list of temperature Threads to get values
         Integer i = 1;
-        Iterator<Temp> iterator = tempList.iterator();
-        System.out.println("\n\nNo config data found as usable. "
-                + "Select a input and name it (i.e. \"1 kettle\" no quotes)"
-                + " or type \"r\" to refresh:");
-        while (iterator.hasNext()) {
-            // launch all the PIDs first,
-            // since they will launch the temp theads too
-            Temp tTemp = iterator.next();
-            BigDecimal currentTemp = tTemp.updateTemp();
-
-            System.out.print(i.toString() + ") " + tTemp.getName());
-            if (currentTemp.equals(Temp.ERROR_TEMP)) {
-                System.out.println(" doesn't have a valid temperature");
-            } else {
-                System.out.println(" " + currentTemp);
+        synchronized(tempList) {
+            Iterator<Temp> iterator = tempList.iterator();
+            System.out.println("\n\nNo config data found as usable. "
+                    + "Select a input and name it (i.e. \"1 kettle\" no quotes)"
+                    + " or type \"r\" to refresh:");
+            while (iterator.hasNext()) {
+                // launch all the PIDs first,
+                // since they will launch the temp theads too
+                Temp tTemp = iterator.next();
+                BigDecimal currentTemp = tTemp.updateTemp();
+    
+                System.out.print(i.toString() + ") " + tTemp.getName());
+                if (currentTemp.equals(Temp.ERROR_TEMP)) {
+                    System.out.println(" doesn't have a valid temperature");
+                } else {
+                    System.out.println(" " + currentTemp);
+                }
+                i++;
             }
-            i++;
         }
     }
 
@@ -1847,16 +1872,18 @@ public final class LaunchControl {
                 childTimer = timersElement.getFirstChild();
             }
 
-            for (Timer t : timerList) {
-
-                Element timerElement = getFirstElementByXpath(
-                        null, "/elsinore/timers/timer[@id='"
-                        + t + "']");
-                if (timerElement == null) {
-                    // No timer by this name
-                    Element newTimer = addNewElement(timersElement, "timer");
-                    newTimer.setAttribute("id", t.getName());
-                    newTimer.setAttribute("position", "" + t.getPosition());
+            synchronized (timerList) {
+                for (Timer t : timerList) {
+                    Element timerElement = getFirstElementByXpath(
+                            null, "/elsinore/timers/timer[@id='"
+                            + t + "']");
+                    if (timerElement == null) {
+                        // No timer by this name
+                        Element newTimer = addNewElement(timersElement,
+                                "timer");
+                        newTimer.setAttribute("id", t.getName());
+                        newTimer.setAttribute("position", "" + t.getPosition());
+                    }
                 }
             }
         }
@@ -2904,8 +2931,7 @@ public final class LaunchControl {
      *
      * @return The current list of timers.
      */
-    public static List<Timer> getTimerList() {
-        Collections.sort(timerList);
+    public static CopyOnWriteArrayList<Timer> getTimerList() {
         return timerList;
     }
 
