@@ -201,6 +201,7 @@ public class ServeHTML {
             + "<script type=\"text/javascript\""
             + " src=\"/templates/static/jquery.fs.stepper.js\">"
             + "</script>" + lineSep
+            + "<script type=\"text/javascript\" src=\"/templates/static/moment.js\"></script>" + lineSep
             + "<script type=\"text/javascript\""
             + " src=\"/templates/static/segment-display.js\">"
             + "</script>" + lineSep

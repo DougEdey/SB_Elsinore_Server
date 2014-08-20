@@ -906,7 +906,7 @@ function toggleDiv(id) {
 
 function setTimer(button, stage) {
 	// get the current Datestamp
-	var curDate = Date.now();
+	var curDate = moment().format("YYYY/MM/DDTHH:mm:ssZZ")
 	if(button.innerHTML == "Start") {
 		$("#" + stage).hide();
 		$("#"+stage+"Timer").show();
@@ -931,7 +931,7 @@ function setTimer(button, stage) {
 
 function resetTimer(button, stage) {
 	// get the current Datestamp
-	var curDate = Date.now();
+	var curDate = moment().format("YYYY/MM/DDTHH:mm:ssZZ")
 	formdata = stage+"End=null&" + stage +"Start=null" ;
 
 	formdata +="&updated=" + curDate;
@@ -959,11 +959,11 @@ function checkTimer(val, stage) {
 	}
 	
 	if ("start" in val) {
-		var startTime = new Date(val["start"]);
+		var startTime = moment(val["start"], "YYYY/MM/DDTHH:mm:ssZZ");
 		
 		// boil has been started, has it been finished
 		if ("end" in val) {
-			var endTime = new Date(val["end"]);
+			var endTime = moment(val["end"], "YYYY/MM/DDTHH:mm:ssZZ");
 			var diffTime = endTime - startTime;
 			var hours = Math.floor(diffTime/(1000*60*60));
 			diffTime -= hours * 1000*60*60;
@@ -1022,8 +1022,8 @@ function addMashStep(mashStep, mashData, pid) {
 	if ("start_time" in mashData) {
 		// if there's an end time, we can show the actual time difference
 		if ("end_time" in mashData) {
-			startDate = new Date(mashData['start_time']);
-			endDate = new Date(mashData['end_time']);
+			startDate = moment(mashData['start_time'], "YYYY/MM/DDTHH:mm:ssZZ");
+			endDate = moment(mashData['end_time'], "YYYY/MM/DDTHH:mm:ssZZ");
 			diff = Math.abs(endDate - startDate);
 			seconds = diff/1000;
 			minutes = Math.floor(seconds/60);

@@ -1,4 +1,5 @@
 package com.sb.elsinore;
+
 import java.util.AbstractMap;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,22 +19,22 @@ import org.json.simple.JSONObject;
 
 /**
  * A class to hold the information about the brew day for the timers.
+ * 
  * @author Doug Edey
- *
+ * 
  */
 public final class BrewDay {
 
     /**
      * The Map of timers for the dates.
      */
-    private Map<String, Object> timers =
-            new ConcurrentHashMap<String, Object>();
+    private Map<String, Object> timers = new ConcurrentHashMap<String, Object>();
 
     // generate the date time parameters
     /**
      * The Day format.
      */
-    private DateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd");
+    private DateFormat dFormat = new SimpleDateFormat("yyyy/MM/dd");
     /**
      * The Time format.
      */
@@ -41,7 +42,7 @@ public final class BrewDay {
     /**
      * The Zulu Date & Time format.
      */
-    private DateFormat lFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+    private DateFormat lFormat = new SimpleDateFormat("yyyy/MM/dd'T'HH:mm:ssZ");
 
     /**
      * The Date this BrewDay was last updated.
@@ -50,7 +51,9 @@ public final class BrewDay {
 
     /**
      * parse a string to a date object.
-     * @param dateString The string to be parsed
+     * 
+     * @param dateString
+     *            The string to be parsed
      * @return a date object
      */
     public Date parseDateString(final String dateString) {
@@ -65,7 +68,7 @@ public final class BrewDay {
             dDate = new Date(Long.parseLong(dateString));
         } catch (NumberFormatException e) {
             BrewServer.LOG.log(Level.INFO, "Error: " + dateString
-                + " could not be parsed as a long, trying date", e);
+                    + " could not be parsed as a long, trying date", e);
             try {
                 dDate = lFormat.parse(dateString);
             } catch (ParseException p) {
@@ -80,10 +83,11 @@ public final class BrewDay {
         return dDate;
     }
 
-
     /**
      * Get the Time for the selected name.
-     * @param name The timer name to look for
+     * 
+     * @param name
+     *            The timer name to look for
      * @return The entry: name, date
      */
     @SuppressWarnings("unchecked")
@@ -94,7 +98,9 @@ public final class BrewDay {
 
     /**
      * Get the selected timer date as a string.
-     * @param name The timer to get.
+     * 
+     * @param name
+     *            The timer to get.
      * @return The date as a string
      */
     public String getTimerString(final String name) {
@@ -103,14 +109,16 @@ public final class BrewDay {
 
     /**
      * Set the timer at name to the specified entry.
-     * @param name The timer to reset.
-     * @param timerData And entry with the timer data.
+     * 
+     * @param name
+     *            The timer to reset.
+     * @param timerData
+     *            And entry with the timer data.
      */
     @SuppressWarnings("unchecked")
-    public void setTimer(final String name,
-            final Entry<String, Date> timerData) {
-        HashMap<String, Date> timerElements =
-                (HashMap<String, Date>) timers.get(name);
+    public void setTimer(final String name, final Entry<String, Date> timerData) {
+        HashMap<String, Date> timerElements = (HashMap<String, Date>) timers
+                .get(name);
 
         if (timerElements == null) {
             timerElements = new HashMap<String, Date>();
@@ -122,30 +130,35 @@ public final class BrewDay {
 
     /**
      * Set the timer to the specified date string.
-     * @param name The timer to set
-     * @param startIn The start time string to set.
+     * 
+     * @param name
+     *            The timer to set
+     * @param startIn
+     *            The start time string to set.
      */
     public void startTimer(final String name, final String startIn) {
-        Entry<String, Date> startEntry =
-                new AbstractMap.SimpleEntry<String, Date>(
-                        "start", parseDateString(startIn));
+        Entry<String, Date> startEntry = new AbstractMap.SimpleEntry<String, Date>(
+                "start", parseDateString(startIn));
         setTimer(name, startEntry);
     }
 
     /**
      * Set the end of the timer to the specified stop time.
-     * @param name The name of the timer to stop.
-     * @param stopIn The stop time as a string
+     * 
+     * @param name
+     *            The name of the timer to stop.
+     * @param stopIn
+     *            The stop time as a string
      */
     public void stopTimer(final String name, final String stopIn) {
-        Entry<String, Date> stopEntry =
-                new AbstractMap.SimpleEntry<String, Date>(
-                        "end", parseDateString(stopIn));
+        Entry<String, Date> stopEntry = new AbstractMap.SimpleEntry<String, Date>(
+                "end", parseDateString(stopIn));
         setTimer(name, stopEntry);
     }
 
     /**
      * Get the last date this brewday was updated.
+     * 
      * @return The date object that this brewday was last updated
      */
     public Date getUpdate() {
@@ -154,6 +167,7 @@ public final class BrewDay {
 
     /**
      * Get the date this brewday was updated as a long format string.
+     * 
      * @return The string that represents when this brewday was last updated
      */
     public String getUpdatedString() {
@@ -162,7 +176,9 @@ public final class BrewDay {
 
     /**
      * Set the updated date of this brewday.
-     * @param updatedIn Date to set the updated parameter of this brewday
+     * 
+     * @param updatedIn
+     *            Date to set the updated parameter of this brewday
      */
     public void setUpdated(final Date updatedIn) {
         this.updated = updatedIn;
@@ -170,7 +186,9 @@ public final class BrewDay {
 
     /**
      * Set the update date of this brewday.
-     * @param updatedIn String representing the updated date
+     * 
+     * @param updatedIn
+     *            String representing the updated date
      */
     public void setUpdated(final String updatedIn) {
         setUpdated(parseDateString(updatedIn));
@@ -178,7 +196,9 @@ public final class BrewDay {
 
     /**
      * Create a new timer.
-     * @param name The name of the new timer.
+     * 
+     * @param name
+     *            The name of the new timer.
      */
     public void addTimer(final String name) {
 
@@ -192,6 +212,7 @@ public final class BrewDay {
 
     /**
      * Get the Status as a JSON Object.
+     * 
      * @return A JSONObject representing the status
      */
     @SuppressWarnings("unchecked")
@@ -207,10 +228,10 @@ public final class BrewDay {
             if (e.getValue() != null) {
 
                 // iterate the child hash map
-                HashMap<String, Date> valueEntry =
-                        (HashMap<String, Date>) e.getValue();
-                Iterator<Entry<String, Date>> dateIt =
-                        valueEntry.entrySet().iterator();
+                HashMap<String, Date> valueEntry = (HashMap<String, Date>) e
+                        .getValue();
+                Iterator<Entry<String, Date>> dateIt = valueEntry.entrySet()
+                        .iterator();
 
                 // get the Timer Name Object
                 JSONObject timerJSON = new JSONObject();
@@ -233,6 +254,7 @@ public final class BrewDay {
 
     /**
      * Return the current state of this Brewday as a JSON string.
+     * 
      * @return The String representing the current timers.
      */
     public String getJSONDataString() {
