@@ -238,6 +238,7 @@ public final class LaunchControl {
     private static double recorderDiff = .15d;
     private static String breweryName = null;
     public static String theme = "default";
+    private static boolean pageLock = false;
 
     /*****
      * Main method to launch the brewery.
@@ -579,7 +580,7 @@ public final class LaunchControl {
         // get each setting add it to the JSON
         JSONObject rObj = new JSONObject();
         JSONObject tJSON = null;
-
+        rObj.put("locked", LaunchControl.pageLock);
         rObj.put("breweryName", LaunchControl.getName());
 
         // iterate the thread lists
@@ -595,6 +596,7 @@ public final class LaunchControl {
             JSONObject tJSONTemp = new JSONObject();
             tJSONTemp.putAll(t.getMapStatus());
             tJSON.put("name", t.getName().replace(" ", "_"));
+            tJSON.put("deviceaddr", t.getProbe());
             tJSON.put("tempprobe", tJSONTemp);
 
             if (t.hasVolume()) {
@@ -3205,5 +3207,13 @@ public final class LaunchControl {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    public static void lockPage() {
+        LaunchControl.pageLock = true;
+    }
+    
+    public static void unlockPage() {
+        LaunchControl.pageLock = false;
     }
 }

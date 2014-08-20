@@ -448,7 +448,8 @@ public class ServeHTML {
             + lineSep
             + "Aux ON</button><br />";
 
-        controller += "<input type='hidden' id='gpio' name='gpio' />"
+        controller += "<input type='hidden' id='deviceaddr' name='deviceaddr' />"
+            + "<input type='hidden' id='gpio' name='gpio' />"
             + "<input type='hidden' id='auxgpio' name='auxgpio' />"
             + "<input type='hidden' id='vol_ain' name='vol_ain' />"
             + "<input type='hidden' id='vol_add' name='vol_add' />"
@@ -498,9 +499,9 @@ public class ServeHTML {
     final String addTimers() {
         String timers = lineSep;
         timers += "<div class='panel panel-info'>\n"
-            + "<div class='title panel-heading'>Timers</div>";
+            + "<div id='timers-header' class='title panel-heading'>Timers</div>";
 
-        timers += "<div class='panel-body'>";
+        timers += "<div id='timers-body' class='panel-body'>";
         for (Timer timer : LaunchControl.getTimerList()) {
             // Mash button
             timers += "<div id='div-" + timer.getName() + "'"

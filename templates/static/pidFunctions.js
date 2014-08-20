@@ -23,6 +23,8 @@ function setup() {
             });
         }
     });
+    
+    $('[class=page-header]').append("<div id='edit-page' class='holo-button' ondblclick='toggleEdit(true); return false;'>Edit</div>")
 
 	//$("#select_logo").click(function(){
 		//$("#logo").trigger('click');
@@ -188,11 +190,20 @@ function waitForMsg(){
 					}
 				});
 			}
+			
+			
 
 			if(window.disableUpdates) {
 				return false;
 			}
+			
+			if ("locked" in data) {			
 				
+				window.locked = !data.locked;
+				toggleEdit(false);
+				window.locked = data.locked;
+			}
+
 			if ("vessels" in data) {
 				val = data.vessels;
 				$.each(val, function(vesselName, vesselStatus) {
@@ -255,13 +266,16 @@ function addMashTable(vesselName) {
 		table += "<th colspan='2'>Mash Step</th>";
 		table += "<th>Temp</th>";
 		table += "<th>Time</th>";
-		table += "</tr><tbody></table>";
-		table += "<button class='btn btn-success' id='addMash-"+vesselName
+		table += "</tr>";
+				
+		table += "<tr><td colspan='2'>"
+			+ "<button class='btn btn-success' id='addMash-"+vesselName
 			+"' type='button' onclick='addNewMashStep(this)' "
 			+ "ondrop='dropDeleteMashStep(event);' "
-			+ "ondragover='allowDropMashStep(event);'>Add</button>";
-		table += "<button class='btn btn-success' id='mashButton-"+vesselName
-			+"' type='button' onclick='mashToggle(this)'>Activate</button>";
+			+ "ondragover='allowDropMashStep(event);'>Add</button></td>";
+		table += "<td colspan='2'><button class='btn btn-success' id='mashButton-"+vesselName
+			+"' type='button' onclick='mashToggle(this)'>Activate</button></td></tr>";
+			+ "</tbody></table>";
 		table += "<br id='mashTable"+vesselName+"footer'/>";
 
 		$("#"+vesselName+"-gage").after(table);
@@ -380,7 +394,7 @@ function editDevice(element) {
 		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
 		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>Update</button>"
 		+ "<button id='cancel-"+vessel+"' class='holo-button modeclass' "
-		+ "onclick='cancelEdit(vessel); waitForMsg(); return false;'>Cancel</button>"
+		+ "onclick='cancelEdit("+vessel+"); waitForMsg(); return false;'>Cancel</button>"
 		+ "</form>"
 		+ "</div>");
 }
@@ -457,7 +471,11 @@ function updatePIDStatus(vessel, val) {
 	jQuery(vesselDiv  + ' input[name="min"]').val(val.min);
 	jQuery(vesselDiv  + ' input[name="max"]').val(val.max);
 	jQuery(vesselDiv  + ' input[name="time"]').val(val.time);
+	jQuery(vesselDiv  + ' input[name="deviceaddr"]').val(val.deviceaddr);
 	jQuery(vesselDiv  + ' input[name="gpio"]').val(val.gpio);
+	if ("auxgpio" in val) {
+		jQuery(vesselDiv  + ' input[name="auxgpio"]').val(val.auxgpio);
+	}
 	
 	// Disable some stuff
 	jQuery(vesselDiv  + ' input[name="dutycycle"]').prop("disabled", true);
@@ -1180,7 +1198,7 @@ function dropPump(ev) {
 	
 	// TODO: Update the server with the new location
 	var newOrder = "";
-	$("[id^='div-Pump'").each(function(index) {
+	$("[id^='div-Pump']").each(function(index) {
 		var divID = this.id;
 		
 		if (divID.indexOf('div-') == 0) {
@@ -1383,5 +1401,162 @@ function clearStatus() {
 		 url: 'clearStatus',
 			type: 'POST',
 		success: function(data) {data = null}
+	});
+}
+
+// Functions to hide editable things
+function toggleEdit(manualChange) {
+	if ("locked" in window) {
+		if (window.locked) {
+			readWrite(manualChange);
+			return;
+		} else {
+			readOnly(manualChange);
+			return;
+		}
+	}
+	readWrite(manualChange);
+}
+
+function readOnly(manualChange) {
+	readOnlyPumps();
+	readOnlyTimers();
+	readOnlyDevices();
+	$("[id=edit-page]").text("Edit");
+	window.locked = true;
+	if (manualChange) {
+		$.ajax({
+			url: 'lockPage',
+			type: 'POST',
+			success: function(data) {data = null}
+		});
+	}
+	window.disableUpdates = 0;
+}
+
+function readWrite(manualChange) {
+	readWritePumps();
+	readWriteTimers();
+	readWriteDevices();
+	$("[id=edit-page]").text("Lock");
+	window.locked = false;
+	if (manualChange) {
+		$.ajax({
+			url: 'unlockPage',
+			type: 'POST',
+			success: function(data) {data = null}
+		});
+	}
+	window.disableUpdates = 1;
+}
+
+function readOnlyPumps() {
+	// Check the size of the pump list 
+	var currentCount = $("[id=pumps-body] > div").length;
+	
+	if (currentCount == 0) {
+		// Hide the Div.
+		$('[id=pumps]').css('display', 'none');		
+	} else {
+		// Hide the button
+		$('[id=NewPump]').css('display', 'none');
+		// Disable drag and drop
+		$("[id=pumps-body] > div").each(function(index) {
+			this.setAttribute('draggable', false);
+		});
+	}
+}
+
+function readWritePumps() {
+	// Check the size of the pump list 
+	var currentCount = $("[id=pumps-body] > div").length;
+	
+	if (currentCount == 0) {
+		// Hide the Div.
+		$('[id=pumps]').css('display', 'block');		
+	} else {
+		// Hide the button
+		$('[id=NewPump]').css('display', 'block');
+		// Enable drag and drop
+		$("[id=pumps-body] > div ").each(function(index) {
+			this.setAttribute('draggable', true);
+		});
+	}	
+}
+
+function readOnlyTimers() {
+	// Check the size of the pump list 
+	var currentCount = $("[id=timers-body] > div").length;
+	
+	if (currentCount == 0) {
+		// Hide the Div.
+		$('[id=timers]').css('display', 'none');		
+	} else {
+		// Hide the button
+		$('[id=NewTimer]').css('display', 'none');
+		// Disable drag and drop
+		$("[id=timers-body] > div").each(function(index) {
+			this.setAttribute('draggable', false);
+		});
+	}
+}
+
+function readWriteTimers() {
+	// Check the size of the pump list 
+	var currentCount = $("[id=timers-body] > div").length;
+	
+	if (currentCount == 0) {
+		// Hide the Div.
+		$('[id=timers]').css('display', 'block');		
+	} else {
+		// Hide the button
+		$('[id=NewTimer]').css('display', 'block');
+		// Disable drag and drop
+		$("[id=timers-body] > div").each(function(index) {
+			this.setAttribute('draggable', true);
+		});
+	}
+}
+
+function readWriteDevices() {
+	// Check the devices to see which ones aren't configured.
+	$("[id$='-title']").each(function (index) {
+		var vessel = this.id.replace("-title", "")
+		var vesselForm = 'form[id="'+ vessel +'-form"]';
+		var devAddr = $('#' + vesselForm + ' > input[name="deviceaddr"]').val();
+		if (devAddr == this.textContent) {
+			$('[id=' + this.id.replace("-form", "") + ']').css('display', 'block')
+		}
+		this.setAttribute("onDblClick", "editDevice(this);");
+		$('[id=' + vessel + '-title]').css('cursor', "pointer");
+		// disable the mash table if needs be
+		if ($('[id=mashTable' + vessel + '] > tbody > tr').length <= 2) {
+			// hide
+			$('[id=mashTable' + vessel + '] > tbody > tr').css('display', 'block');
+		}
+	});
+}
+
+function readOnlyDevices() {
+	// Check the devices to see which ones aren't configured.
+	$("[id$='-title']").each(function (index) {
+		
+		var vessel = this.id.replace("-title", "")
+		if (vessel == "messages") {
+			return;
+		}
+		var vesselForm = 'form[id="'+ vessel +'-form"]';
+		var devAddr = $('#' + vesselForm + ' > input[name="deviceaddr"]').val();
+		if (devAddr == this.textContent) {
+			$('[id=' + vessel + ']').css('display', 'none')
+		}
+		this.removeAttribute("onDblClick");
+		$('[id=' + vessel + '-title]').css('cursor', "auto");
+		
+		// disable the mash table if needs be
+		if ($('[id=mashTable' + vessel + '] > tbody > tr').length <= 2) {
+			// hide
+			$('[id=mashTable' + vessel + '] > tbody > tr').css('display', 'none');
+		}
 	});
 }

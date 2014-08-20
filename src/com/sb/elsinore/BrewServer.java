@@ -1280,6 +1280,18 @@ public class BrewServer extends NanoHTTPD {
             return deletePump(parms);
         }
 
+        if (uri.equalsIgnoreCase("/unlockpage")) {
+            LaunchControl.unlockPage();
+            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+                    "{status: 'unlocked'}");
+        }
+
+        if (uri.equalsIgnoreCase("/lockpage")) {
+            LaunchControl.lockPage();
+            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+                    "{status: 'locked'}");
+        }
+
         if (uri.equalsIgnoreCase("/updatetimerorder")) {
             return updateTimerOrder(parms);
         }
