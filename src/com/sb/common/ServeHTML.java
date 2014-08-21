@@ -76,7 +76,7 @@ public class ServeHTML {
                 + " initial-scale=1.0\">" + lineSep
                 + getHeader() + lineSep + "</head><body>" + lineSep
                 + addJS() + lineSep
-                + "<div class=\"page-header\">"
+                + "<div class=\"page-header\" style='display:inline-block; width=100%'>"
                 + "<h1 onDblClick='editBreweryName();'><div id='breweryname'>Elsinore</div> "
                 + "<small id='brewerysubtext'>"
                     + "<a href='http://dougedey.github.io/SB_Elsinore_Server/'>"
