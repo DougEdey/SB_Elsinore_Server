@@ -1,6 +1,7 @@
 package com.sb.elsinore;
 
 import java.util.AbstractMap;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -137,28 +138,74 @@ public final class BrewDay {
      *            The start time string to set.
      */
     public void startTimer(final String name, final String startIn) {
-        Entry<String, Date> startEntry = new AbstractMap.SimpleEntry<String, Date>(
-                "start", parseDateString(startIn));
+        Date startDate = null;
+        try {
+            Long startTime = Long.parseLong(startIn);
+            // If it's 0 we start now. If it's anything else it's a count down.
+            startDate = new Date();
+            if (startTime > 0) {
+                startDate = new Date(startDate.getTime() + (1000 * startTime));
+            }
+        } catch (NumberFormatException nfe) {
+            startDate = parseDateString(startIn);
+        }
+
+        if (startDate == null) {
+            LaunchControl.setMessage(
+                    "Could not parse timer start time. " + startIn);
+            return;
+        }
+
+        Entry<String, Date> startEntry =
+                new AbstractMap.SimpleEntry<String, Date>("start", startDate);
         setTimer(name, startEntry);
     }
 
     /**
      * Set the end of the timer to the specified stop time.
-     * 
+     *
      * @param name
      *            The name of the timer to stop.
      * @param stopIn
      *            The stop time as a string
      */
     public void stopTimer(final String name, final String stopIn) {
+        HashMap<String, Date> valueEntry = (HashMap<String, Date>) timers.get(name);
+        Date endDate = valueEntry.get("end");
+        if (endDate != null) {
+            // Continue the timer
+            continueTimer(name);
+        } else {
+            Entry<String, Date> stopEntry = new AbstractMap.SimpleEntry<String, Date>(
+                    "end", parseDateString(stopIn));
+            setTimer(name, stopEntry);
+        }
+    }
+
+    public void continueTimer(final String name) {
+        HashMap<String, Date> valueEntry = (HashMap<String, Date>) timers.get(name);
+        Date startDate = valueEntry.get("start");
+        Date endDate = valueEntry.get("end");
+
+        Long current = 0L;
+        if (endDate != null && startDate != null) {
+            // get the current duration.
+            current = endDate.getTime() - startDate.getTime();
+        }
+
+        startDate = new Date(Calendar.getInstance().getTimeInMillis() - current);
+
         Entry<String, Date> stopEntry = new AbstractMap.SimpleEntry<String, Date>(
-                "end", parseDateString(stopIn));
+                "end", null);
         setTimer(name, stopEntry);
+        Entry<String, Date> startEntry = new AbstractMap.SimpleEntry<String, Date>(
+                "start", startDate);
+        setTimer(name, startEntry);
     }
 
     /**
      * Get the last date this brewday was updated.
-     * 
+     *
      * @return The date object that this brewday was last updated
      */
     public Date getUpdate() {
@@ -167,7 +214,7 @@ public final class BrewDay {
 
     /**
      * Get the date this brewday was updated as a long format string.
-     * 
+     *
      * @return The string that represents when this brewday was last updated
      */
     public String getUpdatedString() {
@@ -222,6 +269,7 @@ public final class BrewDay {
         Iterator<Entry<String, Object>> it = timers.entrySet().iterator();
 
         Entry<String, Object> e = null;
+        Date currentDate = Calendar.getInstance().getTime();
 
         while (it.hasNext()) {
             e = it.next();
@@ -237,13 +285,27 @@ public final class BrewDay {
                 JSONObject timerJSON = new JSONObject();
                 timerJSON.put("name", e.getKey());
 
-                while (dateIt.hasNext()) {
-                    Entry<String, Date> dateEntry = dateIt.next();
-                    if (dateEntry.getValue() != null) {
-                        timerJSON.put(dateEntry.getKey(),
-                                lFormat.format(dateEntry.getValue()));
+                Date startDate = valueEntry.get("start");
+                Date endDate = valueEntry.get("end");
+                String mode = "none";
+                Long seconds = 0L;
+
+                if (startDate != null && endDate == null) {
+                    // Are we counting up?
+                    if (startDate.getTime() < currentDate.getTime()) {
+                        seconds = (currentDate.getTime() - startDate.getTime()) / 1000;
+                        mode = "up";
+                    } else {
+                        seconds = (startDate.getTime() - currentDate.getTime()) / 1000;
+                        mode = "down";
                     }
+                } else if (startDate != null && endDate != null) {
+                    // Timer has stopped.
+                    seconds = (endDate.getTime() - startDate.getTime()) / 1000;
+                    mode = "stopped";
                 }
+
+                timerJSON.put(mode, seconds);
 
                 status.add(timerJSON);
             }

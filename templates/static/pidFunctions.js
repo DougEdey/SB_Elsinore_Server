@@ -910,8 +910,12 @@ function setTimer(button, stage) {
 	if(button.innerHTML == "Start") {
 		$("#" + stage).hide();
 		$("#"+stage+"Timer").show();
-		formdata = stage + "Start=" + curDate;
+		formdata = stage + "Start=" + 0;
 	} else {
+		var tt = $("#"+stage+"Timer").data('tinyTimer');
+		if (tt != undefined) {
+			tt.stop();
+		}
 		$("#"+stage).show();
 		$("#"+stage+"Timer").hide();
 		formdata = stage+"End=" + curDate;
@@ -957,26 +961,29 @@ function checkTimer(val, stage) {
 	if ("name" in val) {
 		stage = val.name;
 	}
-	
-	if ("start" in val) {
-		var startTime = moment(val["start"], "YYYY/MM/DDTHH:mm:ssZZ");
-		
-		// boil has been started, has it been finished
-		if ("end" in val) {
-			var endTime = moment(val["end"], "YYYY/MM/DDTHH:mm:ssZZ");
-			var diffTime = endTime - startTime;
-			var hours = Math.floor(diffTime/(1000*60*60));
-			diffTime -= hours * 1000*60*60;
-			var mins = Math.floor(diffTime/(1000*60));
-			diffTime -= mins * 1000*60;
-			$("#"+stage).show();
-			$("#"+stage+"Timer").hide();
-			$("#"+stage)[0].innerHTML = hours + ":" + mins + ":" + diffTime/1000;
-		} else {
-			$("#"+stage).hide();
-			$("#"+stage+"Timer").show();
+	// If We're counting UP
+	if ("up" in val) {
+		var startTime = moment().subtract(val.up, 'seconds');
+		$("#"+stage).hide();
+		$("#"+stage+"Timer").show();
+		var tt = $("#"+stage+"Timer").data('tinyTimer');
+		if (tt == undefined) {
 			$("#"+stage+"Timer").tinyTimer({from: startTime.toString()});
+		} else {
+			tt.resetFrom(startTime)
 		}
+	} else if ("down" in val) {
+		// TODO: COUNTDOWN
+	} else if ("stopped" in val) {
+		
+		var diffTime = val.stopped;
+		var hours = Math.floor(diffTime/(60*60));
+		diffTime -= hours * 60*60;
+		var mins = Math.floor(diffTime/(60));
+		diffTime -= mins * 60;
+		$("#"+stage).show();
+		$("#"+stage+"Timer").hide();
+		$("#"+stage)[0].innerHTML = hours + ":" + mins + ":" + diffTime;
 	} else {
 		$("#"+stage+"Timer").hide();
 		$("#"+stage)[0].innerHTML = "Start";
