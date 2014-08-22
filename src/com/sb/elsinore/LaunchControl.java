@@ -808,6 +808,11 @@ public final class LaunchControl {
                 breweryName = tElement.getTextContent();
             }
 
+            tElement = getFirstElement(config, "pagelock");
+            if (tElement != null) {
+                pageLock = Boolean.parseBoolean(tElement.getTextContent());
+            }
+
             tElement = getFirstElement(config, "scale");
             if (tElement != null) {
                 scale = tElement.getTextContent();
@@ -1541,6 +1546,14 @@ public final class LaunchControl {
         }
 
         Element tempElement = null;
+
+        tempElement = getFirstElement(generalElement, "pagelock");
+
+        if (tempElement == null) {
+            tempElement = addNewElement(generalElement, "pagelock");
+        }
+
+        tempElement.setTextContent(Boolean.toString(pageLock));
 
         if (breweryName != null && !breweryName.equals("")) {
             tempElement = getFirstElement(generalElement, "brewery_name");
