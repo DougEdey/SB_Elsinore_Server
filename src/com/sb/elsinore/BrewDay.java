@@ -150,12 +150,6 @@ public final class BrewDay {
             startDate = parseDateString(startIn);
         }
 
-        if (startDate == null) {
-            LaunchControl.setMessage(
-                    "Could not parse timer start time. " + startIn);
-            return;
-        }
-
         Entry<String, Date> startEntry =
                 new AbstractMap.SimpleEntry<String, Date>("start", startDate);
         setTimer(name, startEntry);
