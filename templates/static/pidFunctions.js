@@ -218,7 +218,7 @@ function waitForMsg(){
 
 						$("[id=tempProbes]").append(sysHtml)
 					}
-					if (sysTemp.length == 1 && data.locked) {
+					if ($("[id=tempProbes] > [id=System] > div").length == 1 && data.locked) {
 						sysTemp.remove();
 					}
 				}
@@ -1592,7 +1592,9 @@ function readOnlyDevices() {
 		var vesselForm = 'form[id="'+ vessel +'-form"]';
 		var devAddr = $('#' + vesselForm + ' > input[name="deviceaddr"]').val();
 		if (devAddr == this.textContent) {
-			$('[id=' + vessel + ']').css('display', 'none')
+			if (vessel != "System" || this.getAttribute("onDblClick").indexOf("enable") == 0) {
+				$('[id=' + vessel + ']').css('display', 'none')
+			}
 		}
 		this.removeAttribute("onDblClick");
 		$('[id=' + vessel + '-title]').css('cursor', "auto");
