@@ -86,6 +86,8 @@ div[id$='-tempStatus'] {
 
 .imageheader {
 	float: right;
+	position: fixed;
+	right: 0;
 }
 
 
