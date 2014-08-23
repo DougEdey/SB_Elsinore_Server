@@ -1033,6 +1033,18 @@ public class BrewServer extends NanoHTTPD {
             return addMashStep(parms);
         }
 
+        if (uri.equalsIgnoreCase("/addsystem")) {
+            LaunchControl.addSystemTemp();
+            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                    "Added system temperature");
+        }
+        
+        if (uri.equalsIgnoreCase("/delsystem")) {
+            LaunchControl.delSystemTemp();
+            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                    "Deleted system temperature");
+        }
+
         if (uri.equalsIgnoreCase("/delmashstep")) {
             return delMashStep(parms);
         }

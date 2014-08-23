@@ -42,6 +42,7 @@ public final class Temp implements Runnable {
     public static BigDecimal FREEZING = new BigDecimal(32);
     public static BigDecimal ERROR_TEMP = new BigDecimal(-999);
     private boolean badTemp = false;
+    private boolean keepalive = true;
     /**
      * Base path for BBB System Temp.
      */
@@ -174,7 +175,7 @@ public final class Temp implements Runnable {
      */
     public void run() {
 
-        while (true) {
+        while (keepalive) {
             if (updateTemp() == ERROR_TEMP) {
                 if (fProbe != null && fProbe.equals(
                         "/sys/class/thermal/thermal_zone0/temp")) {
@@ -954,6 +955,12 @@ public final class Temp implements Runnable {
         }
 
         return statusMap;
+    }
+
+    public void shutdown() {
+        // Graceful shutdown.
+        keepalive = false;
+        System.out.println(this.getName() + " is shutting down");
     }
 }
 

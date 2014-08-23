@@ -206,11 +206,30 @@ function waitForMsg(){
 
 			if ("vessels" in data) {
 				val = data.vessels;
+				
+				if (!("system" in data.vessels) && !("System" in data.vessels)) {
+					// No System temperature, add a header to add it in.
+					var sysTemp = $("[id=tempProbes] > [id=System]");
+					if (sysTemp.length == 0 && !data.locked) {
+						var sysHtml = '<div id="System" class="holo-content controller panel panel-primary Temp">'
+								+ '<div id="System-title" class="title panel-heading "'
+								+ 'ondblclick="enableSystem(this);" style="cursor: pointer;">System</div>'
+								+ '</div>';
+
+						$("[id=tempProbes]").append(sysHtml)
+					}
+					if (sysTemp.length == 1 && data.locked) {
+						sysTemp.remove();
+					}
+				}
 				$.each(val, function(vesselName, vesselStatus) {
 					
 					// This should always be there
 					if ("name" in vesselStatus) {
 						vesselName = vesselStatus.name;
+						if (vesselName == "System" && $('[id=System-tempGauge]').length == 0) {
+							return;
+						}
 					}
 											
 					if ("tempprobe" in vesselStatus) {
@@ -1454,7 +1473,7 @@ function readWrite(manualChange) {
 			success: function(data) {data = null}
 		});
 	}
-	window.disableUpdates = 1;
+	window.disableUpdates = 0;
 }
 
 function readOnlyPumps() {
@@ -1534,7 +1553,17 @@ function readWriteDevices() {
 		if (devAddr == this.textContent) {
 			$('[id=' + this.id.replace("-form", "") + ']').css('display', 'block')
 		}
-		this.setAttribute("onDblClick", "editDevice(this);");
+		
+		if (vessel.toLowerCase() == "system") {
+			if ($('[id=System-tempGauge]').length == 0) {
+				// not enabled
+				this.setAttribute("onDblClick", "enableSystem(this);");
+			} else {
+				this.setAttribute("onDblClick", "disableSystem(this);");
+			}
+		} else {
+			this.setAttribute("onDblClick", "editDevice(this);");
+		}
 		$('[id=' + vessel + '-title]').css('cursor', "pointer");
 		// disable the mash table if needs be
 		if ($('[id=mashTable' + vessel + '] > tbody > tr').length <= 2) {
@@ -1566,4 +1595,25 @@ function readOnlyDevices() {
 			$('[id=mashTable' + vessel + '] > tbody > tr').css('display', 'none');
 		}
 	});
+}
+
+function enableSystem(element) {
+	$.ajax({
+		url: 'addSystem',
+		type: 'POST',
+		success: function(data) {data = null}
+	});
+	
+	sleep(2000);
+	location.reload();
+}
+
+function disableSystem(element) {
+	$.ajax({
+		url: 'delSystem',
+		type: 'POST',
+		success: function(data) {data = null}
+	});
+	sleep(2000);
+	location.reload();
 }
