@@ -2061,7 +2061,15 @@ public final class LaunchControl {
      *            The temperature probe name
      * @return The newly created Document Element
      */
-    public static Element addTempToConfig(final String probe, final String name) {
+    public static Element addTempToConfig(Temp temp) {
+
+        if (temp == null) {
+            return null;
+        }
+
+        String probe = temp.getProbe();
+        String name = temp.getName();
+        String cutoff = temp.getCutoff();
 
         if (probe.equalsIgnoreCase(name)) {
             System.out.println("Probe: " + probe + " is not setup, not saving");
@@ -2077,40 +2085,36 @@ public final class LaunchControl {
             device = addNewElement(null, "device");
             device.setAttribute("id", name);
         }
+        setElementText(device, "probe", probe);
+        setElementText(device, "cutoff", cutoff);
 
-        Temp t = LaunchControl.findTemp(name);
+        System.out.println("Checking for volume");
+        if (temp.hasVolume()) {
+            System.out.println("Saving volume");
+            setElementText(device, "volume-units", temp.getVolumeUnit());
+            if (temp.getVolumeAIN() >= 0) {
+                setElementText(device, "volume-ain",
+                        Integer.toString(temp.getVolumeAIN()));
+            } else {
+                setElementText(device, "volume-address",
+                        temp.getVolumeAddress());
+                setElementText(device, "volume-offset", temp.getVolumeOffset());
+            }
 
-        if (t != null) {
-            setElementText(device, "probe", t.getProbe());
+            ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase = 
+                    temp.getVolumeBase();
 
-            System.out.println("Checking for volume");
-            if (t.hasVolume()) {
-                System.out.println("Saving volume");
-                setElementText(device, "volume-units", t.getVolumeUnit());
-                if (t.getVolumeAIN() >= 0) {
-                    setElementText(device, "volume-ain",
-                            Integer.toString(t.getVolumeAIN()));
-                } else {
-                    setElementText(device, "volume-address",
-                            t.getVolumeAddress());
-                    setElementText(device, "volume-offset", t.getVolumeOffset());
-                }
+            // Iterate over the entries
 
-                ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase = t
-                        .getVolumeBase();
-
-                // Iterate over the entries
-
-                if (volumeBase != null) {
-                    for (Entry<BigDecimal, BigDecimal> e : volumeBase
-                            .entrySet()) {
-                        System.out.println("Saving volume point " + e.getKey()
-                                + " value " + e.getValue());
-                        Element volEntry = addNewElement(device, "volume");
-                        volEntry.setAttribute("vol", e.getKey().toString());
-                        volEntry.setTextContent(e.getValue().toString());
-                        device.appendChild(volEntry);
-                    }
+            if (volumeBase != null) {
+                for (Entry<BigDecimal, BigDecimal> e : volumeBase
+                        .entrySet()) {
+                    System.out.println("Saving volume point " + e.getKey()
+                            + " value " + e.getValue());
+                    Element volEntry = addNewElement(device, "volume");
+                    volEntry.setAttribute("vol", e.getKey().toString());
+                    volEntry.setTextContent(e.getValue().toString());
+                    device.appendChild(volEntry);
                 }
             }
         }

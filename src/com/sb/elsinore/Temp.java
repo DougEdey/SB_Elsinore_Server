@@ -56,14 +56,14 @@ public final class Temp implements Runnable {
     /**
      * Match the temperature regexp.
      */
-    private final Pattern tempRegexp = Pattern.compile("(-?)(\\d{1,3})(C|F)");
+    private final Pattern tempRegexp = Pattern.compile("(-?)(\\d{1,3})(C|F)?");
 
     /**
      * Save the current object to the configuration using LaunchControl.
      */
     public void save() {
         if (name != null && !name.equals("")) {
-            LaunchControl.addTempToConfig(probeName, name);
+            LaunchControl.addTempToConfig(this);
         }
     }
 
@@ -240,7 +240,7 @@ public final class Temp implements Runnable {
                 negative + tempMatcher.group(2));
             String unit = tempMatcher.group(3);
 
-            if (unit.equals(this.scale)) {
+            if (unit == null || unit.equals(this.scale)) {
                 this.cutoffTemp = temperature;
             } else if (unit.equals("F")) {
                 this.cutoffTemp = fToC(temperature);
@@ -397,6 +397,13 @@ public final class Temp implements Runnable {
      */
     public long getTime() {
         return currentTime;
+    }
+    
+    /**
+     * @return The current cutoff temp.
+     */
+    public String getCutoff() {
+        return cutoffTemp.toPlainString();
     }
 
     /**
@@ -949,6 +956,7 @@ public final class Temp implements Runnable {
         statusMap.put("temp", getTemp());
         statusMap.put("elapsed", getTime());
         statusMap.put("scale", getScale());
+        statusMap.put("cutoff", getCutoff());
 
         if (currentError != null) {
             statusMap.put("error", currentError);

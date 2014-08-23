@@ -318,6 +318,11 @@ function updateTempProbe(vessel, val) {
 	dec = Temp % 1;
 	dec = dec.toString().substr(1,3);
 	GaugeDisplay[vessel].setValue(pad(int, 3, 0) + "" + dec);
+	var vesselDiv = '[id="'+vessel+'-form"]';
+	if ("cutoff" in val) {
+		jQuery(vesselDiv  + ' input[name="cutoff"]').val(val.cutoff);
+	}
+	
 	jQuery("#"+vessel+"-tempStatus").text(temp);
 	// cleanup
 	dec = null;
@@ -401,6 +406,7 @@ function editDevice(element) {
 	var vesselDiv = element.id;
 	var gpio = $('#' + vessel  + ' input[name="gpio"]').val();
 	var auxgpio = $('#' + vessel  + ' input[name="auxgpio"]').val();
+	var cutoff = $('#' + vessel  + ' input[name="cutoff"]').val();
 	
 	// Insert a couple of new form elements
 	$('#' + vesselDiv).append("<div id='"+vessel+"-edit'>"
@@ -410,6 +416,8 @@ function editDevice(element) {
 				"value='"+gpio+"' placeholder='GPIO_X(_Y)'/><br/>"
 		+ "<input type='text' name='aux_gpio' id='aux_gpio' onblur='validate_gpio(this)' " +
 				"value='"+auxgpio+"' placeholder='Aux GPIO_X(_Y)' /><br/>"
+		+ "<input type='text' name='cutoff' id='cutoff' " +
+				"value='"+cutoff+"' placeholder='Cutoff Temp' /><br/>"
 		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
 		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>Update</button>"
 		+ "<button id='cancel-"+vessel+"' class='holo-button modeclass' "
