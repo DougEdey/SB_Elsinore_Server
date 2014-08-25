@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,6 +82,7 @@ import Cosm.Datastream;
 import Cosm.Feed;
 import Cosm.Unit;
 
+import com.sb.common.CollectionsUtil;
 import com.sb.common.ServeHTML;
 import com.sb.elsinore.StatusRecorder;
 import com.sb.elsinore.NanoHTTPD.Response.Status;
@@ -118,11 +120,11 @@ public final class LaunchControl {
     /**
      * List of PIDs.
      */
-    private static List<PID> pidList = new ArrayList<PID>();
+    private static ArrayList<PID> pidList = new ArrayList<PID>();
     /**
      * List of Temperature probes.
      */
-    private static List<Temp> tempList = new ArrayList<Temp>();
+    private static ArrayList<Temp> tempList = new ArrayList<Temp>();
     /**
      * List of Pumps.
      */
@@ -130,7 +132,7 @@ public final class LaunchControl {
     /**
      * List of Timers.
      */
-    private static List<Timer> timerList = new ArrayList<Timer>();
+    private static CopyOnWriteArrayList<Timer> timerList = new CopyOnWriteArrayList<Timer>();
     /**
      * List of MashControl profiles.
      */
@@ -236,10 +238,11 @@ public final class LaunchControl {
     private static double recorderDiff = .15d;
     private static String breweryName = null;
     public static String theme = "default";
+    private static boolean pageLock = false;
 
     /*****
      * Main method to launch the brewery.
-     *
+     * 
      * @param arguments
      *            List of arguments from the command line
      */
@@ -279,8 +282,8 @@ public final class LaunchControl {
                         port = t;
                     } catch (NumberFormatException e) {
                         BrewServer.LOG
-                            .warning("Couldn't parse port value as an integer: "
-                                + startupCommand.getOptionValue("port"));
+                                .warning("Couldn't parse port value as an integer: "
+                                        + startupCommand.getOptionValue("port"));
                         System.exit(-1);
                     }
                 }
@@ -290,8 +293,8 @@ public final class LaunchControl {
                 }
 
                 if (startupCommand.hasOption("rthreshold")) {
-                    recorderDiff = Double.parseDouble(
-                            startupCommand.getOptionValue("rthreshold"));
+                    recorderDiff = Double.parseDouble(startupCommand
+                            .getOptionValue("rthreshold"));
                 }
 
                 if (startupCommand.hasOption("baseUser")) {
@@ -329,22 +332,20 @@ public final class LaunchControl {
         startupOptions.addOption("p", "port", true,
                 "Specify the port to run the webserver on");
 
-        startupOptions
-                .addOption("g", "gpiodefinitions", true,
-                    "specify the GPIO Definitions file if"
-                    + " you're on Kernel 3.8 or above");
+        startupOptions.addOption("g", "gpiodefinitions", true,
+                "specify the GPIO Definitions file if"
+                        + " you're on Kernel 3.8 or above");
         startupOptions.addOption("rthreshold", true,
                 "specify the amount for a reading to change before "
-                + "recording the value in history");
+                        + "recording the value in history");
         startupOptions.addOption("baseUser", true,
                 "Specify the user who should own all the files created");
-        startupOptions.addOption("t", "theme", true,
-                "Specify the theme name");
+        startupOptions.addOption("t", "theme", true, "Specify the theme name");
     }
 
     /**
      * Constructor for launch control.
-     *
+     * 
      * @param port
      *            The port to start the server on.
      */
@@ -441,7 +442,7 @@ public final class LaunchControl {
 
     /************
      * Start the COSM Connection.
-     *
+     * 
      * @param apiKey
      *            User API Key from COSM
      * @param feedID
@@ -471,7 +472,7 @@ public final class LaunchControl {
 
     /*****
      * Create an image from a COSM Feed.
-     *
+     * 
      * @param startDate
      *            The start date to get the image from
      * @param endDate
@@ -481,15 +482,17 @@ public final class LaunchControl {
     public String getCosmImages(final String startDate, final String endDate) {
         try {
             if (cosmFeed != null) {
-                for (Temp t : tempList) {
-                    Datastream tData = findDatastream(t.getName());
-                    if (tData != null) {
-                        if (startDate == null || endDate == null) {
-                            cosm.getDatastreamImage(cosmFeed.getId(),
-                                    t.getName());
-                        } else {
-                            cosm.getDatastreamImage(cosmFeed.getId(),
-                                    t.getName(), startDate, endDate);
+                synchronized (tempList) {
+                    for (Temp t : tempList) {
+                        Datastream tData = findDatastream(t.getName());
+                        if (tData != null) {
+                            if (startDate == null || endDate == null) {
+                                cosm.getDatastreamImage(cosmFeed.getId(),
+                                        t.getName());
+                            } else {
+                                cosm.getDatastreamImage(cosmFeed.getId(),
+                                        t.getName(), startDate, endDate);
+                            }
                         }
                     }
                 }
@@ -514,14 +517,17 @@ public final class LaunchControl {
     public String getCosmXML(final String startDate, final String endDate) {
         try {
             if (cosmFeed != null) {
-                for (Temp t : tempList) {
-                    Datastream tData = findDatastream(t.getName());
-                    if (tData != null) {
-                        if (startDate == null || endDate == null) {
-                            cosm.getDatastreamXML(cosmFeed.getId(), t.getName());
-                        } else {
-                            cosm.getDatastreamXML(cosmFeed.getId(),
-                                    t.getName(), startDate, endDate);
+                synchronized (tempList) {
+                    for (Temp t : tempList) {
+                        Datastream tData = findDatastream(t.getName());
+                        if (tData != null) {
+                            if (startDate == null || endDate == null) {
+                                cosm.getDatastreamXML(cosmFeed.getId(),
+                                        t.getName());
+                            } else {
+                                cosm.getDatastreamXML(cosmFeed.getId(),
+                                        t.getName(), startDate, endDate);
+                            }
                         }
                     }
                 }
@@ -541,14 +547,16 @@ public final class LaunchControl {
      */
     public static String getControlPage() {
         HashMap<String, String> devList = new HashMap<String, String>();
-        for (Temp t : tempList) {
-            PID tPid = findPID(t.getName());
-            String type = "Temp";
+        synchronized (tempList) {
+            for (Temp t : tempList) {
+                PID tPid = findPID(t.getName());
+                String type = "Temp";
 
-            if (tPid != null) {
-                type = "PID";
+                if (tPid != null) {
+                    type = "PID";
+                }
+                devList.put(t.getName(), type);
             }
-            devList.put(t.getName(), type);
         }
 
         ServeHTML pidServe = new ServeHTML(devList, pumpList);
@@ -571,66 +579,68 @@ public final class LaunchControl {
         // get each setting add it to the JSON
         JSONObject rObj = new JSONObject();
         JSONObject tJSON = null;
-
+        rObj.put("locked", LaunchControl.pageLock);
         rObj.put("breweryName", LaunchControl.getName());
 
         // iterate the thread lists
         // use the temp list to determine if we have a PID to go with
         JSONArray vesselJSON = new JSONArray();
+        synchronized (tempList) {
+            for (Temp t : tempList) {
+                /* Check for a PID */
+                PID tPid = findPID(t.getName());
+                tJSON = new JSONObject();
 
-        for (Temp t : tempList) {
-            /* Check for a PID */
-            PID tPid = findPID(t.getName());
-            tJSON = new JSONObject();
+                // Add the temp to the JSON Map
+                JSONObject tJSONTemp = new JSONObject();
+                tJSONTemp.putAll(t.getMapStatus());
+                tJSON.put("name", t.getName().replace(" ", "_"));
+                tJSON.put("deviceaddr", t.getProbe());
+                tJSON.put("tempprobe", tJSONTemp);
 
-            // Add the temp to the JSON Map
-            JSONObject tJSONTemp = new JSONObject();
-            tJSONTemp.putAll(t.getMapStatus());
-            tJSON.put("name", t.getName().replace(" ", "_"));
-            tJSON.put("tempprobe", tJSONTemp);
+                if (t.hasVolume()) {
+                    JSONObject volumeJSON = new JSONObject();
+                    volumeJSON.put("volume", t.getVolume());
+                    volumeJSON.put("units", t.getVolumeUnit());
+                    if (t.getVolumeAIN() >= 0) {
+                        volumeJSON.put("ain", t.getVolumeAIN());
+                    } else {
+                        volumeJSON.put("address", t.getVolumeAddress());
+                        volumeJSON.put("offset", t.getVolumeOffset());
+                    }
 
-            if (t.hasVolume()) {
-                JSONObject volumeJSON = new JSONObject();
-                volumeJSON.put("volume", t.getVolume());
-                volumeJSON.put("units", t.getVolumeUnit());
-                if (t.getVolumeAIN() >= 0) {
-                    volumeJSON.put("ain", t.getVolumeAIN());
-                } else {
-                    volumeJSON.put("address", t.getVolumeAddress());
-                    volumeJSON.put("offset", t.getVolumeOffset());
+                    tJSON.put("volume", volumeJSON);
                 }
 
-                tJSON.put("volume", volumeJSON);
-            }
-
-            if (tPid != null) {
-                JSONObject tJSONPID = new JSONObject();
-                tJSONPID.putAll(tPid.getMapStatus());
-                tJSON.put("pidstatus", tJSONPID);
-            }
-
-            // Add the JSON object with the PID Name
-            vesselJSON.add(tJSON);
-
-            // update COSM
-            if (cosmFeed != null) {
-                Datastream tData = findDatastream(t.getName());
-                tData.setCurrentValue(t.getTemp().toString());
-                Unit tUnit = new Unit();
-                tUnit.setType("temp");
-                tUnit.setSymbol(t.getScale());
-                tUnit.setLabel("temperature");
-                tData.setUnit(tUnit);
-                try {
-                    cosm.updateDatastream(cosmFeed.getId(), t.getName(), tData);
-                } catch (CosmException e) {
-                    System.out.println("Failed to update datastream: "
-                            + e.getMessage());
+                if (tPid != null) {
+                    JSONObject tJSONPID = new JSONObject();
+                    tJSONPID.putAll(tPid.getMapStatus());
+                    tJSON.put("pidstatus", tJSONPID);
                 }
 
+                // Add the JSON object with the PID Name
+                vesselJSON.add(tJSON);
+
+                // update COSM
+                if (cosmFeed != null) {
+                    Datastream tData = findDatastream(t.getName());
+                    tData.setCurrentValue(t.getTemp().toString());
+                    Unit tUnit = new Unit();
+                    tUnit.setType("temp");
+                    tUnit.setSymbol(t.getScale());
+                    tUnit.setLabel("temperature");
+                    tData.setUnit(tUnit);
+                    try {
+                        cosm.updateDatastream(cosmFeed.getId(), t.getName(),
+                                tData);
+                    } catch (CosmException e) {
+                        System.out.println("Failed to update datastream: "
+                                + e.getMessage());
+                    }
+
+                }
             }
         }
-
         rObj.put("vessels", vesselJSON);
 
         if (brewDay != null) {
@@ -798,6 +808,11 @@ public final class LaunchControl {
                 breweryName = tElement.getTextContent();
             }
 
+            tElement = getFirstElement(config, "pagelock");
+            if (tElement != null) {
+                pageLock = Boolean.parseBoolean(tElement.getTextContent());
+            }
+
             tElement = getFirstElement(config, "scale");
             if (tElement != null) {
                 scale = tElement.getTextContent();
@@ -866,8 +881,8 @@ public final class LaunchControl {
             }
 
             // Check for a system temperature
-            if (getFirstElement(config, "system") != null) {
-                Temp tTemp = new Temp("system", "");
+            if (getFirstElement(config, "System") != null) {
+                Temp tTemp = new Temp("System", "");
                 tempList.add(tTemp);
                 BrewServer.LOG.info("Adding " + tTemp.getName());
                 // setup the scale for each temp probe
@@ -942,12 +957,12 @@ public final class LaunchControl {
                 try {
                     position = Integer.parseInt(tempString);
                 } catch (NumberFormatException nfe) {
-                    BrewServer.LOG.warning(
-                            "Couldn't parse pump " + pumpName + " position: " + tempString);
+                    BrewServer.LOG.warning("Couldn't parse pump " + pumpName
+                            + " position: " + tempString);
                 }
             }
             try {
-                synchronized(pumpList) {
+                synchronized (pumpList) {
                     pumpList.add(new Pump(pumpName, gpio));
                 }
             } catch (InvalidGPIOException e) {
@@ -974,10 +989,11 @@ public final class LaunchControl {
         }
 
         try {
-            for (String s: config.options(input)) {
-                timerList.add(new Timer(s));
+            synchronized (timerList) {
+                for (String s : config.options(input)) {
+                    timerList.add(new Timer(s));
+                }
             }
-
             // TODO: Add in countup/countdown detection
         } catch (NoSectionException nse) {
             // we shouldn't get here!
@@ -987,7 +1003,7 @@ public final class LaunchControl {
 
     /**
      * Parse the list of timers in an XML Element.
-     *
+     * 
      * @param config
      *            the Element containing the timers
      */
@@ -996,22 +1012,22 @@ public final class LaunchControl {
             return;
         }
         NodeList timers = config.getChildNodes();
-        timerList = new ArrayList<Timer>();
+        timerList = new CopyOnWriteArrayList<Timer>();
 
         for (int i = 0; i < timers.getLength(); i++) {
             Element tElement = (Element) timers.item(i);
             Timer temp = new Timer(tElement.getAttribute("id"));
             if (tElement.getAttribute("position") != null) {
                 try {
-                    temp.setPosition(
-                        Integer.parseInt(
-                            tElement.getAttribute("position")));
+                    temp.setPosition(Integer.parseInt(tElement
+                            .getAttribute("position")));
                 } catch (NumberFormatException nfe) {
                     // Couldn't parse. Move on.
                 }
             }
-
-            timerList.add(temp);
+            synchronized (timerList) {
+                timerList.add(temp);
+            }
         }
     }
 
@@ -1031,7 +1047,7 @@ public final class LaunchControl {
 
         try {
             Pump p = new Pump(name, gpio);
-            synchronized(pumpList) {
+            synchronized (pumpList) {
                 pumpList.add(p);
             }
         } catch (InvalidGPIOException g) {
@@ -1042,9 +1058,32 @@ public final class LaunchControl {
 
     }
 
+    // Add the system temperature
+    public static void addSystemTemp() {
+        Temp tTemp = new Temp("System", "");
+        tempList.add(tTemp);
+        BrewServer.LOG.info("Adding " + tTemp.getName());
+        // setup the scale for each temp probe
+        tTemp.setScale(scale);
+        // setup the threads
+        Thread tThread = new Thread(tTemp);
+        tThread.setName("Temp_system");
+        tempThreads.add(tThread);
+        tThread.start();
+    }
+
+    public static void delSystemTemp() {
+        Temp tTemp = LaunchControl.findTemp("System");
+        // Do we have anything to delete?
+        if (tTemp != null) {
+            tTemp.shutdown();
+            tempList.remove(tTemp);
+        }
+    }
+
     /**
      * Check to see if a pump with the given name exists.
-     *
+     * 
      * @param name
      *            The name of the pump to check
      * @return True if the pump exists.
@@ -1062,7 +1101,7 @@ public final class LaunchControl {
 
     /**
      * Add a new timer to the list.
-     *
+     * 
      * @param name
      *            The name of the timer.
      * @param mode
@@ -1071,11 +1110,13 @@ public final class LaunchControl {
      */
     public static boolean addTimer(final String name, final String mode) {
         // Mode is a placeholder for now
-        if (timerList.contains(name) || name.equals("")) {
-            return false;
+        synchronized (timerList) {
+            if (timerList.contains(name) || name.equals("")) {
+                return false;
+            }
+            CollectionsUtil.addInOrder(timerList, new Timer(name));
         }
 
-        timerList.add(new Timer(name));
         return true;
     }
 
@@ -1250,12 +1291,14 @@ public final class LaunchControl {
      */
     public static Temp findTemp(final String name) {
         // search based on the input name
-        Iterator<Temp> iterator = tempList.iterator();
-        Temp tTemp = null;
-        while (iterator.hasNext()) {
-            tTemp = iterator.next();
-            if (tTemp.getName().equalsIgnoreCase(name)) {
-                return tTemp;
+        synchronized (tempList) {
+            Iterator<Temp> iterator = tempList.iterator();
+            Temp tTemp = null;
+            while (iterator.hasNext()) {
+                tTemp = iterator.next();
+                if (tTemp.getName().equalsIgnoreCase(name)) {
+                    return tTemp;
+                }
             }
         }
         return null;
@@ -1270,12 +1313,14 @@ public final class LaunchControl {
      */
     public static PID findPID(final String name) {
         // search based on the input name
-        Iterator<PID> iterator = pidList.iterator();
-        PID tPid = null;
-        while (iterator.hasNext()) {
-            tPid = iterator.next();
-            if (tPid.getName().equalsIgnoreCase(name)) {
-                return tPid;
+        synchronized (pidList) {
+            Iterator<PID> iterator = pidList.iterator();
+            PID tPid = null;
+            while (iterator.hasNext()) {
+                tPid = iterator.next();
+                if (tPid.getName().equalsIgnoreCase(name)) {
+                    return tPid;
+                }
             }
         }
         return null;
@@ -1288,7 +1333,9 @@ public final class LaunchControl {
      *            PID to add.
      */
     public static void addPID(final PID newPID) {
-        pidList.add(newPID);
+        synchronized (pidList) {
+            pidList.add(newPID);
+        }
         Thread pThread = new Thread(newPID);
         pThread.start();
         pidThreads.add(pThread);
@@ -1296,7 +1343,7 @@ public final class LaunchControl {
 
     /**************
      * Find the Pump in the current list.
-     *
+     * 
      * @param name
      *            The pump to find
      * @return return the PUMP object
@@ -1318,7 +1365,9 @@ public final class LaunchControl {
 
     /**
      * Delete the specified pump.
-     * @param name The pump to delete.
+     * 
+     * @param name
+     *            The pump to delete.
      */
     public static void deletePump(final String name) {
         // search based on the input name
@@ -1339,19 +1388,21 @@ public final class LaunchControl {
 
     /**************
      * Find the Timer in the current list.
-     *
+     * 
      * @param name
      *            The timer to find
      * @return return the Timer object
      */
     public static Timer findTimer(final String name) {
         // search based on the input name
-        Iterator<Timer > iterator = timerList.iterator();
-        Timer tTimer = null;
-        while (iterator.hasNext()) {
-            tTimer = iterator.next();
-            if (tTimer.getName().equalsIgnoreCase(name)) {
-                return tTimer;
+        synchronized (timerList) {
+            Iterator<Timer> iterator = timerList.iterator();
+            Timer tTimer = null;
+            while (iterator.hasNext()) {
+                tTimer = iterator.next();
+                if (tTimer.getName().equalsIgnoreCase(name)) {
+                    return tTimer;
+                }
             }
         }
         return null;
@@ -1359,14 +1410,14 @@ public final class LaunchControl {
 
     /**************
      * Delete the Timer in the current list.
-     *
+     * 
      * @param name
      *            The timer to delete
      */
     public static void deleteTimer(final String name) {
         // search based on the input name
         synchronized (timerList) {
-            Iterator<Timer > iterator = timerList.iterator();
+            Iterator<Timer> iterator = timerList.iterator();
             Timer tTimer = null;
             while (iterator.hasNext()) {
                 tTimer = iterator.next();
@@ -1379,7 +1430,7 @@ public final class LaunchControl {
 
     /********
      * Get the BrewDay object. Create one if there is no brewday object.
-     *
+     * 
      * @return The current brewday object.
      */
     public static BrewDay getBrewDay() {
@@ -1426,8 +1477,9 @@ public final class LaunchControl {
                         }
 
                         useOWFS = true;
-
-                        tempList.clear();
+                        synchronized (tempList) {
+                            tempList.clear();
+                        }
                         listOWFSDevices();
                         return;
                     }
@@ -1448,7 +1500,9 @@ public final class LaunchControl {
 
                 Temp currentTemp = new Temp(currentFile.getName(),
                         currentFile.getName());
-                tempList.add(currentTemp);
+                synchronized (tempList) {
+                    tempList.add(currentTemp);
+                }
                 // setup the scale for each temp probe
                 currentTemp.setScale(scale);
                 // setup the threads
@@ -1516,6 +1570,14 @@ public final class LaunchControl {
         }
 
         Element tempElement = null;
+
+        tempElement = getFirstElement(generalElement, "pagelock");
+
+        if (tempElement == null) {
+            tempElement = addNewElement(generalElement, "pagelock");
+        }
+
+        tempElement.setTextContent(Boolean.toString(pageLock));
 
         if (breweryName != null && !breweryName.equals("")) {
             tempElement = getFirstElement(generalElement, "brewery_name");
@@ -1760,23 +1822,26 @@ public final class LaunchControl {
     private void displaySensors() {
         // iterate the list of temperature Threads to get values
         Integer i = 1;
-        Iterator<Temp> iterator = tempList.iterator();
-        System.out.println("\n\nNo config data found as usable. "
-                + "Select a input and name it (i.e. \"1 kettle\" no quotes)"
-                + " or type \"r\" to refresh:");
-        while (iterator.hasNext()) {
-            // launch all the PIDs first,
-            // since they will launch the temp theads too
-            Temp tTemp = iterator.next();
-            BigDecimal currentTemp = tTemp.updateTemp();
+        synchronized (tempList) {
+            Iterator<Temp> iterator = tempList.iterator();
+            System.out
+                    .println("\n\nNo config data found as usable. "
+                            + "Select a input and name it (i.e. \"1 kettle\" no quotes)"
+                            + " or type \"r\" to refresh:");
+            while (iterator.hasNext()) {
+                // launch all the PIDs first,
+                // since they will launch the temp theads too
+                Temp tTemp = iterator.next();
+                BigDecimal currentTemp = tTemp.updateTemp();
 
-            System.out.print(i.toString() + ") " + tTemp.getName());
-            if (currentTemp.equals(Temp.ERROR_TEMP)) {
-                System.out.println(" doesn't have a valid temperature");
-            } else {
-                System.out.println(" " + currentTemp);
+                System.out.print(i.toString() + ") " + tTemp.getName());
+                if (currentTemp.equals(Temp.ERROR_TEMP)) {
+                    System.out.println(" doesn't have a valid temperature");
+                } else {
+                    System.out.println(" " + currentTemp);
+                }
+                i++;
             }
-            i++;
         }
     }
 
@@ -1797,7 +1862,7 @@ public final class LaunchControl {
             delElements.add((Element) devList.item(i));
         }
         // now we can delete them.
-        for (Element e: delElements) {
+        for (Element e : delElements) {
             e.getParentNode().removeChild(e);
         }
 
@@ -1847,16 +1912,16 @@ public final class LaunchControl {
                 childTimer = timersElement.getFirstChild();
             }
 
-            for (Timer t : timerList) {
-
-                Element timerElement = getFirstElementByXpath(
-                        null, "/elsinore/timers/timer[@id='"
-                        + t + "']");
-                if (timerElement == null) {
-                    // No timer by this name
-                    Element newTimer = addNewElement(timersElement, "timer");
-                    newTimer.setAttribute("id", t.getName());
-                    newTimer.setAttribute("position", "" + t.getPosition());
+            synchronized (timerList) {
+                for (Timer t : timerList) {
+                    Element timerElement = getFirstElementByXpath(null,
+                            "/elsinore/timers/timer[@id='" + t + "']");
+                    if (timerElement == null) {
+                        // No timer by this name
+                        Element newTimer = addNewElement(timersElement, "timer");
+                        newTimer.setAttribute("id", t.getName());
+                        newTimer.setAttribute("position", "" + t.getPosition());
+                    }
                 }
             }
         }
@@ -1996,7 +2061,15 @@ public final class LaunchControl {
      *            The temperature probe name
      * @return The newly created Document Element
      */
-    public static Element addTempToConfig(final String probe, final String name) {
+    public static Element addTempToConfig(Temp temp) {
+
+        if (temp == null) {
+            return null;
+        }
+
+        String probe = temp.getProbe();
+        String name = temp.getName();
+        String cutoff = temp.getCutoff();
 
         if (probe.equalsIgnoreCase(name)) {
             System.out.println("Probe: " + probe + " is not setup, not saving");
@@ -2012,40 +2085,36 @@ public final class LaunchControl {
             device = addNewElement(null, "device");
             device.setAttribute("id", name);
         }
+        setElementText(device, "probe", probe);
+        setElementText(device, "cutoff", cutoff);
 
-        Temp t = LaunchControl.findTemp(name);
+        System.out.println("Checking for volume");
+        if (temp.hasVolume()) {
+            System.out.println("Saving volume");
+            setElementText(device, "volume-units", temp.getVolumeUnit());
+            if (temp.getVolumeAIN() >= 0) {
+                setElementText(device, "volume-ain",
+                        Integer.toString(temp.getVolumeAIN()));
+            } else {
+                setElementText(device, "volume-address",
+                        temp.getVolumeAddress());
+                setElementText(device, "volume-offset", temp.getVolumeOffset());
+            }
 
-        if (t != null) {
-            setElementText(device, "probe", t.getProbe());
+            ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase = 
+                    temp.getVolumeBase();
 
-            System.out.println("Checking for volume");
-            if (t.hasVolume()) {
-                System.out.println("Saving volume");
-                setElementText(device, "volume-units", t.getVolumeUnit());
-                if (t.getVolumeAIN() >= 0) {
-                    setElementText(device, "volume-ain",
-                            Integer.toString(t.getVolumeAIN()));
-                } else {
-                    setElementText(device, "volume-address",
-                            t.getVolumeAddress());
-                    setElementText(device, "volume-offset", t.getVolumeOffset());
-                }
+            // Iterate over the entries
 
-                ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase = t
-                        .getVolumeBase();
-
-                // Iterate over the entries
-
-                if (volumeBase != null) {
-                    for (Entry<BigDecimal, BigDecimal> e : volumeBase
-                            .entrySet()) {
-                        System.out.println("Saving volume point " + e.getKey()
-                                + " value " + e.getValue());
-                        Element volEntry = addNewElement(device, "volume");
-                        volEntry.setAttribute("vol", e.getKey().toString());
-                        volEntry.setTextContent(e.getValue().toString());
-                        device.appendChild(volEntry);
-                    }
+            if (volumeBase != null) {
+                for (Entry<BigDecimal, BigDecimal> e : volumeBase
+                        .entrySet()) {
+                    System.out.println("Saving volume point " + e.getKey()
+                            + " value " + e.getValue());
+                    Element volEntry = addNewElement(device, "volume");
+                    volEntry.setAttribute("vol", e.getKey().toString());
+                    volEntry.setTextContent(e.getValue().toString());
+                    device.appendChild(volEntry);
                 }
             }
         }
@@ -2216,7 +2285,7 @@ public final class LaunchControl {
 
             LaunchControl.setFileOwner(originalFile);
             LaunchControl.setFileOwner(sourceFile);
-            
+
             configCfg.read(configFileName);
             System.out.println("Created configCfg");
         } catch (IOException e) {
@@ -2655,7 +2724,7 @@ public final class LaunchControl {
     /**
      * Get a list of all the nodes that match the nodeName. If no baseNode is
      * provided (null) then it checks from the document root.
-     * 
+     *
      * @param baseNode
      *            The root element to check from, null for the base element
      * @param nodeName
@@ -2736,7 +2805,7 @@ public final class LaunchControl {
 
     /**
      * Returns all the elements using an Xpath Search.
-     *
+     * 
      * @param baseNode
      *            The base node to search on. if null, use the document root.
      * @param xpathIn
@@ -2754,8 +2823,7 @@ public final class LaunchControl {
 
         try {
             expr = xpath.compile(xpathIn);
-            tList = (NodeList) expr.evaluate(configDoc,
-                    XPathConstants.NODESET);
+            tList = (NodeList) expr.evaluate(configDoc, XPathConstants.NODESET);
         } catch (XPathExpressionException e) {
             System.out.println(" Bad XPATH: " + xpathIn);
             e.printStackTrace();
@@ -2768,7 +2836,7 @@ public final class LaunchControl {
 
     /**
      * Returns the first element using an Xpath Search.
-     *
+     * 
      * @param baseNode
      *            The base node to search on. if null, use the document root.
      * @param xpathIn
@@ -2785,7 +2853,6 @@ public final class LaunchControl {
         if (tList.getLength() > 0) {
             tElement = (Element) tList.item(0);
         }
-
 
         return tElement;
 
@@ -2845,7 +2912,7 @@ public final class LaunchControl {
 
     /**
      * Add a MashControl object to the master mash control list.
-     *
+     * 
      * @param mControl
      *            The new mashControl to add
      */
@@ -2861,7 +2928,7 @@ public final class LaunchControl {
 
     /**
      * Start the mashControl thread associated with the PID.
-     *
+     * 
      * @param pid
      *            The PID to find the mash control thread for.
      */
@@ -2892,7 +2959,7 @@ public final class LaunchControl {
 
     /**
      * Get the current OWFS connection.
-     *
+     * 
      * @return The current OWFS Connection object
      */
     public static OwfsConnection getOWFS() {
@@ -2901,11 +2968,10 @@ public final class LaunchControl {
 
     /**
      * Helper to get the current list of timers.
-     *
+     * 
      * @return The current list of timers.
      */
-    public static List<Timer> getTimerList() {
-        Collections.sort(timerList);
+    public static CopyOnWriteArrayList<Timer> getTimerList() {
         return timerList;
     }
 
@@ -3006,8 +3072,7 @@ public final class LaunchControl {
 
         // Read output
         out = new StringBuilder();
-        br = new BufferedReader(
-                new InputStreamReader(process.getInputStream()));
+        br = new BufferedReader(new InputStreamReader(process.getInputStream()));
         line = null;
         previous = null;
         String headSha = null;
@@ -3046,7 +3111,7 @@ public final class LaunchControl {
 
     /**
      * Update from GIT and restart.
-     *
+     * 
      * @return
      */
     public static void updateFromGit() {
@@ -3100,7 +3165,9 @@ public final class LaunchControl {
 
     /**
      * Set the system message for the UI.
-     * @param message The message to set.
+     * 
+     * @param message
+     *            The message to set.
      */
     static void setMessage(String message) {
         LaunchControl.message = message;
@@ -3108,6 +3175,7 @@ public final class LaunchControl {
 
     /**
      * Get the current message.
+     * 
      * @return The current message.
      */
     static String getMessage() {
@@ -3123,7 +3191,9 @@ public final class LaunchControl {
 
     /**
      * Set the brewery name.
-     * @param newName New brewery name.
+     * 
+     * @param newName
+     *            New brewery name.
      */
     static void setName(final String newName) {
         BrewServer.LOG.info("Updating brewery name from "
@@ -3133,7 +3203,9 @@ public final class LaunchControl {
 
     /**
      * Delete the PID from the list.
-     * @param tPID The PID object to delete.
+     * 
+     * @param tPID
+     *            The PID object to delete.
      */
     public static void deletePID(PID tPID) {
         tPID.stop();
@@ -3142,6 +3214,7 @@ public final class LaunchControl {
 
     /**
      * Get the system temperature scale.
+     * 
      * @return The system temperature scale.
      */
     public static String getScale() {
@@ -3150,7 +3223,9 @@ public final class LaunchControl {
 
     /**
      * Change the file owner.
-     * @param targetFile File to change the owner for.
+     * 
+     * @param targetFile
+     *            File to change the owner for.
      */
     public static void setFileOwner(File targetFile) {
         if (baseUser == null || baseUser.equals("")) {
@@ -3169,15 +3244,22 @@ public final class LaunchControl {
         FileOwnerAttributeView view = Files.getFileAttributeView(path,
                 FileOwnerAttributeView.class);
         UserPrincipalLookupService lookupService = FileSystems.getDefault()
-            .getUserPrincipalLookupService();
+                .getUserPrincipalLookupService();
         UserPrincipal userPrincipal;
         try {
-            userPrincipal = lookupService
-                    .lookupPrincipalByName(baseUser);
+            userPrincipal = lookupService.lookupPrincipalByName(baseUser);
             Files.setOwner(path, userPrincipal);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    public static void lockPage() {
+        LaunchControl.pageLock = true;
+    }
+
+    public static void unlockPage() {
+        LaunchControl.pageLock = false;
     }
 }

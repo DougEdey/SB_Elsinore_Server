@@ -1,5 +1,6 @@
 package com.sb.common;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.HashMap;
@@ -64,6 +65,7 @@ public class ServeHTML {
      */
     public final String getPage() {
         String page = "<html xmlns=\"http://www.w3.org/1999/xhtml\"><head>"
+            + "<link rel='shortcut icon' href=''/favicon.ico?v=2' />"
             + "<meta http-equiv='Content-Type' "
             + "content='text/html; charset=utf-8'>"
             + "<meta content='text/html; charset=UTF-8' "
@@ -74,7 +76,7 @@ public class ServeHTML {
                 + " initial-scale=1.0\">" + lineSep
                 + getHeader() + lineSep + "</head><body>" + lineSep
                 + addJS() + lineSep
-                + "<div class=\"page-header\">"
+                + "<div class=\"page-header\" style='margin:0; display:inline-block; width=100%'>"
                 + "<h1 onDblClick='editBreweryName();'><div id='breweryname'>Elsinore</div> "
                 + "<small id='brewerysubtext'>"
                     + "<a href='http://dougedey.github.io/SB_Elsinore_Server/'>"
@@ -199,6 +201,7 @@ public class ServeHTML {
             + "<script type=\"text/javascript\""
             + " src=\"/templates/static/jquery.fs.stepper.js\">"
             + "</script>" + lineSep
+            + "<script type=\"text/javascript\" src=\"/templates/static/moment.js\"></script>" + lineSep
             + "<script type=\"text/javascript\""
             + " src=\"/templates/static/segment-display.js\">"
             + "</script>" + lineSep
@@ -446,8 +449,10 @@ public class ServeHTML {
             + lineSep
             + "Aux ON</button><br />";
 
-        controller += "<input type='hidden' id='gpio' name='gpio' />"
+        controller += "<input type='hidden' id='deviceaddr' name='deviceaddr' />"
+            + "<input type='hidden' id='gpio' name='gpio' />"
             + "<input type='hidden' id='auxgpio' name='auxgpio' />"
+            + "<input type='hidden' id='cutoff' name='cutoff' />"
             + "<input type='hidden' id='vol_ain' name='vol_ain' />"
             + "<input type='hidden' id='vol_add' name='vol_add' />"
             + "<input type='hidden' id='vol_off' name='vol_off' />"
@@ -496,10 +501,9 @@ public class ServeHTML {
     final String addTimers() {
         String timers = lineSep;
         timers += "<div class='panel panel-info'>\n"
-            + "<div class='title panel-heading'>Timers</div>";
+            + "<div id='timers-header' class='title panel-heading'>Timers</div>";
 
-        timers += "<div class='panel-body'>";
-
+        timers += "<div id='timers-body' class='panel-body'>";
         for (Timer timer : LaunchControl.getTimerList()) {
             // Mash button
             timers += "<div id='div-" + timer.getName() + "'"

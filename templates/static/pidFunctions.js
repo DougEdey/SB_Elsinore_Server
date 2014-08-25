@@ -2,7 +2,7 @@ function setup() {
 	//$("#logo").css('opacity','0');
 	window.heightFixed = 0;
 	$.ajax({
-	    url:'brewerImage.gif',
+	    url:'/brewerImage.gif',
 	    type:'HEAD',
 	    error: function()
 	    {
@@ -10,7 +10,7 @@ function setup() {
 	    },
 	    success: function()
 	    {
-	        $('#brewerylogo').attr('src', 'brewerImage.gif');
+	        $('#brewerylogo').attr('src', '/brewerImage.gif');
 	        $('#brewerylogo').css('display', 'block');
 	    }
 	});
@@ -23,6 +23,8 @@ function setup() {
             });
         }
     });
+    
+    $('[class=page-header]').append("<div id='edit-page' class='holo-button' ondblclick='toggleEdit(true); return false;'>Edit</div>")
 
 	//$("#select_logo").click(function(){
 		//$("#logo").trigger('click');
@@ -36,7 +38,7 @@ function setup() {
 //	});
 	
 	waitForMsg();
-}
+};
 
 
 
@@ -61,7 +63,7 @@ $.fn.serializeObject = function()
 function showGraph(element) {
 	var vessel = element.id.substring(0, element.id.indexOf("-tempGauge"));
 	window.open("/graph?vessel=" + vessel);
-}
+};
 
 function sleep(milliseconds) {
   var start = new Date().getTime();
@@ -111,54 +113,51 @@ function waitForMsg(){
 			if(data == null) 
 				return;
 			
-			$.each(data, function(key, val) {
-				vessel = key;
-				
-				// Check for the brewery name
-				if ("breweryName" == vessel) {
-					if (val != null && val.length > 0 && val != "") {
-						window.breweryName = val;
-						jQuery("#breweryname").text(val);
-					} else {
-						window.breweryName = "Elsinore";
-						jQuery("#breweryname").text("Elsinore");
-					}
+			if ("breweryName" in data) {
+				val = data.breweryName;
+				if (val != null && val.length > 0 && val != "") {
+					window.breweryName = val;
+					jQuery("#breweryname").text(val);
+				} else {
+					window.breweryName = "Elsinore";
+					jQuery("#breweryname").text("Elsinore");
 				}
+			}
+			
+			// Check for an error message
+			if ("message" in data) {
+				val = data.message;
 				
-				// Check for an error message
-				if ("message" == vessel) {
-					if (val.length > 0) {
-						val += "<br/><button id='clearMessage' class='holo-button modeclass' "
-							+ "onclick='clearStatus(); return false;'>Clear</button>";
-						jQuery("#messages-body").html(val);
-						
-						if (!$("#messages").is(":visible")) {
-							jQuery("#messages").css('display', 'block');
-							jQuery("#messages").show();
-						}
-					} else {
-						if ($("#messages").is(":visible")) {
-							jQuery("#messages").hide();
-						}
-					}
-					return true;
-				}
-				
-				if (vessel == "brewday") {
-					$.each(val, function(timerName, timerStatus) {
-						checkTimer(timerStatus, timerName);
-					});
-					return true;
+				if (val.length > 0) {
+					val += "<br/><button id='clearMessage' class='holo-button modeclass' "
+						+ "onclick='clearStatus(); return false;'>Clear</button>";
+					jQuery("#messages-body").html(val);
 					
-				}
-
-				// New Feature! Mash Profile!
-				if (vessel == "mash") {
-					if (this == 'Unset') {
-						return true;
+					if (!$("#messages").is(":visible")) {
+						jQuery("#messages").css('display', 'block');
+						jQuery("#messages").show();
 					}
-					val = sortObjectByKey(val);
+				} else {
+					if ($("#messages").is(":visible")) {
+						jQuery("#messages").hide();
+					}
+				}
+			}
+			
+			if ("brewday" in data) {
+				val = data.brewday;
+				$.each(val, function(timerName, timerStatus) {
+					checkTimer(timerStatus, timerName);
+				});
+				
+			}
 
+			if ("mash" in data) {
+				val = data.mash;
+				if (val != 'Unset') {
+					
+					val = sortObjectByKey(val);
+	
 					$.each(val, function(mashPID, mashDetails) {
 						// Iterate the list of mash Lists
 						addMashTable(mashPID);
@@ -166,93 +165,115 @@ function waitForMsg(){
 							if (mashStep != 'pid') {
 								addMashStep(mashStep, mashData, mashPID);
 							}
-							return true;
 						});
-
+	
 						if ($("#mashTable"+mashPID).find('.success').length > 0) {
 							$("#mashButton-" + mashPID).text("Disable");
 						} else {
 							$("#mashButton-" + mashPID).text("Activate");
 						}
-
-						return true;
+	
 					});
 				}
+			}
+								
+			if("pumps" in data) {
+				val = data.pumps;
+				$.each(val, function (pumpName, pumpStatus) {
+					//enable or disable the pump as required
+					if (pumpStatus) {
+						jQuery('button[id^="' + pumpName + '"]')[0].style.background="red";
+						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" ON";
+					} else {
+						jQuery('button[id^="' + pumpName + '"]')[0].style.background="#666666";
+						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" OFF";
+					}
+				});
+			}
+			
+			
+
+			if(window.disableUpdates) {
+				return false;
+			}
+			
+			if ("locked" in data) {			
 				
-				if(vessel == "pumps") {
-					$.each(val, function (pumpName, pumpStatus) {
-						//enable or disable the pump as required
-						if (pumpStatus) {
-							jQuery('button[id^="' + pumpName + '"]')[0].style.background="red";
-							jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" ON";
+				window.locked = !data.locked;
+				toggleEdit(false);
+				window.locked = data.locked;
+			}
+
+			if ("vessels" in data) {
+				val = data.vessels;
+				
+				if (!("system" in data.vessels) && !("System" in data.vessels)) {
+					// No System temperature, add a header to add it in.
+					var sysTemp = $("[id=tempProbes] > [id=System]");
+					if (sysTemp.length == 0 && !data.locked) {
+						var sysHtml = '<div id="System" class="holo-content controller panel panel-primary Temp">'
+								+ '<div id="System-title" class="title panel-heading "'
+								+ 'ondblclick="enableSystem(this);" style="cursor: pointer;">System</div>'
+								+ '</div>';
+
+						$("[id=tempProbes]").append(sysHtml)
+					}
+					if ($("[id=tempProbes] > [id=System] > div").length == 1 && data.locked) {
+						sysTemp.remove();
+					}
+				}
+				$.each(val, function(vesselName, vesselStatus) {
+					
+					// This should always be there
+					if ("name" in vesselStatus) {
+						vesselName = vesselStatus.name;
+						if (vesselName == "System" && $('[id=System-tempGauge]').length == 0) {
+							return;
+						}
+					}
+											
+					if ("tempprobe" in vesselStatus) {
+						updateTempProbe(vesselName, vesselStatus.tempprobe);
+					} 
+					
+					if ("pidstatus" in vesselStatus) {
+
+						addMashTable(vesselName);
+
+						updatePIDStatus(vesselName, vesselStatus.pidstatus);
+						
+						// Hide the gauge if needs be
+						if (vesselStatus.pidstatus.mode == "off") {
+							//Gauges[vessel].refresh(val.actualduty, 100); 				
+							$('div[id^="'+vesselName+'-gage"]').hide();
 						} else {
-							jQuery('button[id^="' + pumpName + '"]')[0].style.background="#666666";
-							jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" OFF";
-						}
-					});
-					return true;
-				}
-
-				if(window.disableUpdates) {
-					return false;
-				}
-				
-				if (vessel == "vessels") {
-					$.each(val, function(vesselName, vesselStatus) {
-						
-						// This should always be there
-						if ("name" in vesselStatus) {
-							vesselName = vesselStatus.name;
-						}
-												
-						if ("tempprobe" in vesselStatus) {
-							updateTempProbe(vesselName, vesselStatus.tempprobe);
-						} 
-						
-						if ("pidstatus" in vesselStatus) {
-
-							addMashTable(vesselName);
-
-							updatePIDStatus(vesselName, vesselStatus.pidstatus);
-							
-							// Hide the gauge if needs be
-							if (vesselStatus.pidstatus.mode == "off") {
-								//Gauges[vessel].refresh(val.actualduty, 100); 				
-								$('div[id^="'+vesselName+'-gage"]').hide();
+							$('div[id^="'+vesselName+'-gage"]').show();
+							if ("actualduty" in vesselStatus.pidstatus) {
+								Gauges[vesselName].refresh(
+										vesselStatus.pidstatus.actualduty, 100);
 							} else {
-								$('div[id^="'+vesselName+'-gage"]').show();
-								if ("actualduty" in vesselStatus.pidstatus) {
-									Gauges[vesselName].refresh(
-											vesselStatus.pidstatus.actualduty, 100);
-								} else {
-									Gauges[vesselName].refresh(
-											vesselStatus.pidstatus.duty, 100);
-								}
+								Gauges[vesselName].refresh(
+										vesselStatus.pidstatus.duty, 100);
 							}
-						} else {
-							hidePIDForm(vesselName);
 						}
-						
-						if ("volume" in vesselStatus) {
-							updateVolumeStatus(vesselName, vesselStatus.volume);
-						} else {
-							jQuery("#" + vesselName + "-volume").text("No Volume");
-						}
-						
-						
-					});
-					return true;		
-				}
-			
-			});
-			
+					} else {
+						hidePIDForm(vesselName);
+					}
+					
+					if ("volume" in vesselStatus) {
+						updateVolumeStatus(vesselName, vesselStatus.volume);
+					} else {
+						jQuery("#" + vesselName + "-volume").text("No Volume");
+					}
+				});
+			}
+		
+		
 			vessel = null;
 			data = null;
 			fixWebkitHeightBug();		
 		}
-		
 	});
-	
 	setTimeout(waitForMsg, 1000); 
 	
 }
@@ -264,13 +285,16 @@ function addMashTable(vesselName) {
 		table += "<th colspan='2'>Mash Step</th>";
 		table += "<th>Temp</th>";
 		table += "<th>Time</th>";
-		table += "</tr><tbody></table>";
-		table += "<button class='btn btn-success' id='addMash-"+vesselName
+		table += "</tr>";
+				
+		table += "<tr><td colspan='2'>"
+			+ "<button class='btn btn-success' id='addMash-"+vesselName
 			+"' type='button' onclick='addNewMashStep(this)' "
 			+ "ondrop='dropDeleteMashStep(event);' "
-			+ "ondragover='allowDropMashStep(event);'>Add</button>";
-		table += "<button class='btn btn-success' id='mashButton-"+vesselName
-			+"' type='button' onclick='mashToggle(this)'>Activate</button>";
+			+ "ondragover='allowDropMashStep(event);'>Add</button></td>";
+		table += "<td colspan='2'><button class='btn btn-success' id='mashButton-"+vesselName
+			+"' type='button' onclick='mashToggle(this)'>Activate</button></td></tr>";
+			+ "</tbody></table>";
 		table += "<br id='mashTable"+vesselName+"footer'/>";
 
 		$("#"+vesselName+"-gage").after(table);
@@ -294,6 +318,11 @@ function updateTempProbe(vessel, val) {
 	dec = Temp % 1;
 	dec = dec.toString().substr(1,3);
 	GaugeDisplay[vessel].setValue(pad(int, 3, 0) + "" + dec);
+	var vesselDiv = '[id="'+vessel+'-form"]';
+	if ("cutoff" in val) {
+		jQuery(vesselDiv  + ' input[name="cutoff"]').val(val.cutoff);
+	}
+	
 	jQuery("#"+vessel+"-tempStatus").text(temp);
 	// cleanup
 	dec = null;
@@ -377,6 +406,7 @@ function editDevice(element) {
 	var vesselDiv = element.id;
 	var gpio = $('#' + vessel  + ' input[name="gpio"]').val();
 	var auxgpio = $('#' + vessel  + ' input[name="auxgpio"]').val();
+	var cutoff = $('#' + vessel  + ' input[name="cutoff"]').val();
 	
 	// Insert a couple of new form elements
 	$('#' + vesselDiv).append("<div id='"+vessel+"-edit'>"
@@ -386,10 +416,12 @@ function editDevice(element) {
 				"value='"+gpio+"' placeholder='GPIO_X(_Y)'/><br/>"
 		+ "<input type='text' name='aux_gpio' id='aux_gpio' onblur='validate_gpio(this)' " +
 				"value='"+auxgpio+"' placeholder='Aux GPIO_X(_Y)' /><br/>"
+		+ "<input type='text' name='cutoff' id='cutoff' " +
+				"value='"+cutoff+"' placeholder='Cutoff Temp' /><br/>"
 		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
 		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>Update</button>"
 		+ "<button id='cancel-"+vessel+"' class='holo-button modeclass' "
-		+ "onclick='cancelEdit(vessel); waitForMsg(); return false;'>Cancel</button>"
+		+ "onclick='cancelEdit("+vessel+"); waitForMsg(); return false;'>Cancel</button>"
 		+ "</form>"
 		+ "</div>");
 }
@@ -466,7 +498,11 @@ function updatePIDStatus(vessel, val) {
 	jQuery(vesselDiv  + ' input[name="min"]').val(val.min);
 	jQuery(vesselDiv  + ' input[name="max"]').val(val.max);
 	jQuery(vesselDiv  + ' input[name="time"]').val(val.time);
+	jQuery(vesselDiv  + ' input[name="deviceaddr"]').val(val.deviceaddr);
 	jQuery(vesselDiv  + ' input[name="gpio"]').val(val.gpio);
+	if ("auxgpio" in val) {
+		jQuery(vesselDiv  + ' input[name="auxgpio"]').val(val.auxgpio);
+	}
 	
 	// Disable some stuff
 	jQuery(vesselDiv  + ' input[name="dutycycle"]').prop("disabled", true);
@@ -897,12 +933,16 @@ function toggleDiv(id) {
 
 function setTimer(button, stage) {
 	// get the current Datestamp
-	var curDate = Date.now();
+	var curDate = moment().format("YYYY/MM/DDTHH:mm:ssZZ")
 	if(button.innerHTML == "Start") {
 		$("#" + stage).hide();
 		$("#"+stage+"Timer").show();
-		formdata = stage + "Start=" + curDate;
+		formdata = stage + "Start=" + 0;
 	} else {
+		var tt = $("#"+stage+"Timer").data('tinyTimer');
+		if (tt != undefined) {
+			tt.stop();
+		}
 		$("#"+stage).show();
 		$("#"+stage+"Timer").hide();
 		formdata = stage+"End=" + curDate;
@@ -922,7 +962,7 @@ function setTimer(button, stage) {
 
 function resetTimer(button, stage) {
 	// get the current Datestamp
-	var curDate = Date.now();
+	var curDate = moment().format("YYYY/MM/DDTHH:mm:ssZZ")
 	formdata = stage+"End=null&" + stage +"Start=null" ;
 
 	formdata +="&updated=" + curDate;
@@ -948,26 +988,29 @@ function checkTimer(val, stage) {
 	if ("name" in val) {
 		stage = val.name;
 	}
-	
-	if ("start" in val) {
-		var startTime = new Date(val["start"]);
-		
-		// boil has been started, has it been finished
-		if ("end" in val) {
-			var endTime = new Date(val["end"]);
-			var diffTime = endTime - startTime;
-			var hours = Math.floor(diffTime/(1000*60*60));
-			diffTime -= hours * 1000*60*60;
-			var mins = Math.floor(diffTime/(1000*60));
-			diffTime -= mins * 1000*60;
-			$("#"+stage).show();
-			$("#"+stage+"Timer").hide();
-			$("#"+stage)[0].innerHTML = hours + ":" + mins + ":" + diffTime/1000;
-		} else {
-			$("#"+stage).hide();
-			$("#"+stage+"Timer").show();
+	// If We're counting UP
+	if ("up" in val) {
+		var startTime = moment().subtract(val.up, 'seconds');
+		$("#"+stage).hide();
+		$("#"+stage+"Timer").show();
+		var tt = $("#"+stage+"Timer").data('tinyTimer');
+		if (tt == undefined) {
 			$("#"+stage+"Timer").tinyTimer({from: startTime.toString()});
+		} else {
+			tt.resetFrom(startTime)
 		}
+	} else if ("down" in val) {
+		// TODO: COUNTDOWN
+	} else if ("stopped" in val) {
+		
+		var diffTime = val.stopped;
+		var hours = Math.floor(diffTime/(60*60));
+		diffTime -= hours * 60*60;
+		var mins = Math.floor(diffTime/(60));
+		diffTime -= mins * 60;
+		$("#"+stage).show();
+		$("#"+stage+"Timer").hide();
+		$("#"+stage)[0].innerHTML = hours + ":" + mins + ":" + diffTime;
 	} else {
 		$("#"+stage+"Timer").hide();
 		$("#"+stage)[0].innerHTML = "Start";
@@ -1013,8 +1056,8 @@ function addMashStep(mashStep, mashData, pid) {
 	if ("start_time" in mashData) {
 		// if there's an end time, we can show the actual time difference
 		if ("end_time" in mashData) {
-			startDate = new Date(mashData['start_time']);
-			endDate = new Date(mashData['end_time']);
+			startDate = moment(mashData['start_time'], "YYYY/MM/DDTHH:mm:ssZZ");
+			endDate = moment(mashData['end_time'], "YYYY/MM/DDTHH:mm:ssZZ");
 			diff = Math.abs(endDate - startDate);
 			seconds = diff/1000;
 			minutes = Math.floor(seconds/60);
@@ -1189,7 +1232,7 @@ function dropPump(ev) {
 	
 	// TODO: Update the server with the new location
 	var newOrder = "";
-	$("[id^='div-Pump'").each(function(index) {
+	$("[id^='div-Pump']").each(function(index) {
 		var divID = this.id;
 		
 		if (divID.indexOf('div-') == 0) {
@@ -1393,4 +1436,194 @@ function clearStatus() {
 			type: 'POST',
 		success: function(data) {data = null}
 	});
+}
+
+// Functions to hide editable things
+function toggleEdit(manualChange) {
+	if ("locked" in window) {
+		if (window.locked) {
+			readWrite(manualChange);
+			return;
+		} else {
+			readOnly(manualChange);
+			return;
+		}
+	}
+	readWrite(manualChange);
+}
+
+function readOnly(manualChange) {
+	readOnlyPumps();
+	readOnlyTimers();
+	readOnlyDevices();
+	$("[id=edit-page]").text("Edit");
+	window.locked = true;
+	if (manualChange) {
+		$.ajax({
+			url: 'lockPage',
+			type: 'POST',
+			success: function(data) {data = null}
+		});
+	}
+	window.disableUpdates = 0;
+}
+
+function readWrite(manualChange) {
+	readWritePumps();
+	readWriteTimers();
+	readWriteDevices();
+	$("[id=edit-page]").text("Lock");
+	window.locked = false;
+	if (manualChange) {
+		$.ajax({
+			url: 'unlockPage',
+			type: 'POST',
+			success: function(data) {data = null}
+		});
+	}
+	window.disableUpdates = 0;
+}
+
+function readOnlyPumps() {
+	// Check the size of the pump list 
+	var currentCount = $("[id=pumps-body] > div").length;
+	
+	if (currentCount == 0) {
+		// Hide the Div.
+		$('[id=pumps]').css('display', 'none');		
+	} else {
+		// Hide the button
+		$('[id=NewPump]').css('display', 'none');
+		// Disable drag and drop
+		$("[id=pumps-body] > div").each(function(index) {
+			this.setAttribute('draggable', false);
+		});
+	}
+}
+
+function readWritePumps() {
+	// Check the size of the pump list 
+	var currentCount = $("[id=pumps-body] > div").length;
+	
+	if (currentCount == 0) {
+		// Hide the Div.
+		$('[id=pumps]').css('display', 'block');		
+	} else {
+		// Hide the button
+		$('[id=NewPump]').css('display', 'block');
+		// Enable drag and drop
+		$("[id=pumps-body] > div ").each(function(index) {
+			this.setAttribute('draggable', true);
+		});
+	}	
+}
+
+function readOnlyTimers() {
+	// Check the size of the pump list 
+	var currentCount = $("[id=timers-body] > div").length;
+	
+	if (currentCount == 0) {
+		// Hide the Div.
+		$('[id=timers]').css('display', 'none');		
+	} else {
+		// Hide the button
+		$('[id=NewTimer]').css('display', 'none');
+		// Disable drag and drop
+		$("[id=timers-body] > div").each(function(index) {
+			this.setAttribute('draggable', false);
+		});
+	}
+}
+
+function readWriteTimers() {
+	// Check the size of the pump list 
+	var currentCount = $("[id=timers-body] > div").length;
+	
+	if (currentCount == 0) {
+		// Hide the Div.
+		$('[id=timers]').css('display', 'block');		
+	} else {
+		// Hide the button
+		$('[id=NewTimer]').css('display', 'block');
+		// Disable drag and drop
+		$("[id=timers-body] > div").each(function(index) {
+			this.setAttribute('draggable', true);
+		});
+	}
+}
+
+function readWriteDevices() {
+	// Check the devices to see which ones aren't configured.
+	$("[id$='-title']").each(function (index) {
+		var vessel = this.id.replace("-title", "")
+		var vesselForm = 'form[id="'+ vessel +'-form"]';
+		var devAddr = $('#' + vesselForm + ' > input[name="deviceaddr"]').val();
+		if (devAddr == this.textContent) {
+			$('[id=' + this.id.replace("-form", "") + ']').css('display', 'block')
+		}
+		
+		if (vessel.toLowerCase() == "system") {
+			if ($('[id=System-tempGauge]').length == 0) {
+				// not enabled
+				this.setAttribute("onDblClick", "enableSystem(this);");
+			} else {
+				this.setAttribute("onDblClick", "disableSystem(this);");
+			}
+		} else {
+			this.setAttribute("onDblClick", "editDevice(this);");
+		}
+		$('[id=' + vessel + '-title]').css('cursor', "pointer");
+		// disable the mash table if needs be
+		if ($('[id=mashTable' + vessel + '] > tbody > tr').length <= 2) {
+			// hide
+			$('[id=mashTable' + vessel + '] > tbody > tr').css('display', 'block');
+		}
+	});
+}
+
+function readOnlyDevices() {
+	// Check the devices to see which ones aren't configured.
+	$("[id$='-title']").each(function (index) {
+		
+		var vessel = this.id.replace("-title", "")
+		if (vessel == "messages") {
+			return;
+		}
+		var vesselForm = 'form[id="'+ vessel +'-form"]';
+		var devAddr = $('#' + vesselForm + ' > input[name="deviceaddr"]').val();
+		if (devAddr == this.textContent) {
+			if (vessel != "System" || this.getAttribute("onDblClick").indexOf("enable") == 0) {
+				$('[id=' + vessel + ']').css('display', 'none')
+			}
+		}
+		this.removeAttribute("onDblClick");
+		$('[id=' + vessel + '-title]').css('cursor', "auto");
+		
+		// disable the mash table if needs be
+		if ($('[id=mashTable' + vessel + '] > tbody > tr').length <= 2) {
+			// hide
+			$('[id=mashTable' + vessel + '] > tbody > tr').css('display', 'none');
+		}
+	});
+}
+
+function enableSystem(element) {
+	$.ajax({
+		url: 'addSystem',
+		type: 'POST',
+		success: function(data) {data = null}
+	});
+	
+	sleep(2000);
+	location.reload();
+}
+
+function disableSystem(element) {
+	$.ajax({
+		url: 'delSystem',
+		type: 'POST',
+		success: function(data) {data = null}
+	});
+	sleep(2000);
+	location.reload();
 }

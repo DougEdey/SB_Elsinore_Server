@@ -276,7 +276,7 @@ public class MashControl implements Runnable {
     @SuppressWarnings("unchecked")
     public final JSONArray getJSONData() {
         JSONArray masterArray = new JSONArray();
-        DateFormat lFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+        DateFormat lFormat = new SimpleDateFormat("yyyy/MM/dd'T'HH:mm:ssZ");
         //masterArray.put("pid", this.getOutputControl());
         synchronized (mashStepList) {
             for (MashStep e : mashStepList) {

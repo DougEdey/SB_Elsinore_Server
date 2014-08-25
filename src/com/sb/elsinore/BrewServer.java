@@ -575,7 +575,7 @@ public class BrewServer extends NanoHTTPD {
      */
     private Response editVessel(final Map<String, String> params) {
         String auxpin = "", newName = "", gpio = "";
-        String inputUnit = "";
+        String inputUnit = "", cutoff = "";
 
         Set<Entry<String, String>> incomingParams = params.entrySet();
         Map<String, String> parms;
@@ -625,6 +625,10 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("auxpin")) {
             auxpin = parms.get("auxpin");
         }
+        
+        if (parms.containsKey("cutoff")) {
+            cutoff = parms.get("cutoff");
+        }
 
         if (inputUnit.equals("")) {
             BrewServer.LOG.warning("No Valid input unit");
@@ -639,6 +643,7 @@ public class BrewServer extends NanoHTTPD {
             tProbe = LaunchControl.findTemp(inputUnit);
             tPID = LaunchControl.findPID(inputUnit);
         }
+
         if (tProbe == null) {
             LaunchControl.setMessage("Couldn't find PID: " + inputUnit);
         }
@@ -646,6 +651,10 @@ public class BrewServer extends NanoHTTPD {
         if (tProbe != null && !newName.equals("")) {
             tProbe.setName(newName);
             BrewServer.LOG.warning("Updated temp name " + newName);
+        }
+
+        if (!cutoff.equals("")) {
+            tProbe.setCutoffTemp(cutoff);
         }
 
         if (tPID != null && !newName.equals("")) {
@@ -1033,6 +1042,18 @@ public class BrewServer extends NanoHTTPD {
             return addMashStep(parms);
         }
 
+        if (uri.equalsIgnoreCase("/addsystem")) {
+            LaunchControl.addSystemTemp();
+            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                    "Added system temperature");
+        }
+        
+        if (uri.equalsIgnoreCase("/delsystem")) {
+            LaunchControl.delSystemTemp();
+            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                    "Deleted system temperature");
+        }
+
         if (uri.equalsIgnoreCase("/delmashstep")) {
             return delMashStep(parms);
         }
@@ -1278,6 +1299,18 @@ public class BrewServer extends NanoHTTPD {
 
         if (uri.equalsIgnoreCase("/deletepump")) {
             return deletePump(parms);
+        }
+
+        if (uri.equalsIgnoreCase("/unlockpage")) {
+            LaunchControl.unlockPage();
+            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+                    "{status: 'unlocked'}");
+        }
+
+        if (uri.equalsIgnoreCase("/lockpage")) {
+            LaunchControl.lockPage();
+            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+                    "{status: 'locked'}");
         }
 
         if (uri.equalsIgnoreCase("/updatetimerorder")) {

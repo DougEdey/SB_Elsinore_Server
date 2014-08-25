@@ -35,19 +35,33 @@ Move to the checked out Directory:
 
 Run:
 
-``` java -jar Elsinore.jar [options ]```
+``` sudo launch.sh ```
 
-To startup the setup procedure, I am aware that it needs to be improved, if you have any suggestions, please raise a bug
-Use -help to show the full list of options.
+You may get offered to use OWFS if you have a non temperature sensor (such as a one wire analogue chip, since the basic OneWire support in Linux doesn't support them)
+Then you can go to 
 
-Then check the config file if you want to, then you can copy the new one to the default name
+``` <ip/hostname of machine>:8080/controller ```
 
-``` cp rpibrew.cfg.new rpibrew.cfg ```
+To run setup.
 
-And rerun Elsinore to get started
+Setup
+=====
 
-``` java -jar Elsinore.jar [options] ```
+You can double click the "Elsinore" name to set your own brewery name, you can upload a custom brewery image, by clicking the upload file button under the brewery image.
 
+Double clicking on a device address allows you to add a GPIO and rename the device (such as kettle, MLT, HLT, case, etc...), as well as an auxiliary GPIO (for secondary, manual outputs)
+
+You can add mash steps for devices you have set up with a GPIO output (so it'll change the temperature, hold temperature, and move steps as needed).
+
+You can add pumps (name and GPIO) by pressing the "Add Pump" button
+
+You can add timers (name only at the moment) by pressing the "Add Timer" button.
+
+You can also delete any of the above, you can drag and drop pumps, timers, and mash steps to re-order them. Or drag them to the delete button to delete them!
+
+When the server is shutdown, it saves all your setup!
+
+Once you've finished setting up, double clicking the "Lock" button in the top right to remove all the setup buttons.
 
 RaspberryPi or Beagleboard?
 =======================
