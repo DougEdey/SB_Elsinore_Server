@@ -258,9 +258,19 @@ public class BrewServer extends NanoHTTPD {
                 String cKey = key.toString();
 
                 try {
-                    int stepCount = Integer.parseInt(cKey);
-                    // We have a good step count, parse the value
+
                     JSONObject valueObj = (JSONObject) incomingData.get(key);
+                    int stepCount = -1;
+                    try {
+                        stepCount = Integer.parseInt(cKey);
+                    } catch (NumberFormatException nfe) {
+                        stepCount = (Integer) valueObj.get("position");
+                    }
+
+                    if (stepCount < 0) {
+                        continue;
+                    }
+                    // We have a good step count, parse the value
 
                     BigDecimal duration = new BigDecimal(
                             valueObj.get("duration").toString());
@@ -283,8 +293,10 @@ public class BrewServer extends NanoHTTPD {
                     // Couldn't work out what this is
                     BrewServer.LOG.warning("Couldn't parse " + cKey);
                     BrewServer.LOG.warning(incomingData.get(key).toString());
+                    e.printStackTrace();
                 }
             }
+            mControl.sortMashSteps();
             LaunchControl.startMashControl(pid);
         }
         return true;

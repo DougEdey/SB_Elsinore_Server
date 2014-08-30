@@ -281,19 +281,20 @@ function waitForMsg(){
 function addMashTable(vesselName) {
 	if ($("#mashTable"+vesselName).length == 0) {
 		table = "<table id='mashTable"+vesselName+"' class='table'>";
-		table += "<tbody class='tbody'><tr>";
+		table += "<thead><tr>";
 		table += "<th colspan='2'>Mash Step</th>";
 		table += "<th>Temp</th>";
 		table += "<th>Time</th>";
-		table += "</tr>";
+		table += "</tr></thead>";
+		table += "<tbody class='tbody'></tbody>"
 				
-		table += "<tr><td colspan='2'>"
+		table += "<tfoot><tr><td colspan='2'>"
 			+ "<button class='btn btn-success' id='addMash-"+vesselName
 			+"' type='button' onclick='addNewMashStep(this)' "
 			+ "ondrop='dropDeleteMashStep(event);' "
 			+ "ondragover='allowDropMashStep(event);'>Add</button></td>";
 		table += "<td colspan='2'><button class='btn btn-success' id='mashButton-"+vesselName
-			+"' type='button' onclick='mashToggle(this)'>Activate</button></td></tr>";
+			+"' type='button' onclick='mashToggle(this)'>Activate</button></td></tr></tfoot>";
 			+ "</tbody></table>";
 		table += "<br id='mashTable"+vesselName+"footer'/>";
 
@@ -1048,7 +1049,12 @@ function addMashStep(mashStep, mashData, pid) {
 		tableRow += ("<td id='mashTimer"+pid+"'>"+mashData['duration']+"</td>");
 		tableRow += ("</tr>");
 
-		mashStepRow = $("#mashTable"+pid +" > tbody > tr").eq(mashStep-1).after(tableRow);
+		if ($("#mashTable"+pid +" > tbody > tr").length == 0) {
+			$("#mashTable"+pid +" > tbody").append(tableRow);
+		} else {
+			mashStepRow = $("#mashTable"+pid +" > tbody > tr").eq(mashStep-1).after(tableRow);
+		}
+		
 		mashStepRow = mashStepRow.next();
 	}
 
