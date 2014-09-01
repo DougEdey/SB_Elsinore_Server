@@ -835,7 +835,7 @@ function addNewMashStep(button) {
 		+ "<input type='text' name='type' id='type' value='' placeholder='type' /><br/>"
 		+ "<input type='text' name='duration' id='duration' value='' placeholder='duration' /><br/>"
 		+ "<input type='hidden' name='pid' value='" + pid + "' />"
-		+ "<input type='hidden' name='step' value='" + ($("#mashTable"+pid+" > tbody > tr").length-1) + "' />"
+		+ "<input type='hidden' name='step' value='" + ($("#mashTable"+pid+" > tbody > tr").length) + "' />"
 		+ "<button id='add-timer' class='holo-button modeclass' "
 		+ "onclick='submitNewMashStep(this.form); return false;'>Add</button>"
 		+ "<button id='cancel-add-mash-step' class='holo-button modeclass' "
@@ -1579,10 +1579,10 @@ function readWriteDevices() {
 			this.setAttribute("onDblClick", "editDevice(this);");
 		}
 		$('[id=' + vessel + '-title]').css('cursor', "pointer");
-		// disable the mash table if needs be
-		if ($('[id=mashTable' + vessel + '] > tbody > tr').length <= 2) {
-			// hide
-			$('[id=mashTable' + vessel + '] > tbody > tr').css('display', 'block');
+		// display the mash table if needs be
+		if ($('[id=mashTable' + vessel + '] > tbody > tr').length == 0) {
+			// show it
+			$('[id=mashTable' + vessel + ']').css('display', 'block');
 		}
 	});
 }
@@ -1606,9 +1606,9 @@ function readOnlyDevices() {
 		$('[id=' + vessel + '-title]').css('cursor', "auto");
 		
 		// disable the mash table if needs be
-		if ($('[id=mashTable' + vessel + '] > tbody > tr').length <= 2) {
+		if ($('[id=mashTable' + vessel + '] > tbody > tr').length == 0) {
 			// hide
-			$('[id=mashTable' + vessel + '] > tbody > tr').css('display', 'none');
+			$('[id=mashTable' + vessel + ']').css('display', 'none');
 		}
 	});
 }
