@@ -1401,7 +1401,7 @@ function dropMashStep(ev) {
 		}
 		
 		var oldStep = getPositionFromMashStep(divID);		
-		newOrder += (parseInt(oldStep)-1) + "=" + (parseInt(index)-1) + "&";
+		newOrder += oldStep + "=" + index + "&";
 	});
 	$('#addMash-'+vessel)[0].innerHTML = "Add";
 	$.ajax({
@@ -1425,7 +1425,7 @@ function dropDeleteMashStep(ev) {
 	var position = getPositionFromMashStep(mashStepName);
 	
 	$('[id="'+mashStepName+'"]').empty().remove();
-	var newOrder = "pid=" + vessel + "&position=" + (parseInt(position)-1);
+	var newOrder = "pid=" + vessel + "&position=" + position;
 	
 	$('#addMash-'+vessel)[0].innerHTML = "Add";
 	$.ajax({
