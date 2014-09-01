@@ -280,7 +280,7 @@ function waitForMsg(){
 
 function addMashTable(vesselName) {
 	if ($("#mashTable"+vesselName).length == 0) {
-		table = "<table id='mashTable"+vesselName+"' class='table'>";
+		table = "<table id='mashTable"+vesselName+"' class='table table-curved'>";
 		table += "<thead><tr>";
 		table += "<th colspan='2'>Mash Step</th>";
 		table += "<th>Temp</th>";
