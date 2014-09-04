@@ -258,9 +258,19 @@ public class BrewServer extends NanoHTTPD {
                 String cKey = key.toString();
 
                 try {
-                    int stepCount = Integer.parseInt(cKey);
-                    // We have a good step count, parse the value
+
                     JSONObject valueObj = (JSONObject) incomingData.get(key);
+                    int stepCount = -1;
+                    try {
+                        stepCount = Integer.parseInt(cKey);
+                    } catch (NumberFormatException nfe) {
+                        stepCount = (Integer) valueObj.get("position");
+                    }
+
+                    if (stepCount < 0) {
+                        continue;
+                    }
+                    // We have a good step count, parse the value
 
                     BigDecimal duration = new BigDecimal(
                             valueObj.get("duration").toString());
@@ -283,8 +293,10 @@ public class BrewServer extends NanoHTTPD {
                     // Couldn't work out what this is
                     BrewServer.LOG.warning("Couldn't parse " + cKey);
                     BrewServer.LOG.warning(incomingData.get(key).toString());
+                    e.printStackTrace();
                 }
             }
+            mControl.sortMashSteps();
             LaunchControl.startMashControl(pid);
         }
         return true;
@@ -399,6 +411,8 @@ public class BrewServer extends NanoHTTPD {
             return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
                     usage.toJSONString());
         }
+        // Prevent any errors from the PID not being a number.
+        params.remove("pid");
         // Do we have a mash control for the PID?
         MashControl mControl = LaunchControl.findMashControl(pid);
         if (mControl == null) {
@@ -409,12 +423,15 @@ public class BrewServer extends NanoHTTPD {
 
         // Should be good to go, iterate and update!
         for (Map.Entry<String, String> mEntry: params.entrySet()) {
+            if (mEntry.getKey().equals("NanoHttpd.QUERY_STRING")) {
+                continue;
+            }
             try {
                 int oldPos = Integer.parseInt(mEntry.getKey());
                 int newPos = Integer.parseInt(mEntry.getValue());
                 mControl.getMashStep(oldPos).setPosition(newPos);
             } catch (NumberFormatException nfe) {
-                LaunchControl.setMessage("Failed to parse Mash reorder value, things may get weird");
+                LaunchControl.setMessage("Failed to parse Mash reorder value, things may get weird" + mEntry.getKey() + ": " + mEntry.getValue());
             } catch (IndexOutOfBoundsException ie) {
                 LaunchControl.setMessage("Invalid mash position, things may get weird");
             }

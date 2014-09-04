@@ -280,20 +280,21 @@ function waitForMsg(){
 
 function addMashTable(vesselName) {
 	if ($("#mashTable"+vesselName).length == 0) {
-		table = "<table id='mashTable"+vesselName+"' class='table'>";
-		table += "<tbody class='tbody'><tr>";
+		table = "<table id='mashTable"+vesselName+"' class='table table-curved'>";
+		table += "<thead><tr>";
 		table += "<th colspan='2'>Mash Step</th>";
 		table += "<th>Temp</th>";
 		table += "<th>Time</th>";
-		table += "</tr>";
+		table += "</tr></thead>";
+		table += "<tbody class='tbody'></tbody>"
 				
-		table += "<tr><td colspan='2'>"
+		table += "<tfoot><tr><td colspan='2'>"
 			+ "<button class='btn btn-success' id='addMash-"+vesselName
 			+"' type='button' onclick='addNewMashStep(this)' "
 			+ "ondrop='dropDeleteMashStep(event);' "
 			+ "ondragover='allowDropMashStep(event);'>Add</button></td>";
 		table += "<td colspan='2'><button class='btn btn-success' id='mashButton-"+vesselName
-			+"' type='button' onclick='mashToggle(this)'>Activate</button></td></tr>";
+			+"' type='button' onclick='mashToggle(this)'>Activate</button></td></tr></tfoot>";
 			+ "</tbody></table>";
 		table += "<br id='mashTable"+vesselName+"footer'/>";
 
@@ -834,7 +835,7 @@ function addNewMashStep(button) {
 		+ "<input type='text' name='type' id='type' value='' placeholder='type' /><br/>"
 		+ "<input type='text' name='duration' id='duration' value='' placeholder='duration' /><br/>"
 		+ "<input type='hidden' name='pid' value='" + pid + "' />"
-		+ "<input type='hidden' name='step' value='" + ($("#mashTable"+pid+" > tbody > tr").length-1) + "' />"
+		+ "<input type='hidden' name='step' value='" + ($("#mashTable"+pid+" > tbody > tr").length) + "' />"
 		+ "<button id='add-timer' class='holo-button modeclass' "
 		+ "onclick='submitNewMashStep(this.form); return false;'>Add</button>"
 		+ "<button id='cancel-add-mash-step' class='holo-button modeclass' "
@@ -1048,7 +1049,12 @@ function addMashStep(mashStep, mashData, pid) {
 		tableRow += ("<td id='mashTimer"+pid+"'>"+mashData['duration']+"</td>");
 		tableRow += ("</tr>");
 
-		mashStepRow = $("#mashTable"+pid +" > tbody > tr").eq(mashStep-1).after(tableRow);
+		if ($("#mashTable"+pid +" > tbody > tr").length == 0) {
+			$("#mashTable"+pid +" > tbody").append(tableRow);
+		} else {
+			mashStepRow = $("#mashTable"+pid +" > tbody > tr").eq(mashStep-1).after(tableRow);
+		}
+		
 		mashStepRow = mashStepRow.next();
 	}
 
@@ -1395,7 +1401,7 @@ function dropMashStep(ev) {
 		}
 		
 		var oldStep = getPositionFromMashStep(divID);		
-		newOrder += (parseInt(oldStep)-1) + "=" + (parseInt(index)-1) + "&";
+		newOrder += oldStep + "=" + index + "&";
 	});
 	$('#addMash-'+vessel)[0].innerHTML = "Add";
 	$.ajax({
@@ -1419,7 +1425,7 @@ function dropDeleteMashStep(ev) {
 	var position = getPositionFromMashStep(mashStepName);
 	
 	$('[id="'+mashStepName+'"]').empty().remove();
-	var newOrder = "pid=" + vessel + "&position=" + (parseInt(position)-1);
+	var newOrder = "pid=" + vessel + "&position=" + position;
 	
 	$('#addMash-'+vessel)[0].innerHTML = "Add";
 	$.ajax({
@@ -1573,10 +1579,10 @@ function readWriteDevices() {
 			this.setAttribute("onDblClick", "editDevice(this);");
 		}
 		$('[id=' + vessel + '-title]').css('cursor', "pointer");
-		// disable the mash table if needs be
-		if ($('[id=mashTable' + vessel + '] > tbody > tr').length <= 2) {
-			// hide
-			$('[id=mashTable' + vessel + '] > tbody > tr').css('display', 'block');
+		// display the mash table if needs be
+		if ($('[id=mashTable' + vessel + '] > tbody > tr').length == 0) {
+			// show it
+			$('[id=mashTable' + vessel + ']').css('display', 'block');
 		}
 	});
 }
@@ -1600,9 +1606,9 @@ function readOnlyDevices() {
 		$('[id=' + vessel + '-title]').css('cursor', "auto");
 		
 		// disable the mash table if needs be
-		if ($('[id=mashTable' + vessel + '] > tbody > tr').length <= 2) {
+		if ($('[id=mashTable' + vessel + '] > tbody > tr').length == 0) {
 			// hide
-			$('[id=mashTable' + vessel + '] > tbody > tr').css('display', 'none');
+			$('[id=mashTable' + vessel + ']').css('display', 'none');
 		}
 	});
 }

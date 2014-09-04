@@ -71,8 +71,9 @@ public class MashControl implements Runnable {
      * @return The new Mash Step
      */
     public final MashStep addMashStep(final int position) {
-        mashStepList.add(new MashStep(position));
-        return mashStepList.get(position);
+        MashStep mashstep = new MashStep(position);
+        mashStepList.add(mashstep);
+        return mashstep;
     }
 
     /**

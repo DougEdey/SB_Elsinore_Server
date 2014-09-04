@@ -188,7 +188,7 @@ public class ServeHTML {
     public final String addJS() {
         String javascript =
             "<link rel=\"stylesheet\" type=\"text/css\" "
-            + "href=\"/templates/static/raspibrew.css\" />" + lineSep
+            + "href=\"/templates/static/elsinore.css\" />" + lineSep
             + "<!-- Bootstrap -->" + lineSep
             + "<link "
             + "href=\"/templates/static/bootstrap-3.0.0/css/bootstrap.min.css\""
