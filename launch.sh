@@ -20,6 +20,7 @@ OPTIONS:
 	-c <config>	Config file (instead of elsinore.cfg)
 	-t <threshold>	The amount to wait for an input to change before recording it.
 	-l <name>	Set the default theme for elsinore.
+    -i  Invert the outputs
 	-d 	Debug logging
 EOF
 $JAVA -jar $DIR/Elsinore.jar --help
@@ -31,7 +32,7 @@ CONFIG=$DIR/elsinore.cfg
 GPIO=
 DEBUG=
 
-while getopts ":hjp:c:g:dt:l:" OPTION
+while getopts ":hjp:c:g:dt:l:i" OPTION
 do
      case $OPTION in
          h)
@@ -39,7 +40,7 @@ do
              exit 1
              ;;
          j)
-             JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,address=5050,server=y,suspend=y
+             JAVA_OPTS="$JAVAOPTS -agentlib:jdwp=transport=dt_socket,address=5050,server=y,suspend=y"
              ;;
          p)
              PORT="--port $OPTARG"
@@ -63,6 +64,8 @@ do
              usage
              exit
              ;;
+     i)
+         JAVA_OPTS="$JAVAOPTS -Dinvert_outputs"
      esac
 done
 
