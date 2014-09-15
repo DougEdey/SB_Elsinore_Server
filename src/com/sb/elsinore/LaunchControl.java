@@ -1579,6 +1579,14 @@ public final class LaunchControl {
 
         tempElement.setTextContent(Boolean.toString(pageLock));
 
+        tempElement = getFirstElement(generalElement, "scale");
+
+        if (tempElement == null) {
+            tempElement = addNewElement(generalElement, "scale");
+        }
+
+        tempElement.setTextContent(scale);
+
         if (breweryName != null && !breweryName.equals("")) {
             tempElement = getFirstElement(generalElement, "brewery_name");
 
@@ -3261,5 +3269,33 @@ public final class LaunchControl {
 
     public static void unlockPage() {
         LaunchControl.pageLock = false;
+    }
+
+    public static boolean setTempScales(String scale) {
+        if (scale == null) {
+            if (LaunchControl.scale.equals("C")) {
+                scale = "F";
+            } else {
+                scale = "C";
+            }
+        }
+        if (!scale.equals("C") && !scale.equals("F")) {
+            return false;
+        }
+        // Change the temperature probes
+        for (Temp t: tempList) {
+            PID p = LaunchControl.findPID(t.getName());
+            if (p != null) {
+                if (!t.getScale().equals(scale)) {
+                    // convert the target temp.
+                    if (scale.equals("F")) {
+                        p.setTemp(Temp.cToF(p.getSetPoint()));
+                    }
+                }
+            }
+            t.setScale(scale);
+        }
+        LaunchControl.scale = scale;
+        return true;
     }
 }
