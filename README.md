@@ -70,13 +70,6 @@ The BeagleBoard Black does have a big advantage over the RPi, it has onboard ana
 
 The RaspberryPi works fine with the existing software, the only thing you need to do differently is naming the GPIO Pinouts.
 
-Pump Control
-============
-
-Elsinore now supports pumps, you'll need to add a new section called "pumps" and each pump must be on it's own line in the form 
-``` name=gpio ```
-
-The buttons will be RED when on, and GRAY when off. 
 
 One Wire & OWFS
 ==========
@@ -89,84 +82,9 @@ One Wire devices can be chained, with only one Pullup resistor before the first 
 
 Install it using your standard package manager, then you need to set a mountpoint up (I use /mnt/1wire) and set 
 
-``` server: w1 ``` in the OWFS configuration File (/etc/owfs.conf by default), you can chose the ports as you want for OWFSHTTP and OWServer, the configuration tool will setup OWFS if it can.
-
-To manually setup OWFS, use the option -owfs when starting up Elsinore
-
-Cutoff Temperature
-============
-After the [incident](http://imgur.com/a/pwQVE) I decided to add a cutoff temperature, in my case I have a temperature probe on my SSRs, and when they go over a certain temperature I want to kill the server so it doesn't get badly damaged
-
-Adding 
-``` cutoff = <string> ```
-To any of the devices, will kill Elsinore when the temperature for that device goes above it.
-
-The String is in the form: <number><scale>
-
-So in the config file below, I can use 85C as a cutoff temperature and it'll turn off when it goes above 85C
-
-System Temperature
-============
-
-System can be enabled during setup by entering "system" (no quotes) at the prompt.
-
-Also, to enable the System Temperature reading, please add
-
-``` <system /> ```
-
-In the <general> section of the configuration file.
-
-Timers
-=========
-
-During setup you can add custom timers, just use:
-
-```
-timer <name>
-```
-
-At the command prompt, if you don't enter a name it will prompt you for one.
-
-Config File
-=========
-
-This config file will automatically be parsed and converted to an XML file 
-
-```
-[general]
-scale = F
-#cosm = COSM API KEY
-#cosm_feed = YOUR COSM FEED
-
-[kettle]
-set_point = 168.0
-duty_cycle = 100.0
-cycle_time = 2.0
-k_param = 41.0
-i_param = 169.0
-d_param = 4.0
-probe = 28-0000032c449f
-gpio = GPIO2_1
+On startup, Elsinore will ask if you want to use OWFS if it detects non-temperature probes.
 
 
-[mlt]
-set_point = 0.0
-duty_cycle = 0.0
-cycle_time = 2.0
-k_param = 44.0
-i_param = 165.0
-d_param = 4.0
-probe = 28-0000032c506e
-gpio = 
-
-[pumps]
-pump_a = GPIO0_8
-pump_foo = GPIO0_9
-```
-
-This is a sample Setup file, you can see I have two devices setup here, the MLT is a "read only" probe that doesn't have a GPIO associated. Whereas the Kettle is setup with default PID values, and has a GPIO pinout of GPIO2_1.
-
-The scale can be changed between C or F to use Celsius or Fahrenheit on the system.
 
 Control Interface
 ============
@@ -183,7 +101,51 @@ to access the webUI, which works on mobiles too:
 
 This is an example of the PID control interface, temperature probes are displayed on the right hand side as LCD displays. On the Raspberry Pi you'll also get the system temperature (this isn't enabled on Beagleboard yet)
 
-There is also a Android Application which is not currently in development, search my repositories to check this, but it's not deprecated yet, I haven't changed the JSON output from the system so it should continue to work.
+Edit Mode
+=========
+
+"Edit mode" is what I call the mechanism by which you can name the temperature probes, convert them to/from PIDs, add pumps, add timers, add mash steps, and re-organize almost everything!
+
+Double clicking the "Edit" button on the top left (the position will probably change) will unlock everything!
+* Allows you to change the temperature mode "Change Scale".
+* Allows you to rename temperature probes -> Double click on any of the temperature probe headers
+* Allows you to create/delete PIDs, edit a temperature probe, and add a GPIO pin for PID mode, and you can chose to add an extra GPIO for the auxilliary output that's manually controlled.
+* Add custom named timers, click the "Add" button in the timer section.
+* Re-order the timers, click and drag to organize them
+* Add custom named Pump outputs, click the "Add" button in the pump section
+* Re-order the pumps, click and drag to organize them
+* [Add mash steps](http://dougedey.github.io/elsinore/mash/instructions/2014/09/01/Elsinore-Mash-Edits/)
+* Add the system temperature probe
+* 
+[More Pictures and information](http://dougedey.github.io/elsinore/setup/instructions/beaglebone/raspberrypi/2014/05/14/New-Elsinore_Setup/)
+
+Pump Control
+============
+
+Elsinore supports pumps, or any output which just needs to be toggled, you can add them from the Web UI when in Edit mode
+The buttons will be RED when on, and GRAY when off. 
+
+
+Cutoff Temperature
+============
+After the [incident](http://imgur.com/a/pwQVE) I decided to add a cutoff temperature, in my case I have a temperature probe on my SSRs, and when they go over a certain temperature I want to kill the server so it doesn't get badly damaged
+
+You can set the cutoff temperature when modifying a PID from the Web UI.
+
+System Temperature
+============
+
+This can be enabled in edit mode on the Web UI.
+
+Timers
+=========
+
+These can be added from the edit mode of the Web UI.
+
+Config File
+=========
+
+The config file is all in XML and everything is controlled via the Web UI!
 
 
 
