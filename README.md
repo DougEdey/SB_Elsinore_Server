@@ -107,16 +107,19 @@ Edit Mode
 "Edit mode" is what I call the mechanism by which you can name the temperature probes, convert them to/from PIDs, add pumps, add timers, add mash steps, and re-organize almost everything!
 
 Double clicking the "Edit" button on the top left (the position will probably change) will unlock everything!
+
 * Allows you to change the temperature mode "Change Scale".
 * Allows you to rename temperature probes -> Double click on any of the temperature probe headers
-* Allows you to create/delete PIDs, edit a temperature probe, and add a GPIO pin for PID mode, and you can chose to add an extra GPIO for the auxilliary output that's manually controlled.
+* Allows you to create/delete PIDs
+** Edit a temperature probe, and add a GPIO pin for PID mode
+** You can chose to add an extra GPIO for the auxilliary output that's manually controlled.
 * Add custom named timers, click the "Add" button in the timer section.
 * Re-order the timers, click and drag to organize them
 * Add custom named Pump outputs, click the "Add" button in the pump section
 * Re-order the pumps, click and drag to organize them
 * [Add mash steps](http://dougedey.github.io/elsinore/mash/instructions/2014/09/01/Elsinore-Mash-Edits/)
 * Add the system temperature probe
-* 
+
 [More Pictures and information](http://dougedey.github.io/elsinore/setup/instructions/beaglebone/raspberrypi/2014/05/14/New-Elsinore_Setup/)
 
 Pump Control
