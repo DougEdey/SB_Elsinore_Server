@@ -25,6 +25,7 @@ function setup() {
     });
     
     $('[class=page-header]').append("<div id='edit-page' class='holo-button' ondblclick='toggleEdit(true); return false;'>Edit</div>")
+    $('[class=page-header]').append("<div id='change-scale' class='holo-button' ondblclick='changeScale(); return false;'>Change Scale</div>")
 
 	//$("#select_logo").click(function(){
 		//$("#logo").trigger('click');
@@ -325,6 +326,11 @@ function updateTempProbe(vessel, val) {
 	}
 	
 	jQuery("#"+vessel+"-tempStatus").text(temp);
+	
+	$("[id="+vessel+"]").find("[id=tempUnit]").each(function() {
+		this.innerHTML = scale;
+	});
+	
 	// cleanup
 	dec = null;
 	temp = null;
@@ -1463,6 +1469,7 @@ function readOnly(manualChange) {
 	readOnlyTimers();
 	readOnlyDevices();
 	$("[id=edit-page]").text("Edit");
+	$("[id=change-scale]").hide();
 	window.locked = true;
 	if (manualChange) {
 		$.ajax({
@@ -1479,6 +1486,7 @@ function readWrite(manualChange) {
 	readWriteTimers();
 	readWriteDevices();
 	$("[id=edit-page]").text("Lock");
+	$("[id=change-scale]").show();
 	window.locked = false;
 	if (manualChange) {
 		$.ajax({
@@ -1627,6 +1635,16 @@ function enableSystem(element) {
 function disableSystem(element) {
 	$.ajax({
 		url: 'delSystem',
+		type: 'POST',
+		success: function(data) {data = null}
+	});
+	sleep(2000);
+	location.reload();
+}
+
+function changeScale() {
+	$.ajax({
+		url: 'setscale',
 		type: 'POST',
 		success: function(data) {data = null}
 	});

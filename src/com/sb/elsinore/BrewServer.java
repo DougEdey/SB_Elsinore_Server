@@ -490,7 +490,7 @@ public class BrewServer extends NanoHTTPD {
                     "Invalid Mash step position to delete: " + ie.getMessage());
             status = Status.BAD_REQUEST;
         }
-
+        
         return new Response(status, MIME_TYPES.get("json"),
                 usage.toJSONString());
     }
@@ -1337,6 +1337,10 @@ public class BrewServer extends NanoHTTPD {
         if (uri.equalsIgnoreCase("/deletetimer")) {
             return deleteTimer(parms);
         }
+        
+        if (uri.equalsIgnoreCase("/setscale")) {
+            return setScale(parms);
+        }
 
         System.out.println("Unidentified URL: " + uri);
         JSONObject usage = new JSONObject();
@@ -2048,6 +2052,23 @@ public class BrewServer extends NanoHTTPD {
         if (timerName != null) {
             LaunchControl.deleteTimer(timerName);
         }
+        return new Response(status, MIME_TYPES.get("json"),
+                usage.toJSONString());
+    }
+
+    private Response setScale(Map<String, String> parms) {
+        Map<String, String> params = ParseParams(parms);
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Change the scale on all the temperature probes");
+        usage.put("scale", "New scale 'F' or 'C'");
+
+        Status status = Response.Status.OK;
+
+        // Iterate all the temperature probes and change the scale
+        if (!LaunchControl.setTempScales(params.get("scale"))) {
+            status = Response.Status.BAD_REQUEST;
+        }
+
         return new Response(status, MIME_TYPES.get("json"),
                 usage.toJSONString());
     }
