@@ -116,7 +116,7 @@ public final class OutputControl implements Runnable {
                 + GPIO.getPinNumber(this.fGPIOh));
             try {
 
-                if (fGPIOc != null && !this.fGPIOh.equals("")) {
+                if (fGPIOh != null && !this.fGPIOh.equals("")) {
                     this.heatSSR = new OutPin(this.fGPIOh);
                     BrewServer.LOG.info("Started the heating output: "
                         + GPIO.getPinNumber(this.fGPIOh));
@@ -162,7 +162,8 @@ public final class OutputControl implements Runnable {
                             if (MathUtil.divide(lTime, THOUSAND)
                                     .compareTo(this.coolDelay) > 0) {
                                 // not slept enough
-                                break;
+                                Thread.sleep(1000);
+                                continue;
                             }
 
                             coolOn();
