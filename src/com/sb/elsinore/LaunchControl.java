@@ -3293,6 +3293,12 @@ public final class LaunchControl {
                     }
                 }
             }
+            MashControl m = LaunchControl.findMashControl(t.getName());
+            if (m != null) {
+                for (int i = 0; i < m.getMashStepSize(); i++) {
+                    m.getMashStep(i).setTempUnit(scale, true);
+                }
+            }
             t.setScale(scale);
         }
         LaunchControl.scale = scale;
