@@ -157,7 +157,7 @@ public class ServeHTML {
         pumpContent += "<span class='holo-button pump' id=\"NewPump\""
                 + " type=\"submit\""
                 + "ondrop='dropDeletePump(event);' "
-                + "ondragover='allowDropTimer(event);'"
+                + "ondragover='allowDropPump(event);'"
                 + "onclick='addPump()'>"
                 + "Add New Pump</span>";
         pumpContent += lineSep + "</div></div>";
@@ -482,10 +482,11 @@ public class ServeHTML {
      */
     final String addPump(final String pumpName) {
         String pumpDetails = lineSep;
-        pumpDetails += "<div id='div-" + pumpName + "'"
+        pumpDetails += "<div id='div-" + pumpName + "' class='pump_wrapper'"
                 + " ondragstart='dragPump(event);' draggable='true'"
                 + " ondrop='dropPump(event);'"
-                + " ondragover='allowDropPump(event);'>"
+                + " ondragover='allowDropPump(event);'"
+                + " ondragleave='leavePump(event);'>"
 
                 + "<button class='holo-button pump' id=\""
                 + pumpName + "\" type=\"submit\" value=\"SubmitCommand\""
@@ -509,7 +510,9 @@ public class ServeHTML {
             timers += "<div id='div-" + timer.getName() + "'"
                 + " ondragstart='dragTimer(event);' draggable='true'"
                 + " ondrop='dropTimer(event);'"
-                + " ondragover='allowDropTimer(event);'>"
+                + " ondragover='allowDropTimer(event);'"
+                + " ondragleave='leaveTimer(event);'"
+                + " class='timer_wrapper'>"
                 + "<div class='timerName holo'>" + timer.getName() + "</div>"
                 + "<span class='holo-button pump' id=\""
                 + timer.getName() + "\" type=\"submit\" "

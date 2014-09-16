@@ -1233,6 +1233,16 @@ function dragPump(ev) {
 
 function dropPump(ev) {
 	ev.preventDefault();
+	
+	var timer = ev.target;
+	if (timer.id != "NewPump") {
+		if (timer.className != "pump_wrapper") {
+			 timer = ev.target.parentElement;
+		}
+		
+		timer.style.border = "1px solid white";
+	}
+	
 	var pumpName = ev.dataTransfer.getData("pumpname");
 	
 	if (pumpName.indexOf("div-") != 0) {
@@ -1266,10 +1276,30 @@ function dropPump(ev) {
 
 function allowDropPump(ev) {
 	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.id == "NewPump") {
+		return;
+	}
+	
+	if (timer.className != "pump_wrapper") {
+		 timer = ev.target.parentElement;
+	}
+	
+	timer.style.border = "1px dashed black";
 }
 
 function dropDeletePump(ev) {
 	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.id != "NewPump") {
+		if (timer.className != "pump_wrapper") {
+			 timer = ev.target.parentElement;
+		}
+		
+		timer.style.border = "1px solid white";
+	}
+	
+	
 	var pumpName = ev.dataTransfer.getData("pumpname");
 	
 	if (pumpName.indexOf("div-") != 0) {
@@ -1288,6 +1318,20 @@ function dropDeletePump(ev) {
 		success: function(data) {data = null}
 	});
 }
+
+function leavePump(ev) {
+	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.id == "NewPump") {
+		return;
+	}
+	if (timer.className != "pump_wrapper") {
+		 timer = ev.target.parentElement;
+	}
+	
+	timer.style.border = "1px solid white";
+}
+
 // END OF PUMPS
 
 function dragTimer(ev) {
@@ -1297,6 +1341,14 @@ function dragTimer(ev) {
 
 function dropTimer(ev) {
 	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.id != "NewTimer") {
+		if (timer.className != "timer_wrapper") {
+			 timer = ev.target.parentElement;
+		}
+		
+		timer.style.border = "1px solid white";
+	}
 	var timerName = ev.dataTransfer.getData("timername");
 	
 	if (timerName.indexOf("div-") != 0) {
@@ -1309,6 +1361,7 @@ function dropTimer(ev) {
 	// TODO: Update the server with the new location
 	var newOrder = "";
 	$("div[id='timers'] > .panel > .panel-body > div").each(function(index) {
+		//this.style.border = "1px dashed black";
 		var divID = this.id;
 		
 		if (divID.indexOf('div-') == 0) {
@@ -1330,6 +1383,29 @@ function dropTimer(ev) {
 
 function allowDropTimer(ev) {
 	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.id == "NewTimer") {
+		return;
+	}
+	
+	if (timer.className != "timer_wrapper") {
+		 timer = ev.target.parentElement;
+	}
+	
+	timer.style.border = "1px dashed black";
+}
+
+function leaveTimer(ev) {
+	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.id == "NewTimer") {
+		return;
+	}
+	if (timer.className != "timer_wrapper") {
+		 timer = ev.target.parentElement;
+	}
+	
+	timer.style.border = "1px solid white";
 }
 
 function dropDeleteTimer(ev) {

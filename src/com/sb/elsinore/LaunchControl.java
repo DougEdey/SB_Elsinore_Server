@@ -1044,10 +1044,14 @@ public final class LaunchControl {
         if (name.equals("") || gpio.equals("") || pumpExists(name)) {
             return false;
         }
-
+        if (LaunchControl.findPump(name) != null) {
+            return false;
+        }
+        
         try {
             Pump p = new Pump(name, gpio);
             synchronized (pumpList) {
+                
                 pumpList.add(p);
             }
         } catch (InvalidGPIOException g) {
