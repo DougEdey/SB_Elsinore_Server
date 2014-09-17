@@ -62,7 +62,7 @@ $.fn.serializeObject = function()
 };
 
 function showGraph(element) {
-	var vessel = element.id.substring(0, element.id.indexOf("-tempGauge"));
+	var vessel = element.id.substring(0, element.id.lastIndexOf("-tempGauge"));
 	window.open("/graph?vessel=" + vessel);
 };
 
@@ -373,7 +373,7 @@ function editVolume(element) {
 	window.disableUpdates = 1;
 	
 	// Is the edit form already displayed
-	var vessel = element.id.substring(0, element.id.indexOf("-volume"));
+	var vessel = element.id.substring(0, element.id.lastIndexOf("-volume"));
 	var vesselEditForm = $('#'+vessel+'-editVol');
 	if (vesselEditForm.val() != undefined) {
 		return;
@@ -404,7 +404,7 @@ function editVolume(element) {
 
 function editDevice(element) {
 	// Is the edit form already displayed
-	var vessel = element.id.substring(0, element.id.indexOf("-title"));
+	var vessel = element.id.substring(0, element.id.lastIndexOf("-title"));
 	var vesselEditForm = $('#'+vessel+'-edit');
 	if (vesselEditForm.val() != undefined) {
 		return;
@@ -544,7 +544,7 @@ function selectOff(vessel) {
 
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
-		i = v.indexOf("-");
+		i = v.lastIndexOf("-");
 		vessel = v.substr(0, i);
 		v = null;
 	}
@@ -576,7 +576,7 @@ function selectAuto(vessel) {
 	
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
-		i = v.indexOf("-");
+		i = v.lastIndexOf("-");
 		vessel = v.substr(0, i);
 		v = null;
 	}
@@ -607,7 +607,7 @@ function selectHysteria(vessel) {
 	
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
-		i = v.indexOf("-");
+		i = v.lastIndexOf("-");
 		vessel = v.substr(0, i);
 		v = null;
 	}
@@ -638,7 +638,7 @@ function selectManual(vessel) {
 	
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
-		i = v.indexOf("-");
+		i = v.lastIndexOf("-");
 		vessel = v.substr(0, i);
 		v = null;
 	}
@@ -669,8 +669,8 @@ function selectManual(vessel) {
 function submitForm(form){
 
 	// Are we updating the data?
-	if (form.id.indexOf("-form") != -1) {
-		var vessel = form.id.substring(0, form.id.indexOf("-form"));
+	if (form.id.lastIndexOf("-form") != -1) {
+		var vessel = form.id.substring(0, form.id.lastIndexOf("-form"));
 		
 		var formdata = {};
 		
@@ -685,8 +685,8 @@ function submitForm(form){
 			dataType: 'json',
 			success: function(data) {data = null}
 		});
-	} else if (form.id.indexOf("-editVol") != -1) {
-		var vessel = form.id.substring(0, form.id.indexOf("-editVol"));
+	} else if (form.id.lastIndexOf("-editVol") != -1) {
+		var vessel = form.id.substring(0, form.id.lastIndexOf("-editVol"));
 		var formdata = {}
 		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
 		$.ajax({ 
@@ -696,9 +696,9 @@ function submitForm(form){
 			dataType: 'json',
 			success: function(data) {data = null}
 		});
-	} else if (form.id.indexOf("-edit") != -1) {
+	} else if (form.id.lastIndexOf("-edit") != -1) {
 		// We're editing
-		var vessel = form.id.substring(0, form.id.indexOf("-edit"));
+		var vessel = form.id.substring(0, form.id.lastIndexOf("-edit"));
 		var formdata = {}
 		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
 		$.ajax({ 
@@ -913,7 +913,7 @@ function disable(input) {
 	window.disableUpdates = 1;
 	
 	// setup the values
-	var vessel = input.id.substring(0, input.id.indexOf("-mode"));
+	var vessel = input.id.substring(0, input.id.lastIndexOf("-mode"));
 	var vesselDiv = 'form[id="'+vessel+'-form"]';
 	
 	jQuery(vesselDiv  + ' input[name="dutycycle"]').prop("disabled", false);
@@ -1199,7 +1199,7 @@ var buildMultipart = function(data){
     var key, crunks = [], bound = false;
     while (!bound) {
         bound = $.md5 ? $.md5(new Date().valueOf()) : (new Date().valueOf());
-        for (key in data) if (~data[key].indexOf(bound)) { bound = false; continue; }
+        for (key in data) if (~data[key].lastIndexOf(bound)) { bound = false; continue; }
     }
 
     for (var key = 0, l = data.length; key < l; key++){
@@ -1245,7 +1245,7 @@ function dropPump(ev) {
 	
 	var pumpName = ev.dataTransfer.getData("pumpname");
 	
-	if (pumpName.indexOf("div-") != 0) {
+	if (pumpName.lastIndexOf("div-") != 0) {
 		pumpName = "div-" + pumpName;
 	}
 	
@@ -1257,7 +1257,7 @@ function dropPump(ev) {
 	$("[id^='div-Pump']").each(function(index) {
 		var divID = this.id;
 		
-		if (divID.indexOf('div-') == 0) {
+		if (divID.lastIndexOf('div-') == 0) {
 			divID = divID.substring(4);
 		}
 		
@@ -1302,7 +1302,7 @@ function dropDeletePump(ev) {
 	
 	var pumpName = ev.dataTransfer.getData("pumpname");
 	
-	if (pumpName.indexOf("div-") != 0) {
+	if (pumpName.lastIndexOf("div-") != 0) {
 		basePumpName = pumpName;
 		pumpName = "div-" + pumpName;
 	}
@@ -1351,7 +1351,7 @@ function dropTimer(ev) {
 	}
 	var timerName = ev.dataTransfer.getData("timername");
 	
-	if (timerName.indexOf("div-") != 0) {
+	if (timerName.lastIndexOf("div-") != 0) {
 		timerName = "div-" + timerName;
 	}
 	
@@ -1364,7 +1364,7 @@ function dropTimer(ev) {
 		//this.style.border = "1px dashed black";
 		var divID = this.id;
 		
-		if (divID.indexOf('div-') == 0) {
+		if (divID.lastIndexOf('div-') == 0) {
 			divID = divID.substring(4);
 		}
 		
@@ -1412,7 +1412,7 @@ function dropDeleteTimer(ev) {
 	ev.preventDefault();
 	var timerName = ev.dataTransfer.getData("timername");
 	
-	if (timerName.indexOf("div-") != 0) {
+	if (timerName.lastIndexOf("div-") != 0) {
 		baseTimerName = timerName;
 		timerName = "div-" + timerName;
 	}
@@ -1434,24 +1434,24 @@ function dropDeleteTimer(ev) {
 
 // Drag and drop functions for mash steps
 function getVesselFromMashStep(divID) {
-	if (divID.indexOf("mashStep") == 0) {
+	if (divID.lastIndexOf("mashStep") == 0) {
 		var temp = divID.substring(8);
 	} else {
 		var temp = divID;
 	}
 	// Explode out
-	var vessel = temp.substring(0, temp.indexOf("-"));
+	var vessel = temp.substring(0, temp.lastIndexOf("-"));
 	return vessel;
 }
 
 function getPositionFromMashStep(divID) {
-	if (divID.indexOf("mashStep") == 0) {
+	if (divID.lastIndexOf("mashStep") == 0) {
 		var temp = divID.substring(8);
 	} else {
 		var temp = divID;
 	}
 	// Explode out
-	var position = temp.substring(temp.indexOf("-") + 1 );
+	var position = temp.substring(temp.lastIndexOf("-") + 1 );
 	return position;
 }
 
@@ -1682,7 +1682,7 @@ function readOnlyDevices() {
 		var vesselForm = 'form[id="'+ vessel +'-form"]';
 		var devAddr = $('#' + vesselForm + ' > input[name="deviceaddr"]').val();
 		if (devAddr == this.textContent) {
-			if (vessel != "System" || this.getAttribute("onDblClick").indexOf("enable") == 0) {
+			if (vessel != "System" || this.getAttribute("onDblClick").lastIndexOf("enable") == 0) {
 				$('[id=' + vessel + ']').css('display', 'none')
 			}
 		}
