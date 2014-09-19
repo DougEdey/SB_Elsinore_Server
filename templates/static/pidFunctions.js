@@ -37,7 +37,10 @@ function setup() {
 //		});
 //	   return false;
 //	});
-	
+
+    $('div[id$=-graph_body]').each(function (index) {
+		$(this).slideToggle();
+	});	
 	waitForMsg();
 };
 
@@ -62,7 +65,7 @@ $.fn.serializeObject = function()
 };
 
 function showGraph(element) {
-	var vessel = element.id.substring(0, element.id.lastIndexOf("-tempGauge"));
+	var vessel = element.id.substring(0, element.id.lastIndexOf("-graph_body"));
 	window.open("/graph?vessel=" + vessel);
 };
 
@@ -1104,6 +1107,10 @@ function fixWebkitHeightBug(){
 
 }
 
+function toggleBlock(id) {
+	$('#' + id).slideToggle();
+}
+
 $(window).resize(function() {
 
 	fixWebkitHeightBug();
@@ -1726,4 +1733,123 @@ function changeScale() {
 	});
 	sleep(2000);
 	location.reload();
+}
+
+function embedGraph(vessel) {
+	if ($('#' + vessel + "-graph_title")[0].innerHTML == "Hide Graph") {
+		$('#' + vessel + "-graph_title")[0].innerHTML = "Show Graph";
+	} else {
+		$('#' + vessel + "-graph_title")[0].innerHTML = "Hide Graph";
+	}
+	var options = {
+		lines: {
+			show: true
+		},
+		points: {
+			show: false
+		},
+		xaxes: [{show: false
+		/*
+				mode: "time",
+				timezone: "browser",
+				timeformat: "%y/%m/%d %H:%M:%S"
+			*/}],
+		yaxes: [{ 
+			axisLabel: "Temperature"}, {
+			axisLabel: "Duty %",
+			position: "right",
+			mode: null,
+			min: 0,
+			max: 100,
+		}]
+	};
+
+	var data = [];
+	$("#" + vessel + "-graph_body").width(300);
+	$("#" + vessel + "-graph_body").height(150);
+	var plot = $.plot("#" + vessel + "-graph_body", data, options);
+	
+	// Fetch one series, adding to what we already have
+
+	var alreadyFetched = {};
+
+	$("button.fetchSeries").click(function () {
+
+		var button = $(this);
+
+		// Find the URL in the link right next to us, then fetch the data
+
+		var dataurl = button.siblings("a").attr("href");
+
+		function onDataReceived(series) {
+
+			// Extract the first coordinate pair; jQuery has parsed it, so
+			// the data is now just an ordinary JavaScript object
+
+			var firstcoordinate = "(" + series.data[0][0] + ", " + series.data[0][1] + ")";
+			button.siblings("span").text("Fetched " + series.label + ", first point: " + firstcoordinate);
+
+			// Push the new data onto our existing data array
+
+			if (!alreadyFetched[series.label]) {
+				alreadyFetched[series.label] = true;
+				data.push(series);
+			}
+
+			//alert("inputdata :" + inputdata); 
+			
+		}
+
+		$.ajax({
+			url: dataurl,
+			type: "GET",
+			dataType: "json",
+			success: onDataReceived
+		});
+	});
+
+	// Initiate a recurring data update
+		data = [];
+		alreadyFetched = {};
+
+		$.plot("#" + vessel + "-graph_body", data, options);
+
+
+		function fetchData() {
+
+			function onDataReceived(series) {
+				// Load all the data in one pass; if we only got partial
+				// data we could merge it with what we already have.
+				series[0].label = "Temp";
+				if (series.length == 2) {
+					series[1].label = "Duty";
+				}
+				data = [ series ];
+				$.plot("#" + vessel + "-graph_body", series, options);					
+			}
+
+			// Normally we call the same URL - a script connected to a
+			// database - but in this case we only have static example
+			// files, so we need to modify the URL.
+			$.ajax({
+				url: "/graph-data/",
+				type: "GET",
+				dataType: "json",
+				data: "vessel="+vessel,
+				success: onDataReceived
+			});
+
+			setTimeout(fetchData, 5000);
+			
+		}
+
+		setTimeout(fetchData, 5000);
+	
+
+	// Load the first series by default, so we don't have an empty plot
+
+	
+	// Add the Flot version string to the footer
+	//$("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
+	
 }
