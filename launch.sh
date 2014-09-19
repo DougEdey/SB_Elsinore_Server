@@ -60,12 +60,13 @@ do
 	 l)
 	     THEME="--theme $OPTARG"
 	     ;;
+         i)
+             JAVA_OPTS="$JAVAOPTS -Dinvert_outputs"
+	     ;;
          ?)
              usage
              exit
              ;;
-     i)
-         JAVA_OPTS="$JAVAOPTS -Dinvert_outputs"
      esac
 done
 

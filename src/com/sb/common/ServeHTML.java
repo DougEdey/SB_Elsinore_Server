@@ -157,7 +157,7 @@ public class ServeHTML {
         pumpContent += "<span class='holo-button pump' id=\"NewPump\""
                 + " type=\"submit\""
                 + "ondrop='dropDeletePump(event);' "
-                + "ondragover='allowDropTimer(event);'"
+                + "ondragover='allowDropPump(event);'"
                 + "onclick='addPump()'>"
                 + "Add New Pump</span>";
         pumpContent += lineSep + "</div></div>";
@@ -231,7 +231,10 @@ public class ServeHTML {
             + "jQuery(document).ready(function() {" + lineSep
             + "    setup();" + lineSep
             + "});" + lineSep
-            + "</script>";
+            + "</script>"
+        + "<script language=\"javascript\" type=\"text/javascript\" src=\"/templates/static/jquery.flot.js\"></script>"
+        + "<script language=\"javascript\" type=\"text/javascript\" src=\"/templates/static/jquery.flot.axislabels.js\"></script>"
+        + "<script language=\"javascript\" type=\"text/javascript\" src=\"/templates/static/jquery.flot.time.js\"></script>";
 
         return javascript;
 
@@ -282,13 +285,20 @@ public class ServeHTML {
             + "</div>"
             + "<div class=\"panel-body\">" + lineSep
             + " <canvas id=\"" + device + "-tempGauge\" class=\"gauge\""
-            + " width=\"300\" height=\"140\" onClick=\"showGraph(this)\">" + lineSep
+            + " width=\"300\" height=\"140\">" + lineSep
             + "</canvas>" + lineSep
             + "<div id='" + device + "-tempSummary'>Temperature("
                 + "<div id='tempUnit'>F</div>): " + lineSep
             + "<div id='" + device + "-tempStatus' >temp</div>&#176"
                 + "<div id='tempUnit'>F</div>" + lineSep
             + "</div>" + lineSep
+            + "<div id=\"" + device
+            + "-graph_wrapper\" class=\"holo-content controller panel panel-info\">"
+            + "<div id='" + device + "-graph_title' class=\"title panel-heading\""
+                    + " onclick='embedGraph(\"" + device + "\"); toggleBlock(\""+device + "-graph_body\");' >Show Graph"
+            + "</div>"
+            + "<div id='" + device + "-graph_body' onclick='showGraph(this);' class=\"panel-body\">"
+            + "</div></div>"
             + "</div>" + lineSep;
 
 
@@ -482,10 +492,11 @@ public class ServeHTML {
      */
     final String addPump(final String pumpName) {
         String pumpDetails = lineSep;
-        pumpDetails += "<div id='div-" + pumpName + "'"
+        pumpDetails += "<div id='div-" + pumpName + "' class='pump_wrapper'"
                 + " ondragstart='dragPump(event);' draggable='true'"
                 + " ondrop='dropPump(event);'"
-                + " ondragover='allowDropPump(event);'>"
+                + " ondragover='allowDropPump(event);'"
+                + " ondragleave='leavePump(event);'>"
 
                 + "<button class='holo-button pump' id=\""
                 + pumpName + "\" type=\"submit\" value=\"SubmitCommand\""
@@ -509,7 +520,9 @@ public class ServeHTML {
             timers += "<div id='div-" + timer.getName() + "'"
                 + " ondragstart='dragTimer(event);' draggable='true'"
                 + " ondrop='dropTimer(event);'"
-                + " ondragover='allowDropTimer(event);'>"
+                + " ondragover='allowDropTimer(event);'"
+                + " ondragleave='leaveTimer(event);'"
+                + " class='timer_wrapper'>"
                 + "<div class='timerName holo'>" + timer.getName() + "</div>"
                 + "<span class='holo-button pump' id=\""
                 + timer.getName() + "\" type=\"submit\" "

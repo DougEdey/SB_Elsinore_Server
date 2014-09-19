@@ -1044,10 +1044,14 @@ public final class LaunchControl {
         if (name.equals("") || gpio.equals("") || pumpExists(name)) {
             return false;
         }
-
+        if (LaunchControl.findPump(name) != null) {
+            return false;
+        }
+        
         try {
             Pump p = new Pump(name, gpio);
             synchronized (pumpList) {
+                
                 pumpList.add(p);
             }
         } catch (InvalidGPIOException g) {
@@ -3291,6 +3295,12 @@ public final class LaunchControl {
                     if (scale.equals("F")) {
                         p.setTemp(Temp.cToF(p.getSetPoint()));
                     }
+                }
+            }
+            MashControl m = LaunchControl.findMashControl(t.getName());
+            if (m != null) {
+                for (int i = 0; i < m.getMashStepSize(); i++) {
+                    m.getMashStep(i).setTempUnit(scale, true);
                 }
             }
             t.setScale(scale);

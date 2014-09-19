@@ -37,7 +37,10 @@ function setup() {
 //		});
 //	   return false;
 //	});
-	
+
+    $('div[id$=-graph_body]').each(function (index) {
+		$(this).slideToggle();
+	});	
 	waitForMsg();
 };
 
@@ -62,7 +65,7 @@ $.fn.serializeObject = function()
 };
 
 function showGraph(element) {
-	var vessel = element.id.substring(0, element.id.indexOf("-tempGauge"));
+	var vessel = element.id.substring(0, element.id.lastIndexOf("-graph_body"));
 	window.open("/graph?vessel=" + vessel);
 };
 
@@ -373,7 +376,7 @@ function editVolume(element) {
 	window.disableUpdates = 1;
 	
 	// Is the edit form already displayed
-	var vessel = element.id.substring(0, element.id.indexOf("-volume"));
+	var vessel = element.id.substring(0, element.id.lastIndexOf("-volume"));
 	var vesselEditForm = $('#'+vessel+'-editVol');
 	if (vesselEditForm.val() != undefined) {
 		return;
@@ -404,7 +407,7 @@ function editVolume(element) {
 
 function editDevice(element) {
 	// Is the edit form already displayed
-	var vessel = element.id.substring(0, element.id.indexOf("-title"));
+	var vessel = element.id.substring(0, element.id.lastIndexOf("-title"));
 	var vesselEditForm = $('#'+vessel+'-edit');
 	if (vesselEditForm.val() != undefined) {
 		return;
@@ -544,7 +547,7 @@ function selectOff(vessel) {
 
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
-		i = v.indexOf("-");
+		i = v.lastIndexOf("-");
 		vessel = v.substr(0, i);
 		v = null;
 	}
@@ -576,7 +579,7 @@ function selectAuto(vessel) {
 	
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
-		i = v.indexOf("-");
+		i = v.lastIndexOf("-");
 		vessel = v.substr(0, i);
 		v = null;
 	}
@@ -607,7 +610,7 @@ function selectHysteria(vessel) {
 	
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
-		i = v.indexOf("-");
+		i = v.lastIndexOf("-");
 		vessel = v.substr(0, i);
 		v = null;
 	}
@@ -638,7 +641,7 @@ function selectManual(vessel) {
 	
 	if((typeof vessel) != "string") {
 		var v = vessel.id;
-		i = v.indexOf("-");
+		i = v.lastIndexOf("-");
 		vessel = v.substr(0, i);
 		v = null;
 	}
@@ -669,8 +672,8 @@ function selectManual(vessel) {
 function submitForm(form){
 
 	// Are we updating the data?
-	if (form.id.indexOf("-form") != -1) {
-		var vessel = form.id.substring(0, form.id.indexOf("-form"));
+	if (form.id.lastIndexOf("-form") != -1) {
+		var vessel = form.id.substring(0, form.id.lastIndexOf("-form"));
 		
 		var formdata = {};
 		
@@ -685,8 +688,8 @@ function submitForm(form){
 			dataType: 'json',
 			success: function(data) {data = null}
 		});
-	} else if (form.id.indexOf("-editVol") != -1) {
-		var vessel = form.id.substring(0, form.id.indexOf("-editVol"));
+	} else if (form.id.lastIndexOf("-editVol") != -1) {
+		var vessel = form.id.substring(0, form.id.lastIndexOf("-editVol"));
 		var formdata = {}
 		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
 		$.ajax({ 
@@ -696,9 +699,9 @@ function submitForm(form){
 			dataType: 'json',
 			success: function(data) {data = null}
 		});
-	} else if (form.id.indexOf("-edit") != -1) {
+	} else if (form.id.lastIndexOf("-edit") != -1) {
 		// We're editing
-		var vessel = form.id.substring(0, form.id.indexOf("-edit"));
+		var vessel = form.id.substring(0, form.id.lastIndexOf("-edit"));
 		var formdata = {}
 		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
 		$.ajax({ 
@@ -913,7 +916,7 @@ function disable(input) {
 	window.disableUpdates = 1;
 	
 	// setup the values
-	var vessel = input.id.substring(0, input.id.indexOf("-mode"));
+	var vessel = input.id.substring(0, input.id.lastIndexOf("-mode"));
 	var vesselDiv = 'form[id="'+vessel+'-form"]';
 	
 	jQuery(vesselDiv  + ' input[name="dutycycle"]').prop("disabled", false);
@@ -1104,6 +1107,10 @@ function fixWebkitHeightBug(){
 
 }
 
+function toggleBlock(id) {
+	$('#' + id).slideToggle();
+}
+
 $(window).resize(function() {
 
 	fixWebkitHeightBug();
@@ -1199,7 +1206,7 @@ var buildMultipart = function(data){
     var key, crunks = [], bound = false;
     while (!bound) {
         bound = $.md5 ? $.md5(new Date().valueOf()) : (new Date().valueOf());
-        for (key in data) if (~data[key].indexOf(bound)) { bound = false; continue; }
+        for (key in data) if (~data[key].lastIndexOf(bound)) { bound = false; continue; }
     }
 
     for (var key = 0, l = data.length; key < l; key++){
@@ -1233,9 +1240,19 @@ function dragPump(ev) {
 
 function dropPump(ev) {
 	ev.preventDefault();
+	
+	var timer = ev.target;
+	if (timer.id != "NewPump") {
+		if (timer.className != "pump_wrapper") {
+			 timer = ev.target.parentElement;
+		}
+		
+		timer.style.border = "1px solid white";
+	}
+	
 	var pumpName = ev.dataTransfer.getData("pumpname");
 	
-	if (pumpName.indexOf("div-") != 0) {
+	if (pumpName.lastIndexOf("div-") != 0) {
 		pumpName = "div-" + pumpName;
 	}
 	
@@ -1247,7 +1264,7 @@ function dropPump(ev) {
 	$("[id^='div-Pump']").each(function(index) {
 		var divID = this.id;
 		
-		if (divID.indexOf('div-') == 0) {
+		if (divID.lastIndexOf('div-') == 0) {
 			divID = divID.substring(4);
 		}
 		
@@ -1266,13 +1283,33 @@ function dropPump(ev) {
 
 function allowDropPump(ev) {
 	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.id == "NewPump") {
+		return;
+	}
+	
+	if (timer.className != "pump_wrapper") {
+		 timer = ev.target.parentElement;
+	}
+	
+	timer.style.border = "1px dashed black";
 }
 
 function dropDeletePump(ev) {
 	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.id != "NewPump") {
+		if (timer.className != "pump_wrapper") {
+			 timer = ev.target.parentElement;
+		}
+		
+		timer.style.border = "1px solid white";
+	}
+	
+	
 	var pumpName = ev.dataTransfer.getData("pumpname");
 	
-	if (pumpName.indexOf("div-") != 0) {
+	if (pumpName.lastIndexOf("div-") != 0) {
 		basePumpName = pumpName;
 		pumpName = "div-" + pumpName;
 	}
@@ -1288,6 +1325,20 @@ function dropDeletePump(ev) {
 		success: function(data) {data = null}
 	});
 }
+
+function leavePump(ev) {
+	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.id == "NewPump") {
+		return;
+	}
+	if (timer.className != "pump_wrapper") {
+		 timer = ev.target.parentElement;
+	}
+	
+	timer.style.border = "1px solid white";
+}
+
 // END OF PUMPS
 
 function dragTimer(ev) {
@@ -1297,9 +1348,17 @@ function dragTimer(ev) {
 
 function dropTimer(ev) {
 	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.id != "NewTimer") {
+		if (timer.className != "timer_wrapper") {
+			 timer = ev.target.parentElement;
+		}
+		
+		timer.style.border = "1px solid white";
+	}
 	var timerName = ev.dataTransfer.getData("timername");
 	
-	if (timerName.indexOf("div-") != 0) {
+	if (timerName.lastIndexOf("div-") != 0) {
 		timerName = "div-" + timerName;
 	}
 	
@@ -1309,9 +1368,10 @@ function dropTimer(ev) {
 	// TODO: Update the server with the new location
 	var newOrder = "";
 	$("div[id='timers'] > .panel > .panel-body > div").each(function(index) {
+		//this.style.border = "1px dashed black";
 		var divID = this.id;
 		
-		if (divID.indexOf('div-') == 0) {
+		if (divID.lastIndexOf('div-') == 0) {
 			divID = divID.substring(4);
 		}
 		
@@ -1330,13 +1390,36 @@ function dropTimer(ev) {
 
 function allowDropTimer(ev) {
 	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.id == "NewTimer") {
+		return;
+	}
+	
+	if (timer.className != "timer_wrapper") {
+		 timer = ev.target.parentElement;
+	}
+	
+	timer.style.border = "1px dashed black";
+}
+
+function leaveTimer(ev) {
+	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.id == "NewTimer") {
+		return;
+	}
+	if (timer.className != "timer_wrapper") {
+		 timer = ev.target.parentElement;
+	}
+	
+	timer.style.border = "1px solid white";
 }
 
 function dropDeleteTimer(ev) {
 	ev.preventDefault();
 	var timerName = ev.dataTransfer.getData("timername");
 	
-	if (timerName.indexOf("div-") != 0) {
+	if (timerName.lastIndexOf("div-") != 0) {
 		baseTimerName = timerName;
 		timerName = "div-" + timerName;
 	}
@@ -1358,24 +1441,24 @@ function dropDeleteTimer(ev) {
 
 // Drag and drop functions for mash steps
 function getVesselFromMashStep(divID) {
-	if (divID.indexOf("mashStep") == 0) {
+	if (divID.lastIndexOf("mashStep") == 0) {
 		var temp = divID.substring(8);
 	} else {
 		var temp = divID;
 	}
 	// Explode out
-	var vessel = temp.substring(0, temp.indexOf("-"));
+	var vessel = temp.substring(0, temp.lastIndexOf("-"));
 	return vessel;
 }
 
 function getPositionFromMashStep(divID) {
-	if (divID.indexOf("mashStep") == 0) {
+	if (divID.lastIndexOf("mashStep") == 0) {
 		var temp = divID.substring(8);
 	} else {
 		var temp = divID;
 	}
 	// Explode out
-	var position = temp.substring(temp.indexOf("-") + 1 );
+	var position = temp.substring(temp.lastIndexOf("-") + 1 );
 	return position;
 }
 
@@ -1606,7 +1689,7 @@ function readOnlyDevices() {
 		var vesselForm = 'form[id="'+ vessel +'-form"]';
 		var devAddr = $('#' + vesselForm + ' > input[name="deviceaddr"]').val();
 		if (devAddr == this.textContent) {
-			if (vessel != "System" || this.getAttribute("onDblClick").indexOf("enable") == 0) {
+			if (vessel != "System" || this.getAttribute("onDblClick").lastIndexOf("enable") == 0) {
 				$('[id=' + vessel + ']').css('display', 'none')
 			}
 		}
@@ -1650,4 +1733,123 @@ function changeScale() {
 	});
 	sleep(2000);
 	location.reload();
+}
+
+function embedGraph(vessel) {
+	if ($('#' + vessel + "-graph_title")[0].innerHTML == "Hide Graph") {
+		$('#' + vessel + "-graph_title")[0].innerHTML = "Show Graph";
+	} else {
+		$('#' + vessel + "-graph_title")[0].innerHTML = "Hide Graph";
+	}
+	var options = {
+		lines: {
+			show: true
+		},
+		points: {
+			show: false
+		},
+		xaxes: [{show: false
+		/*
+				mode: "time",
+				timezone: "browser",
+				timeformat: "%y/%m/%d %H:%M:%S"
+			*/}],
+		yaxes: [{ 
+			axisLabel: "Temperature"}, {
+			axisLabel: "Duty %",
+			position: "right",
+			mode: null,
+			min: 0,
+			max: 100,
+		}]
+	};
+
+	var data = [];
+	$("#" + vessel + "-graph_body").width(300);
+	$("#" + vessel + "-graph_body").height(150);
+	var plot = $.plot("#" + vessel + "-graph_body", data, options);
+	
+	// Fetch one series, adding to what we already have
+
+	var alreadyFetched = {};
+
+	$("button.fetchSeries").click(function () {
+
+		var button = $(this);
+
+		// Find the URL in the link right next to us, then fetch the data
+
+		var dataurl = button.siblings("a").attr("href");
+
+		function onDataReceived(series) {
+
+			// Extract the first coordinate pair; jQuery has parsed it, so
+			// the data is now just an ordinary JavaScript object
+
+			var firstcoordinate = "(" + series.data[0][0] + ", " + series.data[0][1] + ")";
+			button.siblings("span").text("Fetched " + series.label + ", first point: " + firstcoordinate);
+
+			// Push the new data onto our existing data array
+
+			if (!alreadyFetched[series.label]) {
+				alreadyFetched[series.label] = true;
+				data.push(series);
+			}
+
+			//alert("inputdata :" + inputdata); 
+			
+		}
+
+		$.ajax({
+			url: dataurl,
+			type: "GET",
+			dataType: "json",
+			success: onDataReceived
+		});
+	});
+
+	// Initiate a recurring data update
+		data = [];
+		alreadyFetched = {};
+
+		$.plot("#" + vessel + "-graph_body", data, options);
+
+
+		function fetchData() {
+
+			function onDataReceived(series) {
+				// Load all the data in one pass; if we only got partial
+				// data we could merge it with what we already have.
+				series[0].label = "Temp";
+				if (series.length == 2) {
+					series[1].label = "Duty";
+				}
+				data = [ series ];
+				$.plot("#" + vessel + "-graph_body", series, options);					
+			}
+
+			// Normally we call the same URL - a script connected to a
+			// database - but in this case we only have static example
+			// files, so we need to modify the URL.
+			$.ajax({
+				url: "/graph-data/",
+				type: "GET",
+				dataType: "json",
+				data: "vessel="+vessel,
+				success: onDataReceived
+			});
+
+			setTimeout(fetchData, 5000);
+			
+		}
+
+		setTimeout(fetchData, 5000);
+	
+
+	// Load the first series by default, so we don't have an empty plot
+
+	
+	// Add the Flot version string to the footer
+	//$("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
+	
 }

@@ -237,7 +237,6 @@ public final class PID implements Runnable {
 
                         BigDecimal tempAvg = calcAverage();
 
-
                         // we have the current temperature
                         if (mode.equals("auto")) {
                             this.heatSetting.calculatedDuty =

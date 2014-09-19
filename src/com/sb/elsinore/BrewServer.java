@@ -371,7 +371,9 @@ public class BrewServer extends NanoHTTPD {
             newStep.setMethod(method);
             newStep.setType(type);
             newStep.setDuration(duration);
+            newStep.setTempUnit(tempUnit);
             newStep.setTemp(temp);
+
             mControl.sortMashSteps();
 
         } catch (NullPointerException nfe) {
