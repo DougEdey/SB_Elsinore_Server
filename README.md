@@ -111,8 +111,10 @@ Double clicking the "Edit" button on the top left (the position will probably ch
 * Allows you to change the temperature mode "Change Scale".
 * Allows you to rename temperature probes -> Double click on any of the temperature probe headers
 * Allows you to create/delete PIDs
+
 ** Edit a temperature probe, and add a GPIO pin for PID mode
 ** You can chose to add an extra GPIO for the auxilliary output that's manually controlled.
+
 * Add custom named timers, click the "Add" button in the timer section.
 * Re-order the timers, click and drag to organize them
 * Add custom named Pump outputs, click the "Add" button in the pump section
