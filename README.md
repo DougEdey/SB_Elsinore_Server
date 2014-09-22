@@ -167,7 +167,7 @@ The "Language" line should match your system language. For me, I have an English
 
 If you want to provide translations for your language, you'll just need to send me a copy of:
 
-[url]https://github.com/DougEdey/SB_Elsinore_Server/blob/66ebb13ab606498de19393c7d2fcd7beae9b9795/src/com/sb/elsinore/nls/messages.properties[/url]
+[See here for the default](https://github.com/DougEdey/SB_Elsinore_Server/blob/66ebb13ab606498de19393c7d2fcd7beae9b9795/src/com/sb/elsinore/nls/messages.properties)
 
 With the translations and the language line.
 
