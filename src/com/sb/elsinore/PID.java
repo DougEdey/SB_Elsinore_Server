@@ -240,7 +240,7 @@ public final class PID implements Runnable {
                         // we have the current temperature
                         if (mode.equals("auto")) {
                             this.heatSetting.calculatedDuty =
-                                calcPIDreg4(tempAvg, true);
+                                calculate(tempAvg, true);
                             BrewServer.LOG.info("Calculated: "
                                 + heatSetting.calculatedDuty);
                             this.outputControl.setDuty(
@@ -552,6 +552,8 @@ public final class PID implements Runnable {
     /**
      *  Temp values for PID calculation.
      */
+    private BigDecimal error = new BigDecimal(0.0);
+    private BigDecimal totalError = new BigDecimal(0.0);
     private BigDecimal errorFactor = new BigDecimal(0.0);
     /**
      *  Temp values for PID calculation.
@@ -589,19 +591,33 @@ public final class PID implements Runnable {
      * @param enable  Enable the output
      * @return  A Double of the duty cycle %
      */
-    private BigDecimal calcPIDreg4(final BigDecimal avgTemp, final boolean enable) {
+    private BigDecimal calculate(final BigDecimal avgTemp,
+            final boolean enable) {
         this.currentTime = new BigDecimal(System.currentTimeMillis());
         if (previousTime.compareTo(BigDecimal.ZERO) == 0) {
             previousTime = currentTime;
         }
-        BigDecimal dt = MathUtil.divide(currentTime.subtract(previousTime),THOUSAND);
+        BigDecimal dt = MathUtil.divide(
+                currentTime.subtract(previousTime),THOUSAND);
         if (dt.compareTo(BigDecimal.ZERO) == 0) {
             return outputControl.getDuty();
         }
 
-        this.errorFactor = heatSetting.set_point.subtract(avgTemp);
-        this.integralFactor = integralFactor.add(errorFactor.multiply(dt));
-        this.derivativeFactor = errorFactor.subtract(previousError).multiply(dt);
+        // Calculate the error
+        this.error = heatSetting.set_point.subtract(avgTemp);
+
+        if ((this.totalError.add(this.error).multiply(
+                this.integralFactor).compareTo(new BigDecimal(100)) < 0)
+                && (this.totalError.add(this.error).multiply(
+                        this.integralFactor).compareTo(new BigDecimal(0)) > 0))
+        {
+            this.totalError = this.totalError.add(this.error);
+        }
+
+        this.heatSetting.proportional.multiply(this.error).add(
+                heatSetting.integral.multiply(this.totalError)).add(
+                        heatSetting.derivative.multiply(
+                                this.error.subtract(this.previousError)));
 
         BrewServer.LOG.info("DT: " + dt + " Error: " + errorFactor
             + " integral: " + integralFactor
@@ -611,19 +627,22 @@ public final class PID implements Runnable {
                 .add(heatSetting.integral.multiply(integralFactor))
                 .add(heatSetting.derivative.multiply(derivativeFactor));
 
-        previousError = errorFactor;
+        previousError = error;
 
         // limit y[k] to GMA_HLIM and GMA_LLIM
-        if (output.compareTo(gmaHLIM) > 0) {
-            this.output = gmaHLIM;
+        if (output.compareTo(new BigDecimal(100)) > 0) {
+            this.output = new BigDecimal(100);
         }
 
-        if (output.compareTo(gmaLLIM) < 0) {
-            this.output = gmaLLIM;
+        if (output.compareTo(new BigDecimal(-100)) < 0) {
+            if (this.coldSetting == null) {
+                this.output = new BigDecimal(-100);
+            } else {
+                this.output = new BigDecimal(-100);
+            }
         }
+
         this.previousTime = currentTime;
-        this.previousError = errorFactor;
-
         return this.output;
     }
 

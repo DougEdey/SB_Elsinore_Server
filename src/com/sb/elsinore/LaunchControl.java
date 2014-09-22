@@ -1046,11 +1046,11 @@ public final class LaunchControl {
         if (LaunchControl.findPump(name) != null) {
             return false;
         }
-        
+
         try {
             Pump p = new Pump(name, gpio);
             synchronized (pumpList) {
-                
+
                 pumpList.add(p);
             }
         } catch (InvalidGPIOException g) {
@@ -2112,14 +2112,13 @@ public final class LaunchControl {
                 setElementText(device, "volume-offset", temp.getVolumeOffset());
             }
 
-            ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase = 
-                    temp.getVolumeBase();
+            ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase = temp
+                    .getVolumeBase();
 
             // Iterate over the entries
 
             if (volumeBase != null) {
-                for (Entry<BigDecimal, BigDecimal> e : volumeBase
-                        .entrySet()) {
+                for (Entry<BigDecimal, BigDecimal> e : volumeBase.entrySet()) {
                     System.out.println("Saving volume point " + e.getKey()
                             + " value " + e.getValue());
                     Element volEntry = addNewElement(device, "volume");
@@ -2735,7 +2734,7 @@ public final class LaunchControl {
     /**
      * Get a list of all the nodes that match the nodeName. If no baseNode is
      * provided (null) then it checks from the document root.
-     *
+     * 
      * @param baseNode
      *            The root element to check from, null for the base element
      * @param nodeName
@@ -3286,7 +3285,7 @@ public final class LaunchControl {
             return false;
         }
         // Change the temperature probes
-        for (Temp t: tempList) {
+        for (Temp t : tempList) {
             PID p = LaunchControl.findPID(t.getName());
             if (p != null) {
                 if (!t.getScale().equals(scale)) {
