@@ -1286,6 +1286,12 @@ public class BrewServer extends NanoHTTPD {
 
         }
 
+        // NLS Support
+        if (uri.startsWith("/nls/")) {
+            return serveFile(uri.replace("/nls/", "/src/com/sb/elsinore/nls/"),
+                header, rootDir);
+        }
+
         if (uri.equalsIgnoreCase("/brewerImage.gif")) {
             // Has the user uploaded a file?
             if (new File(rootDir, uri).exists()) {

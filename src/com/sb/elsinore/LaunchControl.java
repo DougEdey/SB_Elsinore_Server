@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -569,13 +570,9 @@ public final class LaunchControl {
      * 
      * @return The JSON String of the current status.
      */
-    private static int count = 0;
-
     @SuppressWarnings("unchecked")
     public static String getJSONStatus() {
-        if (count > 1) {
 
-        }
         // get each setting add it to the JSON
         JSONObject rObj = new JSONObject();
         JSONObject tJSON = null;
@@ -672,6 +669,8 @@ public final class LaunchControl {
         if (LaunchControl.getMessage() != null) {
             rObj.put("message", LaunchControl.getMessage());
         }
+
+        rObj.put("language", Locale.getDefault().toString());
         return rObj.toString();
     }
 

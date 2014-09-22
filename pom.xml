@@ -110,7 +110,15 @@
 			<version>3.3.2</version>
 		</dependency>
         
-       
+        <!--  NLS Support -->
+        <dependency>
+			<groupId>org.eclipse.osgi</groupId>
+			<artifactId>org.eclipse.osgi</artifactId>
+			<version>3.7.1</version>
+        </dependency>
+		        
+
+		       
     </dependencies>
     
     	
@@ -135,7 +143,20 @@
                                 </transformer>
                             </transformers>
                             <outputFile>${project.basedir}/${project.name}.jar</outputFile>
-                        </configuration>
+                            
+						                
+						    <filters>
+						        <filter>
+						            <artifact>*:*</artifact>
+						            <excludes>
+						                <exclude>META-INF/*.SF</exclude>
+						                <exclude>META-INF/*.DSA</exclude>
+						                <exclude>META-INF/*.RSA</exclude>
+						            </excludes>
+						        </filter>
+						    </filters>
+						    <!-- Additional configuration. -->
+						</configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -149,6 +170,14 @@
                 </configuration>
             </plugin>
         </plugins>
+         <resources>
+      		<resource>
+		        <directory>src</directory>
+		        <includes>
+		        	<include>com/sb/elsinore/nls/*.properties</include>
+		        </includes>
+        	</resource>
+        </resources>
     </build>
 
 </project>

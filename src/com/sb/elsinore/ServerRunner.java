@@ -1,6 +1,7 @@
 package com.sb.elsinore;
 
 import java.io.IOException;
+import java.util.Locale;
 
 /**
  * A helper class to run the NanoHTTPD instance.
@@ -41,6 +42,7 @@ public class ServerRunner implements Runnable {
             System.exit(-1);
         }
 
+        System.out.println("Language: " + Locale.getDefault().toString());
         System.out.println("Server started, kill to stop.\n");
 
         try {
