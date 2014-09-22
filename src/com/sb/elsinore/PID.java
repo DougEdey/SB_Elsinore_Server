@@ -623,7 +623,7 @@ public final class PID implements Runnable {
             + " integral: " + integralFactor
             + " derivative: " + derivativeFactor);
 
-        this.output = heatSetting.proportional.multiply(errorFactor)
+        this.output = heatSetting.proportional.multiply(this.error)
                 .add(heatSetting.integral.multiply(integralFactor))
                 .add(heatSetting.derivative.multiply(derivativeFactor));
 
