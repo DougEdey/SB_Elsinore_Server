@@ -1801,7 +1801,10 @@ function embedGraph(vessel) {
 			mode: null,
 			min: 0,
 			max: 100,
-		}]
+		}],
+		legend: {
+			position: "nw"
+		}
 	};
 
 	var data = [];
