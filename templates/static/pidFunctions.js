@@ -3,25 +3,26 @@ function getLanguage() {
 		type: 'GET',
 		url: '/getstatus',
 		dataType: 'json',
-		async: true,
+		async: false,
 		cache: false,
 		timeout:5000,
 		success: function(data){
 			if ("language" in data) {
-				return data.language;
+				window.customLang = data.language;
 			}
 			
-			return "";
+			return;
 		}
 	});
 };
 
 function setup() {
+	var langObj = getLanguage();
 	$.i18n.properties({
 	    name:'messages', 
 	    path:'/nls/', 
 	    mode:'both',
-	    language: getLanguage()
+	    language: window.customLang
 	    
 	});
 	// $("#logo").css('opacity','0');
