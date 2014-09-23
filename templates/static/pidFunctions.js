@@ -1591,6 +1591,8 @@ function readOnly(manualChange) {
 	readOnlyDevices();
 	$("[id=edit-page]").text($.i18n.prop("EDIT"));
 	$("[id=change-scale]").hide();
+	$("[id=CheckUpdates]").hide();
+	$("[id=logo]").hide();
 	window.locked = true;
 	if (manualChange) {
 		$.ajax({
@@ -1608,6 +1610,8 @@ function readWrite(manualChange) {
 	readWriteDevices();
 	$("[id=edit-page]").text($.i18n.prop("LOCK"));
 	$("[id=change-scale]").show();
+	$("[id=CheckUpdates]").show();
+	$("[id=logo]").show();
 	window.locked = false;
 	if (manualChange) {
 		$.ajax({
