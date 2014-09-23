@@ -595,6 +595,7 @@ public class BrewServer extends NanoHTTPD {
     private Response editVessel(final Map<String, String> params) {
         String auxpin = "", newName = "", gpio = "";
         String inputUnit = "", cutoff = "";
+        String calibration = null;
 
         Set<Entry<String, String>> incomingParams = params.entrySet();
         Map<String, String> parms;
@@ -644,9 +645,13 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("auxpin")) {
             auxpin = parms.get("auxpin");
         }
-        
+
         if (parms.containsKey("cutoff")) {
             cutoff = parms.get("cutoff");
+        }
+
+        if (parms.containsKey("calibration")) {
+            calibration = parms.get("calibration");
         }
 
         if (inputUnit.equals("")) {
@@ -674,6 +679,10 @@ public class BrewServer extends NanoHTTPD {
 
         if (!cutoff.equals("")) {
             tProbe.setCutoffTemp(cutoff);
+        }
+
+        if (calibration != null) {
+            tProbe.setCalibration(calibration);
         }
 
         if (tPID != null && !newName.equals("")) {

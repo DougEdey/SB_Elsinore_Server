@@ -465,6 +465,7 @@ public class ServeHTML {
             + "<input type='hidden' id='gpio' name='gpio' />"
             + "<input type='hidden' id='auxgpio' name='auxgpio' />"
             + "<input type='hidden' id='cutoff' name='cutoff' />"
+            + "<input type='hidden' id='calibration' name='calibration' />"
             + "<input type='hidden' id='vol_ain' name='vol_ain' />"
             + "<input type='hidden' id='vol_add' name='vol_add' />"
             + "<input type='hidden' id='vol_off' name='vol_off' />"

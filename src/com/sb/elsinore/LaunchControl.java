@@ -1159,7 +1159,7 @@ public final class LaunchControl {
      * @param volumeArray
      *            The volumeArray map for calculations
      */
-    private void startDevice(final String input, final String probe,
+    private Temp startDevice(final String input, final String probe,
             final String gpio, final BigDecimal duty, final BigDecimal cycle,
             final BigDecimal setpoint, final BigDecimal p, final BigDecimal i,
             final BigDecimal d, final String cutoffTemp, final String auxPin,
@@ -1171,7 +1171,7 @@ public final class LaunchControl {
         // Startup the thread
         if (probe == null || probe.equals("0")) {
             BrewServer.LOG.info("No Probe specified for " + input);
-            return;
+            return null;
         }
 
         // input is the name we'll use from here on out
@@ -1224,7 +1224,7 @@ public final class LaunchControl {
         } else if (dsAddress != null && dsOffset != null) {
             tTemp.setupVolumes(dsAddress, dsOffset, volumeUnits);
         } else {
-            return;
+            return tTemp;
         }
 
         if (volumeArray != null && volumeArray.size() >= MIN_VOLUME_SIZE) {
@@ -1236,6 +1236,8 @@ public final class LaunchControl {
                 tTemp.addVolumeMeasurement(entry.getKey(), entry.getValue());
             }
         }
+        
+        return tTemp;
     }
 
     /******
@@ -2098,6 +2100,7 @@ public final class LaunchControl {
         }
         setElementText(device, "probe", probe);
         setElementText(device, "cutoff", cutoff);
+        setElementText(device, "calibration", temp.getCalibration());
 
         System.out.println("Checking for volume");
         if (temp.hasVolume()) {
@@ -2518,7 +2521,7 @@ public final class LaunchControl {
         String gpio = null;
         String volumeUnits = "Litres";
         String dsAddress = null, dsOffset = null;
-        String cutoffTemp = null, auxPin = null;
+        String cutoffTemp = null, auxPin = null, calibration = "";
         ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray = new ConcurrentHashMap<BigDecimal, BigDecimal>();
         BigDecimal duty = new BigDecimal(0), cycle = new BigDecimal(0.0), setpoint = new BigDecimal(
                 0.0), p = new BigDecimal(0.0), i = new BigDecimal(0.0), d = new BigDecimal(
@@ -2589,6 +2592,11 @@ public final class LaunchControl {
             tElement = getFirstElement(config, "cutoff");
             if (tElement != null) {
                 cutoffTemp = tElement.getTextContent();
+            }
+
+            tElement = getFirstElement(config, "calibration");
+            if (tElement != null) {
+                calibration = tElement.getTextContent();
             }
 
             tElement = getFirstElement(config, "aux");
@@ -2670,9 +2678,12 @@ public final class LaunchControl {
             e.printStackTrace();
         }
 
-        startDevice(deviceName, probe, gpio, duty, cycle, setpoint, p, i, d,
+        Temp newTemp = startDevice(deviceName, probe, gpio, duty, cycle, setpoint, p, i, d,
                 cutoffTemp, auxPin, volumeUnits, analoguePin, dsAddress,
                 dsOffset, min, max, time, volumeArray);
+        if (newTemp != null) {
+            newTemp.setCalibration(calibration);
+        }
     }
 
     /**

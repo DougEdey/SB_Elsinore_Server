@@ -362,6 +362,10 @@ function updateTempProbe(vessel, val) {
 		jQuery(vesselDiv  + ' input[name="cutoff"]').val(val.cutoff);
 	}
 	
+	if ("calibration" in val) {
+		jQuery(vesselDiv  + ' input[name="calibration"]').val(val.calibration);
+	}
+	
 	jQuery("#"+vessel+"-tempStatus").text(temp);
 	
 	$("[id="+vessel+"]").find("[id=tempUnit]").each(function() {
@@ -451,6 +455,7 @@ function editDevice(element) {
 	var gpio = $('#' + vessel  + ' input[name="gpio"]').val();
 	var auxgpio = $('#' + vessel  + ' input[name="auxgpio"]').val();
 	var cutoff = $('#' + vessel  + ' input[name="cutoff"]').val();
+	var calibration = $('#' + vessel  + ' input[name="calibration"]').val();
 	
 	// Insert a couple of new form elements
 	$('#' + vesselDiv).append("<div id='"+vessel+"-edit'>"
@@ -462,6 +467,8 @@ function editDevice(element) {
 				"value='"+auxgpio+"' placeholder='Aux GPIO_X(_Y)' /><br/>"
 		+ "<input type='text' name='cutoff' id='cutoff' " +
 				"value='"+cutoff+"' placeholder='" + $.i18n.prop("CUTOFF_TEMP") + "' /><br/>"
+		+ "<input type='text' name='calibration' id='calibration' " +
+			"value='"+calibration+"' placeholder='" + $.i18n.prop("CALIBRATION") + "' /><br/>"
 		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
 		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>" + $.i18n.prop("UPDATE") + "</button>"
 		+ "<button id='cancel-"+vessel+"' class='holo-button modeclass' "
