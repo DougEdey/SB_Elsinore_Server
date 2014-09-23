@@ -993,9 +993,9 @@ public final class Temp implements Runnable {
             if (unit == null || unit.equals(this.scale)) {
                 this.calibration = temperature;
             } else if (unit.equals("F")) {
-                this.calibration = fToC(temperature);
+                this.calibration = temperature.divide(new BigDecimal(1.8));
             } else if (unit.equals("C")) {
-                this.calibration = cToF(temperature);
+                this.calibration = temperature.multiply(new BigDecimal(1.8));
             }
 
         } else {
