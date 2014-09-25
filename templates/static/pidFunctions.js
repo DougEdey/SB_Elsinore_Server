@@ -1,5 +1,31 @@
+function getLanguage() {
+	$.ajax({
+		type: 'GET',
+		url: '/getstatus',
+		dataType: 'json',
+		async: false,
+		cache: false,
+		timeout:5000,
+		success: function(data){
+			if ("language" in data) {
+				window.customLang = data.language;
+			}
+			
+			return;
+		}
+	});
+};
+
 function setup() {
-	//$("#logo").css('opacity','0');
+	var langObj = getLanguage();
+	$.i18n.properties({
+	    name:'messages', 
+	    path:'/nls/', 
+	    mode:'both',
+	    language: window.customLang
+	    
+	});
+	// $("#logo").css('opacity','0');
 	window.heightFixed = 0;
 	$.ajax({
 	    url:'/brewerImage.gif',
@@ -24,19 +50,25 @@ function setup() {
         }
     });
     
-    $('[class=page-header]').append("<div id='edit-page' class='holo-button' ondblclick='toggleEdit(true); return false;'>Edit</div>")
-    $('[class=page-header]').append("<div id='change-scale' class='holo-button' ondblclick='changeScale(); return false;'>Change Scale</div>")
+    $('[class=page-header]').append(
+    		"<div id='edit-page' class='holo-button' ondblclick='toggleEdit(true); return false;'>" +
+    		$.i18n.prop("EDIT") +
+    		"</div>")
+    $('[class=page-header]').append("<div id='change-scale' class='holo-button' ondblclick='changeScale(); return false;'>" +
+    		$.i18n.prop("CHANGE_SCALE") +
+    		"</div>")
 
-	//$("#select_logo").click(function(){
-		//$("#logo").trigger('click');
-//		var $file = $("#logo")[0];
-//		readFile($file.files[0]).done(function(fileData){
-//		   var formData = form.find(":input:not('#file')").serializeArray();
-//		   formData.file = [fileData, $file.files[0].name];
-//		   upload('uploadimage', formData).done(function(){ alert("successfully uploaded!"); });
-//		});
-//	   return false;
-//	});
+	// $("#select_logo").click(function(){
+		// $("#logo").trigger('click');
+// var $file = $("#logo")[0];
+// readFile($file.files[0]).done(function(fileData){
+// var formData = form.find(":input:not('#file')").serializeArray();
+// formData.file = [fileData, $file.files[0].name];
+// upload('uploadimage', formData).done(function(){ alert("successfully
+// uploaded!"); });
+// });
+// return false;
+// });
 
     $('div[id$=-graph_body]').each(function (index) {
 		$(this).slideToggle();
@@ -134,7 +166,8 @@ function waitForMsg(){
 				
 				if (val.length > 0) {
 					val += "<br/><button id='clearMessage' class='holo-button modeclass' "
-						+ "onclick='clearStatus(); return false;'>Clear</button>";
+						+ "onclick='clearStatus(); return false;'>" +
+						$.i18n.prop("CLEAR") + "</button>";
 					jQuery("#messages-body").html(val);
 					
 					if (!$("#messages").is(":visible")) {
@@ -172,9 +205,9 @@ function waitForMsg(){
 						});
 	
 						if ($("#mashTable"+mashPID).find('.success').length > 0) {
-							$("#mashButton-" + mashPID).text("Disable");
+							$("#mashButton-" + mashPID).text($.i18n.prop("DISABLE"));
 						} else {
-							$("#mashButton-" + mashPID).text("Activate");
+							$("#mashButton-" + mashPID).text($.i18n.prop("ACTIVATE"));
 						}
 	
 					});
@@ -184,13 +217,13 @@ function waitForMsg(){
 			if("pumps" in data) {
 				val = data.pumps;
 				$.each(val, function (pumpName, pumpStatus) {
-					//enable or disable the pump as required
+					// enable or disable the pump as required
 					if (pumpStatus) {
 						jQuery('button[id^="' + pumpName + '"]')[0].style.background="red";
-						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" ON";
+						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" " + $.i18n.prop("ON");
 					} else {
 						jQuery('button[id^="' + pumpName + '"]')[0].style.background="#666666";
-						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" OFF";
+						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" "+ $.i18n.prop("OFF");
 					}
 				});
 			}
@@ -217,7 +250,8 @@ function waitForMsg(){
 					if (sysTemp.length == 0 && !data.locked) {
 						var sysHtml = '<div id="System" class="holo-content controller panel panel-primary Temp">'
 								+ '<div id="System-title" class="title panel-heading "'
-								+ 'ondblclick="enableSystem(this);" style="cursor: pointer;">System</div>'
+								+ 'ondblclick="enableSystem(this);" style="cursor: pointer;">' +
+								$.i18n.prop("SYSTEM") + '</div>'
 								+ '</div>';
 
 						$("[id=tempProbes]").append(sysHtml)
@@ -231,7 +265,7 @@ function waitForMsg(){
 					// This should always be there
 					if ("name" in vesselStatus) {
 						vesselName = vesselStatus.name;
-						if (vesselName == "System" && $('[id=System-tempGauge]').length == 0) {
+						if (vesselName == $.i18n.prop("SYSTEM") && $('[id=System-tempGauge]').length == 0) {
 							return;
 						}
 					}
@@ -248,7 +282,7 @@ function waitForMsg(){
 						
 						// Hide the gauge if needs be
 						if (vesselStatus.pidstatus.mode == "off") {
-							//Gauges[vessel].refresh(val.actualduty, 100); 				
+							// Gauges[vessel].refresh(val.actualduty, 100);
 							$('div[id^="'+vesselName+'-gage"]').hide();
 						} else {
 							$('div[id^="'+vesselName+'-gage"]').show();
@@ -267,7 +301,7 @@ function waitForMsg(){
 					if ("volume" in vesselStatus) {
 						updateVolumeStatus(vesselName, vesselStatus.volume);
 					} else {
-						jQuery("#" + vesselName + "-volume").text("No Volume");
+						jQuery("#" + vesselName + "-volume").text($.i18n.prop("NO_VOLUME"));
 					}
 				});
 			}
@@ -286,9 +320,9 @@ function addMashTable(vesselName) {
 	if ($("#mashTable"+vesselName).length == 0) {
 		table = "<table id='mashTable"+vesselName+"' class='table table-curved'>";
 		table += "<thead><tr>";
-		table += "<th colspan='2'>Mash Step</th>";
-		table += "<th>Temp</th>";
-		table += "<th>Time</th>";
+		table += "<th colspan='2'>" + $.i18n.prop("MASH_STEP") + "</th>";
+		table += "<th>" +$.i18n.prop("TEMP") + "</th>";
+		table += "<th>" + $.i18n.prop("TIME") + "</th>";
 		table += "</tr></thead>";
 		table += "<tbody class='tbody'></tbody>"
 				
@@ -296,9 +330,9 @@ function addMashTable(vesselName) {
 			+ "<button class='btn btn-success' id='addMash-"+vesselName
 			+"' type='button' onclick='addNewMashStep(this)' "
 			+ "ondrop='dropDeleteMashStep(event);' "
-			+ "ondragover='allowDropMashStep(event);'>Add</button></td>";
+			+ "ondragover='allowDropMashStep(event);'>" + $.i18n.prop("ADD") + "</button></td>";
 		table += "<td colspan='2'><button class='btn btn-success' id='mashButton-"+vesselName
-			+"' type='button' onclick='mashToggle(this)'>Activate</button></td></tr></tfoot>";
+			+"' type='button' onclick='mashToggle(this)'>" + $.i18n.prop("ACTIVATE") + "</button></td></tr></tfoot>";
 			+ "</tbody></table>";
 		table += "<br id='mashTable"+vesselName+"footer'/>";
 
@@ -316,16 +350,25 @@ function updateTempProbe(vessel, val) {
 	}
 
 	scale = val.scale;
+	if (scale == "F") {
+		GaugeDisplay[vessel].pattern = "###.##";
+	} else {
+		GaugeDisplay[vessel].pattern = "###.#";
+	}
 
 	// set the current temp scale
 	Temp = parseFloat(temp).toFixed(2);
 	int = Math.floor(Temp);
 	dec = Temp % 1;
-	dec = dec.toString().substr(1,3);
-	GaugeDisplay[vessel].setValue(pad(int, 3, 0) + "" + dec);
+	dec = dec.toString().substr(2,3);
+	GaugeDisplay[vessel].setValue(pad(int, 3, 0) + "." + pad(dec, 3, 0));
 	var vesselDiv = '[id="'+vessel+'-form"]';
 	if ("cutoff" in val) {
 		jQuery(vesselDiv  + ' input[name="cutoff"]').val(val.cutoff);
+	}
+	
+	if ("calibration" in val) {
+		jQuery(vesselDiv  + ' input[name="calibration"]').val(val.calibration);
 	}
 	
 	jQuery("#"+vessel+"-tempStatus").text(temp);
@@ -392,15 +435,15 @@ function editVolume(element) {
 	$('#' + vesselDiv).append("<div id='"+vessel+"-editVol'>"
 		+ "<form id='" + vessel + "-editVol' name='" + vessel + "-edit'>"
 		+ "<input type='hidden' name='name' id='name' value='"+vessel+"'/><br/>"
-		+ "<input type='text' name='adc_pin' id='adc_pin' value='"+volPin+"' placeholder='AIN Pin'/><br/>"
-		+ "<input type='text' name='onewire_address' id='onewire_address' value='"+volAdd+"' placeholder='DS2450 Address' /><br/>"
-		+ "<input type='text' name='onewire_offset' id='onewire_offset' value='"+volOff+"' placeholder='DS2450 Offset' /><br/>"
-		+ "<input type='text' name='volume' id='volume' value='' placeholder='New Volume' /><br/>"
-		+ "<input type='text' name='units' id='units' value='' value='"+volUnits+"' placeholder='Litres' /><br/>"
+		+ "<input type='text' name='adc_pin' id='adc_pin' value='"+volPin+"' placeholder='" + $.i18n.prop("ANALOGUE_PIN") + "'/><br/>"
+		+ "<input type='text' name='onewire_address' id='onewire_address' value='"+volAdd+"' placeholder='" + $.i18n.prop("DS2450_ADDRESS") + "' /><br/>"
+		+ "<input type='text' name='onewire_offset' id='onewire_offset' value='"+volOff+"' placeholder='" + $.i18n.prop("DS2450_OFFSET") + "' /><br/>"
+		+ "<input type='text' name='volume' id='volume' value='' placeholder='" + $.i18n.prop("NEW_VOLUME") + "' /><br/>"
+		+ "<input type='text' name='units' id='units' value='' value='"+volUnits+"' placeholder='" + $.i18n.prop("LITRES") + "' /><br/>"
 		+ "<button id='updateVol-"+vessel+"' class='holo-button modeclass' "
-		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>Update</button>"
+		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>" + $.i18n.prop("UPDATE") + "</button>"
 		+ "<button id='cancelVol-"+vessel+"' class='holo-button modeclass' "
-		+ "onclick='cancelVolEdit(vessel); waitForMsg(); return false;'>Cancel</button>"
+		+ "onclick='cancelVolEdit(vessel); waitForMsg(); return false;'>" + $.i18n.prop("CANCEL") + "</button>"
 		+ "</form>"
 		+ "</div>");
 }
@@ -417,6 +460,7 @@ function editDevice(element) {
 	var gpio = $('#' + vessel  + ' input[name="gpio"]').val();
 	var auxgpio = $('#' + vessel  + ' input[name="auxgpio"]').val();
 	var cutoff = $('#' + vessel  + ' input[name="cutoff"]').val();
+	var calibration = $('#' + vessel  + ' input[name="calibration"]').val();
 	
 	// Insert a couple of new form elements
 	$('#' + vesselDiv).append("<div id='"+vessel+"-edit'>"
@@ -427,11 +471,13 @@ function editDevice(element) {
 		+ "<input type='text' name='aux_gpio' id='aux_gpio' onblur='validate_gpio(this)' " +
 				"value='"+auxgpio+"' placeholder='Aux GPIO_X(_Y)' /><br/>"
 		+ "<input type='text' name='cutoff' id='cutoff' " +
-				"value='"+cutoff+"' placeholder='Cutoff Temp' /><br/>"
+				"value='"+cutoff+"' placeholder='" + $.i18n.prop("CUTOFF_TEMP") + "' /><br/>"
+		+ "<input type='text' name='calibration' id='calibration' " +
+			"value='"+calibration+"' placeholder='" + $.i18n.prop("CALIBRATION") + "' /><br/>"
 		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
-		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>Update</button>"
+		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>" + $.i18n.prop("UPDATE") + "</button>"
 		+ "<button id='cancel-"+vessel+"' class='holo-button modeclass' "
-		+ "onclick='cancelEdit("+vessel+"); waitForMsg(); return false;'>Cancel</button>"
+		+ "onclick='cancelEdit("+vessel+"); waitForMsg(); return false;'>" + $.i18n.prop("CANCEL") + "</button>"
 		+ "</form>"
 		+ "</div>");
 }
@@ -457,7 +503,7 @@ function validate_gpio(gpio_input) {
 		return true;
 	}
 	
-	alert('Invalid GPIO pin. Please use GPIO<x> or GPIO<bank>_<offset>');
+	alert($.i18n.prop("INVALID_GPIO"))
 	return false;
 }
 
@@ -474,21 +520,21 @@ function updatePIDStatus(vessel, val) {
 	var vesselDiv = 'form[id="'+vessel+'-form"]';
 	$("#" + vessel + "-controls").show();
 	
-	var mode = val.mode.charAt(0).toUpperCase() + val.mode.slice(1);
+	var mode = val.mode.toLowerCase();
 	var currentMode = jQuery(vesselDiv  + ' input[name="dutycycle"]');
 	
 	if (jQuery(vesselDiv  + ' input[name="dutycycle"]') != mode ) {
 	
-		if(mode== "Off") {
+		if(mode== "off") {
 			selectOff(vessel);
 		}
-		if(mode == "Auto") {
+		if(mode == "auto") {
 			selectAuto(vessel);
 		}
-		if(mode == "Hysteria") {
+		if(mode == "hysteria") {
 			selectHysteria(vessel);
 		}
-		if(mode == "Manual") {
+		if(mode == "manual") {
 			selectManual(vessel);
 		}
 		
@@ -530,10 +576,10 @@ function updatePIDStatus(vessel, val) {
 		jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').show();
 		if (val.auxStatus == "on" || val.auxStatus == "1") {
 			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').style.background = "red";
-			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').innerHTML = "Aux ON"
+			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').innerHTML = $.i18n.prop("AUX_ON");
 		} else {
 			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').style.background = "#666666";
-			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').innerHTML = "Aux OFF"
+			jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').innerHTML = $.i18n.prop("AUX_OFF");
 		}
 	} else {
 		jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').hide();
@@ -679,7 +725,7 @@ function submitForm(form){
 		
 		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
 		$.extend(formdata[vessel], {"name":"mode", "value":Window.mode});
-		//formdata = ;
+		// formdata = ;
 		
 		$.ajax({ 
 			url: 'updatepid',
@@ -744,13 +790,13 @@ function addPump() {
 	// Insert a couple of new form elements
 	$('#pumps-titled').append("<div id='pumps-add'>"
 		+ "<form id='pumps-add-form' name='pumps-add'>"
-		+ "<input type='text' name='new_name' id='new_name' value='' /><br/>"
+		+ "<input type='text' name='new_name' id='new_name' value='' placeholder='" + $.i18n.prop("NAME") + "'/><br/>"
 		+ "<input type='text' name='new_gpio' id='new_gpio' onblur='validate_gpio(this)' " +
 				"value='' placeholder='GPIO_X(_Y)'/><br/>"
 		+ "<button id='add-pump' class='holo-button modeclass' "
-		+ "onclick='submitNewPump(this.form); return false;'>Add</button>"
+		+ "onclick='submitNewPump(this.form); return false;'>" + $.i18n.prop("ADD") + "</button>"
 		+ "<button id='cancel-add-pump' class='holo-button modeclass' "
-		+ "onclick='cancelAddPump(); waitForMsg(); return false;'>Cancel</button>"
+		+ "onclick='cancelAddPump(); waitForMsg(); return false;'>" + $.i18n.prop("" + $.i18n.prop("CANCEL") + "") + "</button>"
 		+ "</form>"
 		+ "</div>");
 	return false;
@@ -765,12 +811,12 @@ function submitNewPump(form) {
 	var data = JSON.stringify(jQuery(form).serializeObject());
 	
 	if (form["new_name"].value == null || form["new_name"].value == "") {
-		alert("The new pump name can't be blank");
+		alert($.i18n.prop("PUMPNAMEBLANK"));
 		return false;
 	}
 	
 	if (form["new_gpio"].value == null || form["new_gpio"].value == "") {
-		alert("The new pump GPIO can't be blank");
+		alert($.i18n.prop("GPIO_BLANK"));
 		return false;
 	}
 	
@@ -796,11 +842,11 @@ function addTimer() {
 	// Insert a couple of new form elements
 	$('#timers > .panel > .title').append("<div id='timer-add'>"
 		+ "<form id='timer-add-form' name='timer-add'>"
-		+ "<input type='text' name='new_name' id='new_name' value='' /><br/>"
+		+ "<input type='text' name='new_name' id='new_name' value='' placeholder='" + $.i18n.prop("NAME") + "' /><br/>"
 		+ "<button id='add-timer' class='holo-button modeclass' "
-		+ "onclick='submitNewTimer(this.form); return false;'>Add</button>"
+		+ "onclick='submitNewTimer(this.form); return false;'>" + $.i18n.prop("ADD") + "</button>"
 		+ "<button id='cancel-add-timer' class='holo-button modeclass' "
-		+ "onclick='cancelAddTimer(); waitForMsg(); return false;'>Cancel</button>"
+		+ "onclick='cancelAddTimer(); waitForMsg(); return false;'>" + $.i18n.prop("CANCEL") + "</button>"
 		+ "</form>"
 		+ "</div>");
 	return false;
@@ -816,7 +862,7 @@ function submitNewTimer(form) {
 	var data = JSON.stringify(jQuery(form).serializeObject());
 	
 	if (form["new_name"].value == null || form["new_name"].value == "") {
-		alert("The new timer name can't be blank");
+		alert($.i18n.prop("TIMERNAMEBLANK"));
 		return false;
 	}
 	
@@ -838,17 +884,17 @@ function addNewMashStep(button) {
 	var tempUnit = $("#" + pid + " div >div >div[id='tempUnit']")[0].textContent;
 	$('#mashTable'+pid+"footer").after("<div id='"+pid+"-mashadd'>"
 		+ "<form id='"+pid+"-mash-add-form' name='"+pid+"-mash-add'>"
-		+ "<input type='text' name='temp' id='temp' value='' placeholder='temp' />"
-		+ "<input type='text' name='temp_unit' id='temp_unit' value='"+tempUnit+"' placeholder='temp_unit' /><br/>"
-		+ "<input type='text' name='method' id='method' value='' placeholder='method' /><br/>"
-		+ "<input type='text' name='type' id='type' value='' placeholder='type' /><br/>"
-		+ "<input type='text' name='duration' id='duration' value='' placeholder='duration' /><br/>"
+		+ "<input type='text' name='temp' id='temp' value='' placeholder='" + $.i18n.prop("TEMP") + "' />"
+		+ "<input type='text' name='temp_unit' id='temp_unit' value='"+tempUnit+"' placeholder='" + $.i18n.prop("TEMP_UNIT") + "' /><br/>"
+		+ "<input type='text' name='method' id='method' value='' placeholder='" + $.i18n.prop("METHOD") + "' /><br/>"
+		+ "<input type='text' name='type' id='type' value='' placeholder='" + $.i18n.prop("TYPE") + "' /><br/>"
+		+ "<input type='text' name='duration' id='duration' value='' placeholder='DURATION' /><br/>"
 		+ "<input type='hidden' name='pid' value='" + pid + "' />"
 		+ "<input type='hidden' name='step' value='" + ($("#mashTable"+pid+" > tbody > tr").length) + "' />"
 		+ "<button id='add-timer' class='holo-button modeclass' "
-		+ "onclick='submitNewMashStep(this.form); return false;'>Add</button>"
+		+ "onclick='submitNewMashStep(this.form); return false;'>" + $.i18n.prop("ADD") + "</button>"
 		+ "<button id='cancel-add-mash-step' class='holo-button modeclass' "
-		+ "onclick='cancelAddMashStep("+pid+"); waitForMsg(); return false;'>Cancel</button>"
+		+ "onclick='cancelAddMashStep("+pid+"); waitForMsg(); return false;'>" + $.i18n.prop("CANCEL") + "</button>"
 		+ "</form>"
 		+ "</div>");
 	return false;
@@ -1023,7 +1069,7 @@ function checkTimer(val, stage) {
 		$("#"+stage)[0].innerHTML = hours + ":" + mins + ":" + diffTime;
 	} else {
 		$("#"+stage+"Timer").hide();
-		$("#"+stage)[0].innerHTML = "Start";
+		$("#"+stage)[0].innerHTML = "" + $.i18n.prop("START") + "";
 	}
 }
 
@@ -1139,7 +1185,7 @@ function updateElsinore() {
 
 function editBreweryName() {
 	
-	var newName = prompt("What would you like to call your brewery?", window.breweryName);
+	var newName = prompt($.i18n.prop("BREWERY_QUESTION"), window.breweryName);
 	if (newName.length == 0 || newName == "" || newName == window.breweryName) {
 		return;
 	}
@@ -1156,7 +1202,7 @@ function readFile(file){
    var loader = new FileReader();
    var def = $.Deferred(), promise = def.promise();
 
-   //--- provide classic deferred interface
+   // --- provide classic deferred interface
    loader.onload = function (e) { def.resolve(e.target.result); };
    loader.onprogress = loader.onloadstart = function (e) { def.notify(e); };
    loader.onerror = loader.onabort = function (e) { def.reject(e); };
@@ -1183,7 +1229,11 @@ function upload(url, data){
 
                 xhr.upload.addEventListener('progress', function(event) {
                     var percent = 0;
-                    var position = event.loaded || event.position; /*event.position is deprecated*/
+                    var position = event.loaded || event.position; /*
+																	 * event.position
+																	 * is
+																	 * deprecated
+																	 */
                     var total = event.total;
                     if (event.lengthComputable) {
                         percent = Math.ceil(position / total * 100);
@@ -1229,13 +1279,13 @@ var buildMultipart = function(data){
     };
 };
 
-/******************************
-* Drag And Drop functionality *
-******************************/
+/*******************************************************************************
+ * Drag And Drop functionality *
+ ******************************************************************************/
 
 function dragPump(ev) {
 	ev.dataTransfer.setData("pumpname", ev.target.childNodes[0].id);
-	$('#NewPump')[0].innerHTML = "Delete Pump";
+	$('#NewPump')[0].innerHTML = $.i18n.prop("DELETE_PUMP");
 }
 
 function dropPump(ev) {
@@ -1270,7 +1320,7 @@ function dropPump(ev) {
 		
 		newOrder += divID + "=" + index + "&";
 	});
-	$('#NewPump')[0].innerHTML = "Add New Pump";
+	$('#NewPump')[0].innerHTML = $.i18n.prop("NEW_PUMP");
 	$.ajax({
 		 url: 'updatePumpOrder',
 			type: 'POST',
@@ -1317,7 +1367,7 @@ function dropDeletePump(ev) {
 	$('[id="'+pumpName+'"]').empty().remove();
 	
 	var newOrder = "name=" + basePumpName;
-	$('#NewPump')[0].innerHTML = "Add New Pump";
+	$('#NewPump')[0].innerHTML = $.i18n.prop("NEW_PUMP");
 	$.ajax({
 		 url: 'deletePump',
 			type: 'POST',
@@ -1343,7 +1393,7 @@ function leavePump(ev) {
 
 function dragTimer(ev) {
 	ev.dataTransfer.setData("timername", ev.target.childNodes[1].id);
-	$('#NewTimer')[0].innerHTML = "Delete Timer";
+	$('#NewTimer')[0].innerHTML = $.i18n.prop("DELETE_TIMER");
 }
 
 function dropTimer(ev) {
@@ -1368,7 +1418,7 @@ function dropTimer(ev) {
 	// TODO: Update the server with the new location
 	var newOrder = "";
 	$("div[id='timers'] > .panel > .panel-body > div").each(function(index) {
-		//this.style.border = "1px dashed black";
+		// this.style.border = "1px dashed black";
 		var divID = this.id;
 		
 		if (divID.lastIndexOf('div-') == 0) {
@@ -1377,7 +1427,7 @@ function dropTimer(ev) {
 		
 		newOrder += divID + "=" + index + "&";
 	});
-	$('#NewTimer')[0].innerHTML = "Add New Timer";
+	$('#NewTimer')[0].innerHTML = $.i18n.prop("NEW_TIMER");
 	$.ajax({
 		 url: 'updateTimerOrder',
 			type: 'POST',
@@ -1427,7 +1477,7 @@ function dropDeleteTimer(ev) {
 	$('[id="'+timerName+'"]').empty().remove();
 	var newOrder = "name="+baseTimerName;
 	
-	$('#NewTimer')[0].innerHTML = "Add New Timer";
+	$('#NewTimer')[0].innerHTML = $.i18n.prop("NEW_TIMER");
 	$.ajax({
 		 url: 'deleteTimer',
 			type: 'POST',
@@ -1468,9 +1518,9 @@ function dragMashStep(ev) {
 	
 	// Explode out
 	var vessel = getVesselFromMashStep(divID.substring(7));
-	//var position = getPositionFromMashStep(divID);
+	// var position = getPositionFromMashStep(divID);
 	ev.dataTransfer.setData("mashStepname", divID);
-	$('#addMash-'+vessel)[0].innerHTML = "Delete";
+	$('#addMash-'+vessel)[0].innerHTML = $.i18n.prop("DELETE");
 }
 
 function dropMashStep(ev) {
@@ -1492,7 +1542,7 @@ function dropMashStep(ev) {
 		var oldStep = getPositionFromMashStep(divID);		
 		newOrder += oldStep + "=" + index + "&";
 	});
-	$('#addMash-'+vessel)[0].innerHTML = "Add";
+	$('#addMash-'+vessel)[0].innerHTML = $.i18n.prop("ADD");
 	$.ajax({
 		 url: 'reordermashprofile',
 			type: 'POST',
@@ -1516,7 +1566,7 @@ function dropDeleteMashStep(ev) {
 	$('[id="'+mashStepName+'"]').empty().remove();
 	var newOrder = "pid=" + vessel + "&position=" + position;
 	
-	$('#addMash-'+vessel)[0].innerHTML = "Add";
+	$('#addMash-'+vessel)[0].innerHTML = $.i18n.prop("ADD");
 	$.ajax({
 		 url: 'delMashStep',
 			type: 'POST',
@@ -1551,8 +1601,10 @@ function readOnly(manualChange) {
 	readOnlyPumps();
 	readOnlyTimers();
 	readOnlyDevices();
-	$("[id=edit-page]").text("Edit");
+	$("[id=edit-page]").text($.i18n.prop("EDIT"));
 	$("[id=change-scale]").hide();
+	$("[id=CheckUpdates]").hide();
+	$("[id=logo]").hide();
 	window.locked = true;
 	if (manualChange) {
 		$.ajax({
@@ -1568,8 +1620,10 @@ function readWrite(manualChange) {
 	readWritePumps();
 	readWriteTimers();
 	readWriteDevices();
-	$("[id=edit-page]").text("Lock");
+	$("[id=edit-page]").text($.i18n.prop("LOCK"));
 	$("[id=change-scale]").show();
+	$("[id=CheckUpdates]").show();
+	$("[id=logo]").show();
 	window.locked = false;
 	if (manualChange) {
 		$.ajax({
@@ -1582,7 +1636,7 @@ function readWrite(manualChange) {
 }
 
 function readOnlyPumps() {
-	// Check the size of the pump list 
+	// Check the size of the pump list
 	var currentCount = $("[id=pumps-body] > div").length;
 	
 	if (currentCount == 0) {
@@ -1599,7 +1653,7 @@ function readOnlyPumps() {
 }
 
 function readWritePumps() {
-	// Check the size of the pump list 
+	// Check the size of the pump list
 	var currentCount = $("[id=pumps-body] > div").length;
 	
 	if (currentCount == 0) {
@@ -1616,7 +1670,7 @@ function readWritePumps() {
 }
 
 function readOnlyTimers() {
-	// Check the size of the pump list 
+	// Check the size of the pump list
 	var currentCount = $("[id=timers-body] > div").length;
 	
 	if (currentCount == 0) {
@@ -1633,7 +1687,7 @@ function readOnlyTimers() {
 }
 
 function readWriteTimers() {
-	// Check the size of the pump list 
+	// Check the size of the pump list
 	var currentCount = $("[id=timers-body] > div").length;
 	
 	if (currentCount == 0) {
@@ -1736,10 +1790,10 @@ function changeScale() {
 }
 
 function embedGraph(vessel) {
-	if ($('#' + vessel + "-graph_title")[0].innerHTML == "Hide Graph") {
-		$('#' + vessel + "-graph_title")[0].innerHTML = "Show Graph";
+	if ($('#' + vessel + "-graph_title")[0].innerHTML == $.i18n.prop("SHOW_GRAPH")) {
+		$('#' + vessel + "-graph_title")[0].innerHTML = $.i18n.prop("HIDE_GRAPH");
 	} else {
-		$('#' + vessel + "-graph_title")[0].innerHTML = "Hide Graph";
+		$('#' + vessel + "-graph_title")[0].innerHTML = $.i18n.prop("SHOW_GRAPH");
 	}
 	var options = {
 		lines: {
@@ -1750,18 +1804,19 @@ function embedGraph(vessel) {
 		},
 		xaxes: [{show: false
 		/*
-				mode: "time",
-				timezone: "browser",
-				timeformat: "%y/%m/%d %H:%M:%S"
-			*/}],
+		 * mode: "time", timezone: "browser", timeformat: "%y/%m/%d %H:%M:%S"
+		 */}],
 		yaxes: [{ 
-			axisLabel: "Temperature"}, {
-			axisLabel: "Duty %",
+			axisLabel: $.i18n.prop("TEMPERATURE")}, {
+			axisLabel: $.i18n.prop("DUTYPERC"),
 			position: "right",
 			mode: null,
 			min: 0,
 			max: 100,
-		}]
+		}],
+		legend: {
+			position: "nw"
+		}
 	};
 
 	var data = [];
@@ -1796,7 +1851,7 @@ function embedGraph(vessel) {
 				data.push(series);
 			}
 
-			//alert("inputdata :" + inputdata); 
+			// alert("inputdata :" + inputdata);
 			
 		}
 
@@ -1809,47 +1864,40 @@ function embedGraph(vessel) {
 	});
 
 	// Initiate a recurring data update
-		data = [];
-		alreadyFetched = {};
+	data = [];
+	alreadyFetched = {};
 
-		$.plot("#" + vessel + "-graph_body", data, options);
+	$.plot("#" + vessel + "-graph_body", data, options);
 
 
-		function fetchData() {
+	function fetchData() {
 
-			function onDataReceived(series) {
-				// Load all the data in one pass; if we only got partial
-				// data we could merge it with what we already have.
-				series[0].label = "Temp";
-				if (series.length == 2) {
-					series[1].label = "Duty";
-				}
-				data = [ series ];
-				$.plot("#" + vessel + "-graph_body", series, options);					
+		function onDataReceived(series) {
+			// Load all the data in one pass; if we only got partial
+			// data we could merge it with what we already have.
+			series[0].label = $.i18n.prop("TEMP");
+			if (series.length == 2) {
+				series[1].label = $.i18n.prop("DUTY");
 			}
-
-			// Normally we call the same URL - a script connected to a
-			// database - but in this case we only have static example
-			// files, so we need to modify the URL.
-			$.ajax({
-				url: "/graph-data/",
-				type: "GET",
-				dataType: "json",
-				data: "vessel="+vessel,
-				success: onDataReceived
-			});
-
-			setTimeout(fetchData, 5000);
-			
+			data = [ series ];
+			$.plot("#" + vessel + "-graph_body", series, options);					
 		}
 
+		// Normally we call the same URL - a script connected to a
+		// database - but in this case we only have static example
+		// files, so we need to modify the URL.
+		$.ajax({
+			url: "/graph-data/",
+			type: "GET",
+			dataType: "json",
+			data: "vessel="+vessel,
+			success: onDataReceived
+		});
+
 		setTimeout(fetchData, 5000);
-	
+		
+	}
 
-	// Load the first series by default, so we don't have an empty plot
+	setTimeout(fetchData, 5000);
 
-	
-	// Add the Flot version string to the footer
-	//$("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
-	
 }

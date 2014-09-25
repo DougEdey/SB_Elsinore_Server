@@ -111,8 +111,8 @@ Double clicking the "Edit" button on the top left (the position will probably ch
 * Allows you to change the temperature mode "Change Scale".
 * Allows you to rename temperature probes -> Double click on any of the temperature probe headers
 * Allows you to create/delete PIDs
-** Edit a temperature probe, and add a GPIO pin for PID mode
-** You can chose to add an extra GPIO for the auxilliary output that's manually controlled.
+  * Edit a temperature probe, and add a GPIO pin for PID mode
+  * You can chose to add an extra GPIO for the auxilliary output that's manually controlled.
 * Add custom named timers, click the "Add" button in the timer section.
 * Re-order the timers, click and drag to organize them
 * Add custom named Pump outputs, click the "Add" button in the pump section
@@ -150,6 +150,31 @@ Config File
 
 The config file is all in XML and everything is controlled via the Web UI!
 
+Language Translations
+=====================
 
+Update! NLS Support!
+
+When you start elsinore you'll see an extra output line:
+
+```
+INFO: Debug System property: null
+Language: en_US
+Server started, kill to stop.
+```
+
+The "Language" line should match your system language. For me, I have an English United States system.
+
+If you want to provide translations for your language, you'll just need to send me a copy of:
+
+[See here for the default](https://github.com/DougEdey/SB_Elsinore_Server/blob/66ebb13ab606498de19393c7d2fcd7beae9b9795/src/com/sb/elsinore/nls/messages.properties)
+
+With the translations and the language line.
+
+If you want to test it yourself, set your system up to build Elsinore, which should be as simple as importing the project to Eclipse (since that's what I use). 
+
+Then create a copy of src/com/sb/elsinore/nls/messages.properties but change the name to almost match your language, just change the _ to a -. i.e. en_US becomes en-US. 
+
+Then create the matching file: src/com/sb/elsinore/nls/messages_<language_output>.properties. for my system it would be src/com/sb/elsinore/nls/messages_en-US.properties
 
 Thanks For reading this, if you have any queries please contact me or file a bug.

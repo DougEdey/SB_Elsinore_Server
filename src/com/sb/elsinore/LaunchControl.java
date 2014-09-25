@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -569,13 +570,9 @@ public final class LaunchControl {
      * 
      * @return The JSON String of the current status.
      */
-    private static int count = 0;
-
     @SuppressWarnings("unchecked")
     public static String getJSONStatus() {
-        if (count > 1) {
 
-        }
         // get each setting add it to the JSON
         JSONObject rObj = new JSONObject();
         JSONObject tJSON = null;
@@ -672,6 +669,8 @@ public final class LaunchControl {
         if (LaunchControl.getMessage() != null) {
             rObj.put("message", LaunchControl.getMessage());
         }
+
+        rObj.put("language", Locale.getDefault().toString());
         return rObj.toString();
     }
 
@@ -1047,11 +1046,11 @@ public final class LaunchControl {
         if (LaunchControl.findPump(name) != null) {
             return false;
         }
-        
+
         try {
             Pump p = new Pump(name, gpio);
             synchronized (pumpList) {
-                
+
                 pumpList.add(p);
             }
         } catch (InvalidGPIOException g) {
@@ -1160,7 +1159,7 @@ public final class LaunchControl {
      * @param volumeArray
      *            The volumeArray map for calculations
      */
-    private void startDevice(final String input, final String probe,
+    private Temp startDevice(final String input, final String probe,
             final String gpio, final BigDecimal duty, final BigDecimal cycle,
             final BigDecimal setpoint, final BigDecimal p, final BigDecimal i,
             final BigDecimal d, final String cutoffTemp, final String auxPin,
@@ -1172,7 +1171,7 @@ public final class LaunchControl {
         // Startup the thread
         if (probe == null || probe.equals("0")) {
             BrewServer.LOG.info("No Probe specified for " + input);
-            return;
+            return null;
         }
 
         // input is the name we'll use from here on out
@@ -1225,7 +1224,7 @@ public final class LaunchControl {
         } else if (dsAddress != null && dsOffset != null) {
             tTemp.setupVolumes(dsAddress, dsOffset, volumeUnits);
         } else {
-            return;
+            return tTemp;
         }
 
         if (volumeArray != null && volumeArray.size() >= MIN_VOLUME_SIZE) {
@@ -1237,6 +1236,8 @@ public final class LaunchControl {
                 tTemp.addVolumeMeasurement(entry.getKey(), entry.getValue());
             }
         }
+        
+        return tTemp;
     }
 
     /******
@@ -2099,6 +2100,7 @@ public final class LaunchControl {
         }
         setElementText(device, "probe", probe);
         setElementText(device, "cutoff", cutoff);
+        setElementText(device, "calibration", temp.getCalibration());
 
         System.out.println("Checking for volume");
         if (temp.hasVolume()) {
@@ -2113,14 +2115,13 @@ public final class LaunchControl {
                 setElementText(device, "volume-offset", temp.getVolumeOffset());
             }
 
-            ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase = 
-                    temp.getVolumeBase();
+            ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase = temp
+                    .getVolumeBase();
 
             // Iterate over the entries
 
             if (volumeBase != null) {
-                for (Entry<BigDecimal, BigDecimal> e : volumeBase
-                        .entrySet()) {
+                for (Entry<BigDecimal, BigDecimal> e : volumeBase.entrySet()) {
                     System.out.println("Saving volume point " + e.getKey()
                             + " value " + e.getValue());
                     Element volEntry = addNewElement(device, "volume");
@@ -2520,7 +2521,7 @@ public final class LaunchControl {
         String gpio = null;
         String volumeUnits = "Litres";
         String dsAddress = null, dsOffset = null;
-        String cutoffTemp = null, auxPin = null;
+        String cutoffTemp = null, auxPin = null, calibration = "";
         ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray = new ConcurrentHashMap<BigDecimal, BigDecimal>();
         BigDecimal duty = new BigDecimal(0), cycle = new BigDecimal(0.0), setpoint = new BigDecimal(
                 0.0), p = new BigDecimal(0.0), i = new BigDecimal(0.0), d = new BigDecimal(
@@ -2591,6 +2592,11 @@ public final class LaunchControl {
             tElement = getFirstElement(config, "cutoff");
             if (tElement != null) {
                 cutoffTemp = tElement.getTextContent();
+            }
+
+            tElement = getFirstElement(config, "calibration");
+            if (tElement != null) {
+                calibration = tElement.getTextContent();
             }
 
             tElement = getFirstElement(config, "aux");
@@ -2672,9 +2678,12 @@ public final class LaunchControl {
             e.printStackTrace();
         }
 
-        startDevice(deviceName, probe, gpio, duty, cycle, setpoint, p, i, d,
+        Temp newTemp = startDevice(deviceName, probe, gpio, duty, cycle, setpoint, p, i, d,
                 cutoffTemp, auxPin, volumeUnits, analoguePin, dsAddress,
                 dsOffset, min, max, time, volumeArray);
+        if (newTemp != null) {
+            newTemp.setCalibration(calibration);
+        }
     }
 
     /**
@@ -2736,7 +2745,7 @@ public final class LaunchControl {
     /**
      * Get a list of all the nodes that match the nodeName. If no baseNode is
      * provided (null) then it checks from the document root.
-     *
+     * 
      * @param baseNode
      *            The root element to check from, null for the base element
      * @param nodeName
@@ -3287,7 +3296,7 @@ public final class LaunchControl {
             return false;
         }
         // Change the temperature probes
-        for (Temp t: tempList) {
+        for (Temp t : tempList) {
             PID p = LaunchControl.findPID(t.getName());
             if (p != null) {
                 if (!t.getScale().equals(scale)) {

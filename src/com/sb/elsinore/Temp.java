@@ -305,7 +305,8 @@ public final class Temp implements Runnable {
      */
     private InPin volumePin = null;
     private boolean stopVolumeLogging;
-
+    private BigDecimal calibration = new BigDecimal(0);
+    
     /**
      * @return Get the current temperature
      */
@@ -337,6 +338,8 @@ public final class Temp implements Runnable {
                 this.cutoffTemp = cToF(cutoffTemp);
             }
 
+            this.calibration = this.calibration.multiply(new BigDecimal(1.8));
+
             this.scale = s;
         }
 
@@ -346,7 +349,7 @@ public final class Temp implements Runnable {
                     && !scale.equalsIgnoreCase(s)) {
                 this.cutoffTemp = fToC(cutoffTemp);
             }
-
+            this.calibration = this.calibration.divide(new BigDecimal(1.8));
             this.scale = s;
         }
         BrewServer.LOG.warning("Cut off is now: " + this.cutoffTemp);
@@ -357,9 +360,9 @@ public final class Temp implements Runnable {
      */
     public BigDecimal getTempF() {
         if (scale.equals("F")) {
-            return currentTemp;
+            return currentTemp.add(this.calibration);
         }
-        return cToF(currentTemp);
+        return cToF(currentTemp.add(this.calibration));
     }
 
     /**
@@ -367,9 +370,9 @@ public final class Temp implements Runnable {
      */
     public BigDecimal getTempC() {
         if (scale.equals("C")) {
-            return currentTemp;
+            return currentTemp.add(this.calibration);
         }
-        return fToC(currentTemp);
+        return fToC(currentTemp.add(this.calibration));
     }
 
     /**
@@ -957,6 +960,7 @@ public final class Temp implements Runnable {
         statusMap.put("elapsed", getTime());
         statusMap.put("scale", getScale());
         statusMap.put("cutoff", getCutoff());
+        statusMap.put("calibration", getCalibration());
 
         if (currentError != null) {
             statusMap.put("error", currentError);
@@ -969,6 +973,39 @@ public final class Temp implements Runnable {
         // Graceful shutdown.
         keepalive = false;
         System.out.println(this.getName() + " is shutting down");
+    }
+
+    public void setCalibration(String calibration) {
+        // Lock the calibration temp
+        Matcher tempMatcher = tempRegexp.matcher(calibration);
+
+        if (tempMatcher.find()) {
+            // We have matched against the TEMP_REGEXP
+            String negative = tempMatcher.group(1);
+            if (negative == null) {
+                negative = "+";
+            }
+
+            BigDecimal temperature = new BigDecimal(
+                negative + tempMatcher.group(2));
+            String unit = tempMatcher.group(3);
+
+            if (unit == null || unit.equals(this.scale)) {
+                this.calibration = temperature;
+            } else if (unit.equals("F")) {
+                this.calibration = temperature.divide(new BigDecimal(1.8));
+            } else if (unit.equals("C")) {
+                this.calibration = temperature.multiply(new BigDecimal(1.8));
+            }
+
+        } else {
+            BrewServer.LOG.severe(calibration + " doesn't match "
+                    + tempRegexp.pattern());
+        }
+    }
+
+    public String getCalibration() {
+        return this.calibration.toString() + this.scale;
     }
 }
 
