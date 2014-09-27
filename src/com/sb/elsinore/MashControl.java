@@ -344,7 +344,7 @@ public class MashControl implements Runnable {
     }
 
     /**
-     * Delete the specified mash step
+     * Delete the specified mash step.
      * @param position
      */
     public void delMashStep(int position) {

@@ -22,6 +22,8 @@ Setup Instructions
 
 [HBT Thread for RaspberryPi setup](http://www.homebrewtalk.com/f170/raspberry-pi-strangebrew-elsinore-basic-setup-463590/#post5961579)
 
+[Video Instructions](http://dougedey.github.io/2014/09/27/Setup_Videos/)
+
 Startup Instructions
 ====================
 
