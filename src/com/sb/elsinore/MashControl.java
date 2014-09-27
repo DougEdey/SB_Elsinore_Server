@@ -349,6 +349,10 @@ public class MashControl implements Runnable {
      */
     public void delMashStep(int position) {
         sortMashSteps();
-        this.mashStepList.remove(position);
+        for (int i = 0; i < mashStepList.size(); i++) {
+            if (mashStepList.get(i).getPosition() == position) {
+                this.mashStepList.remove(i);
+            }
+        }
     }
 }
