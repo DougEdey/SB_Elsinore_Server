@@ -1053,7 +1053,9 @@ public final class LaunchControl {
 
                 pumpList.add(p);
             }
-        } catch (InvalidGPIOException g) {
+        } catch (Exception g) {
+            System.out.println("Could not add pump: " + g.getMessage());
+            g.printStackTrace();
             return false;
         }
 
