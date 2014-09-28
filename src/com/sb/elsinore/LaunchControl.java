@@ -99,6 +99,7 @@ import com.sb.elsinore.NanoHTTPD.Response.Status;
  */
 public final class LaunchControl {
     /* MAGIC NUMBERS! */
+    private static boolean loadCompleted = false;
     /**
      * The default OWFS Port.
      */
@@ -679,6 +680,7 @@ public final class LaunchControl {
      */
     public void readConfig() {
 
+        LaunchControl.loadCompleted = false;
         // read the config file from the rpibrew.cfg file
         if (configCfg == null) {
             initializeConfig();
@@ -738,6 +740,7 @@ public final class LaunchControl {
             // get user input
             createConfig();
         }
+        LaunchControl.loadCompleted = true;
     }
 
     /**
@@ -1053,7 +1056,9 @@ public final class LaunchControl {
 
                 pumpList.add(p);
             }
-        } catch (InvalidGPIOException g) {
+        } catch (Exception g) {
+            System.out.println("Could not add pump: " + g.getMessage());
+            g.printStackTrace();
             return false;
         }
 
@@ -1566,6 +1571,9 @@ public final class LaunchControl {
      * Save the configuration file to the default config filename as xml.
      */
     private static void saveConfigFile() {
+        if (!LaunchControl.loadCompleted) {
+            return;
+        }
         File configOut = new File(configFileName);
         LaunchControl.setFileOwner(configOut);
 
@@ -2468,7 +2476,7 @@ public final class LaunchControl {
                     }
 
                     try {
-                        BigDecimal volValue = new BigDecimal(curOption);
+                        BigDecimal volValue = new BigDecimal(curOption.replace(",", "."));
                         BigDecimal volReading = new BigDecimal(
                                 config.getDouble(volumeSection, curOption));
                         volumeArray.put(volValue, volReading);

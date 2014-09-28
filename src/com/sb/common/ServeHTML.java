@@ -77,8 +77,8 @@ public class ServeHTML {
                 + " initial-scale=1.0\">" + lineSep
                 + getHeader() + lineSep + "</head><body>" + lineSep
                 + addJS() + lineSep
-                + "<div class=\"page-header\" style='margin:0; display:inline-block; width=100%'>"
-                + "<h1 onDblClick='editBreweryName();'><div id='breweryname'>Elsinore</div> "
+                + "<div class=\"page-header\" style='margin:0; display:inline; width=100%'>"
+                + "<h1 onClick='editBreweryName();' class='brewerynameheader'><div id='breweryname'>Elsinore</div> "
                 + "<small id='brewerysubtext'>"
                     + "<a href='http://dougedey.github.io/SB_Elsinore_Server/'>"
                     + "StrangeBrew Elsinore"
@@ -282,7 +282,7 @@ public class ServeHTML {
 
         controller += "<div id=\"" + device
             + "-title\" class=\"title panel-heading \""
-            + " ondblclick='editDevice(this)' >" + device.replace("_", " ") + "</div>"
+            + " onclick='editDevice(this)' >" + device.replace("_", " ") + "</div>"
             + "<div id=\"" + device + "-error\" class-\"panel-error\">"
             + "</div>"
             + "<div class=\"panel-body\">" + lineSep
@@ -482,7 +482,7 @@ public class ServeHTML {
 
 
         controller += "<div id='" + device + "-volume' "
-            + "ondblclick='editVolume(this)'></div>" + lineSep;
+            + "onclick='editVolume(this)'></div>" + lineSep;
         controller += "</div>";
 
         return controller;

@@ -51,10 +51,9 @@ function setup() {
     });
     
     $('[class=page-header]').append(
-    		"<div id='edit-page' class='holo-button' ondblclick='toggleEdit(true); return false;'>" +
-    		$.i18n.prop("EDIT") +
-    		"</div>")
-    $('[class=page-header]').append("<div id='change-scale' class='holo-button' ondblclick='changeScale(); return false;'>" +
+    		"<div id='edit-page' class='holo-button' onclick='toggleEdit(true); return false;'>" +
+    		$.i18n.prop("EDIT") + "</div>");
+    $('[class=page-header]').append("<div id='change-scale' class='holo-button' onclick='changeScale(); return false;'>" +
     		$.i18n.prop("CHANGE_SCALE") +
     		"</div>")
 
@@ -250,7 +249,7 @@ function waitForMsg(){
 					if (sysTemp.length == 0 && !data.locked) {
 						var sysHtml = '<div id="System" class="holo-content controller panel panel-primary Temp">'
 								+ '<div id="System-title" class="title panel-heading "'
-								+ 'ondblclick="enableSystem(this);" style="cursor: pointer;">' +
+								+ 'onclick="enableSystem(this);" style="cursor: pointer;">' +
 								$.i18n.prop("SYSTEM") + '</div>'
 								+ '</div>';
 
@@ -998,6 +997,7 @@ function setTimer(button, stage) {
 		var tt = $("#"+stage+"Timer").data('tinyTimer');
 		if (tt != undefined) {
 			tt.stop();
+			$("#"+stage+"Timer").removeData('tinyTimer');
 		}
 		$("#"+stage).show();
 		$("#"+stage+"Timer").hide();
@@ -1019,7 +1019,7 @@ function setTimer(button, stage) {
 function resetTimer(button, stage) {
 	// get the current Datestamp
 	var curDate = moment().format("YYYY/MM/DDTHH:mm:ssZZ")
-	formdata = stage+"End=null&" + stage +"Start=null" ;
+	formdata = stage+"Reset=null" ;
 
 	formdata +="&updated=" + curDate;
 	
@@ -1034,7 +1034,6 @@ function resetTimer(button, stage) {
 	
 	$("#"+stage).show();
 	$("#"+stage+"Timer").hide();
-	
 	window.disableUpdates = 0;
 	return false;
 }
@@ -1058,7 +1057,6 @@ function checkTimer(val, stage) {
 	} else if ("down" in val) {
 		// TODO: COUNTDOWN
 	} else if ("stopped" in val) {
-		
 		var diffTime = val.stopped;
 		var hours = Math.floor(diffTime/(60*60));
 		diffTime -= hours * 60*60;
@@ -1066,8 +1064,9 @@ function checkTimer(val, stage) {
 		diffTime -= mins * 60;
 		$("#"+stage).show();
 		$("#"+stage+"Timer").hide();
-		$("#"+stage)[0].innerHTML = hours + ":" + mins + ":" + diffTime;
+		$("#"+stage)[0].innerHTML = pad(hours, 2, 0) + ":" + pad(mins, 2, 0) + ":" + pad(diffTime, 2, 0);
 	} else {
+		$("#"+stage).show();
 		$("#"+stage+"Timer").hide();
 		$("#"+stage)[0].innerHTML = "" + $.i18n.prop("START") + "";
 	}
@@ -1716,12 +1715,12 @@ function readWriteDevices() {
 		if (vessel.toLowerCase() == "system") {
 			if ($('[id=System-tempGauge]').length == 0) {
 				// not enabled
-				this.setAttribute("onDblClick", "enableSystem(this);");
+				this.setAttribute("onclick", "enableSystem(this);");
 			} else {
-				this.setAttribute("onDblClick", "disableSystem(this);");
+				this.setAttribute("onclick", "disableSystem(this);");
 			}
 		} else {
-			this.setAttribute("onDblClick", "editDevice(this);");
+			this.setAttribute("onclick", "editDevice(this);");
 		}
 		$('[id=' + vessel + '-title]').css('cursor', "pointer");
 		// display the mash table if needs be
@@ -1743,11 +1742,11 @@ function readOnlyDevices() {
 		var vesselForm = 'form[id="'+ vessel +'-form"]';
 		var devAddr = $('#' + vesselForm + ' > input[name="deviceaddr"]').val();
 		if (devAddr == this.textContent) {
-			if (vessel != "System" || this.getAttribute("onDblClick").lastIndexOf("enable") == 0) {
+			if (vessel != "System" || this.getAttribute("onClick").lastIndexOf("enable") == 0) {
 				$('[id=' + vessel + ']').css('display', 'none')
 			}
 		}
-		this.removeAttribute("onDblClick");
+		this.removeAttribute("onClick");
 		$('[id=' + vessel + '-title]').css('cursor', "auto");
 		
 		// disable the mash table if needs be

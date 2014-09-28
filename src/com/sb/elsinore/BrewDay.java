@@ -124,7 +124,7 @@ public final class BrewDay {
         if (timerElements == null) {
             timerElements = new HashMap<String, Date>();
         }
-
+        
         timerElements.put(timerData.getKey(), timerData.getValue());
         timers.put(name, timerElements);
     }
@@ -165,6 +165,10 @@ public final class BrewDay {
      */
     public void stopTimer(final String name, final String stopIn) {
         HashMap<String, Date> valueEntry = (HashMap<String, Date>) timers.get(name);
+        if (valueEntry == null) {
+            LaunchControl.setMessage("Could not stop timer " + name);
+            return;
+        }
         Date endDate = valueEntry.get("end");
         if (endDate != null) {
             // Continue the timer
@@ -195,6 +199,15 @@ public final class BrewDay {
         Entry<String, Date> startEntry = new AbstractMap.SimpleEntry<String, Date>(
                 "start", startDate);
         setTimer(name, startEntry);
+    }
+    
+    public void resetTimer(String name) {
+        Entry<String, Date> startEntry = new AbstractMap.SimpleEntry<String, Date>(
+                "start", null);
+        Entry<String, Date> stopEntry = new AbstractMap.SimpleEntry<String, Date>(
+                "end", null);
+        setTimer(name, startEntry);
+        setTimer(name, stopEntry);
     }
 
     /**

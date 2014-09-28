@@ -56,7 +56,7 @@ public final class Temp implements Runnable {
     /**
      * Match the temperature regexp.
      */
-    private final Pattern tempRegexp = Pattern.compile("(-?)(\\d{1,3})(C|F)?");
+    private final Pattern tempRegexp = Pattern.compile("^(-?)([0-9]+)(.[0-9]{1,2})?(C|F)?$");
 
     /**
      * Save the current object to the configuration using LaunchControl.
@@ -231,14 +231,21 @@ public final class Temp implements Runnable {
 
         if (tempMatcher.find()) {
             // We have matched against the TEMP_REGEXP
-            String negative = tempMatcher.group(1);
-            if (negative == null) {
-                negative = "+";
+            String number = tempMatcher.group(1);
+            if (number == null) {
+                number = "+";
             }
-
-            BigDecimal temperature = new BigDecimal(
-                negative + tempMatcher.group(2));
-            String unit = tempMatcher.group(3);
+            // Get the integer
+            if (tempMatcher.group(2) != null) {
+                number += tempMatcher.group(2);
+            }
+            // Do we have a decimal?
+            if (tempMatcher.group(3) != null) {
+                number += tempMatcher.group(3);
+            }
+            // Create the temp
+            BigDecimal temperature = new BigDecimal(number);
+            String unit = tempMatcher.group(4);
 
             if (unit == null || unit.equals(this.scale)) {
                 this.cutoffTemp = temperature;
@@ -981,14 +988,21 @@ public final class Temp implements Runnable {
 
         if (tempMatcher.find()) {
             // We have matched against the TEMP_REGEXP
-            String negative = tempMatcher.group(1);
-            if (negative == null) {
-                negative = "+";
+            String number = tempMatcher.group(1);
+            if (number == null) {
+                number = "+";
             }
-
-            BigDecimal temperature = new BigDecimal(
-                negative + tempMatcher.group(2));
-            String unit = tempMatcher.group(3);
+            // Get the integer
+            if (tempMatcher.group(2) != null) {
+                number += tempMatcher.group(2);
+            }
+            // Do we have a decimal?
+            if (tempMatcher.group(3) != null) {
+                number += tempMatcher.group(3);
+            }
+            // Create the temp
+            BigDecimal temperature = new BigDecimal(number);
+            String unit = tempMatcher.group(4);
 
             if (unit == null || unit.equals(this.scale)) {
                 this.calibration = temperature;
