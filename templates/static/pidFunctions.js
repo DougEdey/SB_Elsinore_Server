@@ -989,7 +989,7 @@ function toggleDiv(id) {
 function setTimer(button, stage) {
 	// get the current Datestamp
 	var curDate = moment().format("YYYY/MM/DDTHH:mm:ssZZ")
-	if(button.innerHTML == "Start") {
+	if(button.innerHTML == $.i18n.prop("START")) {
 		$("#" + stage).hide();
 		$("#"+stage+"Timer").show();
 		formdata = stage + "Start=" + 0;
@@ -1030,7 +1030,7 @@ function resetTimer(button, stage) {
 		success: function(data) {data = null}
 	});
 	
-	$("#"+stage)[0].innerHTML = "Start";
+	$("#"+stage)[0].innerHTML = $.i18n.prop("START");
 	
 	$("#"+stage).show();
 	$("#"+stage+"Timer").hide();
