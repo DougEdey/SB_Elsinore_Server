@@ -124,7 +124,7 @@ public final class BrewDay {
         if (timerElements == null) {
             timerElements = new HashMap<String, Date>();
         }
-
+        
         timerElements.put(timerData.getKey(), timerData.getValue());
         timers.put(name, timerElements);
     }
@@ -195,6 +195,15 @@ public final class BrewDay {
         Entry<String, Date> startEntry = new AbstractMap.SimpleEntry<String, Date>(
                 "start", startDate);
         setTimer(name, startEntry);
+    }
+    
+    public void resetTimer(String name) {
+        Entry<String, Date> startEntry = new AbstractMap.SimpleEntry<String, Date>(
+                "start", null);
+        Entry<String, Date> stopEntry = new AbstractMap.SimpleEntry<String, Date>(
+                "end", null);
+        setTimer(name, startEntry);
+        setTimer(name, stopEntry);
     }
 
     /**

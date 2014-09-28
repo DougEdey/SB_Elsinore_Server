@@ -998,6 +998,7 @@ function setTimer(button, stage) {
 		var tt = $("#"+stage+"Timer").data('tinyTimer');
 		if (tt != undefined) {
 			tt.stop();
+			$("#"+stage+"Timer").removeData('tinyTimer');
 		}
 		$("#"+stage).show();
 		$("#"+stage+"Timer").hide();
@@ -1019,7 +1020,7 @@ function setTimer(button, stage) {
 function resetTimer(button, stage) {
 	// get the current Datestamp
 	var curDate = moment().format("YYYY/MM/DDTHH:mm:ssZZ")
-	formdata = stage+"End=null&" + stage +"Start=null" ;
+	formdata = stage+"Reset=null" ;
 
 	formdata +="&updated=" + curDate;
 	
@@ -1034,7 +1035,6 @@ function resetTimer(button, stage) {
 	
 	$("#"+stage).show();
 	$("#"+stage+"Timer").hide();
-	
 	window.disableUpdates = 0;
 	return false;
 }
@@ -1058,7 +1058,6 @@ function checkTimer(val, stage) {
 	} else if ("down" in val) {
 		// TODO: COUNTDOWN
 	} else if ("stopped" in val) {
-		
 		var diffTime = val.stopped;
 		var hours = Math.floor(diffTime/(60*60));
 		diffTime -= hours * 60*60;
@@ -1066,8 +1065,9 @@ function checkTimer(val, stage) {
 		diffTime -= mins * 60;
 		$("#"+stage).show();
 		$("#"+stage+"Timer").hide();
-		$("#"+stage)[0].innerHTML = hours + ":" + mins + ":" + diffTime;
+		$("#"+stage)[0].innerHTML = pad(hours, 2, 0) + ":" + pad(mins, 2, 0) + ":" + pad(diffTime, 2, 0);
 	} else {
+		$("#"+stage).show();
 		$("#"+stage+"Timer").hide();
 		$("#"+stage)[0].innerHTML = "" + $.i18n.prop("START") + "";
 	}

@@ -1136,6 +1136,10 @@ public class BrewServer extends NanoHTTPD {
                     int trimEnd = e.getKey().length() - "End".length();
                     String name = e.getKey().substring(0, trimEnd);
                     brewDay.stopTimer(name, e.getValue());
+                } else if (e.getKey().endsWith("Reset")) {
+                    int trimEnd = e.getKey().length() - "Reset".length();
+                    String name = e.getKey().substring(0, trimEnd);
+                    brewDay.resetTimer(name);
                 }
             }
 
