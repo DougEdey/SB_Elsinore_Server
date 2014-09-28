@@ -273,9 +273,9 @@ public class BrewServer extends NanoHTTPD {
                     // We have a good step count, parse the value
 
                     BigDecimal duration = new BigDecimal(
-                            valueObj.get("duration").toString());
+                            valueObj.get("duration").toString().replace(",", "."));
                     BigDecimal temp = new BigDecimal(valueObj.get("temp")
-                            .toString());
+                            .toString().replace(",", "."));
 
                     String method = valueObj.get("method").toString();
                     String type = valueObj.get("type").toString();
@@ -334,8 +334,8 @@ public class BrewServer extends NanoHTTPD {
         String type = params.get("type");
 
         try {
-            BigDecimal duration = new BigDecimal(params.get("duration"));
-            BigDecimal temp = new BigDecimal(params.get("temp"));
+            BigDecimal duration = new BigDecimal(params.get("duration").replace(",", "."));
+            BigDecimal temp = new BigDecimal(params.get("temp").replace(",", "."));
             int stepNumber = Integer.parseInt(params.get("step"));
 
             // Double check for any issues.
@@ -891,7 +891,7 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("dutycycle")) {
             temp = parms.get("dutycycle");
             try {
-                dTemp = new BigDecimal(temp);
+                dTemp = new BigDecimal(temp.replace(",", "."));
                 duty = dTemp;
                 BrewServer.LOG.info("Duty cycle: " + duty);
             } catch (NumberFormatException nfe) {
@@ -903,7 +903,7 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("cycletime")) {
             temp = parms.get("cycletime");
             try {
-                dTemp = new BigDecimal(temp);
+                dTemp = new BigDecimal(temp.replace(",", "."));
                 cycle = dTemp;
                 BrewServer.LOG.info("Cycle time: " + cycle);
             } catch (NumberFormatException nfe) {
@@ -915,7 +915,7 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("setpoint")) {
             temp = parms.get("setpoint");
             try {
-                dTemp = new BigDecimal(temp);
+                dTemp = new BigDecimal(temp.replace(",", "."));
                 setpoint = dTemp;
                 BrewServer.LOG.info("Set Point: " + setpoint);
             } catch (NumberFormatException nfe) {
@@ -927,7 +927,7 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("p")) {
             temp = parms.get("p");
             try {
-                dTemp = new BigDecimal(temp);
+                dTemp = new BigDecimal(temp.replace(",", "."));
                 p = dTemp;
                 BrewServer.LOG.info("P: " + p);
             } catch (NumberFormatException nfe) {
@@ -939,7 +939,7 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("i")) {
             temp = parms.get("i");
             try {
-                dTemp = new BigDecimal(temp);
+                dTemp = new BigDecimal(temp.replace(",", "."));
                 i = dTemp;
                 BrewServer.LOG.info("I: " + i);
             } catch (NumberFormatException nfe) {
@@ -951,7 +951,7 @@ public class BrewServer extends NanoHTTPD {
         if (parms.containsKey("d")) {
             temp = parms.get("d");
             try {
-                dTemp = new BigDecimal(temp);
+                dTemp = new BigDecimal(temp.replace(",", "."));
                 d = dTemp;
                 BrewServer.LOG.info("D: " + d);
             } catch (NumberFormatException nfe) {
@@ -969,7 +969,7 @@ public class BrewServer extends NanoHTTPD {
                 "The minimum temperature to enable the output (HYSTERIA)");
         if (parms.containsKey("min")) {
             try {
-                dTemp = new BigDecimal(parms.get("min"));
+                dTemp = new BigDecimal(parms.get("min").replace(",", "."));
                 min = dTemp;
                 BrewServer.LOG.info("Min: " + mode);
             } catch (NumberFormatException nfe) {
@@ -981,7 +981,7 @@ public class BrewServer extends NanoHTTPD {
                 "The maximum temperature to disable the output (HYSTERIA)");
         if (parms.containsKey("max")) {
             try {
-                dTemp = new BigDecimal(parms.get("max"));
+                dTemp = new BigDecimal(parms.get("max").replace(",", "."));
                 max = dTemp;
                 BrewServer.LOG.info("Max: " + mode);
             } catch (NumberFormatException nfe) {
@@ -993,7 +993,7 @@ public class BrewServer extends NanoHTTPD {
                 "The minimum time when enabling the output (HYSTERIA)");
         if (parms.containsKey("time")) {
             try {
-                dTemp = new BigDecimal(parms.get("time"));
+                dTemp = new BigDecimal(parms.get("time").replace(",", "."));
                 time = dTemp;
                 BrewServer.LOG.info("Time: " + time);
             } catch (NumberFormatException nfe) {
@@ -1726,7 +1726,7 @@ public class BrewServer extends NanoHTTPD {
 
         // Should be good to go now
         try {
-            BigDecimal actualVol = new BigDecimal(volume);
+            BigDecimal actualVol = new BigDecimal(volume.replace(",", "."));
             if (t.addVolumeMeasurement(actualVol)) {
                 return new Response(Response.Status.OK, MIME_TYPES.get("json"),
                         "{'Result': 'OK'}");

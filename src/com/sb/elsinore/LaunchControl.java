@@ -2468,7 +2468,7 @@ public final class LaunchControl {
                     }
 
                     try {
-                        BigDecimal volValue = new BigDecimal(curOption);
+                        BigDecimal volValue = new BigDecimal(curOption.replace(",", "."));
                         BigDecimal volReading = new BigDecimal(
                                 config.getDouble(volumeSection, curOption));
                         volumeArray.put(volValue, volReading);
