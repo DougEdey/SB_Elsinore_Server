@@ -41,7 +41,7 @@ public class Pump implements Comparable<Pump> {
         } catch (InvalidGPIOException e) {
             throw e;
         } catch (RuntimeException e) {
-            e.printStackTrace();
+            throw e;
         }
 
         String temp = null;

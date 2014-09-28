@@ -855,6 +855,8 @@ public class BrewServer extends NanoHTTPD {
 
         if (LaunchControl.addPump(newName, gpio)) {
             return new Response(Status.OK, MIME_TYPES.get("txt"), "Pump Added");
+        } else {
+            LaunchControl.setMessage("Could not add pump " + newName + ": " + gpio);
         }
 
         JSONObject usage = new JSONObject();

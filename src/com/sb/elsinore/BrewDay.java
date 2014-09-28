@@ -165,6 +165,10 @@ public final class BrewDay {
      */
     public void stopTimer(final String name, final String stopIn) {
         HashMap<String, Date> valueEntry = (HashMap<String, Date>) timers.get(name);
+        if (valueEntry == null) {
+            LaunchControl.setMessage("Could not stop timer " + name);
+            return;
+        }
         Date endDate = valueEntry.get("end");
         if (endDate != null) {
             // Continue the timer
