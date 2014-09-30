@@ -36,13 +36,6 @@ public class Pump implements Comparable<Pump> {
     public Pump(final String newName, final String pinName)
             throws InvalidGPIOException {
         this.name = newName.replace("_", " ");
-        try {
-            this.output = new OutPin(pinName);
-        } catch (InvalidGPIOException e) {
-            throw e;
-        } catch (RuntimeException e) {
-            throw e;
-        }
 
         String temp = null;
 
@@ -57,6 +50,14 @@ public class Pump implements Comparable<Pump> {
             this.invertOutput = true;
         }
 
+        try {
+            this.output = new OutPin(pinName);
+            this.turnOff();
+        } catch (InvalidGPIOException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw e;
+        }
     }
 
     /**
