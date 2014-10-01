@@ -135,4 +135,10 @@ public class Pump implements Comparable<Pump> {
     public int compareTo(Pump o) {
         return Integer.compare(this.position, o.getPosition());
     }
+    
+    public void shutdown() {
+        if (output != null) {
+            output.close();
+        }
+    }
 }

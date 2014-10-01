@@ -382,6 +382,14 @@ public final class LaunchControl {
                         }
                     }
                 }
+                // Close off all the Pump GPIOs properly.
+                synchronized (pumpList) {
+                    if (pumpList.size() > 0) {
+                        for (Pump p: pumpList) {
+                            p.shutdown();
+                        }
+                    }
+                }
 
                 saveConfigFile();
 
