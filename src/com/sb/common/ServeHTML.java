@@ -13,6 +13,7 @@ import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Messages;
 import com.sb.elsinore.PID;
 import com.sb.elsinore.Pump;
+import com.sb.elsinore.Temp;
 import com.sb.elsinore.Timer;
 
 
@@ -115,6 +116,7 @@ public class ServeHTML {
                     (Entry<String, String>) devIterator.next();
             String devName = pairs.getKey().replace(" ", "_");
             String devType = pairs.getValue();
+            Temp tTemp = LaunchControl.findTemp(devName);
             if (devType.equalsIgnoreCase("PID")) {
                 pidContent += addController(devName, devType);
             }
@@ -249,6 +251,11 @@ public class ServeHTML {
      * @return The HTML String content
      */
     public final String addController(final String device, final String type) {
+        Temp tTemp = LaunchControl.findTemp(device);
+        if (LaunchControl.isLocked() && !tTemp.isSetup()) {
+            return "";
+        }
+
         String controller = "<div id=\"" + device
             + "\" class=\"holo-content controller panel panel-primary "
             + type + "\">" + lineSep

@@ -335,7 +335,7 @@ public final class PID implements Runnable {
         this.auxGPIO = detectGPIO(gpio);
 
         if (this.auxGPIO == null || auxGPIO.equals("")) {
-            BrewServer.LOG.log(Level.WARNING,
+            BrewServer.LOG.log(Level.INFO,
                 "Could not detect GPIO as valid: " + gpio);
         }
     }
