@@ -234,10 +234,11 @@ function waitForMsg(){
 			}
 			
 			if ("locked" in data) {			
-				
-				window.locked = !data.locked;
-				toggleEdit(false);
-				window.locked = data.locked;
+				if (window.locked == undefined) {
+					window.locked = !data.locked;
+					toggleEdit(false);
+					window.locked = data.locked;
+				}
 			}
 
 			if ("vessels" in data) {
@@ -989,7 +990,7 @@ function toggleDiv(id) {
 function setTimer(button, stage) {
 	// get the current Datestamp
 	var curDate = moment().format("YYYY/MM/DDTHH:mm:ssZZ")
-	if(button.innerHTML == "Start") {
+	if(button.innerHTML == $.i18n.prop("START")) {
 		$("#" + stage).hide();
 		$("#"+stage+"Timer").show();
 		formdata = stage + "Start=" + 0;
@@ -1030,7 +1031,7 @@ function resetTimer(button, stage) {
 		success: function(data) {data = null}
 	});
 	
-	$("#"+stage)[0].innerHTML = "Start";
+	$("#"+stage)[0].innerHTML = $.i18n.prop("START");
 	
 	$("#"+stage).show();
 	$("#"+stage+"Timer").hide();
@@ -1597,6 +1598,9 @@ function toggleEdit(manualChange) {
 }
 
 function readOnly(manualChange) {
+	if (window.locked != undefined && window.locked) {
+		return;
+	}
 	readOnlyPumps();
 	readOnlyTimers();
 	readOnlyDevices();
@@ -1611,11 +1615,17 @@ function readOnly(manualChange) {
 			type: 'POST',
 			success: function(data) {data = null}
 		});
+		
+		sleep(2000);
+		location.reload();
 	}
 	window.disableUpdates = 0;
 }
 
 function readWrite(manualChange) {
+	if (window.locked != undefined && !window.locked) {
+		return;
+	}
 	readWritePumps();
 	readWriteTimers();
 	readWriteDevices();
@@ -1623,6 +1633,7 @@ function readWrite(manualChange) {
 	$("[id=change-scale]").show();
 	$("[id=CheckUpdates]").show();
 	$("[id=logo]").show();
+	
 	window.locked = false;
 	if (manualChange) {
 		$.ajax({
@@ -1630,6 +1641,9 @@ function readWrite(manualChange) {
 			type: 'POST',
 			success: function(data) {data = null}
 		});
+	
+		sleep(2000);
+		location.reload();
 	}
 	window.disableUpdates = 0;
 }

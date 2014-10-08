@@ -312,7 +312,7 @@ public final class Temp implements Runnable {
      */
     private InPin volumePin = null;
     private boolean stopVolumeLogging;
-    private BigDecimal calibration = new BigDecimal(0);
+    private BigDecimal calibration = BigDecimal.ZERO;
     
     /**
      * @return Get the current temperature
@@ -980,6 +980,7 @@ public final class Temp implements Runnable {
         // Graceful shutdown.
         keepalive = false;
         System.out.println(this.getName() + " is shutting down");
+        Thread.currentThread().interrupt();
     }
 
     public void setCalibration(String calibration) {
@@ -1019,7 +1020,11 @@ public final class Temp implements Runnable {
     }
 
     public String getCalibration() {
-        return this.calibration.toString() + this.scale;
+        return this.calibration + this.scale;
+    }
+
+    public boolean isSetup() {
+        return !this.getName().equals(this.getProbe());
     }
 }
 

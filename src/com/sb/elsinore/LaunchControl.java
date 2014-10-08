@@ -241,6 +241,7 @@ public final class LaunchControl {
     private static String breweryName = null;
     public static String theme = "default";
     private static boolean pageLock = false;
+    private static boolean allDevicesListed = false;
 
     /*****
      * Main method to launch the brewery.
@@ -382,6 +383,14 @@ public final class LaunchControl {
                         }
                     }
                 }
+                // Close off all the Pump GPIOs properly.
+                synchronized (pumpList) {
+                    if (pumpList.size() > 0) {
+                        for (Pump p: pumpList) {
+                            p.shutdown();
+                        }
+                    }
+                }
 
                 saveConfigFile();
 
@@ -401,6 +410,7 @@ public final class LaunchControl {
         recorder.start();
 
         // Debug info before launching the BrewServer itself
+        LaunchControl.loadCompleted = true;
         BrewServer.LOG.log(Level.INFO, "CONFIG READ COMPLETED***********");
         sRunner = new ServerRunner(BrewServer.class, this.server_port);
         sRunner.run();
@@ -568,7 +578,7 @@ public final class LaunchControl {
     /******
      * Get the JSON Output String. This is the current Status of the PIDs,
      * Temps, Pumps, etc...
-     * 
+     *
      * @return The JSON String of the current status.
      */
     @SuppressWarnings("unchecked")
@@ -585,6 +595,11 @@ public final class LaunchControl {
         JSONArray vesselJSON = new JSONArray();
         synchronized (tempList) {
             for (Temp t : tempList) {
+                if (LaunchControl.pageLock
+                        && t.getName().equals(t.getProbe())) {
+                    continue;
+                }
+
                 /* Check for a PID */
                 PID tPid = findPID(t.getName());
                 tJSON = new JSONObject();
@@ -1456,6 +1471,10 @@ public final class LaunchControl {
      * /sys/bus/w1/devices, basic access
      */
     private static void listOneWireSys() {
+        listOneWireSys(true);
+    }
+
+    private static void listOneWireSys(boolean prompt) {
         // try to access the list of 1-wire devices
         File w1Folder = new File("/sys/bus/w1/devices/");
         if (!w1Folder.exists()) {
@@ -1476,22 +1495,25 @@ public final class LaunchControl {
                     && !currentFile.getName().startsWith("w1_bus_master")) {
 
                 // Check to see if theres a non temp probe (DS18x20)
-                if (!currentFile.getName().startsWith("28") && !useOWFS) {
-                    System.out.println("Detected a non temp probe."
-                            + currentFile.getName() + "\n"
-                            + "Do you want to switch to OWFS? [y/N]");
-                    String t = readInput();
-                    if (t.toLowerCase().startsWith("y")) {
-                        if (owfsConnection == null) {
-                            createOWFS();
+                if (!currentFile.getName().startsWith("28")
+                        && !useOWFS) {
+                    if (prompt) {
+                        System.out.println("Detected a non temp probe."
+                                + currentFile.getName() + "\n"
+                                + "Do you want to switch to OWFS? [y/N]");
+                        String t = readInput();
+                        if (t.toLowerCase().startsWith("y")) {
+                            if (owfsConnection == null) {
+                                createOWFS();
+                            }
+    
+                            useOWFS = true;
+                            synchronized (tempList) {
+                                tempList.clear();
+                            }
+                            listOWFSDevices();
+                            return;
                         }
-
-                        useOWFS = true;
-                        synchronized (tempList) {
-                            tempList.clear();
-                        }
-                        listOWFSDevices();
-                        return;
                     }
                     // Skip this iteration
                     continue;
@@ -1500,14 +1522,12 @@ public final class LaunchControl {
                 owfsServer = null;
                 owfsPort = null;
 
-                // got a directory, check for a temp
-                System.out.println("Checking for " + currentFile.getName());
-
                 // Check to see if this probe exists
                 if (probeExists(currentFile.getName())) {
                     continue;
                 }
 
+                System.out.println("Checking for " + currentFile.getName());
                 Temp currentTemp = new Temp(currentFile.getName(),
                         currentFile.getName());
                 synchronized (tempList) {
@@ -1524,11 +1544,36 @@ public final class LaunchControl {
         }
     }
 
+    /**
+     * Remove any non setup devices.
+     */
+    private static void removeNonSetupDevices() {
+//        synchronized (tempList) {
+//            for (Temp t: tempList) {
+//                if (t.getName().equals(t.getProbe())) {
+//                    t.shutdown();
+//                }
+//                tempList.remove(t);
+//            }
+//        }
+    }
+
+    /**
+     * update the device list.
+     */
     private static void updateDeviceList() {
+        updateDeviceList(true);
+    }
+
+    /**
+     * Update the device list.
+     * @param prompt Prompt for OWFS usage.
+     */
+    private static void updateDeviceList(boolean prompt) {
         if (useOWFS) {
             listOWFSDevices();
         } else {
-            listOneWireSys();
+            listOneWireSys(prompt);
         }
     }
 
@@ -3285,10 +3330,12 @@ public final class LaunchControl {
     }
 
     public static void lockPage() {
+        LaunchControl.removeNonSetupDevices();
         LaunchControl.pageLock = true;
     }
 
     public static void unlockPage() {
+        LaunchControl.listOneWireSys(false);
         LaunchControl.pageLock = false;
     }
 
@@ -3324,5 +3371,9 @@ public final class LaunchControl {
         }
         LaunchControl.scale = scale;
         return true;
+    }
+
+    public static boolean isLocked() {
+        return LaunchControl.pageLock;
     }
 }

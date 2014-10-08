@@ -36,13 +36,6 @@ public class Pump implements Comparable<Pump> {
     public Pump(final String newName, final String pinName)
             throws InvalidGPIOException {
         this.name = newName.replace("_", " ");
-        try {
-            this.output = new OutPin(pinName);
-        } catch (InvalidGPIOException e) {
-            throw e;
-        } catch (RuntimeException e) {
-            throw e;
-        }
 
         String temp = null;
 
@@ -53,9 +46,18 @@ public class Pump implements Comparable<Pump> {
         }
 
         if (temp != null) {
+            System.out.println("Inverted outputs: " + temp);
             this.invertOutput = true;
         }
 
+        try {
+            this.output = new OutPin(pinName);
+            this.turnOff();
+        } catch (InvalidGPIOException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw e;
+        }
     }
 
     /**
@@ -63,8 +65,13 @@ public class Pump implements Comparable<Pump> {
      */
     public final boolean getStatus() {
         try {
-            return output.getValue().equals("1");
+            if (this.invertOutput) {
+                return output.getValue().equals("0");
+            } else {
+                return output.getValue().equals("1");
+            }
         } catch (Exception e) {
+            System.out.println("Couldn't toggle pump: " + e);
             return false;
         }
     }
@@ -127,5 +134,11 @@ public class Pump implements Comparable<Pump> {
     @Override
     public int compareTo(Pump o) {
         return Integer.compare(this.position, o.getPosition());
+    }
+    
+    public void shutdown() {
+        if (output != null) {
+            output.close();
+        }
     }
 }
