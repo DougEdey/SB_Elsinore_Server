@@ -119,10 +119,10 @@ Double clicking the "Edit" button on the top left (the position will probably ch
 * Re-order the timers, click and drag to organize them
 * Add custom named Pump outputs, click the "Add" button in the pump section
 * Re-order the pumps, click and drag to organize them
-* [Add mash steps](http://dougedey.github.io/elsinore/mash/instructions/2014/09/01/Elsinore-Mash-Edits/)
+* [Add mash steps](http://dougedey.github.io/2014/09/01/Elsinore-Mash-Edits/)
 * Add the system temperature probe
 
-[More Pictures and information](http://dougedey.github.io/elsinore/setup/instructions/beaglebone/raspberrypi/2014/05/14/New-Elsinore_Setup/)
+[More Pictures and information](http://dougedey.github.io/2014/05/14/New-Elsinore_Setup/)
 
 Pump Control
 ============
