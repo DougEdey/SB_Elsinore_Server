@@ -1384,7 +1384,7 @@ public class BrewServer extends NanoHTTPD {
         usage.put("updatepump", "Change the pump status off/on");
 
         BrewServer.LOG.info("Invalid URI: " + uri);
-        return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+        return new NanoHTTPD.Response(Status.NOT_FOUND, MIME_TYPES.get("json"),
                 usage.toJSONString());
     }
 

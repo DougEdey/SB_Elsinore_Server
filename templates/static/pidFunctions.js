@@ -34,10 +34,14 @@ function setup() {
 	    {
 	    	$('#brewerylogo').css('display', 'none');
 	    },
-	    success: function()
+	    success: function(data, status, XMLHttpRequest)
 	    {
-	        $('#brewerylogo').attr('src', '/brewerImage.gif');
-	        $('#brewerylogo').css('display', 'block');
+	    	if (XMLHttpRequest.status == 200) {
+		        $('#brewerylogo').attr('src', '/brewerImage.gif');
+		        $('#brewerylogo').css('display', 'block');
+	    	} else {
+	    		$('#brewerylogo').css('display', 'none');
+	    	}
 	    }
 	});
 
