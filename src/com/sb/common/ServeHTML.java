@@ -71,7 +71,8 @@ public class ServeHTML {
             + "<meta http-equiv='Content-Type' "
             + "content='text/html; charset=utf-8'>"
             + "<meta content='text/html; charset=UTF-8' "
-            + "http-equiv='Content-Type'/>" + lineSep;
+            + "http-equiv='Content-Type'/>" + lineSep
+            + "<meta charset='UTF-8' />" + lineSep;
 
         page += "<title>Elsinore "+Messages.CONTROLLER+"</title>" + lineSep
                 + "<meta name=\"viewport\" content=\"width=device-width,"
