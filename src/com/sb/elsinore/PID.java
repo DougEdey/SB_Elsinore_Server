@@ -245,12 +245,12 @@ public final class PID implements Runnable {
                                 + heatSetting.calculatedDuty);
                             this.outputControl.setDuty(
                                 heatSetting.calculatedDuty);
-                            this.outputControl.setHTime(heatSetting.cycle_time);
+                            this.outputControl.getHeater().setCycleTime(heatSetting.cycle_time);
                         } else if (mode.equals("manual")) {
                             this.outputControl.setDuty(heatSetting.duty_cycle);
                         } else if (mode.equals("off")) {
                             this.outputControl.setDuty(BigDecimal.ZERO);
-                            this.outputControl.setHTime(heatSetting.cycle_time);
+                            this.outputControl.getHeater().setCycleTime(heatSetting.cycle_time);
                         } else if (mode.equals("hysteria")) {
                             // Set the duty cycle to be 100, we can wake it up when we want to
                             BrewServer.LOG.info("Checking current temp against " + this.min + " and " + this.max);
@@ -260,7 +260,7 @@ public final class PID implements Runnable {
                                 this.hysteriaStartTime = this.currentTime;
                                 this.heatSetting.duty_cycle = new BigDecimal(100);
                                 this.outputControl.setDuty(this.heatSetting.duty_cycle);
-                                this.outputControl.setHTime(this.minTime.multiply(new BigDecimal(60)));
+                                this.outputControl.getHeater().setCycleTime(this.minTime.multiply(new BigDecimal(60)));
                                 
                                 // Make sure the thread wakes up for the new settings
                                 this.outputThread.interrupt();

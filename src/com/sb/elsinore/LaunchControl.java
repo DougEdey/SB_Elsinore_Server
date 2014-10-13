@@ -1,18 +1,15 @@
 package com.sb.elsinore;
 
-import jGPIO.GPIO;
 import jGPIO.InvalidGPIOException;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.net.InetAddress;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystems;
@@ -24,7 +21,6 @@ import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,7 +31,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -60,7 +55,6 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.ini4j.ConfigParser;
 import org.ini4j.ConfigParser.InterpolationException;
 import org.ini4j.ConfigParser.NoOptionException;
@@ -85,8 +79,6 @@ import Cosm.Unit;
 
 import com.sb.common.CollectionsUtil;
 import com.sb.common.ServeHTML;
-import com.sb.elsinore.StatusRecorder;
-import com.sb.elsinore.NanoHTTPD.Response.Status;
 
 /**
  * LaunchControl is the core class of Elsinore. It reads the config file,
@@ -252,6 +244,10 @@ public final class LaunchControl {
     public static void main(final String... arguments) {
         BrewServer.LOG.info("Running Brewery Controller.");
         int port = DEFAULT_PORT;
+        
+        // Allow for the root directory to be overridden by environment variable
+        // or set on the command line with the -root option
+        String rootDir = System.getenv("ELSINORE_ROOT");
 
         if (arguments.length > 0) {
             createOptions();
@@ -294,6 +290,10 @@ public final class LaunchControl {
                 if (startupCommand.hasOption("d")) {
                     System.setProperty("debug", "INFO");
                 }
+                
+                if (startupCommand.hasOption("root")) {
+                    rootDir = startupCommand.getOptionValue("root");
+                }
 
                 if (startupCommand.hasOption("rthreshold")) {
                     recorderDiff = Double.parseDouble(startupCommand
@@ -314,6 +314,23 @@ public final class LaunchControl {
                 return;
             }
         }
+        
+        if( rootDir != null )
+        {
+            //Validate to make sure it's valid, otherwise things will go badly.
+            File root = new File(rootDir);
+            if( root!= null && root.exists() && root.isDirectory() )
+            {
+                System.setProperty("root_override", rootDir);
+            }
+            else
+            {
+                BrewServer.LOG.warning("Invalid root directory proviced: "+rootDir);
+                System.exit(-1);
+            }
+            
+        }
+        
         LaunchControl lc = new LaunchControl(port);
         BrewServer.LOG.warning("Started LaunchControl: " + lc.toString());
     }
@@ -341,6 +358,9 @@ public final class LaunchControl {
         startupOptions.addOption("rthreshold", true,
                 "specify the amount for a reading to change before "
                         + "recording the value in history");
+        startupOptions.addOption("root", true,
+                "specify the root directory for elsinore.  This is the location "
+                        + "configuration and html files should live.");
         startupOptions.addOption("baseUser", true,
                 "Specify the user who should own all the files created");
         startupOptions.addOption("t", "theme", true, "Specify the theme name");
