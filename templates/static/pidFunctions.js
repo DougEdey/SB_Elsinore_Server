@@ -223,10 +223,10 @@ function waitForMsg(){
 					// enable or disable the pump as required
 					if (pumpStatus) {
 						jQuery('button[id^="' + pumpName + '"]')[0].style.background="red";
-						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" " + $.i18n.prop("ON");
+						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName.replace("_", " ") +" " + $.i18n.prop("ON");
 					} else {
 						jQuery('button[id^="' + pumpName + '"]')[0].style.background="#666666";
-						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName +" "+ $.i18n.prop("OFF");
+						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName.replace("_", " ") +" "+ $.i18n.prop("OFF");
 					}
 				});
 			}

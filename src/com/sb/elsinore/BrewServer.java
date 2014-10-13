@@ -1152,7 +1152,7 @@ public class BrewServer extends NanoHTTPD {
         if (uri.equalsIgnoreCase("/updatepump")) {
             if (parms.containsKey("toggle")) {
                 String pumpname = parms.get("toggle");
-                Pump tempPump = LaunchControl.findPump(pumpname);
+                Pump tempPump = LaunchControl.findPump(pumpname.replaceAll("_", " "));
                 if (tempPump != null) {
                     if (tempPump.getStatus()) {
                         tempPump.turnOff();

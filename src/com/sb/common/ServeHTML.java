@@ -503,14 +503,14 @@ public class ServeHTML {
      */
     final String addPump(final String pumpName) {
         String pumpDetails = lineSep;
-        pumpDetails += "<div id='div-" + pumpName + "' class='pump_wrapper'"
+        pumpDetails += "<div id='div-" + pumpName.replaceAll(" ", "_") + "' class='pump_wrapper'"
                 + " ondragstart='dragPump(event);' draggable='true'"
                 + " ondrop='dropPump(event);'"
                 + " ondragover='allowDropPump(event);'"
                 + " ondragleave='leavePump(event);'>"
 
                 + "<button class='holo-button pump' id=\""
-                + pumpName + "\" type=\"submit\" value=\"SubmitCommand\""
+                + pumpName.replaceAll(" ", "_") + "\" type=\"submit\" value=\"SubmitCommand\""
                 + " onClick='submitPump(this); waitForMsg(); return false;'>"
                 + pumpName + "</button></div>" + lineSep;
         return pumpDetails;

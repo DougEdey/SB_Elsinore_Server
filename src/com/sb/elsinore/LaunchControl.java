@@ -665,7 +665,7 @@ public final class LaunchControl {
             tJSON = new JSONObject();
 
             for (Pump p : pumpList) {
-                tJSON.put(p.getName(), p.getStatus());
+                tJSON.put(p.getName().replaceAll(" ", "_"), p.getStatus());
             }
 
             rObj.put("pumps", tJSON);
