@@ -33,7 +33,7 @@ public class OutputDevice {
     protected BigDecimal cycleTime = new BigDecimal(5000);    //5 second default
     protected OutPin ssr = null;    //The output pin.
     protected String name;    //The name of this device
-    protected String gpio;    //The gpio pin
+    private String gpio;    //The gpio pin
 
     public OutputDevice(String name, String gpio, BigDecimal cycleTimeSeconds) {
         this.name = name;
@@ -71,8 +71,17 @@ public class OutputDevice {
         }
     }
 
+    
+    /**
+     * Run through a cycle and turn the device on/off as appropriate based on the input duty.
+     * @param duty The percentage of time / power to run.  This will only run if the duty
+     *              is between 0 and 100 and not null.
+     */
     public void runCycle(BigDecimal duty) throws InterruptedException, InvalidGPIOException {
-        if (duty != null) {
+        // Run if the duty is not null and is between 0 and 100 inclusive.
+        if (duty != null && 
+            duty.compareTo(BigDecimal.ZERO) > -1 &&
+            duty.compareTo(HUNDRED) < 1) {
             initializeSSR();
 
             duty = MathUtil.divide(duty, HUNDRED);
@@ -132,5 +141,19 @@ public class OutputDevice {
         if (cycleTime != null) {
             this.cycleTime = cycleTime.multiply(THOUSAND);
         }
+    }
+
+    /**
+     * @return the gpio
+     */
+    public String getGpio(){
+        return gpio;
+    }
+
+    /**
+     * @param gpio the gpio to set
+     */
+    public void setGpio(String gpio){
+        this.gpio = gpio;
     }
 }

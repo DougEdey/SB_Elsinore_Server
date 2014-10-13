@@ -21,9 +21,18 @@ public class CompressorDevice extends OutputDevice {
         super(name, gpio, cycleTimeSeconds);
     }
 
+    
+    /**
+     * Run through a cycle and turn the device on/off as appropriate based on the input duty.
+     * @param duty The percentage of time / power to run.  This will only run if the duty
+     *              is between 0 and 100 and not null.
+     */
     @Override
     public void runCycle(BigDecimal duty) throws InterruptedException, InvalidGPIOException {
-        if (duty != null) {
+        // Run if the duty is not null and is between 0 and 100 inclusive.
+        if (duty != null && 
+            duty.compareTo(BigDecimal.ZERO) > -1 &&
+            duty.compareTo(HUNDRED) < 1) {
             initializeSSR();
 
             if (duty.compareTo(HUNDRED) == 0) {

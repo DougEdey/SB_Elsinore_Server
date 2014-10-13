@@ -145,15 +145,17 @@ public class BrewServer extends NanoHTTPD {
         super(port);
         // default level, this can be changed
         
-        initializeLogger(LOG);
+        initializeLogger(BrewServer.LOG);
         
         Level logLevel = Level.WARNING;
-        String newLevel = System.getProperty("debug")!=null?System.getProperty("debug"):System.getenv("ELSINORE_DEBUG");
+        String newLevel = System.getProperty("debug") != null ?
+                                System.getProperty("debug"):
+                                System.getenv("ELSINORE_DEBUG");
         if( "INFO".equalsIgnoreCase(newLevel)){
             logLevel = Level.INFO;
         }
-        LOG.info("Enabled logging at level:"+logLevel.toString());
-        LOG.setLevel(logLevel);
+        BrewServer.LOG.info("Enabled logging at level:"+logLevel.toString());
+        BrewServer.LOG.setLevel(logLevel);
         
         // just serve up on port 8080 for now
         BrewServer.LOG.info("Launching on port " + port);
