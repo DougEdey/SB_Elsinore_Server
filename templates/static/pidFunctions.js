@@ -356,16 +356,22 @@ function updateTempProbe(vessel, val) {
 	scale = val.scale;
 	if (scale == "F") {
 		GaugeDisplay[vessel].pattern = "###.##";
+		Temp = Number(temp).toFixed(2);
+		int = Math.floor(Temp);
+		dec = Number(Temp % 1).toFixed(2);
+		dec = dec.toString().substr(2,4);
 	} else {
 		GaugeDisplay[vessel].pattern = "###.#";
+		Temp = Number(temp).toFixed(1);
+		int = Math.floor(Temp);
+		
+		dec = (Temp % 1).toFixed(1);
+		dec = dec.toString().substr(2,3);	
 	}
 
-	// set the current temp scale
-	Temp = parseFloat(temp).toFixed(2);
-	int = Math.floor(Temp);
-	dec = Temp % 1;
-	dec = dec.toString().substr(2,3);
-	GaugeDisplay[vessel].setValue(pad(int, 3, 0) + "." + pad(dec, 3, 0));
+	int = pad(int, 3, ' ');
+	
+	GaugeDisplay[vessel].setValue(int + "." + dec);
 	var vesselDiv = '[id="'+vessel+'-form"]';
 	if ("cutoff" in val) {
 		jQuery(vesselDiv  + ' input[name="cutoff"]').val(val.cutoff);
