@@ -627,7 +627,7 @@ public final class LaunchControl {
                 // Add the temp to the JSON Map
                 JSONObject tJSONTemp = new JSONObject();
                 tJSONTemp.putAll(t.getMapStatus());
-                tJSON.put("name", t.getName().replace(" ", "_"));
+                tJSON.put("name", t.getName().replaceAll(" ", "_"));
                 tJSON.put("deviceaddr", t.getProbe());
                 tJSON.put("tempprobe", tJSONTemp);
 

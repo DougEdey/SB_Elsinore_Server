@@ -210,7 +210,7 @@ public final class Temp implements Runnable {
      * @return The name of this probe
      */
     public String getName() {
-        return name;
+        return name.replaceAll(" ", "_");
     }
 
     /**

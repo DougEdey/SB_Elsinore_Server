@@ -1370,7 +1370,7 @@ function dropDeletePump(ev) {
 	}
 	
 	
-	var pumpName = ev.dataTransfer.getData("pumpname");
+	var pumpName = ev.dataTransfer.getData("pumpname").replace(" ", "_");
 	
 	if (pumpName.lastIndexOf("div-") != 0) {
 		basePumpName = pumpName;
