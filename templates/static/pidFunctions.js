@@ -1054,6 +1054,9 @@ function checkTimer(val, stage) {
 	if ("name" in val) {
 		stage = val.name;
 	}
+	
+	stage = stage.replace(" ", "_");
+	
 	// If We're counting UP
 	if ("up" in val) {
 		var startTime = moment().subtract(val.up, 'seconds');

@@ -22,6 +22,10 @@ public class Timer implements Comparable<Timer> {
     public String getName() {
         return this.name;
     }
+    
+    public String getSafeName() {
+        return this.name.replaceAll(" ", "_");
+    }
 
     /**
      * Set the new position of this pump.

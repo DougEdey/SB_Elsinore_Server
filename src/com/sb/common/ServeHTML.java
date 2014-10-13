@@ -528,7 +528,7 @@ public class ServeHTML {
         timers += "<div id='timers-body' class='panel-body'>";
         for (Timer timer : LaunchControl.getTimerList()) {
             // Mash button
-            timers += "<div id='div-" + timer.getName() + "'"
+            timers += "<div id='div-" + timer.getSafeName() + "'"
                 + " ondragstart='dragTimer(event);' draggable='true'"
                 + " ondrop='dropTimer(event);'"
                 + " ondragover='allowDropTimer(event);'"
@@ -536,7 +536,7 @@ public class ServeHTML {
                 + " class='timer_wrapper'>"
                 + "<div class='timerName holo'>" + timer.getName() + "</div>"
                 + "<span class='holo-button pump' id=\""
-                + timer.getName() + "\" type=\"submit\" "
+                + timer.getSafeName() + "\" type=\"submit\" "
                 + "value=\"" + timer.getName() + "Timer\""
                     + " onclick='setTimer(this, \"" + timer.getName() + "\");"
                     + " waitForMsg(); return false;'>"
@@ -544,14 +544,14 @@ public class ServeHTML {
                 + "</span>" + lineSep;
 
             timers += "<span class='holo-button pump' style='display:none'"
-                    + " id=\"" + timer.getName() + "Timer\" type=\"submit\" "
+                    + " id=\"" + timer.getSafeName() + "Timer\" type=\"submit\" "
                     + "value=\"" + timer.getName() + "Timer\""
                     + " onclick='setTimer(this, \"" + timer.getName() + "\");"
                     + " waitForMsg(); return false;'>"
                 + "</span>" + lineSep;
 
             timers += "<span class='holo-button pump' id=\""
-                    + timer.getName() + "\""
+                    + timer.getSafeName() + "\""
                     + " type=\"submit\" "
                     + "value=\"" + timer.getName() + "Timer\""
                     + " onclick='resetTimer(this, \"" + timer.getName() + "\");"
