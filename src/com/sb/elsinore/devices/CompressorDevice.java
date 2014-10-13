@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.sb.elsinore.devices;
 
 import com.sb.elsinore.BrewServer;
@@ -9,7 +5,9 @@ import jGPIO.InvalidGPIOException;
 import java.math.BigDecimal;
 
 /**
- * This class represents a compressor based device that needs a pause between run cycles.
+ * This class represents a compressor based device that needs a pause between
+ * run cycles.
+ *
  * @author Andy
  */
 public class CompressorDevice extends OutputDevice {
@@ -25,21 +23,23 @@ public class CompressorDevice extends OutputDevice {
 
     @Override
     public void runCycle(BigDecimal duty) throws InterruptedException, InvalidGPIOException {
-        initializeSSR();
+        if (duty != null) {
+            initializeSSR();
 
-        if (duty.compareTo(HUNDRED) == 0) {
-            if (System.currentTimeMillis() - lastStopTime > delayBetweenRuns) {
-                if (!running) {
-                    BrewServer.LOG.warning("Starting compressor device.");
-                    lastStartTime = System.currentTimeMillis();
+            if (duty.compareTo(HUNDRED) == 0) {
+                if (System.currentTimeMillis() - lastStopTime > delayBetweenRuns) {
+                    if (!running) {
+                        BrewServer.LOG.warning("Starting compressor device.");
+                        lastStartTime = System.currentTimeMillis();
+                    }
+                    running = true;
+                    setValue(true);
+                } else {
+                    BrewServer.LOG.warning("Need to wait before starting compressor again.");
                 }
-                running = true;
-                setValue(true);
-            } else {
-                BrewServer.LOG.warning("Need to wait before starting compressor again.");
             }
+            Thread.sleep(cycleTime.intValue());
         }
-        Thread.sleep(cycleTime.intValue());
     }
 
     @Override

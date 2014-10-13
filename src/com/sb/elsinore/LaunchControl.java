@@ -244,6 +244,10 @@ public final class LaunchControl {
     public static void main(final String... arguments) {
         BrewServer.LOG.info("Running Brewery Controller.");
         int port = DEFAULT_PORT;
+        
+        // Allow for the root directory to be overridden by environment variable
+        // or set on the command line with the -root option
+        String rootDir = System.getenv("ELSINORE_ROOT");
 
         if (arguments.length > 0) {
             createOptions();
@@ -286,6 +290,10 @@ public final class LaunchControl {
                 if (startupCommand.hasOption("d")) {
                     System.setProperty("debug", "INFO");
                 }
+                
+                if (startupCommand.hasOption("root")) {
+                    rootDir = startupCommand.getOptionValue("root");
+                }
 
                 if (startupCommand.hasOption("rthreshold")) {
                     recorderDiff = Double.parseDouble(startupCommand
@@ -306,6 +314,23 @@ public final class LaunchControl {
                 return;
             }
         }
+        
+        if( rootDir != null )
+        {
+            //Validate to make sure it's valid, otherwise things will go badly.
+            File root = new File(rootDir);
+            if( root!= null && root.exists() && root.isDirectory() )
+            {
+                System.setProperty("root_override", rootDir);
+            }
+            else
+            {
+                BrewServer.LOG.warning("Invalid root directory proviced: "+rootDir);
+                System.exit(-1);
+            }
+            
+        }
+        
         LaunchControl lc = new LaunchControl(port);
         BrewServer.LOG.warning("Started LaunchControl: " + lc.toString());
     }
@@ -333,6 +358,9 @@ public final class LaunchControl {
         startupOptions.addOption("rthreshold", true,
                 "specify the amount for a reading to change before "
                         + "recording the value in history");
+        startupOptions.addOption("root", true,
+                "specify the root directory for elsinore.  This is the location "
+                        + "configuration and html files should live.");
         startupOptions.addOption("baseUser", true,
                 "Specify the user who should own all the files created");
         startupOptions.addOption("t", "theme", true, "Specify the theme name");

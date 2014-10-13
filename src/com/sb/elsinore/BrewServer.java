@@ -161,9 +161,9 @@ public class BrewServer extends NanoHTTPD {
         this.rootDir = new File(BrewServer.class.getProtectionDomain()
                 .getCodeSource().getLocation().getPath()).getParentFile();
         
-        if( System.getenv("ELSINORE_ROOT") != null )
+        if( System.getProperty("root_override") != null )
         {
-            this.rootDir = new File(System.getenv("ELSINORE_ROOT"));
+            this.rootDir = new File(System.getProperty("root_override"));
             LOG.info("Overriding Root Directory from System Property: " + rootDir.getAbsolutePath());
         }
         
