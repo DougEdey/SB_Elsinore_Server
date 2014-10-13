@@ -8,14 +8,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.FileOwnerAttributeView;
-import java.nio.file.attribute.UserPrincipal;
-import java.nio.file.attribute.UserPrincipalLookupService;
-import java.nio.file.spi.FileTypeDetector;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,9 +30,7 @@ import com.sb.elsinore.NanoHTTPD.Response.Status;
 import com.sb.elsinore.NanoHTTPD.Response;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.FileReader;
-import java.io.SequenceInputStream;
 
 /**
  * A custom HTTP server for Elsinore. Designed to be very simple and lightweight
@@ -152,38 +143,57 @@ public class BrewServer extends NanoHTTPD {
     public BrewServer(final int port) throws IOException {
 
         super(port);
+        // default level, this can be changed
+        
+        initializeLogger(LOG);
+        
+        Level logLevel = Level.WARNING;
+        String newLevel = System.getProperty("debug")!=null?System.getProperty("debug"):System.getenv("ELSINORE_DEBUG");
+        if( "INFO".equalsIgnoreCase(newLevel)){
+            logLevel = Level.INFO;
+        }
+        LOG.info("Enabled logging at level:"+logLevel.toString());
+        LOG.setLevel(logLevel);
+        
         // just serve up on port 8080 for now
         BrewServer.LOG.info("Launching on port " + port);
 
-        // setup the logging handlers
-        Handler[] lH = LOG.getHandlers();
-        for (Handler h : lH) {
-            h.setLevel(Level.INFO);
-            LOG.info("Log handler: " + h.toString());
-        }
-
-        if (lH.length == 0) {
-            LOG.addHandler(new ConsoleHandler());
-
-            // default level, this can be changed
-            try {
-                LOG.info("Debug System property: "
-                        + System.getProperty("debug"));
-                if (System.getProperty("debug").equalsIgnoreCase("INFO")) {
-                    LOG.setLevel(Level.INFO);
-                    LOG.info("Enabled logging at an info level");
-                }
-            } catch (NullPointerException e) {
-                LOG.setLevel(Level.WARNING);
-            }
-        }
-
         this.rootDir = new File(BrewServer.class.getProtectionDomain()
                 .getCodeSource().getLocation().getPath()).getParentFile();
+        
+        if( System.getenv("ELSINORE_ROOT") != null )
+        {
+            this.rootDir = new File(System.getenv("ELSINORE_ROOT"));
+            LOG.info("Overriding Root Directory from System Property: " + rootDir.getAbsolutePath());
+        }
+        
         LOG.info("Root Directory is: " + rootDir.toString());
 
         if (rootDir.exists() && rootDir.isDirectory()) {
             LOG.info("Root directory: " + rootDir.toString());
+        }
+    }
+    
+    /**
+     * Initialize the logger.  Look at the current logger and its parents to see
+     * if it already has a handler setup.  If not, it adds one.
+     *
+     * @param logger
+     *            The logger to initialize
+     */
+    private void initializeLogger(Logger logger)
+    {
+        if( logger.getHandlers().length == 0 )
+        {
+            if( logger.getParent() != null && logger.getUseParentHandlers() )
+            {
+                initializeLogger( LOG.getParent() );
+            }
+            else
+            {
+                Handler newHandler = new ConsoleHandler();
+                logger.addHandler(newHandler);
+            }
         }
     }
 
