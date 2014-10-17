@@ -595,6 +595,7 @@ function updatePIDStatus(vessel, val) {
 		jQuery(vesselDiv  + ' button[id="'+vessel+'Aux"]').hide();
 	}
 	
+	$(vesselDiv + ' button[id="sendcommand"]').hide();
 	window.disableUpdates = 0;
 
 }
@@ -626,6 +627,7 @@ function selectOff(vessel) {
 	jQuery('tr[id="'+vessel+'-min"]').hide();
 	jQuery('tr[id="'+vessel+'-max"]').hide();
 	jQuery('tr[id="'+vessel+'-time"]').hide();
+	$(vesselDiv + ' button[id="sendcommand"]').show();
 
 	vessel = null;
 	return false;
@@ -657,7 +659,7 @@ function selectAuto(vessel) {
 	jQuery('tr[id="'+vessel+'-min"]').hide();
 	jQuery('tr[id="'+vessel+'-max"]').hide();
 	jQuery('tr[id="'+vessel+'-time"]').hide();
-
+	$(vesselDiv + ' button[id="sendcommand"]').show();
 	vessel = null;
 	return false;
 }
@@ -688,7 +690,7 @@ function selectHysteria(vessel) {
 	jQuery('tr[id="'+vessel+'-min"]').show();
 	jQuery('tr[id="'+vessel+'-max"]').show();
 	jQuery('tr[id="'+vessel+'-time"]').show();
-
+	$(vesselDiv + ' button[id="sendcommand"]').show();
 	vessel = null;
 	return false;
 }
@@ -719,7 +721,7 @@ function selectManual(vessel) {
 	jQuery('tr[id="'+vessel+'-min"]').hide();
 	jQuery('tr[id="'+vessel+'-max"]').hide();
 	jQuery('tr[id="'+vessel+'-time"]').hide();
-
+	$(vesselDiv + ' button[id="sendcommand"]').show();
 
 	vessel = null;
 	return false;
@@ -984,6 +986,7 @@ function disable(input) {
 	jQuery(vesselDiv  + ' input[name="min"]').prop("disabled", false);
 	jQuery(vesselDiv  + ' input[name="max"]').prop("disabled", false);
 	jQuery(vesselDiv  + ' input[name="time"]').prop("disabled", false);
+	$(vesselDiv + ' button[id="sendcommand"]').hide();
 	return false;
 }
 
