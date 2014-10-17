@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 
+import jGPIO.GPIO;
 import jGPIO.InvalidGPIOException;
 
 import java.io.BufferedReader;
@@ -55,6 +56,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.logging.Log;
 import org.ini4j.ConfigParser;
 import org.ini4j.ConfigParser.InterpolationException;
 import org.ini4j.ConfigParser.NoOptionException;
@@ -1165,48 +1167,19 @@ public final class LaunchControl {
 
     /**
      * Startup a PID device.
-     * 
+     *
      * @param input
      *            The name of the PID.
      * @param probe
      *            The One-Wire probe address
      * @param gpio
      *            The GPIO to use, null doesn't start the device.
-     * @param duty
-     *            The initial duty time to use.
-     * @param cycle
-     *            The initial duty cycle to use.
-     * @param setpoint
-     *            The initial Set point to use.
-     * @param p
-     *            The initial proportional value.
-     * @param i
-     *            The initial integral value.
-     * @param d
-     *            The initial derivative value.
-     * @param cutoffTemp
-     *            The initial safety cut off temperature.
-     * @param auxPin
-     *            The auxiliary output pin.
-     * @param volumeUnits
-     *            The volume units to display in.
-     * @param analoguePin
-     *            The analogue pin for the volume measurement.
-     * @param dsAddress
-     *            The one wire analogue chip (DS2405 for instance)
-     * @param dsOffset
-     *            The one wire pin offset to use (A-D for instance)
-     * @param volumeArray
-     *            The volumeArray map for calculations
+     * @return
+     *    The new Temp probe. Use it to look up the PID if applicable.
      */
     private Temp startDevice(final String input, final String probe,
-            final String gpio, final BigDecimal duty, final BigDecimal cycle,
-            final BigDecimal setpoint, final BigDecimal p, final BigDecimal i,
-            final BigDecimal d, final String cutoffTemp, final String auxPin,
-            final String volumeUnits, final int analoguePin,
-            final String dsAddress, final String dsOffset,
-            final BigDecimal min, final BigDecimal max, final BigDecimal time,
-            final ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray) {
+            final String gpio)
+    {
 
         // Startup the thread
         if (probe == null || probe.equals("0")) {
@@ -1223,10 +1196,6 @@ public final class LaunchControl {
         // setup the scale for each temp probe
         tTemp.setScale(scale);
 
-        if (cutoffTemp != null) {
-            tTemp.setCutoffTemp(cutoffTemp);
-        }
-
         // setup the threads
         Thread tThread = new Thread(tTemp);
         tThread.setName("Temp_" + tTemp.getName());
@@ -1236,18 +1205,7 @@ public final class LaunchControl {
         if (gpio != null && !gpio.equals("")) {
             BrewServer.LOG.info("Adding PID with GPIO: " + gpio);
             PID tPID = new PID(tTemp, input, gpio);
-            try {
-                tPID.setHysteria(min, max, time);
-            } catch (NumberFormatException nfe) {
-                System.out.println("Invalid options when setting up Hysteria: "
-                        + nfe.getMessage());
-            }
-            tPID.updateValues("off", duty, cycle, setpoint, p, i, d);
-
-            if (auxPin != null && !auxPin.equals("")) {
-                tPID.setAux(auxPin);
-            }
-
+            
             pidList.add(tPID);
             Thread pThread = new Thread(tPID);
             pThread.setName("PID_" + tTemp.getName());
@@ -1255,34 +1213,12 @@ public final class LaunchControl {
             pThread.start();
         }
 
-        if (analoguePin != -1) {
-            try {
-                tTemp.setupVolumes(analoguePin, volumeUnits);
-            } catch (InvalidGPIOException e) {
-                e.printStackTrace();
-            }
-        } else if (dsAddress != null && dsOffset != null) {
-            tTemp.setupVolumes(dsAddress, dsOffset, volumeUnits);
-        } else {
-            return tTemp;
-        }
-
-        if (volumeArray != null && volumeArray.size() >= MIN_VOLUME_SIZE) {
-            Iterator<Entry<BigDecimal, BigDecimal>> volIter = volumeArray
-                    .entrySet().iterator();
-
-            while (volIter.hasNext()) {
-                Entry<BigDecimal, BigDecimal> entry = volIter.next();
-                tTemp.addVolumeMeasurement(entry.getKey(), entry.getValue());
-            }
-        }
-        
         return tTemp;
     }
 
     /******
      * Search for a Datastream in cosm based on a tag.
-     * 
+     *
      * @param tag
      *            The tag to search for
      * @return The found Datastream, or null if it doesn't find anything
@@ -2578,9 +2514,50 @@ public final class LaunchControl {
             System.out.print("No Such Option");
             noe.printStackTrace();
         }
-        startDevice(input, probe, gpio, duty, cycle, setpoint, p, i, d,
-                cutoffTemp, auxPin, volumeUnits, analoguePin, dsAddress,
-                dsOffset, min, max, time, volumeArray);
+        Temp newTemp = startDevice(input, probe, gpio);
+
+        try {
+            if (gpio != null && GPIO.getPinNumber(gpio) >= 0) {
+                PID tPID = LaunchControl.findPID(newTemp.getName());
+                try {
+                    tPID.setHysteria(min, max, time);
+                } catch (NumberFormatException nfe) {
+                    System.out.println("Invalid options when setting up Hysteria: "
+                            + nfe.getMessage());
+                }
+                tPID.updateValues("off", duty, cycle, setpoint, p, i, d);
+
+                if (auxPin != null && !auxPin.equals("")) {
+                    tPID.setAux(auxPin);
+                }
+        
+            }
+        } catch (InvalidGPIOException e) {
+            System.out.println("Invalid GPIO provided");
+        }
+        
+        if (cutoffTemp != null) {
+            newTemp.setCutoffTemp(cutoffTemp);
+        }
+        if (analoguePin != -1) {
+            try {
+                newTemp.setupVolumes(analoguePin, volumeUnits);
+            } catch (InvalidGPIOException e) {
+                e.printStackTrace();
+            }
+        } else if (dsAddress != null && dsOffset != null) {
+            newTemp.setupVolumes(dsAddress, dsOffset, volumeUnits);
+        }
+
+        if (volumeArray != null && volumeArray.size() >= MIN_VOLUME_SIZE) {
+            Iterator<Entry<BigDecimal, BigDecimal>> volIter = volumeArray
+                    .entrySet().iterator();
+
+            while (volIter.hasNext()) {
+                Entry<BigDecimal, BigDecimal> entry = volIter.next();
+                newTemp.addVolumeMeasurement(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     /**
@@ -2751,9 +2728,51 @@ public final class LaunchControl {
             e.printStackTrace();
         }
 
-        Temp newTemp = startDevice(deviceName, probe, gpio, duty, cycle, setpoint, p, i, d,
-                cutoffTemp, auxPin, volumeUnits, analoguePin, dsAddress,
-                dsOffset, min, max, time, volumeArray);
+        Temp newTemp = startDevice(deviceName, probe, gpio);
+
+        try {
+            if (gpio != null && GPIO.getPinNumber(gpio) >= 0) {
+                PID tPID = LaunchControl.findPID(newTemp.getName());
+                try {
+                    tPID.setHysteria(min, max, time);
+                } catch (NumberFormatException nfe) {
+                    System.out.println("Invalid options when setting up Hysteria: "
+                            + nfe.getMessage());
+                }
+                tPID.updateValues("off", duty, cycle, setpoint, p, i, d);
+
+                if (auxPin != null && !auxPin.equals("")) {
+                    tPID.setAux(auxPin);
+                }
+        
+            }
+        } catch (InvalidGPIOException e) {
+            System.out.println("Invalid GPIO provided");
+        }
+        
+        if (cutoffTemp != null) {
+            newTemp.setCutoffTemp(cutoffTemp);
+        }
+        if (analoguePin != -1) {
+            try {
+                newTemp.setupVolumes(analoguePin, volumeUnits);
+            } catch (InvalidGPIOException e) {
+                e.printStackTrace();
+            }
+        } else if (dsAddress != null && dsOffset != null) {
+            newTemp.setupVolumes(dsAddress, dsOffset, volumeUnits);
+        }
+
+        if (volumeArray != null && volumeArray.size() >= MIN_VOLUME_SIZE) {
+            Iterator<Entry<BigDecimal, BigDecimal>> volIter = volumeArray
+                    .entrySet().iterator();
+
+            while (volIter.hasNext()) {
+                Entry<BigDecimal, BigDecimal> entry = volIter.next();
+                newTemp.addVolumeMeasurement(entry.getKey(), entry.getValue());
+            }
+        }
+        
         if (newTemp != null) {
             newTemp.setCalibration(calibration);
         }
