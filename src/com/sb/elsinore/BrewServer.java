@@ -605,8 +605,8 @@ public class BrewServer extends NanoHTTPD {
      * @return True is success, false if failure.
      */
     private Response editVessel(final Map<String, String> params) {
-        String auxpin = "", newName = "", gpio = "";
-        String inputUnit = "", cutoff = "";
+        String auxpin = "", newName = "", heatgpio = "";
+        String inputUnit = "", cutoff = "", coolgpio = "";
         String calibration = null;
 
         Set<Entry<String, String>> incomingParams = params.entrySet();
@@ -650,8 +650,12 @@ public class BrewServer extends NanoHTTPD {
             newName = parms.get("new_name");
         }
 
-        if (parms.containsKey("new_gpio")) {
-            gpio = parms.get("new_gpio");
+        if (parms.containsKey("new_heat_gpio")) {
+            heatgpio = parms.get("new_heat_gpio");
+        }
+
+        if (parms.containsKey("new_cool_gpio")) {
+            coolgpio = parms.get("new_cool_gpio");
         }
 
         if (parms.containsKey("auxpin")) {
@@ -706,19 +710,34 @@ public class BrewServer extends NanoHTTPD {
             newName = inputUnit;
         }
 
-        if (!gpio.equals("")) {
+        // HEATING GPIO
+        if (!heatgpio.equals("") || !coolgpio.equals("")) {
             // The GPIO is Set.
             if (tPID == null) {
                 // No PID already, create one.
-                tPID = new PID(tProbe, newName, gpio);
+                tPID = new PID(tProbe, newName);
+                // Setup the heating output
+                if (!heatgpio.equals("")) {
+                    tPID.setHeatGPIO(heatgpio);
+                }
+                // Setup the cooling output
+                if (!coolgpio.equals("")) {
+                    tPID.setCoolGPIO(coolgpio);
+                }
                 tPID.setAux(auxpin);
                 LaunchControl.addPID(tPID);
                 BrewServer.LOG.warning("Create PID");
                 return new Response(Status.OK, MIME_TYPES.get("txt"),
                         "PID Added");
-            } else if (!tPID.getHeatGPIO().equals(gpio)) {
-                // We have a PID, set it to the new value
-                tPID.setHeatGPIO(gpio);
+            } else {
+                if (!tPID.getHeatGPIO().equals(heatgpio)) {
+                    // We have a PID, set it to the new value
+                    tPID.setHeatGPIO(heatgpio);
+                }
+                if (!tPID.getCoolGPIO().equals(coolgpio)) {
+                    // We have a PID, set it to the new value
+                    tPID.setCoolGPIO(coolgpio);
+                }
                 return new Response(Status.OK, MIME_TYPES.get("txt"),
                         "PID Updated");
             }
