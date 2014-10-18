@@ -83,6 +83,16 @@ public final class PID implements Runnable {
     }
 
     /**
+     * Create a new PID with minimal information.
+     * @param aTemp The Temperature probe object to use
+     * @param aName The Name of this PID
+     */
+    public PID(final Temp aTemp, final String aName) {
+        this.fName = aName;
+        this.fTemp = aTemp;
+    }
+
+    /**
      * Determine if the GPIO is valid and return it if it is.
      * @param gpio The GPIO String to check.
      * @return The GPIO pin if it's valid, or blank if it's not.

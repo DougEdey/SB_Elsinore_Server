@@ -20,8 +20,10 @@ public class Messages extends NLS {
     public static String AUTO;
     public static String HYSTERIA;
     public static String MANUAL;
-    public static String ON;
-    public static String OFF;
+    public static String PID_ON;
+    public static String PID_OFF;
+    public static String PUMP_ON;
+    public static String PUMP_OFF;
     public static String SET_POINT;
     public static String DUTY_CYCLE;
     public static String DUTY_TIME;
@@ -63,11 +65,14 @@ public class Messages extends NLS {
     public static String BREWERY_QUESTION;
     public static String DELETE_PUMP;
     public static String DELETE_TIMER;
-    
+
     public static String EDIT;
     public static String LOCK;
     public static String DUTYPERC;
-    
+    public static String HEAT;
+    public static String COOL;
+    public static String DELAY;
+
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);
     }
