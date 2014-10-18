@@ -226,10 +226,10 @@ function waitForMsg(){
 					// enable or disable the pump as required
 					if (pumpStatus) {
 						jQuery('button[id^="' + pumpName + '"]')[0].style.background="red";
-						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName.replace("_", " ") +" " + $.i18n.prop("ON");
+						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName.replace("_", " ") +" " + $.i18n.prop("PUMP_ON");
 					} else {
 						jQuery('button[id^="' + pumpName + '"]')[0].style.background="#666666";
-						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName.replace("_", " ") +" "+ $.i18n.prop("OFF");
+						jQuery('button[id^="' + pumpName + '"]')[0].innerHTML= pumpName.replace("_", " ") +" "+ $.i18n.prop("PUMP_OFF");
 					}
 				});
 			}
@@ -470,7 +470,8 @@ function editDevice(element) {
 	}
 	
 	var vesselDiv = element.id;
-	var gpio = $('#' + vessel  + ' input[name="gpio"]').val();
+	var heatgpio = $('#' + vessel  + ' input[name="heatgpio"]').val();
+	var coolgpio = $('#' + vessel  + ' input[name="coolgpio"]').val();
 	var auxgpio = $('#' + vessel  + ' input[name="auxgpio"]').val();
 	var cutoff = $('#' + vessel  + ' input[name="cutoff"]').val();
 	var calibration = $('#' + vessel  + ' input[name="calibration"]').val();
@@ -478,14 +479,16 @@ function editDevice(element) {
 	// Insert a couple of new form elements
 	$('#' + vesselDiv).append("<div id='"+vessel+"-edit'>"
 		+ "<form id='" + vessel + "-edit' name='" + vessel + "-edit'>"
-		+ "<input type='text' name='new_name' id='new_name' value='"+vessel+"' /><br/>"
-		+ "<input type='text' name='new_gpio' id='new_gpio' onblur='validate_gpio(this)' " +
-				"value='"+gpio+"' placeholder='GPIO_X(_Y)'/><br/>"
-		+ "<input type='text' name='aux_gpio' id='aux_gpio' onblur='validate_gpio(this)' " +
+		+ "<input type='text' class='form-control' name='new_name' id='new_name' value='"+vessel+"' /><br/>"
+		+ "<input type='text' class='form-control' name='new_heat_gpio' id='new_heat_gpio' onblur='validate_gpio(this)' " +
+				"value='"+heatgpio+"' placeholder='"+$.i18n.prop("HEAT") + " GPIO_X(_Y)'/><br/>"
+		+ "<input type='text' class='form-control' name='new_cool_gpio' id='new_cool_gpio' onblur='validate_gpio(this)' " +
+				"value='"+coolgpio+"' placeholder='"+$.i18n.prop("COOL") + " GPIO_X(_Y)'/><br/>"
+		+ "<input type='text' class='form-control' name='aux_gpio' id='aux_gpio' onblur='validate_gpio(this)' " +
 				"value='"+auxgpio+"' placeholder='Aux GPIO_X(_Y)' /><br/>"
-		+ "<input type='text' name='cutoff' id='cutoff' " +
+		+ "<input type='text' class='form-control' name='cutoff' id='cutoff' " +
 				"value='"+cutoff+"' placeholder='" + $.i18n.prop("CUTOFF_TEMP") + "' /><br/>"
-		+ "<input type='text' name='calibration' id='calibration' " +
+		+ "<input type='text' class='form-control' name='calibration' id='calibration' " +
 			"value='"+calibration+"' placeholder='" + $.i18n.prop("CALIBRATION") + "' /><br/>"
 		+ "<button id='update-"+vessel+"' class='holo-button modeclass' "
 		+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>" + $.i18n.prop("UPDATE") + "</button>"
@@ -566,7 +569,7 @@ function updatePIDStatus(vessel, val) {
 		jQuery(vesselDiv  + ' div[id="heat"] input[name="heatp"]').val(val.heat.p);
 		jQuery(vesselDiv  + ' div[id="heat"] input[name="heati"]').val(val.heat.i);
 		jQuery(vesselDiv  + ' div[id="heat"] input[name="heatd"]').val(val.heat.d);
-		jQuery(vesselDiv  + ' div[id="heat"] input[name="heatgpio"]').val(val.heat.gpio);
+		jQuery(vesselDiv  + ' input[name="heatgpio"]').val(val.heat.gpio);
 	} else {
 		$(vesselDiv + ' a:first').hide();
 	}
@@ -577,7 +580,7 @@ function updatePIDStatus(vessel, val) {
 		jQuery(vesselDiv  + ' div[id="cool"] input[name="cooli"]').val(val.cool.i);
 		jQuery(vesselDiv  + ' div[id="cool"] input[name="coold"]').val(val.cool.d);
 		jQuery(vesselDiv  + ' div[id="cool"] input[name="cooldelay"]').val(val.cool.delay);
-		jQuery(vesselDiv  + ' div[id="cool"] input[name="coolgpio"]').val(val.cool.gpio);
+		jQuery(vesselDiv  + ' input[name="coolgpio"]').val(val.cool.gpio);
 	} else {
 		$(vesselDiv + ' a:last').hide();
 	}
