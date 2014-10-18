@@ -379,13 +379,23 @@ public class ServeHTML {
                 + "<td id='" + device + "-unitDC'>%</td><br />"
             + "</tr>" + lineSep
 
+            // Add in the tabs
+            + "<!-- Nav tabs -->" + lineSep
+            + "<tr id='"+device+"-tabbedInputs'><td>"
+            + "<ul class=\"nav nav-tabs\" role=\"tablist\" id='inputtabs'>" + lineSep
+            + "<li class=\"active\"><a href=\"#heat\" role=\"tab\" data-toggle=\"tab\">Heat</a></li>" + lineSep
+            + "<li><a href=\"#cool\" role=\"tab\" data-toggle=\"tab\">Cool</a></li>" + lineSep
+            + "</ul>"
+
                 // DUTY TIME
-            + "<tr id='" + device + "-DT' class='holo-field'>"
+            + "<div class=\"tab-content\">" + lineSep
+            + "<div class=\"tab-pane active\" id='heat'>" + lineSep
+            + "<table><tr id='" + device + "-heatDT' class='holo-field'>"
             + lineSep
                 + "<td id='" + device + "-labelDT' >"+Messages.DUTY_TIME+"</td>"
                 + lineSep
                 + "<td id=\"" + device + "-cycletime\">" + lineSep
-                + "<input class='inputBox dutytime' name=\"cycletime\""
+                + "<input class='inputBox heatdutytime' name=\"heatcycletime\""
                     + " maxlength = \"6\" size =\"6\" value=\"\""
                     + " style=\"text-align: left;\"/>"
                 + "</td>" + lineSep
@@ -393,10 +403,10 @@ public class ServeHTML {
             + "</tr>" + lineSep
 
                  // P
-            + "<tr id='" + device + "-p' class='holo-field'>" + lineSep
+            + "<tr id='" + device + "-heatp' class='holo-field'>" + lineSep
                 + "<td id='" + device + "-labelp' >P</td>" + lineSep
                 + "<td id=\"" + device + "-pinput\">" + lineSep
-                    + "\t<input class='inputBox p' name=\"p\""
+                    + "\t<input class='inputBox heatp' name=\"heatp\""
                     + " maxlength = \"6\" size =\"6\" value=\"\""
                     + " style=\"text-align: left;\"/>"
                 + "</td>" + lineSep
@@ -406,10 +416,10 @@ public class ServeHTML {
             + "</tr>" + lineSep
 
                 // I
-            + "<tr id='" + device + "-i' class='holo-field'>" + lineSep
+            + "<tr id='" + device + "-heati' class='holo-field'>" + lineSep
                 + "<td id='" + device + "-labeli' >I</td>" + lineSep
                 + "<td id=\"" + device + "-iinput\">" + lineSep
-                    + "\t<input class='inputBox i' name=\"i\""
+                    + "\t<input class='inputBox heati' name=\"heati\""
                     + " maxlength = \"6\" size =\"6\" value=\"\""
                     + " style=\"text-align: left;\"/>"
                 + "</td>" + lineSep
@@ -418,15 +428,80 @@ public class ServeHTML {
             + "</tr>" + lineSep
 
                 // D
-            + "<tr id='" + device + "-d' class='holo-field'>" + lineSep
+            + "<tr id='" + device + "-heatd' class='holo-field'>" + lineSep
                 + "<td id='" + device + "-labeld' >D</td>" + lineSep
                 + "<td id=\"" + device + "-dinput\">" + lineSep
-                    + "\t<input class='inputBox d ' name=\"d\""
+                    + "\t<input class='inputBox heatd ' name=\"heatd\""
+                    + " maxlength = \"6\" size =\"6\" value=\"\""
+                    + " style=\"text-align: left;\"/>"
+                + "</td>" + lineSep
+                + "<td id='" + device + "-unitD'>"+Messages.SECS+"</td>"
+            + "</tr></table>" + lineSep
+            + "</div>"
+
+            // COOLING
+            // DUTY TIME
+            + "<div class=\"tab-pane\" id='cool'>" + lineSep
+            + "<table><tr id='" + device + "-coolDT' class='holo-field'>"
+            + lineSep
+                + "<td id='" + device + "-labelDT' >"+Messages.DUTY_TIME+"</td>"
+                + lineSep
+                + "<td id=\"" + device + "-cycletime\">" + lineSep
+                + "<input class='inputBox cooldutytime' name=\"coolcycletime\""
+                    + " maxlength = \"6\" size =\"6\" value=\"\""
+                    + " style=\"text-align: left;\"/>"
+                + "</td>" + lineSep
+                + "<td id='" + device + "-unitDT'>"+Messages.SECS+"</td>"
+            + "</tr>" + lineSep
+
+                 // P
+            + "<tr id='" + device + "-coolp' class='holo-field'>" + lineSep
+                + "<td id='" + device + "-labelp' >P</td>" + lineSep
+                + "<td id=\"" + device + "-pinput\">" + lineSep
+                    + "\t<input class='inputBox coolp' name=\"coolp\""
+                    + " maxlength = \"6\" size =\"6\" value=\"\""
+                    + " style=\"text-align: left;\"/>"
+                + "</td>" + lineSep
+                + "<td id='" + device + "-unitP'>"+Messages.SECS+"/&#176"
+                    + "<div id='tempUnit'>F</div>"
+                + "</td>"
+            + "</tr>" + lineSep
+
+                // I
+            + "<tr id='" + device + "-cooli' class='holo-field'>" + lineSep
+                + "<td id='" + device + "-labeli' >I</td>" + lineSep
+                + "<td id=\"" + device + "-iinput\">" + lineSep
+                    + "\t<input class='inputBox cooli' name=\"cooli\""
+                    + " maxlength = \"6\" size =\"6\" value=\"\""
+                    + " style=\"text-align: left;\"/>"
+                + "</td>" + lineSep
+                + "<td id='" + device + "-unitI'>&#176"
+                    + "<div id='tempUnit'>F</div></td>"
+            + "</tr>" + lineSep
+
+                // D
+            + "<tr id='" + device + "-coold' class='holo-field'>" + lineSep
+                + "<td id='" + device + "-labeld' >D</td>" + lineSep
+                + "<td id=\"" + device + "-dinput\">" + lineSep
+                    + "\t<input class='inputBox coold ' name=\"coold\""
                     + " maxlength = \"6\" size =\"6\" value=\"\""
                     + " style=\"text-align: left;\"/>"
                 + "</td>" + lineSep
                 + "<td id='" + device + "-unitD'>"+Messages.SECS+"</td>"
             + "</tr>" + lineSep
+
+            // DELAY
+            + "<tr id='" + device + "-cooldelay' class='holo-field'>" + lineSep
+            + "<td id='" + device + "-labeldelay' >Delay</td>" + lineSep
+            + "<td id=\"" + device + "-delayinput\">" + lineSep
+                + "\t<input class='inputBox cooldelay ' name=\"cooldelay\""
+                + " maxlength = \"6\" size =\"6\" value=\"\""
+                + " style=\"text-align: left;\"/>"
+            + "</td>" + lineSep
+            + "<td id='" + device + "-unitDelay'>"+Messages.MINUTES+"</td>"
+        + "</td></tr></table>" + lineSep
+            + "</div>" + lineSep
+        +"</tr>"
             // min
             + "<tr id='" + device + "-min' class='holo-field'>" + lineSep
                 + "<td id='" + device + "-labelMin' >"+Messages.MIN+"</td>" + lineSep

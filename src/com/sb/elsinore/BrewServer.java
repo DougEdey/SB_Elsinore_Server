@@ -716,16 +716,16 @@ public class BrewServer extends NanoHTTPD {
                 BrewServer.LOG.warning("Create PID");
                 return new Response(Status.OK, MIME_TYPES.get("txt"),
                         "PID Added");
-            } else if (!tPID.getGPIO().equals(gpio)) {
+            } else if (!tPID.getHeatGPIO().equals(gpio)) {
                 // We have a PID, set it to the new value
-                tPID.setGPIO(gpio);
+                tPID.setHeatGPIO(gpio);
                 return new Response(Status.OK, MIME_TYPES.get("txt"),
                         "PID Updated");
             }
         } else {
             if (tPID != null) {
                 LaunchControl.deletePID(tPID);
-                tPID.setGPIO("");
+                tPID.setHeatGPIO("");
             }
         }
 
@@ -891,10 +891,14 @@ public class BrewServer extends NanoHTTPD {
     @SuppressWarnings("unchecked")
     private Response updatePID(final Map<String, String> params) {
         String temp, mode = "off";
-        BigDecimal dTemp = new BigDecimal(0), duty = new BigDecimal(0), cycle = new BigDecimal(
-                0), setpoint = new BigDecimal(0), p = new BigDecimal(0), i = new BigDecimal(
-                0), d = new BigDecimal(0), min = new BigDecimal(0), max = new BigDecimal(
-                0), time = new BigDecimal(0);
+        BigDecimal dTemp = new BigDecimal(0), duty = new BigDecimal(0),
+                heatcycle = new BigDecimal(0), setpoint = new BigDecimal(0),
+                heatp = new BigDecimal(0), heati = new BigDecimal(0),
+                heatd = new BigDecimal(0), min = new BigDecimal(0),
+                max = new BigDecimal(0), time = new BigDecimal(0),
+                coolcycle = new BigDecimal(0), coolp= new BigDecimal(0),
+                cooli = new BigDecimal(0), coold = new BigDecimal(0),
+                cooldelay = new BigDecimal(0);
 
         JSONObject sub_usage = new JSONObject();
         Map<String, String> parms = ParseParams(params);
@@ -913,18 +917,6 @@ public class BrewServer extends NanoHTTPD {
             }
         }
 
-        sub_usage.put("dutycycle", "The new cycle time in seconds to set");
-        if (parms.containsKey("cycletime")) {
-            temp = parms.get("cycletime");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                cycle = dTemp;
-                BrewServer.LOG.info("Cycle time: " + cycle);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad cycle");
-            }
-        }
-
         sub_usage.put("setpoint", "The new target temperature to set");
         if (parms.containsKey("setpoint")) {
             temp = parms.get("setpoint");
@@ -937,39 +929,111 @@ public class BrewServer extends NanoHTTPD {
             }
         }
 
-        sub_usage.put("p", "The new proportional value to set");
-        if (parms.containsKey("p")) {
-            temp = parms.get("p");
+        sub_usage.put("heatcycletime", "The new heat cycle time in seconds to set");
+        if (parms.containsKey("heatcycletime")) {
+            temp = parms.get("heatcycletime");
             try {
                 dTemp = new BigDecimal(temp.replace(",", "."));
-                p = dTemp;
-                BrewServer.LOG.info("P: " + p);
+                heatcycle = dTemp;
+                BrewServer.LOG.info("Cycle time: " + heatcycle);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad p");
+                BrewServer.LOG.info("Bad cycle");
             }
         }
 
-        sub_usage.put("p", "The new integral value to set");
-        if (parms.containsKey("i")) {
-            temp = parms.get("i");
+        sub_usage.put("heatp", "The new proportional value to set");
+        if (parms.containsKey("heatp")) {
+            temp = parms.get("heatp");
             try {
                 dTemp = new BigDecimal(temp.replace(",", "."));
-                i = dTemp;
-                BrewServer.LOG.info("I: " + i);
+                heatp = dTemp;
+                BrewServer.LOG.info("heat P: " + heatp);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad i");
+                BrewServer.LOG.info("Bad heat p");
             }
         }
 
-        sub_usage.put("p", "The new differential value to set");
-        if (parms.containsKey("d")) {
-            temp = parms.get("d");
+        sub_usage.put("heati", "The new integral value to set");
+        if (parms.containsKey("heati")) {
+            temp = parms.get("heati");
             try {
                 dTemp = new BigDecimal(temp.replace(",", "."));
-                d = dTemp;
-                BrewServer.LOG.info("D: " + d);
+                heati = dTemp;
+                BrewServer.LOG.info("Heat I: " + heati);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad d");
+                BrewServer.LOG.info("Bad heat i");
+            }
+        }
+
+        sub_usage.put("heatd", "The new head differential value to set");
+        if (parms.containsKey("heatd")) {
+            temp = parms.get("heatd");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                heatd = dTemp;
+                BrewServer.LOG.info("Heat D: " + heatd);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad heat d");
+            }
+        }
+
+        sub_usage.put("coolcycletime", "The new cool cycle time in seconds to set");
+        if (parms.containsKey("coolcycletime")) {
+            temp = parms.get("coolcycletime");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                coolcycle = dTemp;
+                BrewServer.LOG.info("Cycle time: " + coolcycle);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad cycle");
+            }
+        }
+
+        sub_usage.put("cooldelay", "The new cool cycle delay in minutes to set");
+        if (parms.containsKey("cooldelay")) {
+            temp = parms.get("cooldelay");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                cooldelay = dTemp;
+                BrewServer.LOG.info("Delay time: " + cooldelay);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad Cool delay");
+            }
+        }
+
+        sub_usage.put("coolp", "The new proportional value to set");
+        if (parms.containsKey("coolp")) {
+            temp = parms.get("coolp");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                coolp = dTemp;
+                BrewServer.LOG.info("cool P: " + coolp);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad cool p");
+            }
+        }
+
+        sub_usage.put("cooli", "The new integral value to set");
+        if (parms.containsKey("cooli")) {
+            temp = parms.get("cooli");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                cooli = dTemp;
+                BrewServer.LOG.info("Heat I: " + cooli);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad cool i");
+            }
+        }
+
+        sub_usage.put("coold", "The new head differential value to set");
+        if (parms.containsKey("coold")) {
+            temp = parms.get("coold");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                coold = dTemp;
+                BrewServer.LOG.info("Heat D: " + coold);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad cool d");
             }
         }
 
@@ -1026,9 +1090,14 @@ public class BrewServer extends NanoHTTPD {
                 tPID.setHysteria(min, max, time);
                 tPID.useHysteria();
             } else {
-                BrewServer.LOG.info(mode + ":" + duty + ":" + cycle + ":"
-                        + setpoint + ":" + p + ":" + i + ":" + d);
-                tPID.updateValues(mode, duty, cycle, setpoint, p, i, d);
+                BrewServer.LOG.info(mode + ":" + duty + ":" + heatcycle + ":"
+                        + setpoint + ":" + heatp + ":" + heati + ":" + heatd);
+                tPID.updateValues(mode, duty, heatcycle, setpoint, heatp, heati, heatd);
+                tPID.setCoolCycle(coolcycle);
+                tPID.setCoolP(coolp);
+                tPID.setCoolI(cooli);
+                tPID.setCoolD(coold);
+                tPID.setCoolDelay(cooldelay);
             }
             return new Response(Status.OK, MIME_HTML, "PID " + inputUnit
                     + " updated");

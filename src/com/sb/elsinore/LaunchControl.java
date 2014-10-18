@@ -68,6 +68,7 @@ import org.owfs.jowfsclient.OwfsConnection;
 import org.owfs.jowfsclient.OwfsConnectionConfig;
 import org.owfs.jowfsclient.OwfsConnectionFactory;
 import org.owfs.jowfsclient.OwfsException;
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -738,36 +739,6 @@ public final class LaunchControl {
 
         if (configDoc != null) {
             parseXMLSections();
-        } else if (configCfg != null) {
-            parseCfgSections();
-            // Add a new temperature probe for the system
-            // input is the name we'll use from here on out
-            try {
-                if (configCfg.hasOption("general", "system_temp")
-                        && configCfg.getBoolean("general", "system_temp")) {
-                    Temp tTemp = new Temp("system", "");
-                    tempList.add(tTemp);
-                    BrewServer.LOG.info("Adding " + tTemp.getName());
-                    // setup the scale for each temp probe
-                    tTemp.setScale(scale);
-                    // setup the threads
-                    Thread tThread = new Thread(tTemp);
-                    tThread.setName("Temp_system");
-                    tempThreads.add(tThread);
-                    tThread.start();
-                }
-            } catch (NoSectionException e) {
-                // impossible
-                BrewServer.LOG.warning("Section Missing! " + e.getMessage());
-            } catch (NoOptionException e) {
-                // Impossible
-                BrewServer.LOG.warning("Option Missing! " + e.getMessage());
-            } catch (InterpolationException e) {
-                // Impossible
-                BrewServer.LOG.warning("Interapolation Exception! "
-                        + e.getMessage());
-            }
-
         } else {
             System.out.println("Couldn't get a configuration file!");
             System.exit(1);
@@ -780,57 +751,10 @@ public final class LaunchControl {
         LaunchControl.loadCompleted = true;
     }
 
-    /**
-     * Parse the general section of the configuration file.
-     * 
-     * @param config
-     *            The ConfigParser object to parse
-     * @param input
-     *            The input name, should be general, but flexible
-     */
-    private void parseGeneral(final ConfigParser config, final String input) {
-        try {
-            if (config.hasSection(input)) {
-                if (config.hasOption(input, "scale")) {
-                    scale = config.get(input, "scale");
-                }
-                if (config.hasOption(input, "cosm")
-                        && config.hasOption(input, "cosm_feed")) {
-                    startCosm(config.get(input, "cosm"),
-                            config.getInt(input, "cosm_feed"));
-                } else if (config.hasOption(input, "pachube")
-                        && config.hasOption(input, "pachube_feed")) {
-                    startCosm(config.get(input, "pachube"),
-                            config.getInt(input, "pachube_feed"));
-                }
-
-                if (config.hasOption(input, "owfs_server")
-                        && config.hasOption(input, "owfs_port")) {
-
-                    owfsServer = config.get(input, "owfs_server");
-                    owfsPort = config.getInt(input, "owfs_port");
-                    BrewServer.LOG.log(Level.INFO, "Setup OWFS at "
-                            + owfsServer + ":" + owfsPort);
-
-                    setupOWFS();
-                }
-
-            }
-        } catch (NoSectionException nse) {
-            System.out.print("No Such Section");
-            nse.printStackTrace();
-        } catch (InterpolationException ie) {
-            System.out.print("Int");
-            ie.printStackTrace();
-        } catch (NoOptionException noe) {
-            System.out.print("No Such Option");
-            noe.printStackTrace();
-        }
-    }
 
     /**
      * Parse the general section of the XML Configuration.
-     * 
+     *
      * @param config
      *            The General element to be parsed.
      */
@@ -938,44 +862,9 @@ public final class LaunchControl {
         }
     }
 
-    /*****
-     * Parse the list of pumps.
-     * 
-     * @param config
-     *            The config Parser object to use
-     * @param input
-     *            the name of the section to parse
-     */
-    private void parsePumps(final ConfigParser config, final String input) {
-        try {
-            List<String> pumps = config.options(input);
-            for (String pumpName : pumps) {
-                String gpio = config.get(input, pumpName);
-                try {
-                    pumpList.add(new Pump(pumpName, gpio));
-                } catch (InvalidGPIOException e) {
-                    System.out.println("Invalid GPIO (" + gpio
-                            + ") detected for pump " + pumpName);
-                    System.out
-                            .println("Please fix the config file before running");
-                    System.exit(-1);
-                }
-            }
-        } catch (NoSectionException nse) {
-            // we shouldn't get here!
-            nse.printStackTrace();
-        } catch (NoOptionException e) {
-            // We shouldn't get here!
-            e.printStackTrace();
-        } catch (InterpolationException e) {
-            // We shouldn't get here
-            e.printStackTrace();
-        }
-    }
-
     /**
      * Parse the pumps in the specified element.
-     * 
+     *
      * @param config
      *            The element that contains the pumps information
      */
@@ -1014,35 +903,9 @@ public final class LaunchControl {
 
     }
 
-    /*****
-     * Parse the list of timers.
-     * 
-     * @param config
-     *            The config Parser object to use
-     * @param input
-     *            the name of the section to parse
-     */
-    private void parseTimers(final ConfigParser config, final String input) {
-        if (config == null) {
-            return;
-        }
-
-        try {
-            synchronized (timerList) {
-                for (String s : config.options(input)) {
-                    timerList.add(new Timer(s));
-                }
-            }
-            // TODO: Add in countup/countdown detection
-        } catch (NoSectionException nse) {
-            // we shouldn't get here!
-            nse.printStackTrace();
-        }
-    }
-
     /**
      * Parse the list of timers in an XML Element.
-     * 
+     *
      * @param config
      *            the Element containing the timers
      */
@@ -1072,7 +935,7 @@ public final class LaunchControl {
 
     /**
      * Add a new pump to the server.
-     * 
+     *
      * @param name
      *            The name of the pump to add.
      * @param gpio
@@ -1128,7 +991,7 @@ public final class LaunchControl {
 
     /**
      * Check to see if a pump with the given name exists.
-     * 
+     *
      * @param name
      *            The name of the pump to check
      * @return True if the pump exists.
@@ -1898,8 +1761,7 @@ public final class LaunchControl {
                 deletePIDConfig(fTemp.getName());
             } else if (!n.getName().equals(fTemp.getProbe())) {
                 System.out.println("Saving PID " + n.getName());
-                savePID(n.getName(), n.heatSetting, n.getGPIO(),
-                        n.getAuxGPIO(), n.getMin(), n.getMax(), n.getTime());
+                savePID(n);
             }
 
             if (fTemp.getVolumeBase() != null) {
@@ -2001,39 +1863,20 @@ public final class LaunchControl {
         System.out.println("Using base node " + device.getNodeName()
                 + " with ID " + device.getAttribute("id"));
 
-        deleteElement(device, "duty_cycle");
-        deleteElement(device, "cycle_time");
-        deleteElement(device, "set_point");
-        deleteElement(device, "proportional");
-        deleteElement(device, "integral");
-        deleteElement(device, "derivative");
-        deleteElement(device, "gpio");
-        deleteElement(device, "min");
-        deleteElement(device, "max");
-        deleteElement(device, "time");
-        deleteElement(device, "aux");
-        saveConfigFile();
-
+        device.getParentNode().removeChild(device);
     }
 
     /******
      * Save the PID to the config doc.
-     * 
-     * @param name
-     *            Name of the PID
-     * @param settings
-     *            The PID settings normally these are taken from the live device
-     * @param gpio
-     *            The main GPIO for the PID.
-     * @param auxGPIO
-     *            The auxiliary GPIO.
+     *
+     * @param pid
+     *           The PID to save
      */
-    public static void savePID(final String name, final PID.Settings settings,
-            final String gpio, final String auxGPIO, final BigDecimal min,
-            final BigDecimal max, final BigDecimal time) {
+    public static void savePID(final PID pid) {
 
-        if (name == null || name.equals("")) {
+        if (pid.getName() == null || pid.getName().equals("")) {
             new Throwable().printStackTrace();
+            return;
         }
 
         if (configDoc == null) {
@@ -2041,34 +1884,49 @@ public final class LaunchControl {
         }
 
         // Save the config to the configuration file
-        System.out.println("Saving the information for " + name);
+        System.out.println("Saving the information for " + pid.getName());
 
         // save any changes
         Element device = getFirstElementByXpath(null, "/elsinore/device[@id='"
-                + name + "']");
+                + pid.getName() + "']");
+
         if (device == null) {
             System.out.println("Creating new Element");
-            // no idea why there wouldn't be this section
             device = addNewElement(null, "device");
-            device.setAttribute("id", name);
+            device.setAttribute("id", pid.getName());
         }
 
         System.out.println("Using base node " + device.getNodeName()
                 + " with ID " + device.getAttribute("id"));
 
-        setElementText(device, "duty_cycle", settings.duty_cycle.toString());
-        setElementText(device, "cycle_time", settings.cycle_time.toString());
-        setElementText(device, "set_point", settings.set_point.toString());
-        setElementText(device, "proportional", settings.proportional.toString());
-        setElementText(device, "integral", settings.integral.toString());
-        setElementText(device, "derivative", settings.derivative.toString());
-        setElementText(device, "gpio", gpio);
-        setElementText(device, "min", min.toString());
-        setElementText(device, "max", max.toString());
-        setElementText(device, "time", time.toString());
+        setElementText(device, "duty_cycle", pid.getDuty().toString());
+        setElementText(device, "set_point", pid.getSetPoint().toString());
 
-        if (auxGPIO != null) {
-            setElementText(device, "aux", auxGPIO);
+        if (pid.getHeatSetting() != null) {
+            Element heatElement = addNewElement(device, "heat");
+            setElementText(heatElement, "cycle_time", pid.getHeatCycle().toString());
+            setElementText(heatElement, "proportional", pid.getHeatP().toString());
+            setElementText(heatElement, "integral", pid.getHeatI().toString());
+            setElementText(heatElement, "derivative", pid.getHeatD().toString());
+            setElementText(heatElement, "gpio", pid.getHeatGPIO());
+        }
+
+        if (pid.getCoolSetting() != null) {
+            Element coolElement = addNewElement(device, "cool");
+            setElementText(coolElement, "cycle_time", pid.getCoolCycle().toString());
+            setElementText(coolElement, "delay", pid.getCoolDelay().toString());
+            setElementText(coolElement, "proportional", pid.getCoolP().toString());
+            setElementText(coolElement, "integral", pid.getCoolI().toString());
+            setElementText(coolElement, "derivative", pid.getCoolD().toString());
+            setElementText(coolElement, "gpio", pid.getCoolGPIO());
+        }
+        
+        setElementText(device, "min", pid.getMin().toString());
+        setElementText(device, "max", pid.getMax().toString());
+        setElementText(device, "time", pid.getTime().toString());
+
+        if (pid.getAuxGPIO() != null) {
+            setElementText(device, "aux", pid.getAuxGPIO());
         }
 
         saveConfigFile();
@@ -2316,31 +2174,7 @@ public final class LaunchControl {
             configCfg = null;
         }
     }
-
-    /**
-     * Parse the config file as non XML.
-     */
-    private void parseCfgSections() {
-
-        List<String> configSections = configCfg.sections();
-        Iterator<String> iterator = configSections.iterator();
-        while (iterator.hasNext()) {
-            String temp = iterator.next().toString();
-            if (temp.equalsIgnoreCase("general")) {
-                // parse the general config
-                parseGeneral(configCfg, temp);
-            } else if (temp.equalsIgnoreCase("pumps")) {
-                // parse the pump config
-                parsePumps(configCfg, temp);
-            } else if (temp.equalsIgnoreCase("timers")) {
-                // parse the pump config
-                parseTimers(configCfg, temp);
-            } else {
-                parseDevice(configCfg, temp);
-            }
-        }
-    }
-
+    
     /**
      * Parse the config using the XML Parser.
      */
@@ -2379,188 +2213,6 @@ public final class LaunchControl {
     }
 
     /**
-     * Parse the sections individually.
-     * 
-     * @param config
-     *            The ConfigParser object to use
-     * @param input
-     *            The input name to parse
-     */
-    private void parseDevice(final ConfigParser config, final String input) {
-        String probe = null;
-        String gpio = null;
-        String volumeUnits = "Litres";
-        String dsAddress = null, dsOffset = null;
-        String cutoffTemp = null, auxPin = null;
-        ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray = new ConcurrentHashMap<BigDecimal, BigDecimal>();
-        BigDecimal duty = new BigDecimal(0), cycle = new BigDecimal(0.0), setpoint = new BigDecimal(
-                0.0), p = new BigDecimal(0.0), i = new BigDecimal(0.0), d = new BigDecimal(
-                0.0), min = new BigDecimal(0.0), max = new BigDecimal(0.0), time = new BigDecimal(
-                0.0);
-        int analoguePin = -1;
-
-        BrewServer.LOG.info("Parsing : " + input);
-        try {
-            if (config.hasSection(input)) {
-                if (config.hasOption(input, "probe")) {
-                    probe = config.get(input, "probe");
-                }
-                if (config.hasOption(input, "gpio")) {
-                    gpio = config.get(input, "gpio");
-                }
-                if (config.hasOption(input, "duty_cycle")) {
-                    duty = new BigDecimal(config.getDouble(input, "duty_cycle"));
-                }
-                if (config.hasOption(input, "cycle_time")) {
-                    cycle = new BigDecimal(
-                            config.getDouble(input, "cycle_time"));
-                }
-                if (config.hasOption(input, "set_point")) {
-                    setpoint = new BigDecimal(config.getDouble(input,
-                            "set_point"));
-                }
-                if (config.hasOption(input, "proportional")) {
-                    p = new BigDecimal(config.getDouble(input, "proportional"));
-                }
-                if (config.hasOption(input, "integral")) {
-                    i = new BigDecimal(config.getDouble(input, "integral"));
-                }
-                if (config.hasOption(input, "derivative")) {
-                    d = new BigDecimal(config.getDouble(input, "derivative"));
-                }
-
-                if (config.hasOption(input, "min")) {
-                    min = new BigDecimal(config.getDouble(input, "min"));
-                }
-                if (config.hasOption(input, "max")) {
-                    max = new BigDecimal(config.getDouble(input, "max"));
-                }
-                if (config.hasOption(input, "time")) {
-                    time = new BigDecimal(config.getDouble(input, "time"));
-                }
-
-                if (config.hasOption(input, "cutoff")) {
-                    cutoffTemp = config.get(input, "cutoff");
-                }
-                if (config.hasOption(input, "aux")) {
-                    auxPin = config.get(input, "aux");
-                }
-
-            }
-
-            // Check to see if there is a volume section
-            String volumeSection = input + "-volume";
-            if (config.hasSection(volumeSection)) {
-                List<String> volumeOptions = config.options(volumeSection);
-
-                // Whilst we really want a 0th element
-                // Lets just dump this data into a list
-                for (String curOption : volumeOptions) {
-                    if (curOption.equalsIgnoreCase("unit")) {
-                        volumeUnits = config.get(volumeSection, curOption);
-                        continue;
-                    }
-
-                    if (curOption.equalsIgnoreCase("pin")) {
-                        analoguePin = config.getInt(volumeSection, curOption);
-                        continue;
-                    }
-
-                    if (curOption.equalsIgnoreCase("address")) {
-                        dsAddress = config.get(volumeSection, curOption);
-                        continue;
-                    }
-
-                    if (curOption.equalsIgnoreCase("offset")) {
-                        dsOffset = config.get(volumeSection, curOption);
-                        continue;
-                    }
-
-                    try {
-                        BigDecimal volValue = new BigDecimal(curOption.replace(",", "."));
-                        BigDecimal volReading = new BigDecimal(
-                                config.getDouble(volumeSection, curOption));
-                        volumeArray.put(volValue, volReading);
-                        // we can parse this as an integer
-                    } catch (NumberFormatException e) {
-                        System.out.println("Could not parse " + curOption
-                                + " as an integer");
-                    }
-                }
-
-                if (volumeUnits == null) {
-                    System.out.println("Couldn't find a volume unit for "
-                            + input);
-                    volumeArray = null;
-                }
-
-                if (volumeArray != null && volumeArray.size() < MIN_VOLUME_SIZE) {
-                    System.out.println("Not enough volume data points, "
-                            + volumeArray.size() + " found");
-                    volumeArray = null;
-                } else if (volumeArray == null) {
-                    System.out.println("No Volume Presets,"
-                            + " check your config or rerun the setup!");
-                    // otherwise we are OK
-                }
-            }
-        } catch (NoSectionException nse) {
-            System.out.print("No Such Section");
-            nse.printStackTrace();
-        } catch (InterpolationException ie) {
-            System.out.print("Int");
-            ie.printStackTrace();
-        } catch (NoOptionException noe) {
-            System.out.print("No Such Option");
-            noe.printStackTrace();
-        }
-        Temp newTemp = startDevice(input, probe, gpio);
-
-        try {
-            if (gpio != null && GPIO.getPinNumber(gpio) >= 0) {
-                PID tPID = LaunchControl.findPID(newTemp.getName());
-                try {
-                    tPID.setHysteria(min, max, time);
-                } catch (NumberFormatException nfe) {
-                    System.out.println("Invalid options when setting up Hysteria: "
-                            + nfe.getMessage());
-                }
-                tPID.updateValues("off", duty, cycle, setpoint, p, i, d);
-
-                if (auxPin != null && !auxPin.equals("")) {
-                    tPID.setAux(auxPin);
-                }
-        
-            }
-        } catch (InvalidGPIOException e) {
-            System.out.println("Invalid GPIO provided");
-        }
-        
-        if (cutoffTemp != null) {
-            newTemp.setCutoffTemp(cutoffTemp);
-        }
-        if (analoguePin != -1) {
-            try {
-                newTemp.setupVolumes(analoguePin, volumeUnits);
-            } catch (InvalidGPIOException e) {
-                e.printStackTrace();
-            }
-        } else if (dsAddress != null && dsOffset != null) {
-            newTemp.setupVolumes(dsAddress, dsOffset, volumeUnits);
-        }
-
-        if (volumeArray != null && volumeArray.size() >= MIN_VOLUME_SIZE) {
-            Iterator<Entry<BigDecimal, BigDecimal>> volIter = volumeArray
-                    .entrySet().iterator();
-
-            while (volIter.hasNext()) {
-                Entry<BigDecimal, BigDecimal> entry = volIter.next();
-                newTemp.addVolumeMeasurement(entry.getKey(), entry.getValue());
-            }
-        }
-    }
-
-    /**
      * Parse a configuration section, such as a specific device.
      * 
      * @param config
@@ -2568,15 +2220,20 @@ public final class LaunchControl {
      */
     private void parseDevice(final Element config) {
         String probe = null;
-        String gpio = null;
+        String heatGPIO = null;
+        String coolGPIO = null;
         String volumeUnits = "Litres";
         String dsAddress = null, dsOffset = null;
         String cutoffTemp = null, auxPin = null, calibration = "";
-        ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray = new ConcurrentHashMap<BigDecimal, BigDecimal>();
-        BigDecimal duty = new BigDecimal(0), cycle = new BigDecimal(0.0), setpoint = new BigDecimal(
-                0.0), p = new BigDecimal(0.0), i = new BigDecimal(0.0), d = new BigDecimal(
-                0.0), min = new BigDecimal(0.0), max = new BigDecimal(0.0), time = new BigDecimal(
-                0.0);
+        ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray =
+                new ConcurrentHashMap<BigDecimal, BigDecimal>();
+        BigDecimal duty = new BigDecimal(0), heatCycle = new BigDecimal(0.0),
+                setpoint = new BigDecimal(0.0), heatP = new BigDecimal(0.0),
+                heatI = new BigDecimal(0.0), heatD = new BigDecimal(0.0),
+                min = new BigDecimal(0.0), max = new BigDecimal(0.0),
+                time = new BigDecimal(0.0), coolP = new BigDecimal(0.0),
+                coolI = new BigDecimal(0.0), coolD = new BigDecimal(0.0),
+                coolCycle = new BigDecimal(0.0), coolDelay = new BigDecimal(0.0);
 
         int analoguePin = -1;
 
@@ -2589,19 +2246,9 @@ public final class LaunchControl {
                 probe = tElement.getTextContent();
             }
 
-            tElement = getFirstElement(config, "gpio");
-            if (tElement != null) {
-                gpio = tElement.getTextContent();
-            }
-
             tElement = getFirstElement(config, "duty_cycle");
             if (tElement != null) {
                 duty = new BigDecimal(tElement.getTextContent());
-            }
-
-            tElement = getFirstElement(config, "cycle_time");
-            if (tElement != null) {
-                cycle = new BigDecimal(tElement.getTextContent());
             }
 
             tElement = getFirstElement(config, "set_point");
@@ -2609,19 +2256,70 @@ public final class LaunchControl {
                 setpoint = new BigDecimal(tElement.getTextContent());
             }
 
-            tElement = getFirstElement(config, "proportional");
-            if (tElement != null) {
-                p = new BigDecimal(tElement.getTextContent());
+            Element settingsElement = getFirstElement(config, "heat");
+
+            if (settingsElement == null) {
+                settingsElement = config;
             }
 
-            tElement = getFirstElement(config, "integral");
+            tElement = getFirstElement(settingsElement, "gpio");
             if (tElement != null) {
-                i = new BigDecimal(tElement.getTextContent());
+                heatGPIO = tElement.getTextContent();
             }
 
-            tElement = getFirstElement(config, "derivative");
+            tElement = getFirstElement(settingsElement, "cycle_time");
             if (tElement != null) {
-                d = new BigDecimal(tElement.getTextContent());
+                heatCycle = new BigDecimal(tElement.getTextContent());
+            }
+
+            tElement = getFirstElement(settingsElement, "proportional");
+            if (tElement != null) {
+                heatP = new BigDecimal(tElement.getTextContent());
+            }
+
+            tElement = getFirstElement(settingsElement, "integral");
+            if (tElement != null) {
+                heatI = new BigDecimal(tElement.getTextContent());
+            }
+
+            tElement = getFirstElement(settingsElement, "derivative");
+            if (tElement != null) {
+                heatD = new BigDecimal(tElement.getTextContent());
+            }
+
+            settingsElement = getFirstElement(config, "cool");
+
+            if (settingsElement != null) {
+
+                tElement = getFirstElement(settingsElement, "cycle_time");
+                if (tElement != null) {
+                    coolCycle = new BigDecimal(tElement.getTextContent());
+                }
+
+                tElement = getFirstElement(settingsElement, "proportional");
+                if (tElement != null) {
+                    coolP = new BigDecimal(tElement.getTextContent());
+                }
+
+                tElement = getFirstElement(settingsElement, "integral");
+                if (tElement != null) {
+                    coolI = new BigDecimal(tElement.getTextContent());
+                }
+
+                tElement = getFirstElement(settingsElement, "derivative");
+                if (tElement != null) {
+                    coolD = new BigDecimal(tElement.getTextContent());
+                }
+
+                tElement = getFirstElement(settingsElement, "gpio");
+                if (tElement != null) {
+                    coolGPIO = tElement.getTextContent();
+                }
+
+                tElement = getFirstElement(settingsElement, "delay");
+                if (tElement != null) {
+                    coolDelay = new BigDecimal(tElement.getTextContent());
+                }
             }
 
             tElement = getFirstElement(config, "min");
@@ -2714,7 +2412,7 @@ public final class LaunchControl {
                 // we don't have a basic level
                 // not implemented yet, math is hard
                 System.out
-                        .println("No Volume Presets, check your config or rerun the setup!");
+                    .println("No Volume Presets, check your config or rerun the setup!");
                 // otherwise we are OK
             }
 
@@ -2728,10 +2426,10 @@ public final class LaunchControl {
             e.printStackTrace();
         }
 
-        Temp newTemp = startDevice(deviceName, probe, gpio);
+        Temp newTemp = startDevice(deviceName, probe, heatGPIO);
 
         try {
-            if (gpio != null && GPIO.getPinNumber(gpio) >= 0) {
+            if (heatGPIO != null && GPIO.getPinNumber(heatGPIO) >= 0) {
                 PID tPID = LaunchControl.findPID(newTemp.getName());
                 try {
                     tPID.setHysteria(min, max, time);
@@ -2739,17 +2437,23 @@ public final class LaunchControl {
                     System.out.println("Invalid options when setting up Hysteria: "
                             + nfe.getMessage());
                 }
-                tPID.updateValues("off", duty, cycle, setpoint, p, i, d);
+
+                tPID.updateValues("off", duty, heatCycle, setpoint, heatP, heatI, heatD);
+                tPID.setCoolGPIO(coolGPIO);
+                tPID.setCoolDelay(coolDelay);
+                tPID.setCoolCycle(coolCycle);
+                tPID.setCoolP(coolP);
+                tPID.setCoolI(coolI);
+                tPID.setCoolD(coolD);
 
                 if (auxPin != null && !auxPin.equals("")) {
                     tPID.setAux(auxPin);
                 }
-        
             }
         } catch (InvalidGPIOException e) {
             System.out.println("Invalid GPIO provided");
         }
-        
+
         if (cutoffTemp != null) {
             newTemp.setCutoffTemp(cutoffTemp);
         }
@@ -2772,7 +2476,7 @@ public final class LaunchControl {
                 newTemp.addVolumeMeasurement(entry.getKey(), entry.getValue());
             }
         }
-        
+
         if (newTemp != null) {
             newTemp.setCalibration(calibration);
         }
@@ -2780,7 +2484,7 @@ public final class LaunchControl {
 
     /**
      * Copy a file helper, used for backing data the config file.
-     * 
+     *
      * @param sourceFile
      *            The file to copy from
      * @param destFile
@@ -2864,7 +2568,7 @@ public final class LaunchControl {
     /**
      * Get the first element matching nodeName from the baseNode. If baseNode is
      * null, use the document root
-     * 
+     *
      * @param baseNode
      *            The base element to search, null matches from the root
      * @param nodeName
@@ -2886,7 +2590,7 @@ public final class LaunchControl {
 
     /**
      * Add a new element to the specified baseNode.
-     * 
+     *
      * @param baseNode
      *            The baseNode to append to, if null, use the document root
      * @param nodeName
@@ -2898,6 +2602,20 @@ public final class LaunchControl {
 
         if (configDoc == null) {
             setupConfigDoc();
+        }
+
+        // See if this element exists.
+        if (baseNode != null) {
+            NodeList nl = baseNode.getChildNodes();
+
+            if (nl.getLength() > 0) {
+                for (int i = 0; i < nl.getLength(); i++) {
+                    Node item = nl.item(i);
+                    if (item != null && item.getNodeName().equals(nodeName)) {
+                        return (Element) item;
+                    }
+                }
+            }
         }
 
         Element newElement = configDoc.createElement(nodeName);
@@ -2918,7 +2636,7 @@ public final class LaunchControl {
 
     /**
      * Returns all the elements using an Xpath Search.
-     * 
+     *
      * @param baseNode
      *            The base node to search on. if null, use the document root.
      * @param xpathIn
@@ -2949,7 +2667,7 @@ public final class LaunchControl {
 
     /**
      * Returns the first element using an Xpath Search.
-     * 
+     *
      * @param baseNode
      *            The base node to search on. if null, use the document root.
      * @param xpathIn
@@ -3002,7 +2720,7 @@ public final class LaunchControl {
 
     /**
      * Delete the named element from the baseNode.
-     * 
+     *
      * @param baseNode
      *            The Node to delete a child from
      * @param elementName
@@ -3025,7 +2743,7 @@ public final class LaunchControl {
 
     /**
      * Add a MashControl object to the master mash control list.
-     * 
+     *
      * @param mControl
      *            The new mashControl to add
      */
@@ -3055,7 +2773,7 @@ public final class LaunchControl {
 
     /**
      * Look for the MashControl for the specified PID.
-     * 
+     *
      * @param pid
      *            The PID string to search for.
      * @return The MashControl for the PID.
@@ -3072,7 +2790,7 @@ public final class LaunchControl {
 
     /**
      * Get the current OWFS connection.
-     * 
+     *
      * @return The current OWFS Connection object
      */
     public static OwfsConnection getOWFS() {
@@ -3081,7 +2799,7 @@ public final class LaunchControl {
 
     /**
      * Helper to get the current list of timers.
-     * 
+     *
      * @return The current list of timers.
      */
     public static CopyOnWriteArrayList<Timer> getTimerList() {

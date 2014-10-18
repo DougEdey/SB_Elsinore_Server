@@ -24,15 +24,15 @@ public final class PID implements Runnable {
      * Thousand BigDecimal multiplier.
      */
     private BigDecimal THOUSAND = new BigDecimal(1000);
-    /**
-     * The output control that's used.
-     */
-    private OutputControl outputControl = null;
+
     /**
      * The Output control thread.
      */
     private Thread outputThread = null;
     private boolean invertOutput = false;
+    private BigDecimal duty_cycle = new BigDecimal(0);
+    private BigDecimal calculatedDuty = new BigDecimal(0);
+    private BigDecimal set_point = new BigDecimal(0);
     
     /* Hysteria Settings */
     private BigDecimal max = new BigDecimal(0);
@@ -49,21 +49,22 @@ public final class PID implements Runnable {
         /**
          * values to hold the settings.
          */
-        public BigDecimal duty_cycle = new BigDecimal(0),
+        public BigDecimal
             cycle_time = new BigDecimal(0),
             proportional = new BigDecimal(0),
             integral = new BigDecimal(0),
             derivative = new BigDecimal(0),
-            set_point = new BigDecimal(0),
-            calculatedDuty = new BigDecimal(0);
+            delay = new BigDecimal(0);
 
         /**
          * Default constructor.
          */
         public Settings() {
-            duty_cycle = cycle_time = proportional =
-                    integral = derivative = set_point = new BigDecimal(0.0);
+            cycle_time = proportional =
+                    integral = derivative = new BigDecimal(0.0);
         }
+        
+        public OutputControl outputControl = null;
     }
 
     /**
@@ -76,7 +77,7 @@ public final class PID implements Runnable {
         this.fName = aName;
         this.fTemp = aTemp;
 
-        this.fGPIO = detectGPIO(gpio);
+        this.heatGPIO = detectGPIO(gpio);
         this.mode = "off";
         this.heatSetting = new Settings();
     }
@@ -129,10 +130,10 @@ public final class PID implements Runnable {
             final BigDecimal i, final BigDecimal d) {
         this.mode = m;
         if (this.mode.equals("manual")) {
-            this.heatSetting.duty_cycle = duty;
+            this.duty_cycle = duty;
         }
         this.heatSetting.cycle_time = cycle;
-        this.heatSetting.set_point = setpoint;
+        this.set_point = setpoint;
         BrewServer.LOG.info(heatSetting.proportional + ": "
             + heatSetting.integral + ": " + heatSetting.derivative);
         this.heatSetting.proportional = p;
@@ -140,8 +141,7 @@ public final class PID implements Runnable {
         this.heatSetting.derivative = d;
         BrewServer.LOG.info(this.heatSetting.proportional + ": "
             + heatSetting.integral + ": " + this.heatSetting.derivative);
-        LaunchControl.savePID(this.fName, this.heatSetting,
-            this.fGPIO, this.auxGPIO, this.min, this.max, this.minTime);
+        LaunchControl.savePID(this);
         return;
     }
 
@@ -150,11 +150,11 @@ public final class PID implements Runnable {
      * @return The current status of this PID.
      */
     public synchronized String getStatus() {
-        if (this.outputControl != null) {
-            return this.outputControl.getStatus();
+        if (this.heatSetting.outputControl != null) {
+            return this.heatSetting.outputControl.getStatus();
         }
         // Output control is broken
-        return "No output on! Duty Cyle: " + this.heatSetting.duty_cycle
+        return "No output on! Duty Cyle: " + this.duty_cycle
                 + " - Temp: " + getTempC();
     }
 
@@ -194,10 +194,10 @@ public final class PID implements Runnable {
         // setup the first time
         this.previousTime = new BigDecimal(System.currentTimeMillis());
         // create the Output if needed
-        if (!this.fGPIO.equals("")) {
-            this.outputControl =
-                new OutputControl(fName, fGPIO, heatSetting.cycle_time);
-            this.outputThread = new Thread(this.outputControl);
+        if (!this.heatGPIO.equals("")) {
+            this.heatSetting.outputControl =
+                new OutputControl(fName, heatGPIO, heatSetting.cycle_time);
+            this.outputThread = new Thread(this.heatSetting.outputControl);
             this.outputThread.start();
         } else {
             return;
@@ -228,7 +228,7 @@ public final class PID implements Runnable {
                     this.currentTime = new BigDecimal(this.fTemp.getTime());
                     
                     // if the GPIO is blank we do not need to do any of this;
-                    if (this.fGPIO != "") {
+                    if (this.heatGPIO != "") {
                         if (this.tempList.size() >= 5) {
                             tempList.remove(0);
                         }
@@ -239,34 +239,32 @@ public final class PID implements Runnable {
 
                         // we have the current temperature
                         if (mode.equals("auto")) {
-                            this.heatSetting.calculatedDuty =
+                            this.calculatedDuty =
                                 calculate(tempAvg, true);
-                            BrewServer.LOG.info("Calculated: "
-                                + heatSetting.calculatedDuty);
-                            this.outputControl.setDuty(
-                                heatSetting.calculatedDuty);
-                            this.outputControl.getHeater().setCycleTime(heatSetting.cycle_time);
+                            BrewServer.LOG.info("Calculated: " + calculatedDuty);
+                            this.heatSetting.outputControl.setDuty(calculatedDuty);
+                            this.heatSetting.outputControl.getHeater().setCycleTime(heatSetting.cycle_time);
                         } else if (mode.equals("manual")) {
-                            this.outputControl.setDuty(heatSetting.duty_cycle);
+                            this.heatSetting.outputControl.setDuty(duty_cycle);
                         } else if (mode.equals("off")) {
-                            this.outputControl.setDuty(BigDecimal.ZERO);
-                            this.outputControl.getHeater().setCycleTime(heatSetting.cycle_time);
+                            this.heatSetting.outputControl.setDuty(BigDecimal.ZERO);
+                            this.heatSetting.outputControl.getHeater().setCycleTime(heatSetting.cycle_time);
                         } else if (mode.equals("hysteria")) {
                             // Set the duty cycle to be 100, we can wake it up when we want to
                             BrewServer.LOG.info("Checking current temp against " + this.min + " and " + this.max);
                             if (this.getTempF().compareTo(this.min) < 0 
-                                    && this.outputControl.getDuty().compareTo(new BigDecimal(100)) < 0) {
+                                    && this.heatSetting.outputControl.getDuty().compareTo(new BigDecimal(100)) < 0) {
                                 BrewServer.LOG.info("Current temp is less than the minimum temp, turning on 100");
                                 this.hysteriaStartTime = this.currentTime;
-                                this.heatSetting.duty_cycle = new BigDecimal(100);
-                                this.outputControl.setDuty(this.heatSetting.duty_cycle);
-                                this.outputControl.getHeater().setCycleTime(this.minTime.multiply(new BigDecimal(60)));
+                                this.duty_cycle = new BigDecimal(100);
+                                this.heatSetting.outputControl.setDuty(this.duty_cycle);
+                                this.heatSetting.outputControl.getHeater().setCycleTime(this.minTime.multiply(new BigDecimal(60)));
                                 
                                 // Make sure the thread wakes up for the new settings
                                 this.outputThread.interrupt();
                                 
                             } else if (this.getTempF().compareTo(this.max) >= 0
-                                    && this.outputControl.getDuty().compareTo(BigDecimal.ZERO) != 0) {
+                                    && this.heatSetting.outputControl.getDuty().compareTo(BigDecimal.ZERO) != 0) {
                                 BrewServer.LOG.info("Current temp is more than the max temp");
                                 // We're over the maximum temp, but should we wake up the thread?
                                 BigDecimal timeDiff = this.currentTime.subtract(this.hysteriaStartTime);
@@ -277,8 +275,8 @@ public final class PID implements Runnable {
                                     BrewServer.LOG.info("Slep for long enough, turning off");
                                     // Make sure the thread wakes up for the new settings    
 
-                                    this.heatSetting.duty_cycle = BigDecimal.ZERO;
-                                    this.outputControl.setDuty(this.heatSetting.duty_cycle);
+                                    this.duty_cycle = BigDecimal.ZERO;
+                                    this.heatSetting.outputControl.setDuty(this.duty_cycle);
                                     this.outputThread.interrupt();
                                 }
                             }
@@ -288,7 +286,7 @@ public final class PID implements Runnable {
                    
                         BrewServer.LOG.info(mode + ": " + fName + " status: "
                             + fTempF + " duty cycle: "
-                            + this.outputControl.getDuty());
+                            + this.heatSetting.outputControl.getDuty());
                     }
                     //notify all waiters of the change of state
                 }
@@ -313,7 +311,7 @@ public final class PID implements Runnable {
             duty = new BigDecimal(-100);
         }
 
-        heatSetting.duty_cycle = duty;
+        this.duty_cycle = duty;
     }
 
     /****
@@ -324,7 +322,7 @@ public final class PID implements Runnable {
         if (temp.doubleValue() < 0) {
             temp = BigDecimal.ZERO;
         }
-        heatSetting.set_point = temp;
+        this.set_point = temp;
     }
 
     /*******
@@ -372,7 +370,31 @@ public final class PID implements Runnable {
      * Set the proportional value.
      * @param p the new proportional value
      */
-    public void setP(final BigDecimal p) {
+    public void setCoolP(final BigDecimal p) {
+        coolSetting.proportional = p;
+    }
+
+    /******
+     * Set the integral value.
+     * @param i The new Integral.
+     */
+    public void setCoolI(final BigDecimal i) {
+        coolSetting.integral = i;
+    }
+
+    /******
+     * Set the differential value.
+     * @param d The new differential
+     */
+    public void setCoolD(final BigDecimal d) {
+        coolSetting.derivative = d;
+    }
+    
+    /******
+     * Set the proportional value.
+     * @param p the new proportional value
+     */
+    public void setHeatP(final BigDecimal p) {
         heatSetting.proportional = p;
     }
 
@@ -380,7 +402,7 @@ public final class PID implements Runnable {
      * Set the integral value.
      * @param i The new Integral.
      */
-    public void setI(final BigDecimal i) {
+    public void setHeatI(final BigDecimal i) {
         heatSetting.integral = i;
     }
 
@@ -388,7 +410,7 @@ public final class PID implements Runnable {
      * Set the differential value.
      * @param d The new differential
      */
-    public void setD(final BigDecimal d) {
+    public void setHeatD(final BigDecimal d) {
         heatSetting.derivative = d;
     }
 
@@ -417,10 +439,14 @@ public final class PID implements Runnable {
     /**
      * @return Get the GPIO Pin
      */
-    public String getGPIO() {
-        return fGPIO;
+    public String getHeatGPIO() {
+        return heatGPIO;
     }
 
+    public String getCoolGPIO() {
+        return coolGPIO;
+    }
+    
     /**
      * @return  Get the Aux GPIO Pin
      */
@@ -432,42 +458,74 @@ public final class PID implements Runnable {
      * @return Get the current duty cycle percentage
      */
     public BigDecimal getDuty() {
-        return heatSetting.duty_cycle;
-    }
-
-    /**
-     * @return  Get the current Duty Cycle Time
-     */
-    public BigDecimal getCycle() {
-        return heatSetting.cycle_time;
+        return duty_cycle;
     }
 
     /**
      * @return Get the PID Target temperature
      */
     public BigDecimal getSetPoint() {
-        return heatSetting.set_point;
+        return this.set_point;
+    }
+
+    /**
+     * @return  Get the current Duty Cycle Time
+     */
+    public BigDecimal getHeatCycle() {
+        return heatSetting.cycle_time;
     }
 
     /**
      * @return Get the current proportional value
      */
-    public BigDecimal getP() {
+    public BigDecimal getHeatP() {
         return heatSetting.proportional;
     }
 
     /**
      * @return  Get the current Integral value
      */
-    public BigDecimal getI() {
+    public BigDecimal getHeatI() {
         return heatSetting.integral;
     }
 
     /**
      * @return Get the current Differential value
      */
-    public BigDecimal getD() {
+    public BigDecimal getHeatD() {
         return heatSetting.derivative;
+    }
+    /**
+     * @return  Get the current Duty Cycle Time
+     */
+    public BigDecimal getCoolCycle() {
+        return coolSetting.cycle_time;
+    }
+
+
+    /**
+     * @return Get the current proportional value
+     */
+    public BigDecimal getCoolP() {
+        return coolSetting.proportional;
+    }
+
+    /**
+     * @return  Get the current Integral value
+     */
+    public BigDecimal getCoolI() {
+        return coolSetting.integral;
+    }
+
+    /**
+     * @return Get the current Differential value
+     */
+    public BigDecimal getCoolD() {
+        return coolSetting.derivative;
+    }
+
+    public BigDecimal getCoolDelay() {
+        return coolSetting.delay;
     }
 
     /**
@@ -524,7 +582,8 @@ public final class PID implements Runnable {
     /**
      * The GPIO String values.
      */
-    private String fGPIO, auxGPIO = null;
+    private String heatGPIO, auxGPIO = null;
+    private String coolGPIO = null;
     /**
      * The previous five temperature readings.
      */
@@ -542,8 +601,8 @@ public final class PID implements Runnable {
     /**
      * Settings for the heating and cooling.
      */
-    Settings heatSetting;
-    private Settings coldSetting;
+    private Settings heatSetting = new Settings();
+    private Settings coolSetting = new Settings();
     /**
      * The aux output pin.
      */
@@ -600,11 +659,11 @@ public final class PID implements Runnable {
         BigDecimal dt = MathUtil.divide(
                 currentTime.subtract(previousTime),THOUSAND);
         if (dt.compareTo(BigDecimal.ZERO) == 0) {
-            return outputControl.getDuty();
+            return heatSetting.outputControl.getDuty();
         }
 
         // Calculate the error
-        this.error = heatSetting.set_point.subtract(avgTemp);
+        this.error = this.set_point.subtract(avgTemp);
 
         if ((this.totalError.add(this.error).multiply(
                 this.integralFactor).compareTo(new BigDecimal(100)) < 0)
@@ -629,17 +688,12 @@ public final class PID implements Runnable {
 
         previousError = error;
 
-        // limit y[k] to GMA_HLIM and GMA_LLIM
         if (output.compareTo(new BigDecimal(100)) > 0) {
             this.output = new BigDecimal(100);
         }
 
         if (output.compareTo(new BigDecimal(-100)) < 0) {
-            if (this.coldSetting == null) {
-                this.output = new BigDecimal(-100);
-            } else {
-                this.output = new BigDecimal(-100);
-            }
+            this.output = new BigDecimal(-100);
         }
 
         this.previousTime = currentTime;
@@ -650,10 +704,10 @@ public final class PID implements Runnable {
      * Used as a shutdown hook to close off everything.
      */
     public void shutdown() {
-        if (outputControl != null && outputThread != null) {
-            this.outputControl.shuttingDown = true;
+        if (heatSetting.outputControl != null && outputThread != null) {
+            this.heatSetting.outputControl.shuttingDown = true;
             this.outputThread.interrupt();
-            this.outputControl.shutdown();
+            this.heatSetting.outputControl.shutdown();
         }
 
         if (auxPin != null) {
@@ -661,8 +715,7 @@ public final class PID implements Runnable {
         }
 
         if (this.getName() != null && !getName().equals("")) {
-            LaunchControl.savePID(
-                this.getName(), heatSetting, fGPIO, auxGPIO, min, max, minTime);
+            LaunchControl.savePID(this);
         }
     }
 
@@ -671,16 +724,18 @@ public final class PID implements Runnable {
      * @param gpio The GPIO to be used
      * @param duty The new duty time in seconds
      * @param delay The start/stop delay in minutes
+     * @param cycle The Cycle time for 
      * @param p the proportional value
      * @param i the integral value
      * @param d the differential value
      */
-    public void setCool(final String gpio, final BigDecimal duty, final BigDecimal delay,
-            final BigDecimal p, final BigDecimal i, final BigDecimal d) {
+    public void setCool(final String gpio, final BigDecimal duty,
+            final BigDecimal delay, final BigDecimal cycle, final BigDecimal p,
+            final BigDecimal i, final BigDecimal d) {
         // set the values
         int j = 0;
         // Wait for the Output to turn on.
-        while (outputControl == null) {
+        while (coolSetting.outputControl == null) {
             j++;
             try {
                 Thread.sleep(100);
@@ -693,7 +748,7 @@ public final class PID implements Runnable {
                 return;
             }
         }
-        this.outputControl.setCool(gpio, duty, delay);
+        this.heatSetting.outputControl.setCool(gpio, duty, delay);
     }
 
     /**
@@ -702,20 +757,36 @@ public final class PID implements Runnable {
     public Map<String, Object> getMapStatus() {
         Map<String, Object> statusMap = new HashMap<String, Object>();
         statusMap.put("mode", getMode());
-        statusMap.put("gpio", getGPIO());
         // hack to get the real duty out
         if (getMode().contains("auto")) {
-            statusMap.put("actualduty", heatSetting.calculatedDuty);
+            statusMap.put("actualduty", calculatedDuty);
         }
+
+        // The Heat settings
+        Map<String, Object> heatMap = new HashMap<String, Object>();
+        heatMap.put("cycle", getHeatCycle());
+        heatMap.put("p", getHeatP());
+        heatMap.put("i", getHeatI());
+        heatMap.put("d", getHeatD());
+        heatMap.put("gpio", getHeatGPIO());
+        statusMap.put("heat", heatMap);
+
+        // The cool settings
+        Map<String, Object> coolMap = new HashMap<String, Object>();
+        coolMap.put("cycle", getCoolCycle());
+        coolMap.put("p", getCoolP());
+        coolMap.put("i", getCoolI());
+        coolMap.put("d", getCoolD());
+        coolMap.put("gpio", getCoolGPIO());
+        coolMap.put("delay", getCoolDelay());
+        statusMap.put("cool", coolMap);
+
         statusMap.put("duty", getDuty());
-        statusMap.put("cycle", getCycle());
         statusMap.put("setpoint", getSetPoint());
-        statusMap.put("p", getP());
-        statusMap.put("i", getI());
-        statusMap.put("d", getD());
         statusMap.put("min", this.min);
         statusMap.put("max", this.max);
         statusMap.put("time", this.minTime);
+
         statusMap.put("status", getStatus());
 
         if (auxPin != null) {
@@ -731,17 +802,28 @@ public final class PID implements Runnable {
      * Set the GPIO to a new pin, shutdown the old one first.
      * @param gpio The new GPIO to use
      */
-    public void setGPIO(final String gpio) {
+    public void setHeatGPIO(final String gpio) {
         // Close down the existing OutputControl
-        if (this.outputControl != null) {
-            this.outputControl.shutdown();
+        if (this.heatSetting.outputControl != null) {
+            this.heatSetting.outputControl.shutdown();
         }
-        
-        this.fGPIO = gpio;
-        this.outputControl = new OutputControl(
-            this.fName, this.fGPIO, this.heatSetting.cycle_time);
+
+        this.heatGPIO = gpio;
+        this.heatSetting.outputControl = new OutputControl(
+            this.fName, this.heatGPIO, this.heatSetting.cycle_time);
     }
 
+    public void setCoolGPIO(final String gpio) {
+        // Close down the existing OutputControl
+        if (this.coolSetting.outputControl != null) {
+            this.coolSetting.outputControl.shutdown();
+        }
+
+        this.coolGPIO = gpio;
+        this.coolSetting.outputControl = new OutputControl(
+            this.fName, this.coolGPIO, this.coolSetting.cycle_time);
+    }
+    
     public BigDecimal getMin() {
         return this.min;
     }
@@ -754,9 +836,25 @@ public final class PID implements Runnable {
         return this.minTime;
     }
 
+    public Settings getHeatSetting() {
+        return this.heatSetting;
+    }
+    
+    public Settings getCoolSetting() {
+        return this.coolSetting;
+    }
+    
     public void stop() {
         System.out.println("Shutting down " + this.getName());
         running = false;
         Thread.currentThread().interrupt();
+    }
+
+    public void setCoolDelay(BigDecimal coolDelay) {
+        this.coolSetting.delay = coolDelay;
+    }
+    
+    public void setCoolCycle(BigDecimal coolCycle) {
+        this.coolSetting.cycle_time= coolCycle;
     }
 }

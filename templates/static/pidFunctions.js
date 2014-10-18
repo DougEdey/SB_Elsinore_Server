@@ -61,21 +61,24 @@ function setup() {
     		$.i18n.prop("CHANGE_SCALE") +
     		"</div>")
 
-	// $("#select_logo").click(function(){
-		// $("#logo").trigger('click');
-// var $file = $("#logo")[0];
-// readFile($file.files[0]).done(function(fileData){
-// var formData = form.find(":input:not('#file')").serializeArray();
-// formData.file = [fileData, $file.files[0].name];
-// upload('uploadimage', formData).done(function(){ alert("successfully
-// uploaded!"); });
-// });
-// return false;
-// });
-
     $('div[id$=-graph_body]').each(function (index) {
 		$(this).slideToggle();
 	});	
+    
+    $('#cool a').click(function (e) {
+	  e.preventDefault()
+	  $(this).tab('show')
+	});
+    	
+	$('#heat a').click(function (e) {
+	  e.preventDefault()
+	  $(this).tab('show')
+	});
+	
+//	$('div[id="*-tabbedInputs]').foreach(function (div) {
+//		div.tabs();
+//	});
+//			
 	waitForMsg();
 };
 
@@ -556,27 +559,50 @@ function updatePIDStatus(vessel, val) {
 	jQuery('div[id="tempUnit"]').text(val.scale);
 	
 	jQuery(vesselDiv  + ' input[name="dutycycle"]').val(val.duty);
-	jQuery(vesselDiv  + ' input[name="cycletime"]').val(val.cycle);
 	jQuery(vesselDiv  + ' input[name="setpoint"]').val(val.setpoint);
-	jQuery(vesselDiv  + ' input[name="p"]').val(val.p);
-	jQuery(vesselDiv  + ' input[name="i"]').val(val.i);
-	jQuery(vesselDiv  + ' input[name="d"]').val(val.d);
+	
+	if ("heat" in val) {
+		jQuery(vesselDiv  + ' div[id="heat"] input[name="heatcycletime"]').val(val.heat.cycle);
+		jQuery(vesselDiv  + ' div[id="heat"] input[name="heatp"]').val(val.heat.p);
+		jQuery(vesselDiv  + ' div[id="heat"] input[name="heati"]').val(val.heat.i);
+		jQuery(vesselDiv  + ' div[id="heat"] input[name="heatd"]').val(val.heat.d);
+		jQuery(vesselDiv  + ' div[id="heat"] input[name="heatgpio"]').val(val.heat.gpio);
+	} else {
+		$(vesselDiv + ' a:first').hide();
+	}
+	
+	if ("cool" in val) {
+		jQuery(vesselDiv  + ' div[id="cool"] input[name="coolcycletime"]').val(val.cool.cycle);
+		jQuery(vesselDiv  + ' div[id="cool"] input[name="coolp"]').val(val.cool.p);
+		jQuery(vesselDiv  + ' div[id="cool"] input[name="cooli"]').val(val.cool.i);
+		jQuery(vesselDiv  + ' div[id="cool"] input[name="coold"]').val(val.cool.d);
+		jQuery(vesselDiv  + ' div[id="cool"] input[name="coolgpio"]').val(val.cool.gpio);
+	} else {
+		$(vesselDiv + ' a:last').hide();
+	}
+	
 	jQuery(vesselDiv  + ' input[name="min"]').val(val.min);
 	jQuery(vesselDiv  + ' input[name="max"]').val(val.max);
 	jQuery(vesselDiv  + ' input[name="time"]').val(val.time);
 	jQuery(vesselDiv  + ' input[name="deviceaddr"]').val(val.deviceaddr);
-	jQuery(vesselDiv  + ' input[name="gpio"]').val(val.gpio);
+	
 	if ("auxgpio" in val) {
 		jQuery(vesselDiv  + ' input[name="auxgpio"]').val(val.auxgpio);
 	}
 	
 	// Disable some stuff
 	jQuery(vesselDiv  + ' input[name="dutycycle"]').prop("disabled", true);
-	jQuery(vesselDiv  + ' input[name="cycletime"]').prop("disabled", true);
 	jQuery(vesselDiv  + ' input[name="setpoint"]').prop("disabled", true);
-	jQuery(vesselDiv  + ' input[name="p"]').prop("disabled", true);
-	jQuery(vesselDiv  + ' input[name="i"]').prop("disabled", true);
-	jQuery(vesselDiv  + ' input[name="d"]').prop("disabled", true);
+	
+	jQuery(vesselDiv  + ' input[name="heatcycletime"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="heatp"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="heati"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="heatd"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="coolcycletime"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="cooldelay"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="coolp"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="cooli"]').prop("disabled", true);
+	jQuery(vesselDiv  + ' input[name="coold"]').prop("disabled", true);
 	jQuery(vesselDiv  + ' input[name="min"]').prop("disabled", true);
 	jQuery(vesselDiv  + ' input[name="max"]').prop("disabled", true);
 	jQuery(vesselDiv  + ' input[name="time"]').prop("disabled", true);
@@ -619,14 +645,11 @@ function selectOff(vessel) {
 	jQuery('button[id^="'+vessel+'-modeHysteria"]')[0].style.background="#666666";
 
 	jQuery('tr[id="'+vessel+'-SP"]').hide();
-	jQuery('tr[id="'+vessel+'-DT"]').hide();
 	jQuery('tr[id="'+vessel+'-DC"]').hide();
-	jQuery('tr[id="'+vessel+'-p"]').hide();
-	jQuery('tr[id="'+vessel+'-i"]').hide();
-	jQuery('tr[id="'+vessel+'-d"]').hide();
 	jQuery('tr[id="'+vessel+'-min"]').hide();
 	jQuery('tr[id="'+vessel+'-max"]').hide();
 	jQuery('tr[id="'+vessel+'-time"]').hide();
+	jQuery('tr[id="'+vessel+'-tabbedInputs"]').hide();
 	$(vesselDiv + ' button[id="sendcommand"]').show();
 
 	vessel = null;
@@ -651,14 +674,13 @@ function selectAuto(vessel) {
 	jQuery('button[id^="'+vessel+'-modeAuto"]')[0].style.background="red";
 
 	jQuery('tr[id="'+vessel+'-SP"]').show();
-	jQuery('tr[id="'+vessel+'-DT"]').show();
+	$('div[id="'+vessel+'-tabbedInputs"]').show();	
+
 	jQuery('tr[id="'+vessel+'-DC"]').hide();
-	jQuery('tr[id="'+vessel+'-p"]').show();
-	jQuery('tr[id="'+vessel+'-i"]').show();
-	jQuery('tr[id="'+vessel+'-d"]').show();
 	jQuery('tr[id="'+vessel+'-min"]').hide();
 	jQuery('tr[id="'+vessel+'-max"]').hide();
 	jQuery('tr[id="'+vessel+'-time"]').hide();
+	jQuery('tr[id="'+vessel+'-tabbedInputs"]').show()
 	$(vesselDiv + ' button[id="sendcommand"]').show();
 	vessel = null;
 	return false;
@@ -682,14 +704,12 @@ function selectHysteria(vessel) {
 	jQuery('button[id^="'+vessel+'-modeHysteria"]')[0].style.background="red";
 
 	jQuery('tr[id="'+vessel+'-SP"]').hide();
-	jQuery('tr[id="'+vessel+'-DT"]').hide();
-	jQuery('tr[id="'+vessel+'-DC"]').hide();
-	jQuery('tr[id="'+vessel+'-p"]').hide();
-	jQuery('tr[id="'+vessel+'-i"]').hide();
-	jQuery('tr[id="'+vessel+'-d"]').hide();
+	jQuery('tr[id="'+vessel+'-DC"]').hide()
+	$('div[id="'+vessel+'-tabbedInputs"]').hide();
 	jQuery('tr[id="'+vessel+'-min"]').show();
 	jQuery('tr[id="'+vessel+'-max"]').show();
 	jQuery('tr[id="'+vessel+'-time"]').show();
+	jQuery('tr[id="'+vessel+'-tabbedInputs"]').hide()
 	$(vesselDiv + ' button[id="sendcommand"]').show();
 	vessel = null;
 	return false;
@@ -713,14 +733,12 @@ function selectManual(vessel) {
 	jQuery('button[id^="'+vessel+'-modeHysteria"]')[0].style.background="#666666";
 
 	jQuery('tr[id="'+vessel+'-SP"]').hide();
-	jQuery('tr[id="'+vessel+'-DT"]').show();
-	jQuery('tr[id="'+vessel+'-DC"]').show();
-	jQuery('tr[id="'+vessel+'-p"]').hide();
-	jQuery('tr[id="'+vessel+'-i"]').hide();
-	jQuery('tr[id="'+vessel+'-d"]').hide();
+	jQuery('tr[id="'+vessel+'-DC"]').show()
+	$('div[id="'+vessel+'-tabbedInputs"]').hide();
 	jQuery('tr[id="'+vessel+'-min"]').hide();
 	jQuery('tr[id="'+vessel+'-max"]').hide();
 	jQuery('tr[id="'+vessel+'-time"]').hide();
+	jQuery('tr[id="'+vessel+'-tabbedInputs"]').hide();
 	$(vesselDiv + ' button[id="sendcommand"]').show();
 
 	vessel = null;
@@ -978,11 +996,16 @@ function disable(input) {
 	var vesselDiv = 'form[id="'+vessel+'-form"]';
 	
 	jQuery(vesselDiv  + ' input[name="dutycycle"]').prop("disabled", false);
-	jQuery(vesselDiv  + ' input[name="cycletime"]').prop("disabled", false);
 	jQuery(vesselDiv  + ' input[name="setpoint"]').prop("disabled", false);
-	jQuery(vesselDiv  + ' input[name="p"]').prop("disabled", false);
-	jQuery(vesselDiv  + ' input[name="i"]').prop("disabled", false);
-	jQuery(vesselDiv  + ' input[name="d"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="heatcycletime"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="heatp"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="heati"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="heatd"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="coolcycletime"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="coolp"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="cooli"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="coold"]').prop("disabled", false);
+	jQuery(vesselDiv  + ' input[name="cooldelay"]').prop("disabled", false);
 	jQuery(vesselDiv  + ' input[name="min"]').prop("disabled", false);
 	jQuery(vesselDiv  + ' input[name="max"]').prop("disabled", false);
 	jQuery(vesselDiv  + ' input[name="time"]').prop("disabled", false);
