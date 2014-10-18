@@ -381,7 +381,7 @@ public class ServeHTML {
 
             // Add in the tabs
             + "<!-- Nav tabs -->" + lineSep
-            + "<tr id='"+device+"-tabbedInputs'><td>"
+            + "<tr id='"+device+"-tabbedInputs'><td colspan='3'>"
             + "<ul class=\"nav nav-tabs\" role=\"tablist\" id='inputtabs'>" + lineSep
             + "<li class=\"active\"><a href=\"#heat\" role=\"tab\" data-toggle=\"tab\">Heat</a></li>" + lineSep
             + "<li><a href=\"#cool\" role=\"tab\" data-toggle=\"tab\">Cool</a></li>" + lineSep
