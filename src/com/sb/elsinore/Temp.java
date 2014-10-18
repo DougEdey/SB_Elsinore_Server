@@ -1003,6 +1003,7 @@ public final class Temp implements Runnable {
             }
             // Create the temp
             BigDecimal temperature = new BigDecimal(number);
+            temperature.setScale(2);
             String unit = tempMatcher.group(4);
 
             if (unit == null || unit.equals(this.scale)) {
@@ -1020,7 +1021,7 @@ public final class Temp implements Runnable {
     }
 
     public String getCalibration() {
-        return this.calibration + this.scale;
+        return this.calibration.toPlainString() + this.scale;
     }
 
     public boolean isSetup() {
