@@ -19,25 +19,21 @@
 		  float: left;
 }
 #Temp {
-        margin:2px 0 1px 1px;
-		  padding: 1em;
+          padding: 1em;
 		  float: left;
 }
 
 #pumps {
-        margin:2px 0 1px 1px;
-		  padding: 1em;
+          padding: 1em;
 		  float:left;
 }
 
 #timers {
-        margin:2px 0 1px 1px;
-		  padding: 1em;
+          padding: 1em;
 		  float:left;
 }
 
 #tempProbes {
-        margin:2px 0 1px 1px;
 		  padding: 1em;
 		  float:left;
 }
