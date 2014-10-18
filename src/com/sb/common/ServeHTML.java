@@ -344,7 +344,7 @@ public class ServeHTML {
                 + " class=\"holo-button modeclass\""
                 + " onclick='disable(this);"
                 + " selectOff(this);"
-                + " return false;'>"+Messages.OFF+"</button>"
+                + " return false;'>"+Messages.PID_OFF+"</button>"
             + lineSep
             + "</div>" + lineSep
             + "<table id='pidInput' class='labels table'>"
@@ -381,10 +381,13 @@ public class ServeHTML {
 
             // Add in the tabs
             + "<!-- Nav tabs -->" + lineSep
-            + "<tr id='"+device+"-tabbedInputs'><td colspan='3'>"
-            + "<ul class=\"nav nav-tabs\" role=\"tablist\" id='inputtabs'>" + lineSep
-            + "<li class=\"active\"><a href=\"#heat\" role=\"tab\" data-toggle=\"tab\">Heat</a></li>" + lineSep
-            + "<li><a href=\"#cool\" role=\"tab\" data-toggle=\"tab\">Cool</a></li>" + lineSep
+            + "<tr id='" + device + "-tabbedInputs'><td colspan='3'>"
+            + "<ul class=\"nav nav-tabs\" role=\"tablist\" id='inputtabs'>"
+            + lineSep
+            + "<li class=\"active\"><a href=\"#heat\" role=\"tab\" data-toggle=\"tab\">"
+            + Messages.HEAT + "</a></li>" + lineSep
+            + "<li><a href=\"#cool\" role=\"tab\" data-toggle=\"tab\">"
+            + Messages.COOL + "</a></li>" + lineSep
             + "</ul>"
 
                 // DUTY TIME
@@ -392,14 +395,14 @@ public class ServeHTML {
             + "<div class=\"tab-pane active\" id='heat'>" + lineSep
             + "<table><tr id='" + device + "-heatDT' class='holo-field'>"
             + lineSep
-                + "<td id='" + device + "-labelDT' >"+Messages.DUTY_TIME+"</td>"
-                + lineSep
-                + "<td id=\"" + device + "-cycletime\">" + lineSep
-                + "<input class='inputBox heatdutytime' name=\"heatcycletime\""
-                    + " maxlength = \"6\" size =\"6\" value=\"\""
-                    + " style=\"text-align: left;\"/>"
-                + "</td>" + lineSep
-                + "<td id='" + device + "-unitDT'>"+Messages.SECS+"</td>"
+            + "<td id='" + device + "-labelDT' >" + Messages.DUTY_TIME + "</td>"
+            + lineSep
+            + "<td id=\"" + device + "-cycletime\">" + lineSep
+            + "<input class='inputBox heatdutytime' name=\"heatcycletime\""
+            + " maxlength = \"6\" size =\"6\" value=\"\""
+            + " style=\"text-align: left;\"/>"
+            + "</td>" + lineSep
+            + "<td id='" + device + "-unitDT'>" + Messages.SECS + "</td>"
             + "</tr>" + lineSep
 
                  // P
@@ -492,7 +495,8 @@ public class ServeHTML {
 
             // DELAY
             + "<tr id='" + device + "-cooldelay' class='holo-field'>" + lineSep
-            + "<td id='" + device + "-labeldelay' >Delay</td>" + lineSep
+            + "<td id='" + device + "-labeldelay' >"
+                + Messages.DELAY + "</td>" + lineSep
             + "<td id=\"" + device + "-delayinput\">" + lineSep
                 + "\t<input class='inputBox cooldelay ' name=\"cooldelay\""
                 + " maxlength = \"6\" size =\"6\" value=\"\""
@@ -545,7 +549,8 @@ public class ServeHTML {
             + Messages.AUX_ON +"</button><br />";
 
         controller += "<input type='hidden' id='deviceaddr' name='deviceaddr' />"
-            + "<input type='hidden' id='gpio' name='gpio' />"
+            + "<input type='hidden' id='heatgpio' name='heatgpio' />"
+            + "<input type='hidden' id='coolgpio' name='coolgpio' />"
             + "<input type='hidden' id='auxgpio' name='auxgpio' />"
             + "<input type='hidden' id='cutoff' name='cutoff' />"
             + "<input type='hidden' id='calibration' name='calibration' />"
