@@ -293,13 +293,18 @@ function waitForMsg(){
 							$('div[id^="'+vesselName+'-gage"]').hide();
 						} else {
 							$('div[id^="'+vesselName+'-gage"]').show();
+							var duty = vesselStatus.pidstatus.duty;
 							if ("actualduty" in vesselStatus.pidstatus) {
-								Gauges[vesselName].refresh(
-										vesselStatus.pidstatus.actualduty, 100);
-							} else {
-								Gauges[vesselName].refresh(
-										vesselStatus.pidstatus.duty, 100);
+								duty = vesselStatus.pidstatus.actualduty;		
 							}
+							
+							if (duty < 100) {
+								Gauges[vesselName].refreshBoth(duty, -100, "0");
+							} else {
+								Gauges[vesselName].refreshBoth(duty, "0", 100);
+							}
+							
+							
 						}
 					} else {
 						hidePIDForm(vesselName);

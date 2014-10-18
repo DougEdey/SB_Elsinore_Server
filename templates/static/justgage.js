@@ -838,6 +838,86 @@ JustGage.prototype.refresh = function(val, max) {
   obj, displayVal, color, max = null;
 };
 
+
+JustGage.prototype.refreshBoth = function(val, min, max) {
+
+	  var obj = this;
+	  var displayVal, color, min = min || null;
+	  var max = max || null;
+
+	  // Set new min
+	  if (min !== null) {
+		  obj.config.min = min;
+
+		    obj.txtMinimum = obj.config.min;
+		    if( obj.config.humanFriendly ) {
+		      obj.txtMinimum = humanFriendlyNumber( obj.config.min, obj.config.humanFriendlyDecimal );
+		    } else if( obj.config.formatNumber ) {
+		      obj.txtMinimum = formatNumber( obj.config.min );
+		    }
+		    obj.txtMin.attr({"text" : obj.txtMinimum});
+		    setDy(obj.txtMin, obj.params.minFontSize, obj.params.minY);
+		  
+	  }
+	  
+	  // set new max
+	  if(max !== null) {
+	    obj.config.max = max;
+
+	    obj.txtMaximum = obj.config.max;
+	    if( obj.config.humanFriendly ) {
+	      obj.txtMaximum = humanFriendlyNumber( obj.config.max, obj.config.humanFriendlyDecimal );
+	    } else if( obj.config.formatNumber ) {
+	      obj.txtMaximum = formatNumber( obj.config.max );
+	    }
+	    obj.txtMax.attr({"text" : obj.txtMaximum});
+	    setDy(obj.txtMax, obj.params.maxFontSize, obj.params.maxY);
+	  }
+	  
+
+	  // overflow values
+	  displayVal = val;
+	  if ((val * 1) > (obj.config.max * 1)) {val = (obj.config.max * 1);}
+	  if ((val * 1) < (obj.config.min * 1)) {val = (obj.config.min * 1);}
+
+	  color = getColor(val, (val - obj.config.min) / (obj.config.max - obj.config.min), obj.config.levelColors, obj.config.noGradient, obj.config.customSectors);
+
+	  if(obj.config.textRenderer) {
+	    displayVal = obj.config.textRenderer(displayVal);
+	  } else if( obj.config.humanFriendly ) {
+	    displayVal = humanFriendlyNumber( displayVal, obj.config.humanFriendlyDecimal ) + obj.config.symbol;
+	  } else if( obj.config.formatNumber ) {
+	    displayVal = formatNumber((displayVal * 1).toFixed(obj.config.decimals)) + obj.config.symbol;
+	  } else {
+	    displayVal = (displayVal * 1).toFixed(obj.config.decimals) + obj.config.symbol;
+	  }
+	  obj.originalValue = displayVal;
+	  obj.config.value = val * 1;
+
+	  if(!obj.config.counter) {
+	    obj.txtValue.attr({"text":displayVal});
+	    setDy(obj.txtValue, obj.params.valueFontSize, obj.params.valueY);
+	  }
+
+	  obj.level.animate({
+	    pki: [
+	      obj.config.value,
+	      obj.config.min,
+	      obj.config.max,
+	      obj.params.widgetW,
+	      obj.params.widgetH,
+	      obj.params.dx,
+	      obj.params.dy,
+	      obj.config.gaugeWidthScale,
+	      obj.config.donut
+	    ],
+	    "fill":color
+	  },  obj.config.refreshAnimationTime, obj.config.refreshAnimationType);
+
+	  // var clear
+	  obj, displayVal, color, max, min = null;
+	};
+
 /** Generate shadow */
 JustGage.prototype.generateShadow = function(svg, defs) {
 
