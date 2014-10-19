@@ -301,15 +301,18 @@ public class ServeHTML {
                 + "<div id='tempUnit'>F</div>): " + lineSep
             + "<div id='" + device + "-tempStatus' >temp</div>&#176"
                 + "<div id='tempUnit'>F</div>" + lineSep
-            + "</div>" + lineSep
-            + "<div id=\"" + device
+            + "</div>" + lineSep;
+        
+        if (LaunchControl.recorderEnabled()) {
+            controller += "<div id=\"" + device
             + "-graph_wrapper\" class=\"holo-content controller panel panel-info\">"
             + "<div id='" + device + "-graph_title' class=\"title panel-heading\""
                     + " onclick='embedGraph(\"" + device + "\"); toggleBlock(\""+device + "-graph_body\");' >"
             + Messages.SHOW_GRAPH + "</div>"
             + "<div id='" + device + "-graph_body' onclick='showGraph(this);' class=\"panel-body\">"
-            + "</div></div>"
-            + "</div>" + lineSep;
+            + "</div></div>";
+        }    
+        controller += "</div>" + lineSep;
 
 
         controller +=

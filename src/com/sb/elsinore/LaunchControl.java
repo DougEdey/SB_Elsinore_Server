@@ -3151,4 +3151,8 @@ public final class LaunchControl {
     public static boolean isLocked() {
         return LaunchControl.pageLock;
     }
+
+    public static boolean recorderEnabled() {
+        return LaunchControl.recorderEnabled;
+    }
 }

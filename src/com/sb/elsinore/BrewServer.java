@@ -1857,6 +1857,10 @@ public class BrewServer extends NanoHTTPD {
      * @return the JSON Response data
      */
     public NanoHTTPD.Response getGraphData(Map<String, String> params) {
+        if (!LaunchControl.recorderEnabled()) {
+            return new NanoHTTPD.Response("Recorder disabled");
+        }
+
         Map<String, String> parms = ParseParams(params);
         // Have we been asked for a size?
         int size = 1000;
