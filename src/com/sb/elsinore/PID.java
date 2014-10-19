@@ -262,7 +262,7 @@ public final class PID implements Runnable {
                         } else if (mode.equals("hysteria")) {
                             // Set the duty cycle to be 100, we can wake it up when we want to
                             BrewServer.LOG.info("Checking current temp against " + this.min + " and " + this.max);
-                            if (this.getTempF().compareTo(this.min) < 0 
+                            if (this.min.compareTo(this.getTempF()) < 0
                                     && this.heatSetting.outputControl.getDuty().compareTo(new BigDecimal(100)) < 0) {
                                 BrewServer.LOG.info("Current temp is less than the minimum temp, turning on 100");
                                 this.hysteriaStartTime = this.currentTime;
@@ -273,7 +273,7 @@ public final class PID implements Runnable {
                                 // Make sure the thread wakes up for the new settings
                                 this.outputThread.interrupt();
                                 
-                            } else if (this.getTempF().compareTo(this.max) >= 0
+                            } else if (this.max.compareTo(this.getTempF()) >= 0
                                     && this.heatSetting.outputControl.getDuty().compareTo(BigDecimal.ZERO) != 0) {
                                 BrewServer.LOG.info("Current temp is more than the max temp");
                                 // We're over the maximum temp, but should we wake up the thread?
@@ -839,7 +839,7 @@ public final class PID implements Runnable {
     }
 
     public BigDecimal getMax() {
-        return this.min;
+        return this.max;
     }
 
     public BigDecimal getTime() {
