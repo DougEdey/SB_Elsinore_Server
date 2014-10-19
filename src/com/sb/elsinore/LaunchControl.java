@@ -233,6 +233,8 @@ public final class LaunchControl {
     private static XPathExpression expr = null;
     private static String message = "";
     private static double recorderDiff = .15d;
+    private static boolean recorderEnabled = true;
+    private static String recorderDirectory = StatusRecorder.defaultDirectory;
     private static String breweryName = null;
     public static String theme = "default";
     private static boolean pageLock = false;
@@ -293,7 +295,7 @@ public final class LaunchControl {
                 if (startupCommand.hasOption("d")) {
                     System.setProperty("debug", "INFO");
                 }
-                
+
                 if (startupCommand.hasOption("root")) {
                     rootDir = startupCommand.getOptionValue("root");
                 }
@@ -311,29 +313,38 @@ public final class LaunchControl {
                     theme = startupCommand.getOptionValue("t");
                 }
 
+                if (startupCommand.hasOption("r")) {
+                    if (startupCommand.getOptionValue("r").equalsIgnoreCase("false")) {
+                        recorderEnabled = false;
+                    }
+                }
+
+                if (startupCommand.hasOption("rdirectory")) {
+                    recorderDirectory = startupCommand.getOptionValue("rdirectory");
+                    if (!recorderDirectory.endsWith("/")) {
+                        recorderDirectory += "/";
+                    }
+                }
+
             } catch (ParseException e) {
                 System.out.println("Error when parsing the command line");
                 e.printStackTrace();
                 return;
             }
         }
-        
-        if( rootDir != null )
-        {
+
+        if (rootDir != null) {
             //Validate to make sure it's valid, otherwise things will go badly.
             File root = new File(rootDir);
-            if( root!= null && root.exists() && root.isDirectory() )
-            {
+            if (root != null && root.exists() && root.isDirectory()) {
                 System.setProperty("root_override", rootDir);
-            }
-            else
-            {
-                BrewServer.LOG.warning("Invalid root directory proviced: "+rootDir);
+            } else {
+                BrewServer.LOG.warning(
+                    "Invalid root directory proviced: " + rootDir);
                 System.exit(-1);
             }
-            
         }
-        
+
         LaunchControl lc = new LaunchControl(port);
         BrewServer.LOG.warning("Started LaunchControl: " + lc.toString());
     }
@@ -362,11 +373,15 @@ public final class LaunchControl {
                 "specify the amount for a reading to change before "
                         + "recording the value in history");
         startupOptions.addOption("root", true,
-                "specify the root directory for elsinore.  This is the location "
-                        + "configuration and html files should live.");
+            "specify the root directory for elsinore.  This is the location "
+                    + "configuration and html files should live.");
         startupOptions.addOption("baseUser", true,
                 "Specify the user who should own all the files created");
         startupOptions.addOption("t", "theme", true, "Specify the theme name");
+        startupOptions.addOption("r", StatusRecorder.RECORDER_ENABLED, true,
+                "Enable or disable the status recorder. Default enabled.");
+        startupOptions.addOption("rdirectory", StatusRecorder.DIRECTORY_PROPERTY,
+                true, "Set the recorder directory output, default: graph-data/");
     }
 
     /**
@@ -426,11 +441,13 @@ public final class LaunchControl {
         // See if we have an active configuration file
         readConfig();
 
-        BrewServer.LOG.log(Level.INFO, "Starting Status Recorder");
+        if (this.recorderEnabled) {
+            BrewServer.LOG.log(Level.INFO, "Starting Status Recorder");
 
-        recorder = new StatusRecorder();
-        recorder.setThreshold(recorderDiff);
-        recorder.start();
+            recorder = new StatusRecorder(recorderDirectory);
+            recorder.setThreshold(recorderDiff);
+            recorder.start();
+        }
 
         // Debug info before launching the BrewServer itself
         LaunchControl.loadCompleted = true;
@@ -3062,7 +3079,8 @@ public final class LaunchControl {
         if (baseUser == null || baseUser.equals("")) {
             return;
         }
-        if (!targetFile.exists()) {
+        
+        if (targetFile != null && !targetFile.exists()) {
             try {
                 new FileOutputStream(targetFile).close();
             } catch (IOException e1) {

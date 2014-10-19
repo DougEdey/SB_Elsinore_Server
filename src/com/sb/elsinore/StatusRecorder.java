@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -24,9 +25,17 @@ public class StatusRecorder implements Runnable {
     private String logFile = null;
     private Thread thread;
     private long startTime = 0;
+    private String recorderDirectory = StatusRecorder.defaultDirectory;
     private HashMap<String, Status> temperatureMap;
     private HashMap<String, Status> dutyMap;
     boolean writeRawLog = false;
+    public static String defaultDirectory = "graph-data/";
+    public static String DIRECTORY_PROPERTY = "recorder_directory";
+    public static String RECORDER_ENABLED = "recorder_enabled";
+    
+    public StatusRecorder(String recorderDirectory) {
+        this.recorderDirectory = recorderDirectory;
+    }
 
     /**
      * Start the thread.
@@ -39,7 +48,6 @@ public class StatusRecorder implements Runnable {
             thread.setDaemon(true);
             thread.start();
         }
-
     }
 
     /**
@@ -60,16 +68,15 @@ public class StatusRecorder implements Runnable {
         //This will store multiple logs - one for raw data,
         // one for each series (duty & temperature per vessel)
         // For now - we'll store Duty, temperature vs time
-
         //Assume new logs on each run
         startTime = System.currentTimeMillis();
 
-        String directory = "graph-data/" + startTime + "/";
+        String directory = recorderDirectory + startTime + "/";
         File directoryFile = new File(directory);
         directoryFile.mkdirs();
         LaunchControl.setFileOwner(directoryFile.getParentFile());
         LaunchControl.setFileOwner(directoryFile);
-        
+
         //Generate a new log file under the current directory
         logFile = directory + "raw.log";
 
