@@ -1,10 +1,12 @@
 package com.sb.elsinore;
+import com.sb.elsinore.devices.OutputDevice;
 import com.sb.util.MathUtil;
 
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
@@ -63,10 +65,9 @@ public final class PID implements Runnable {
             cycle_time = proportional =
                     integral = derivative = new BigDecimal(0.0);
         }
-        
-        public OutputControl outputControl = null;
     }
-
+    
+    public OutputControl outputControl = null;
     /**
      * Create a new PID with minimal information.
      * @param aTemp The Temperature probe object to use
@@ -160,8 +161,8 @@ public final class PID implements Runnable {
      * @return The current status of this PID.
      */
     public synchronized String getStatus() {
-        if (this.heatSetting.outputControl != null) {
-            return this.heatSetting.outputControl.getStatus();
+        if (this.outputControl != null) {
+            return this.outputControl.getStatus();
         }
         // Output control is broken
         return "No output on! Duty Cyle: " + this.duty_cycle
@@ -205,9 +206,9 @@ public final class PID implements Runnable {
         this.previousTime = new BigDecimal(System.currentTimeMillis());
         // create the Output if needed
         if (!this.heatGPIO.equals("")) {
-            this.heatSetting.outputControl =
+            this.outputControl =
                 new OutputControl(fName, heatGPIO, heatSetting.cycle_time);
-            this.outputThread = new Thread(this.heatSetting.outputControl);
+            this.outputThread = new Thread(this.outputControl);
             this.outputThread.start();
         } else {
             return;
@@ -252,42 +253,87 @@ public final class PID implements Runnable {
                             this.calculatedDuty =
                                 calculate(tempAvg, true);
                             BrewServer.LOG.info("Calculated: " + calculatedDuty);
-                            this.heatSetting.outputControl.setDuty(calculatedDuty);
-                            this.heatSetting.outputControl.getHeater().setCycleTime(heatSetting.cycle_time);
+                            this.outputControl.setDuty(calculatedDuty);
+                            this.outputControl.getHeater().setCycleTime(heatSetting.cycle_time);
                         } else if (mode.equals("manual")) {
-                            this.heatSetting.outputControl.setDuty(duty_cycle);
+                            this.outputControl.setDuty(duty_cycle);
                         } else if (mode.equals("off")) {
-                            this.heatSetting.outputControl.setDuty(BigDecimal.ZERO);
-                            this.heatSetting.outputControl.getHeater().setCycleTime(heatSetting.cycle_time);
+                            this.outputControl.setDuty(BigDecimal.ZERO);
+                            this.outputControl.getHeater().setCycleTime(heatSetting.cycle_time);
                         } else if (mode.equals("hysteria")) {
+                            /**
+                             * New logic
+                             * 1) If we're below the minimum temp
+                             *      AND we have a heating output
+                             *      AND we have been on for the minimum time
+                             *      AND we have been off for the minimum delay
+                             *      THEN turn on the heating output
+                             * 2) If we're above the maximum temp
+                             *      AND we have a cooling output
+                             *      AND we have been on for the minimum time
+                             *      AND we have been off for the minimum delay
+                             *      THEN turn on the cooling output
+                             * 
+                             */
                             // Set the duty cycle to be 100, we can wake it up when we want to
                             BrewServer.LOG.info("Checking current temp against " + this.min + " and " + this.max);
-                            if (this.min.compareTo(this.getTempF()) < 0
-                                    && this.heatSetting.outputControl.getDuty().compareTo(new BigDecimal(100)) < 0) {
-                                BrewServer.LOG.info("Current temp is less than the minimum temp, turning on 100");
-                                this.hysteriaStartTime = this.currentTime;
-                                this.duty_cycle = new BigDecimal(100);
-                                this.heatSetting.outputControl.setDuty(this.duty_cycle);
-                                this.heatSetting.outputControl.getHeater().setCycleTime(this.minTime.multiply(new BigDecimal(60)));
+                            try {
+                                this.timeDiff = this.currentTime.subtract(this.hysteriaStartTime);
+                                this.timeDiff = timeDiff.divide(THOUSAND, 2, RoundingMode.HALF_UP).divide(new BigDecimal(60), 2, RoundingMode.HALF_UP);
+                            } catch (ArithmeticException e) {
+                                BrewServer.LOG.info(e.getMessage());
+                            }
+                            
+                            if (this.getTempF().compareTo(this.min) < 0) {
+                                if (this.outputControl != null 
+                                        && this.outputControl.getDuty().compareTo(new BigDecimal(100)) < 0) {
+                                    if (this.minTimePassed()) {
+                                        BrewServer.LOG.info("Current temp is less than the minimum temp, turning on 100");
+                                        this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
+                                        this.duty_cycle = new BigDecimal(100);
+                                        this.outputControl.setDuty(this.duty_cycle);
+                                        this.outputControl.getHeater().setCycleTime(
+                                                this.minTime.multiply(new BigDecimal(60)));
+                                    }
+                                } else if (this.outputControl.getCooler() != null
+                                        && this.outputControl.getDuty().compareTo(new BigDecimal(100).negate()) < 0) {
+                                    if (this.minTimePassed()) {
+                                        BrewServer.LOG.info("Slept for long enough, turning off");
+                                        // Make sure the thread wakes up for the new settings
+                                        this.duty_cycle = new BigDecimal(0);
+                                        this.outputControl.setDuty(this.duty_cycle);
+                                        this.outputThread.interrupt();
+                                    }
+                                 }
                                 
                                 // Make sure the thread wakes up for the new settings
                                 this.outputThread.interrupt();
                                 
-                            } else if (this.max.compareTo(this.getTempF()) >= 0
-                                    && this.heatSetting.outputControl.getDuty().compareTo(BigDecimal.ZERO) != 0) {
-                                BrewServer.LOG.info("Current temp is more than the max temp");
-                                // We're over the maximum temp, but should we wake up the thread?
-                                BigDecimal timeDiff = this.currentTime.subtract(this.hysteriaStartTime);
-                                timeDiff = timeDiff.divide(THOUSAND).divide(new BigDecimal(60));
+                            } else if (this.getTempF().compareTo(this.max) >= 0) {
                                 // TimeDiff is now in minutes
-                                
-                                if (timeDiff.compareTo(this.minTime) >= 0) {
-                                    BrewServer.LOG.info("Slep for long enough, turning off");
-                                    // Make sure the thread wakes up for the new settings    
-
-                                    this.duty_cycle = BigDecimal.ZERO;
-                                    this.heatSetting.outputControl.setDuty(this.duty_cycle);
-                                    this.outputThread.interrupt();
+                                // Is the cooling output on?
+                                if (this.outputControl.getCooler() != null 
+                                        && this.outputControl.getDuty().compareTo(new BigDecimal(100).negate()) > 0) {
+                                    if (this.minTimePassed()) {
+                                        BrewServer.LOG.info("Current temp is greater than the max temp, turning on -100");
+                                        this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
+                                        this.duty_cycle = new BigDecimal(-100);
+                                        this.outputControl.setDuty(this.duty_cycle);
+                                        this.outputControl.getCooler().setCycleTime(
+                                                this.minTime.multiply(new BigDecimal(60)));
+                                    }
+                                } else if(this.outputControl.getHeater() != null 
+                                        && this.outputControl.getDuty().compareTo(new BigDecimal(100)) > 0) {
+                                   BrewServer.LOG.info("Current temp is more than the max temp");
+                                   // We're over the maximum temp, but should we wake up the thread?
+                                   
+                                   if (this.minTimePassed()) {
+                                       BrewServer.LOG.info("Slep for long enough, turning off");
+                                       // Make sure the thread wakes up for the new settings        
+                                       this.duty_cycle = BigDecimal.ZERO;
+                                       this.outputControl.setDuty(this.duty_cycle);
+                                       this.outputThread.interrupt();
+                                    }
                                 }
                             }
                         
@@ -296,7 +342,7 @@ public final class PID implements Runnable {
                    
                         BrewServer.LOG.info(mode + ": " + fName + " status: "
                             + fTempF + " duty cycle: "
-                            + this.heatSetting.outputControl.getDuty());
+                            + this.outputControl.getDuty());
                     }
                     //notify all waiters of the change of state
                 }
@@ -307,6 +353,19 @@ public final class PID implements Runnable {
                 System.err.println(ex);
                 Thread.currentThread().interrupt();
             }
+        }
+    }
+
+    private boolean minTimePassed() {
+        if (this.timeDiff.compareTo(this.minTime) <= 0) {
+            LaunchControl.setMessage("Waiting for minimum time before changing outputs "
+                    + this.minTime.subtract(this.timeDiff) + " mins remaining");
+            return false;
+        } else { 
+            if (LaunchControl.getMessage().startsWith("Waiting for minimum")) {
+                LaunchControl.setMessage("");
+            }
+            return true;
         }
     }
 
@@ -443,7 +502,7 @@ public final class PID implements Runnable {
      * @return Get the temperature in fahrenheit
      */
     public BigDecimal getTempF() {
-        return fTempC;
+        return fTempF;
     }
 
     /**
@@ -608,6 +667,7 @@ public final class PID implements Runnable {
      */
     private BigDecimal currentTime = new BigDecimal(System.currentTimeMillis());
     private BigDecimal hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
+    private BigDecimal timeDiff = new BigDecimal(0.0);
     /**
      * Settings for the heating and cooling.
      */
@@ -669,7 +729,7 @@ public final class PID implements Runnable {
         BigDecimal dt = MathUtil.divide(
                 currentTime.subtract(previousTime),THOUSAND);
         if (dt.compareTo(BigDecimal.ZERO) == 0) {
-            return heatSetting.outputControl.getDuty();
+            return outputControl.getDuty();
         }
 
         // Calculate the error
@@ -714,10 +774,10 @@ public final class PID implements Runnable {
      * Used as a shutdown hook to close off everything.
      */
     public void shutdown() {
-        if (heatSetting.outputControl != null && outputThread != null) {
-            this.heatSetting.outputControl.shuttingDown = true;
+        if (outputControl != null && outputThread != null) {
+            this.outputControl.shuttingDown = true;
             this.outputThread.interrupt();
-            this.heatSetting.outputControl.shutdown();
+            this.outputControl.shutdown();
         }
 
         if (auxPin != null) {
@@ -745,7 +805,7 @@ public final class PID implements Runnable {
         // set the values
         int j = 0;
         // Wait for the Output to turn on.
-        while (coolSetting.outputControl == null) {
+        while (outputControl.getCooler() == null) {
             j++;
             try {
                 Thread.sleep(100);
@@ -758,7 +818,7 @@ public final class PID implements Runnable {
                 return;
             }
         }
-        this.heatSetting.outputControl.setCool(gpio, duty, delay);
+        this.outputControl.setCool(gpio, duty, delay);
     }
 
     /**
@@ -814,24 +874,30 @@ public final class PID implements Runnable {
      */
     public void setHeatGPIO(final String gpio) {
         // Close down the existing OutputControl
-        if (this.heatSetting.outputControl != null) {
-            this.heatSetting.outputControl.shutdown();
+        if (this.outputControl.getHeater() != null) {
+            this.outputControl.getHeater().disable();
         }
 
         this.heatGPIO = gpio;
-        this.heatSetting.outputControl = new OutputControl(
-            this.fName, this.heatGPIO, this.heatSetting.cycle_time);
+        if (this.heatGPIO != null) {
+            this.outputControl.setHeater(new OutputDevice(
+                this.getName(), heatGPIO, this.heatSetting.cycle_time));
+        } else {
+            this.outputControl.setHeater(null);
+        }
     }
 
     public void setCoolGPIO(final String gpio) {
         // Close down the existing OutputControl
-        if (this.coolSetting.outputControl != null) {
-            this.coolSetting.outputControl.shutdown();
+        if (this.outputControl.getCooler() != null) {
+            this.outputControl.getCooler().disable();
         }
-
         this.coolGPIO = gpio;
-        this.coolSetting.outputControl = new OutputControl(
-            this.fName, this.coolGPIO, this.coolSetting.cycle_time);
+        if (gpio != null) {
+            this.outputControl.setCool(gpio, new BigDecimal(0), this.coolSetting.delay);
+        } else {
+            this.outputControl.setCooler(null);
+        }
     }
     
     public BigDecimal getMin() {

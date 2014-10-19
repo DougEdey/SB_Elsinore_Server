@@ -231,7 +231,7 @@ public final class LaunchControl {
      * Xpath Expression static for the helpers.
      */
     private static XPathExpression expr = null;
-    private static String message = null;
+    private static String message = "";
     private static double recorderDiff = .15d;
     private static String breweryName = null;
     public static String theme = "default";
