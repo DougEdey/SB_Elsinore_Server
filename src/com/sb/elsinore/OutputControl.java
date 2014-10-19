@@ -177,6 +177,5 @@ public final class OutputControl implements Runnable {
     public void setHeater(OutputDevice heater) {
         this.heater = heater;
     }
-
 }
 

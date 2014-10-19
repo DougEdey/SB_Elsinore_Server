@@ -257,6 +257,7 @@ public final class PID implements Runnable {
                             this.outputControl.setDuty(calculatedDuty);
                             this.outputControl.getHeater().setCycleTime(heatSetting.cycle_time);
                         } else if (mode.equals("manual")) {
+                            this.outputControl.getHeater().setCycleTime(this.manual_cycle);
                             this.outputControl.setDuty(duty_cycle);
                         } else if (mode.equals("off")) {
                             this.outputControl.setDuty(BigDecimal.ZERO);
