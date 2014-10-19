@@ -205,7 +205,7 @@ public final class PID implements Runnable {
         // setup the first time
         this.previousTime = new BigDecimal(System.currentTimeMillis());
         // create the Output if needed
-        if (!this.heatGPIO.equals("")) {
+        if (this.heatGPIO != null && !this.heatGPIO.equals("")) {
             this.outputControl =
                 new OutputControl(fName, heatGPIO, heatSetting.cycle_time);
             this.outputThread = new Thread(this.outputControl);
@@ -661,7 +661,7 @@ public final class PID implements Runnable {
     /**
      * Various strings.
      */
-    private String mode, fName;
+    private String mode = "off", fName = null;
     /**
      * The current timestamp.
      */
@@ -874,11 +874,14 @@ public final class PID implements Runnable {
      */
     public void setHeatGPIO(final String gpio) {
         // Close down the existing OutputControl
+        this.heatGPIO = gpio;
+        if (this.outputControl == null) {
+            this.outputControl = new OutputControl(this.getName(), gpio, this.getHeatCycle());
+        }
         if (this.outputControl.getHeater() != null) {
             this.outputControl.getHeater().disable();
         }
 
-        this.heatGPIO = gpio;
         if (this.heatGPIO != null) {
             this.outputControl.setHeater(new OutputDevice(
                 this.getName(), heatGPIO, this.heatSetting.cycle_time));
@@ -889,10 +892,14 @@ public final class PID implements Runnable {
 
     public void setCoolGPIO(final String gpio) {
         // Close down the existing OutputControl
+        this.coolGPIO = gpio;
+        if (this.outputControl == null) {
+            this.outputControl = new OutputControl(this.getName(), this.heatGPIO, this.getHeatCycle());
+        }
         if (this.outputControl.getCooler() != null) {
             this.outputControl.getCooler().disable();
         }
-        this.coolGPIO = gpio;
+        
         if (gpio != null) {
             this.outputControl.setCool(gpio, new BigDecimal(0), this.coolSetting.delay);
         } else {
