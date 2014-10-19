@@ -299,8 +299,14 @@ function waitForMsg(){
 							}
 							
 							if (duty < 100) {
+								if (Gauges[vesselName].config.textMax != "0") {
+									Gauges[vesselName].config.levelColors = [ "#0033CC", "#CC00CC", "#a9d70b"];
+								}
 								Gauges[vesselName].refreshBoth(duty, -100, "0");
 							} else {
+								if (Gauges[vesselName].config.textMax != "0") {
+									Gauges[vesselName].config.levelColors = [ "#a9d70b", "#f9c802", "#ff0000"];
+								}
 								Gauges[vesselName].refreshBoth(duty, "0", 100);
 							}
 							
