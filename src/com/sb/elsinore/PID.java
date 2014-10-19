@@ -35,6 +35,7 @@ public final class PID implements Runnable {
     private BigDecimal duty_cycle = new BigDecimal(0);
     private BigDecimal calculatedDuty = new BigDecimal(0);
     private BigDecimal set_point = new BigDecimal(0);
+    private BigDecimal manual_cycle = new BigDecimal(0);
     
     /* Hysteria Settings */
     private BigDecimal max = new BigDecimal(0);
@@ -853,6 +854,7 @@ public final class PID implements Runnable {
 
         statusMap.put("duty", getDuty());
         statusMap.put("setpoint", getSetPoint());
+        statusMap.put("manualcycle", this.manual_cycle);
         statusMap.put("min", this.min);
         statusMap.put("max", this.max);
         statusMap.put("time", this.minTime);
@@ -939,5 +941,13 @@ public final class PID implements Runnable {
     
     public void setCoolCycle(BigDecimal coolCycle) {
         this.coolSetting.cycle_time= coolCycle;
+    }
+    
+    public void setHeatCycle(BigDecimal heatCycle) {
+        this.heatSetting.cycle_time = heatCycle;
+    }
+    
+    public void setManualCycle(BigDecimal cycle) {
+        this.manual_cycle = cycle;
     }
 }

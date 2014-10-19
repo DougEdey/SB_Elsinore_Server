@@ -917,7 +917,7 @@ public class BrewServer extends NanoHTTPD {
                 max = new BigDecimal(0), time = new BigDecimal(0),
                 coolcycle = new BigDecimal(0), coolp= new BigDecimal(0),
                 cooli = new BigDecimal(0), coold = new BigDecimal(0),
-                cooldelay = new BigDecimal(0);
+                cooldelay = new BigDecimal(0), cycle = new BigDecimal(0);
 
         JSONObject sub_usage = new JSONObject();
         Map<String, String> parms = ParseParams(params);
@@ -1003,6 +1003,18 @@ public class BrewServer extends NanoHTTPD {
                 dTemp = new BigDecimal(temp.replace(",", "."));
                 coolcycle = dTemp;
                 BrewServer.LOG.info("Cycle time: " + coolcycle);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad cycle");
+            }
+        }
+        
+        sub_usage.put("cycletime", "The new manual cycle time in seconds to set");
+        if (parms.containsKey("cycletime")) {
+            temp = parms.get("cycletime");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                cycle = dTemp;
+                BrewServer.LOG.info("Cycle time: " + cycle);
             } catch (NumberFormatException nfe) {
                 BrewServer.LOG.info("Bad cycle");
             }
@@ -1117,6 +1129,10 @@ public class BrewServer extends NanoHTTPD {
                 tPID.setCoolI(cooli);
                 tPID.setCoolD(coold);
                 tPID.setCoolDelay(cooldelay);
+                
+                if (mode.equalsIgnoreCase("manual")) {
+                    tPID.setManualCycle(cycle);
+                }
             }
             return new Response(Status.OK, MIME_HTML, "PID " + inputUnit
                     + " updated");

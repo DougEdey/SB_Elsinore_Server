@@ -381,6 +381,18 @@ public class ServeHTML {
                 + "</td>" + lineSep
                 + "<td id='" + device + "-unitDC'>%</td><br />"
             + "</tr>" + lineSep
+            
+            +"<tr id='" + device + "-DT' class='holo-field'>"
+                + lineSep
+                + "<td id='" + device + "-labelDT' >" + Messages.DUTY_TIME + "</td>"
+                + lineSep
+                + "<td id=\"" + device + "-cycletime\">" + lineSep
+                + "<input class='inputBox dutytime' name=\"cycletime\""
+                + " maxlength = \"6\" size =\"6\" value=\"\""
+                + " style=\"text-align: left;\"/>"
+                + "</td>" + lineSep
+                + "<td id='" + device + "-unitDT'>" + Messages.SECS + "</td>"
+            + "</tr>" + lineSep
 
             // Add in the tabs
             + "<!-- Nav tabs -->" + lineSep
