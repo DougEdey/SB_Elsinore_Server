@@ -256,15 +256,7 @@ function waitForMsg() {
 					if (window.disableUpdates) {
 						return false;
 					}
-
-					if ("locked" in data) {
-						if (window.locked == undefined) {
-							window.locked = !data.locked;
-							toggleEdit(false);
-							window.locked = data.locked;
-						}
-					}
-
+					
 					if ("vessels" in data) {
 						val = data.vessels;
 
@@ -287,8 +279,7 @@ function waitForMsg() {
 								sysTemp.remove();
 							}
 						}
-						$
-								.each(
+						$.each(
 										val,
 										function(vesselName, vesselStatus) {
 
@@ -376,7 +367,15 @@ function waitForMsg() {
 											}
 										});
 					}
-
+					
+					if ("locked" in data) {
+						if (window.locked == undefined) {
+							window.locked = !data.locked;
+							toggleEdit(false);
+							window.locked = data.locked;
+						}
+					}
+					
 					vessel = null;
 					data = null;
 					fixWebkitHeightBug();
@@ -450,7 +449,8 @@ function updateTempProbe(vessel, val) {
 	if ("calibration" in val) {
 		jQuery(vesselDiv + ' input[name="calibration"]').val(val.calibration);
 	}
-
+	
+	jQuery(vesselDiv + ' input[name="hidden"]').val(val.hidden);
 	jQuery("#" + vessel + "-tempStatus").text(temp);
 
 	$("[id=" + vessel + "]").find("[id=tempUnit]").each(function() {
@@ -577,7 +577,13 @@ function editDevice(element) {
 	var auxgpio = $('#' + vessel + ' input[name="auxgpio"]').val();
 	var cutoff = $('#' + vessel + ' input[name="cutoff"]').val();
 	var calibration = $('#' + vessel + ' input[name="calibration"]').val();
+	var hidden = $('#' + vessel + ' input[name="hidden"]').val();
 
+	if (hidden == "true") {
+		var toggle = "SHOW";
+	} else {
+		var toggle = "HIDE";
+	}
 	// Insert a couple of new form elements
 	$('#' + vesselDiv)
 			.append(
@@ -630,6 +636,11 @@ function editDevice(element) {
 							+ "onclick='cancelEdit(" + vessel
 							+ "); waitForMsg(); return false;'>"
 							+ $.i18n.prop("CANCEL") + "</button>" + "</form>"
+							+ "<button id='hide-" + vessel
+							+ "' class='holo-button modeclass' "
+							+ "onclick='toggleDevice(" + vessel
+							+ "); waitForMsg(); sleep(1000); location.reload();'>"
+							+ $.i18n.prop(toggle) + "</button>" + "</form>"
 							+ "</div>");
 }
 
@@ -660,6 +671,18 @@ function validate_gpio(gpio_input) {
 
 function cancelEdit(vessel) {
 	$('#' + vessel + '-edit').empty().remove();
+}
+
+function toggleDevice(vessel) {
+	$.ajax({
+		url : 'toggledevice',
+		type : 'POST',
+		data : "device=" + vessel,
+		dataType : 'json',
+		success : function(data) {
+			data = null
+		}
+	});
 }
 
 function hidePIDForm(vessel) {
@@ -1894,9 +1917,19 @@ function toggleEdit(manualChange) {
 	if ("locked" in window) {
 		if (window.locked) {
 			readWrite(manualChange);
+			$(".controller").each(function hideDevice(count, element) {
+				$(element).show();
+			});
 			return;
 		} else {
 			readOnly(manualChange);
+			$(".controller").each(function hideDevice(count, element) {
+				if ($(element).find("input[id='hidden']").val() == "true") {
+					$(element).hide();
+				} else {
+					$(element).show();
+				}
+			});
 			return;
 		}
 	}

@@ -43,6 +43,7 @@ public final class Temp implements Runnable {
     public static BigDecimal ERROR_TEMP = new BigDecimal(-999);
     private boolean badTemp = false;
     private boolean keepalive = true;
+    private boolean hidden = false;
     /**
      * Base path for BBB System Temp.
      */
@@ -962,7 +963,7 @@ public final class Temp implements Runnable {
      */
     public Map<String, Object> getMapStatus() {
         Map<String, Object> statusMap = new HashMap<String, Object>();
-
+        statusMap.put("hidden", isHidden());
         statusMap.put("temp", getTemp());
         statusMap.put("elapsed", getTime());
         statusMap.put("scale", getScale());
@@ -1026,6 +1027,34 @@ public final class Temp implements Runnable {
 
     public boolean isSetup() {
         return !this.getName().equals(this.getProbe());
+    }
+
+    public void toggleVisibility() {
+        if (this.hidden) {
+            this.show();
+        } else {
+            this.hide();
+        }
+    }
+
+    public void hide() {
+        this.hidden = true;
+    }
+
+    public void show() {
+        this.hidden = false;
+    }
+
+    public boolean isHidden() {
+        return this.hidden;
+    }
+    
+    public String getVisibility() {
+        if (this.hidden) {
+            return "SHOWN";
+        } else {
+            return "HIDDEN";
+        }
     }
 }
 

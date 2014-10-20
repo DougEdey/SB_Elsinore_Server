@@ -1476,9 +1476,13 @@ public class BrewServer extends NanoHTTPD {
         if (uri.equalsIgnoreCase("/deletetimer")) {
             return deleteTimer(parms);
         }
-        
+
         if (uri.equalsIgnoreCase("/setscale")) {
             return setScale(parms);
+        }
+
+        if (uri.equalsIgnoreCase("/toggledevice")) {
+            return toggleDevice(parms);
         }
 
         System.out.println("Unidentified URL: " + uri);
@@ -2209,6 +2213,25 @@ public class BrewServer extends NanoHTTPD {
 
         // Iterate all the temperature probes and change the scale
         if (!LaunchControl.setTempScales(params.get("scale"))) {
+            status = Response.Status.BAD_REQUEST;
+        }
+
+        return new Response(status, MIME_TYPES.get("json"),
+                usage.toJSONString());
+    }
+    
+    private Response toggleDevice(Map<String, String> parms) {
+        Map<String, String> params = ParseParams(parms);
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Hide a specific device from the UI");
+        usage.put("device", "The device name to hide");
+
+        Status status = Response.Status.OK;
+        Temp temp = LaunchControl.findTemp(params.get("device"));
+
+        if (temp != null) {
+            temp.toggleVisibility();
+        } else {
             status = Response.Status.BAD_REQUEST;
         }
 
