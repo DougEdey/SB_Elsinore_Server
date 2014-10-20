@@ -256,7 +256,7 @@ function waitForMsg() {
 					if (window.disableUpdates) {
 						return false;
 					}
-					
+
 					if ("vessels" in data) {
 						val = data.vessels;
 
@@ -279,7 +279,8 @@ function waitForMsg() {
 								sysTemp.remove();
 							}
 						}
-						$.each(
+						$
+								.each(
 										val,
 										function(vesselName, vesselStatus) {
 
@@ -367,7 +368,7 @@ function waitForMsg() {
 											}
 										});
 					}
-					
+
 					if ("locked" in data) {
 						if (window.locked == undefined) {
 							window.locked = !data.locked;
@@ -375,7 +376,7 @@ function waitForMsg() {
 							window.locked = data.locked;
 						}
 					}
-					
+
 					vessel = null;
 					data = null;
 					fixWebkitHeightBug();
@@ -449,7 +450,7 @@ function updateTempProbe(vessel, val) {
 	if ("calibration" in val) {
 		jQuery(vesselDiv + ' input[name="calibration"]').val(val.calibration);
 	}
-	
+
 	jQuery(vesselDiv + ' input[name="hidden"]').val(val.hidden);
 	jQuery("#" + vessel + "-tempStatus").text(temp);
 
@@ -630,16 +631,23 @@ function editDevice(element) {
 							+ vessel
 							+ "' class='holo-button modeclass' "
 							+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>"
-							+ $.i18n.prop("UPDATE") + "</button>"
-							+ "<button id='cancel-" + vessel
+							+ $.i18n.prop("UPDATE")
+							+ "</button>"
+							+ "<button id='cancel-"
+							+ vessel
 							+ "' class='holo-button modeclass' "
-							+ "onclick='cancelEdit(" + vessel
+							+ "onclick='cancelEdit("
+							+ vessel
 							+ "); waitForMsg(); return false;'>"
-							+ $.i18n.prop("CANCEL") + "</button>" + "</form>"
-							+ "<button id='hide-" + vessel
+							+ $.i18n.prop("CANCEL")
+							+ "</button>"
+							+ "</form>"
+							+ "<button id='hide-"
+							+ vessel
 							+ "' class='holo-button modeclass' "
-							+ "onclick='toggleDevice(" + vessel
-							+ "); waitForMsg(); sleep(1000); location.reload();'>"
+							+ "onclick='toggleDevice(\""
+							+ vessel
+							+ "\"); waitForMsg(); sleep(1000); location.reload();'>"
 							+ $.i18n.prop(toggle) + "</button>" + "</form>"
 							+ "</div>");
 }
@@ -678,7 +686,6 @@ function toggleDevice(vessel) {
 		url : 'toggledevice',
 		type : 'POST',
 		data : "device=" + vessel,
-		dataType : 'json',
 		success : function(data) {
 			data = null
 		}
