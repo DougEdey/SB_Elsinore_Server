@@ -26,6 +26,9 @@ public final class OutputControl implements Runnable {
     
     private String status = "off";
     
+    public OutputControl() {
+        
+    }
     /**
      * Constructor for a heat only pin.
      * @param aName Name of this instance.
@@ -174,6 +177,5 @@ public final class OutputControl implements Runnable {
     public void setHeater(OutputDevice heater) {
         this.heater = heater;
     }
-
 }
 

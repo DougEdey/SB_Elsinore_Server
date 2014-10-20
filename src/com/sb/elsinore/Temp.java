@@ -43,6 +43,7 @@ public final class Temp implements Runnable {
     public static BigDecimal ERROR_TEMP = new BigDecimal(-999);
     private boolean badTemp = false;
     private boolean keepalive = true;
+    private boolean hidden = false;
     /**
      * Base path for BBB System Temp.
      */
@@ -210,7 +211,7 @@ public final class Temp implements Runnable {
      * @return The name of this probe
      */
     public String getName() {
-        return name;
+        return name.replaceAll(" ", "_");
     }
 
     /**
@@ -962,7 +963,7 @@ public final class Temp implements Runnable {
      */
     public Map<String, Object> getMapStatus() {
         Map<String, Object> statusMap = new HashMap<String, Object>();
-
+        statusMap.put("hidden", isHidden());
         statusMap.put("temp", getTemp());
         statusMap.put("elapsed", getTime());
         statusMap.put("scale", getScale());
@@ -1003,6 +1004,7 @@ public final class Temp implements Runnable {
             }
             // Create the temp
             BigDecimal temperature = new BigDecimal(number);
+            temperature.setScale(2);
             String unit = tempMatcher.group(4);
 
             if (unit == null || unit.equals(this.scale)) {
@@ -1020,11 +1022,39 @@ public final class Temp implements Runnable {
     }
 
     public String getCalibration() {
-        return this.calibration + this.scale;
+        return this.calibration.toPlainString() + this.scale;
     }
 
     public boolean isSetup() {
         return !this.getName().equals(this.getProbe());
+    }
+
+    public void toggleVisibility() {
+        if (this.hidden) {
+            this.show();
+        } else {
+            this.hide();
+        }
+    }
+
+    public void hide() {
+        this.hidden = true;
+    }
+
+    public void show() {
+        this.hidden = false;
+    }
+
+    public boolean isHidden() {
+        return this.hidden;
+    }
+    
+    public String getVisibility() {
+        if (this.hidden) {
+            return "SHOWN";
+        } else {
+            return "HIDDEN";
+        }
     }
 }
 

@@ -605,8 +605,8 @@ public class BrewServer extends NanoHTTPD {
      * @return True is success, false if failure.
      */
     private Response editVessel(final Map<String, String> params) {
-        String auxpin = "", newName = "", gpio = "";
-        String inputUnit = "", cutoff = "";
+        String auxpin = "", newName = "", heatgpio = "";
+        String inputUnit = "", cutoff = "", coolgpio = "";
         String calibration = null;
 
         Set<Entry<String, String>> incomingParams = params.entrySet();
@@ -650,8 +650,12 @@ public class BrewServer extends NanoHTTPD {
             newName = parms.get("new_name");
         }
 
-        if (parms.containsKey("new_gpio")) {
-            gpio = parms.get("new_gpio");
+        if (parms.containsKey("new_heat_gpio")) {
+            heatgpio = parms.get("new_heat_gpio");
+        }
+
+        if (parms.containsKey("new_cool_gpio")) {
+            coolgpio = parms.get("new_cool_gpio");
         }
 
         if (parms.containsKey("auxpin")) {
@@ -706,26 +710,41 @@ public class BrewServer extends NanoHTTPD {
             newName = inputUnit;
         }
 
-        if (!gpio.equals("")) {
+        // HEATING GPIO
+        if (!heatgpio.equals("") || !coolgpio.equals("")) {
             // The GPIO is Set.
             if (tPID == null) {
                 // No PID already, create one.
-                tPID = new PID(tProbe, newName, gpio);
+                tPID = new PID(tProbe, newName);
+                // Setup the heating output
+                if (!heatgpio.equals("")) {
+                    tPID.setHeatGPIO(heatgpio);
+                }
+                // Setup the cooling output
+                if (!coolgpio.equals("")) {
+                    tPID.setCoolGPIO(coolgpio);
+                }
                 tPID.setAux(auxpin);
                 LaunchControl.addPID(tPID);
                 BrewServer.LOG.warning("Create PID");
                 return new Response(Status.OK, MIME_TYPES.get("txt"),
                         "PID Added");
-            } else if (!tPID.getGPIO().equals(gpio)) {
-                // We have a PID, set it to the new value
-                tPID.setGPIO(gpio);
+            } else {
+                if (!tPID.getHeatGPIO().equals(heatgpio)) {
+                    // We have a PID, set it to the new value
+                    tPID.setHeatGPIO(heatgpio);
+                }
+                if (!tPID.getCoolGPIO().equals(coolgpio)) {
+                    // We have a PID, set it to the new value
+                    tPID.setCoolGPIO(coolgpio);
+                }
                 return new Response(Status.OK, MIME_TYPES.get("txt"),
                         "PID Updated");
             }
         } else {
             if (tPID != null) {
                 LaunchControl.deletePID(tPID);
-                tPID.setGPIO("");
+                tPID.setHeatGPIO("");
             }
         }
 
@@ -891,10 +910,14 @@ public class BrewServer extends NanoHTTPD {
     @SuppressWarnings("unchecked")
     private Response updatePID(final Map<String, String> params) {
         String temp, mode = "off";
-        BigDecimal dTemp = new BigDecimal(0), duty = new BigDecimal(0), cycle = new BigDecimal(
-                0), setpoint = new BigDecimal(0), p = new BigDecimal(0), i = new BigDecimal(
-                0), d = new BigDecimal(0), min = new BigDecimal(0), max = new BigDecimal(
-                0), time = new BigDecimal(0);
+        BigDecimal dTemp = new BigDecimal(0), duty = new BigDecimal(0),
+                heatcycle = new BigDecimal(0), setpoint = new BigDecimal(0),
+                heatp = new BigDecimal(0), heati = new BigDecimal(0),
+                heatd = new BigDecimal(0), min = new BigDecimal(0),
+                max = new BigDecimal(0), time = new BigDecimal(0),
+                coolcycle = new BigDecimal(0), coolp= new BigDecimal(0),
+                cooli = new BigDecimal(0), coold = new BigDecimal(0),
+                cooldelay = new BigDecimal(0), cycle = new BigDecimal(0);
 
         JSONObject sub_usage = new JSONObject();
         Map<String, String> parms = ParseParams(params);
@@ -913,18 +936,6 @@ public class BrewServer extends NanoHTTPD {
             }
         }
 
-        sub_usage.put("dutycycle", "The new cycle time in seconds to set");
-        if (parms.containsKey("cycletime")) {
-            temp = parms.get("cycletime");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                cycle = dTemp;
-                BrewServer.LOG.info("Cycle time: " + cycle);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad cycle");
-            }
-        }
-
         sub_usage.put("setpoint", "The new target temperature to set");
         if (parms.containsKey("setpoint")) {
             temp = parms.get("setpoint");
@@ -937,39 +948,123 @@ public class BrewServer extends NanoHTTPD {
             }
         }
 
-        sub_usage.put("p", "The new proportional value to set");
-        if (parms.containsKey("p")) {
-            temp = parms.get("p");
+        sub_usage.put("heatcycletime", "The new heat cycle time in seconds to set");
+        if (parms.containsKey("heatcycletime")) {
+            temp = parms.get("heatcycletime");
             try {
                 dTemp = new BigDecimal(temp.replace(",", "."));
-                p = dTemp;
-                BrewServer.LOG.info("P: " + p);
+                heatcycle = dTemp;
+                BrewServer.LOG.info("Cycle time: " + heatcycle);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad p");
+                BrewServer.LOG.info("Bad cycle");
             }
         }
 
-        sub_usage.put("p", "The new integral value to set");
-        if (parms.containsKey("i")) {
-            temp = parms.get("i");
+        sub_usage.put("heatp", "The new proportional value to set");
+        if (parms.containsKey("heatp")) {
+            temp = parms.get("heatp");
             try {
                 dTemp = new BigDecimal(temp.replace(",", "."));
-                i = dTemp;
-                BrewServer.LOG.info("I: " + i);
+                heatp = dTemp;
+                BrewServer.LOG.info("heat P: " + heatp);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad i");
+                BrewServer.LOG.info("Bad heat p");
             }
         }
 
-        sub_usage.put("p", "The new differential value to set");
-        if (parms.containsKey("d")) {
-            temp = parms.get("d");
+        sub_usage.put("heati", "The new integral value to set");
+        if (parms.containsKey("heati")) {
+            temp = parms.get("heati");
             try {
                 dTemp = new BigDecimal(temp.replace(",", "."));
-                d = dTemp;
-                BrewServer.LOG.info("D: " + d);
+                heati = dTemp;
+                BrewServer.LOG.info("Heat I: " + heati);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad d");
+                BrewServer.LOG.info("Bad heat i");
+            }
+        }
+
+        sub_usage.put("heatd", "The new head differential value to set");
+        if (parms.containsKey("heatd")) {
+            temp = parms.get("heatd");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                heatd = dTemp;
+                BrewServer.LOG.info("Heat D: " + heatd);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad heat d");
+            }
+        }
+
+        sub_usage.put("coolcycletime", "The new cool cycle time in seconds to set");
+        if (parms.containsKey("coolcycletime")) {
+            temp = parms.get("coolcycletime");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                coolcycle = dTemp;
+                BrewServer.LOG.info("Cycle time: " + coolcycle);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad cycle");
+            }
+        }
+        
+        sub_usage.put("cycletime", "The new manual cycle time in seconds to set");
+        if (parms.containsKey("cycletime")) {
+            temp = parms.get("cycletime");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                cycle = dTemp;
+                BrewServer.LOG.info("Cycle time: " + cycle);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad cycle");
+            }
+        }
+
+        sub_usage.put("cooldelay", "The new cool cycle delay in minutes to set");
+        if (parms.containsKey("cooldelay")) {
+            temp = parms.get("cooldelay");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                cooldelay = dTemp;
+                BrewServer.LOG.info("Delay time: " + cooldelay);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad Cool delay");
+            }
+        }
+
+        sub_usage.put("coolp", "The new proportional value to set");
+        if (parms.containsKey("coolp")) {
+            temp = parms.get("coolp");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                coolp = dTemp;
+                BrewServer.LOG.info("cool P: " + coolp);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad cool p");
+            }
+        }
+
+        sub_usage.put("cooli", "The new integral value to set");
+        if (parms.containsKey("cooli")) {
+            temp = parms.get("cooli");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                cooli = dTemp;
+                BrewServer.LOG.info("Heat I: " + cooli);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad cool i");
+            }
+        }
+
+        sub_usage.put("coold", "The new head differential value to set");
+        if (parms.containsKey("coold")) {
+            temp = parms.get("coold");
+            try {
+                dTemp = new BigDecimal(temp.replace(",", "."));
+                coold = dTemp;
+                BrewServer.LOG.info("Heat D: " + coold);
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.info("Bad cool d");
             }
         }
 
@@ -1026,9 +1121,18 @@ public class BrewServer extends NanoHTTPD {
                 tPID.setHysteria(min, max, time);
                 tPID.useHysteria();
             } else {
-                BrewServer.LOG.info(mode + ":" + duty + ":" + cycle + ":"
-                        + setpoint + ":" + p + ":" + i + ":" + d);
-                tPID.updateValues(mode, duty, cycle, setpoint, p, i, d);
+                BrewServer.LOG.info(mode + ":" + duty + ":" + heatcycle + ":"
+                        + setpoint + ":" + heatp + ":" + heati + ":" + heatd);
+                tPID.updateValues(mode, duty, heatcycle, setpoint, heatp, heati, heatd);
+                tPID.setCoolCycle(coolcycle);
+                tPID.setCoolP(coolp);
+                tPID.setCoolI(cooli);
+                tPID.setCoolD(coold);
+                tPID.setCoolDelay(cooldelay);
+                
+                if (mode.equalsIgnoreCase("manual")) {
+                    tPID.setManualCycle(cycle);
+                }
             }
             return new Response(Status.OK, MIME_HTML, "PID " + inputUnit
                     + " updated");
@@ -1164,7 +1268,7 @@ public class BrewServer extends NanoHTTPD {
         if (uri.equalsIgnoreCase("/updatepump")) {
             if (parms.containsKey("toggle")) {
                 String pumpname = parms.get("toggle");
-                Pump tempPump = LaunchControl.findPump(pumpname);
+                Pump tempPump = LaunchControl.findPump(pumpname.replaceAll("_", " "));
                 if (tempPump != null) {
                     if (tempPump.getStatus()) {
                         tempPump.turnOff();
@@ -1372,9 +1476,13 @@ public class BrewServer extends NanoHTTPD {
         if (uri.equalsIgnoreCase("/deletetimer")) {
             return deleteTimer(parms);
         }
-        
+
         if (uri.equalsIgnoreCase("/setscale")) {
             return setScale(parms);
+        }
+
+        if (uri.equalsIgnoreCase("/toggledevice")) {
+            return toggleDevice(parms);
         }
 
         System.out.println("Unidentified URL: " + uri);
@@ -1769,6 +1877,10 @@ public class BrewServer extends NanoHTTPD {
      * @return the JSON Response data
      */
     public NanoHTTPD.Response getGraphData(Map<String, String> params) {
+        if (!LaunchControl.recorderEnabled()) {
+            return new NanoHTTPD.Response("Recorder disabled");
+        }
+
         Map<String, String> parms = ParseParams(params);
         // Have we been asked for a size?
         int size = 1000;
@@ -2101,6 +2213,25 @@ public class BrewServer extends NanoHTTPD {
 
         // Iterate all the temperature probes and change the scale
         if (!LaunchControl.setTempScales(params.get("scale"))) {
+            status = Response.Status.BAD_REQUEST;
+        }
+
+        return new Response(status, MIME_TYPES.get("json"),
+                usage.toJSONString());
+    }
+    
+    private Response toggleDevice(Map<String, String> parms) {
+        Map<String, String> params = ParseParams(parms);
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Hide a specific device from the UI");
+        usage.put("device", "The device name to hide");
+
+        Status status = Response.Status.OK;
+        Temp temp = LaunchControl.findTemp(params.get("device"));
+
+        if (temp != null) {
+            temp.toggleVisibility();
+        } else {
             status = Response.Status.BAD_REQUEST;
         }
 
