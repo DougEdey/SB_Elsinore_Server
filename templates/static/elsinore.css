@@ -85,9 +85,9 @@ div[id$='-tempStatus'] {
 }
 
 .imageheader {
-	float: right;
+	/*float: right;
 	right: 0;
-	clear: left;
+	clear: left;*/
 }
 
 
@@ -282,12 +282,24 @@ div[id='timers'] > .panel > .panel-body > div {
 
 .left {
 	float:left;
+	height:65px;
 }
 
 .right {
 	float: right;
+	height:65px;
 }
 
-.center {
+.center-left {
 	float: none;
+	height:65px;
+	display: table-cell;
+	overflow: hidden;
+}
+
+.center-right {
+	float: none;
+	height:65px;
+	display: table-cell;
+	overflow: hidden;
 }

@@ -18,8 +18,8 @@ import org.json.simple.JSONValue;
  */
 public class StatusRecorder implements Runnable {
 
-    private static double THRESHOLD = .15d;
-    private static final long SLEEP = 1000 * 5; // 5 seconds - is this too fast?
+    public static double THRESHOLD = .15d;
+    public static long SLEEP = 1000 * 5; // 5 seconds - is this too fast?
     private JSONObject lastStatus = null;
     private long lastStatusTime = 0;
     private String logFile = null;
@@ -354,5 +354,21 @@ public class StatusRecorder implements Runnable {
      */
     public void setThreshold(double recorderDiff) {
         this.THRESHOLD = recorderDiff;
+    }
+    
+    public double getDiff() {
+        return StatusRecorder.THRESHOLD;
+    }
+    
+    public double getTime() {
+        return StatusRecorder.SLEEP;
+    }
+
+    public void setDiff(double threshold) {
+        StatusRecorder.THRESHOLD = threshold;
+    }
+    
+    public void setTime(long time) {
+        StatusRecorder.SLEEP = time;
     }
 }

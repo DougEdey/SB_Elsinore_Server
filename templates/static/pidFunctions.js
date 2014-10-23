@@ -52,11 +52,11 @@ function setup() {
 		}
 	});
 
-	$('[class=page-header]')
+	$('div[class="center-left"]')
 			.append(
 					"<div id='edit-page' class='holo-button' onclick='toggleEdit(true); return false;'>"
 							+ $.i18n.prop("EDIT") + "</div>");
-	$('[class=page-header]')
+	$('div[class="center-left"]')
 			.append(
 					"<div id='change-scale' class='holo-button' onclick='changeScale(); return false;'>"
 							+ $.i18n.prop("CHANGE_SCALE") + "</div>")
@@ -1947,15 +1947,19 @@ function readOnly(manualChange) {
 	if (window.locked != undefined && window.locked) {
 		return;
 	}
-	readOnlyPumps();
-	readOnlyTimers();
-	readOnlyDevices();
-	$("[id=edit-page]").text($.i18n.prop("EDIT"));
-	$("[id=change-scale]").hide();
-	$("[id=CheckUpdates]").hide();
-	$("[id=logo]").hide();
-	window.locked = true;
+	
 	if (manualChange) {
+		var formdata = JSON.stringify(jQuery('form[id=settings-form]').serializeObject());
+		formdata.recorder = $('form[id="settings-form"] div[id="recorder_enabled"] input').prop("checked");
+		$.ajax({
+			url : 'updateSystemSettings',
+			type : 'POST',
+			data: formdata,
+			success : function(data) {
+				data = null
+			}
+		});
+		
 		$.ajax({
 			url : 'lockPage',
 			type : 'POST',
@@ -1967,6 +1971,16 @@ function readOnly(manualChange) {
 		sleep(2000);
 		location.reload();
 	}
+	
+	readOnlyPumps();
+	readOnlyTimers();
+	readOnlyDevices();
+	$("[id=edit-page]").text($.i18n.prop("EDIT"));
+	$("[id=change-scale]").hide();
+	$("[id=CheckUpdates]").hide();
+	$("[id=logo]").hide();
+	window.locked = true;
+	
 	window.disableUpdates = 0;
 }
 
@@ -1974,13 +1988,6 @@ function readWrite(manualChange) {
 	if (window.locked != undefined && !window.locked) {
 		return;
 	}
-	readWritePumps();
-	readWriteTimers();
-	readWriteDevices();
-	$("[id=edit-page]").text($.i18n.prop("LOCK"));
-	$("[id=change-scale]").show();
-	$("[id=CheckUpdates]").show();
-	$("[id=logo]").show();
 
 	window.locked = false;
 	if (manualChange) {
@@ -1995,6 +2002,16 @@ function readWrite(manualChange) {
 		sleep(2000);
 		location.reload();
 	}
+	
+	readWritePumps();
+	readWriteTimers();
+	readWriteDevices();
+	$("[id=edit-page]").text($.i18n.prop("LOCK"));
+	$("[id=change-scale]").show();
+	$("[id=CheckUpdates]").show();
+	$("[id=logo]").show();
+	displaySystemSettings();
+	
 	window.disableUpdates = 0;
 }
 
@@ -2294,4 +2311,65 @@ function embedGraph(vessel) {
 
 	setTimeout(fetchData, 5000);
 
+}
+
+function displaySystemSettings() {
+	$.ajax({
+		type : 'GET',
+		url : '/getsystemsettings',
+		dataType : 'json',
+		async : false,
+		cache : false,
+		timeout : 5000,
+		success : function(data) {
+			// We have a recorder object, so display the options
+			if ($('div[id="settings-form"]').length == 0) {
+				$('div[class="center-right"]')
+				.append('<form id="settings-form" role="form">' +
+						'</form>');
+			}
+			
+			if ("recorder" in data) {
+				if ($('form[id="settings-form"] div[id="recorder_enabled"').length == 0) {
+					$('form[id="settings-form"]')
+					.append(
+						'<div class="checkbox" id="recorder_enabled">' +
+							'<label>' +
+								'<input type="checkbox" name="recorder">Recorder Enabled' +
+							'</label>' +
+							'</span>' +
+						'</div>');
+				}
+				
+				$('form[id="settings-form"] div[id="recorder_enabled"] input').prop("checked", data.recorder);
+			}
+			
+			if ("recorderDiff" in data) {
+				if ($('form[id="settings-form"] div[id="recorder_tolerence"').length == 0) {
+					$('form[id="settings-form"]')
+					.append(
+						'<div class="form-group" id="recorder_tolerence">' +
+							'<label for="recorderTolerance">Recorder Tolerance</label>' +
+							'<input class="form-control" name="recorderTolerence" type="text">' +
+						'</div>');
+				}
+				
+				$('form[id="settings-form"] div[id="recorder_tolerence"] input').val(data.recorderDiff);
+			}
+			
+			if ("recorderTime" in data) {
+				if ($('form[id="settings-form"] div[id="recorder_time"').length == 0) {
+					$('form[id="settings-form"]')
+					.append(
+						'<div class="form-group" id="recorder_time">' +
+							'<label for="recorderTime">Recorder Sample Time</label>' +
+							'<input name="recorderTime" class="form-control" type="text">' +
+						'</div>');
+				}
+				
+				$('form[id="settings-form"] div[id="recorder_time"] input').val(data.recorderTime);
+			}
+			return;
+		}
+	});
 }
