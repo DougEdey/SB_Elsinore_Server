@@ -279,3 +279,15 @@ div[id='timers'] > .panel > .panel-body > div {
 .table-curved > :last-child > :last-child > :last-child {
     border-radius: 0 0 6px 0;
 }
+
+.left {
+	float:left;
+}
+
+.right {
+	float: right;
+}
+
+.center {
+	float: none;
+}
