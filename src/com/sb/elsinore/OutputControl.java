@@ -152,7 +152,15 @@ public final class OutputControl implements Runnable {
    /**
     * @param duty The duty to set this control with.
     */
-    public synchronized void setDuty(final BigDecimal duty) {
+    public synchronized void setDuty(BigDecimal duty) {
+        // Fix Defect #28: Cap the duty as positive or negative.
+        if (this.cooler == null && duty.compareTo(BigDecimal.ZERO) < 0) {
+            duty = BigDecimal.ZERO;
+        }
+
+        if (this.heater == null && duty.compareTo(BigDecimal.ZERO) > 0) {
+            duty = BigDecimal.ZERO;
+        }
         this.fDuty = duty;
         BrewServer.LOG.info("IN: " + duty + " OUT: " + fDuty);
     }
