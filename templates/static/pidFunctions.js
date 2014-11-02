@@ -1421,8 +1421,9 @@ function addMashStep(mashStep, mashData, pid) {
 					minutes + ":" + pad(seconds, 2, 0));
 		} else {
 			// start the timer
+			var endMoment = moment(mashData['target_time'], "YYYY/MM/DDTHH:mm:ssZZ");
 			mashStepRow.find("#mashTimer" + pid).tinyTimer({
-				to : mashData['target_time'].toString()
+				to : endMoment.toString()
 			});
 		}
 	}
