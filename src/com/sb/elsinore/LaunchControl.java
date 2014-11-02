@@ -2912,7 +2912,9 @@ public final class LaunchControl {
         Process process = null;
         try {
             process = pb.start();
-        } catch (IOException e3) {
+            process.waitFor();
+            System.out.println(process.getOutputStream().toString());
+        } catch (IOException | InterruptedException e3) {
             System.out.println("Couldn't check remote git SHA");
             e3.printStackTrace();
             return;
@@ -2933,7 +2935,8 @@ public final class LaunchControl {
         process = null;
         try {
             process = pb.start();
-        } catch (IOException e3) {
+            process.waitFor();
+        } catch (IOException | InterruptedException e3) {
             System.out.println("Couldn't check remote git SHA");
             e3.printStackTrace();
             return;
@@ -2982,7 +2985,8 @@ public final class LaunchControl {
         pb.redirectErrorStream(true);
         try {
             process = pb.start();
-        } catch (IOException e1) {
+            process.waitFor();
+        } catch (IOException | InterruptedException e1) {
             System.out.println("Couldn't check remote SHA");
             e1.printStackTrace();
             return;
