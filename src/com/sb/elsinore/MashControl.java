@@ -195,9 +195,9 @@ public class MashControl implements Runnable {
                 Thread.sleep(10000);
             } catch (InterruptedException e) {
                 // We got woken up.
-                if (isShutdownFlag()) {
-                    return;
-                }
+            }
+            if (isShutdownFlag()) {
+                return;
             }
         }
     }
@@ -353,6 +353,12 @@ public class MashControl implements Runnable {
             if (mashStepList.get(i).getPosition() == position) {
                 this.mashStepList.remove(i);
             }
+        }
+
+        // No more steps, turn off the MashControl
+        if (mashStepList.size() == 0) {
+            setShutdownFlag(true);
+            Thread.currentThread().interrupt();
         }
     }
 }
