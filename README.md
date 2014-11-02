@@ -63,6 +63,8 @@ You can also delete any of the above, you can drag and drop pumps, timers, and m
 
 When the server is shutdown, it saves all your setup!
 
+You can also use the Edit mode of the web UI to change the settings for the data recorder, for instance, turning it off, setting the minimum change to record data, and so on...
+
 Once you've finished setting up, double clicking the "Lock" button in the top right to remove all the setup buttons.
 
 RaspberryPi or Beagleboard?
