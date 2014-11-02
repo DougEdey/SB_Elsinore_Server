@@ -3027,6 +3027,8 @@ public final class LaunchControl {
                     + "<span class='holo-button' id=\"UpdatesFromGit\""
                     + " type=\"submit\"" + " onClick='updateElsinore();'>"
                     + "Click here to update</span>");
+        } else {
+            LaunchControl.setMessage("No updates available!");
         }
 
     }
