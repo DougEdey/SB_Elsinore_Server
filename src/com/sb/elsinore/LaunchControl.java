@@ -441,7 +441,7 @@ public final class LaunchControl {
         // See if we have an active configuration file
         readConfig();
 
-        if (this.recorderEnabled) {
+        if (LaunchControl.recorderEnabled) {
             BrewServer.LOG.log(Level.INFO, "Starting Status Recorder");
 
             recorder = new StatusRecorder(recorderDirectory);
@@ -731,6 +731,18 @@ public final class LaunchControl {
     }
 
     /**
+     * Get the system status.
+     * @return a JSON Object representing the current system status
+     */
+    public static String getSystemStatus() {
+        JSONObject retVal = new JSONObject();
+        retVal.put("recorder", (LaunchControl.recorder != null));
+        retVal.put("recorderTime", StatusRecorder.SLEEP);
+        retVal.put("recorderDiff", StatusRecorder.THRESHOLD);
+        return retVal.toJSONString();
+    }
+
+    /**
      * Read the configuration file.
      */
     public void readConfig() {
@@ -798,6 +810,40 @@ public final class LaunchControl {
                 scale = tElement.getTextContent();
             }
 
+            tElement = getFirstElement(config, "recorder");
+            if (tElement != null) {
+                if (Boolean.parseBoolean(tElement.getTextContent())) {
+                    LaunchControl.recorderEnabled = true;
+                    LaunchControl.enableRecorder();
+                } else {
+                    LaunchControl.recorderEnabled = false;
+                    LaunchControl.disableRecorder();
+                }
+            }
+
+            tElement = getFirstElement(config, "recorderDiff");
+            if (tElement != null) {
+                try {
+                    StatusRecorder.THRESHOLD = Double.parseDouble(
+                            tElement.getTextContent());
+                } catch (Exception e) {
+                    LaunchControl.setMessage(LaunchControl.getMessage() +
+                            "\n Failed to parse recorder diff as a double.\n" +
+                            e.getMessage());
+                }
+            }
+
+            tElement = getFirstElement(config, "recorderTime");
+            if (tElement != null) {
+                try {
+                    StatusRecorder.SLEEP = Long.parseLong(
+                            tElement.getTextContent());
+                } catch (Exception e) {
+                    LaunchControl.setMessage(LaunchControl.getMessage() +
+                            "\n Failed to parse recorder sleep as a long.\n" +
+                            e.getMessage());
+                }
+            }
             String cosmAPIKey = null;
             Integer cosmFeedID = null;
 
@@ -1480,6 +1526,30 @@ public final class LaunchControl {
         }
 
         tempElement.setTextContent(scale);
+        
+        tempElement = getFirstElement(generalElement, "recorder");
+
+        if (tempElement == null) {
+            tempElement = addNewElement(generalElement, "recorder");
+        }
+
+        tempElement.setTextContent(Boolean.toString(LaunchControl.recorder == null));
+
+        tempElement = getFirstElement(generalElement, "recorderDiff");
+
+        if (tempElement == null) {
+            tempElement = addNewElement(generalElement, "recorderDiff");
+        }
+
+        tempElement.setTextContent(Double.toString(StatusRecorder.THRESHOLD));
+        
+        tempElement = getFirstElement(generalElement, "recorderTime");
+
+        if (tempElement == null) {
+            tempElement = addNewElement(generalElement, "recorderTime");
+        }
+
+        tempElement.setTextContent(Long.toString(StatusRecorder.SLEEP));
 
         if (breweryName != null && !breweryName.equals("")) {
             tempElement = getFirstElement(generalElement, "brewery_name");
@@ -2842,7 +2912,9 @@ public final class LaunchControl {
         Process process = null;
         try {
             process = pb.start();
-        } catch (IOException e3) {
+            process.waitFor();
+            System.out.println(process.getOutputStream().toString());
+        } catch (IOException | InterruptedException e3) {
             System.out.println("Couldn't check remote git SHA");
             e3.printStackTrace();
             return;
@@ -2863,7 +2935,8 @@ public final class LaunchControl {
         process = null;
         try {
             process = pb.start();
-        } catch (IOException e3) {
+            process.waitFor();
+        } catch (IOException | InterruptedException e3) {
             System.out.println("Couldn't check remote git SHA");
             e3.printStackTrace();
             return;
@@ -2912,7 +2985,8 @@ public final class LaunchControl {
         pb.redirectErrorStream(true);
         try {
             process = pb.start();
-        } catch (IOException e1) {
+            process.waitFor();
+        } catch (IOException | InterruptedException e1) {
             System.out.println("Couldn't check remote SHA");
             e1.printStackTrace();
             return;
@@ -2953,6 +3027,8 @@ public final class LaunchControl {
                     + "<span class='holo-button' id=\"UpdatesFromGit\""
                     + " type=\"submit\"" + " onClick='updateElsinore();'>"
                     + "Click here to update</span>");
+        } else {
+            LaunchControl.setMessage("No updates available!");
         }
 
     }
@@ -3154,5 +3230,30 @@ public final class LaunchControl {
 
     public static boolean recorderEnabled() {
         return LaunchControl.recorderEnabled;
+    }
+
+    public static StatusRecorder getRecorder() {
+        return LaunchControl.recorder;
+    }
+
+    public static void enableRecorder() {
+        if (LaunchControl.recorder != null) {
+            return;
+        }
+        System.out.println("Enabling the recorder");
+        LaunchControl.recorderEnabled = true;
+        LaunchControl.recorder = new StatusRecorder(recorderDirectory);
+        LaunchControl.recorder.setThreshold(recorderDiff);
+        LaunchControl.recorder.start();
+    }
+
+    public static void disableRecorder() {
+        if (LaunchControl.recorder == null) {
+            return;
+        }
+        System.out.println("Disabling the recorder");
+        LaunchControl.recorderEnabled = false;
+        LaunchControl.recorder.stop();
+        LaunchControl.recorder = null;
     }
 }

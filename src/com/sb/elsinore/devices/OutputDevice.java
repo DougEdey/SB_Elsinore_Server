@@ -102,12 +102,11 @@ public class OutputDevice {
 
     protected void setValue(boolean value) {
         if (this.ssr != null) {
-
-            // invert the output if needed
-            if (this.invertOutput) {
-                value = !value;
-            }
-            synchronized (ssr) {
+            synchronized (this.ssr) {
+                // invert the output if needed
+                if (this.invertOutput) {
+                    value = !value;
+                }
                 this.ssr.setValue(value);
             }
         }

@@ -1313,6 +1313,16 @@ public class BrewServer extends NanoHTTPD {
                     LaunchControl.getJSONStatus());
         }
 
+        if (uri.equalsIgnoreCase("/getsystemsettings")) {
+            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+                    LaunchControl.getSystemStatus());
+        }
+        
+        if (uri.equalsIgnoreCase("/updatesystemsettings")) {
+            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+                    updateSystemSettings(parms));
+        }
+
         if (uri.equalsIgnoreCase("/controller")) {
             return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                     LaunchControl.getControlPage());
@@ -2237,5 +2247,49 @@ public class BrewServer extends NanoHTTPD {
 
         return new Response(status, MIME_TYPES.get("json"),
                 usage.toJSONString());
+    }
+    
+    private String updateSystemSettings(Map<String, String> parms) {
+        Map<String, String> params = ParseParams(parms);
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Update the system settings");
+        usage.put("recorder", "True/false to enable/disable the recorder.");
+        usage.put("recorderDiff", "The tolerance to record data changes.");
+        usage.put("recorderTime", "The time between sampling the data for recording.");
+
+        if (params.containsKey("recorder")) {
+            boolean recorderOn = params.get("recorder").equals("on");
+            // If we're on, disable the recorder
+            if (!recorderOn) {
+                LaunchControl.disableRecorder();
+            } else if (recorderOn) {
+                LaunchControl.enableRecorder();
+            }
+        } else {
+            LaunchControl.disableRecorder();
+        }
+
+        if (params.containsKey("recorderTolerence")) {
+            try {
+                StatusRecorder.THRESHOLD =
+                    Double.parseDouble(params.get("recorderTolerence"));
+            } catch (Exception e) {
+                LaunchControl.setMessage(
+                    "Failed to parse Recorder diff as a double\n" + e.getMessage()
+                            + LaunchControl.getMessage());
+            }
+        }
+
+        if (params.containsKey("recorderTime")) {
+            try {
+                StatusRecorder.SLEEP =
+                    Long.parseLong(params.get("recorderTime"));
+            } catch (Exception e) {
+                LaunchControl.setMessage(
+                    "Failed to parse Recorder time as a long\n" + e.getMessage()
+                            + LaunchControl.getMessage());
+            }
+        }
+        return usage.toJSONString();
     }
 }

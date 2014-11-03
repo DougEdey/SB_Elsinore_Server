@@ -76,20 +76,26 @@ public final class OutputControl implements Runnable {
                      {
                          case 0:
                              status = "off";
-                             getHeater().turnOff();
-                             getCooler().turnOff();
+                             if (getHeater() != null) 
+                                 getHeater().turnOff();
+                             if (getCooler() != null)
+                                 getCooler().turnOff();
                              //Need to sleep because we're not running a cycle
                              Thread.sleep(1000);
                              break;
                          case -1: //Less than 0
                              status = "cooling";
-                             getHeater().turnOff();
-                             getCooler().runCycle(fDuty.negate());
+                             if (getHeater() != null)
+                                 getHeater().turnOff();
+                             if (getCooler() != null)
+                                 getCooler().runCycle(fDuty.negate());
                              break;
                          case 1: //Greater than 0
                              status = "heating";
-                             getCooler().turnOff();
-                             getHeater().runCycle(fDuty);
+                             if (getCooler() != null)
+                                 getCooler().turnOff();
+                             if (getHeater() != null)
+                                 getHeater().runCycle(fDuty);
                              break;
                      }
                  } catch (InterruptedException e) {
@@ -112,8 +118,12 @@ public final class OutputControl implements Runnable {
              e1.printStackTrace();
          } finally {
          BrewServer.LOG.warning("Output Control turning off outputs");
-            getHeater().turnOff();
-            getCooler().turnOff();
+             if (getHeater() != null) {
+                 getHeater().turnOff();
+             }
+             if (getCooler() != null) {
+                 getCooler().turnOff();
+             }
         }
     }
 
@@ -122,10 +132,14 @@ public final class OutputControl implements Runnable {
      */
     public void shutdown() {
         BrewServer.LOG.info("Shutting down OC");
-        getHeater().turnOff();
-        getCooler().turnOff();
-        getHeater().disable();
-        getCooler().disable();
+        if (getHeater() != null) {
+            getHeater().turnOff();
+            getHeater().disable();
+        }
+        if (getCooler() != null) {
+            getCooler().turnOff();
+            getCooler().disable();
+        }
     }
 
     /**
@@ -138,7 +152,15 @@ public final class OutputControl implements Runnable {
    /**
     * @param duty The duty to set this control with.
     */
-    public synchronized void setDuty(final BigDecimal duty) {
+    public synchronized void setDuty(BigDecimal duty) {
+        // Fix Defect #28: Cap the duty as positive or negative.
+        if (this.cooler == null && duty.compareTo(BigDecimal.ZERO) < 0) {
+            duty = BigDecimal.ZERO;
+        }
+
+        if (this.heater == null && duty.compareTo(BigDecimal.ZERO) > 0) {
+            duty = BigDecimal.ZERO;
+        }
         this.fDuty = duty;
         BrewServer.LOG.info("IN: " + duty + " OUT: " + fDuty);
     }

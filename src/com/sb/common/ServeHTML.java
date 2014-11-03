@@ -79,7 +79,8 @@ public class ServeHTML {
                 + " initial-scale=1.0\">" + lineSep
                 + getHeader() + lineSep + "</head><body>" + lineSep
                 + addJS() + lineSep
-                + "<div class=\"page-header\" style='margin:0; display:inline; width=100%'>"
+                + "<div>"
+                + "<div class='left'>"
                 + "<h1 onClick='editBreweryName();' class='brewerynameheader'><div id='breweryname'>Elsinore</div> "
                 + "<small id='brewerysubtext'>"
                     + "<a href='http://dougedey.github.io/SB_Elsinore_Server/'>"
@@ -87,9 +88,16 @@ public class ServeHTML {
                     + "</a>"
                 + "</small>"
                 + "</h1>"
+                + "</div>"
+                + "<div class='right'>"
                 + "<div class='imageheader'><img height=\"200\" width=\"200\" id='brewerylogo' src='' style='display:none;'/>"
                 + "<br/>"
                 + "<input type='file' id='logo' data-url='uploadImage'/>"
+                + "</div>"
+                + "</div>"
+                + "<div class='center-left'>"
+                + "</div>"
+                + "<div class='center-right'>"
                 + "</div>"
                 + "</div><br />";
 

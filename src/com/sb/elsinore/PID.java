@@ -460,7 +460,7 @@ public final class PID implements Runnable {
     public void setCoolD(final BigDecimal d) {
         coolSetting.derivative = d;
     }
-    
+
     /******
      * Set the proportional value.
      * @param p the new proportional value
@@ -760,11 +760,17 @@ public final class PID implements Runnable {
 
         previousError = error;
 
-        if (output.compareTo(new BigDecimal(100)) > 0) {
-            this.output = new BigDecimal(100);
+        if (output.compareTo(BigDecimal.ZERO) < 0
+                && (this.coolGPIO == null || this.coolGPIO.equals(""))) {
+            output = BigDecimal.ZERO;
+        } else if (output.compareTo(BigDecimal.ZERO) > 0
+                && (this.heatGPIO == null || this.heatGPIO.equals(""))) {
+            output = BigDecimal.ZERO;
         }
 
-        if (output.compareTo(new BigDecimal(-100)) < 0) {
+        if (output.compareTo(new BigDecimal(100)) > 0) {
+            this.output = new BigDecimal(100);
+        } else if (output.compareTo(new BigDecimal(-100)) < 0) {
             this.output = new BigDecimal(-100);
         }
 
