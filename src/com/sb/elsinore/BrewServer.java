@@ -730,11 +730,11 @@ public class BrewServer extends NanoHTTPD {
                 return new Response(Status.OK, MIME_TYPES.get("txt"),
                         "PID Added");
             } else {
-                if (!tPID.getHeatGPIO().equals(heatgpio)) {
+                if (!heatgpio.equals(tPID.getHeatGPIO())) {
                     // We have a PID, set it to the new value
                     tPID.setHeatGPIO(heatgpio);
                 }
-                if (!tPID.getCoolGPIO().equals(coolgpio)) {
+                if (!coolgpio.equals(tPID.getCoolGPIO())) {
                     // We have a PID, set it to the new value
                     tPID.setCoolGPIO(coolgpio);
                 }
@@ -1493,6 +1493,10 @@ public class BrewServer extends NanoHTTPD {
 
         if (uri.equalsIgnoreCase("/toggledevice")) {
             return toggleDevice(parms);
+        }
+        
+        if (uri.equalsIgnoreCase("/stop")) {
+            System.exit(128);
         }
 
         System.out.println("Unidentified URL: " + uri);
