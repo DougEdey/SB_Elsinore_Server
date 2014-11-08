@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 import com.sb.util.MathUtil;
+
 import jGPIO.GPIO.Direction;
 import jGPIO.InPin;
 import jGPIO.InvalidGPIOException;
@@ -10,6 +11,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -38,7 +41,7 @@ public final class Temp implements Runnable {
      * C_TO_F_MULT: Multiplier to convert C to F.
      * FREEZING: The freezing point of Fahrenheit.
      */
-    
+    public MathContext context = new MathContext(2, RoundingMode.HALF_DOWN);
     public static BigDecimal FREEZING = new BigDecimal(32);
     public static BigDecimal ERROR_TEMP = new BigDecimal(-999);
     private boolean badTemp = false;
@@ -357,7 +360,7 @@ public final class Temp implements Runnable {
                     && !scale.equalsIgnoreCase(s)) {
                 this.cutoffTemp = fToC(cutoffTemp);
             }
-            this.calibration = this.calibration.divide(new BigDecimal(1.8));
+            this.calibration = this.calibration.divide(new BigDecimal(1.8), context);
             this.scale = s;
         }
         BrewServer.LOG.warning("Cut off is now: " + this.cutoffTemp);
@@ -1010,7 +1013,7 @@ public final class Temp implements Runnable {
             if (unit == null || unit.equals(this.scale)) {
                 this.calibration = temperature;
             } else if (unit.equals("F")) {
-                this.calibration = temperature.divide(new BigDecimal(1.8));
+                this.calibration = temperature.divide(new BigDecimal(1.8), context);
             } else if (unit.equals("C")) {
                 this.calibration = temperature.multiply(new BigDecimal(1.8));
             }
