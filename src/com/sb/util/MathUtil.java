@@ -2,6 +2,7 @@ package com.sb.util;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.math.RoundingMode;
 
 /**
  *
@@ -9,7 +10,7 @@ import java.math.MathContext;
 public final class MathUtil
 {
     
-    private static MathContext context = MathContext.DECIMAL32;
+    private static MathContext context = new MathContext(2, RoundingMode.HALF_DOWN);
     
     public static BigDecimal divide(BigDecimal numerator, BigDecimal denominator)
     {
