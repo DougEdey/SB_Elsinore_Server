@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -1025,7 +1026,8 @@ public final class Temp implements Runnable {
     }
 
     public String getCalibration() {
-        return this.calibration.toPlainString() + this.scale;
+        DecimalFormat df = new DecimalFormat("#.##");
+        return df.format(this.calibration) + this.scale;
     }
 
     public boolean isSetup() {

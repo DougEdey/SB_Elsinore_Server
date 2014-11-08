@@ -69,24 +69,32 @@ public class StatusRecorder implements Runnable {
         // one for each series (duty & temperature per vessel)
         // For now - we'll store Duty, temperature vs time
         //Assume new logs on each run
-        startTime = System.currentTimeMillis();
-
-        String directory = recorderDirectory + startTime + "/";
-        File directoryFile = new File(directory);
-        directoryFile.mkdirs();
-        LaunchControl.setFileOwner(directoryFile.getParentFile());
-        LaunchControl.setFileOwner(directoryFile);
-
-        //Generate a new log file under the current directory
-        logFile = directory + "raw.log";
-
-        File file = new File(this.logFile);
-        boolean fileExists = file.exists();
-        LaunchControl.setFileOwner(file);
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-
+        
+        //Keep checking the status until all the temperature sensors are initialized
         try {
+            
+            while( ! checkInitialized() ){
+                Thread.sleep(1000);
+            }
+        
+            startTime = System.currentTimeMillis();
+
+            String directory = recorderDirectory + startTime + "/";
+            File directoryFile = new File(directory);
+            directoryFile.mkdirs();
+            LaunchControl.setFileOwner(directoryFile.getParentFile());
+            LaunchControl.setFileOwner(directoryFile);
+
+            //Generate a new log file under the current directory
+            logFile = directory + "raw.log";
+
+            File file = new File(this.logFile);
+            boolean fileExists = file.exists();
+            LaunchControl.setFileOwner(file);
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+
+        
             while (true) {
                 //Just going to record when something changes
                 String status = LaunchControl.getJSONStatus();
@@ -125,6 +133,25 @@ public class StatusRecorder implements Runnable {
             //Don't do anything, this is how we close this out.
         }
 
+    }
+    
+    protected boolean checkInitialized()
+    {
+        String status = LaunchControl.getJSONStatus();
+        JSONObject newStatus = (JSONObject) JSONValue.parse(status);
+        JSONArray vessels = (JSONArray) newStatus.get("vessels");
+        boolean initialized = true;
+        for (int x = 0; x < vessels.size(); x++) {
+            JSONObject vessel = (JSONObject) vessels.get(x);
+               if (vessel.containsKey("tempprobe")) {
+                    String temp = ((JSONObject) vessel.get("tempprobe"))
+                            .get("temp").toString();
+                    initialized &= !temp.equals("0.0");
+                        
+                }
+        }
+        return initialized;
+             
     }
 
     /**
