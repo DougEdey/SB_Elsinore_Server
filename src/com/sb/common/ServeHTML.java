@@ -308,7 +308,7 @@ public class ServeHTML {
             + "</canvas>" + lineSep
             + "<div id='" + device + "-tempSummary'>" + Messages.TEMPERATURE + "("
                 + "<div id='tempUnit'>F</div>): " + lineSep
-            + "<div id='" + device + "-tempStatus' >temp</div>&#176"
+                + "<div id='" + device + "-tempStatus' >temp</div>&#176"
                 + "<div id='tempUnit'>F</div>" + lineSep
             + "</div>" + lineSep;
         
