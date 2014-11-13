@@ -226,7 +226,7 @@ public class PIDComponent implements Renderable {
                                                 ._tr()
                                             ._table()
                                         ._div()
-                                        .div(class_("tab-pane active").id("cool"))
+                                        .div(class_("tab-pane").id("cool"))
                                             .table()
                                                 .tr(id(name + "-coolDT").class_("holo-field"))
                                                     .td(id(name + "-labelDT"))
