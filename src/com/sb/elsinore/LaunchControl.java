@@ -112,28 +112,29 @@ public final class LaunchControl {
      * The Minimum number of volume data points.
      */
     private static final int MIN_VOLUME_SIZE = 3;
+    public static final String RepoURL = "http://dougedey.github.io/SB_Elsinore_Server/";
     private static String baseUser = null;
 
     /**
      * List of PIDs.
      */
-    private static ArrayList<PID> pidList = new ArrayList<PID>();
+    public static ArrayList<PID> pidList = new ArrayList<PID>();
     /**
      * List of Temperature probes.
      */
-    private static ArrayList<Temp> tempList = new ArrayList<Temp>();
+    public static ArrayList<Temp> tempList = new ArrayList<Temp>();
     /**
      * List of Pumps.
      */
-    private static ArrayList<Pump> pumpList = new ArrayList<Pump>();
+    public static ArrayList<Pump> pumpList = new ArrayList<Pump>();
     /**
      * List of Timers.
      */
-    private static CopyOnWriteArrayList<Timer> timerList = new CopyOnWriteArrayList<Timer>();
+    public static CopyOnWriteArrayList<Timer> timerList = new CopyOnWriteArrayList<Timer>();
     /**
      * List of MashControl profiles.
      */
-    private static List<MashControl> mashList = new ArrayList<MashControl>();
+    public static List<MashControl> mashList = new ArrayList<MashControl>();
 
     /**
      * Temperature Thread list.

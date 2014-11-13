@@ -25,9 +25,11 @@ import java.util.logging.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.rendersnake.HtmlCanvas;
 
 import com.sb.elsinore.NanoHTTPD.Response.Status;
 import com.sb.elsinore.NanoHTTPD.Response;
+import com.sb.elsinore.html.RenderHTML;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -1326,6 +1328,21 @@ public class BrewServer extends NanoHTTPD {
         if (uri.equalsIgnoreCase("/controller")) {
             return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                     LaunchControl.getControlPage());
+        }
+
+        if (uri.equalsIgnoreCase("/newcontroller")) {
+            RenderHTML renderController = new RenderHTML();
+            HtmlCanvas html = new HtmlCanvas();
+            String result = "";
+            try {
+                renderController.renderOn(html);
+                result = html.toHtml();
+            } catch (IOException e) {
+                e.printStackTrace();
+                result = e.getMessage();
+            }
+            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                    result);
         }
 
         if (uri.equalsIgnoreCase("/timers")) {
