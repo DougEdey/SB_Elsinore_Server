@@ -1370,7 +1370,7 @@ public final class LaunchControl {
 
         if (listOfFiles.length == 0) {
             System.out
-                    .println("No 1Wire probes found! Please check your system!");
+                .println("No 1Wire probes found! Please check your system!");
             System.exit(-1);
         }
 

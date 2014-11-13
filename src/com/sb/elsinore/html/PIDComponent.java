@@ -40,7 +40,7 @@ public class PIDComponent implements Renderable {
             ._script()
             .div(id(name + "-title").class_("title panel-heading")
                     .onClick("editDevice(this)"))
-                .write(name)
+                .write(name.replace("_", " "))
             ._div()
             .div(id(name + "-error").class_("panel-error")
                     .onClick("dismissError(this)"))
