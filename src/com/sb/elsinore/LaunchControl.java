@@ -1362,6 +1362,8 @@ public final class LaunchControl {
         File w1Folder = new File("/sys/bus/w1/devices/");
         if (!w1Folder.exists()) {
             System.out.println("Couldn't read the one wire devices directory!");
+            System.out.println("Did you set up One Wire?");
+            System.out.println("http://dougedey.github.io/2014/11/12/Setting_Up_One_Wire/");
             System.exit(-1);
         }
         File[] listOfFiles = w1Folder.listFiles();
