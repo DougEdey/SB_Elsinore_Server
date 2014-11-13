@@ -7,3 +7,5 @@ bin
 # Hide any swap/temp files
 *.swp
 /graph-data/
+~*
+*~
