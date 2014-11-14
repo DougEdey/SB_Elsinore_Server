@@ -10,7 +10,7 @@ import java.math.RoundingMode;
 public final class MathUtil
 {
     
-    private static MathContext context = new MathContext(2, RoundingMode.HALF_DOWN);
+    private static MathContext context = MathContext.DECIMAL32;
     
     public static BigDecimal divide(BigDecimal numerator, BigDecimal denominator)
     {
