@@ -9,10 +9,14 @@ import com.sb.elsinore.LaunchControl;
 
 import static org.rendersnake.HtmlAttributesFactory.*;
 
+/**
+ * Create a top bar for the web page.
+ * @author Doug Edey
+ */
 public class TopBar implements Renderable {
 
     @Override
-    public void renderOn(HtmlCanvas htmlCanvas) throws IOException {
+    public final void renderOn(HtmlCanvas htmlCanvas) throws IOException {
         htmlCanvas.div(id("topbar"))
             .div(id("breweryTitle").class_("left"))
                 .h1(class_("breweryNameHeader").onClick("editBreweryName()"))

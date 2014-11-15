@@ -6,6 +6,11 @@ import org.rendersnake.HtmlCanvas;
 import org.rendersnake.Renderable;
 import static org.rendersnake.HtmlAttributesFactory.*;
 
+/**
+ * Implements a mode button for the PIDs.
+ * @author Doug Edey
+ *
+ */
 public class ModeButton implements Renderable {
 
     private String device = "";
