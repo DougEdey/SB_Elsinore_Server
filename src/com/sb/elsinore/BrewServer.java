@@ -35,10 +35,10 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 
 /**
- * A custom HTTP server for Elsinore. Designed to be very simple and lightweight
- * 
+ * A custom HTTP server for Elsinore. Designed to be very simple and lightweight.
+ *
  * @author Doug Edey
- * 
+ *
  */
 public class BrewServer extends NanoHTTPD {
 
@@ -55,7 +55,8 @@ public class BrewServer extends NanoHTTPD {
     /**
      * Hashtable mapping (String)FILENAME_EXTENSION -> (String)MIME_TYPE.
      */
-    private static final Map<String, String> MIME_TYPES = new HashMap<String, String>() {
+    private static final Map<String, String> MIME_TYPES
+        = new HashMap<String, String>() {
         /**
          * The Serial UID.
          */
@@ -90,6 +91,11 @@ public class BrewServer extends NanoHTTPD {
         }
     };
 
+    /**
+     * Convert a JSON paramaeter set into a hashmap.
+     * @param params The incoming parameter listing
+     * @return The converted parameters
+     */
     public Map<String, String> ParseParams(Map<String, String> params) {
         Set<Entry<String, String>> incomingParams = params.entrySet();
         Map<String, String> parms;
@@ -146,38 +152,36 @@ public class BrewServer extends NanoHTTPD {
 
         super(port);
         // default level, this can be changed
-        
         initializeLogger(BrewServer.LOG);
-        
+
         Level logLevel = Level.WARNING;
         String newLevel = System.getProperty("debug") != null ?
                                 System.getProperty("debug"):
                                 System.getenv("ELSINORE_DEBUG");
-        if( "INFO".equalsIgnoreCase(newLevel)){
+        if ("INFO".equalsIgnoreCase(newLevel)) {
             logLevel = Level.INFO;
         }
-        BrewServer.LOG.info("Enabled logging at level:"+logLevel.toString());
-        BrewServer.LOG.setLevel(logLevel);
-        
-        // just serve up on port 8080 for now
+
         BrewServer.LOG.info("Launching on port " + port);
+        BrewServer.LOG.info("Enabled logging at level:" + logLevel.toString());
+        BrewServer.LOG.setLevel(logLevel);
 
         this.rootDir = new File(BrewServer.class.getProtectionDomain()
                 .getCodeSource().getLocation().getPath()).getParentFile();
-        
-        if( System.getProperty("root_override") != null )
-        {
+
+        if (System.getProperty("root_override") != null) {
             this.rootDir = new File(System.getProperty("root_override"));
-            LOG.info("Overriding Root Directory from System Property: " + rootDir.getAbsolutePath());
+            LOG.info("Overriding Root Directory from System Property: "
+                    + rootDir.getAbsolutePath());
         }
-        
+
         LOG.info("Root Directory is: " + rootDir.toString());
 
         if (rootDir.exists() && rootDir.isDirectory()) {
             LOG.info("Root directory: " + rootDir.toString());
         }
     }
-    
+
     /**
      * Initialize the logger.  Look at the current logger and its parents to see
      * if it already has a handler setup.  If not, it adds one.
@@ -185,16 +189,12 @@ public class BrewServer extends NanoHTTPD {
      * @param logger
      *            The logger to initialize
      */
-    private void initializeLogger(Logger logger)
-    {
-        if( logger.getHandlers().length == 0 )
-        {
-            if( logger.getParent() != null && logger.getUseParentHandlers() )
-            {
-                initializeLogger( LOG.getParent() );
-            }
-            else
-            {
+    private void initializeLogger(final Logger logger) {
+        if (logger.getHandlers().length == 0) {
+            if (logger.getParent() != null
+                    && logger.getUseParentHandlers()) {
+                initializeLogger(LOG.getParent());
+            } else {
                 Handler newHandler = new ConsoleHandler();
                 logger.addHandler(newHandler);
             }
@@ -284,10 +284,11 @@ public class BrewServer extends NanoHTTPD {
                     if (stepCount < 0) {
                         continue;
                     }
-                    // We have a good step count, parse the value
 
+                    // We have a good step count, parse the value
                     BigDecimal duration = new BigDecimal(
-                            valueObj.get("duration").toString().replace(",", "."));
+                            valueObj.get("duration")
+                            .toString().replace(",", "."));
                     BigDecimal temp = new BigDecimal(valueObj.get("temp")
                             .toString().replace(",", "."));
 
@@ -348,8 +349,10 @@ public class BrewServer extends NanoHTTPD {
         String type = params.get("type");
 
         try {
-            BigDecimal duration = new BigDecimal(params.get("duration").replace(",", "."));
-            BigDecimal temp = new BigDecimal(params.get("temp").replace(",", "."));
+            BigDecimal duration = new BigDecimal(
+                    params.get("duration").replace(",", "."));
+            BigDecimal temp = new BigDecimal(
+                    params.get("temp").replace(",", "."));
             int stepNumber = Integer.parseInt(params.get("step"));
 
             // Double check for any issues.
@@ -506,7 +509,7 @@ public class BrewServer extends NanoHTTPD {
                     "Invalid Mash step position to delete: " + ie.getMessage());
             status = Status.BAD_REQUEST;
         }
-        
+
         return new Response(status, MIME_TYPES.get("json"),
                 usage.toJSONString());
     }
