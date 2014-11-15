@@ -439,6 +439,17 @@ public final class LaunchControl {
             }
         });
 
+        /**
+         * Check to make sure we have a valid folder for one wire straight away.
+         */
+        File w1Folder = new File("/sys/bus/w1/devices/");
+        if (!w1Folder.exists()) {
+            System.out.println("Couldn't read the one wire devices directory!");
+            System.out.println("Did you set up One Wire?");
+            System.out.println("http://dougedey.github.io/2014/11/12/Setting_Up_One_Wire/");
+            System.exit(-1);
+        }
+
         // See if we have an active configuration file
         readConfig();
 
@@ -1357,7 +1368,11 @@ public final class LaunchControl {
         listOneWireSys(true);
     }
 
-    private static void listOneWireSys(boolean prompt) {
+    /**
+     * List the one wire devices in /sys/bus/w1/devices.
+     * @param prompt Prompt to select OWFS if needed
+     */
+    private static void listOneWireSys(final boolean prompt) {
         // try to access the list of 1-wire devices
         File w1Folder = new File("/sys/bus/w1/devices/");
         if (!w1Folder.exists()) {
@@ -1777,11 +1792,12 @@ public final class LaunchControl {
 
     /*******
      * Helper function to read the user input and tidy it up.
-     * 
+     *
      * @return Trimmed String representing the UserInput
      */
     private static String readInput() {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(System.in));
         String input = "";
         try {
             input = br.readLine();
