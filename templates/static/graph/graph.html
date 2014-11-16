@@ -3,12 +3,9 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<title>Live Data Graph</title>
-	<link href="/templates/static/graph/flot.css" rel="stylesheet" type="text/css">
-	
 	<script language="javascript" type="text/javascript" src="/templates/static/jquery.js"></script>
-	<script language="javascript" type="text/javascript" src="/templates/static/jquery.flot.js"></script>
-	<script language="javascript" type="text/javascript" src="/templates/static/jquery.flot.axislabels.js"></script>
-	<script language="javascript" type="text/javascript" src="/templates/static/jquery.flot.time.js"></script>
+	<script language="javascript" type="text/javascript" src="/templates/static/graph/Chart.js"></script>
+	
 	<script type="text/javascript">
 
 	function getParams() {
@@ -52,7 +49,8 @@
 
 		var data = [];
 
-		var plot = $.plot("#placeholder", data, options);
+		var ctx = document.getElementById("temperatureChart").getContext("2d");
+		var temperatureChart = new Chart(ctx).Line(data);
 		
 		// Fetch one series, adding to what we already have
 
@@ -147,7 +145,7 @@
 	<div id="content">
 
 		<div class="demo-container">
-			<div id="placeholder" class="demo-placeholder"></div>
+			<canvas id="temperatureChart" width="400" height="400"></canvas>
 			<a id="view_all_points" href="">View all history</a>
 			<a id="view_all_inputs" href="/graph?&size=0">View all inputs</a>
 		</div>
