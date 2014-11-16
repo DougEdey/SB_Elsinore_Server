@@ -250,7 +250,7 @@ public final class LaunchControl {
     public static void main(final String... arguments) {
         BrewServer.LOG.info("Running Brewery Controller.");
         int port = DEFAULT_PORT;
-        
+
         // Allow for the root directory to be overridden by environment variable
         // or set on the command line with the -root option
         String rootDir = System.getenv("ELSINORE_ROOT");
@@ -315,13 +315,15 @@ public final class LaunchControl {
                 }
 
                 if (startupCommand.hasOption("r")) {
-                    if (startupCommand.getOptionValue("r").equalsIgnoreCase("false")) {
+                    if (startupCommand.getOptionValue("r").equalsIgnoreCase(
+                            "false")) {
                         recorderEnabled = false;
                     }
                 }
 
                 if (startupCommand.hasOption("rdirectory")) {
-                    recorderDirectory = startupCommand.getOptionValue("rdirectory");
+                    recorderDirectory = startupCommand
+                            .getOptionValue("rdirectory");
                     if (!recorderDirectory.endsWith("/")) {
                         recorderDirectory += "/";
                     }
@@ -335,13 +337,13 @@ public final class LaunchControl {
         }
 
         if (rootDir != null) {
-            //Validate to make sure it's valid, otherwise things will go badly.
+            // Validate to make sure it's valid, otherwise things will go badly.
             File root = new File(rootDir);
             if (root != null && root.exists() && root.isDirectory()) {
                 System.setProperty("root_override", rootDir);
             } else {
-                BrewServer.LOG.warning(
-                    "Invalid root directory proviced: " + rootDir);
+                BrewServer.LOG.warning("Invalid root directory proviced: "
+                        + rootDir);
                 System.exit(-1);
             }
         }
@@ -374,15 +376,16 @@ public final class LaunchControl {
                 "specify the amount for a reading to change before "
                         + "recording the value in history");
         startupOptions.addOption("root", true,
-            "specify the root directory for elsinore.  This is the location "
-                    + "configuration and html files should live.");
+                "specify the root directory for elsinore.  This is the location "
+                        + "configuration and html files should live.");
         startupOptions.addOption("baseUser", true,
                 "Specify the user who should own all the files created");
         startupOptions.addOption("t", "theme", true, "Specify the theme name");
         startupOptions.addOption("r", StatusRecorder.RECORDER_ENABLED, true,
                 "Enable or disable the status recorder. Default enabled.");
-        startupOptions.addOption("rdirectory", StatusRecorder.DIRECTORY_PROPERTY,
-                true, "Set the recorder directory output, default: graph-data/");
+        startupOptions.addOption("rdirectory",
+                StatusRecorder.DIRECTORY_PROPERTY, true,
+                "Set the recorder directory output, default: graph-data/");
     }
 
     /**
@@ -425,7 +428,7 @@ public final class LaunchControl {
                 // Close off all the Pump GPIOs properly.
                 synchronized (pumpList) {
                     if (pumpList.size() > 0) {
-                        for (Pump p: pumpList) {
+                        for (Pump p : pumpList) {
                             p.shutdown();
                         }
                     }
@@ -446,7 +449,8 @@ public final class LaunchControl {
         if (!w1Folder.exists()) {
             System.out.println("Couldn't read the one wire devices directory!");
             System.out.println("Did you set up One Wire?");
-            System.out.println("http://dougedey.github.io/2014/11/12/Setting_Up_One_Wire/");
+            System.out
+                    .println("http://dougedey.github.io/2014/11/12/Setting_Up_One_Wire/");
             System.exit(-1);
         }
 
@@ -630,7 +634,7 @@ public final class LaunchControl {
     /******
      * Get the JSON Output String. This is the current Status of the PIDs,
      * Temps, Pumps, etc...
-     *
+     * 
      * @return The JSON String of the current status.
      */
     @SuppressWarnings("unchecked")
@@ -647,8 +651,7 @@ public final class LaunchControl {
         JSONArray vesselJSON = new JSONArray();
         synchronized (tempList) {
             for (Temp t : tempList) {
-                if (LaunchControl.pageLock
-                        && t.getName().equals(t.getProbe())) {
+                if (LaunchControl.pageLock && t.getName().equals(t.getProbe())) {
                     continue;
                 }
 
@@ -744,6 +747,7 @@ public final class LaunchControl {
 
     /**
      * Get the system status.
+     * 
      * @return a JSON Object representing the current system status
      */
     public static String getSystemStatus() {
@@ -792,10 +796,9 @@ public final class LaunchControl {
         LaunchControl.loadCompleted = true;
     }
 
-
     /**
      * Parse the general section of the XML Configuration.
-     *
+     * 
      * @param config
      *            The General element to be parsed.
      */
@@ -836,24 +839,24 @@ public final class LaunchControl {
             tElement = getFirstElement(config, "recorderDiff");
             if (tElement != null) {
                 try {
-                    StatusRecorder.THRESHOLD = Double.parseDouble(
-                            tElement.getTextContent());
+                    StatusRecorder.THRESHOLD = Double.parseDouble(tElement
+                            .getTextContent());
                 } catch (Exception e) {
-                    LaunchControl.setMessage(LaunchControl.getMessage() +
-                            "\n Failed to parse recorder diff as a double.\n" +
-                            e.getMessage());
+                    LaunchControl.setMessage(LaunchControl.getMessage()
+                            + "\n Failed to parse recorder diff as a double.\n"
+                            + e.getMessage());
                 }
             }
 
             tElement = getFirstElement(config, "recorderTime");
             if (tElement != null) {
                 try {
-                    StatusRecorder.SLEEP = Long.parseLong(
-                            tElement.getTextContent());
+                    StatusRecorder.SLEEP = Long.parseLong(tElement
+                            .getTextContent());
                 } catch (Exception e) {
-                    LaunchControl.setMessage(LaunchControl.getMessage() +
-                            "\n Failed to parse recorder sleep as a long.\n" +
-                            e.getMessage());
+                    LaunchControl.setMessage(LaunchControl.getMessage()
+                            + "\n Failed to parse recorder sleep as a long.\n"
+                            + e.getMessage());
                 }
             }
             String cosmAPIKey = null;
@@ -939,7 +942,7 @@ public final class LaunchControl {
 
     /**
      * Parse the pumps in the specified element.
-     *
+     * 
      * @param config
      *            The element that contains the pumps information
      */
@@ -980,7 +983,7 @@ public final class LaunchControl {
 
     /**
      * Parse the list of timers in an XML Element.
-     *
+     * 
      * @param config
      *            the Element containing the timers
      */
@@ -1010,7 +1013,7 @@ public final class LaunchControl {
 
     /**
      * Add a new pump to the server.
-     *
+     * 
      * @param name
      *            The name of the pump to add.
      * @param gpio
@@ -1066,7 +1069,7 @@ public final class LaunchControl {
 
     /**
      * Check to see if a pump with the given name exists.
-     *
+     * 
      * @param name
      *            The name of the pump to check
      * @return True if the pump exists.
@@ -1105,19 +1108,17 @@ public final class LaunchControl {
 
     /**
      * Startup a PID device.
-     *
+     * 
      * @param input
      *            The name of the PID.
      * @param probe
      *            The One-Wire probe address
      * @param gpio
      *            The GPIO to use, null doesn't start the device.
-     * @return
-     *    The new Temp probe. Use it to look up the PID if applicable.
+     * @return The new Temp probe. Use it to look up the PID if applicable.
      */
     private Temp startDevice(final String input, final String probe,
-            final String gpio)
-    {
+            final String gpio) {
 
         // Startup the thread
         if (probe == null || probe.equals("0")) {
@@ -1143,7 +1144,7 @@ public final class LaunchControl {
         if (gpio != null && !gpio.equals("")) {
             BrewServer.LOG.info("Adding PID with GPIO: " + gpio);
             PID tPID = new PID(tTemp, input, gpio);
-            
+
             pidList.add(tPID);
             Thread pThread = new Thread(tPID);
             pThread.setName("PID_" + tTemp.getName());
@@ -1156,7 +1157,7 @@ public final class LaunchControl {
 
     /******
      * Search for a Datastream in cosm based on a tag.
-     *
+     * 
      * @param tag
      *            The tag to search for
      * @return The found Datastream, or null if it doesn't find anything
@@ -1370,7 +1371,9 @@ public final class LaunchControl {
 
     /**
      * List the one wire devices in /sys/bus/w1/devices.
-     * @param prompt Prompt to select OWFS if needed
+     * 
+     * @param prompt
+     *            Prompt to select OWFS if needed
      */
     private static void listOneWireSys(final boolean prompt) {
         // try to access the list of 1-wire devices
@@ -1378,14 +1381,15 @@ public final class LaunchControl {
         if (!w1Folder.exists()) {
             System.out.println("Couldn't read the one wire devices directory!");
             System.out.println("Did you set up One Wire?");
-            System.out.println("http://dougedey.github.io/2014/11/12/Setting_Up_One_Wire/");
+            System.out
+                    .println("http://dougedey.github.io/2014/11/12/Setting_Up_One_Wire/");
             System.exit(-1);
         }
         File[] listOfFiles = w1Folder.listFiles();
 
         if (listOfFiles.length == 0) {
             System.out
-                .println("No 1Wire probes found! Please check your system!");
+                    .println("No 1Wire probes found! Please check your system!");
             System.exit(-1);
         }
 
@@ -1395,8 +1399,7 @@ public final class LaunchControl {
                     && !currentFile.getName().startsWith("w1_bus_master")) {
 
                 // Check to see if theres a non temp probe (DS18x20)
-                if (!currentFile.getName().startsWith("28")
-                        && !useOWFS) {
+                if (!currentFile.getName().startsWith("28") && !useOWFS) {
                     if (prompt) {
                         System.out.println("Detected a non temp probe."
                                 + currentFile.getName() + "\n"
@@ -1406,7 +1409,7 @@ public final class LaunchControl {
                             if (owfsConnection == null) {
                                 createOWFS();
                             }
-    
+
                             useOWFS = true;
                             synchronized (tempList) {
                                 tempList.clear();
@@ -1448,14 +1451,14 @@ public final class LaunchControl {
      * Remove any non setup devices.
      */
     private static void removeNonSetupDevices() {
-//        synchronized (tempList) {
-//            for (Temp t: tempList) {
-//                if (t.getName().equals(t.getProbe())) {
-//                    t.shutdown();
-//                }
-//                tempList.remove(t);
-//            }
-//        }
+        // synchronized (tempList) {
+        // for (Temp t: tempList) {
+        // if (t.getName().equals(t.getProbe())) {
+        // t.shutdown();
+        // }
+        // tempList.remove(t);
+        // }
+        // }
     }
 
     /**
@@ -1467,7 +1470,9 @@ public final class LaunchControl {
 
     /**
      * Update the device list.
-     * @param prompt Prompt for OWFS usage.
+     * 
+     * @param prompt
+     *            Prompt for OWFS usage.
      */
     private static void updateDeviceList(boolean prompt) {
         if (useOWFS) {
@@ -1544,14 +1549,15 @@ public final class LaunchControl {
         }
 
         tempElement.setTextContent(scale);
-        
+
         tempElement = getFirstElement(generalElement, "recorder");
 
         if (tempElement == null) {
             tempElement = addNewElement(generalElement, "recorder");
         }
 
-        tempElement.setTextContent(Boolean.toString(LaunchControl.recorder == null));
+        tempElement.setTextContent(Boolean
+                .toString(LaunchControl.recorder == null));
 
         tempElement = getFirstElement(generalElement, "recorderDiff");
 
@@ -1560,7 +1566,7 @@ public final class LaunchControl {
         }
 
         tempElement.setTextContent(Double.toString(StatusRecorder.THRESHOLD));
-        
+
         tempElement = getFirstElement(generalElement, "recorderTime");
 
         if (tempElement == null) {
@@ -1792,12 +1798,11 @@ public final class LaunchControl {
 
     /*******
      * Helper function to read the user input and tidy it up.
-     *
+     * 
      * @return Trimmed String representing the UserInput
      */
     private static String readInput() {
-        BufferedReader br = new BufferedReader(
-                new InputStreamReader(System.in));
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String input = "";
         try {
             input = br.readLine();
@@ -1974,9 +1979,9 @@ public final class LaunchControl {
 
     /******
      * Save the PID to the config doc.
-     *
+     * 
      * @param pid
-     *           The PID to save
+     *            The PID to save
      */
     public static void savePID(final PID pid) {
 
@@ -2010,8 +2015,10 @@ public final class LaunchControl {
 
         if (pid.getHeatSetting() != null) {
             Element heatElement = addNewElement(device, "heat");
-            setElementText(heatElement, "cycle_time", pid.getHeatCycle().toString());
-            setElementText(heatElement, "proportional", pid.getHeatP().toString());
+            setElementText(heatElement, "cycle_time", pid.getHeatCycle()
+                    .toString());
+            setElementText(heatElement, "proportional", pid.getHeatP()
+                    .toString());
             setElementText(heatElement, "integral", pid.getHeatI().toString());
             setElementText(heatElement, "derivative", pid.getHeatD().toString());
             setElementText(heatElement, "gpio", pid.getHeatGPIO());
@@ -2019,14 +2026,16 @@ public final class LaunchControl {
 
         if (pid.getCoolSetting() != null) {
             Element coolElement = addNewElement(device, "cool");
-            setElementText(coolElement, "cycle_time", pid.getCoolCycle().toString());
+            setElementText(coolElement, "cycle_time", pid.getCoolCycle()
+                    .toString());
             setElementText(coolElement, "delay", pid.getCoolDelay().toString());
-            setElementText(coolElement, "proportional", pid.getCoolP().toString());
+            setElementText(coolElement, "proportional", pid.getCoolP()
+                    .toString());
             setElementText(coolElement, "integral", pid.getCoolI().toString());
             setElementText(coolElement, "derivative", pid.getCoolD().toString());
             setElementText(coolElement, "gpio", pid.getCoolGPIO());
         }
-        
+
         setElementText(device, "min", pid.getMin().toString());
         setElementText(device, "max", pid.getMax().toString());
         setElementText(device, "time", pid.getTime().toString());
@@ -2280,7 +2289,7 @@ public final class LaunchControl {
             configCfg = null;
         }
     }
-    
+
     /**
      * Parse the config using the XML Parser.
      */
@@ -2331,15 +2340,13 @@ public final class LaunchControl {
         String volumeUnits = "Litres";
         String dsAddress = null, dsOffset = null;
         String cutoffTemp = null, auxPin = null, calibration = "";
-        ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray =
-                new ConcurrentHashMap<BigDecimal, BigDecimal>();
-        BigDecimal duty = new BigDecimal(0), heatCycle = new BigDecimal(0.0),
-                setpoint = new BigDecimal(0.0), heatP = new BigDecimal(0.0),
-                heatI = new BigDecimal(0.0), heatD = new BigDecimal(0.0),
-                min = new BigDecimal(0.0), max = new BigDecimal(0.0),
-                time = new BigDecimal(0.0), coolP = new BigDecimal(0.0),
-                coolI = new BigDecimal(0.0), coolD = new BigDecimal(0.0),
-                coolCycle = new BigDecimal(0.0), coolDelay = new BigDecimal(0.0);
+        ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray = new ConcurrentHashMap<BigDecimal, BigDecimal>();
+        BigDecimal duty = new BigDecimal(0), heatCycle = new BigDecimal(0.0), setpoint = new BigDecimal(
+                0.0), heatP = new BigDecimal(0.0), heatI = new BigDecimal(0.0), heatD = new BigDecimal(
+                0.0), min = new BigDecimal(0.0), max = new BigDecimal(0.0), time = new BigDecimal(
+                0.0), coolP = new BigDecimal(0.0), coolI = new BigDecimal(0.0), coolD = new BigDecimal(
+                0.0), coolCycle = new BigDecimal(0.0), coolDelay = new BigDecimal(
+                0.0);
 
         int analoguePin = -1;
 
@@ -2518,7 +2525,7 @@ public final class LaunchControl {
                 // we don't have a basic level
                 // not implemented yet, math is hard
                 System.out
-                    .println("No Volume Presets, check your config or rerun the setup!");
+                        .println("No Volume Presets, check your config or rerun the setup!");
                 // otherwise we are OK
             }
 
@@ -2540,11 +2547,13 @@ public final class LaunchControl {
                 try {
                     tPID.setHysteria(min, max, time);
                 } catch (NumberFormatException nfe) {
-                    System.out.println("Invalid options when setting up Hysteria: "
-                            + nfe.getMessage());
+                    System.out
+                            .println("Invalid options when setting up Hysteria: "
+                                    + nfe.getMessage());
                 }
 
-                tPID.updateValues("off", duty, heatCycle, setpoint, heatP, heatI, heatD);
+                tPID.updateValues("off", duty, heatCycle, setpoint, heatP,
+                        heatI, heatD);
                 tPID.setCoolGPIO(coolGPIO);
                 tPID.setCoolDelay(coolDelay);
                 tPID.setCoolCycle(coolCycle);
@@ -2590,7 +2599,7 @@ public final class LaunchControl {
 
     /**
      * Copy a file helper, used for backing data the config file.
-     *
+     * 
      * @param sourceFile
      *            The file to copy from
      * @param destFile
@@ -2674,7 +2683,7 @@ public final class LaunchControl {
     /**
      * Get the first element matching nodeName from the baseNode. If baseNode is
      * null, use the document root
-     *
+     * 
      * @param baseNode
      *            The base element to search, null matches from the root
      * @param nodeName
@@ -2696,7 +2705,7 @@ public final class LaunchControl {
 
     /**
      * Add a new element to the specified baseNode.
-     *
+     * 
      * @param baseNode
      *            The baseNode to append to, if null, use the document root
      * @param nodeName
@@ -2742,7 +2751,7 @@ public final class LaunchControl {
 
     /**
      * Returns all the elements using an Xpath Search.
-     *
+     * 
      * @param baseNode
      *            The base node to search on. if null, use the document root.
      * @param xpathIn
@@ -2773,7 +2782,7 @@ public final class LaunchControl {
 
     /**
      * Returns the first element using an Xpath Search.
-     *
+     * 
      * @param baseNode
      *            The base node to search on. if null, use the document root.
      * @param xpathIn
@@ -2826,7 +2835,7 @@ public final class LaunchControl {
 
     /**
      * Delete the named element from the baseNode.
-     *
+     * 
      * @param baseNode
      *            The Node to delete a child from
      * @param elementName
@@ -2849,7 +2858,7 @@ public final class LaunchControl {
 
     /**
      * Add a MashControl object to the master mash control list.
-     *
+     * 
      * @param mControl
      *            The new mashControl to add
      */
@@ -2879,7 +2888,7 @@ public final class LaunchControl {
 
     /**
      * Look for the MashControl for the specified PID.
-     *
+     * 
      * @param pid
      *            The PID string to search for.
      * @return The MashControl for the PID.
@@ -2896,7 +2905,7 @@ public final class LaunchControl {
 
     /**
      * Get the current OWFS connection.
-     *
+     * 
      * @return The current OWFS Connection object
      */
     public static OwfsConnection getOWFS() {
@@ -2905,7 +2914,7 @@ public final class LaunchControl {
 
     /**
      * Helper to get the current list of timers.
-     *
+     * 
      * @return The current list of timers.
      */
     public static CopyOnWriteArrayList<Timer> getTimerList() {
@@ -3166,7 +3175,7 @@ public final class LaunchControl {
 
     /**
      * Change the file owner.
-     * 
+     *
      * @param targetFile
      *            File to change the owner for.
      */
@@ -3174,12 +3183,11 @@ public final class LaunchControl {
         if (baseUser == null || baseUser.equals("")) {
             return;
         }
-        
+
         if (targetFile != null && !targetFile.exists()) {
             try {
                 new FileOutputStream(targetFile).close();
             } catch (IOException e1) {
-                // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
         }
