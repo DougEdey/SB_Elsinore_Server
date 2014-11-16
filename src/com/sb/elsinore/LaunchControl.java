@@ -94,6 +94,7 @@ import com.sb.common.ServeHTML;
  */
 public final class LaunchControl {
     /* MAGIC NUMBERS! */
+    public static int EXIT_UPDATE = 128;
     private static boolean loadCompleted = false;
     /**
      * The default OWFS Port.
@@ -3112,7 +3113,7 @@ public final class LaunchControl {
         LaunchControl.setMessage(out.toString());
         System.out.println(out.toString());
 
-        System.exit(128);
+        System.exit(EXIT_UPDATE);
     }
 
     /**
@@ -3175,7 +3176,7 @@ public final class LaunchControl {
 
     /**
      * Change the file owner.
-     *
+     * 
      * @param targetFile
      *            File to change the owner for.
      */
