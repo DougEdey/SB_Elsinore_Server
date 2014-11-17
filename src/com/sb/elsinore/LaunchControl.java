@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
@@ -753,7 +754,7 @@ public final class LaunchControl {
      */
     public static String getSystemStatus() {
         JSONObject retVal = new JSONObject();
-        retVal.put("recorder", (LaunchControl.recorder != null));
+        retVal.put("recorder", LaunchControl.recorder != null);
         retVal.put("recorderTime", StatusRecorder.SLEEP);
         retVal.put("recorderDiff", StatusRecorder.THRESHOLD);
         return retVal.toJSONString();
@@ -1558,7 +1559,7 @@ public final class LaunchControl {
         }
 
         tempElement.setTextContent(Boolean
-                .toString(LaunchControl.recorder == null));
+                .toString(LaunchControl.recorder != null));
 
         tempElement = getFirstElement(generalElement, "recorderDiff");
 
