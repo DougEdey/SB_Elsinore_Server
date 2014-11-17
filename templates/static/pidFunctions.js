@@ -2192,6 +2192,7 @@ function changeScale() {
 }
 
 function embedGraph(vessel) {
+	vessel = vessel.trim();
 	if ($('#' + vessel + "-graph_title")[0].innerHTML == $.i18n
 			.prop("SHOW_GRAPH")) {
 		$('#' + vessel + "-graph_title")[0].innerHTML = $.i18n
@@ -2200,109 +2201,38 @@ function embedGraph(vessel) {
 		$('#' + vessel + "-graph_title")[0].innerHTML = $.i18n
 				.prop("SHOW_GRAPH");
 	}
-	var options = {
-		lines : {
-			show : true
-		},
-		points : {
-			show : false
-		},
-		xaxes : [ {
-			show : false
-		/*
-		 * mode: "time", timezone: "browser", timeformat: "%y/%m/%d %H:%M:%S"
-		 */} ],
-		yaxes : [ {
-			axisLabel : $.i18n.prop("TEMPERATURE")
-		}, {
-			axisLabel : $.i18n.prop("DUTYPERC"),
-			position : "right",
-			mode : null,
-			min : 0,
-			max : 100,
-		} ],
-		legend : {
-			position : "nw"
-		}
-	};
-
-	var data = [];
-	$("#" + vessel + "-graph_body").width(300);
-	$("#" + vessel + "-graph_body").height(150);
-	var plot = $.plot("#" + vessel + "-graph_body", data, options);
-
-	// Fetch one series, adding to what we already have
 
 	var alreadyFetched = {};
-
-	$("button.fetchSeries").click(
-			function() {
-
-				var button = $(this);
-
-				// Find the URL in the link right next to us, then fetch the
-				// data
-
-				var dataurl = button.siblings("a").attr("href");
-
-				function onDataReceived(series) {
-
-					// Extract the first coordinate pair; jQuery has parsed it,
-					// so
-					// the data is now just an ordinary JavaScript object
-
-					var firstcoordinate = "(" + series.data[0][0] + ", "
-							+ series.data[0][1] + ")";
-					button.siblings("span").text(
-							"Fetched " + series.label + ", first point: "
-									+ firstcoordinate);
-
-					// Push the new data onto our existing data array
-
-					if (!alreadyFetched[series.label]) {
-						alreadyFetched[series.label] = true;
-						data.push(series);
-					}
-
-					// alert("inputdata :" + inputdata);
-
-				}
-
-				$.ajax({
-					url : dataurl,
-					type : "GET",
-					dataType : "json",
-					success : onDataReceived
-				});
-			});
-
-	// Initiate a recurring data update
-	data = [];
-	alreadyFetched = {};
-
-	$.plot("#" + vessel + "-graph_body", data, options);
-
+	window.updateOnly = false;
+	var chart = null;
+	$("#" + vessel + "-graph_body").width(300);
+	$("#" + vessel + "-graph_body").height(150);
 	function fetchData() {
 
 		function onDataReceived(series) {
-			// Load all the data in one pass; if we only got partial
-			// data we could merge it with what we already have.
-			series[0].label = $.i18n.prop("TEMP");
-			if (series.length == 2) {
-				series[1].label = $.i18n.prop("DUTY");
+			if (chart == null) {
+				series["size"] = {};
+				series["size"]["height"] = 150;
+				chart = c3.generate(series);
+			} else {
+				chart.load(series);
 			}
-			data = [ series ];
-			$.plot("#" + vessel + "-graph_body", series, options);
+			window.updateOnly = true;
 		}
 
 		// Normally we call the same URL - a script connected to a
 		// database - but in this case we only have static example
 		// files, so we need to modify the URL.
+		var updateParams = {};
+		updateParams["vessel"] = vessel;
+		updateParams["bindto"] = vessel + "-graph_body";
+		updateParams["updates"] = window.updateOnly;
+		
 		$.ajax({
 			url : "/graph-data/",
 			type : "GET",
 			dataType : "json",
-			data : "vessel=" + vessel,
+			data : updateParams,
 			success : onDataReceived
 		});
 
@@ -2310,7 +2240,7 @@ function embedGraph(vessel) {
 
 	}
 
-	setTimeout(fetchData, 5000);
+	fetchData();
 
 }
 
