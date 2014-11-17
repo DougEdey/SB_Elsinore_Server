@@ -201,6 +201,8 @@ public class ServeHTML {
         String javascript =
             "<link rel=\"stylesheet\" type=\"text/css\" "
             + "href=\"/templates/static/elsinore.css\" />" + lineSep
+            + "<link rel=\"stylesheet\" type=\"text/css\" "
+            + "href=\"/templates/static/css/c3.css\" />" + lineSep
             + "<!-- Bootstrap -->" + lineSep
             + "<link "
             + "href=\"/templates/static/bootstrap-3.0.0/css/bootstrap.min.css\""
@@ -244,9 +246,8 @@ public class ServeHTML {
             + "    setup();" + lineSep
             + "});" + lineSep
             + "</script>"
-        + "<script language=\"javascript\" type=\"text/javascript\" src=\"/templates/static/jquery.flot.js\"></script>" + lineSep
-        + "<script language=\"javascript\" type=\"text/javascript\" src=\"/templates/static/jquery.flot.axislabels.js\"></script>" + lineSep
-        + "<script language=\"javascript\" type=\"text/javascript\" src=\"/templates/static/jquery.flot.time.js\"></script>" + lineSep
+        + "<script language=\"javascript\" type=\"text/javascript\" src=\"/templates/static/js/c3.js\"></script>" + lineSep
+        + "<script language=\"javascript\" type=\"text/javascript\" src=\"/templates/static/js/d3.js\"></script>" + lineSep
         + "<script language=\"javascript\" type=\"text/javascript\" src=\"/templates/static/jquery.i18n.properties.js\"></script>" + lineSep;
 
         return javascript;
