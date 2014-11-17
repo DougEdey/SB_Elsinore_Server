@@ -3,135 +3,64 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<title>Live Data Graph</title>
-	<script language="javascript" type="text/javascript" src="/templates/static/jquery.js"></script>
-	<script language="javascript" type="text/javascript" src="/templates/static/graph/Chart.js"></script>
-	
+	<script language="javascript" type="text/javascript" src="/templates/static/js/d3.js"></script>
+	<script language="javascript" type="text/javascript" src="/templates/static/js/c3.js"></script>
+	<script language="javascript" type="text/javascript" src="/templates/static/js/jquery.js"></script>
+	<link href="/templates/static/css/c3.css" rel="stylesheet" type="text/css">
 	<script type="text/javascript">
 
 	function getParams() {
 
-	  var params = window.location.search.substring(1).split('&'),
-	    i = 0,
-	    pair = null,
-	    result = {};
+		var params = window.location.search.substring(1).split('&'),
+		i = 0,
+		pair = null,
+		result = {};
 
-	  while (pair = params[i++]) {
-	    pair = pair.split('=');
-	    result[pair[0]] = decodeURIComponent(pair[1]);
-	  }
-
-	  return result;
+		while (pair = params[i++]) {
+			pair = pair.split('=');
+			result[pair[0]] = decodeURIComponent(pair[1]);
+		}
+		result["bindto"] = "#temperatureChart";
+		result["updates"] = window.updateOnly;
+		return result;
 	}
 
 	$(function() {
 		$("#view_all_points").attr('href', window.location.href + '&size=0');
 		
-		var options = {
-			lines: {
-				show: true
-			},
-			points: {
-				show: false
-			},
-			xaxes: [{
-					mode: "time",
-					timezone: "browser",
-					timeformat: "%y/%m/%d %H:%M:%S"
-				}],
-			yaxes: [{axisLabel: "Temperature"}, {
-				axisLabel: "Duty %",
-				position: "right",
-				mode: null,
-				min: 0,
-				max: 100,
-			}]
-		};
-
 		var data = [];
 
-		var ctx = document.getElementById("temperatureChart").getContext("2d");
-		var temperatureChart = new Chart(ctx).Line(data);
-		
 		// Fetch one series, adding to what we already have
 
 		var alreadyFetched = {};
-
-		$("button.fetchSeries").click(function () {
-
-			var button = $(this);
-
-			// Find the URL in the link right next to us, then fetch the data
-
-			var dataurl = button.siblings("a").attr("href");
+		window.updateOnly = false;
+		var chart = null;
+		function fetchData() {
 
 			function onDataReceived(series) {
-
-				// Extract the first coordinate pair; jQuery has parsed it, so
-				// the data is now just an ordinary JavaScript object
-
-				var firstcoordinate = "(" + series.data[0][0] + ", " + series.data[0][1] + ")";
-				button.siblings("span").text("Fetched " + series.label + ", first point: " + firstcoordinate);
-
-				// Push the new data onto our existing data array
-
-				if (!alreadyFetched[series.label]) {
-					alreadyFetched[series.label] = true;
-					data.push(series);
+				if (chart == null) {
+					chart = c3.generate(series)
+				} else {
+					chart.load(series);
 				}
-
-				//alert("inputdata :" + inputdata); 
-				
 			}
 
+			// Normally we call the same URL - a script connected to a
+			// database - but in this case we only have static example
+			// files, so we need to modify the URL.
 			$.ajax({
-				url: dataurl,
+				url: "/graph-data/",
 				type: "GET",
 				dataType: "json",
+				data: getParams(),
 				success: onDataReceived
 			});
-		});
-
-		// Initiate a recurring data update
-			data = [];
-			alreadyFetched = {};
-
-			$.plot("#placeholder", data, options);
-
-
-			function fetchData() {
-
-				function onDataReceived(series) {
-					// Load all the data in one pass; if we only got partial
-					// data we could merge it with what we already have.
-					data = [ series ];
-					$.plot("#placeholder", series, options);					
-				}
-
-				// Normally we call the same URL - a script connected to a
-				// database - but in this case we only have static example
-				// files, so we need to modify the URL.
-				$.ajax({
-					url: "/graph-data/",
-					type: "GET",
-					dataType: "json",
-					data: getParams(),
-					success: onDataReceived
-				});
-
-				setTimeout(fetchData, 5000);
-				
-			}
-
+			window.updateOnly = true;
 			setTimeout(fetchData, 5000);
+			
+		}
 		
-
-		// Load the first series by default, so we don't have an empty plot
-
-		
-		// Add the Flot version string to the footer
-
-		$("#footer").prepend("Flot " + $.plot.version + " &ndash; ");
-		
+		fetchData();
 	});
 
 	</script>
@@ -145,7 +74,7 @@
 	<div id="content">
 
 		<div class="demo-container">
-			<canvas id="temperatureChart" width="400" height="400"></canvas>
+			<div id="temperatureChart"></div>
 			<a id="view_all_points" href="">View all history</a>
 			<a id="view_all_inputs" href="/graph?&size=0">View all inputs</a>
 		</div>
