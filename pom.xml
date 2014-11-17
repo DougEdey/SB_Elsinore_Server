@@ -117,10 +117,11 @@
 			<version>3.7.1</version>
 		</dependency>
 
+		<!-- Get this from : https://github.com/emicklei/rendersnake -->
 		<dependency>
 			<groupId>org.rendersnake</groupId>
 			<artifactId>rendersnake</artifactId>
-			<version>1.8</version>
+			<version>1.9-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 
