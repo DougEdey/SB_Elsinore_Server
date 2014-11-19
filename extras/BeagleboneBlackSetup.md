@@ -7,13 +7,15 @@ The Beaglebone Black is similar to the Raspberry Pi, but with more GPIO and onbo
 Launching
 ============
 
-You _must_ set the "Gpio_definitions" property on launch 
+EDIT: No longer needed! The system will lookup this by default. But you can override it if you want to! Thanks to jangeeva for the poke...
+
+You _can_ set the "gpio_definition" property on launch 
 
 ``` 
-java -Dgpio_definitions=extras/beaglebone.json -jar Elsinore.jar
+java -Dgpio_definition=extras/beaglebone.json -jar Elsinore.jar
 ```
 
-Otherwise the system will error
+If there's an issue with the default file. Or you're on a system I haven't supported yet officially. Contact me if you have!
 
 GPIO Naming
 ===========

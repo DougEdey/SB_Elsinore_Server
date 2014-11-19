@@ -9,7 +9,9 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.file.Files;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -25,18 +27,21 @@ import java.util.logging.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.rendersnake.HtmlCanvas;
 
 import com.sb.elsinore.NanoHTTPD.Response.Status;
 import com.sb.elsinore.NanoHTTPD.Response;
+import com.sb.elsinore.html.RenderHTML;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 
 /**
- * A custom HTTP server for Elsinore. Designed to be very simple and lightweight
- * 
+ * A custom HTTP server for Elsinore. Designed to be very simple and lightweight.
+ *
  * @author Doug Edey
- * 
+ *
  */
 public class BrewServer extends NanoHTTPD {
 
@@ -53,7 +58,8 @@ public class BrewServer extends NanoHTTPD {
     /**
      * Hashtable mapping (String)FILENAME_EXTENSION -> (String)MIME_TYPE.
      */
-    private static final Map<String, String> MIME_TYPES = new HashMap<String, String>() {
+    private static final Map<String, String> MIME_TYPES
+        = new HashMap<String, String>() {
         /**
          * The Serial UID.
          */
@@ -88,6 +94,11 @@ public class BrewServer extends NanoHTTPD {
         }
     };
 
+    /**
+     * Convert a JSON paramaeter set into a hashmap.
+     * @param params The incoming parameter listing
+     * @return The converted parameters
+     */
     public Map<String, String> ParseParams(Map<String, String> params) {
         Set<Entry<String, String>> incomingParams = params.entrySet();
         Map<String, String> parms;
@@ -144,38 +155,36 @@ public class BrewServer extends NanoHTTPD {
 
         super(port);
         // default level, this can be changed
-        
         initializeLogger(BrewServer.LOG);
-        
+
         Level logLevel = Level.WARNING;
         String newLevel = System.getProperty("debug") != null ?
                                 System.getProperty("debug"):
                                 System.getenv("ELSINORE_DEBUG");
-        if( "INFO".equalsIgnoreCase(newLevel)){
+        if ("INFO".equalsIgnoreCase(newLevel)) {
             logLevel = Level.INFO;
         }
-        BrewServer.LOG.info("Enabled logging at level:"+logLevel.toString());
-        BrewServer.LOG.setLevel(logLevel);
-        
-        // just serve up on port 8080 for now
+
         BrewServer.LOG.info("Launching on port " + port);
+        BrewServer.LOG.info("Enabled logging at level:" + logLevel.toString());
+        BrewServer.LOG.setLevel(logLevel);
 
         this.rootDir = new File(BrewServer.class.getProtectionDomain()
                 .getCodeSource().getLocation().getPath()).getParentFile();
-        
-        if( System.getProperty("root_override") != null )
-        {
+
+        if (System.getProperty("root_override") != null) {
             this.rootDir = new File(System.getProperty("root_override"));
-            LOG.info("Overriding Root Directory from System Property: " + rootDir.getAbsolutePath());
+            LOG.info("Overriding Root Directory from System Property: "
+                    + rootDir.getAbsolutePath());
         }
-        
+
         LOG.info("Root Directory is: " + rootDir.toString());
 
         if (rootDir.exists() && rootDir.isDirectory()) {
             LOG.info("Root directory: " + rootDir.toString());
         }
     }
-    
+
     /**
      * Initialize the logger.  Look at the current logger and its parents to see
      * if it already has a handler setup.  If not, it adds one.
@@ -183,16 +192,12 @@ public class BrewServer extends NanoHTTPD {
      * @param logger
      *            The logger to initialize
      */
-    private void initializeLogger(Logger logger)
-    {
-        if( logger.getHandlers().length == 0 )
-        {
-            if( logger.getParent() != null && logger.getUseParentHandlers() )
-            {
-                initializeLogger( LOG.getParent() );
-            }
-            else
-            {
+    private void initializeLogger(final Logger logger) {
+        if (logger.getHandlers().length == 0) {
+            if (logger.getParent() != null
+                    && logger.getUseParentHandlers()) {
+                initializeLogger(LOG.getParent());
+            } else {
                 Handler newHandler = new ConsoleHandler();
                 logger.addHandler(newHandler);
             }
@@ -282,10 +287,11 @@ public class BrewServer extends NanoHTTPD {
                     if (stepCount < 0) {
                         continue;
                     }
-                    // We have a good step count, parse the value
 
+                    // We have a good step count, parse the value
                     BigDecimal duration = new BigDecimal(
-                            valueObj.get("duration").toString().replace(",", "."));
+                            valueObj.get("duration")
+                            .toString().replace(",", "."));
                     BigDecimal temp = new BigDecimal(valueObj.get("temp")
                             .toString().replace(",", "."));
 
@@ -346,8 +352,10 @@ public class BrewServer extends NanoHTTPD {
         String type = params.get("type");
 
         try {
-            BigDecimal duration = new BigDecimal(params.get("duration").replace(",", "."));
-            BigDecimal temp = new BigDecimal(params.get("temp").replace(",", "."));
+            BigDecimal duration = new BigDecimal(
+                    params.get("duration").replace(",", "."));
+            BigDecimal temp = new BigDecimal(
+                    params.get("temp").replace(",", "."));
             int stepNumber = Integer.parseInt(params.get("step"));
 
             // Double check for any issues.
@@ -504,7 +512,7 @@ public class BrewServer extends NanoHTTPD {
                     "Invalid Mash step position to delete: " + ie.getMessage());
             status = Status.BAD_REQUEST;
         }
-        
+
         return new Response(status, MIME_TYPES.get("json"),
                 usage.toJSONString());
     }
@@ -1317,7 +1325,7 @@ public class BrewServer extends NanoHTTPD {
             return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
                     LaunchControl.getSystemStatus());
         }
-        
+
         if (uri.equalsIgnoreCase("/updatesystemsettings")) {
             return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
                     updateSystemSettings(parms));
@@ -1326,6 +1334,21 @@ public class BrewServer extends NanoHTTPD {
         if (uri.equalsIgnoreCase("/controller")) {
             return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                     LaunchControl.getControlPage());
+        }
+
+        if (uri.equalsIgnoreCase("/newcontroller")) {
+            RenderHTML renderController = new RenderHTML();
+            HtmlCanvas html = new HtmlCanvas();
+            String result = "";
+            try {
+                renderController.renderOn(html);
+                result = html.toHtml();
+            } catch (IOException e) {
+                e.printStackTrace();
+                result = e.getMessage();
+            }
+            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                    result);
         }
 
         if (uri.equalsIgnoreCase("/timers")) {
@@ -1946,65 +1969,65 @@ public class BrewServer extends NanoHTTPD {
         File directoryFile = new File("graph-data/" + directory);
 
         File[] contents = directoryFile.listFiles();
-        StringBuilder json = new StringBuilder("[");
+        JSONObject xsData = new JSONObject();
+        JSONObject axes = new JSONObject();
+        JSONObject columns = new JSONObject();
+        JSONArray dataBuffer = new JSONArray();
+        long currentTime = System.currentTimeMillis();
 
         for (File content : contents) {
             if (content.getName().endsWith(".csv")
                     && content.getName().toLowerCase()
                             .startsWith(vessel.toLowerCase())) {
-                if (json.length() > 1) {
-                    json.append(',');
-                }
-                json.append("{\"label\":\"");
-
                 String name = content.getName();
 
                 // Strip off .csv
                 name = name.substring(0, name.length() - 4);
                 name = name.replace('-', ' ');
-                json.append(name + "\"");
 
-                if (name.contains(" duty")) {
-                    json.append(", \"yaxis\": 2");
-                } else {
-                    json.append(", \"yaxis\": 1");
+                if (parms.containsKey("bindto")
+                        && ((String)parms.get("bindto")).endsWith("-graph_body")) {
+                    name = name.substring(name.lastIndexOf(" ") + 1);
                 }
 
-                json.append(",\"data\":[");
+                xsData.put(name, "x" + name);
+
+                if (name.endsWith("duty")) {
+                    axes.put(name, "y2");
+                } else {
+                    axes.put(name, "y");
+                }
+
+                JSONArray xArray = new JSONArray();
+                JSONArray dataArray = new JSONArray();
+
+                xArray.add("x" + name);
+                dataArray.add(name);
 
                 String lastLine = null;
                 BufferedReader reader = null;
                 try {
                     reader = new BufferedReader(new FileReader(content));
                     String line;
-
-                    List<String> textArray = new ArrayList<String>();
+                    String[] lArray = null;
 
                     while ((line = reader.readLine()) != null) {
-
-                        textArray.add('[' + line + ']');
-                        lastLine = line;
+                        // Each line contains the timestamp and the value
+                        lArray = line.split(",");
+                        xArray.add(BrewDay.sFormat
+                                .format(new Date(Long.parseLong(lArray[0])))
+                                );
+                        dataArray.add(lArray[1].trim());
                     }
 
-                    if (size > 0 && textArray.size() > size) {
-                        textArray = textArray.subList(textArray.size() - size,
-                                textArray.size());
+                    if (lArray != null && Long.parseLong(lArray[0]) != currentTime) {
+                        xArray.add(BrewDay.sFormat
+                                .format(new Date(currentTime)));
+                        dataArray.add(lArray[1].trim());
                     }
 
-                    StringBuffer sb = new StringBuffer();
-                    String s = null;
-                    for (int i = 0; i < textArray.size(); i++) {
-                        s = textArray.get(i);
-                        if (!s.matches(" *")) {
-                            // empty string are ""; " "; "  "; and so on
-                            sb.append(s);
-                            if (i < textArray.size() - 1) {
-                                sb.append(",");
-                            }
-                        }
-                    }
-                    json.append(sb.toString());
-
+                    dataBuffer.add(xArray);
+                    dataBuffer.add(dataArray);
                 } catch (Exception e) {
                     // Do nothing
                 } finally {
@@ -2012,31 +2035,80 @@ public class BrewServer extends NanoHTTPD {
                         try {
                             reader.close();
                         } catch (Exception e) {
-
+                            BrewServer.LOG.warning("Couldn't close file: "
+                                    + content.getAbsolutePath());
                         }
                     }
                 }
 
-                if (live && lastLine != null) {
-                    // Repeat the last point since the series only prints data
-                    // when it changes. Otherwise this won't look 'live'
-                    json.append(",[" + System.currentTimeMillis() + ","
-                            + lastLine.split(",")[1] + "]");
-                }
-
-                json.append("]}");
             }
-
         }
-        json.append(']');
+
+        JSONObject dataContent = new JSONObject();
+        dataContent.put("columns", dataBuffer);
+        if (parms.containsKey("updates")
+                && Boolean.parseBoolean(parms.get("updates"))) {
+            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+                    dataContent.toJSONString());
+        }
+
+        dataContent.put("xs", xsData);
+        dataContent.put("axes", axes);
+        dataContent.put("xFormat", "%H:%M:%S");
+
+        JSONObject axisContent = new JSONObject();
+        JSONObject y2Label = new JSONObject();
+        y2Label.put("text", "Duty Cycle %");
+        y2Label.put("position", "outer-middle");
+        JSONObject y2 = new JSONObject();
+        y2.put("show", "true");
+        y2.put("label", y2Label);
+
+        JSONObject y1Label = new JSONObject();
+        y1Label.put("text", "Temperature");
+        y1Label.put("position", "outer-middle");
+        JSONObject y1 = new JSONObject();
+        y1.put("show",  "true");
+        y1.put("label", y1Label);
+        
+        JSONObject padding = new JSONObject();
+        padding.put("top", 0);
+        padding.put("bottom", 0);
+        y1.put("padding", padding);
+
+        JSONObject formatJSON = new JSONObject();
+        formatJSON.put("format", "%H:%M:%S");
+        JSONObject xContent = new JSONObject();
+        xContent.put("type", "timeseries");
+        xContent.put("tick", formatJSON);
+        axisContent.put("x", xContent);
+        axisContent.put("y", y1);
+        axisContent.put("y2", y2);
+
+        JSONObject finalJSON = new JSONObject();
+        finalJSON.put("data", dataContent);
+        finalJSON.put("axis", axisContent);
+
+        if (parms.containsKey("bindto")) {
+            finalJSON.put("bindto", "#" + parms.get("bindto"));
+        } else {
+            finalJSON.put("bindto", "#chart");
+        }
+
+        if (!((String) finalJSON.get("bindto")).endsWith("_body")) {
+            JSONObject enabledJSON = new JSONObject();
+            enabledJSON.put("enabled", true);
+            finalJSON.put("zoom", enabledJSON);
+        }
 
         return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                json.toString());
+                finalJSON.toJSONString());
+
     }
 
     /**
      * Read the incoming parameters and update the name as appropriate.
-     * 
+     *
      * @param params
      *            The parameters from the client
      * @return True if success, false if failure

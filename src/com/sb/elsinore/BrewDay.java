@@ -35,15 +35,15 @@ public final class BrewDay {
     /**
      * The Day format.
      */
-    private DateFormat dFormat = new SimpleDateFormat("yyyy/MM/dd");
+    public static DateFormat dFormat = new SimpleDateFormat("yyyy/MM/dd");
     /**
      * The Time format.
      */
-    private DateFormat sFormat = new SimpleDateFormat("HH:mm:ss");
+    public static DateFormat sFormat = new SimpleDateFormat("HH:mm:ss");
     /**
      * The Zulu Date & Time format.
      */
-    private DateFormat lFormat = new SimpleDateFormat("yyyy/MM/dd'T'HH:mm:ssZ");
+    public static DateFormat lFormat = new SimpleDateFormat("yyyy/MM/dd'T'HH:mm:ssZ");
 
     /**
      * The Date this BrewDay was last updated.
@@ -52,7 +52,7 @@ public final class BrewDay {
 
     /**
      * parse a string to a date object.
-     * 
+     *
      * @param dateString
      *            The string to be parsed
      * @return a date object

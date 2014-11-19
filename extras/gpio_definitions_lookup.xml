@@ -1,0 +1,3 @@
+<lookup>
+    <capability id="ti_am335x-bone" file="extras/beaglebone.json" />
+</lookup>
