@@ -3,6 +3,8 @@ BeagleBone Black Setup
 
 The Beaglebone Black is similar to the Raspberry Pi, but with more GPIO and onboard Analogue in (that has a max of 1.8V)
 
+Please do not use a Kernel above 3.8, if you do get a new image, install the 3.8 kernel with ``` sudo apt-get install linux-image-3.8.13-bone67 ```
+
 
 Launching
 ============
@@ -30,7 +32,7 @@ BeagleboardBlack has multiple banks, for example GPIO2_2, this translates to phy
 Overlays
 ============
 
-For beagleboard to get OneWire support, and GPIO control, you need to install a Device Tree Overlay file. I have added these under the support directory:
+For beagleboard to get OneWire support, and GPIO control, you need to install a Device Tree Overlay file. I have added these under the *extras* directory.
 
 To compile the overlay: 
 
