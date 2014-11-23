@@ -90,10 +90,13 @@ public class OutputDevice {
             BrewServer.LOG.info("On: " + onTime
                     + " Off; " + offTime);
 
-            setValue(true);
-            Thread.sleep(onTime.intValue());
+            if( onTime.intValue() > 0 )
+            {
+                setValue(true);
+                Thread.sleep(onTime.intValue());
+            }
 
-            if (duty.compareTo(HUNDRED) < 0) {
+            if (duty.compareTo(HUNDRED) < 0 && offTime.intValue() > 0 ) {
                 setValue(false);
                 Thread.sleep(offTime.intValue());
             }
