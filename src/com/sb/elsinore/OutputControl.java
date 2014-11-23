@@ -39,25 +39,30 @@ public final class OutputControl implements Runnable {
            final BigDecimal cycle_time) {
            // just for heating
         heater = new OutputDevice(aName, fGPIO, cycle_time);
-        cooler = new OutputDevice(aName, null, cycle_time);
+        //cooler = new OutputDevice(aName, null, cycle_time);
         
-        //TODO - Remove this hack and add a real setup to add a cooling based device, but for now, this works
-        if( aName.startsWith("cool_"))
-        {
-            cooler = new CompressorDevice(aName, fGPIO, cycle_time);
-            heater = new OutputDevice(aName, null, cycle_time);
-        }
+
    }
 
    /**
     * Set the current cooling information.
     * @param gpio The GPIO to use for the cooling output
-    * @param duty The cycle time for the cooling output
+    * @param cycle_time The cycle time for the cooling output
     * @param delay The delay between cooling start/stop calls.
     */
-   public void setCool(final String gpio, final BigDecimal duty,
+   public void setCool(final String gpio, final BigDecimal cycle_time,
            final BigDecimal delay) {
-        setCooler(new OutputDevice("cooler", gpio, duty));
+       
+        //If there is a cooling delay between cycles, then assume this is a compressor device
+        if( BigDecimal.ZERO.compareTo(delay) == -1 ) {
+            CompressorDevice coolDevice = new CompressorDevice("cooler", gpio, cycle_time);
+            coolDevice.setDelay(delay);
+            setCooler(coolDevice);
+        }
+        else {
+            setCooler(new OutputDevice("cooler", gpio, cycle_time));
+        }
+        
    }
 
 
