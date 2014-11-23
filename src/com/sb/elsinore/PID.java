@@ -101,25 +101,25 @@ public final class PID implements Runnable {
      */
     private String detectGPIO(final String gpio) {
         // Determine what kind of GPIO Mapping we have
-        Pattern pinPattern = Pattern.compile("(GPIO)([0-9])_([0-9]*)");
-        Pattern pinPatternAlt = Pattern.compile("(GPIO)?([0-9]*)");
+        Pattern pinPattern = Pattern.compile("(GPIO)([0-9])_([0-9]+)");
+        Pattern pinPatternAlt = Pattern.compile("(GPIO)?_?([0-9]+)");
 
         Matcher pinMatcher = pinPattern.matcher(gpio);
 
         BrewServer.LOG.info("Matches: " + pinMatcher.groupCount());
 
-        if (pinMatcher.groupCount() > 0) {
+        if (pinMatcher.matches()) {
             // Beagleboard style input
             BrewServer.LOG.info("Matched GPIO pinout for Beagleboard: "
                     + gpio + ". OS: " + System.getProperty("os.level"));
             return gpio;
         } else {
             pinMatcher = pinPatternAlt.matcher(gpio);
-            if (pinMatcher.groupCount() > 0) {
+            if (pinMatcher.matches()) {
                 BrewServer.LOG.info("Direct GPIO Pinout detected. OS: "
                         + System.getProperty("os.level"));
                 // The last group gives us the GPIO number
-                return pinMatcher.group(pinMatcher.groupCount());
+                return gpio;
             } else {
                 BrewServer.LOG.info("Could not match the GPIO!");
                 return "";
@@ -240,8 +240,8 @@ public final class PID implements Runnable {
                     this.currentTime = new BigDecimal(this.fTemp.getTime());
 
                     // if the GPIO is blank we do not need to do any of this;
-                    if (this.outputControl.getHeater() == null
-                            && this.outputControl.getCooler() == null) {
+                    if (this.outputControl.getHeater() != null
+                            && this.outputControl.getCooler() != null) {
                         if (this.tempList.size() >= 5) {
                             tempList.remove(0);
                         }
