@@ -2570,6 +2570,7 @@ public final class LaunchControl {
             }
         } catch (InvalidGPIOException e) {
             System.out.println("Invalid GPIO provided");
+            e.printStackTrace();
         }
 
         if (cutoffTemp != null) {
