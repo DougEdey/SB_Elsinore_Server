@@ -2553,12 +2553,13 @@ public final class LaunchControl {
 
                 tPID.updateValues("off", duty, heatCycle, setpoint, heatP,
                         heatI, heatD);
-                tPID.setCoolGPIO(coolGPIO);
                 tPID.setCoolDelay(coolDelay);
                 tPID.setCoolCycle(coolCycle);
                 tPID.setCoolP(coolP);
                 tPID.setCoolI(coolI);
                 tPID.setCoolD(coolD);
+                tPID.setCoolGPIO(coolGPIO);
+                
 
                 if (auxPin != null && !auxPin.equals("")) {
                     tPID.setAux(auxPin);

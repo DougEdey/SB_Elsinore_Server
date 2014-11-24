@@ -241,7 +241,7 @@ public final class PID implements Runnable {
 
                     // if the GPIO is blank we do not need to do any of this;
                     if (this.outputControl.getHeater() != null
-                            && this.outputControl.getCooler() != null) {
+                            || this.outputControl.getCooler() != null) {
                         if (this.tempList.size() >= 5) {
                             tempList.remove(0);
                         }
@@ -828,7 +828,7 @@ public final class PID implements Runnable {
         }
         
         if (gpio != null) {
-            this.outputControl.setCool(gpio, new BigDecimal(0), this.coolSetting.delay);
+            this.outputControl.setCool(gpio, this.coolSetting.cycle_time, this.coolSetting.delay);
         } else {
             this.outputControl.setCooler(null);
         }
