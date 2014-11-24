@@ -42,19 +42,19 @@ public class ServerRunner implements Runnable {
             System.exit(-1);
         }
 
-        System.out.println("Language: " + Locale.getDefault().toString());
-        System.out.println("Server started, kill to stop.\n");
+        BrewServer.LOG.info("Language: " + Locale.getDefault().toString());
+        BrewServer.LOG.info("Server started, kill to stop.\n");
 
         try {
             while (true) {
                 System.in.read();
             }
         } catch (Throwable ignored) {
-            System.out.println(ignored.getLocalizedMessage());
+            BrewServer.LOG.warning(ignored.getLocalizedMessage());
         }
 
         server.stop();
-        System.out.println("Server stopped.\n");
+        BrewServer.LOG.info("Server stopped.\n");
     }
 
     /**

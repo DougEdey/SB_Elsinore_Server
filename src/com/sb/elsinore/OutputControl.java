@@ -1,6 +1,7 @@
 package com.sb.elsinore;
 import com.sb.elsinore.devices.CompressorDevice;
 import com.sb.elsinore.devices.OutputDevice;
+
 import java.math.BigDecimal;
 
 import jGPIO.InvalidGPIOException;
@@ -114,7 +115,7 @@ public final class OutputControl implements Runnable {
              return;
          }
          catch (InvalidGPIOException e1) {
-             System.out.println(e1.getMessage());
+             BrewServer.LOG.warning(e1.getMessage());
              e1.printStackTrace();
          } finally {
          BrewServer.LOG.warning("Output Control turning off outputs");

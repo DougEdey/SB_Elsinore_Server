@@ -322,13 +322,13 @@ public class MashStep implements Comparable<MashStep> {
     public final void setTargetEnd(final Date newTarget) {
         if (newTarget != null && startTime != null
                 && newTarget.compareTo(startTime) <= 0) {
-            System.out.println(newTarget);
-            System.out.println(startTime);
+            BrewServer.LOG.info(newTarget.toString());
+            BrewServer.LOG.info(startTime.toString());
             BrewServer.LOG.warning(
                 "New target date is less than than the start date");
             return;
         }
-        System.out.println("Setting target time: " + newTarget);
+        BrewServer.LOG.info("Setting target time: " + newTarget);
         this.targetEndTime = newTarget;
     }
 

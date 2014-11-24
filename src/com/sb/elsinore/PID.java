@@ -855,7 +855,7 @@ public final class PID implements Runnable {
     }
     
     public void stop() {
-        System.out.println("Shutting down " + this.getName());
+        BrewServer.LOG.warning("Shutting down " + this.getName());
         running = false;
         Thread.currentThread().interrupt();
     }

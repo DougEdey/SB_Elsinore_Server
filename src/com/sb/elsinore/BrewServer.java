@@ -240,7 +240,7 @@ public class BrewServer extends NanoHTTPD {
         if (incomingData != null) {
             // Use the JSON Data
             BrewServer.LOG.info("Found valid data for " + inputUnit);
-            System.out.println(incomingData.toJSONString());
+            BrewServer.LOG.info(incomingData.toJSONString());
 
             MashControl mControl = null;
 
@@ -1522,7 +1522,7 @@ public class BrewServer extends NanoHTTPD {
             System.exit(128);
         }
 
-        System.out.println("Unidentified URL: " + uri);
+        BrewServer.LOG.info("Unidentified URL: " + uri);
         JSONObject usage = new JSONObject();
         usage.put("controller", "Get the main controller page");
         usage.put("getstatus", "Get the current status as a JSON object");

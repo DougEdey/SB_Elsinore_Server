@@ -276,7 +276,7 @@ public final class LaunchControl {
                 }
 
                 if (startupCommand.hasOption("gpiodefinitions")) {
-                    System.out.println("Setting property file to: "
+                    BrewServer.LOG.info("Setting property file to: "
                             + startupCommand.getOptionValue("gpiodefinitions"));
                     System.setProperty("gpiodefinitions",
                             startupCommand.getOptionValue("gpiodefinitions"));
@@ -332,7 +332,7 @@ public final class LaunchControl {
                 }
 
             } catch (ParseException e) {
-                System.out.println("Error when parsing the command line");
+                BrewServer.LOG.info("Error when parsing the command line");
                 e.printStackTrace();
                 return;
             }
@@ -449,8 +449,8 @@ public final class LaunchControl {
          */
         File w1Folder = new File("/sys/bus/w1/devices/");
         if (!w1Folder.exists()) {
-            System.out.println("Couldn't read the one wire devices directory!");
-            System.out.println("Did you set up One Wire?");
+            BrewServer.LOG.info("Couldn't read the one wire devices directory!");
+            BrewServer.LOG.info("Did you set up One Wire?");
             System.out
                     .println("http://dougedey.github.io/2014/11/12/Setting_Up_One_Wire/");
             System.exit(-1);
@@ -483,7 +483,7 @@ public final class LaunchControl {
         }
 
         // Old way to close off the System
-        System.out.println("Waiting for input... Type 'quit' to exit");
+        BrewServer.LOG.info("Waiting for input... Type 'quit' to exit");
         String input = "";
         String[] inputBroken;
 
@@ -496,7 +496,7 @@ public final class LaunchControl {
             try {
                 input = br.readLine();
             } catch (IOException ioe) {
-                System.out.println("IO error trying to read your input: "
+                BrewServer.LOG.info("IO error trying to read your input: "
                         + input);
             }
 
@@ -504,7 +504,7 @@ public final class LaunchControl {
             inputBroken = input.split(" ");
             // is the first value something we recognize?
             if (inputBroken[0].equalsIgnoreCase("quit")) {
-                System.out.println("Quitting");
+                BrewServer.LOG.info("Quitting");
                 System.exit(0);
             }
         }
@@ -704,7 +704,7 @@ public final class LaunchControl {
                         cosm.updateDatastream(cosmFeed.getId(), t.getName(),
                                 tData);
                     } catch (CosmException e) {
-                        System.out.println("Failed to update datastream: "
+                        BrewServer.LOG.info("Failed to update datastream: "
                                 + e.getMessage());
                     }
 
@@ -772,10 +772,10 @@ public final class LaunchControl {
         }
 
         if (configCfg == null) {
-            System.out.println("CFG IS NULL");
+            BrewServer.LOG.info("CFG IS NULL");
         }
         if (configDoc == null) {
-            System.out.println("DOC IS NULL");
+            BrewServer.LOG.info("DOC IS NULL");
         }
 
         if (configDoc == null && configCfg == null) {
@@ -787,7 +787,7 @@ public final class LaunchControl {
         if (configDoc != null) {
             parseXMLSections();
         } else {
-            System.out.println("Couldn't get a configuration file!");
+            BrewServer.LOG.info("Couldn't get a configuration file!");
             System.exit(1);
         }
 
@@ -974,9 +974,9 @@ public final class LaunchControl {
                     pumpList.add(new Pump(pumpName, gpio));
                 }
             } catch (InvalidGPIOException e) {
-                System.out.println("Invalid GPIO (" + gpio
+                BrewServer.LOG.warning("Invalid GPIO (" + gpio
                         + ") detected for pump " + pumpName);
-                System.out.println("Please fix the config file before running");
+                BrewServer.LOG.warning("Please fix the config file before running");
                 System.exit(-1);
             }
         }
@@ -1037,7 +1037,7 @@ public final class LaunchControl {
                 pumpList.add(p);
             }
         } catch (Exception g) {
-            System.out.println("Could not add pump: " + g.getMessage());
+            BrewServer.LOG.warning("Could not add pump: " + g.getMessage());
             g.printStackTrace();
             return false;
         }
@@ -1381,17 +1381,16 @@ public final class LaunchControl {
         // try to access the list of 1-wire devices
         File w1Folder = new File("/sys/bus/w1/devices/");
         if (!w1Folder.exists()) {
-            System.out.println("Couldn't read the one wire devices directory!");
-            System.out.println("Did you set up One Wire?");
-            System.out
-                    .println("http://dougedey.github.io/2014/11/12/Setting_Up_One_Wire/");
+            BrewServer.LOG.warning("Couldn't read the one wire devices directory!");
+            BrewServer.LOG.warning("Did you set up One Wire?");
+            BrewServer.LOG.warning("http://dougedey.github.io/2014/11/12/Setting_Up_One_Wire/");
             System.exit(-1);
         }
         File[] listOfFiles = w1Folder.listFiles();
 
         if (listOfFiles.length == 0) {
-            System.out
-                    .println("No 1Wire probes found! Please check your system!");
+            BrewServer.LOG.warning("No 1Wire probes found! Please check your system!");
+            BrewServer.LOG.warning("http://dougedey.github.io/2014/11/24/Why_Cant_I_Use_Elsinore_Without_Temperature_Probes/");
             System.exit(-1);
         }
 
@@ -1403,7 +1402,7 @@ public final class LaunchControl {
                 // Check to see if theres a non temp probe (DS18x20)
                 if (!currentFile.getName().startsWith("28") && !useOWFS) {
                     if (prompt) {
-                        System.out.println("Detected a non temp probe."
+                        BrewServer.LOG.warning("Detected a non temp probe."
                                 + currentFile.getName() + "\n"
                                 + "Do you want to switch to OWFS? [y/N]");
                         String t = readInput();
@@ -1432,7 +1431,7 @@ public final class LaunchControl {
                     continue;
                 }
 
-                System.out.println("Checking for " + currentFile.getName());
+                BrewServer.LOG.info("Checking for " + currentFile.getName());
                 Temp currentTemp = new Temp(currentFile.getName(),
                         currentFile.getName());
                 synchronized (tempList) {
@@ -1497,8 +1496,9 @@ public final class LaunchControl {
         updateDeviceList();
 
         if (tempList.size() == 0) {
-            System.out.println("Could not find any one wire devices\n"
+            BrewServer.LOG.warning("Could not find any one wire devices\n"
                     + "Please check you have the correct modules setup");
+            BrewServer.LOG.warning("http://dougedey.github.io/2014/11/24/Why_Cant_I_Use_Elsinore_Without_Temperature_Probes/");
             System.exit(0);
         }
 
@@ -1512,10 +1512,10 @@ public final class LaunchControl {
             addr = InetAddress.getLocalHost();
             String webURL = "http://" + addr.getHostName() + ":"
                     + this.server_port + "/controller";
-            System.out.println("Please go to the Web UI to the web UI "
+            BrewServer.LOG.warning("Please go to the Web UI to the web UI "
                     + webURL);
         } catch (UnknownHostException e) {
-            System.out.println("Couldn't get localhost information.");
+            BrewServer.LOG.warning("Couldn't get localhost information.");
         }
     }
 
@@ -1632,10 +1632,10 @@ public final class LaunchControl {
             transformer.transform(source, configResult);
 
         } catch (TransformerConfigurationException e) {
-            System.out.println("Could not transform config file");
+            BrewServer.LOG.warning("Could not transform config file");
             e.printStackTrace();
         } catch (TransformerException e) {
-            System.out.println("Could not transformer file");
+            BrewServer.LOG.warning("Could not transformer file");
             e.printStackTrace();
         } catch (XPathExpressionException e) {
             e.printStackTrace();
@@ -1655,7 +1655,7 @@ public final class LaunchControl {
         }
 
         // Use the thread safe mechanism
-        System.out.println("Connecting to " + owfsServer + ":" + owfsPort);
+        BrewServer.LOG.info("Connecting to " + owfsServer + ":" + owfsPort);
         OwfsConnectionConfig owConfig = new OwfsConnectionConfig(owfsServer,
                 owfsPort);
         owConfig.setPersistence(OwPersistence.ON);
@@ -1669,8 +1669,8 @@ public final class LaunchControl {
      */
     private static void createOWFS() {
 
-        System.out.println("Creating the OWFS configuration.");
-        System.out.println("What is the OWFS server host?"
+        BrewServer.LOG.warning("Creating the OWFS configuration.");
+        BrewServer.LOG.warning("What is the OWFS server host?"
                 + " (Defaults to localhost)");
 
         String line = readInput();
@@ -1678,7 +1678,7 @@ public final class LaunchControl {
             owfsServer = line.trim();
         }
 
-        System.out.println("What is the OWFS server port? (Defaults to 4304)");
+        BrewServer.LOG.warning("What is the OWFS server port? (Defaults to 4304)");
 
         line = readInput();
         if (!line.trim().equals("")) {
@@ -1711,7 +1711,7 @@ public final class LaunchControl {
         try {
             List<String> owfsDirs = owfsConnection.listDirectory("/");
             if (owfsDirs.size() > 0) {
-                System.out.println("Listing OWFS devices on " + owfsServer
+                BrewServer.LOG.info("Listing OWFS devices on " + owfsServer
                         + ":" + owfsPort);
             }
             Iterator<String> dirIt = owfsDirs.iterator();
@@ -1729,7 +1729,7 @@ public final class LaunchControl {
                     if (probeExists(dir)) {
                         continue;
                     }
-                    System.out.println("Checking for " + dir);
+                    BrewServer.LOG.info("Checking for " + dir);
                     Temp currentTemp = new Temp(dir, dir);
                     tempList.add(currentTemp);
                     // setup the scale for each temp probe
@@ -1822,10 +1822,7 @@ public final class LaunchControl {
         Integer i = 1;
         synchronized (tempList) {
             Iterator<Temp> iterator = tempList.iterator();
-            System.out
-                    .println("\n\nNo config data found as usable. "
-                            + "Select a input and name it (i.e. \"1 kettle\" no quotes)"
-                            + " or type \"r\" to refresh:");
+            
             while (iterator.hasNext()) {
                 // launch all the PIDs first,
                 // since they will launch the temp theads too
@@ -1834,9 +1831,9 @@ public final class LaunchControl {
 
                 System.out.print(i.toString() + ") " + tTemp.getName());
                 if (currentTemp.equals(Temp.ERROR_TEMP)) {
-                    System.out.println(" doesn't have a valid temperature");
+                    BrewServer.LOG.warning(" doesn't have a valid temperature");
                 } else {
-                    System.out.println(" " + currentTemp);
+                    BrewServer.LOG.info(" " + currentTemp);
                 }
                 i++;
             }
@@ -1873,7 +1870,7 @@ public final class LaunchControl {
                 // Delete the info
                 deletePIDConfig(fTemp.getName());
             } else if (!n.getName().equals(fTemp.getProbe())) {
-                System.out.println("Saving PID " + n.getName());
+                BrewServer.LOG.info("Saving PID " + n.getName());
                 savePID(n);
             }
 
@@ -1971,9 +1968,9 @@ public final class LaunchControl {
         }
 
         // Save the config to the configuration file
-        System.out.println("Deleting the PID information for " + name);
+        BrewServer.LOG.info("Deleting the PID information for " + name);
 
-        System.out.println("Using base node " + device.getNodeName()
+        BrewServer.LOG.info("Using base node " + device.getNodeName()
                 + " with ID " + device.getAttribute("id"));
 
         device.getParentNode().removeChild(device);
@@ -1997,19 +1994,19 @@ public final class LaunchControl {
         }
 
         // Save the config to the configuration file
-        System.out.println("Saving the information for " + pid.getName());
+        BrewServer.LOG.info("Saving the information for " + pid.getName());
 
         // save any changes
         Element device = getFirstElementByXpath(null, "/elsinore/device[@id='"
                 + pid.getName() + "']");
 
         if (device == null) {
-            System.out.println("Creating new Element");
+            BrewServer.LOG.info("Creating new Element");
             device = addNewElement(null, "device");
             device.setAttribute("id", pid.getName());
         }
 
-        System.out.println("Using base node " + device.getNodeName()
+        BrewServer.LOG.info("Using base node " + device.getNodeName()
                 + " with ID " + device.getAttribute("id"));
 
         setElementText(device, "duty_cycle", pid.getDuty().toString());
@@ -2069,11 +2066,11 @@ public final class LaunchControl {
         String cutoff = temp.getCutoff();
 
         if (probe.equalsIgnoreCase(name)) {
-            System.out.println("Probe: " + probe + " is not setup, not saving");
+            BrewServer.LOG.info("Probe: " + probe + " is not setup, not saving");
             return null;
         }
         // save any changes
-        System.out.println("Saving " + name + " with probe " + probe);
+        BrewServer.LOG.info("Saving " + name + " with probe " + probe);
         // save any changes
         Element device = getFirstElementByXpath(null, "/elsinore/device[@id='"
                 + name + "']");
@@ -2086,9 +2083,9 @@ public final class LaunchControl {
         setElementText(device, "cutoff", cutoff);
         setElementText(device, "calibration", temp.getCalibration());
 
-        System.out.println("Checking for volume");
+        BrewServer.LOG.info("Checking for volume");
         if (temp.hasVolume()) {
-            System.out.println("Saving volume");
+            BrewServer.LOG.info("Saving volume");
             setElementText(device, "volume-units", temp.getVolumeUnit());
             if (temp.getVolumeAIN() >= 0) {
                 setElementText(device, "volume-ain",
@@ -2106,7 +2103,7 @@ public final class LaunchControl {
 
             if (volumeBase != null) {
                 for (Entry<BigDecimal, BigDecimal> e : volumeBase.entrySet()) {
-                    System.out.println("Saving volume point " + e.getKey()
+                    BrewServer.LOG.info("Saving volume point " + e.getKey()
                             + " value " + e.getValue());
                     Element volEntry = addNewElement(device, "volume");
                     volEntry.setAttribute("vol", e.getKey().toString());
@@ -2136,7 +2133,7 @@ public final class LaunchControl {
             final String offset, final String volumeUnit,
             final ConcurrentHashMap<BigDecimal, BigDecimal> concurrentHashMap) {
 
-        System.out.println("Saving volume for " + name);
+        BrewServer.LOG.info("Saving volume for " + name);
 
         Element device = saveVolumeMeasurements(name, concurrentHashMap,
                 volumeUnit);
@@ -2267,14 +2264,14 @@ public final class LaunchControl {
             }
             return;
         } catch (Exception e) {
-            System.out.println(configFileName
+            BrewServer.LOG.info(configFileName
                     + " isn't an XML File, trying configparser");
         }
 
         try {
             configCfg = new ConfigParser();
 
-            System.out.println("Backing up config to " + configFileName
+            BrewServer.LOG.info("Backing up config to " + configFileName
                     + ".original");
             File originalFile = new File(configFileName + ".original");
             File sourceFile = new File(configFileName);
@@ -2284,9 +2281,9 @@ public final class LaunchControl {
             LaunchControl.setFileOwner(sourceFile);
 
             configCfg.read(configFileName);
-            System.out.println("Created configCfg");
+            BrewServer.LOG.info("Created configCfg");
         } catch (IOException e) {
-            System.out.println("Config file at: " + configFileName
+            BrewServer.LOG.info("Config file at: " + configFileName
                     + " doesn't exist");
             configCfg = null;
         }
@@ -2310,7 +2307,7 @@ public final class LaunchControl {
             Node temp = configSections.item(i);
             if (temp.getNodeType() == Node.ELEMENT_NODE) {
                 Element e = (Element) temp;
-                System.out.println("Checking section " + e.getNodeName());
+                BrewServer.LOG.info("Checking section " + e.getNodeName());
                 // Parsed general first
                 if (e.getNodeName().equalsIgnoreCase("general")) {
                     continue;
@@ -2322,7 +2319,7 @@ public final class LaunchControl {
                 } else if (e.getNodeName().equalsIgnoreCase("device")) {
                     parseDevice(e);
                 } else {
-                    System.out.println("Unrecognized section "
+                    BrewServer.LOG.info("Unrecognized section "
                             + e.getNodeName());
                 }
             }
@@ -2486,7 +2483,7 @@ public final class LaunchControl {
                         volumeArray.put(volValue, volReading);
                         // we can parse this as an integer
                     } catch (NumberFormatException e) {
-                        System.out.println("Could not parse "
+                        BrewServer.LOG.info("Could not parse "
                                 + curOption.getNodeName() + " as an integer");
                     }
 
@@ -2514,13 +2511,13 @@ public final class LaunchControl {
             }
 
             if (volumeUnits == null) {
-                System.out.println("Couldn't find a volume unit for "
+                BrewServer.LOG.info("Couldn't find a volume unit for "
                         + deviceName);
                 volumeArray = null;
             }
 
             if (volumeArray != null && volumeArray.size() < MIN_VOLUME_SIZE) {
-                System.out.println("Not enough volume data points, "
+                BrewServer.LOG.info("Not enough volume data points, "
                         + volumeArray.size() + " found");
                 volumeArray = null;
             } else if (volumeArray == null) {
@@ -2536,7 +2533,7 @@ public final class LaunchControl {
                     + deviceName);
             nfe.printStackTrace();
         } catch (Exception e) {
-            System.out.println(e.getMessage() + " Ocurred when reading "
+            BrewServer.LOG.info(e.getMessage() + " Ocurred when reading "
                     + deviceName);
             e.printStackTrace();
         }
@@ -2568,7 +2565,7 @@ public final class LaunchControl {
                 }
             }
         } catch (InvalidGPIOException e) {
-            System.out.println("Invalid GPIO provided");
+            BrewServer.LOG.info("Invalid GPIO provided");
             e.printStackTrace();
         }
 
@@ -2738,13 +2735,13 @@ public final class LaunchControl {
 
         Element newElement = configDoc.createElement(nodeName);
         Element trueBase = baseNode;
-        System.out.println("Creating element of " + nodeName);
+        BrewServer.LOG.info("Creating element of " + nodeName);
 
         if (trueBase == null) {
-            System.out.println("Creating on configDoc base");
+            BrewServer.LOG.info("Creating on configDoc base");
             trueBase = configDoc.getDocumentElement();
         } else {
-            System.out.println("on " + trueBase.getNodeName());
+            BrewServer.LOG.info("on " + trueBase.getNodeName());
         }
 
         newElement = (Element) trueBase.appendChild(newElement);
@@ -2774,7 +2771,7 @@ public final class LaunchControl {
             expr = xpath.compile(xpathIn);
             tList = (NodeList) expr.evaluate(configDoc, XPathConstants.NODESET);
         } catch (XPathExpressionException e) {
-            System.out.println(" Bad XPATH: " + xpathIn);
+            BrewServer.LOG.warning("Bad XPATH: " + xpathIn);
             e.printStackTrace();
             System.exit(-1);
 
@@ -2944,9 +2941,9 @@ public final class LaunchControl {
         try {
             process = pb.start();
             process.waitFor();
-            System.out.println(process.getOutputStream().toString());
+            BrewServer.LOG.info(process.getOutputStream().toString());
         } catch (IOException | InterruptedException e3) {
-            System.out.println("Couldn't check remote git SHA");
+            BrewServer.LOG.info("Couldn't check remote git SHA");
             e3.printStackTrace();
             return;
         }
@@ -2957,7 +2954,7 @@ public final class LaunchControl {
         commands.add("rev-parse");
         commands.add("HEAD");
         LaunchControl.setMessage("Checking for updates from git...");
-        System.out.println("Checking for updates from the head repo");
+        BrewServer.LOG.info("Checking for updates from the head repo");
 
         // Run macro on target
         pb = new ProcessBuilder(commands);
@@ -2968,7 +2965,7 @@ public final class LaunchControl {
             process = pb.start();
             process.waitFor();
         } catch (IOException | InterruptedException e3) {
-            System.out.println("Couldn't check remote git SHA");
+            BrewServer.LOG.info("Couldn't check remote git SHA");
             e3.printStackTrace();
             return;
         }
@@ -2988,17 +2985,17 @@ public final class LaunchControl {
                         currentSha = line;
                     }
                     out.append(line).append('\n');
-                    System.out.println(line);
+                    BrewServer.LOG.info(line);
                 }
             }
         } catch (IOException e2) {
-            System.out.println("Couldn't read a line when checking local SHA");
+            BrewServer.LOG.info("Couldn't read a line when checking local SHA");
             e2.printStackTrace();
             return;
         }
 
         if (currentSha == null) {
-            System.out.println("Couldn't check Head revision");
+            BrewServer.LOG.info("Couldn't check Head revision");
             LaunchControl.setMessage("Couldn't check head revision");
             return;
         }
@@ -3018,7 +3015,7 @@ public final class LaunchControl {
             process = pb.start();
             process.waitFor();
         } catch (IOException | InterruptedException e1) {
-            System.out.println("Couldn't check remote SHA");
+            BrewServer.LOG.warning("Couldn't check remote SHA");
             e1.printStackTrace();
             return;
         }
@@ -3038,17 +3035,17 @@ public final class LaunchControl {
                         headSha = line;
                     }
                     out.append(line).append('\n');
-                    System.out.println(line);
+                    BrewServer.LOG.info(line);
                 }
             }
         } catch (IOException e) {
-            System.out.println("Couldn't read remote head revision output");
+            BrewServer.LOG.warning("Couldn't read remote head revision output");
             e.printStackTrace();
             return;
         }
 
         if (headSha == null) {
-            System.out.println("Couldn't check ORIGIN revision");
+            BrewServer.LOG.info("Couldn't check ORIGIN revision");
             LaunchControl.setMessage("Couldn't check ORIGIN revision");
             return;
         }
@@ -3076,7 +3073,7 @@ public final class LaunchControl {
         jarLocation = new File(LaunchControl.class.getProtectionDomain()
                 .getCodeSource().getLocation().getPath()).getParentFile();
 
-        System.out.println("Updating from Head");
+        BrewServer.LOG.info("Updating from Head");
         List<String> commands = new ArrayList<String>();
         commands.add("git");
         commands.add("pull");
@@ -3087,7 +3084,7 @@ public final class LaunchControl {
         try {
             process = pb.start();
         } catch (IOException e3) {
-            System.out.println("Couldn't check remote git SHA");
+            BrewServer.LOG.info("Couldn't check remote git SHA");
             e3.printStackTrace();
             LaunchControl.setMessage("Failed to update from Git");
             return;
@@ -3103,17 +3100,16 @@ public final class LaunchControl {
                 if (!line.equals(previous)) {
                     previous = line;
                     out.append(line).append('\n');
-                    System.out.println(line);
                 }
             }
         } catch (IOException e2) {
-            System.out.println("Couldn't update from GIT");
+            BrewServer.LOG.warning("Couldn't update from GIT");
             e2.printStackTrace();
             LaunchControl.setMessage(out.toString());
             return;
         }
         LaunchControl.setMessage(out.toString());
-        System.out.println(out.toString());
+        BrewServer.LOG.warning(out.toString());
 
         System.exit(EXIT_UPDATE);
     }
@@ -3270,7 +3266,7 @@ public final class LaunchControl {
         if (LaunchControl.recorder != null) {
             return;
         }
-        System.out.println("Enabling the recorder");
+        BrewServer.LOG.info("Enabling the recorder");
         LaunchControl.recorderEnabled = true;
         LaunchControl.recorder = new StatusRecorder(recorderDirectory);
         LaunchControl.recorder.setThreshold(recorderDiff);
@@ -3281,7 +3277,7 @@ public final class LaunchControl {
         if (LaunchControl.recorder == null) {
             return;
         }
-        System.out.println("Disabling the recorder");
+        BrewServer.LOG.info("Disabling the recorder");
         LaunchControl.recorderEnabled = false;
         LaunchControl.recorder.stop();
         LaunchControl.recorder = null;
