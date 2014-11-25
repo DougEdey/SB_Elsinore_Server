@@ -895,9 +895,9 @@ public final class PID implements Runnable {
         BrewServer.LOG.info("Checking current temp against " + this.min + " and " + this.max);
         try {
             this.timeDiff = this.currentTime.subtract(this.hysteriaStartTime);
-            this.timeDiff = timeDiff.divide(THOUSAND).divide(new BigDecimal(60));
+            this.timeDiff = MathUtil.divide(MathUtil.divide(timeDiff, THOUSAND), 60);
         } catch (ArithmeticException e) {
-            BrewServer.LOG.info(e.getMessage());
+            BrewServer.LOG.warning(e.getMessage());
         }
         
         if (this.getTempF().compareTo(this.min) < 0) {
