@@ -930,6 +930,7 @@ public class BrewServer extends NanoHTTPD {
         JSONObject sub_usage = new JSONObject();
         Map<String, String> parms = ParseParams(params);
         String inputUnit = parms.get("inputunit");
+        boolean errorValue = false;
 
         // Fall back to the old style
         sub_usage.put("dutycycle", "The new duty cycle % to set");
@@ -941,6 +942,7 @@ public class BrewServer extends NanoHTTPD {
                 BrewServer.LOG.info("Duty cycle: " + duty);
             } catch (NumberFormatException nfe) {
                 System.out.print("Bad duty");
+                errorValue = true;
             }
         }
 
@@ -952,7 +954,8 @@ public class BrewServer extends NanoHTTPD {
                 setpoint = dTemp;
                 BrewServer.LOG.info("Set Point: " + setpoint);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad setpoint");
+                BrewServer.LOG.warning("Bad setpoint");
+                errorValue = true;
             }
         }
 
@@ -964,7 +967,8 @@ public class BrewServer extends NanoHTTPD {
                 heatcycle = dTemp;
                 BrewServer.LOG.info("Cycle time: " + heatcycle);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad cycle");
+                BrewServer.LOG.warning("Bad cycle");
+                errorValue = true;
             }
         }
 
@@ -976,7 +980,8 @@ public class BrewServer extends NanoHTTPD {
                 heatp = dTemp;
                 BrewServer.LOG.info("heat P: " + heatp);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad heat p");
+                BrewServer.LOG.warning("Bad heat p");
+                errorValue = true;
             }
         }
 
@@ -988,7 +993,8 @@ public class BrewServer extends NanoHTTPD {
                 heati = dTemp;
                 BrewServer.LOG.info("Heat I: " + heati);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad heat i");
+                BrewServer.LOG.warning("Bad heat i");
+                errorValue = true;
             }
         }
 
@@ -1000,7 +1006,8 @@ public class BrewServer extends NanoHTTPD {
                 heatd = dTemp;
                 BrewServer.LOG.info("Heat D: " + heatd);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad heat d");
+                BrewServer.LOG.warning("Bad heat d");
+                errorValue = true;
             }
         }
 
@@ -1012,7 +1019,8 @@ public class BrewServer extends NanoHTTPD {
                 coolcycle = dTemp;
                 BrewServer.LOG.info("Cycle time: " + coolcycle);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad cycle");
+                BrewServer.LOG.warning("Bad cycle");
+                errorValue = true;
             }
         }
         
@@ -1024,7 +1032,8 @@ public class BrewServer extends NanoHTTPD {
                 cycle = dTemp;
                 BrewServer.LOG.info("Cycle time: " + cycle);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad cycle");
+                BrewServer.LOG.warning("Bad cycle");
+                errorValue = true;
             }
         }
 
@@ -1036,7 +1045,8 @@ public class BrewServer extends NanoHTTPD {
                 cooldelay = dTemp;
                 BrewServer.LOG.info("Delay time: " + cooldelay);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad Cool delay");
+                BrewServer.LOG.warning("Bad Cool delay");
+                errorValue = true;
             }
         }
 
@@ -1048,7 +1058,8 @@ public class BrewServer extends NanoHTTPD {
                 coolp = dTemp;
                 BrewServer.LOG.info("cool P: " + coolp);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad cool p");
+                BrewServer.LOG.warning("Bad cool p");
+                errorValue = true;
             }
         }
 
@@ -1060,7 +1071,8 @@ public class BrewServer extends NanoHTTPD {
                 cooli = dTemp;
                 BrewServer.LOG.info("Heat I: " + cooli);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad cool i");
+                BrewServer.LOG.warning("Bad cool i");
+                errorValue = true;
             }
         }
 
@@ -1072,7 +1084,8 @@ public class BrewServer extends NanoHTTPD {
                 coold = dTemp;
                 BrewServer.LOG.info("Heat D: " + coold);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad cool d");
+                BrewServer.LOG.warning("Bad cool d");
+                errorValue = true;
             }
         }
 
@@ -1090,7 +1103,8 @@ public class BrewServer extends NanoHTTPD {
                 min = dTemp;
                 BrewServer.LOG.info("Min: " + mode);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad minimum");
+                BrewServer.LOG.warning("Bad minimum");
+                errorValue = true;
             }
         }
 
@@ -1102,7 +1116,8 @@ public class BrewServer extends NanoHTTPD {
                 max = dTemp;
                 BrewServer.LOG.info("Max: " + mode);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad maximum");
+                BrewServer.LOG.warning("Bad maximum");
+                errorValue = true;
             }
         }
 
@@ -1114,7 +1129,8 @@ public class BrewServer extends NanoHTTPD {
                 time = dTemp;
                 BrewServer.LOG.info("Time: " + time);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.info("Bad time");
+                BrewServer.LOG.warning("Bad time");
+                errorValue = true;
             }
         }
 
@@ -1123,6 +1139,12 @@ public class BrewServer extends NanoHTTPD {
         JSONObject usage = new JSONObject();
         usage.put(":PIDname", sub_usage);
 
+        if (errorValue) {
+            LaunchControl.setMessage("Bad inputs when updating. Please check the system log");
+            return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
+                    usage.toJSONString()); 
+        }
+        
         PID tPID = LaunchControl.findPID(inputUnit);
         if (tPID != null) {
             if (mode.equalsIgnoreCase("hysteria")) {

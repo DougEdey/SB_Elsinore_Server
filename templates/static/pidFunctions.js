@@ -729,7 +729,7 @@ function updatePIDStatus(vessel, val) {
 	jQuery(vesselDiv + ' input[name="dutycycle"]').val(val.duty);
 	jQuery(vesselDiv + ' input[name="setpoint"]').val(val.setpoint);
 	jQuery(vesselDiv + ' input[name="cycletime"]').val(val.manualcycle);
-	if ("heat" in val && val.heat.gpio != "") {
+	if ("heat" in val) {
 		jQuery(vesselDiv + ' div[id="heat"] input[name="heatcycletime"]').val(
 				val.heat.cycle);
 		jQuery(vesselDiv + ' div[id="heat"] input[name="heatp"]').val(
@@ -743,7 +743,7 @@ function updatePIDStatus(vessel, val) {
 		$(vesselDiv + ' a:first').hide();
 	}
 
-	if ("cool" in val && val.cool.gpio != "") {
+	if ("cool" in val) {
 		jQuery(vesselDiv + ' div[id="cool"] input[name="coolcycletime"]').val(
 				val.cool.cycle);
 		jQuery(vesselDiv + ' div[id="cool"] input[name="coolp"]').val(
@@ -927,6 +927,14 @@ function selectManual(vessel) {
 	vessel = null;
 	return false;
 }
+function addBadInput(badInputs, varName) {
+	if (badInputs != "") {
+		badInputs += ", " + varName;
+	} else {
+		badInputs = varName;
+	}
+	return badInputs;
+}
 
 function submitForm(form) {
 
@@ -936,7 +944,81 @@ function submitForm(form) {
 
 		var formdata = {};
 
-		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
+		var preData = jQuery(form).serializeObject();
+		
+		var validData = true;
+		var badInputs = "";
+		
+		if (isNaN(preData.coolcycletime)) {
+			badInputs = "Cool Cycle Time";
+		}
+		
+		if (isNaN(preData.coold)) {
+			badInputs = addBadInput(badInputs, "Cool D"); 
+		}
+		
+		if (isNaN(preData.cooldelay)) {
+			badInputs = addBadInput(badInputs, "Cool Delay");
+		}
+		
+		if (isNaN(preData.cooli)) {
+			badInputs = addBadInput(badInputs, "Cool I");
+		}
+		
+		if (isNaN(preData.coolp)) {
+			badInputs = addBadInput(badInputs, "Cool P");
+		}
+		
+		if (isNaN(preData.cutoff)) {
+			badInputs = addBadInput(badInputs, "Cut Off");
+		}
+		
+		if (isNaN(preData.cycletime)) {
+			badInputs = addBadInput(badInputs, "Cycle Time");
+		}
+		
+		if (isNaN(preData.dutycycle)) {
+			badInputs = addBadInput(badInputs, "Duty Cycle");
+		}
+		
+		if (isNaN(preData.heatcycletime)) {
+			badInputs = addBadInput(badInputs, "Heat Duty Cycle");
+		}
+		
+		if (isNaN(preData.heatd)) {
+			badInputs = addBadInput(badInputs, "Heat D");
+		}
+		
+		if (isNaN(preData.heati)) {
+			badInputs = addBadInput(badInputs, "Heat I");
+		}
+		
+		if (isNaN(preData.p)) {
+			badInputs = addBadInput(badInputs, "P");
+		}
+		
+		if (isNaN(preData.max)) {
+			badInputs = addBadInput(badInputs, "Hysteria Max");
+		}
+		
+		if (isNaN(preData.min)) {
+			badInputs = addBadInput(badInputs, "Hysteria Min");
+		}
+		
+		if (isNaN(preData.setpoint)) {
+			badInputs = addBadInput(badInputs, "Setpoint");
+		}
+		
+		if (isNaN(preData.time)) {
+			badInputs = addBadInput(badInputs, "Hysteria Delay");
+		}
+		
+		if (!validData) {
+			alert("Invalid data provided. Check your inputs: " + badInputs);
+			return false;
+		}
+		
+		formdata[vessel] = JSON.stringify(preData);
 		$.extend(formdata[vessel], {
 			"name" : "mode",
 			"value" : Window.mode
