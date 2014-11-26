@@ -936,7 +936,7 @@ public final class PID implements Runnable {
             // TimeDiff is now in minutes
             // Is the cooling output on?
             if (this.outputControl.getCooler() != null 
-                    && this.outputControl.getDuty().compareTo(new BigDecimal(100).negate()) > 0) {
+                    && this.outputControl.getDuty().compareTo(BigDecimal.ZERO) != 0) {
                 if (this.minTimePassed()) {
                     BrewServer.LOG.info("Current temp is greater than the max temp, turning on -100");
                     this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
@@ -946,7 +946,7 @@ public final class PID implements Runnable {
                             this.minTime.multiply(new BigDecimal(60)));
                 }
             } else if(this.outputControl.getHeater() != null 
-                    && this.outputControl.getDuty().compareTo(new BigDecimal(100)) > 0) {
+                    && this.outputControl.getDuty().compareTo(BigDecimal.ZERO) != 0) {
                BrewServer.LOG.info("Current temp is more than the max temp");
                // We're over the maximum temp, but should we wake up the thread?
                
