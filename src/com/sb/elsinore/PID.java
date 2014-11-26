@@ -909,7 +909,7 @@ public final class PID implements Runnable {
         
         if (this.getTempF().compareTo(minTempF) < 0) {
             if (this.outputControl != null 
-                    && this.outputControl.getDuty().compareTo(new BigDecimal(100)) < 0) {
+                    && this.outputControl.getDuty().compareTo(BigDecimal.ZERO) != 0) {
                 if (this.minTimePassed()) {
                     BrewServer.LOG.info("Current temp is less than the minimum temp, turning on 100");
                     this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
@@ -919,7 +919,7 @@ public final class PID implements Runnable {
                             this.minTime.multiply(new BigDecimal(60)));
                 }
             } else if (this.outputControl.getCooler() != null
-                    && this.outputControl.getDuty().compareTo(new BigDecimal(100).negate()) < 0) {
+                    && this.outputControl.getDuty().compareTo(BigDecimal.ZERO) != 0) {
                 if (this.minTimePassed()) {
                     BrewServer.LOG.info("Slept for long enough, turning off");
                     // Make sure the thread wakes up for the new settings
