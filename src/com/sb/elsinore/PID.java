@@ -900,7 +900,14 @@ public final class PID implements Runnable {
             BrewServer.LOG.warning(e.getMessage());
         }
         
-        if (this.getTempF().compareTo(this.min) < 0) {
+        BigDecimal minTempF = this.min;
+        BigDecimal maxTempF = this.max;
+        if (this.getTemp().getScale().equalsIgnoreCase("C")) {
+            minTempF = Temp.cToF(this.min);
+            maxTempF = Temp.cToF(this.max);
+        }
+        
+        if (this.getTempF().compareTo(minTempF) < 0) {
             if (this.outputControl != null 
                     && this.outputControl.getDuty().compareTo(new BigDecimal(100)) < 0) {
                 if (this.minTimePassed()) {
@@ -925,7 +932,7 @@ public final class PID implements Runnable {
             // Make sure the thread wakes up for the new settings
             this.outputThread.interrupt();
             
-        } else if (this.getTempF().compareTo(this.max) >= 0) {
+        } else if (this.getTempF().compareTo(maxTempF) >= 0) {
             // TimeDiff is now in minutes
             // Is the cooling output on?
             if (this.outputControl.getCooler() != null 
