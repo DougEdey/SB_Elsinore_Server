@@ -908,7 +908,7 @@ public final class PID implements Runnable {
         }
         
         if (this.getTempF().compareTo(minTempF) < 0) {
-            if (this.outputControl != null) {
+            if (this.hasValidHeater()) {
                 if (this.minTimePassed()) {
                     BrewServer.LOG.info("Current temp is less than the minimum temp, turning on 100");
                     this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
@@ -917,7 +917,7 @@ public final class PID implements Runnable {
                     this.outputControl.getHeater().setCycleTime(
                             this.minTime.multiply(new BigDecimal(60)));
                 }
-            } else if (this.outputControl.getCooler() != null) {
+            } else if (this.hasValidCooler()) {
                 if (this.minTimePassed()) {
                     BrewServer.LOG.info("Slept for long enough, turning off");
                     // Make sure the thread wakes up for the new settings
@@ -933,7 +933,7 @@ public final class PID implements Runnable {
         } else if (this.getTempF().compareTo(maxTempF) >= 0) {
             // TimeDiff is now in minutes
             // Is the cooling output on?
-            if (this.outputControl.getCooler() != null) {
+            if (this.hasValidCooler()) {
                 if (this.minTimePassed()) {
                     BrewServer.LOG.info("Current temp is greater than the max temp, turning on -100");
                     this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
@@ -942,7 +942,7 @@ public final class PID implements Runnable {
                     this.outputControl.getCooler().setCycleTime(
                             this.minTime.multiply(new BigDecimal(60)));
                 }
-            } else if(this.outputControl.getHeater() != null) {
+            } else if(this.hasValidHeater()) {
                BrewServer.LOG.info("Current temp is more than the max temp");
                // We're over the maximum temp, but should we wake up the thread?
                
@@ -955,5 +955,19 @@ public final class PID implements Runnable {
                 }
             }
         }
+    }
+    
+    public boolean hasValidCooler() {
+        return (this.outputControl != null
+                && this.outputControl.getCooler() != null
+                && this.outputControl.getCooler().getGpio() != null
+                && !this.outputControl.getCooler().getGpio().equals(""));
+    }
+    
+    public boolean hasValidHeater() {
+        return (this.outputControl != null
+                && this.outputControl.getHeater() != null
+                && this.outputControl.getHeater().getGpio() != null
+                && !this.outputControl.getHeater().getGpio().equals(""));
     }
 }
