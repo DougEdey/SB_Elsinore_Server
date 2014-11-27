@@ -20,7 +20,7 @@
 			pair = pair.split('=');
 			result[pair[0]] = decodeURIComponent(pair[1]);
 		}
-		result["bindto"] = "#temperatureChart";
+		result["bindto"] = "temperatureChart";
 		result["updates"] = window.updateOnly;
 		return result;
 	}
