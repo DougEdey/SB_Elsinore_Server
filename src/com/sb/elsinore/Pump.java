@@ -46,7 +46,7 @@ public class Pump implements Comparable<Pump> {
         }
 
         if (temp != null) {
-            System.out.println("Inverted outputs: " + temp);
+            BrewServer.LOG.warning("Inverted outputs: " + temp);
             this.invertOutput = true;
         }
 
@@ -71,7 +71,7 @@ public class Pump implements Comparable<Pump> {
                 return output.getValue().equals("1");
             }
         } catch (Exception e) {
-            System.out.println("Couldn't toggle pump: " + e);
+            BrewServer.LOG.warning("Couldn't toggle pump: " + e);
             return false;
         }
     }

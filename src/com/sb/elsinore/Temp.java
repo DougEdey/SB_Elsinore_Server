@@ -91,7 +91,7 @@ public final class Temp implements Runnable {
                 if (tempFile.exists()) {
                     fProbe = bbbSystemTemp;
                 } else {
-                    BrewServer.LOG.info(
+                    BrewServer.LOG.warning(
                         "Couldn't find a valid system temperature probe");
                     return;
                 }
@@ -120,7 +120,7 @@ public final class Temp implements Runnable {
                             devFamily.toString() + "."
                             + devAddress.toString().toUpperCase();
 
-                        System.out.println("Converted address: "
+                        BrewServer.LOG.info("Converted address: "
                             + fixedAddress);
 
                         aName = fixedAddress;
@@ -161,7 +161,7 @@ public final class Temp implements Runnable {
                     String fixedAddress = devFamily.toString() + "."
                         + devAddress.toString().toLowerCase();
 
-                    System.out.println("Converted address: " + fixedAddress);
+                    BrewServer.LOG.info("Converted address: " + fixedAddress);
 
                     aName = fixedAddress;
                     probePath = null;
@@ -428,7 +428,7 @@ public final class Temp implements Runnable {
         BigDecimal result = ERROR_TEMP;
 
         if (badTemp) {
-            System.out.println("Trying to recover " + this.getName());
+            BrewServer.LOG.warning("Trying to recover " + this.getName());
         }
         if (fProbe == null) {
             result = updateTempFromOWFS();
@@ -530,7 +530,7 @@ public final class Temp implements Runnable {
         } catch (IOException ie) {
             if (loggingOn) {
                 this.currentError = "Couldn't find the device under: " + fProbe;
-                System.out.println(currentError);
+                BrewServer.LOG.warning(currentError);
                 if (fProbe == rpiSystemTemp) {
                     fProbe = bbbSystemTemp;
                 }
@@ -544,7 +544,7 @@ public final class Temp implements Runnable {
                 try {
                     br.close();
                 } catch (IOException ie) {
-                    BrewServer.LOG.info(ie.getLocalizedMessage());
+                    BrewServer.LOG.warning(ie.getLocalizedMessage());
                 }
             }
         }
@@ -628,7 +628,7 @@ public final class Temp implements Runnable {
             this.volumePin = new InPin(analogPin, Direction.ANALOGUE);
         } catch (InvalidGPIOException e) {
             this.volumeMeasurement = false;
-            System.out.println("Invalid Analog GPIO specified " + analogPin);
+            BrewServer.LOG.warning("Invalid Analog GPIO specified " + analogPin);
             throw(e);
         }
 
@@ -674,11 +674,11 @@ public final class Temp implements Runnable {
 
                 if (volumeMultiplier.compareTo(BigDecimal.ZERO) != 0) {
                     if (newMultiplier != volumeMultiplier) {
-                        System.out.println(
+                        BrewServer.LOG.info(
                             "The newMultiplier isn't the same as the old one,"
                             + " if this is a big difference, be careful!"
                             + " You may need a quadratic!");
-                        System.out.println("New: " + newMultiplier
+                        BrewServer.LOG.info("New: " + newMultiplier
                             + ". Old: " + volumeMultiplier);
                     }
                 } else {
@@ -687,11 +687,11 @@ public final class Temp implements Runnable {
 
                 if (volumeConstant.compareTo(BigDecimal.ZERO) != 0) {
                     if (newConstant != volumeConstant) {
-                        System.out.println("The new constant "
+                        BrewServer.LOG.info("The new constant "
                             + "isn't the same as the old one, if this is a big"
                             + " difference, be careful!"
                             + " You may need a quadratic!");
-                        System.out.println("New: " + newConstant
+                        BrewServer.LOG.info("New: " + newConstant
                             + ". Old: " + volumeConstant);
                     }
                 } else {
@@ -859,7 +859,7 @@ public final class Temp implements Runnable {
                     return false;
                 }
             } catch (NumberFormatException  e) {
-                System.out.println("Bad Analog input value!");
+                BrewServer.LOG.warning("Bad Analog input value!");
                 return false;
             }
 
@@ -875,7 +875,7 @@ public final class Temp implements Runnable {
         // read in ten values
         BigDecimal avgValue = MathUtil.divide(total, maxReads);
         
-        System.out.println("Read " + avgValue + " for "
+        BrewServer.LOG.info("Read " + avgValue + " for "
                 + volume + " " + volumeUnit.toString());
 
         this.addVolumeMeasurement(volume, avgValue);
@@ -984,7 +984,7 @@ public final class Temp implements Runnable {
     public void shutdown() {
         // Graceful shutdown.
         keepalive = false;
-        System.out.println(this.getName() + " is shutting down");
+        BrewServer.LOG.warning(this.getName() + " is shutting down");
         Thread.currentThread().interrupt();
     }
 
@@ -1062,5 +1062,3 @@ public final class Temp implements Runnable {
         }
     }
 }
-
-

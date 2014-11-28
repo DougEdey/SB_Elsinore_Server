@@ -23,7 +23,7 @@ public class OutputDevice {
             String invOut = System.getProperty("invert_outputs");
 
             if (invOut != null) {
-                System.out.println("Inverting outputs");
+                BrewServer.LOG.warning("Inverting outputs");
                 invertOutput = true;
             }
         } catch (Exception e) {

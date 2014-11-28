@@ -855,7 +855,7 @@ public final class PID implements Runnable {
     }
     
     public void stop() {
-        System.out.println("Shutting down " + this.getName());
+        BrewServer.LOG.warning("Shutting down " + this.getName());
         running = false;
         Thread.currentThread().interrupt();
     }
@@ -895,14 +895,20 @@ public final class PID implements Runnable {
         BrewServer.LOG.info("Checking current temp against " + this.min + " and " + this.max);
         try {
             this.timeDiff = this.currentTime.subtract(this.hysteriaStartTime);
-            this.timeDiff = timeDiff.divide(THOUSAND).divide(new BigDecimal(60));
+            this.timeDiff = MathUtil.divide(MathUtil.divide(timeDiff, THOUSAND), 60);
         } catch (ArithmeticException e) {
-            BrewServer.LOG.info(e.getMessage());
+            BrewServer.LOG.warning(e.getMessage());
         }
         
-        if (this.getTempF().compareTo(this.min) < 0) {
-            if (this.outputControl != null 
-                    && this.outputControl.getDuty().compareTo(new BigDecimal(100)) < 0) {
+        BigDecimal minTempF = this.min;
+        BigDecimal maxTempF = this.max;
+        if (this.getTemp().getScale().equalsIgnoreCase("C")) {
+            minTempF = Temp.cToF(this.min);
+            maxTempF = Temp.cToF(this.max);
+        }
+        
+        if (this.getTempF().compareTo(minTempF) < 0) {
+            if (this.hasValidHeater()) {
                 if (this.minTimePassed()) {
                     BrewServer.LOG.info("Current temp is less than the minimum temp, turning on 100");
                     this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
@@ -911,8 +917,7 @@ public final class PID implements Runnable {
                     this.outputControl.getHeater().setCycleTime(
                             this.minTime.multiply(new BigDecimal(60)));
                 }
-            } else if (this.outputControl.getCooler() != null
-                    && this.outputControl.getDuty().compareTo(new BigDecimal(100).negate()) < 0) {
+            } else if (this.hasValidCooler()) {
                 if (this.minTimePassed()) {
                     BrewServer.LOG.info("Slept for long enough, turning off");
                     // Make sure the thread wakes up for the new settings
@@ -925,11 +930,10 @@ public final class PID implements Runnable {
             // Make sure the thread wakes up for the new settings
             this.outputThread.interrupt();
             
-        } else if (this.getTempF().compareTo(this.max) >= 0) {
+        } else if (this.getTempF().compareTo(maxTempF) >= 0) {
             // TimeDiff is now in minutes
             // Is the cooling output on?
-            if (this.outputControl.getCooler() != null 
-                    && this.outputControl.getDuty().compareTo(new BigDecimal(100).negate()) > 0) {
+            if (this.hasValidCooler()) {
                 if (this.minTimePassed()) {
                     BrewServer.LOG.info("Current temp is greater than the max temp, turning on -100");
                     this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
@@ -938,8 +942,7 @@ public final class PID implements Runnable {
                     this.outputControl.getCooler().setCycleTime(
                             this.minTime.multiply(new BigDecimal(60)));
                 }
-            } else if(this.outputControl.getHeater() != null 
-                    && this.outputControl.getDuty().compareTo(new BigDecimal(100)) > 0) {
+            } else if(this.hasValidHeater()) {
                BrewServer.LOG.info("Current temp is more than the max temp");
                // We're over the maximum temp, but should we wake up the thread?
                
@@ -952,5 +955,19 @@ public final class PID implements Runnable {
                 }
             }
         }
+    }
+    
+    public boolean hasValidCooler() {
+        return (this.outputControl != null
+                && this.outputControl.getCooler() != null
+                && this.outputControl.getCooler().getGpio() != null
+                && !this.outputControl.getCooler().getGpio().equals(""));
+    }
+    
+    public boolean hasValidHeater() {
+        return (this.outputControl != null
+                && this.outputControl.getHeater() != null
+                && this.outputControl.getHeater().getGpio() != null
+                && !this.outputControl.getHeater().getGpio().equals(""));
     }
 }

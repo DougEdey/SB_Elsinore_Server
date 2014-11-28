@@ -37,7 +37,7 @@ Move to the checked out Directory:
 
 Run:
 
-``` sudo launch.sh ```
+``` sudo ./launch.sh ```
 
 You may get offered to use OWFS if you have a non temperature sensor (such as a one wire analogue chip, since the basic OneWire support in Linux doesn't support them)
 Then you can go to 
