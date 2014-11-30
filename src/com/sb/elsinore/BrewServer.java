@@ -4,6 +4,7 @@ import jGPIO.InvalidGPIOException;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -1997,6 +1998,36 @@ public class BrewServer extends NanoHTTPD {
         JSONArray dataBuffer = new JSONArray();
         long currentTime = System.currentTimeMillis();
 
+        // Are we downloading the files?
+        if (params.containsKey("download")
+                && params.get("download").equalsIgnoreCase("true")) {
+            String zipFileName = "graph-data/zipdownload-"
+                + currentTime + ".zip";
+            ZipFile zipFile = null;
+            try {
+                zipFile = new ZipFile(zipFileName);
+            } catch (FileNotFoundException ioe) {
+                BrewServer.LOG.warning(
+                        "Couldn't create zip file at: " + zipFileName);
+                BrewServer.LOG.warning(ioe.getLocalizedMessage());
+            }
+
+            for (File content : contents) {
+                try {
+                    if (content.getName().endsWith(".csv")
+                            && content.getName().toLowerCase()
+                                    .startsWith(vessel.toLowerCase())) {
+                        zipFile.addToZipFile(content.getAbsolutePath());
+                    }
+                } catch (IOException ioe) {
+                    BrewServer.LOG.warning(
+                            "Couldn't add " + content.getAbsolutePath()
+                            + " to zipfile");
+                }
+            }
+            return serveFile(zipFileName, params, rootDir);
+        }
+
         for (File content : contents) {
             if (content.getName().endsWith(".csv")
                     && content.getName().toLowerCase()
@@ -2008,7 +2039,8 @@ public class BrewServer extends NanoHTTPD {
                 name = name.replace('-', ' ');
 
                 if (parms.containsKey("bindto")
-                        && ((String)parms.get("bindto")).endsWith("-graph_body")) {
+                        && ((String)parms.get("bindto"))
+                        .endsWith("-graph_body")) {
                     name = name.substring(name.lastIndexOf(" ") + 1);
                 }
 

@@ -161,7 +161,7 @@ public final class LaunchControl {
     private static Document configDoc = null;
 
     /**
-     * Default config filename. Can be overriden with -c <filename>
+     * Default config filename. Can be overridden with -c <filename>
      */
     private static String configFileName = "elsinore.cfg";
 

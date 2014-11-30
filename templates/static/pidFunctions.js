@@ -2288,7 +2288,7 @@ function embedGraph(vessel) {
 	window.updateOnly = false;
 	var chart = null;
 	$("#" + vessel + "-graph_body").width(300);
-	$("#" + vessel + "-graph_body").height(150);
+	$("#" + vessel + "-graph_body").height(200);
 	function fetchData() {
 
 		function onDataReceived(series) {
