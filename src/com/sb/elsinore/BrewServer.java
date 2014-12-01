@@ -1354,12 +1354,12 @@ public class BrewServer extends NanoHTTPD {
                     updateSystemSettings(parms));
         }
 
-        if (uri.equalsIgnoreCase("/controller")) {
+        if (uri.equalsIgnoreCase("/oldcontroller")) {
             return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                     LaunchControl.getControlPage());
         }
 
-        if (uri.equalsIgnoreCase("/newcontroller")) {
+        if (uri.equalsIgnoreCase("/controller")) {
             RenderHTML renderController = new RenderHTML();
             HtmlCanvas html = new HtmlCanvas();
             String result = "";

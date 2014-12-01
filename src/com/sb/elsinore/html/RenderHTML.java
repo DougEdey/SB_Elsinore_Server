@@ -43,6 +43,9 @@ public class RenderHTML implements Renderable {
         // Add all the Temps
         html.div(id("tempProbes"));
             for (Temp temp: LaunchControl.tempList) {
+                if (LaunchControl.isLocked() && temp.getName().equals(temp.getProbe())) {
+                    continue;
+                }
                 PID pid = LaunchControl.findPID(temp.getName());
                 if (pid == null) {
                     html.render(new PIDComponent(temp.getName()));

@@ -697,7 +697,7 @@ function toggleDevice(vessel) {
 }
 
 function hidePIDForm(vessel) {
-	$("#" + vessel + "-controls").toggleClass("hidden", true);
+	$("#" + vessel + "-controls").hide();
 }
 
 function updatePIDStatus(vessel, val) {
