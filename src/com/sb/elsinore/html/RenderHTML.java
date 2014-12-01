@@ -86,11 +86,11 @@ public class RenderHTML implements Renderable {
                         html.render(new TimerComponent(timer.getName()));
                     }
 
-                    html.span(id("NewPump").class_("holo-button pump")
-                        .type("submit").onDrop("dropDeletePump(event")
-                        .onDragover("allowDropPump(event)")
-                        .onClick("addPump()"))
-                        .write(Messages.NEW_PUMP)
+                    html.span(id("NewTimer").class_("holo-button timer")
+                        .type("submit").onDrop("dropDeleteTimer(event")
+                        .onDragover("allowDropTimer(event)")
+                        .onClick("addTimer()"))
+                        .write(Messages.NEW_TIMER)
                     ._span()
                 ._div()
             ._div()
