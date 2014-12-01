@@ -52,14 +52,18 @@ function setup() {
 		}
 	});
 
-	$('div[class="center-left"]')
-			.append(
-					"<div id='edit-page' class='holo-button' onclick='toggleEdit(true); return false;'>"
+	var temp =$('div[class="center-left"]');
+	
+	if (temp == undefined || temp.length == 0) {
+		temp = $('div[class="center-left col-md-4"]')
+	}
+	temp.append(
+			"<div id='edit-page' class='col-md-4 holo-button' onclick='toggleEdit(true); return false;'>"
 							+ $.i18n.prop("EDIT") + "</div>");
-	$('div[class="center-left"]')
-			.append(
-					"<div id='change-scale' class='holo-button' onclick='changeScale(); return false;'>"
-							+ $.i18n.prop("CHANGE_SCALE") + "</div>")
+
+	temp.append(
+			"<div id='change-scale' class='col-md-6 holo-button' onclick='changeScale(); return false;'>"
+					+ $.i18n.prop("CHANGE_SCALE") + "</div>")
 
 	$('div[id$=-graph_body]').each(function(index) {
 		$(this).slideToggle();
@@ -175,11 +179,11 @@ function waitForMsg() {
 
 							if (!$("#messages").is(":visible")) {
 								jQuery("#messages").css('display', 'block');
-								jQuery("#messages").show();
+								jQuery("#messages").toggleClass("hidden", false);
 							}
 						} else {
 							if ($("#messages").is(":visible")) {
-								jQuery("#messages").hide();
+								jQuery("#messages").toggleClass("hidden", true);;
 							}
 						}
 					}
@@ -312,13 +316,13 @@ function waitForMsg() {
 															'div[id^="'
 																	+ vesselName
 																	+ '-gage"]')
-															.hide();
+															.toggleClass("hidden", true);
 												} else {
 													$(
 															'div[id^="'
 																	+ vesselName
 																	+ '-gage"]')
-															.show();
+															.toggleClass("hidden", false);
 													var duty = vesselStatus.pidstatus.duty;
 													if ("actualduty" in vesselStatus.pidstatus) {
 														duty = vesselStatus.pidstatus.actualduty;
@@ -466,9 +470,9 @@ function updateTempProbe(vessel, val) {
 	// Check for an error message
 	if ("errorMessage" in val) {
 		jQuery("#" + vessel + "-error").text(val.errorMessage);
-		jQuery("#" + vessel + "-error").show();
+		jQuery("#" + vessel + "-error").toggleClass("hidden", false);
 	} else {
-		jQuery("#" + vessel + "-error").hide();
+		jQuery("#" + vessel + "-error").toggleClass("hidden", true);
 	}
 
 }
@@ -693,13 +697,13 @@ function toggleDevice(vessel) {
 }
 
 function hidePIDForm(vessel) {
-	$("#" + vessel + "-controls").hide();
+	$("#" + vessel + "-controls").toggleClass("hidden", true);
 }
 
 function updatePIDStatus(vessel, val) {
 	// setup the values
 	var vesselDiv = 'form[id="' + vessel + '-form"]';
-	$("#" + vessel + "-controls").show();
+	$("#" + vessel + "-controls").toggleClass("hidden", false);
 
 	var mode = val.mode.toLowerCase();
 	var currentMode = jQuery(vesselDiv + ' input[name="dutycycle"]');
@@ -740,7 +744,7 @@ function updatePIDStatus(vessel, val) {
 				val.heat.d);
 		jQuery(vesselDiv + ' input[name="heatgpio"]').val(val.heat.gpio);
 	} else {
-		$(vesselDiv + ' a:first').hide();
+		$(vesselDiv + ' a:first').toggleClass("hidden", true);
 	}
 
 	if ("cool" in val) {
@@ -756,7 +760,7 @@ function updatePIDStatus(vessel, val) {
 				val.cool.delay);
 		jQuery(vesselDiv + ' input[name="coolgpio"]').val(val.cool.gpio);
 	} else {
-		$(vesselDiv + ' a:last').hide();
+		$(vesselDiv + ' a:last').toggleClass("hidden", true);
 	}
 
 	jQuery(vesselDiv + ' input[name="min"]').val(val.min);
@@ -787,7 +791,7 @@ function updatePIDStatus(vessel, val) {
 
 	// Aux Mode check
 	if ("auxStatus" in val) {
-		jQuery(vesselDiv + ' button[id="' + vessel + 'Aux"]').show();
+		jQuery(vesselDiv + ' button[id="' + vessel + 'Aux"]').toggleClass("hidden", false);
 		if (val.auxStatus == "on" || val.auxStatus == "1") {
 			jQuery(vesselDiv + ' button[id="' + vessel + 'Aux"]').style.background = "red";
 			jQuery(vesselDiv + ' button[id="' + vessel + 'Aux"]').innerHTML = $.i18n
@@ -798,10 +802,10 @@ function updatePIDStatus(vessel, val) {
 					.prop("AUX_OFF");
 		}
 	} else {
-		jQuery(vesselDiv + ' button[id="' + vessel + 'Aux"]').hide();
+		jQuery(vesselDiv + ' button[id="' + vessel + 'Aux"]').toggleClass("hidden", true);
 	}
 
-	$(vesselDiv + ' button[id="sendcommand"]').hide();
+	$(vesselDiv + ' button[id="sendcommand"]').toggleClass("hidden", true);
 	window.disableUpdates = 0;
 
 }
@@ -823,14 +827,14 @@ function selectOff(vessel) {
 	jQuery('button[id^="' + vessel + '-modeAuto"]')[0].style.background = "#666666";
 	jQuery('button[id^="' + vessel + '-modeHysteria"]')[0].style.background = "#666666";
 
-	jQuery('tr[id="' + vessel + '-SP"]').hide();
-	jQuery('tr[id="' + vessel + '-DC"]').hide();
-	jQuery('tr[id="' + vessel + '-DT"]').hide();
-	jQuery('tr[id="' + vessel + '-min"]').hide();
-	jQuery('tr[id="' + vessel + '-max"]').hide();
-	jQuery('tr[id="' + vessel + '-time"]').hide();
-	jQuery('tr[id="' + vessel + '-tabbedInputs"]').hide();
-	$(vesselDiv + ' button[id="sendcommand"]').show();
+	jQuery('tr[id="' + vessel + '-SP"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-DC"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-DT"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-min"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-max"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-time"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-tabbedInputs"]').toggleClass("hidden", true);
+	$(vesselDiv + ' button[id="sendcommand"]').toggleClass("hidden", false);
 
 	vessel = null;
 	return false;
@@ -853,16 +857,16 @@ function selectAuto(vessel) {
 	jQuery('button[id^="' + vessel + '-modeHysteria"]')[0].style.background = "#666666";
 	jQuery('button[id^="' + vessel + '-modeAuto"]')[0].style.background = "red";
 
-	jQuery('tr[id="' + vessel + '-SP"]').show();
-	$('div[id="' + vessel + '-tabbedInputs"]').show();
+	jQuery('tr[id="' + vessel + '-SP"]').toggleClass("hidden", false);
+	$('div[id="' + vessel + '-tabbedInputs"]').toggleClass("hidden", false);
 
-	jQuery('tr[id="' + vessel + '-DT"]').hide();
-	jQuery('tr[id="' + vessel + '-DC"]').hide();
-	jQuery('tr[id="' + vessel + '-min"]').hide();
-	jQuery('tr[id="' + vessel + '-max"]').hide();
-	jQuery('tr[id="' + vessel + '-time"]').hide();
-	jQuery('tr[id="' + vessel + '-tabbedInputs"]').show()
-	$(vesselDiv + ' button[id="sendcommand"]').show();
+	jQuery('tr[id="' + vessel + '-DT"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-DC"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-min"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-max"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-time"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-tabbedInputs"]').toggleClass("hidden", false)
+	$(vesselDiv + ' button[id="sendcommand"]').toggleClass("hidden", false);
 	vessel = null;
 	return false;
 }
@@ -884,15 +888,15 @@ function selectHysteria(vessel) {
 	jQuery('button[id^="' + vessel + '-modeAuto"]')[0].style.background = "#666666";
 	jQuery('button[id^="' + vessel + '-modeHysteria"]')[0].style.background = "red";
 
-	jQuery('tr[id="' + vessel + '-SP"]').hide();
-	jQuery('tr[id="' + vessel + '-DC"]').hide()
-	jQuery('tr[id="' + vessel + '-DT"]').hide();
-	$('div[id="' + vessel + '-tabbedInputs"]').hide();
-	jQuery('tr[id="' + vessel + '-min"]').show();
-	jQuery('tr[id="' + vessel + '-max"]').show();
-	jQuery('tr[id="' + vessel + '-time"]').show();
-	jQuery('tr[id="' + vessel + '-tabbedInputs"]').hide()
-	$(vesselDiv + ' button[id="sendcommand"]').show();
+	jQuery('tr[id="' + vessel + '-SP"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-DC"]').toggleClass("hidden", true)
+	jQuery('tr[id="' + vessel + '-DT"]').toggleClass("hidden", true);
+	$('div[id="' + vessel + '-tabbedInputs"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-min"]').toggleClass("hidden", false);
+	jQuery('tr[id="' + vessel + '-max"]').toggleClass("hidden", false);
+	jQuery('tr[id="' + vessel + '-time"]').toggleClass("hidden", false);
+	jQuery('tr[id="' + vessel + '-tabbedInputs"]').toggleClass("hidden", true)
+	$(vesselDiv + ' button[id="sendcommand"]').toggleClass("hidden", false);
 	vessel = null;
 	return false;
 }
@@ -914,15 +918,15 @@ function selectManual(vessel) {
 	jQuery('button[id^="' + vessel + '-modeAuto"]')[0].style.background = "#666666";
 	jQuery('button[id^="' + vessel + '-modeHysteria"]')[0].style.background = "#666666";
 
-	jQuery('tr[id="' + vessel + '-SP"]').hide();
-	jQuery('tr[id="' + vessel + '-DC"]').show();
-	jQuery('tr[id="' + vessel + '-DT"]').show();
-	$('div[id="' + vessel + '-tabbedInputs"]').hide();
-	jQuery('tr[id="' + vessel + '-min"]').hide();
-	jQuery('tr[id="' + vessel + '-max"]').hide();
-	jQuery('tr[id="' + vessel + '-time"]').hide();
-	jQuery('tr[id="' + vessel + '-tabbedInputs"]').hide();
-	$(vesselDiv + ' button[id="sendcommand"]').show();
+	jQuery('tr[id="' + vessel + '-SP"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-DC"]').toggleClass("hidden", false);
+	jQuery('tr[id="' + vessel + '-DT"]').toggleClass("hidden", false);
+	$('div[id="' + vessel + '-tabbedInputs"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-min"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-max"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-time"]').toggleClass("hidden", true);
+	jQuery('tr[id="' + vessel + '-tabbedInputs"]').toggleClass("hidden", true);
+	$(vesselDiv + ' button[id="sendcommand"]').toggleClass("hidden", false);
 
 	vessel = null;
 	return false;
@@ -1062,7 +1066,7 @@ function submitForm(form) {
 			}
 		});
 	} else {
-		// Another form...
+		// Another form..
 		console.log("Unrecognised form: " + form.id);
 		return;
 	}
@@ -1334,7 +1338,7 @@ function disable(input) {
 	jQuery(vesselDiv + ' input[name="max"]').prop("disabled", false);
 	jQuery(vesselDiv + ' input[name="time"]').prop("disabled", false);
 	jQuery(vesselDiv + ' input[name="cycletime"]').prop("disabled", false);
-	$(vesselDiv + ' button[id="sendcommand"]').hide();
+	$(vesselDiv + ' button[id="sendcommand"]').toggleClass("hidden", true);
 	return false;
 }
 
@@ -1352,8 +1356,8 @@ function setTimer(button, stage) {
 	// get the current Datestamp
 	var curDate = moment().format("YYYY/MM/DDTHH:mm:ssZZ")
 	if (button.innerHTML == $.i18n.prop("START")) {
-		$("#" + stage).hide();
-		$("#" + stage + "Timer").show();
+		$("#" + stage).toggleClass("hidden", true);
+		$("#" + stage + "Timer").toggleClass("hidden", false);
 		formdata = stage + "Start=" + 0;
 	} else {
 		var tt = $("#" + stage + "Timer").data('tinyTimer');
@@ -1361,8 +1365,8 @@ function setTimer(button, stage) {
 			tt.stop();
 			$("#" + stage + "Timer").removeData('tinyTimer');
 		}
-		$("#" + stage).show();
-		$("#" + stage + "Timer").hide();
+		$("#" + stage).toggleClass("hidden", false);
+		$("#" + stage + "Timer").toggleClass("hidden", true);
 		formdata = stage + "End=" + curDate;
 	}
 
@@ -1398,8 +1402,8 @@ function resetTimer(button, stage) {
 
 	$("#" + stage)[0].innerHTML = $.i18n.prop("START");
 
-	$("#" + stage).show();
-	$("#" + stage + "Timer").hide();
+	$("#" + stage).toggleClass("hidden", false);
+	$("#" + stage + "Timer").toggleClass("hidden", true);
 	window.disableUpdates = 0;
 	return false;
 }
@@ -1415,8 +1419,8 @@ function checkTimer(val, stage) {
 	// If We're counting UP
 	if ("up" in val) {
 		var startTime = moment().subtract(val.up, 'seconds');
-		$("#" + stage).hide();
-		$("#" + stage + "Timer").show();
+		$("#" + stage).toggleClass("hidden", true);
+		$("#" + stage + "Timer").toggleClass("hidden", false);
 		var tt = $("#" + stage + "Timer").data('tinyTimer');
 		if (tt == undefined) {
 			$("#" + stage + "Timer").tinyTimer({
@@ -1433,13 +1437,13 @@ function checkTimer(val, stage) {
 		diffTime -= hours * 60 * 60;
 		var mins = Math.floor(diffTime / (60));
 		diffTime -= mins * 60;
-		$("#" + stage).show();
-		$("#" + stage + "Timer").hide();
+		$("#" + stage).toggleClass("hidden", false);
+		$("#" + stage + "Timer").toggleClass("hidden", true);
 		$("#" + stage)[0].innerHTML = pad(hours, 2, 0) + ":" + pad(mins, 2, 0)
 				+ ":" + pad(diffTime, 2, 0);
 	} else {
-		$("#" + stage).show();
-		$("#" + stage + "Timer").hide();
+		$("#" + stage).toggleClass("hidden", false);
+		$("#" + stage + "Timer").toggleClass("hidden", true);
 		$("#" + stage)[0].innerHTML = "" + $.i18n.prop("START") + "";
 	}
 }
@@ -2008,16 +2012,16 @@ function toggleEdit(manualChange) {
 		if (window.locked) {
 			readWrite(manualChange);
 			$(".controller").each(function hideDevice(count, element) {
-				$(element).show();
+				$(element).toggleClass("hidden", false);
 			});
 			return;
 		} else {
 			readOnly(manualChange);
 			$(".controller").each(function hideDevice(count, element) {
 				if ($(element).find("input[id='hidden']").val() == "true") {
-					$(element).hide();
+					$(element).toggleClass("hidden", true);
 				} else {
-					$(element).show();
+					$(element).toggleClass("hidden", false);
 				}
 			});
 			return;
@@ -2059,9 +2063,9 @@ function readOnly(manualChange) {
 	readOnlyTimers();
 	readOnlyDevices();
 	$("[id=edit-page]").text($.i18n.prop("EDIT"));
-	$("[id=change-scale]").hide();
-	$("[id=CheckUpdates]").hide();
-	$("[id=logo]").hide();
+	$("[id=change-scale]").toggleClass("hidden", true);
+	$("[id=CheckUpdates]").toggleClass("hidden", true);
+	$("[id=logo]").toggleClass("hidden", true);
 	window.locked = true;
 	
 	window.disableUpdates = 0;
@@ -2090,9 +2094,9 @@ function readWrite(manualChange) {
 	readWriteTimers();
 	readWriteDevices();
 	$("[id=edit-page]").text($.i18n.prop("LOCK"));
-	$("[id=change-scale]").show();
-	$("[id=CheckUpdates]").show();
-	$("[id=logo]").show();
+	$("[id=change-scale]").toggleClass("hidden", false);
+	$("[id=CheckUpdates]").toggleClass("hidden", false);
+	$("[id=logo]").toggleClass("hidden", false);
 	displaySystemSettings();
 	
 	window.disableUpdates = 0;
@@ -2337,8 +2341,12 @@ function displaySystemSettings() {
 		success : function(data) {
 			// We have a recorder object, so display the options
 			if ($('div[id="settings-form"]').length == 0) {
-				$('div[class="center-right"]')
-				.append('<form id="settings-form" role="form">' +
+				var temp =$('div[class="center-right"]');
+				
+				if (temp == undefined || temp.length == 0) {
+					temp = $('div[class="center-right col-md-4"]')
+				}
+				temp.append('<form id="settings-form" role="form">' +
 						'</form>');
 			}
 			
@@ -2346,7 +2354,7 @@ function displaySystemSettings() {
 				if ($('form[id="settings-form"] div[id="recorder_enabled"').length == 0) {
 					$('form[id="settings-form"]')
 					.append(
-						'<div class="checkbox" id="recorder_enabled">' +
+						'<div class="col-md-4 checkbox" id="recorder_enabled">' +
 							'<label>' +
 								'<input type="checkbox" name="recorder">Recorder Enabled' +
 							'</label>' +
@@ -2361,7 +2369,7 @@ function displaySystemSettings() {
 				if ($('form[id="settings-form"] div[id="recorder_tolerence"').length == 0) {
 					$('form[id="settings-form"]')
 					.append(
-						'<div class="form-group" id="recorder_tolerence">' +
+						'<div class="col-md-4 form-group" id="recorder_tolerence">' +
 							'<label for="recorderTolerance">Recorder Tolerance</label>' +
 							'<input class="form-control" name="recorderTolerence" type="text">' +
 						'</div>');
@@ -2374,7 +2382,7 @@ function displaySystemSettings() {
 				if ($('form[id="settings-form"] div[id="recorder_time"').length == 0) {
 					$('form[id="settings-form"]')
 					.append(
-						'<div class="form-group" id="recorder_time">' +
+						'<div class="col-md-4 form-group" id="recorder_time">' +
 							'<label for="recorderTime">Recorder Sample Time</label>' +
 							'<input name="recorderTime" class="form-control" type="text">' +
 						'</div>');
