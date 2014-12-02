@@ -402,8 +402,11 @@ public final class LaunchControl {
         // to make sure we close off the GPIO connections
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
-
+                BrewServer.LOG.warning("Shutting down. Saving configuration");
                 saveSettings();
+                BrewServer.LOG.warning("Configuration saved.");
+                
+                BrewServer.LOG.warning("Shutting down temperature probe threads.");
                 synchronized (tempList) {
                     for (Temp t : tempList) {
                         if (t != null) {
@@ -412,6 +415,7 @@ public final class LaunchControl {
                     }
                 }
 
+                BrewServer.LOG.warning("Shutting down PID threads.");
                 synchronized (pidList) {
                     for (PID n : pidList) {
                         if (n != null) {
@@ -422,6 +426,7 @@ public final class LaunchControl {
 
                 synchronized (mashList) {
                     if (mashList.size() > 0) {
+                        BrewServer.LOG.warning("Shutting down MashControl threads.");
                         for (MashControl m : mashList) {
                             m.setShutdownFlag(true);
                         }
@@ -430,6 +435,7 @@ public final class LaunchControl {
                 // Close off all the Pump GPIOs properly.
                 synchronized (pumpList) {
                     if (pumpList.size() > 0) {
+                        BrewServer.LOG.warning("Shutting down pumps.");
                         for (Pump p : pumpList) {
                             p.shutdown();
                         }
@@ -439,8 +445,10 @@ public final class LaunchControl {
                 saveConfigFile();
 
                 if (recorder != null) {
+                    BrewServer.LOG.warning("Shutting down recorder threads.");
                     recorder.stop();
                 }
+                BrewServer.LOG.warning("Goodbye!");
             }
         });
 
