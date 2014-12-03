@@ -579,6 +579,8 @@ function editDevice(element) {
 	var vesselDiv = element.id;
 	var heatgpio = $('#' + vessel + ' input[name="heatgpio"]').val();
 	var coolgpio = $('#' + vessel + ' input[name="coolgpio"]').val();
+	var heatinvert = $('#' + vessel + ' input[name="heatinvert"]').val();
+	var coolinvert = $('#' + vessel + ' input[name="coolinvert"]').val();
 	var auxgpio = $('#' + vessel + ' input[name="auxgpio"]').val();
 	var cutoff = $('#' + vessel + ' input[name="cutoff"]').val();
 	var calibration = $('#' + vessel + ' input[name="calibration"]').val();
@@ -609,12 +611,20 @@ function editDevice(element) {
 							+ "' placeholder='"
 							+ $.i18n.prop("HEAT")
 							+ " GPIO_X(_Y)'/><br/>"
+							+ "<label>"
+							+ "<input type='checkbox' name='heat_invert' />" + $.i18n.prop("INVERT_HEAT")
+							+ "</label>"
+							+ "<br />"
 							+ "<input type='text' class='form-control' name='new_cool_gpio' id='new_cool_gpio' onblur='validate_gpio(this)' "
 							+ "value='"
 							+ coolgpio
 							+ "' placeholder='"
 							+ $.i18n.prop("COOL")
 							+ " GPIO_X(_Y)'/><br/>"
+							+ "<label>"
+							+ "<input type='checkbox' name='cool_invert' />" + $.i18n.prop("INVERT_COOL")
+							+ "</label>"
+							+ "<br />"
 							+ "<input type='text' class='form-control' name='aux_gpio' id='aux_gpio' onblur='validate_gpio(this)' "
 							+ "value='"
 							+ auxgpio
@@ -654,6 +664,11 @@ function editDevice(element) {
 							+ "\"); waitForMsg(); sleep(1000); location.reload();'>"
 							+ $.i18n.prop(toggle) + "</button>" + "</form>"
 							+ "</div>");
+	
+	var checked = (heatinvert == "true");
+	$('form[id="' +vessel + '-edit"] input[name="heat_invert"]').prop("checked", checked);
+	checked = (coolinvert == "true");
+	$('form[id="' +vessel + '-edit"] input[name="cool_invert"]').prop("checked", checked);
 }
 
 function validate_gpio(gpio_input) {
@@ -743,6 +758,7 @@ function updatePIDStatus(vessel, val) {
 		jQuery(vesselDiv + ' div[id="heat"] input[name="heatd"]').val(
 				val.heat.d);
 		jQuery(vesselDiv + ' input[name="heatgpio"]').val(val.heat.gpio);
+		jQuery(vesselDiv + ' input[name="heatinvert"]').val(val.heat.inverted);
 	} else {
 		$(vesselDiv + ' a:first').toggleClass("hidden", true);
 	}
@@ -759,6 +775,7 @@ function updatePIDStatus(vessel, val) {
 		jQuery(vesselDiv + ' div[id="cool"] input[name="cooldelay"]').val(
 				val.cool.delay);
 		jQuery(vesselDiv + ' input[name="coolgpio"]').val(val.cool.gpio);
+		jQuery(vesselDiv + ' input[name="coolinvert"]').val(val.cool.inverted);
 	} else {
 		$(vesselDiv + ' a:last').toggleClass("hidden", true);
 	}
@@ -2361,7 +2378,6 @@ function displaySystemSettings() {
 							'</span>' +
 						'</div>');
 				}
-				
 				$('form[id="settings-form"] div[id="recorder_enabled"] input').prop("checked", data.recorder);
 			}
 			

@@ -16,32 +16,31 @@ import jGPIO.InvalidGPIOException;
 public final class OutputControl implements Runnable {
 
     public boolean shuttingDown = false;
-    
     private OutputDevice cooler = null;
     private OutputDevice heater = null;
-    
+
     /**
-     * The Duty cycle.  Initialized to ZERO to prevent use of duty before it is set.
+     * The Duty cycle.
+     * Initialized to ZERO to prevent use of duty before it is set.
      */
     private BigDecimal fDuty = BigDecimal.ZERO;
-    
+
     private String status = "off";
-    
+
     public OutputControl() {
-        
     }
+
     /**
      * Constructor for a heat only pin.
      * @param aName Name of this instance.
      * @param fGPIO the heating GPIO pin.
-     * @param cycle_time the duty time for the heating output.
+     * @param cycleTime the duty time for the heating output.
      */
    public OutputControl(final String aName, final String fGPIO,
-           final BigDecimal cycle_time) {
+           final BigDecimal cycleTime) {
            // just for heating
-        heater = new OutputDevice(aName, fGPIO, cycle_time);
+        heater = new OutputDevice(aName, fGPIO, cycleTime);
         //cooler = new OutputDevice(aName, null, cycle_time);
-        
 
    }
 
@@ -53,10 +52,12 @@ public final class OutputControl implements Runnable {
     */
    public void setCool(final String gpio, final BigDecimal cycle_time,
            final BigDecimal delay) {
-       
-        //If there is a cooling delay between cycles, then assume this is a compressor device
-        if( BigDecimal.ZERO.compareTo(delay) == -1 ) {
-            CompressorDevice coolDevice = new CompressorDevice("cooler", gpio, cycle_time);
+
+        //If there is a cooling delay between cycles,
+        //then assume this is a compressor device
+        if (BigDecimal.ZERO.compareTo(delay) == -1) {
+            CompressorDevice coolDevice =
+                    new CompressorDevice("cooler", gpio, cycle_time);
             coolDevice.setDelay(delay);
             setCooler(coolDevice);
         }

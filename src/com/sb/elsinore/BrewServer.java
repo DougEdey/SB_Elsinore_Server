@@ -617,6 +617,7 @@ public class BrewServer extends NanoHTTPD {
         String auxpin = "", newName = "", heatgpio = "";
         String inputUnit = "", cutoff = "", coolgpio = "";
         String calibration = null;
+        boolean heatInvert = false, coolInvert = false;
 
         Set<Entry<String, String>> incomingParams = params.entrySet();
         Map<String, String> parms;
@@ -665,6 +666,14 @@ public class BrewServer extends NanoHTTPD {
 
         if (parms.containsKey("new_cool_gpio")) {
             coolgpio = parms.get("new_cool_gpio");
+        }
+
+        if (parms.containsKey("heat_invert")) {
+            heatInvert = parms.get("heat_invert").equals("on");
+        }
+
+        if (parms.containsKey("cool_invert")) {
+            coolInvert = parms.get("cool_invert").equals("on");
         }
 
         if (parms.containsKey("auxpin")) {
@@ -728,10 +737,12 @@ public class BrewServer extends NanoHTTPD {
                 // Setup the heating output
                 if (!heatgpio.equals("")) {
                     tPID.setHeatGPIO(heatgpio);
+                    tPID.setHeatInverted(heatInvert);
                 }
                 // Setup the cooling output
                 if (!coolgpio.equals("")) {
                     tPID.setCoolGPIO(coolgpio);
+                    tPID.setCoolInverted(coolInvert);
                 }
                 tPID.setAux(auxpin);
                 LaunchControl.addPID(tPID);
@@ -743,10 +754,12 @@ public class BrewServer extends NanoHTTPD {
                     // We have a PID, set it to the new value
                     tPID.setHeatGPIO(heatgpio);
                 }
+                tPID.setHeatInverted(heatInvert);
                 if (!coolgpio.equals(tPID.getCoolGPIO())) {
                     // We have a PID, set it to the new value
                     tPID.setCoolGPIO(coolgpio);
                 }
+                tPID.setCoolInverted(coolInvert);
                 return new Response(Status.OK, MIME_TYPES.get("txt"),
                         "PID Updated");
             }
@@ -1011,7 +1024,7 @@ public class BrewServer extends NanoHTTPD {
                 errorValue = true;
             }
         }
-
+        
         sub_usage.put("coolcycletime", "The new cool cycle time in seconds to set");
         if (parms.containsKey("coolcycletime")) {
             temp = parms.get("coolcycletime");

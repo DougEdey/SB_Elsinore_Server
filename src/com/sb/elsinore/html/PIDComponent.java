@@ -79,6 +79,8 @@ public class PIDComponent implements Renderable {
                 .input(type("hidden").name("deviceaddr").id("deviceaddr"))
                 .input(type("hidden").name("heatgpio").id("heatgpio"))
                 .input(type("hidden").name("coolgpio").id("coolgpio"))
+                .input(type("hidden").name("heatinvert").id("heatinvert"))
+                .input(type("hidden").name("coolinvert").id("coolinvert"))
                 .input(type("hidden").name("auxgpio").id("auxgpio"))
                 .input(type("hidden").name("cutoff").id("cutoff"))
                 .input(type("hidden").name("calibration").id("calibration"))

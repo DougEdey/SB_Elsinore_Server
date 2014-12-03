@@ -58,6 +58,7 @@ public final class PID implements Runnable {
             integral = new BigDecimal(0),
             derivative = new BigDecimal(0),
             delay = new BigDecimal(0);
+        boolean inverted = false;
 
         /**
          * Default constructor.
@@ -67,8 +68,9 @@ public final class PID implements Runnable {
                     integral = derivative = new BigDecimal(0.0);
         }
     }
-    
+
     public OutputControl outputControl = null;
+    
     /**
      * Create a new PID with minimal information.
      * @param aTemp The Temperature probe object to use
@@ -491,6 +493,34 @@ public final class PID implements Runnable {
     public BigDecimal getHeatD() {
         return heatSetting.derivative;
     }
+
+    /**
+     * @return true if the heating output is inverted.
+     */
+    public boolean getHeatInverted() {
+        return heatSetting.inverted;
+    }
+    
+    public void setHeatInverted(boolean inverted) {
+        if (this.hasValidHeater()) {
+            heatSetting.inverted = inverted;
+            this.outputControl.getHeater().setInverted(true);
+        }
+    }
+    
+    public void setCoolInverted(boolean inverted) {
+        if (this.hasValidCooler()) {
+            coolSetting.inverted = inverted;
+            this.outputControl.getCooler().setInverted(true);
+        }
+    }
+
+    /**
+     * @return true if the cooling output is inverted.
+     */
+    public boolean getCoolInverted() {
+        return coolSetting.inverted;
+    }
     /**
      * @return  Get the current Duty Cycle Time
      */
@@ -765,6 +795,7 @@ public final class PID implements Runnable {
         heatMap.put("i", getHeatI());
         heatMap.put("d", getHeatD());
         heatMap.put("gpio", getHeatGPIO());
+        heatMap.put("inverted", getHeatInverted());
         statusMap.put("heat", heatMap);
 
         // The cool settings
@@ -775,6 +806,7 @@ public final class PID implements Runnable {
         coolMap.put("d", getCoolD());
         coolMap.put("gpio", getCoolGPIO());
         coolMap.put("delay", getCoolDelay());
+        coolMap.put("inverted", getCoolInverted());
         statusMap.put("cool", coolMap);
 
         statusMap.put("duty", getDuty());
@@ -803,7 +835,8 @@ public final class PID implements Runnable {
         // Close down the existing OutputControl
         this.heatGPIO = gpio;
         if (this.outputControl == null) {
-            this.outputControl = new OutputControl(this.getName(), gpio, this.getHeatCycle());
+            this.outputControl = new OutputControl(
+                    this.getName(), gpio, this.getHeatCycle());
         }
         if (this.outputControl.getHeater() != null) {
             this.outputControl.getHeater().disable();
@@ -956,18 +989,41 @@ public final class PID implements Runnable {
             }
         }
     }
-    
+
+    /**
+     * Helper to check is a cooler is enabled correctly.
+     * @return True is a valid cooler is enabled
+     */
     public boolean hasValidCooler() {
         return (this.outputControl != null
                 && this.outputControl.getCooler() != null
                 && this.outputControl.getCooler().getGpio() != null
                 && !this.outputControl.getCooler().getGpio().equals(""));
     }
-    
+
+    /**
+     * Helper to check is a valid heater is enabled.
+     * @return True if a valid heater is detected.
+     */
     public boolean hasValidHeater() {
         return (this.outputControl != null
                 && this.outputControl.getHeater() != null
                 && this.outputControl.getHeater().getGpio() != null
                 && !this.outputControl.getHeater().getGpio().equals(""));
+    }
+
+    /**
+     * Invert the outputs.
+     * @param invert True to invert the outputs.
+     */
+    public void setInverted(final boolean invert) {
+        this.invertOutput = invert;
+    }
+
+    /**
+     * @return True if this device has inverted outputs.
+     */
+    public boolean isInverted() {
+        return this.invertOutput;
     }
 }

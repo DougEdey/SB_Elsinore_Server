@@ -14,11 +14,17 @@ import java.math.BigDecimal;
  */
 public class OutputDevice {
 
-    protected static boolean invertOutput = false;
+    protected boolean invertOutput = false;
     protected static BigDecimal HUNDRED = new BigDecimal(100);
     protected static BigDecimal THOUSAND = new BigDecimal(1000);
 
-    static {
+    protected BigDecimal cycleTime = new BigDecimal(5000);    //5 second default
+    protected OutPin ssr = null;    //The output pin.
+    protected String name;    //The name of this device
+    private String gpio;    //The gpio pin
+
+    public OutputDevice(String name, String gpio, BigDecimal cycleTimeSeconds) {
+        // Check for inverted outputs using a property.
         try {
             String invOut = System.getProperty("invert_outputs");
 
@@ -29,13 +35,7 @@ public class OutputDevice {
         } catch (Exception e) {
             // Incase get property fails
         }
-    }
-    protected BigDecimal cycleTime = new BigDecimal(5000);    //5 second default
-    protected OutPin ssr = null;    //The output pin.
-    protected String name;    //The name of this device
-    private String gpio;    //The gpio pin
 
-    public OutputDevice(String name, String gpio, BigDecimal cycleTimeSeconds) {
         this.name = name;
         setCycleTime(cycleTimeSeconds);
         this.gpio = gpio;
@@ -146,16 +146,31 @@ public class OutputDevice {
     }
 
     /**
-     * @return the gpio
+     * @return the GPIO.
      */
-    public String getGpio(){
+    public final String getGpio() {
         return gpio;
     }
 
     /**
-     * @param gpio the gpio to set
+     * @param gpioIn the GPIO to set.
      */
-    public void setGpio(String gpio){
-        this.gpio = gpio;
+    public final void setGpio(final String gpioIn){
+        this.gpio = gpioIn;
+    }
+
+    /**
+     * Sets the outputs to be inverted for this device.
+     * @param inverted True to invert the output.
+     */
+    public final void setInverted(final boolean inverted) {
+        this.invertOutput = inverted;
+    }
+
+    /**
+     * @return Return true if the output is inverted.
+     */
+    public final boolean getInverted() {
+        return this.invertOutput;
     }
 }

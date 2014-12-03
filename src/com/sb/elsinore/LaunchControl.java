@@ -1920,7 +1920,8 @@ public final class LaunchControl {
                             "/elsinore/timers/timer[@id='" + t + "']");
                     if (timerElement == null) {
                         // No timer by this name
-                        Element newTimer = addNewElement(timersElement, "timer");
+                        Element newTimer =
+                                addNewElement(timersElement, "timer");
                         newTimer.setAttribute("id", t.getName());
                         newTimer.setAttribute("position", "" + t.getPosition());
                     }
@@ -2027,8 +2028,11 @@ public final class LaunchControl {
             setElementText(heatElement, "proportional", pid.getHeatP()
                     .toString());
             setElementText(heatElement, "integral", pid.getHeatI().toString());
-            setElementText(heatElement, "derivative", pid.getHeatD().toString());
+            setElementText(heatElement, "derivative",
+                    pid.getHeatD().toString());
             setElementText(heatElement, "gpio", pid.getHeatGPIO());
+            setElementText(heatElement, "invert",
+                    Boolean.toString(pid.getHeatInverted()));
         }
 
         if (pid.getCoolSetting() != null) {
@@ -2039,8 +2043,11 @@ public final class LaunchControl {
             setElementText(coolElement, "proportional", pid.getCoolP()
                     .toString());
             setElementText(coolElement, "integral", pid.getCoolI().toString());
-            setElementText(coolElement, "derivative", pid.getCoolD().toString());
+            setElementText(coolElement, "derivative",
+                    pid.getCoolD().toString());
             setElementText(coolElement, "gpio", pid.getCoolGPIO());
+            setElementText(coolElement, "invert",
+                    Boolean.toString(pid.getCoolInverted()));
         }
 
         setElementText(device, "min", pid.getMin().toString());
@@ -2354,7 +2361,7 @@ public final class LaunchControl {
                 0.0), coolP = new BigDecimal(0.0), coolI = new BigDecimal(0.0), coolD = new BigDecimal(
                 0.0), coolCycle = new BigDecimal(0.0), coolDelay = new BigDecimal(
                 0.0);
-
+        boolean coolInvert = false, heatInvert = false;
         int analoguePin = -1;
 
         String deviceName = config.getAttribute("id");
@@ -2376,69 +2383,79 @@ public final class LaunchControl {
                 setpoint = new BigDecimal(tElement.getTextContent());
             }
 
-            Element settingsElement = getFirstElement(config, "heat");
+            Element heatElement = getFirstElement(config, "heat");
 
-            if (settingsElement == null) {
-                settingsElement = config;
+            if (heatElement == null) {
+                heatElement = config;
             }
 
-            tElement = getFirstElement(settingsElement, "gpio");
+            tElement = getFirstElement(heatElement, "gpio");
             if (tElement != null) {
                 heatGPIO = tElement.getTextContent();
             }
 
-            tElement = getFirstElement(settingsElement, "cycle_time");
+            tElement = getFirstElement(heatElement, "cycle_time");
             if (tElement != null) {
                 heatCycle = new BigDecimal(tElement.getTextContent());
             }
 
-            tElement = getFirstElement(settingsElement, "proportional");
+            tElement = getFirstElement(heatElement, "proportional");
             if (tElement != null) {
                 heatP = new BigDecimal(tElement.getTextContent());
             }
 
-            tElement = getFirstElement(settingsElement, "integral");
+            tElement = getFirstElement(heatElement, "integral");
             if (tElement != null) {
                 heatI = new BigDecimal(tElement.getTextContent());
             }
 
-            tElement = getFirstElement(settingsElement, "derivative");
+            tElement = getFirstElement(heatElement, "derivative");
             if (tElement != null) {
                 heatD = new BigDecimal(tElement.getTextContent());
             }
 
-            settingsElement = getFirstElement(config, "cool");
+            tElement = getFirstElement(config, "invert");
+            if (tElement != null) {
+                heatInvert = Boolean.parseBoolean(tElement.getTextContent());
+            }
 
-            if (settingsElement != null) {
+            Element coolElement = getFirstElement(config, "cool");
 
-                tElement = getFirstElement(settingsElement, "cycle_time");
+            if (coolElement != null) {
+
+                tElement = getFirstElement(coolElement, "cycle_time");
                 if (tElement != null) {
                     coolCycle = new BigDecimal(tElement.getTextContent());
                 }
 
-                tElement = getFirstElement(settingsElement, "proportional");
+                tElement = getFirstElement(coolElement, "proportional");
                 if (tElement != null) {
                     coolP = new BigDecimal(tElement.getTextContent());
                 }
 
-                tElement = getFirstElement(settingsElement, "integral");
+                tElement = getFirstElement(coolElement, "integral");
                 if (tElement != null) {
                     coolI = new BigDecimal(tElement.getTextContent());
                 }
 
-                tElement = getFirstElement(settingsElement, "derivative");
+                tElement = getFirstElement(coolElement, "derivative");
                 if (tElement != null) {
                     coolD = new BigDecimal(tElement.getTextContent());
                 }
 
-                tElement = getFirstElement(settingsElement, "gpio");
+                tElement = getFirstElement(coolElement, "gpio");
                 if (tElement != null) {
                     coolGPIO = tElement.getTextContent();
                 }
 
-                tElement = getFirstElement(settingsElement, "delay");
+                tElement = getFirstElement(coolElement, "delay");
                 if (tElement != null) {
                     coolDelay = new BigDecimal(tElement.getTextContent());
+                }
+
+                tElement = getFirstElement(coolElement, "inverted");
+                if (tElement != null) {
+                    coolInvert = Boolean.parseBoolean(tElement.getTextContent());
                 }
             }
 
@@ -2532,7 +2549,7 @@ public final class LaunchControl {
                 // we don't have a basic level
                 // not implemented yet, math is hard
                 System.out
-                        .println("No Volume Presets, check your config or rerun the setup!");
+                    .println("No Volume Presets, check your config or rerun the setup!");
                 // otherwise we are OK
             }
 
@@ -2555,8 +2572,8 @@ public final class LaunchControl {
                     tPID.setHysteria(min, max, time);
                 } catch (NumberFormatException nfe) {
                     System.out
-                            .println("Invalid options when setting up Hysteria: "
-                                    + nfe.getMessage());
+                        .println("Invalid options when setting up Hysteria: "
+                                + nfe.getMessage());
                 }
 
                 tPID.updateValues("off", duty, heatCycle, setpoint, heatP,
@@ -2567,7 +2584,8 @@ public final class LaunchControl {
                 tPID.setCoolI(coolI);
                 tPID.setCoolD(coolD);
                 tPID.setCoolGPIO(coolGPIO);
-                
+                tPID.setCoolInverted(coolInvert);
+                tPID.setHeatInverted(heatInvert);
 
                 if (auxPin != null && !auxPin.equals("")) {
                     tPID.setAux(auxPin);
