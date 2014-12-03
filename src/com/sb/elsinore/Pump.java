@@ -141,4 +141,12 @@ public class Pump implements Comparable<Pump> {
             output.close();
         }
     }
+    
+    public void setInverted(boolean invert) {
+        this.invertOutput = invert;
+    }
+    
+    public boolean getInverted() {
+        return this.invertOutput;
+    }
 }

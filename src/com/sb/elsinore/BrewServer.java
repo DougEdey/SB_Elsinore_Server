@@ -861,6 +861,7 @@ public class BrewServer extends NanoHTTPD {
     private Response addPump(final Map<String, String> params) {
         String newName = "", gpio = "";
         String inputUnit = "";
+        boolean invert = false;
 
         Set<Entry<String, String>> incomingParams = params.entrySet();
         Map<String, String> parms;
@@ -906,10 +907,16 @@ public class BrewServer extends NanoHTTPD {
             gpio = parms.get("new_gpio");
         }
 
+        if (parms.containsKey("invert")) {
+            invert = parms.get("invert").equals("on");
+        }
+
         if (LaunchControl.addPump(newName, gpio)) {
+            LaunchControl.findPump(newName).setInverted(invert);
             return new Response(Status.OK, MIME_TYPES.get("txt"), "Pump Added");
         } else {
-            LaunchControl.setMessage("Could not add pump " + newName + ": " + gpio);
+            LaunchControl.setMessage(
+                    "Could not add pump " + newName + ": " + gpio);
         }
 
         JSONObject usage = new JSONObject();

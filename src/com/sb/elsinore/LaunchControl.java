@@ -966,8 +966,14 @@ public final class LaunchControl {
         for (int i = 0; i < pumps.getLength(); i++) {
             Element curPump = (Element) pumps.item(i);
             String pumpName = curPump.getNodeName().replace("_", " ");
-            String gpio = curPump.getTextContent();
+            String gpio = null;
+            if (curPump.hasAttribute("gpio")) {
+                gpio = curPump.getAttribute("gpio");
+            } else {
+                gpio = curPump.getTextContent();
+            }
             int position = -1;
+
             String tempString = curPump.getAttribute("position");
             if (tempString == null) {
                 try {
@@ -984,8 +990,15 @@ public final class LaunchControl {
             } catch (InvalidGPIOException e) {
                 BrewServer.LOG.warning("Invalid GPIO (" + gpio
                         + ") detected for pump " + pumpName);
-                BrewServer.LOG.warning("Please fix the config file before running");
+                BrewServer.LOG.warning(
+                        "Please fix the config file before running");
                 System.exit(-1);
+            }
+
+            Element invert = getFirstElement(curPump, "invert");
+            if (invert != null) {
+                LaunchControl.findPump(pumpName).setInverted(
+                    Boolean.parseBoolean(invert.getTextContent()));
             }
         }
 
@@ -1023,7 +1036,7 @@ public final class LaunchControl {
 
     /**
      * Add a new pump to the server.
-     * 
+     *
      * @param name
      *            The name of the pump to add.
      * @param gpio
@@ -1951,15 +1964,20 @@ public final class LaunchControl {
 
                 Pump tPump = pumpIt.next();
 
-                if (getFirstElementByXpath(null,
-                        "/elsinore/pumps/" + tPump.getNodeName()) == null) {
+                Element newPump = getFirstElementByXpath(null,
+                        "/elsinore/pumps/" + tPump.getNodeName());
+
+                if (newPump == null) {
                     // No timer by this name
-                    Element newPump = addNewElement(pumpsElement,
+                    newPump = addNewElement(pumpsElement,
                             tPump.getNodeName());
-                    newPump.appendChild(configDoc.createTextNode(tPump
-                            .getGPIO()));
-                    newPump.setAttribute("position", "" + tPump.getPosition());
                 }
+                newPump.setAttribute("gpio", tPump.getGPIO());
+                newPump.setAttribute("position", "" + tPump.getPosition());
+                Element invertElement = addNewElement(newPump, "invert");
+                invertElement.setTextContent(
+                        Boolean.toString(tPump.getInverted()));
+                newPump.appendChild(invertElement);
             }
         }
     }

@@ -418,6 +418,7 @@ function addMashTable(vesselName) {
 
 	}
 }
+
 function updateTempProbe(vessel, val) {
 
 	temp = parseFloat(val.temp).toFixed(2);
@@ -1124,6 +1125,9 @@ function addPump() {
 							+ "'/><br/>"
 							+ "<input type='text' name='new_gpio' id='new_gpio' onblur='validate_gpio(this)' "
 							+ "value='' placeholder='GPIO_X(_Y)'/><br/>"
+							+ "<label>"
+							+ "<input type='checkbox' name='invert' />" + $.i18n.prop("INVERT_GPIO")
+							+ "</label><br/>"
 							+ "<button id='add-pump' class='holo-button modeclass' "
 							+ "onclick='submitNewPump(this.form); return false;'>"
 							+ $.i18n.prop("ADD")

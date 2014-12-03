@@ -65,7 +65,7 @@ public class RenderHTML implements Renderable {
                     }
 
                     html.span(id("NewPump").class_("holo-button pump")
-                        .type("submit").onDrop("dropDeletePump(event")
+                        .type("submit").onDrop("dropDeletePump(event);")
                         .onDragover("allowDropPump(event)")
                         .onClick("addPump()"))
                         .write(Messages.NEW_PUMP)
