@@ -749,7 +749,7 @@ function updatePIDStatus(vessel, val) {
 	jQuery(vesselDiv + ' input[name="dutycycle"]').val(val.duty);
 	jQuery(vesselDiv + ' input[name="setpoint"]').val(val.setpoint);
 	jQuery(vesselDiv + ' input[name="cycletime"]').val(val.manualcycle);
-	if ("heat" in val) {
+	if ("heat" in val && val.heat.gpio != "") {
 		jQuery(vesselDiv + ' div[id="heat"] input[name="heatcycletime"]').val(
 				val.heat.cycle);
 		jQuery(vesselDiv + ' div[id="heat"] input[name="heatp"]').val(
@@ -764,7 +764,7 @@ function updatePIDStatus(vessel, val) {
 		$(vesselDiv + ' a:first').toggleClass("hidden", true);
 	}
 
-	if ("cool" in val) {
+	if ("cool" in val && val.cool.gpio != "") {
 		jQuery(vesselDiv + ' div[id="cool"] input[name="coolcycletime"]').val(
 				val.cool.cycle);
 		jQuery(vesselDiv + ' div[id="cool"] input[name="coolp"]').val(
