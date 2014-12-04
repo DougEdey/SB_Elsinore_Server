@@ -199,7 +199,7 @@ public class PIDComponent implements Renderable {
                 ._tr()
                 .tr(id(name + "-heatD").class_("holo-field"))
                 .td(id(name + "-labeld"))
-                .write("I")
+                .write("D")
                 ._td()
                 .td(id(name + "-dinput"))
                 .input(class_("inputBox heatd").name("heatd")
