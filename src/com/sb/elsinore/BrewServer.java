@@ -952,6 +952,15 @@ public class BrewServer extends NanoHTTPD {
         Map<String, String> parms = ParseParams(params);
         String inputUnit = parms.get("inputunit");
         boolean errorValue = false;
+        PID tPID = LaunchControl.findPID(inputUnit);
+        if (tPID == null) {
+            BrewServer.LOG.warning("Couldn't find PID: " + inputUnit);
+            LaunchControl.setMessage("Could not find PID: " + inputUnit);
+            LaunchControl.setMessage("Bad inputs when updating."
+                    + " Please check the system log");
+            return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
+                    "");
+        }
 
         // Fall back to the old style
         sub_usage.put("dutycycle", "The new duty cycle % to set");
@@ -988,8 +997,10 @@ public class BrewServer extends NanoHTTPD {
                 heatcycle = dTemp;
                 BrewServer.LOG.info("Cycle time: " + heatcycle);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad cycle");
-                errorValue = true;
+                if (tPID.hasValidHeater()) {
+                    BrewServer.LOG.warning("Bad cycle");
+                    errorValue = true;
+                }
             }
         }
 
@@ -1001,8 +1012,10 @@ public class BrewServer extends NanoHTTPD {
                 heatp = dTemp;
                 BrewServer.LOG.info("heat P: " + heatp);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad heat p");
-                errorValue = true;
+                if (tPID.hasValidHeater()) {
+                    BrewServer.LOG.warning("Bad heat p");
+                    errorValue = true;
+                }
             }
         }
 
@@ -1014,8 +1027,10 @@ public class BrewServer extends NanoHTTPD {
                 heati = dTemp;
                 BrewServer.LOG.info("Heat I: " + heati);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad heat i");
-                errorValue = true;
+                if (tPID.hasValidHeater()) {
+                    BrewServer.LOG.warning("Bad heat i");
+                    errorValue = true;
+                }
             }
         }
 
@@ -1027,11 +1042,13 @@ public class BrewServer extends NanoHTTPD {
                 heatd = dTemp;
                 BrewServer.LOG.info("Heat D: " + heatd);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad heat d");
-                errorValue = true;
+                if (tPID.hasValidHeater()) {
+                    BrewServer.LOG.warning("Bad heat d");
+                    errorValue = true;
+                }
             }
         }
-        
+
         sub_usage.put("coolcycletime", "The new cool cycle time in seconds to set");
         if (parms.containsKey("coolcycletime")) {
             temp = parms.get("coolcycletime");
@@ -1040,8 +1057,10 @@ public class BrewServer extends NanoHTTPD {
                 coolcycle = dTemp;
                 BrewServer.LOG.info("Cycle time: " + coolcycle);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad cycle");
-                errorValue = true;
+                if (tPID.hasValidCooler()) {
+                    BrewServer.LOG.warning("Bad cycle");
+                    errorValue = true;
+                }
             }
         }
         
@@ -1053,8 +1072,10 @@ public class BrewServer extends NanoHTTPD {
                 cycle = dTemp;
                 BrewServer.LOG.info("Cycle time: " + cycle);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad cycle");
-                errorValue = true;
+                if (tPID.hasValidHeater()) {
+                    BrewServer.LOG.warning("Bad cycle");
+                    errorValue = true;
+                }
             }
         }
 
@@ -1066,8 +1087,10 @@ public class BrewServer extends NanoHTTPD {
                 cooldelay = dTemp;
                 BrewServer.LOG.info("Delay time: " + cooldelay);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad Cool delay");
-                errorValue = true;
+                if (tPID.hasValidHeater()) {
+                    BrewServer.LOG.warning("Bad Cool delay");
+                    errorValue = true;
+                }
             }
         }
 
@@ -1079,8 +1102,10 @@ public class BrewServer extends NanoHTTPD {
                 coolp = dTemp;
                 BrewServer.LOG.info("cool P: " + coolp);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad cool p");
-                errorValue = true;
+                if (tPID.hasValidCooler()) {
+                    BrewServer.LOG.warning("Bad cool p");
+                    errorValue = true;
+                }
             }
         }
 
@@ -1092,8 +1117,10 @@ public class BrewServer extends NanoHTTPD {
                 cooli = dTemp;
                 BrewServer.LOG.info("Heat I: " + cooli);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad cool i");
-                errorValue = true;
+                if (tPID.hasValidCooler()) {
+                    BrewServer.LOG.warning("Bad cool i");
+                    errorValue = true;
+                }
             }
         }
 
@@ -1105,8 +1132,10 @@ public class BrewServer extends NanoHTTPD {
                 coold = dTemp;
                 BrewServer.LOG.info("Heat D: " + coold);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad cool d");
-                errorValue = true;
+                if (tPID.hasValidCooler()) {
+                    BrewServer.LOG.warning("Bad cool d");
+                    errorValue = true;
+                }
             }
         }
 
@@ -1166,7 +1195,6 @@ public class BrewServer extends NanoHTTPD {
                     usage.toJSONString()); 
         }
         
-        PID tPID = LaunchControl.findPID(inputUnit);
         if (tPID != null) {
             if (mode.equalsIgnoreCase("hysteria")) {
                 tPID.setHysteria(min, max, time);
