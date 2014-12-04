@@ -258,16 +258,20 @@ public final class PID implements Runnable {
                             this.outputControl.setDuty(calculatedDuty);
                             this.outputControl.getHeater().setCycleTime(
                                     heatSetting.cycle_time);
+                            this.outputThread.interrupt();
                         } else if (mode.equals("manual")) {
                             this.outputControl.getHeater().setCycleTime(
                                     this.manual_cycle);
                             this.outputControl.setDuty(duty_cycle);
+                            this.outputThread.interrupt();
                         } else if (mode.equals("off")) {
                             this.outputControl.setDuty(BigDecimal.ZERO);
                             this.outputControl.getHeater().setCycleTime(
                                     heatSetting.cycle_time);
+                            this.outputThread.interrupt();
                         } else if (mode.equals("hysteria")) {
                             setHysteria();
+                            this.outputThread.interrupt();
                         }
                         BrewServer.LOG.info(mode + ": " + fName + " status: "
                             + fTempF + " duty cycle: "
@@ -500,18 +504,20 @@ public final class PID implements Runnable {
     public boolean getHeatInverted() {
         return heatSetting.inverted;
     }
-    
+
     public void setHeatInverted(boolean inverted) {
         if (this.hasValidHeater()) {
             heatSetting.inverted = inverted;
-            this.outputControl.getHeater().setInverted(true);
+            this.outputControl.getHeater().setInverted(inverted);
+            this.outputControl.getHeater().turnOff();
         }
     }
-    
+
     public void setCoolInverted(boolean inverted) {
         if (this.hasValidCooler()) {
             coolSetting.inverted = inverted;
-            this.outputControl.getCooler().setInverted(true);
+            this.outputControl.getCooler().setInverted(inverted);
+            this.outputControl.getCooler().turnOff();
         }
     }
 
