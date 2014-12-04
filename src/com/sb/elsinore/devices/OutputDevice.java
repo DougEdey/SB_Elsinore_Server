@@ -63,6 +63,7 @@ public class OutputDevice {
         if (ssr == null) {
             if (gpio != null && gpio.length() > 0) {
                 ssr = new OutPin(gpio);
+                turnOff();
             }
         }
 
