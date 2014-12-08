@@ -160,10 +160,10 @@ function waitForMsg() {
 						val = data.breweryName;
 						if (val != null && val.length > 0 && val != "") {
 							window.breweryName = val;
-							jQuery("#breweryname").text(val);
+							jQuery("#breweryName").text(val);
 						} else {
 							window.breweryName = "Elsinore";
-							jQuery("#breweryname").text("Elsinore");
+							jQuery("#breweryName").text("Elsinore");
 						}
 					}
 
