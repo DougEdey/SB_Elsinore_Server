@@ -1678,12 +1678,16 @@ public final class LaunchControl {
 
         // Use the thread safe mechanism
         BrewServer.LOG.info("Connecting to " + owfsServer + ":" + owfsPort);
-        OwfsConnectionConfig owConfig = new OwfsConnectionConfig(owfsServer,
-                owfsPort);
-        owConfig.setPersistence(OwPersistence.ON);
-        owfsConnection = OwfsConnectionFactory
-                .newOwfsClientThreadSafe(owConfig);
-        useOWFS = true;
+        try {
+            OwfsConnectionConfig owConfig = new OwfsConnectionConfig(owfsServer,
+                    owfsPort);
+            owConfig.setPersistence(OwPersistence.ON);
+            owfsConnection = OwfsConnectionFactory
+                    .newOwfsClientThreadSafe(owConfig);
+            useOWFS = true;
+        } catch (NullPointerException npe) {
+            BrewServer.LOG.warning("OWFS is not able to be setup. You may need to rerun setup.");
+        }
     }
 
     /**
@@ -1804,6 +1808,7 @@ public final class LaunchControl {
             setupOWFS();
             if (owfsConnection == null) {
                 BrewServer.LOG.info("no OWFS connection");
+                return "";
             }
         }
         try {

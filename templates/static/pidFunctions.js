@@ -489,7 +489,7 @@ function updateVolumeStatus(vessel, status) {
 				+ "<form id='" + vessel + "-gravity-edit'" +
 						" name='" + vessel + "-gravity-edit'>"
 				+ "<input type='number' name='gravity' id='gravity'" +
-						" value='" + status.gravity + "'/><br/>"
+						" value='" + status.gravity + "' step='any'/><br/>"
 				+ "<button id='updategravity-" + vessel + "'" +
 						" class='holo-button modeclass' "
 				+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>"

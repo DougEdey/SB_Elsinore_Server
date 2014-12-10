@@ -2492,12 +2492,12 @@ public class BrewServer extends NanoHTTPD {
 
         Temp temp = null;
 
-        if (parms.containsKey("inputunit")) {
-            temp = LaunchControl.findTemp(parms.get("inputunit"));
+        if (params.containsKey("inputunit")) {
+            temp = LaunchControl.findTemp(params.get("inputunit"));
             if (temp == null) {
                 LaunchControl.addMessage(
                         "Could not find the temperature probe for: "
-                                + parms.get("inputunit"));
+                                + params.get("inputunit"));
                 status = Status.BAD_REQUEST;
             }
         } else {
@@ -2506,16 +2506,16 @@ public class BrewServer extends NanoHTTPD {
             status = Status.BAD_REQUEST;
         }
 
-        if (parms.containsKey("gravity")) {
+        if (params.containsKey("gravity")) {
             try {
-                BigDecimal gravity = new BigDecimal(parms.get("gravity"));
+                BigDecimal gravity = new BigDecimal(params.get("gravity"));
                 if (temp != null) {
                     temp.setGravity(gravity);
                 }
             } catch (NumberFormatException nfe) {
                 LaunchControl.addMessage(
                         "Could not parse gravity as a decimal: "
-                                + parms.get("gravity"));
+                                + params.get("gravity"));
             }
         }
 
