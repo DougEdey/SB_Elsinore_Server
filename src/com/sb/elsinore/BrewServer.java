@@ -1588,9 +1588,13 @@ public class BrewServer extends NanoHTTPD {
         if (uri.equalsIgnoreCase("/toggledevice")) {
             return toggleDevice(parms);
         }
-        
+
         if (uri.equalsIgnoreCase("/stop")) {
             System.exit(128);
+        }
+
+        if (uri.equalsIgnoreCase("/setgravity")) {
+            return setGravity(parms);
         }
 
         BrewServer.LOG.info("Unidentified URL: " + uri);
@@ -1968,6 +1972,7 @@ public class BrewServer extends NanoHTTPD {
         } catch (NumberFormatException nfe) {
             error_msg = "Could not setup volumes for " + volume + " Units: "
                     + units;
+            LaunchControl.addMessage(error_msg);
             usage.put("Error", "Invalid parameters: " + error_msg);
             return new Response(Response.Status.BAD_REQUEST,
                     MIME_TYPES.get("json"), usage.toJSONString());
@@ -2426,14 +2431,15 @@ public class BrewServer extends NanoHTTPD {
         return new Response(status, MIME_TYPES.get("json"),
                 usage.toJSONString());
     }
-    
+
     private String updateSystemSettings(Map<String, String> parms) {
         Map<String, String> params = ParseParams(parms);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Update the system settings");
         usage.put("recorder", "True/false to enable/disable the recorder.");
         usage.put("recorderDiff", "The tolerance to record data changes.");
-        usage.put("recorderTime", "The time between sampling the data for recording.");
+        usage.put("recorderTime",
+                "The time between sampling the data for recording.");
 
         if (params.containsKey("recorder")) {
             boolean recorderOn = params.get("recorder").equals("on");
@@ -2469,5 +2475,51 @@ public class BrewServer extends NanoHTTPD {
             }
         }
         return usage.toJSONString();
+    }
+
+    /**
+     * Set the gravity for the specified device.
+     * @param parms
+     * @return
+     */
+    public Response setGravity(Map<String, String> parms) {
+        Map<String, String> params = ParseParams(parms);
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Update the specified volume reader gravity");
+        usage.put("device", "The device name to set the gravity on.");
+        usage.put("gravity", "The new specific gravity to set");
+        Status status = Status.OK;
+
+        Temp temp = null;
+
+        if (parms.containsKey("inputunit")) {
+            temp = LaunchControl.findTemp(parms.get("inputunit"));
+            if (temp == null) {
+                LaunchControl.addMessage(
+                        "Could not find the temperature probe for: "
+                                + parms.get("inputunit"));
+                status = Status.BAD_REQUEST;
+            }
+        } else {
+            LaunchControl.addMessage(
+                    "No device provided when setting the gravity");
+            status = Status.BAD_REQUEST;
+        }
+
+        if (parms.containsKey("gravity")) {
+            try {
+                BigDecimal gravity = new BigDecimal(parms.get("gravity"));
+                if (temp != null) {
+                    temp.setGravity(gravity);
+                }
+            } catch (NumberFormatException nfe) {
+                LaunchControl.addMessage(
+                        "Could not parse gravity as a decimal: "
+                                + parms.get("gravity"));
+            }
+        }
+
+        return new Response(status, MIME_TYPES.get("json"),
+                usage.toJSONString());
     }
 }

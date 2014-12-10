@@ -686,6 +686,7 @@ public final class LaunchControl {
                         volumeJSON.put("address", t.getVolumeAddress());
                         volumeJSON.put("offset", t.getVolumeOffset());
                     }
+                    volumeJSON.put("gravity", t.getGravity());
 
                     tJSON.put("volume", volumeJSON);
                 }
@@ -2372,13 +2373,16 @@ public final class LaunchControl {
         String volumeUnits = "Litres";
         String dsAddress = null, dsOffset = null;
         String cutoffTemp = null, auxPin = null, calibration = "";
-        ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray = new ConcurrentHashMap<BigDecimal, BigDecimal>();
-        BigDecimal duty = new BigDecimal(0), heatCycle = new BigDecimal(0.0), setpoint = new BigDecimal(
-                0.0), heatP = new BigDecimal(0.0), heatI = new BigDecimal(0.0), heatD = new BigDecimal(
-                0.0), min = new BigDecimal(0.0), max = new BigDecimal(0.0), time = new BigDecimal(
-                0.0), coolP = new BigDecimal(0.0), coolI = new BigDecimal(0.0), coolD = new BigDecimal(
-                0.0), coolCycle = new BigDecimal(0.0), coolDelay = new BigDecimal(
-                0.0);
+        ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray =
+                new ConcurrentHashMap<BigDecimal, BigDecimal>();
+        BigDecimal duty = new BigDecimal(0), heatCycle = new BigDecimal(0.0),
+                setpoint = new BigDecimal(0.0), heatP = new BigDecimal(0.0),
+                heatI = new BigDecimal(0.0), heatD = new BigDecimal(0.0),
+                min = new BigDecimal(0.0), max = new BigDecimal(0.0),
+                time = new BigDecimal(0.0), coolP = new BigDecimal(0.0),
+                coolI = new BigDecimal(0.0), coolD = new BigDecimal(0.0),
+                coolCycle = new BigDecimal(0.0),
+                coolDelay = new BigDecimal(0.0);
         boolean coolInvert = false, heatInvert = false;
         int analoguePin = -1;
 
@@ -3161,7 +3165,7 @@ public final class LaunchControl {
 
     /**
      * Set the system message for the UI.
-     * 
+     *
      * @param message
      *            The message to set.
      */
@@ -3170,8 +3174,16 @@ public final class LaunchControl {
     }
 
     /**
+     * Add a message to the current one.
+     * @param message
+     */
+    static void addMessage(String message) {
+        LaunchControl.message += "\n" + message;
+    }
+
+    /**
      * Get the current message.
-     * 
+     *
      * @return The current message.
      */
     static String getMessage() {

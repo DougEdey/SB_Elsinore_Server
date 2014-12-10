@@ -479,24 +479,39 @@ function updateTempProbe(vessel, val) {
 }
 
 function updateVolumeStatus(vessel, status) {
-	jQuery("#" + vessel + "-volume").text(
+	$("#" + vessel + "-volume").text(
 			parseFloat(status.volume).toFixed(2) + " " + status.units);
-	jQuery("#" + vessel + ' input[name="vol_units"]').val(status.units);
+	$("#" + vessel + ' input[name="vol_units"]').val(status.units);
 
+	if ($("#" + vessel + "-volume-gravity").length == 0) {
+		$("#" + vessel + "-volume").append(
+			"<div id='" + vessel + "-volume-gravity'>"
+				+ "<form id='" + vessel + "-gravity-edit'" +
+						" name='" + vessel + "-gravity-edit'>"
+				+ "<input type='number' name='gravity' id='gravity'" +
+						" value='" + status.gravity + "'/><br/>"
+				+ "<button id='updategravity-" + vessel + "'" +
+						" class='holo-button modeclass' "
+				+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>"
+				+ $.i18n.prop("UPDATE_GRAVITY")
+				+ "</button>"
+			+ "</div>");
+	}
+	
 	var vesselDiv = '[id="' + vessel + '-form"]';
 
 	if ("ain" in status) {
-		jQuery(vesselDiv + ' input[name="vol_ain"]').val(status.ain);
-		jQuery(vesselDiv + ' input[name="vol_add"]').val("");
-		jQuery(vesselDiv + ' input[name="vol_off"]').val("");
+		$(vesselDiv + ' input[name="vol_ain"]').val(status.ain);
+		$(vesselDiv + ' input[name="vol_add"]').val("");
+		$(vesselDiv + ' input[name="vol_off"]').val("");
 	} else if ("vol_add" in status) {
-		jQuery(vesselDiv + ' input[name="vol_add"]').val(status.address);
-		jQuery(vesselDiv + ' input[name="vol_off"]').val(status.offset);
-		jQuery(vesselDiv + ' input[name="vol_ain"]').val("");
+		$(vesselDiv + ' input[name="vol_add"]').val(status.address);
+		$(vesselDiv + ' input[name="vol_off"]').val(status.offset);
+		$(vesselDiv + ' input[name="vol_ain"]').val("");
 	} else {
-		jQuery(vesselDiv + ' input[name="vol_ain"]').val("");
-		jQuery(vesselDiv + ' input[name="vol_add"]').val("");
-		jQuery(vesselDiv + ' input[name="vol_off"]').val("");
+		$(vesselDiv + ' input[name="vol_ain"]').val("");
+		$(vesselDiv + ' input[name="vol_add"]').val("");
+		$(vesselDiv + ' input[name="vol_off"]').val("");
 	}
 
 }
@@ -1062,6 +1077,19 @@ function submitForm(form) {
 		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
 		$.ajax({
 			url : 'addvolpoint',
+			type : 'POST',
+			data : formdata,
+			dataType : 'json',
+			success : function(data) {
+				data = null
+			}
+		});
+	} else if (form.id.lastIndexOf("-gravity-edit") != -1) {
+		var vessel = form.id.substring(0, form.id.lastIndexOf("-gravity-edit"));
+		var formdata = {}
+		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
+		$.ajax({
+			url : 'setgravity',
 			type : 'POST',
 			data : formdata,
 			dataType : 'json',

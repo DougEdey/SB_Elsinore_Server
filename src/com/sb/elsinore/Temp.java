@@ -287,7 +287,8 @@ public final class Temp implements Runnable {
             currentVolume = new BigDecimal(0),
             cutoffTemp = new BigDecimal(-999.0),
             volumeConstant = new BigDecimal(0),
-            volumeMultiplier = new BigDecimal(0.0);
+            volumeMultiplier = new BigDecimal(0.0),
+            gravity = new BigDecimal(1.000);
 
     /**
      * The current timestamp.
@@ -805,6 +806,8 @@ public final class Temp implements Runnable {
                 this.currentVolume = tVolume;
             }
 
+            this.currentVolume = this.currentVolume.multiply(this.gravity);
+
             return pinValue;
         } catch (NumberFormatException e) {
             e.printStackTrace();
@@ -973,6 +976,7 @@ public final class Temp implements Runnable {
         statusMap.put("scale", getScale());
         statusMap.put("cutoff", getCutoff());
         statusMap.put("calibration", getCalibration());
+        statusMap.put("gravity", gravity);
 
         if (currentError != null) {
             statusMap.put("error", currentError);
@@ -1060,5 +1064,13 @@ public final class Temp implements Runnable {
         } else {
             return "HIDDEN";
         }
+    }
+ 
+    public void setGravity(BigDecimal newGravity) {
+        this.gravity = newGravity;
+    }
+
+    public BigDecimal getGravity() {
+        return this.gravity;
     }
 }
