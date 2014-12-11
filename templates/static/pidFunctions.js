@@ -565,11 +565,12 @@ function editVolume(element) {
 							+ "<input type='text' name='volume' id='volume' value='' placeholder='"
 							+ $.i18n.prop("NEW_VOLUME")
 							+ "' /><br/>"
-							+ "<input type='text' name='units' id='units' value='' value='"
-							+ volUnits
-							+ "' placeholder='"
-							+ $.i18n.prop("LITRES")
-							+ "' /><br/>"
+							+ "<select name='units' id='units'>"
+								+ "<option value='Litres'>Litres</option>"
+								+ "<option value='US Gallons'>US Gallons</option>"
+								+ "<option value='UK Gallons'>UK Gallons</option>"
+							+ "</select>"
+							+ "<br/>"
 							+ "<button id='updateVol-"
 							+ vessel
 							+ "' class='holo-button modeclass' "
