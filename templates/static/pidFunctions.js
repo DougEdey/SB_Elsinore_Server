@@ -486,10 +486,10 @@ function updateVolumeStatus(vessel, status) {
 	if ($("#" + vessel + "-volume-gravity").length == 0) {
 		$("#" + vessel + "-volume").append(
 			"<div id='" + vessel + "-volume-gravity'>"
-				+ "<form id='" + vessel + "-gravity-edit'" +
+				+ "<form id='" + vessel + "-gravity-edit' " +
 						" name='" + vessel + "-gravity-edit'>"
-				+ "<input type='number' name='gravity' id='gravity'" +
-						" value='" + status.gravity + "' step='any'/><br/>"
+				+ "<input type='number' name='gravity' class='form-control' id='gravity'" +
+						" value='" + status.gravity + "' step='any'/>"
 				+ "<button id='updategravity-" + vessel + "'" +
 						" class='holo-button modeclass' "
 				+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>"
@@ -547,22 +547,22 @@ function editVolume(element) {
 							+ "<input type='hidden' name='name' id='name' value='"
 							+ vessel
 							+ "'/><br/>"
-							+ "<input type='text' name='adc_pin' id='adc_pin' value='"
+							+ "<input type='text' class='form-control' name='adc_pin' id='adc_pin' value='"
 							+ volPin
 							+ "' placeholder='"
 							+ $.i18n.prop("ANALOGUE_PIN")
 							+ "'/><br/>"
-							+ "<input type='text' name='onewire_address' id='onewire_address' value='"
+							+ "<input type='text' class='form-control' name='onewire_address' id='onewire_address' value='"
 							+ volAdd
 							+ "' placeholder='"
 							+ $.i18n.prop("DS2450_ADDRESS")
 							+ "' /><br/>"
-							+ "<input type='text' name='onewire_offset' id='onewire_offset' value='"
+							+ "<input type='text' class='form-control' name='onewire_offset' id='onewire_offset' value='"
 							+ volOff
 							+ "' placeholder='"
 							+ $.i18n.prop("DS2450_OFFSET")
 							+ "' /><br/>"
-							+ "<input type='text' name='volume' id='volume' value='' placeholder='"
+							+ "<input type='number' step='any' class='form-control' name='volume' id='volume' value='' placeholder='"
 							+ $.i18n.prop("NEW_VOLUME")
 							+ "' /><br/>"
 							+ "<select class='holo-spinner' name='units' id='units'>"
