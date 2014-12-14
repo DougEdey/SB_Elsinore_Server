@@ -1063,7 +1063,7 @@ public class BrewServer extends NanoHTTPD {
                 }
             }
         }
-        
+
         sub_usage.put("cycletime", "The new manual cycle time in seconds to set");
         if (parms.containsKey("cycletime")) {
             temp = parms.get("cycletime");
@@ -1208,9 +1208,10 @@ public class BrewServer extends NanoHTTPD {
                 tPID.setCoolI(cooli);
                 tPID.setCoolD(coold);
                 tPID.setCoolDelay(cooldelay);
-                
+
                 if (mode.equalsIgnoreCase("manual")) {
-                    tPID.setManualCycle(cycle);
+                    tPID.setManualDuty(duty);
+                    tPID.setManualTime(cycle);
                 }
             }
             return new Response(Status.OK, MIME_HTML, "PID " + inputUnit

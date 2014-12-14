@@ -80,9 +80,9 @@ public class OutputDevice {
      */
     public void runCycle(BigDecimal duty) throws InterruptedException, InvalidGPIOException {
         // Run if the duty is not null and is between 0 and 100 inclusive.
-        if (duty != null && 
-            duty.compareTo(BigDecimal.ZERO) > -1 &&
-            duty.compareTo(HUNDRED) < 1) {
+        if (duty != null
+                && duty.compareTo(BigDecimal.ZERO) > 0
+                && duty.compareTo(HUNDRED) < 1) {
             initializeSSR();
 
             duty = MathUtil.divide(duty, HUNDRED);
@@ -91,13 +91,12 @@ public class OutputDevice {
             BrewServer.LOG.info("On: " + onTime
                     + " Off; " + offTime);
 
-            if( onTime.intValue() > 0 )
-            {
+            if (onTime.intValue() > 0) {
                 setValue(true);
                 Thread.sleep(onTime.intValue());
             }
 
-            if (duty.compareTo(HUNDRED) < 0 && offTime.intValue() > 0 ) {
+            if (duty.compareTo(HUNDRED) < 0 && offTime.intValue() > 0) {
                 setValue(false);
                 Thread.sleep(offTime.intValue());
             }

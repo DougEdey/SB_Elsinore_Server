@@ -762,9 +762,9 @@ function updatePIDStatus(vessel, val) {
 
 	jQuery('div[id="tempUnit"]').text(val.scale);
 
-	jQuery(vesselDiv + ' input[name="dutycycle"]').val(val.duty);
+	jQuery(vesselDiv + ' input[name="dutycycle"]').val(val.manualduty);
 	jQuery(vesselDiv + ' input[name="setpoint"]').val(val.setpoint);
-	jQuery(vesselDiv + ' input[name="cycletime"]').val(val.manualcycle);
+	jQuery(vesselDiv + ' input[name="cycletime"]').val(val.manualtime);
 	if ("heat" in val && val.heat.gpio != "") {
 		jQuery(vesselDiv + ' div[id="heat"] input[name="heatcycletime"]').val(
 				val.heat.cycle);

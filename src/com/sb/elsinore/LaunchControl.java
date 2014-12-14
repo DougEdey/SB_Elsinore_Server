@@ -2042,7 +2042,8 @@ public final class LaunchControl {
         BrewServer.LOG.info("Using base node " + device.getNodeName()
                 + " with ID " + device.getAttribute("id"));
 
-        setElementText(device, "duty_cycle", pid.getDuty().toString());
+        setElementText(device, "duty_cycle", pid.getManualCycle().toString());
+        setElementText(device, "duty_time", pid.getManualTime().toString());
         setElementText(device, "set_point", pid.getSetPoint().toString());
 
         if (pid.getHeatSetting() != null) {
@@ -2386,7 +2387,7 @@ public final class LaunchControl {
                 min = new BigDecimal(0.0), max = new BigDecimal(0.0),
                 time = new BigDecimal(0.0), coolP = new BigDecimal(0.0),
                 coolI = new BigDecimal(0.0), coolD = new BigDecimal(0.0),
-                coolCycle = new BigDecimal(0.0),
+                coolCycle = new BigDecimal(0.0), cycle = new BigDecimal(0.0),
                 coolDelay = new BigDecimal(0.0);
         boolean coolInvert = false, heatInvert = false;
         int analoguePin = -1;
@@ -2403,6 +2404,11 @@ public final class LaunchControl {
             tElement = getFirstElement(config, "duty_cycle");
             if (tElement != null) {
                 duty = new BigDecimal(tElement.getTextContent());
+            }
+
+            tElement = getFirstElement(config, "duty_time");
+            if (tElement != null) {
+                cycle = new BigDecimal(tElement.getTextContent());
             }
 
             tElement = getFirstElement(config, "set_point");
@@ -2613,7 +2619,8 @@ public final class LaunchControl {
                 tPID.setCoolGPIO(coolGPIO);
                 tPID.setCoolInverted(coolInvert);
                 tPID.setHeatInverted(heatInvert);
-
+                tPID.setManualTime(cycle);
+                tPID.setManualDuty(duty);
                 if (auxPin != null && !auxPin.equals("")) {
                     tPID.setAux(auxPin);
                 }
