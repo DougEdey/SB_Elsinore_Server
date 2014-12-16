@@ -31,11 +31,12 @@ $JAVA -jar $DIR/Elsinore.jar --help
 JAVA_OPTS=
 PORT=
 CONFIG=$DIR/elsinore.cfg
+LOG_FILE=$DIR/elsinore.log
 GPIO=
 DEBUG=
 OTHER_OPTS=
 
-while getopts ":hjp:c:g:dt:l:ir:s:" OPTION
+while getopts ":hjp:c:g:dt:l:ir:s:f:" OPTION
 do
 case $OPTION in
     h)
@@ -72,6 +73,9 @@ case $OPTION in
     s)
         OTHER_OPTS="$OTHER_OPTS --recorder_directory $OPTARG"
         ;;
+    f)
+        LOG_FILE=$OPTARG
+	;;
     ?)
         usage
         exit
@@ -83,7 +87,7 @@ RUNTIME_OPTS="$PORT $GPIO $DEBUG $THRESHOLD $THEME --baseUser $ORIGINAL_USER $OT
 RC=128
 while [ $RC -eq 128 ] 
 do
-	sudo $JAVA $JAVA_OPTS -jar $DIR/Elsinore.jar --config $CONFIG $RUNTIME_OPTS 
+	sudo $JAVA $JAVA_OPTS -jar $DIR/Elsinore.jar --config $CONFIG $RUNTIME_OPTS &> $LOG_FILE
 	RC=$?
 done
 

@@ -1,0 +1,90 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:          elsinore
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: StrangeBrew Elsinore Brewery Controller
+# Description:       Start and stop the StrangeBrew Elsinore Brewery controller.
+### END INIT INFO
+ELSINORE_PATH=/home/elsinore/SB_Elsinore_Server
+CONFFILE=$ELSINORE_PATH/elsinore.cfg
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:$ELSINORE_PATH
+DESC="Elsinore Brewery Controller"
+NAME="elsinore"
+DAEMON=$ELSINORE_PATH/launch.sh 
+PIDDIR=/var/run/elsinore
+PIDFILE=$PIDDIR/$NAME.pid
+LOGFILE=$ELSINORE_PATH/elsinore.log
+
+# Uncomment this line if you're on BBB to ensure One Wire/GPIOs are setup
+W1_SETUP=$ELSINORE_PATH/extras/bbb_setup.sh
+
+# Gracefully exit if the package has been removed.
+test -x $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+d_start() {
+    if [ ! -d /sys/devices/w1_bus_master1 ]; then
+        echo "Pushing One Wire Modules"
+	$ELSINORE_PATH/extras/w1_setup.sh
+    fi
+    [ -d $PIDDIR ] || {
+    mkdir -m 0775 -p $PIDDIR
+    chown root:root $PIDDIR >/dev/null 2>&1
+    }
+    start-stop-daemon --start --quiet --background --pidfile $PIDFILE --make-pidfile --oknodo --exec $DAEMON -- -c $CONFFILE 
+    echo $! > $PIDFILE
+    # ensure the daemon has been started 
+    sleep 1
+    pidofproc -p $PIDFILE $DAEMON >/dev/null
+}
+
+d_stop() {
+    pkill -TERM -P `cat $PIDFILE`
+    sleep 1
+    if [ -f $PIDFILE ] && ! ps h `cat $PIDFILE` > /dev/null
+    then
+        # Stale PID file (owserver was successfilly stoped),
+        #remove it
+        rm -f $PIDFILE
+    fi
+}
+
+d_status() {
+    pidofproc -p $PIDFILE $DAEMON > /dev/null
+}
+
+case "$1" in
+    start)
+        log_daemon_msg "Starting $DESC" "$NAME"
+        d_start
+        log_end_msg $?
+        ;;
+    stop)
+        log_daemon_msg "Stopping $DESC" "$NAME"
+        d_stop
+        log_end_msg $?
+        ;;
+    restart|force-reload)
+        log_daemon_msg "Restarting $DESC" "$NAME"
+        d_status && d_stop
+        d_start
+        log_end_msg $?
+        ;;
+    status)
+        d_status
+        if [ $? -eq 0 ];then
+            log_success_msg "$NAME is running"
+        else
+            log_failure_msg "$NAME is not running"
+        fi
+        ;;
+    *)
+        echo "Usage: /etc/init.d/$NAME {start|stop|restart|force-reload|status}" >&2
+        exit 1
+        ;;
+esac
+
+exit 0
