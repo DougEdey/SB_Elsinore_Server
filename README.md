@@ -55,6 +55,22 @@ You must EDIT the file ``` extras/elsinore ``` to ensure the ELSINORE_PATH varia
 
 If you're running on BeagleBone Black you'll also want to uncomment the W1_SETUP line and the lines indicated in d_start() to ensure that the One Wire and JGPIO files are exported correctly.
 
+Then run:
+
+```
+sudo cp extras/elsinore /etc/init.d
+sudo update-rc.d elsinore defaults
+```
+
+And then you can manually start elsinore using
+``` sudo service elsinore start ```
+
+Stop using:
+
+``` sudo service elsinore stop ```
+
+And it'll automatically start/stop on boot/shutdown
+
 Setup
 =====
 
