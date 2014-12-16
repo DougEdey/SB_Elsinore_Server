@@ -18,7 +18,7 @@ PIDFILE=$PIDDIR/$NAME.pid
 LOGFILE=$ELSINORE_PATH/elsinore.log
 
 # Uncomment this line if you're on BBB to ensure One Wire/GPIOs are setup
-W1_SETUP=$ELSINORE_PATH/extras/bbb_setup.sh
+#W1_SETUP=$ELSINORE_PATH/extras/bbb_setup.sh
 
 # Gracefully exit if the package has been removed.
 test -x $DAEMON || exit 0
@@ -26,10 +26,11 @@ test -x $DAEMON || exit 0
 . /lib/lsb/init-functions
 
 d_start() {
-    if [ ! -d /sys/devices/w1_bus_master1 ]; then
-        echo "Pushing One Wire Modules"
-	$ELSINORE_PATH/extras/w1_setup.sh
-    fi
+    # Uncomment these lines if you're on BBB
+    #if [ ! -d /sys/devices/w1_bus_master1 ]; then
+    #    echo "Pushing One Wire Modules"
+	#    $ELSINORE_PATH/extras/w1_setup.sh
+    #fi
     [ -d $PIDDIR ] || {
     mkdir -m 0775 -p $PIDDIR
     chown root:root $PIDDIR >/dev/null 2>&1

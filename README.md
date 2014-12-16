@@ -46,6 +46,15 @@ Then you can go to
 
 To run setup.
 
+Installing as an init.d script
+==============================
+
+Elsinore now has a script which allows you to setup Elsinore as a service.
+
+You must EDIT the file ``` extras/elsinore ``` to ensure the ELSINORE_PATH variable matches the location you have cloned Elsinore into.
+
+If you're running on BeagleBone Black you'll also want to uncomment the W1_SETUP line and the lines indicated in d_start() to ensure that the One Wire and JGPIO files are exported correctly.
+
 Setup
 =====
 
