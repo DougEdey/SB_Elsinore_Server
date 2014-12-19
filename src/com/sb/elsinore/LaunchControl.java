@@ -1775,7 +1775,6 @@ public final class LaunchControl {
      */
     public static boolean probeExists(final String address) {
         for (Temp t : tempList) {
-            BrewServer.LOG.warning("Looking for " + address + ": " + t.getProbe());
             if (t.getProbe().equals(address)) {
                 return true;
             }
@@ -1785,7 +1784,7 @@ public final class LaunchControl {
 
     /***********
      * Helper method to read a path value from OWFS with all checks.
-     * 
+     *
      * @param path
      *            The path to read from
      * @return A string representing the value (or null if there's an error
