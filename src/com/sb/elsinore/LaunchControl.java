@@ -83,6 +83,8 @@ import Cosm.Unit;
 
 import com.sb.common.CollectionsUtil;
 import com.sb.common.ServeHTML;
+import com.sb.elsinore.NanoHTTPD.Response;
+import com.sb.elsinore.NanoHTTPD.Response.Status;
 
 /**
  * LaunchControl is the core class of Elsinore. It reads the config file,
@@ -240,7 +242,7 @@ public final class LaunchControl {
     private static String recorderDirectory = StatusRecorder.defaultDirectory;
     private static String breweryName = null;
     public static String theme = "default";
-    private static boolean pageLock = false;
+    public static boolean pageLock = false;
     private static boolean allDevicesListed = false;
 
     /*****
@@ -1395,11 +1397,15 @@ public final class LaunchControl {
 
     /**
      * List the one wire devices in /sys/bus/w1/devices.
-     * 
+     *
      * @param prompt
      *            Prompt to select OWFS if needed
      */
-    private static void listOneWireSys(final boolean prompt) {
+    public static void listOneWireSys(final boolean prompt) {
+        if (useOWFS) {
+            listOWFSDevices();
+            return;
+        }
         // try to access the list of 1-wire devices
         File w1Folder = new File("/sys/bus/w1/devices/");
         if (!w1Folder.exists()) {
@@ -1471,20 +1477,6 @@ public final class LaunchControl {
     }
 
     /**
-     * Remove any non setup devices.
-     */
-    private static void removeNonSetupDevices() {
-        // synchronized (tempList) {
-        // for (Temp t: tempList) {
-        // if (t.getName().equals(t.getProbe())) {
-        // t.shutdown();
-        // }
-        // tempList.remove(t);
-        // }
-        // }
-    }
-
-    /**
      * update the device list.
      */
     private static void updateDeviceList() {
@@ -1493,7 +1485,7 @@ public final class LaunchControl {
 
     /**
      * Update the device list.
-     * 
+     *
      * @param prompt
      *            Prompt for OWFS usage.
      */
@@ -1783,6 +1775,7 @@ public final class LaunchControl {
      */
     public static boolean probeExists(final String address) {
         for (Temp t : tempList) {
+            BrewServer.LOG.warning("Looking for " + address + ": " + t.getProbe());
             if (t.getProbe().equals(address)) {
                 return true;
             }
@@ -3273,16 +3266,6 @@ public final class LaunchControl {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-    }
-
-    public static void lockPage() {
-        LaunchControl.removeNonSetupDevices();
-        LaunchControl.pageLock = true;
-    }
-
-    public static void unlockPage() {
-        LaunchControl.listOneWireSys(false);
-        LaunchControl.pageLock = false;
     }
 
     public static boolean setTempScales(String scale) {

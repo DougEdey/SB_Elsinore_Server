@@ -7,13 +7,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.file.Files;
-import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -28,7 +26,6 @@ import java.util.logging.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.rendersnake.HtmlCanvas;
 
 import com.sb.elsinore.NanoHTTPD.Response.Status;
@@ -39,7 +36,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 
 /**
- * A custom HTTP server for Elsinore. Designed to be very simple and lightweight.
+ * A custom HTTP server for Elsinore.
+ * Designed to be very simple and lightweight.
  *
  * @author Doug Edey
  *
@@ -51,6 +49,11 @@ public class BrewServer extends NanoHTTPD {
      */
     private File rootDir;
 
+    private Method method;
+    private Map<String, String> header;
+    private Map<String, String> files;
+    private Map<String, String> parameters;
+
     /**
      * The Logger object.
      */
@@ -59,7 +62,7 @@ public class BrewServer extends NanoHTTPD {
     /**
      * Hashtable mapping (String)FILENAME_EXTENSION -> (String)MIME_TYPE.
      */
-    private static final Map<String, String> MIME_TYPES
+    public static final Map<String, String> MIME_TYPES
         = new HashMap<String, String>() {
         /**
          * The Serial UID.
@@ -212,9 +215,10 @@ public class BrewServer extends NanoHTTPD {
      *            The parameters map from the original request
      * @return True if the profile is updated successfully.
      */
-    private boolean updateMashProfile(final Map<String, String> parms) {
+    @UrlEndpoint(url = "/mashprofile")
+    private Response updateMashProfile() {
         String inputUnit = null;
-        Set<Entry<String, String>> incomingParams = parms.entrySet();
+        Set<Entry<String, String>> incomingParams = parameters.entrySet();
         Iterator<Entry<String, String>> it = incomingParams.iterator();
         Entry<String, String> param = null;
         JSONObject incomingData = new JSONObject();
@@ -268,7 +272,9 @@ public class BrewServer extends NanoHTTPD {
                 incomingData.remove("pid");
             } else {
                 BrewServer.LOG.warning("Couldn't find the PID for this update");
-                return false;
+
+                return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
+                        "Failed to update Mash Profile");
             }
 
             // Iterate through the JSON
@@ -318,7 +324,9 @@ public class BrewServer extends NanoHTTPD {
             mControl.sortMashSteps();
             LaunchControl.startMashControl(pid);
         }
-        return true;
+
+        return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                    "Updated MashProfile");
     }
 
     /**
@@ -326,10 +334,12 @@ public class BrewServer extends NanoHTTPD {
      * @param params The incoming parameters.
      * @return The NanoHTTPD response to return to the browser.
      */
-    private Response addMashStep(Map<String, String> params) {
+    @UrlEndpoint(url = "/addmashstep")
+    private Response addMashStep() {
         // Parse the response
         // Temp unit, PID, duration, temp, method, type, step number
         // Default to the existing temperature scale
+        Map<String, String> params = this.parameters;
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Add a new mashstep to the specified PID");
         usage.put("temp_unit (optional)",
@@ -421,7 +431,9 @@ public class BrewServer extends NanoHTTPD {
      * @param params The incoming params, check the usage.
      * @return The Response object.
      */
-    private Response reorderMashProfile(final Map<String, String> params) {
+    @UrlEndpoint(url = "/reordermashprofile")
+    private Response reorderMashProfile() {
+        Map<String, String> params = this.parameters;
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Set the order for the mash profile.");
         usage.put("pid", "The name of the PID to change the mash profile order on.");
@@ -469,7 +481,9 @@ public class BrewServer extends NanoHTTPD {
      * @param params The details.
      * @return The Response.
      */
-    private Response delMashStep(Map<String, String> params) {
+    @UrlEndpoint(url = "/delmashstep")
+    private Response delMashStep() {
+        Map<String, String> params = this.parameters;
         // Parse the response
         // Temp unit, PID, duration, temp, method, type, step number
         // Default to the existing temperature scale
@@ -524,14 +538,16 @@ public class BrewServer extends NanoHTTPD {
      *            The parameters from the original request.
      * @return True if set, false if there's an error
      */
-    private boolean toggleMashProfile(final Map<String, String> parameters) {
+    @UrlEndpoint(url = "/togglemash")
+    private Response toggleMashProfile() {
 
         String pid = null;
         if (parameters.containsKey("pid")) {
             pid = parameters.get("pid");
         } else {
             BrewServer.LOG.warning("No PID provided to toggle Mash Profile");
-            return false;
+            return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
+                    "Failed to toggle mash profile");
         }
 
         boolean activate = false;
@@ -541,7 +557,8 @@ public class BrewServer extends NanoHTTPD {
             }
         } else {
             BrewServer.LOG.warning("No Status provided to toggle Mash Profile");
-            return false;
+            return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
+                    "Failed to toggle mash profile");
         }
 
         int position = -1;
@@ -551,14 +568,16 @@ public class BrewServer extends NanoHTTPD {
             } catch (NumberFormatException e) {
                 BrewServer.LOG.warning("Couldn't parse positional argument: "
                         + parameters.get("position"));
-                return false;
+                return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
+                        "Failed to toggle mash profile");
             }
         }
 
         MashControl mObj = LaunchControl.findMashControl(pid);
 
         if (mObj == null) {
-            return false;
+            return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
+                    "Failed to toggle mash profile");
         }
 
         MashStep mashEntry = mObj.getCurrentMashStep();
@@ -589,7 +608,8 @@ public class BrewServer extends NanoHTTPD {
             } else {
                 BrewServer.LOG.warning("A mash is in progress for " + pid
                         + " but no positional argument is set");
-                return false;
+                return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
+                        "Failed to toggle mash profile");
             }
         }
 
@@ -603,7 +623,9 @@ public class BrewServer extends NanoHTTPD {
                     + stepToUse);
         }
 
-        return true;
+
+        return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                "Toggled mash profile");
     }
 
     /**
@@ -613,7 +635,9 @@ public class BrewServer extends NanoHTTPD {
      *            The parameters from the client.
      * @return True is success, false if failure.
      */
-    private Response editVessel(final Map<String, String> params) {
+    @UrlEndpoint(url = "/editdevice")
+    private Response editVessel() {
+        final Map<String, String> params = this.parameters;
         String auxpin = "", newName = "", heatgpio = "";
         String inputUnit = "", cutoff = "", coolgpio = "";
         String calibration = null;
@@ -788,15 +812,16 @@ public class BrewServer extends NanoHTTPD {
     /**
      * Add a new timer to the brewery.
      * 
-     * @param params
+     * @param parameters
      *            The parameter list
      * @return True if added ok
      */
-    private Response addTimer(final Map<String, String> params) {
+    @UrlEndpoint(url = "/addtimer")
+    private Response addTimer() {
         String oldName = "", newName = "", gpio = "";
         String inputUnit = "";
 
-        Set<Entry<String, String>> incomingParams = params.entrySet();
+        Set<Entry<String, String>> incomingParams = parameters.entrySet();
         Map<String, String> parms;
         Iterator<Entry<String, String>> it = incomingParams.iterator();
         Entry<String, String> param = null;
@@ -827,8 +852,8 @@ public class BrewServer extends NanoHTTPD {
             BrewServer.LOG.info("Found valid data for " + inputUnit);
             parms = (Map<String, String>) incomingData;
         } else {
-            inputUnit = params.get("form");
-            parms = params;
+            inputUnit = parameters.get("form");
+            parms = parameters;
         }
 
         // Fall back to the old style
@@ -845,7 +870,7 @@ public class BrewServer extends NanoHTTPD {
         usage.put("new_name", "The name of the timer to add");
         usage.put("mode",
                 "The mode for the timer, increment, or decrement (optional)");
-        usage.put("Error", "Invalid parameters passed " + params.toString());
+        usage.put("Error", "Invalid parameters passed " + parameters.toString());
 
         return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
                 usage.toJSONString());
@@ -858,12 +883,13 @@ public class BrewServer extends NanoHTTPD {
      *            The parameter list
      * @return True if added ok
      */
-    private Response addPump(final Map<String, String> params) {
+    @UrlEndpoint(url = "/addpump")
+    private Response addPump() {
         String newName = "", gpio = "";
         String inputUnit = "";
         boolean invert = false;
 
-        Set<Entry<String, String>> incomingParams = params.entrySet();
+        Set<Entry<String, String>> incomingParams = this.parameters.entrySet();
         Map<String, String> parms;
         Iterator<Entry<String, String>> it = incomingParams.iterator();
         Entry<String, String> param = null;
@@ -894,8 +920,8 @@ public class BrewServer extends NanoHTTPD {
             BrewServer.LOG.info("Found valid data for " + inputUnit);
             parms = (Map<String, String>) incomingData;
         } else {
-            inputUnit = params.get("form");
-            parms = params;
+            inputUnit = this.parameters.get("form");
+            parms = this.parameters;
         }
 
         // Fall back to the old style
@@ -923,7 +949,8 @@ public class BrewServer extends NanoHTTPD {
         usage.put("Usage", "Add a new pump to the system");
         usage.put("new_name", "The name of the pump to add");
         usage.put("new_gpio", "The GPIO for the pump to work on");
-        usage.put("Error", "Invalid parameters passed " + params.toString());
+        usage.put("Error", "Invalid parameters passed "
+                + this.parameters.toString());
 
         return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
                 usage.toJSONString());
@@ -932,12 +959,13 @@ public class BrewServer extends NanoHTTPD {
     /**
      * Read the incoming parameters and update the PID as appropriate.
      * 
-     * @param params
+     * @param parameters
      *            The parameters from the client
      * @return True if success, false if failure
      */
     @SuppressWarnings("unchecked")
-    private Response updatePID(final Map<String, String> params) {
+    @UrlEndpoint(url = "/updatepid")
+    private Response updatePID() {
         String temp, mode = "off";
         BigDecimal dTemp = new BigDecimal(0), duty = new BigDecimal(0),
                 heatcycle = new BigDecimal(0), setpoint = new BigDecimal(0),
@@ -949,7 +977,7 @@ public class BrewServer extends NanoHTTPD {
                 cooldelay = new BigDecimal(0), cycle = new BigDecimal(0);
 
         JSONObject sub_usage = new JSONObject();
-        Map<String, String> parms = ParseParams(params);
+        Map<String, String> parms = ParseParams(parameters);
         String inputUnit = parms.get("inputunit");
         boolean errorValue = false;
         PID tPID = LaunchControl.findPID(inputUnit);
@@ -1228,7 +1256,7 @@ public class BrewServer extends NanoHTTPD {
 
     /**
      * The main method that checks the data coming into the server.
-     * 
+     *
      * @param uri
      *            The URI requested
      * @param method
@@ -1244,6 +1272,10 @@ public class BrewServer extends NanoHTTPD {
     public final Response serve(final String uri, final Method method,
             final Map<String, String> header, final Map<String, String> parms,
             final Map<String, String> files) {
+        this.method = method;
+        this.header = header;
+        this.parameters = parms;
+        this.files = files;
 
         BrewServer.LOG.info("URL : " + uri + " method: " + method);
 
@@ -1253,141 +1285,18 @@ public class BrewServer extends NanoHTTPD {
                     "Status Cleared");
         }
 
-        // parms contains the properties here
-        if (uri.equalsIgnoreCase("/mashprofile")) {
-            if (updateMashProfile(parms)) {
-                return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                        "Updated MashProfile");
-            }
-
-            return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
-                    "Failed to update Mashprofile");
-        }
-
-        if (uri.equalsIgnoreCase("/addmashstep")) {
-            return addMashStep(parms);
-        }
-
         if (uri.equalsIgnoreCase("/addsystem")) {
             LaunchControl.addSystemTemp();
             return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                     "Added system temperature");
         }
-        
+
         if (uri.equalsIgnoreCase("/delsystem")) {
             LaunchControl.delSystemTemp();
             return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                     "Deleted system temperature");
         }
-
-        if (uri.equalsIgnoreCase("/delmashstep")) {
-            return delMashStep(parms);
-        }
-
-        if (uri.equalsIgnoreCase("/togglemash")) {
-            if (toggleMashProfile(parms)) {
-                return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                        "Toggled mash profile");
-            }
-            return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
-                    "Failed to toggle MashProfile");
-        }
-
-        if (uri.equalsIgnoreCase("/reordermashprofile")) {
-            return reorderMashProfile(parms);
-        }
-
-        if (uri.equalsIgnoreCase("/editdevice")) {
-            return editVessel(parms);
-        }
-        if (uri.equalsIgnoreCase("/updatepid")) {
-            // parse the values if possible
-            return updatePID(parms);
-        }
-
-        if (uri.equalsIgnoreCase("/updateday")) {
-            // we're storing the data for the brew day
-            String tempDateStamp;
-            BrewDay brewDay = LaunchControl.getBrewDay();
-
-            // updated date
-            if (parms.containsKey("updated")) {
-                tempDateStamp = parms.get("updated");
-                brewDay.setUpdated(tempDateStamp);
-            } else {
-                // we don't have an updated datestamp
-                return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                        "No update datestamp, not updating a thang! YA HOSER!");
-            }
-
-            Iterator<Entry<String, String>> it = parms.entrySet().iterator();
-            Entry<String, String> e = null;
-
-            while (it.hasNext()) {
-                e = it.next();
-
-                if (e.getKey().endsWith("Start")) {
-                    int trimEnd = e.getKey().length() - "Start".length();
-                    String name = e.getKey().substring(0, trimEnd);
-                    brewDay.startTimer(name, e.getValue());
-                } else if (e.getKey().endsWith("End")) {
-                    int trimEnd = e.getKey().length() - "End".length();
-                    String name = e.getKey().substring(0, trimEnd);
-                    brewDay.stopTimer(name, e.getValue());
-                } else if (e.getKey().endsWith("Reset")) {
-                    int trimEnd = e.getKey().length() - "Reset".length();
-                    String name = e.getKey().substring(0, trimEnd);
-                    brewDay.resetTimer(name);
-                }
-            }
-
-            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                    "Updated Brewday");
-        }
-
-        if (uri.equalsIgnoreCase("/updatepump")) {
-            if (parms.containsKey("toggle")) {
-                String pumpname = parms.get("toggle");
-                Pump tempPump = LaunchControl.findPump(pumpname.replaceAll("_", " "));
-                if (tempPump != null) {
-                    if (tempPump.getStatus()) {
-                        tempPump.turnOff();
-                    } else {
-                        tempPump.turnOn();
-                    }
-
-                    return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                            "Updated Pump");
-                } else {
-                    JSONObject usage = new JSONObject();
-                    usage.put("Error", "Invalid name supplied: " + pumpname);
-                    usage.put("toggle", "The name of the Pump to toggle on/off");
-                    return new Response(Status.BAD_REQUEST,
-                            MIME_TYPES.get("txt"), "Invalid pump: " + pumpname
-                                    + " provided.");
-                }
-            }
-        }
-
-        if (uri.equalsIgnoreCase("/toggleaux")) {
-            if (parms.containsKey("toggle")) {
-                String pidname = parms.get("toggle");
-                PID tempPID = LaunchControl.findPID(pidname);
-                if (tempPID != null) {
-                    tempPID.toggleAux();
-                    return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                            "Updated Aux for " + pidname);
-                } else {
-                    LOG.warning("Invalid PID: " + pidname + " provided.");
-                    JSONObject usage = new JSONObject();
-                    usage.put("Error", "Invalid name supplied: " + pidname);
-                    usage.put("toggle",
-                            "The name of the PID to toggle the aux output for");
-                    return new Response(usage.toJSONString());
-                }
-            }
-        }
-
+        
         if (uri.equalsIgnoreCase("/getstatus")) {
             return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
                     LaunchControl.getJSONStatus());
@@ -1398,55 +1307,9 @@ public class BrewServer extends NanoHTTPD {
                     LaunchControl.getSystemStatus());
         }
 
-        if (uri.equalsIgnoreCase("/updatesystemsettings")) {
-            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                    updateSystemSettings(parms));
-        }
-
-        if (uri.equalsIgnoreCase("/oldcontroller")) {
-            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                    LaunchControl.getControlPage());
-        }
-
-        if (uri.equalsIgnoreCase("/controller")) {
-            RenderHTML renderController = new RenderHTML();
-            HtmlCanvas html = new HtmlCanvas();
-            String result = "";
-            try {
-                renderController.renderOn(html);
-                result = html.toHtml();
-            } catch (IOException e) {
-                e.printStackTrace();
-                result = e.getMessage();
-            }
-            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                    result);
-        }
-
-        if (uri.equalsIgnoreCase("/timers")) {
-            return new NanoHTTPD.Response(Status.OK, MIME_HTML, LaunchControl
-                    .getBrewDay().brewDayStatus().toString());
-        }
-
         if (uri.equalsIgnoreCase("/graph")) {
             return serveFile("/templates/static/graph/graph.html", header,
                     rootDir);
-        }
-
-        if (uri.toLowerCase().startsWith("/graph-data")) {
-            return getGraphData(parms);
-        }
-
-        if (uri.equalsIgnoreCase("/addpump")) {
-            return addPump(parms);
-        }
-
-        if (uri.equalsIgnoreCase("/addtimer")) {
-            return addTimer(parms);
-        }
-
-        if (uri.equalsIgnoreCase("/addvolpoint")) {
-            return addVolumePoint(parms);
         }
 
         if (uri.equalsIgnoreCase("/checkgit")) {
@@ -1457,12 +1320,6 @@ public class BrewServer extends NanoHTTPD {
 
         if (uri.equalsIgnoreCase("/restartupdate")) {
             LaunchControl.updateFromGit();
-            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                    "{Status:'OK'}");
-        }
-
-        if (uri.equalsIgnoreCase("/setbreweryname")) {
-            updateBreweryName(parms);
             return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
                     "{Status:'OK'}");
         }
@@ -1528,75 +1385,41 @@ public class BrewServer extends NanoHTTPD {
                 header, rootDir);
         }
 
-        if (uri.equalsIgnoreCase("/brewerImage.gif")) {
-            // Has the user uploaded a file?
-            if (new File(rootDir, uri).exists()) {
-                return serveFile(uri, header, rootDir);
-            }
-            // Check to see if there's a theme set.
-            if (LaunchControl.theme != null
-                    && !LaunchControl.theme.equals("")) {
-                if (new File(rootDir,
-                        "/logos/" + LaunchControl.theme + ".gif").exists()) {
-                    return serveFile("/logos/" + LaunchControl.theme + ".gif",
-                            header, rootDir);
-                }
-            }
-
-
-        }
-
         if (!uri.equals("") && new File(rootDir, uri).exists()) {
             return serveFile(uri, header, rootDir);
-        }
-
-        if (uri.equalsIgnoreCase("/uploadimage")) {
-            return updateBreweryImage(files);
-        }
-
-        if (uri.equalsIgnoreCase("/updatepumporder")) {
-            return updatePumpOrder(parms);
-        }
-
-        if (uri.equalsIgnoreCase("/deletepump")) {
-            return deletePump(parms);
-        }
-
-        if (uri.equalsIgnoreCase("/unlockpage")) {
-            LaunchControl.unlockPage();
-            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                    "{status: 'unlocked'}");
-        }
-
-        if (uri.equalsIgnoreCase("/lockpage")) {
-            LaunchControl.lockPage();
-            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                    "{status: 'locked'}");
-        }
-
-        if (uri.equalsIgnoreCase("/updatetimerorder")) {
-            return updateTimerOrder(parms);
-        }
-
-        if (uri.equalsIgnoreCase("/deletetimer")) {
-            return deleteTimer(parms);
-        }
-
-        if (uri.equalsIgnoreCase("/setscale")) {
-            return setScale(parms);
-        }
-
-        if (uri.equalsIgnoreCase("/toggledevice")) {
-            return toggleDevice(parms);
         }
 
         if (uri.equalsIgnoreCase("/stop")) {
             System.exit(128);
         }
 
-        if (uri.equalsIgnoreCase("/setgravity")) {
-            return setGravity(parms);
+        this.parameters = parms;
+        for (java.lang.reflect.Method m
+                : BrewServer.class.getDeclaredMethods()) {
+           UrlEndpoint urlMethod =
+                   (UrlEndpoint) m.getAnnotation(UrlEndpoint.class);
+           if (urlMethod != null) {
+               if (urlMethod.url().equalsIgnoreCase(uri)) {
+                   try {
+                       return (Response) m.invoke(this);
+                   } catch (IllegalAccessException e) {
+                       //do nothing;
+                   } catch (InvocationTargetException o) {
+                       // do nothing
+                   }
+               }
+           }
         }
+
+        BrewServer.LOG.warning("Failed to find URI: " + uri);
+
+//        if (uri.equalsIgnoreCase("/volumeeditform")) {
+//            return getVolumeEditForm(parms);
+//        }
+//
+//        if (uri.equalsIgnoreCase("/phsensoreditform")) {
+//            return getPhSensorEditForm(parms);
+//        }
 
         BrewServer.LOG.info("Unidentified URL: " + uri);
         JSONObject usage = new JSONObject();
@@ -1624,7 +1447,7 @@ public class BrewServer extends NanoHTTPD {
     /**
      * Serves file from homeDir and its' subdirectories (only). Uses only URI,
      * ignores all headers and HTTP parameters.
-     * 
+     *
      * @param incomingUri
      *            The URI requested
      * @param header
@@ -1830,7 +1653,8 @@ public class BrewServer extends NanoHTTPD {
             }
         } catch (IOException ioe) {
             res = new Response(Response.Status.FORBIDDEN,
-                    NanoHTTPD.MIME_PLAINTEXT, "FORBIDDEN: Reading file failed.");
+                    NanoHTTPD.MIME_PLAINTEXT,
+                    "FORBIDDEN: Reading file failed.");
         }
 
         res.addHeader("Accept-Ranges", "bytes");
@@ -1841,7 +1665,6 @@ public class BrewServer extends NanoHTTPD {
     /**
      * URL-encodes everything between "/"-characters. Encodes spaces as '%20'
      * instead of '+'.
-     * 
      * @param uri
      *            The URI to be encoded
      * @return The Encoded URI
@@ -1868,15 +1691,12 @@ public class BrewServer extends NanoHTTPD {
 
     /**
      * Add a new data point for the volume reading.
-     * 
-     * @param params
-     *            List of parameters, must include "name" and "volume".
-     *            Optional: probe details for onewire or direct ADC
      * @return A NanoHTTPD response
      */
-    private Response addVolumePoint(Map<String, String> params) {
+    @UrlEndpoint(url = "/addvolpoint")
+    private Response addVolumePoint() {
         JSONObject usage = new JSONObject();
-        Map<String, String> parms = ParseParams(params);
+        Map<String, String> parms = ParseParams(this.parameters);
         String inputUnit = parms.get("inputunit");
         usage.put("name", "Temperature probe name to add a volume point to");
         usage.put("volume",
@@ -1889,7 +1709,6 @@ public class BrewServer extends NanoHTTPD {
                 "The one wire offset to be used for analogue reads");
         usage.put("adc_pin", "The ADC Pin to be used for analogue reads");
 
-        System.out.println(params);
         String name = parms.get("name").trim();
         String volume = parms.get("volume").trim();
         String units = parms.get("units").trim();
@@ -1985,16 +1804,14 @@ public class BrewServer extends NanoHTTPD {
 
     /**
      * Get the graph data.
-     * 
-     * @param params
-     *            A list of specific parameters
      * @return the JSON Response data
      */
-    public NanoHTTPD.Response getGraphData(Map<String, String> params) {
+    @UrlEndpoint(url = "/graph-data")
+    public NanoHTTPD.Response getGraphData() {
         if (!LaunchControl.recorderEnabled()) {
             return new NanoHTTPD.Response("Recorder disabled");
         }
-
+        Map<String, String> params = this.parameters;
         Map<String, String> parms = ParseParams(params);
         // Have we been asked for a size?
         int size = 1000;
@@ -2093,7 +1910,7 @@ public class BrewServer extends NanoHTTPD {
                 name = name.replace('-', ' ');
 
                 if (parms.containsKey("bindto")
-                        && ((String)parms.get("bindto"))
+                        && ((String) parms.get("bindto"))
                         .endsWith("-graph_body")) {
                     name = name.substring(name.lastIndexOf(" ") + 1);
                 }
@@ -2178,7 +1995,7 @@ public class BrewServer extends NanoHTTPD {
         JSONObject y1 = new JSONObject();
         y1.put("show",  "true");
         y1.put("label", y1Label);
-        
+
         JSONObject padding = new JSONObject();
         padding.put("top", 0);
         padding.put("bottom", 0);
@@ -2217,22 +2034,23 @@ public class BrewServer extends NanoHTTPD {
     /**
      * Read the incoming parameters and update the name as appropriate.
      *
-     * @param params
-     *            The parameters from the client
      * @return True if success, false if failure
      */
     @SuppressWarnings("unchecked")
-    private Response updateBreweryName(final Map<String, String> params) {
+    @UrlEndpoint(url = "/setbreweryname")
+    private Response updateBreweryName() {
 
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Set the brewery name");
         usage.put("name", "The new brewery name");
 
-        Map<String, String> parms = ParseParams(params);
+        Map<String, String> parms = ParseParams(this.parameters);
         String newName = parms.get("name");
 
         if (newName != null && newName != "" && newName.length() > 0) {
             LaunchControl.setName(newName);
+            return new Response(Response.Status.OK,
+                    MIME_TYPES.get("json"), usage.toJSONString());
         }
 
         return new Response(Response.Status.BAD_REQUEST,
@@ -2242,13 +2060,13 @@ public class BrewServer extends NanoHTTPD {
 
     /**
      * Read the incoming parameters and update the name as appropriate.
-     * @param files
-     *            The parameters from the client
      * @return True if success, false if failure
      */
     @SuppressWarnings("unchecked")
-    private Response updateBreweryImage(final Map<String, String> files) {
+    @UrlEndpoint(url = "/uploadimage")
+    private Response updateBreweryImage() {
 
+        final Map<String, String> files = this.files;
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Set the brewery image");
         usage.put("files", "The new image file");
@@ -2287,8 +2105,13 @@ public class BrewServer extends NanoHTTPD {
 
     }
 
-    private Response updatePumpOrder(Map<String, String> parms) {
-        Map<String, String> params = ParseParams(parms);
+    /**
+     * Update the pump order.
+     * @return A HTTP Response
+     */
+    @UrlEndpoint(url = "/updatepumporder")
+    private Response updatePumpOrder() {
+        Map<String, String> params = ParseParams(this.parameters);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Re-order the pumps");
         usage.put(":name=:position", "The new orders, starting at 0");
@@ -2311,7 +2134,8 @@ public class BrewServer extends NanoHTTPD {
                 tPump.setPosition(Integer.parseInt(entry.getValue()));
             } catch (NumberFormatException nfe) {
                 LaunchControl.setMessage(
-                        "Couldn't parse " + entry.getValue() + " as an integer");
+                        "Couldn't parse " + entry.getValue()
+                        + " as an integer");
             }
             status = Response.Status.OK;
         }
@@ -2321,11 +2145,11 @@ public class BrewServer extends NanoHTTPD {
 
     /**
      * Delete a pump.
-     * @param parms
-     * @return
+     * @return a reponse
      */
-    private Response deletePump(Map<String, String> parms) {
-        Map<String, String> params = ParseParams(parms);
+    @UrlEndpoint(url = "/deletepump")
+    private Response deletePump() {
+        Map<String, String> params = ParseParams(this.parameters);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Delete the specified pump");
         usage.put("name=:pump", "The pump to delete");
@@ -2340,9 +2164,13 @@ public class BrewServer extends NanoHTTPD {
                 usage.toJSONString());
     }
 
-    private Response updateTimerOrder(Map<String, String> parms) {
-
-        Map<String, String> params = ParseParams(parms);
+    /**
+     * Update the timer order.
+     * @return A HTTP Response
+     */
+    @UrlEndpoint(url = "/updatetimerorder")
+    private Response updateTimerOrder() {
+        Map<String, String> params = ParseParams(this.parameters);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Re-order the timers");
         usage.put(":name=:position", "The new orders, starting at 0");
@@ -2369,7 +2197,8 @@ public class BrewServer extends NanoHTTPD {
                 tTimer.setPosition(Integer.parseInt(entry.getValue()));
             } catch (NumberFormatException nfe) {
                 LaunchControl.setMessage(
-                        "Couldn't parse " + entry.getValue() + " as an integer");
+                        "Couldn't parse " + entry.getValue()
+                        + " as an integer");
             }
         }
         return new Response(Response.Status.OK,
@@ -2379,10 +2208,11 @@ public class BrewServer extends NanoHTTPD {
     /**
      * Delete a timer.
      * @param parms
-     * @return
+     * @return a response
      */
-    private Response deleteTimer(Map<String, String> parms) {
-        Map<String, String> params = ParseParams(parms);
+    @UrlEndpoint(url = "/deletetimer")
+    private Response deleteTimer() {
+        Map<String, String> params = ParseParams(this.parameters);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Delete the specified timer");
         usage.put("name=:timer", "The timer to delete");
@@ -2397,7 +2227,9 @@ public class BrewServer extends NanoHTTPD {
                 usage.toJSONString());
     }
 
-    private Response setScale(Map<String, String> parms) {
+    @UrlEndpoint(url = "/setscale")
+    private Response setScale() {
+        Map<String, String> parms = this.parameters;
         Map<String, String> params = ParseParams(parms);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Change the scale on all the temperature probes");
@@ -2413,8 +2245,10 @@ public class BrewServer extends NanoHTTPD {
         return new Response(status, MIME_TYPES.get("json"),
                 usage.toJSONString());
     }
-    
-    private Response toggleDevice(Map<String, String> parms) {
+
+    @UrlEndpoint(url = "/toggledevice")
+    private Response toggleDevice() {
+        Map<String, String> parms = this.parameters;
         Map<String, String> params = ParseParams(parms);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Hide a specific device from the UI");
@@ -2433,8 +2267,9 @@ public class BrewServer extends NanoHTTPD {
                 usage.toJSONString());
     }
 
-    private String updateSystemSettings(Map<String, String> parms) {
-        Map<String, String> params = ParseParams(parms);
+    @UrlEndpoint(url = "/updatesystemsettings")
+    private final Response updateSystemSettings() {
+        Map<String, String> params = ParseParams(parameters);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Update the system settings");
         usage.put("recorder", "True/false to enable/disable the recorder.");
@@ -2460,7 +2295,8 @@ public class BrewServer extends NanoHTTPD {
                     Double.parseDouble(params.get("recorderTolerence"));
             } catch (Exception e) {
                 LaunchControl.setMessage(
-                    "Failed to parse Recorder diff as a double\n" + e.getMessage()
+                    "Failed to parse Recorder diff as a double\n"
+                            + e.getMessage()
                             + LaunchControl.getMessage());
             }
         }
@@ -2475,15 +2311,18 @@ public class BrewServer extends NanoHTTPD {
                             + LaunchControl.getMessage());
             }
         }
-        return usage.toJSONString();
+        return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
+                usage.toString());
     }
 
     /**
      * Set the gravity for the specified device.
      * @param parms
-     * @return
+     * @return A response
      */
-    public Response setGravity(Map<String, String> parms) {
+    @UrlEndpoint(url = "/setgravity")
+    public final Response setGravity() {
+        Map<String, String> parms = this.parameters;
         Map<String, String> params = ParseParams(parms);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Update the specified volume reader gravity");
@@ -2522,5 +2361,154 @@ public class BrewServer extends NanoHTTPD {
 
         return new Response(status, MIME_TYPES.get("json"),
                 usage.toJSONString());
+    }
+
+    @UrlEndpoint(url="/controller")
+    public Response renderController() {
+        RenderHTML renderController = new RenderHTML();
+        HtmlCanvas html = new HtmlCanvas();
+        String result = "";
+        try {
+            renderController.renderOn(html);
+            result = html.toHtml();
+        } catch (IOException e) {
+            e.printStackTrace();
+            result = e.getMessage();
+        }
+        return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                result);
+    }
+
+    @UrlEndpoint(url = "/lockpage")
+    public Response lockPage() {
+        LaunchControl.pageLock = true;
+        return new NanoHTTPD.Response(Status.OK,
+                BrewServer.MIME_TYPES.get("json"),
+                "{status: 'locked'}");
+    }
+
+    @UrlEndpoint(url = "/unlockpage")
+    public Response unlockPage() {
+        LaunchControl.listOneWireSys(false);
+        LaunchControl.pageLock = false;
+        return new NanoHTTPD.Response(Status.OK,
+                BrewServer.MIME_TYPES.get("json"),
+                "{status: 'unlocked'}");
+    }
+    
+    @UrlEndpoint(url = "/brewerImage.gif")
+    public Response getBrewerImage() {
+        String uri = "/brewerImage.gif";
+
+        // Has the user uploaded a file?
+        if (new File(rootDir, uri).exists()) {
+            return serveFile(uri, this.header, rootDir);
+        }
+        // Check to see if there's a theme set.
+        if (LaunchControl.theme != null
+                && !LaunchControl.theme.equals("")) {
+            if (new File(rootDir,
+                    "/logos/" + LaunchControl.theme + ".gif").exists()) {
+                return serveFile("/logos/" + LaunchControl.theme + ".gif",
+                        this.header, rootDir);
+            }
+        }
+
+        return new NanoHTTPD.Response(Status.BAD_REQUEST,
+                BrewServer.MIME_TYPES.get("json"),
+                "{image: 'unavailable'}");
+    }
+
+    @UrlEndpoint(url = "/updatepump")
+    public Response updatePump() {
+
+        if (parameters.containsKey("toggle")) {
+            String pumpname = parameters.get("toggle");
+            Pump tempPump =
+                    LaunchControl.findPump(pumpname.replaceAll("_", " "));
+            if (tempPump != null) {
+                if (tempPump.getStatus()) {
+                    tempPump.turnOff();
+                } else {
+                    tempPump.turnOn();
+                }
+
+                return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                        "Updated Pump");
+            } else {
+                JSONObject usage = new JSONObject();
+                usage.put("Error", "Invalid name supplied: " + pumpname);
+                usage.put("toggle", "The name of the Pump to toggle on/off");
+                return new Response(Status.BAD_REQUEST,
+                        MIME_TYPES.get("txt"), "Invalid pump: " + pumpname
+                                + " provided.");
+            }
+        }
+
+        return new Response(Status.BAD_REQUEST,
+                MIME_TYPES.get("txt"), "Invalid data"
+                        + " provided.");
+    }
+
+    @UrlEndpoint(url = "/toggleaux")
+    public Response toggleAux() {
+        JSONObject usage = new JSONObject();
+        if (parameters.containsKey("toggle")) {
+            String pidname = parameters.get("toggle");
+            PID tempPID = LaunchControl.findPID(pidname);
+            if (tempPID != null) {
+                tempPID.toggleAux();
+                return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                        "Updated Aux for " + pidname);
+            } else {
+                LOG.warning("Invalid PID: " + pidname + " provided.");
+                usage.put("Error", "Invalid name supplied: " + pidname);
+            }
+        }
+
+        usage.put("toggle",
+                "The name of the PID to toggle the aux output for");
+        return new Response(usage.toJSONString());
+    }
+
+    @UrlEndpoint(url = "/updateday")
+    public Response updateDay() {
+        // we're storing the data for the brew day
+        String tempDateStamp;
+        BrewDay brewDay = LaunchControl.getBrewDay();
+
+        // updated date
+        if (parameters.containsKey("updated")) {
+            tempDateStamp = parameters.get("updated");
+            brewDay.setUpdated(tempDateStamp);
+        } else {
+            // we don't have an updated datestamp
+            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                    "No update datestamp, not updating a thang! YA HOSER!");
+        }
+
+        Iterator<Entry<String, String>> it = parameters.entrySet().iterator();
+        Entry<String, String> e = null;
+
+        while (it.hasNext()) {
+            e = it.next();
+
+            if (e.getKey().endsWith("Start")) {
+                int trimEnd = e.getKey().length() - "Start".length();
+                String name = e.getKey().substring(0, trimEnd);
+                brewDay.startTimer(name, e.getValue());
+            } else if (e.getKey().endsWith("End")) {
+                int trimEnd = e.getKey().length() - "End".length();
+                String name = e.getKey().substring(0, trimEnd);
+                brewDay.stopTimer(name, e.getValue());
+            } else if (e.getKey().endsWith("Reset")) {
+                int trimEnd = e.getKey().length() - "Reset".length();
+                String name = e.getKey().substring(0, trimEnd);
+                brewDay.resetTimer(name);
+            }
+        }
+
+        return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                "Updated Brewday");
     }
 }
