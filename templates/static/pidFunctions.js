@@ -525,12 +525,6 @@ function editVolume(element) {
 		return;
 	}
 
-	var vesselDiv = vessel + "-volume";
-	var volPin = $('#' + vessel + ' input[name="vol_ain"]').val();
-	var volAdd = $('#' + vessel + ' input[name="vol_add"]').val();
-	var volOff = $('#' + vessel + ' input[name="vol_off"]').val();
-	var volUnits = $('#' + vessel + ' input[name="vol_units"]').val();
-
 	// Insert a couple of new form elements
 	 var $tr = $(element);
      
@@ -543,6 +537,30 @@ function editVolume(element) {
          success: function(html) {
              $tr.popover({
                  title: 'Volume Edit',
+                 content: html,
+                 placement: 'top',
+                 html: true,
+                 trigger: 'manual'
+             }).popover('show');
+         }
+     });
+}
+
+function addPhSensor(element) {
+
+	window.disableUpdates = 1;
+
+	// Insert a couple of new form elements
+	 var $tr = $(element);
+     
+     $tr.popover('destroy');
+     $.ajax({
+         url: '/getphsensorform',
+         data: "",
+         dataType: 'html',
+         success: function(html) {
+             $tr.popover({
+                 title: 'Add New pH Sensor',
                  content: html,
                  placement: 'top',
                  html: true,
@@ -1058,6 +1076,19 @@ function submitForm(form) {
 		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
 		$.ajax({
 			url : 'setgravity',
+			type : 'POST',
+			data : formdata,
+			dataType : 'json',
+			success : function(data) {
+				data = null
+			}
+		});
+	} else if (form.id.lastIndexOf("-editPhSensor") != -1) {
+		var sensorName = form.id.substring(0, form.id.lastIndexOf("-editPhSensor"));
+		var formdata = {}
+		formdata[sensorName] = JSON.stringify(jQuery(form).serializeObject());
+		$.ajax({
+			url : 'addphsensor',
 			type : 'POST',
 			data : formdata,
 			dataType : 'json',
