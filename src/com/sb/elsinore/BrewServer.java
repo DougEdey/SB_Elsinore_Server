@@ -30,8 +30,11 @@ import org.rendersnake.HtmlCanvas;
 
 import com.sb.elsinore.NanoHTTPD.Response.Status;
 import com.sb.elsinore.NanoHTTPD.Response;
+import com.sb.elsinore.annotations.UrlEndpoint;
+import com.sb.elsinore.html.PhSensorForm;
 import com.sb.elsinore.html.RenderHTML;
 import com.sb.elsinore.html.VolumeEditForm;
+import com.sb.elsinore.inputs.PhSensor;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -1414,14 +1417,6 @@ public class BrewServer extends NanoHTTPD {
 
         BrewServer.LOG.warning("Failed to find URI: " + uri);
 
-//        if (uri.equalsIgnoreCase("/volumeeditform")) {
-//            return getVolumeEditForm(parms);
-//        }
-//
-//        if (uri.equalsIgnoreCase("/phsensoreditform")) {
-//            return getPhSensorEditForm(parms);
-//        }
-
         BrewServer.LOG.info("Unidentified URL: " + uri);
         JSONObject usage = new JSONObject();
         usage.put("controller", "Get the main controller page");
@@ -2535,6 +2530,31 @@ public class BrewServer extends NanoHTTPD {
         String result = "";
         try {
             volEditForm.renderOn(html);
+            result = html.toHtml();
+        } catch (IOException e) {
+            e.printStackTrace();
+            result = e.getMessage();
+            LaunchControl.setMessage(result);
+        }
+        return new Response(Status.OK, MIME_HTML, result);
+    }
+    
+    @UrlEndpoint(url = "/getphsensorform")
+    public Response getPhSensorForm() {
+        PhSensor phSensor = null;
+        
+        if (!parameters.containsKey("sensor")) {
+            phSensor = new PhSensor();
+        } else {
+            phSensor = LaunchControl.findPhSensor(parameters.get("sensor"));
+        }
+
+        // Render away
+        PhSensorForm phSensorForm = new PhSensorForm(phSensor);
+        HtmlCanvas html = new HtmlCanvas();
+        String result = "";
+        try {
+            phSensorForm.renderOn(html);
             result = html.toHtml();
         } catch (IOException e) {
             e.printStackTrace();

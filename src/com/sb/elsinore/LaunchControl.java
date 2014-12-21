@@ -85,6 +85,7 @@ import com.sb.common.CollectionsUtil;
 import com.sb.common.ServeHTML;
 import com.sb.elsinore.NanoHTTPD.Response;
 import com.sb.elsinore.NanoHTTPD.Response.Status;
+import com.sb.elsinore.inputs.PhSensor;
 
 /**
  * LaunchControl is the core class of Elsinore. It reads the config file,
@@ -139,7 +140,10 @@ public final class LaunchControl {
      * List of MashControl profiles.
      */
     public static List<MashControl> mashList = new ArrayList<MashControl>();
-
+    /**
+     * List of pH Sensors.
+     */
+    public static ArrayList<PhSensor> phSensorList = new ArrayList<PhSensor>();
     /**
      * Temperature Thread list.
      */
@@ -753,6 +757,8 @@ public final class LaunchControl {
         if (LaunchControl.getMessage() != null) {
             rObj.put("message", LaunchControl.getMessage());
         }
+        
+        
 
         rObj.put("language", Locale.getDefault().toString());
         return rObj.toString();
@@ -3358,5 +3364,19 @@ public final class LaunchControl {
         }
 
         return devices;
+    }
+
+    public static PhSensor findPhSensor(String string) {
+        synchronized (phSensorList) {
+            Iterator<PhSensor> iterator = phSensorList.iterator();
+            PhSensor tPh = null;
+            while (iterator.hasNext()) {
+                tPh = iterator.next();
+                if (tPh.getName().equalsIgnoreCase(string)) {
+                    return tPh;
+                }
+            }
+        }
+        return null;
     }
 }
