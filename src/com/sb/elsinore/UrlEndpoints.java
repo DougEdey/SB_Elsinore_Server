@@ -1493,6 +1493,8 @@ public class UrlEndpoints {
 
         JSONObject formatJSON = new JSONObject();
         formatJSON.put("format", "%H:%M:%S");
+        formatJSON.put("culling", true);
+        formatJSON.put("rotate", 90);
         JSONObject xContent = new JSONObject();
         xContent.put("type", "timeseries");
         xContent.put("tick", formatJSON);
