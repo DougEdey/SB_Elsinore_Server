@@ -2079,6 +2079,7 @@ function readOnly(manualChange) {
 	readOnlyPumps();
 	readOnlyTimers();
 	readOnlyDevices();
+	readOnlyPhSensors();
 	$("[id=edit-page]").text($.i18n.prop("EDIT"));
 	$("[id=change-scale]").toggleClass("hidden", true);
 	$("[id=CheckUpdates]").toggleClass("hidden", true);
@@ -2110,6 +2111,7 @@ function readWrite(manualChange) {
 	readWritePumps();
 	readWriteTimers();
 	readWriteDevices();
+	readWritePhSensors();
 	$("[id=edit-page]").text($.i18n.prop("LOCK"));
 	$("[id=change-scale]").toggleClass("hidden", false);
 	$("[id=CheckUpdates]").toggleClass("hidden", false);
@@ -2182,6 +2184,40 @@ function readWriteTimers() {
 		$('[id=NewTimer]').css('display', 'block');
 		// Disable drag and drop
 		$("[id=timers-body] > div").each(function(index) {
+			this.setAttribute('draggable', true);
+		});
+	}
+}
+
+function readOnlyPhSensors() {
+	// Check the size of the pump list
+	var currentCount = $("[id=phSensors-body] > div").length;
+
+	if (currentCount == 0) {
+		// Hide the Div.
+		$('[id=phSensors]').css('display', 'none');
+	} else {
+		// Hide the button
+		$('[id=NewPhSensor]').css('display', 'none');
+		// Disable drag and drop
+		$("[id=phSensors-body] > div").each(function(index) {
+			this.setAttribute('draggable', false);
+		});
+	}
+}
+
+function readWritePhSensors() {
+	// Check the size of the pump list
+	var currentCount = $("[id=phSensors-body] > div").length;
+
+	if (currentCount == 0) {
+		// Hide the Div.
+		$('[id=phSensors]').css('display', 'block');
+	} else {
+		// Hide the button
+		$('[id=NewPhSensor]').css('display', 'block');
+		// Disable drag and drop
+		$("[id=phSensors-body] > div").each(function(index) {
 			this.setAttribute('draggable', true);
 		});
 	}
