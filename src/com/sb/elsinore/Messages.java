@@ -4,7 +4,9 @@ import org.eclipse.osgi.util.NLS;
 
 public class Messages extends NLS {
     private static final String BUNDLE_NAME = "com.sb.elsinore.nls.messages"; // $NON-NLS-1$
-    
+
+    public static String PH_MODEL = null;
+
     public static String TEMPERATURE;
     public static String TEMP;
     public static String PUMPS;
