@@ -18,6 +18,7 @@ import com.sb.elsinore.PID;
 import com.sb.elsinore.Pump;
 import com.sb.elsinore.Temp;
 import com.sb.elsinore.Timer;
+import com.sb.elsinore.inputs.PhSensor;
 
 public class RenderHTML implements Renderable {
 
@@ -91,6 +92,26 @@ public class RenderHTML implements Renderable {
                         .onDragover("allowDropTimer(event)")
                         .onClick("addTimer()"))
                         .write(Messages.NEW_TIMER)
+                    ._button()
+                ._div()
+            ._div()
+        ._div();
+
+        // Add the pH Sensors
+        html.div(id("phSensors"))
+            .div(class_("panel panel-info"))
+                .div(id("phSensors-header").class_("title panel-heading"))
+                    .write(Messages.PH_SENSORS)
+                ._div()
+                .div(id("phSensors-body").class_("panel-body"));
+                    for (PhSensor sensor: LaunchControl.phSensorList) {
+                        html.render(new PhSensorComponent(sensor));
+                    }
+                html.button(id("NewPhSensor").class_("btn sensor")
+                        .type("submit").onDrop("dropDeletePhSensor(event")
+                        .onDragover("allowDropPhSensor(event)")
+                        .onClick("addPhSensor()"))
+                        .write(Messages.NEW_PHSENSOR)
                     ._button()
                 ._div()
             ._div()

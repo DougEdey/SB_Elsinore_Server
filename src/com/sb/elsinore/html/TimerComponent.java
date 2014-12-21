@@ -48,7 +48,6 @@ public class TimerComponent implements Renderable {
                 .write(Messages.RESET)
             ._span()
         ._div();
-
     }
 
 }

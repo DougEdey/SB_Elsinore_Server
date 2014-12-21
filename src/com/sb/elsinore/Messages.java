@@ -5,8 +5,10 @@ import org.eclipse.osgi.util.NLS;
 public class Messages extends NLS {
     private static final String BUNDLE_NAME = "com.sb.elsinore.nls.messages"; // $NON-NLS-1$
 
-    public static String PH_MODEL = null;
-
+    public static String PH_MODEL;
+    public static String PH_SENSORS;
+    public static String NEW_PHSENSOR;
+    public static String UPDATE_VALUE;
     public static String TEMPERATURE;
     public static String TEMP;
     public static String PUMPS;

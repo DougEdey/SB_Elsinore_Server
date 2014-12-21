@@ -48,13 +48,20 @@ public class PhSensor {
     }
 
     /**
+     * Override the ToString.
+     * @return The name of the PhSensor
+     */
+    public final String toString() {
+        return this.name;
+    }
+    /**
      * Setup a pH Sensor using a DS2450 based Analog input.
      * @param address The DS2450 Address
-     * @param offset The DS2450 Offset
+     * @param newOffset The DS2450 Offset
      */
-    public PhSensor(final String address, final String offset) {
+    public PhSensor(final String address, final String newOffset) {
         this.dsAddress = address;
-        this.dsOffset = offset;
+        this.dsOffset = newOffset;
     }
 
     /**
@@ -122,7 +129,7 @@ public class PhSensor {
                 LaunchControl.setupOWFS();
             }
         }
-        
+
         return pinValue;
     }
 
