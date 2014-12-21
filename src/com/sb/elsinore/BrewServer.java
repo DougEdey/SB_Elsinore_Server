@@ -285,10 +285,6 @@ public class BrewServer extends NanoHTTPD {
                 header, rootDir);
         }
 
-        if (!uri.equals("") && new File(rootDir, uri).exists()) {
-            return serveFile(uri, header, rootDir);
-        }
-
         if (uri.equalsIgnoreCase("/stop")) {
             System.exit(128);
         }
@@ -307,14 +303,21 @@ public class BrewServer extends NanoHTTPD {
                        urlEndpoints.rootDir = rootDir;
                        return (Response) m.invoke(urlEndpoints);
                    } catch (IllegalAccessException e) {
+                       LOG.warning("Couldn't access URL: " + uri);
                        e.printStackTrace();
                    } catch (InvocationTargetException o) {
+                       LOG.warning("Couldn't access URL: " + uri);
                        o.printStackTrace();
                    } catch (Exception e) {
+                       LOG.warning("Couldn't access URL: " + uri);
                        e.printStackTrace();
                    }
                }
            }
+        }
+
+        if (!uri.equals("") && new File(rootDir, uri).exists()) {
+            return serveFile(uri, header, rootDir);
         }
 
         BrewServer.LOG.warning("Failed to find URI: " + uri);

@@ -41,6 +41,7 @@ public class PhSensorForm implements Renderable {
                         .id("dsAddress"));
                 html.option(value("").selected_if(
                         "".equals(phSensor.getDsAddress())))
+                        .write(Messages.DS2450_ADDRESS)
                 ._option();
                 for (String addr: LaunchControl.getOneWireDevices("/20")) {
                     String address = addr.substring(1);

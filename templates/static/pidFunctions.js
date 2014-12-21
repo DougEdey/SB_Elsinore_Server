@@ -562,7 +562,7 @@ function addPhSensor(element) {
              $tr.popover({
                  title: 'Add New pH Sensor',
                  content: html,
-                 placement: 'top',
+                 placement: 'bottom',
                  html: true,
                  trigger: 'manual'
              }).popover('show');
@@ -2475,6 +2475,20 @@ function displaySystemSettings() {
 				$('form[id="settings-form"] div[id="recorder_time"] input').val(data.recorderTime);
 			}
 			return;
+		}
+	});
+	
+}
+
+function readPhSensor(element, name) {
+	$.ajax({
+		url : "/readPhSensor",
+		type : "GET",
+		data : {name: name},
+		dataType : "json",
+		success : function(html) {
+			// We got the data from the sensor
+			$(element).html(html);
 		}
 	});
 }

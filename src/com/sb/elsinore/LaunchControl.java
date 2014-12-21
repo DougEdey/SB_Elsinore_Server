@@ -1044,6 +1044,33 @@ public final class LaunchControl {
     }
 
     /**
+     * Parse the list of phSensors in an XML Element.
+     *
+     * @param config
+     *            the Element containing the ph Sensors
+     */
+    private void parsePhSensors(final Element config) {
+        if (config == null) {
+            return;
+        }
+        NodeList sensors = config.getChildNodes();
+
+        for (int i = 0; i < sensors.getLength(); i++) {
+            Element tElement = (Element) sensors.item(i);
+            PhSensor temp = new PhSensor();
+            temp.setName(tElement.getNodeName().replace("_", " "));
+            temp.setDsAddress(tElement.getAttribute("dsAddress"));
+            temp.setDsOffset(tElement.getAttribute("dsOffset"));
+            temp.setAinPin(tElement.getAttribute("ainPin"));
+            temp.setOffset(tElement.getAttribute("offset"));
+            temp.setModel(tElement.getAttribute("model"));
+            synchronized (phSensorList) {
+                phSensorList.add(temp);
+            }
+        }
+    }
+
+    /**
      * Add a new pump to the server.
      *
      * @param name
@@ -1984,6 +2011,44 @@ public final class LaunchControl {
                 newPump.appendChild(invertElement);
             }
         }
+
+        // Delete all the ph Sensors first
+        Element phSensorsElement = getFirstElement(null, "phSensors");
+
+        if (phSensorsElement == null) {
+            phSensorsElement = addNewElement(null, "phSensors");
+        }
+
+        Node childSensor = phSensorsElement.getFirstChild();
+        while (childSensor != null) {
+            phSensorsElement.removeChild(childSensor);
+            childSensor = phSensorsElement.getFirstChild();
+        }
+
+        // Save the Pumps
+        if (phSensorList.size() > 0) {
+
+            Iterator<PhSensor> phSensorIt = phSensorList.iterator();
+
+            while (phSensorIt.hasNext()) {
+
+                PhSensor tSensor = phSensorIt.next();
+
+                Element newSensor = getFirstElementByXpath(null,
+                        "/elsinore/phSensors/" + tSensor.getName());
+
+                if (newSensor == null) {
+                    // No timer by this name
+                    newSensor = addNewElement(phSensorsElement,
+                            tSensor.getName());
+                }
+                newSensor.setAttribute("model", tSensor.getModel());
+                newSensor.setAttribute("ainPin", tSensor.getAIN());
+                newSensor.setAttribute("dsAddress", tSensor.getDsAddress());
+                newSensor.setAttribute("dsOffset", tSensor.getDsOffset());
+                newSensor.setAttribute("offset", "" + tSensor.getOffset());
+            }
+        }
     }
 
     public static void deletePIDConfig(String name) {
@@ -2340,6 +2405,7 @@ public final class LaunchControl {
         // setup general first
         parseGeneral(getFirstElement(null, "general"));
         parsePumps(getFirstElement(null, "pumps"));
+        parsePhSensors(getFirstElement(null, "phSensors"));
 
         for (int i = 0; i < configSections.getLength(); i++) {
             Node temp = configSections.item(i);
@@ -2347,18 +2413,10 @@ public final class LaunchControl {
                 Element e = (Element) temp;
                 BrewServer.LOG.info("Checking section " + e.getNodeName());
                 // Parsed general first
-                if (e.getNodeName().equalsIgnoreCase("general")) {
-                    continue;
-                } else if (e.getNodeName().equalsIgnoreCase("pumps")) {
-                    // parsePumps(e);
-                    continue;
-                } else if (e.getNodeName().equalsIgnoreCase("timers")) {
+                if (e.getNodeName().equalsIgnoreCase("timers")) {
                     parseTimers(e);
                 } else if (e.getNodeName().equalsIgnoreCase("device")) {
                     parseDevice(e);
-                } else {
-                    BrewServer.LOG.info("Unrecognized section "
-                            + e.getNodeName());
                 }
             }
         }

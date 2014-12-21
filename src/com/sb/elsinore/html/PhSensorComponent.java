@@ -29,8 +29,8 @@ public class PhSensorComponent implements Renderable {
             ._div()
             .button(id(phSensor.toString()).class_("btn phSensor")
                     .type("submit").value(phSensor + "PhSensor")
-                    .onClick("readPhSensor(this, " + phSensor
-                            + "); waitForMsg(); return false;"))
+                    .onClick("readPhSensor(this, '" + phSensor + "');"
+                            + " waitForMsg(); return false;"))
                 .write(Messages.UPDATE_VALUE)
             ._button()
         ._div();

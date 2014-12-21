@@ -72,7 +72,27 @@ public class PhSensor {
         this.model = type;
     }
 
-    public final void setAinPin(int newPin) {
+    /**
+     * Set the Analog Input pin.
+     * @param newPin The new input pin.
+     */
+    public final void setAinPin(final String newPin) {
+        if (newPin == null || newPin.length() == 0) {
+            this.ainPin = -1;
+            return;
+        }
+        try {
+            this.ainPin = Integer.parseInt(newPin);
+        } catch (NumberFormatException nfe) {
+            this.ainPin = -1;
+        }
+    }
+
+    /**
+     * Set the Analog Input pin.
+     * @param newPin The new input pin.
+     */
+    public final void setAinPin(final int newPin) {
         this.ainPin = newPin;
     }
 
@@ -180,7 +200,7 @@ public class PhSensor {
      * @return The name of this Sensor
      */
     public final String getName() {
-        return this.name;
+        return this.name.replaceAll(" ", "_");
     }
 
     /**
@@ -194,6 +214,13 @@ public class PhSensor {
         return Integer.toString(this.ainPin);
     }
 
+    /**
+     * Get the calibration offset in pH.
+     * @return The Calibration offset in pH
+     */
+    public final BigDecimal getOffset() {
+        return this.offset;
+    }
     /**
      * Return the current DS2450 Offset.
      * @return DS2450 Offset
@@ -223,7 +250,7 @@ public class PhSensor {
      * @return The value of the pH Probe.
      */
     public final BigDecimal calcPhValue() {
-        BigDecimal value = null;
+        BigDecimal value = new BigDecimal(0);
 
         for (java.lang.reflect.Method m
                 : PhSensor.class.getDeclaredMethods()) {
@@ -234,9 +261,9 @@ public class PhSensor {
                    try {
                        value = (BigDecimal) m.invoke(this);
                    } catch (IllegalAccessException e) {
-                       //do nothing;
+                       e.printStackTrace();
                    } catch (InvocationTargetException o) {
-                       // do nothing
+                       o.printStackTrace();
                    }
                }
            }
@@ -270,9 +297,7 @@ public class PhSensor {
     @PhSensorType(model = "SEN0161")
     public final BigDecimal calcSEN0161() {
         BigDecimal readValue = this.getAverage(3);
-        BigDecimal t = null;
-        t = MathUtil.multiply(readValue, (5.0 / 1024));
-        return MathUtil.multiply(t, 3.5).add(offset);
+        return MathUtil.multiply(readValue, 3.5).add(offset);
     }
 
     /**
@@ -288,11 +313,11 @@ public class PhSensor {
             if (t.compareTo(BigDecimal.ZERO) == 0) {
                 i--;
             } else {
-                readValue.add(t);
+                readValue = readValue.add(t);
             }
         }
 
-        return readValue.divide(new BigDecimal(maxRead));
+        return MathUtil.divide(readValue, new BigDecimal(maxRead));
     }
 
     /**
@@ -301,5 +326,21 @@ public class PhSensor {
      */
     public final void setName(final String newName) {
         this.name = newName;
+    }
+
+    /**
+     * Set the calibration offset.
+     * @param attribute The Calibration offset
+     */
+    public final void setOffset(final String attribute) {
+        setOffset(new BigDecimal(attribute));
+    }
+
+    /**
+     * Set the calibration offset.
+     * @param attribute The Calibration offset
+     */
+    public final void setOffset(final BigDecimal attribute) {
+        this.offset = attribute;
     }
 }

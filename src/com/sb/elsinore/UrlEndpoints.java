@@ -40,7 +40,7 @@ public class UrlEndpoints {
         /**
          * The Serial UID.
          */
-        private static final long serialVersionUID = 1L;
+        public static final long serialVersionUID = 1L;
     
         {
             put("css", "text/css");
@@ -136,7 +136,7 @@ public class UrlEndpoints {
      * @return True if the profile is updated successfully.
      */
     @UrlEndpoint(url = "/mashprofile")
-    private Response updateMashProfile() {
+    public Response updateMashProfile() {
         String inputUnit = null;
         Set<Entry<String, String>> incomingParams = parameters.entrySet();
         Iterator<Entry<String, String>> it = incomingParams.iterator();
@@ -255,7 +255,7 @@ public class UrlEndpoints {
      * @return The NanoHTTPD response to return to the browser.
      */
     @UrlEndpoint(url = "/addmashstep")
-    private Response addMashStep() {
+    public Response addMashStep() {
         // Parse the response
         // Temp unit, PID, duration, temp, method, type, step number
         // Default to the existing temperature scale
@@ -352,7 +352,7 @@ public class UrlEndpoints {
      * @return The Response object.
      */
     @UrlEndpoint(url = "/reordermashprofile")
-    private Response reorderMashProfile() {
+    public Response reorderMashProfile() {
         Map<String, String> params = this.parameters;
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Set the order for the mash profile.");
@@ -402,7 +402,7 @@ public class UrlEndpoints {
      * @return The Response.
      */
     @UrlEndpoint(url = "/delmashstep")
-    private Response delMashStep() {
+    public Response delMashStep() {
         Map<String, String> params = this.parameters;
         // Parse the response
         // Temp unit, PID, duration, temp, method, type, step number
@@ -459,7 +459,7 @@ public class UrlEndpoints {
      * @return True if set, false if there's an error
      */
     @UrlEndpoint(url = "/togglemash")
-    private Response toggleMashProfile() {
+    public Response toggleMashProfile() {
 
         String pid = null;
         if (parameters.containsKey("pid")) {
@@ -556,7 +556,7 @@ public class UrlEndpoints {
      * @return True is success, false if failure.
      */
     @UrlEndpoint(url = "/editdevice")
-    private Response editVessel() {
+    public Response editVessel() {
         final Map<String, String> params = this.parameters;
         String auxpin = "", newName = "", heatgpio = "";
         String inputUnit = "", cutoff = "", coolgpio = "";
@@ -737,7 +737,7 @@ public class UrlEndpoints {
      * @return True if added ok
      */
     @UrlEndpoint(url = "/addtimer")
-    private Response addTimer() {
+    public Response addTimer() {
         String oldName = "", newName = "", gpio = "";
         String inputUnit = "";
 
@@ -804,7 +804,7 @@ public class UrlEndpoints {
      * @return True if added ok
      */
     @UrlEndpoint(url = "/addpump")
-    private Response addPump() {
+    public Response addPump() {
         String newName = "", gpio = "";
         String inputUnit = "";
         boolean invert = false;
@@ -885,7 +885,7 @@ public class UrlEndpoints {
      */
     @SuppressWarnings("unchecked")
     @UrlEndpoint(url = "/updatepid")
-    private Response updatePID() {
+    public Response updatePID() {
         String temp, mode = "off";
         BigDecimal dTemp = new BigDecimal(0), duty = new BigDecimal(0),
                 heatcycle = new BigDecimal(0), setpoint = new BigDecimal(0),
@@ -1179,7 +1179,7 @@ public class UrlEndpoints {
      * @return A NanoHTTPD response
      */
     @UrlEndpoint(url = "/addvolpoint")
-    private Response addVolumePoint() {
+    public Response addVolumePoint() {
         JSONObject usage = new JSONObject();
         Map<String, String> parms = ParseParams(this.parameters);
         String inputUnit = parms.get("inputunit");
@@ -1292,6 +1292,11 @@ public class UrlEndpoints {
      * @return the JSON Response data
      */
     @UrlEndpoint(url = "/graph-data")
+    public NanoHTTPD.Response getGraphDataWrapper() {
+        return getGraphData();
+    }
+
+    @UrlEndpoint(url = "/graph-data/")
     public NanoHTTPD.Response getGraphData() {
         if (!LaunchControl.recorderEnabled()) {
             return new NanoHTTPD.Response("Recorder disabled");
@@ -1523,7 +1528,7 @@ public class UrlEndpoints {
      */
     @SuppressWarnings("unchecked")
     @UrlEndpoint(url = "/setbreweryname")
-    private Response updateBreweryName() {
+    public Response updateBreweryName() {
 
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Set the brewery name");
@@ -1549,7 +1554,7 @@ public class UrlEndpoints {
      */
     @SuppressWarnings("unchecked")
     @UrlEndpoint(url = "/uploadimage")
-    private Response updateBreweryImage() {
+    public Response updateBreweryImage() {
 
         final Map<String, String> files = this.files;
         JSONObject usage = new JSONObject();
@@ -1595,7 +1600,7 @@ public class UrlEndpoints {
      * @return A HTTP Response
      */
     @UrlEndpoint(url = "/updatepumporder")
-    private Response updatePumpOrder() {
+    public Response updatePumpOrder() {
         Map<String, String> params = ParseParams(this.parameters);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Re-order the pumps");
@@ -1633,7 +1638,7 @@ public class UrlEndpoints {
      * @return a reponse
      */
     @UrlEndpoint(url = "/deletepump")
-    private Response deletePump() {
+    public Response deletePump() {
         Map<String, String> params = ParseParams(this.parameters);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Delete the specified pump");
@@ -1654,7 +1659,7 @@ public class UrlEndpoints {
      * @return A HTTP Response
      */
     @UrlEndpoint(url = "/updatetimerorder")
-    private Response updateTimerOrder() {
+    public Response updateTimerOrder() {
         Map<String, String> params = ParseParams(this.parameters);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Re-order the timers");
@@ -1696,7 +1701,7 @@ public class UrlEndpoints {
      * @return a response
      */
     @UrlEndpoint(url = "/deletetimer")
-    private Response deleteTimer() {
+    public Response deleteTimer() {
         Map<String, String> params = ParseParams(this.parameters);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Delete the specified timer");
@@ -1713,7 +1718,7 @@ public class UrlEndpoints {
     }
 
     @UrlEndpoint(url = "/setscale")
-    private Response setScale() {
+    public Response setScale() {
         Map<String, String> parms = this.parameters;
         Map<String, String> params = ParseParams(parms);
         JSONObject usage = new JSONObject();
@@ -1732,7 +1737,7 @@ public class UrlEndpoints {
     }
 
     @UrlEndpoint(url = "/toggledevice")
-    private Response toggleDevice() {
+    public Response toggleDevice() {
         Map<String, String> parms = this.parameters;
         Map<String, String> params = ParseParams(parms);
         JSONObject usage = new JSONObject();
@@ -1753,7 +1758,7 @@ public class UrlEndpoints {
     }
 
     @UrlEndpoint(url = "/updatesystemsettings")
-    private final Response updateSystemSettings() {
+    public final Response updateSystemSettings() {
         Map<String, String> params = ParseParams(parameters);
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Update the system settings");
@@ -2065,6 +2070,7 @@ public class UrlEndpoints {
         if (phSensor == null) {
             phSensor = new PhSensor();
             phSensor.setName(localParams.get("name"));
+            LaunchControl.phSensorList.add(phSensor);
         }
 
         // Update the pH Sensor
@@ -2121,5 +2127,19 @@ public class UrlEndpoints {
         }
 
         return new Response(Status.OK, MIME_HTML, "");
+    }
+    
+    @UrlEndpoint(url = "/readphsensor")
+    public Response readPhSensor() {
+        PhSensor phSensor = LaunchControl.findPhSensor(parameters.get("name").replace(" ", "_"));
+        // CHeck for errors
+        String result;
+        if (phSensor == null) {
+            result = "Couldn't find phSensor";
+        } else {
+            result = phSensor.calcPhValue().toPlainString();
+        }
+        // return the value
+        return new Response(Status.OK, MIME_HTML, result);
     }
 }
