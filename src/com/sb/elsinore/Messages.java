@@ -79,6 +79,7 @@ public class Messages extends NLS {
     public static String HEAT;
     public static String COOL;
     public static String DELAY;
+    public static String CALIBRATE;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);

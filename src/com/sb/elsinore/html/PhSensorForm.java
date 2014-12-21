@@ -16,18 +16,19 @@ import com.sb.elsinore.inputs.PhSensor;
 
 public class PhSensorForm implements Renderable {
 
-    private PhSensor phSensor = null;
+    private final PhSensor phSensor;
 
     public PhSensorForm(PhSensor newSensor) {
         this.phSensor = newSensor;
     }
 
     @Override
-    public void renderOn(HtmlCanvas html) throws IOException {
-        html.div(id(phSensor.getName() + "-editVol").class_("col-md-12"))
-            .form(id(phSensor.getName() + "-editVol")
+    public void renderOn(final HtmlCanvas html) throws IOException {
+        html.div(id(phSensor.getName() + "-editPhSensor").class_("col-md-12"))
+            .form(id(phSensor.getName() + "-editPhSensor")
                     .name(phSensor.getName() + "-edit"))
-                .input(type("hidden").name("name").id("name")
+                .input(type("text").class_("form-control")
+                        .name("name").id("name")
                         .value(phSensor.getName()))
                 .br();
                 html.input(type("text").class_("form-control")
@@ -36,8 +37,8 @@ public class PhSensorForm implements Renderable {
                         .add("placeholder", Messages.ANALOGUE_PIN))
                 .br()
                 // Replace this with a list
-                .select(class_("holo-spinner").name("onewire_address")
-                        .id("onewire_address"));
+                .select(class_("holo-spinner").name("dsAddress")
+                        .id("dsAddress"));
                 html.option(value("").selected_if(
                         "".equals(phSensor.getDsAddress())))
                 ._option();
@@ -51,14 +52,15 @@ public class PhSensorForm implements Renderable {
 
                 html._select();
                 html.input(type("text").class_("form-control")
-                        .name("onewire_offset")
-                        .id("onewire_offset").value(phSensor.getDsOffset())
+                        .name("dsOffset")
+                        .id("dsOffset").value(phSensor.getDsOffset())
                         .add("placeholder", Messages.DS2450_OFFSET))
                 .br();
                 html.select(class_("holo-spinner").name("ph_model")
                         .id("ph_model"));
                 html.option(value("").selected_if(
-                        "".equals(phSensor.getDsAddress()))).write(Messages.PH_MODEL)
+                        "".equals(phSensor.getDsAddress())))
+                    .write(Messages.PH_MODEL)
                 ._option();
                 for (String model: phSensor.getAvailableTypes()) {
                     html.option(value(model)
@@ -68,6 +70,12 @@ public class PhSensorForm implements Renderable {
                 }
 
                 html._select();
+                html.input(type("number").class_("form-control")
+                        .add("step", "any")
+                        .name("calibration")
+                        .id("calibration").value("")
+                        .add("placeholder", Messages.CALIBRATE))
+                .br();
                 html.button(id("updatePhSensor-" + phSensor.getName())
                         .onClick("submitForm(this.form);")
                         .class_("btn"))

@@ -110,7 +110,7 @@ public class RenderHTML implements Renderable {
                 html.button(id("NewPhSensor").class_("btn sensor")
                         .type("submit").onDrop("dropDeletePhSensor(event")
                         .onDragover("allowDropPhSensor(event)")
-                        .onClick("addPhSensor()"))
+                        .onClick("addPhSensor(this)"))
                         .write(Messages.NEW_PHSENSOR)
                     ._button()
                 ._div()

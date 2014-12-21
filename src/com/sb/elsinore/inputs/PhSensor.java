@@ -68,8 +68,50 @@ public class PhSensor {
      * Set the pH Sensor Type.
      * @param type The type of the sensor.
      */
-    public final void setType(final String type) {
+    public final void setModel(final String type) {
         this.model = type;
+    }
+
+    public final void setAinPin(int newPin) {
+        this.ainPin = newPin;
+    }
+
+    /**
+     * Set the DS2450 Address.
+     * @param address The address of the DS2450.
+     */
+    public final void setDsAddress(final String address) {
+        this.dsAddress = address;
+    }
+
+    /**
+     * Set the DS2450 Offset.
+     * @param newoffset The Offset of the DS2450.
+     */
+    public final void setDsOffset(final String newoffset) {
+        this.dsOffset = newoffset;
+    }
+
+    /**
+     * Calibrate the Probe and calculate the offset.
+     * @param targetRead The pH of the solution being measured.
+     */
+    public final void calibrate(final BigDecimal targetRead) {
+        BigDecimal tolerance = new BigDecimal(0.3);
+        BigDecimal currentValue = this.calcPhValue();
+        if (currentValue.subtract(targetRead).plus()
+                .compareTo(tolerance) > 0) {
+            // We're outside of the tolerance. So Set the offset.
+            offset = targetRead.subtract(currentValue);
+        }
+
+        // Verify we're good
+        currentValue = this.calcPhValue();
+        if (currentValue.subtract(targetRead).plus()
+                .compareTo(tolerance) > 0) {
+            LaunchControl.setMessage("Failed to calibrate. Difference is: "
+                + currentValue.subtract(targetRead));
+        }
     }
 
     /**
@@ -227,10 +269,21 @@ public class PhSensor {
      */
     @PhSensorType(model = "SEN0161")
     public final BigDecimal calcSEN0161() {
-        int MAXREAD = 3;
+        BigDecimal readValue = this.getAverage(3);
+        BigDecimal t = null;
+        t = MathUtil.multiply(readValue, (5.0 / 1024));
+        return MathUtil.multiply(t, 3.5).add(offset);
+    }
+
+    /**
+     * Get the average value of the analog input.
+     * @param maxRead The number of samples to take.
+     * @return The current average.
+     */
+    public final BigDecimal getAverage(final int maxRead) {
         BigDecimal readValue = new BigDecimal(0);
         BigDecimal t = null;
-        for (int i = 0; i <= MAXREAD; i++) {
+        for (int i = 0; i <= maxRead; i++) {
             t = this.updateReading();
             if (t.compareTo(BigDecimal.ZERO) == 0) {
                 i--;
@@ -238,8 +291,15 @@ public class PhSensor {
                 readValue.add(t);
             }
         }
-        readValue = readValue.divide(new BigDecimal(MAXREAD));
-        t = MathUtil.multiply(readValue, (5.0 / 1024));
-        return MathUtil.multiply(t, 3.5).add(offset);
+
+        return readValue.divide(new BigDecimal(maxRead));
+    }
+
+    /**
+     * Set the name of this pH Sensor.
+     * @param newName The new name.
+     */
+    public final void setName(final String newName) {
+        this.name = newName;
     }
 }

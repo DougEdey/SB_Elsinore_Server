@@ -726,7 +726,7 @@ public final class Temp implements Runnable {
                 } catch (Exception e) {
                     if (!this.stopVolumeLogging) {
                         BrewServer.LOG.log(Level.SEVERE,
-                            "Could not update the volume reading from OWFS", e);
+                            "Could not update the volume reading from OWFS");
                         this.stopVolumeLogging = true;
                     }
                     BrewServer.LOG.info("Reconnecting OWFS");

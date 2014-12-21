@@ -1317,7 +1317,7 @@ public final class LaunchControl {
 
     /**
      * Delete the specified pump.
-     * 
+     *
      * @param name
      *            The pump to delete.
      */
@@ -1340,7 +1340,7 @@ public final class LaunchControl {
 
     /**************
      * Find the Timer in the current list.
-     * 
+     *
      * @param name
      *            The timer to find
      * @return return the Timer object
@@ -3176,19 +3176,19 @@ public final class LaunchControl {
     /**
      * Set the system message for the UI.
      *
-     * @param message
+     * @param newMessage
      *            The message to set.
      */
-    static void setMessage(String message) {
-        LaunchControl.message = message;
+    public static void setMessage(final String newMessage) {
+        LaunchControl.message = newMessage;
     }
 
     /**
      * Add a message to the current one.
-     * @param message
+     * @param newMessage The message to append.
      */
-    static void addMessage(String message) {
-        LaunchControl.message += "\n" + message;
+    static void addMessage(final String newMessage) {
+        LaunchControl.message += "\n" + newMessage;
     }
 
     /**
@@ -3378,5 +3378,28 @@ public final class LaunchControl {
             }
         }
         return null;
+    }
+
+    /**
+     * Delete the specified pH Sensor.
+     *
+     * @param name
+     *            The sensor to delete.
+     */
+    public static void deletePhSensor(final String name) {
+        // search based on the input name
+        synchronized (phSensorList) {
+            Iterator<PhSensor> iterator = phSensorList.iterator();
+            PhSensor tSensor = null;
+
+            while (iterator.hasNext()) {
+                tSensor = iterator.next();
+                if (tSensor.getName().equalsIgnoreCase(name)) {
+                    iterator.remove();
+                    return;
+                }
+            }
+
+        }
     }
 }
