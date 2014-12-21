@@ -1407,9 +1407,11 @@ public class BrewServer extends NanoHTTPD {
                    try {
                        return (Response) m.invoke(this);
                    } catch (IllegalAccessException e) {
-                       //do nothing;
+                       e.printStackTrace();
                    } catch (InvocationTargetException o) {
-                       // do nothing
+                       o.printStackTrace();
+                   } catch (Exception e) {
+                       e.printStackTrace();
                    }
                }
            }
@@ -2538,11 +2540,11 @@ public class BrewServer extends NanoHTTPD {
         }
         return new Response(Status.OK, MIME_HTML, result);
     }
-    
+
     @UrlEndpoint(url = "/getphsensorform")
     public Response getPhSensorForm() {
         PhSensor phSensor = null;
-        
+
         if (!parameters.containsKey("sensor")) {
             phSensor = new PhSensor();
         } else {

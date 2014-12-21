@@ -55,7 +55,8 @@ public class PhSensorForm implements Renderable {
                         .id("onewire_offset").value(phSensor.getDsOffset())
                         .add("placeholder", Messages.DS2450_OFFSET))
                 .br();
-
+                html.select(class_("holo-spinner").name("ph_model")
+                        .id("ph_model"));
                 html.option(value("").selected_if(
                         "".equals(phSensor.getDsAddress()))).write(Messages.PH_MODEL)
                 ._option();
@@ -77,6 +78,7 @@ public class PhSensorForm implements Renderable {
                         .class_("btn"))
                     .write(Messages.CANCEL)
                 ._button()
+            ._form()
         ._div();
     }
 
