@@ -58,12 +58,12 @@ function setup() {
 		temp = $('div[class="center-left col-md-4"]')
 	}
 	temp.append(
-			"<div id='edit-page' class='col-md-4 holo-button' onclick='toggleEdit(true); return false;'>"
-							+ $.i18n.prop("EDIT") + "</div>");
+			"<button id='edit-page' class='col-md-4 btn' onclick='toggleEdit(true); return false;'>"
+							+ $.i18n.prop("EDIT") + "</button>");
 
 	temp.append(
-			"<div id='change-scale' class='col-md-6 holo-button' onclick='changeScale(); return false;'>"
-					+ $.i18n.prop("CHANGE_SCALE") + "</div>")
+			"<button id='change-scale' class='col-md-6 btn' onclick='changeScale(); return false;'>"
+					+ $.i18n.prop("CHANGE_SCALE") + "</button>")
 
 	$('div[id$=-graph_body]').each(function(index) {
 		$(this).slideToggle();
@@ -79,10 +79,13 @@ function setup() {
 		$(this).tab('show')
 	});
 
-	// $('div[id="*-tabbedInputs]').foreach(function (div) {
-	// div.tabs();
-	// });
-	//			
+
+	$('html').on('click', function(e) {
+		  if (typeof $(e.target).data('original-title') == 'undefined' && !$(e.target).parents().is('.popover.in')) {
+		    $('[data-original-title]').popover('hide');
+		  }
+	});
+   	
 	waitForMsg();
 };
 
@@ -172,7 +175,7 @@ function waitForMsg() {
 						val = data.message;
 
 						if (val.length > 0) {
-							val += "<br/><button id='clearMessage' class='holo-button modeclass' "
+							val += "<br/><button id='clearMessage' class='btn modeclass' "
 									+ "onclick='clearStatus(); return false;'>"
 									+ $.i18n.prop("CLEAR") + "</button>";
 							jQuery("#messages-body").html(val);
@@ -363,12 +366,8 @@ function waitForMsg() {
 												updateVolumeStatus(vesselName,
 														vesselStatus.volume);
 											} else {
-												jQuery(
-														"#" + vesselName
-																+ "-volume")
-														.text(
-																$.i18n
-																		.prop("NO_VOLUME"));
+												jQuery("#" + vesselName+ "-volumeAmount")
+													.text($.i18n.prop("NO_VOLUME"));
 											}
 										});
 					}
@@ -479,7 +478,7 @@ function updateTempProbe(vessel, val) {
 }
 
 function updateVolumeStatus(vessel, status) {
-	$("#" + vessel + "-volume").text(
+	$("#" + vessel + "-volumeAmount").text(
 			parseFloat(status.volume).toFixed(2) + " " + status.units);
 	$("#" + vessel + ' input[name="vol_units"]').val(status.units);
 
@@ -491,7 +490,7 @@ function updateVolumeStatus(vessel, status) {
 				+ "<input type='number' name='gravity' class='form-control' id='gravity'" +
 						" value='" + status.gravity + "' step='any'/>"
 				+ "<button id='updategravity-" + vessel + "'" +
-						" class='holo-button modeclass' "
+						" class='btn' "
 				+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>"
 				+ $.i18n.prop("UPDATE_GRAVITY")
 				+ "</button>"
@@ -513,7 +512,6 @@ function updateVolumeStatus(vessel, status) {
 		$(vesselDiv + ' input[name="vol_add"]').val("");
 		$(vesselDiv + ' input[name="vol_off"]').val("");
 	}
-
 }
 
 function editVolume(element) {
@@ -534,55 +532,24 @@ function editVolume(element) {
 	var volUnits = $('#' + vessel + ' input[name="vol_units"]').val();
 
 	// Insert a couple of new form elements
-	$('#' + vesselDiv)
-			.append(
-					"<div id='"
-							+ vessel
-							+ "-editVol'>"
-							+ "<form id='"
-							+ vessel
-							+ "-editVol' name='"
-							+ vessel
-							+ "-edit'>"
-							+ "<input type='hidden' name='name' id='name' value='"
-							+ vessel
-							+ "'/><br/>"
-							+ "<input type='text' class='form-control' name='adc_pin' id='adc_pin' value='"
-							+ volPin
-							+ "' placeholder='"
-							+ $.i18n.prop("ANALOGUE_PIN")
-							+ "'/><br/>"
-							+ "<input type='text' class='form-control' name='onewire_address' id='onewire_address' value='"
-							+ volAdd
-							+ "' placeholder='"
-							+ $.i18n.prop("DS2450_ADDRESS")
-							+ "' /><br/>"
-							+ "<input type='text' class='form-control' name='onewire_offset' id='onewire_offset' value='"
-							+ volOff
-							+ "' placeholder='"
-							+ $.i18n.prop("DS2450_OFFSET")
-							+ "' /><br/>"
-							+ "<input type='number' step='any' class='form-control' name='volume' id='volume' value='' placeholder='"
-							+ $.i18n.prop("NEW_VOLUME")
-							+ "' /><br/>"
-							+ "<select class='holo-spinner' name='units' id='units'>"
-								+ "<option value='Litres'>Litres</option>"
-								+ "<option value='US Gallons'>US Gallons</option>"
-								+ "<option value='UK Gallons'>UK Gallons</option>"
-							+ "</select>"
-							+ "<br/>"
-							+ "<button id='updateVol-"
-							+ vessel
-							+ "' class='holo-button modeclass' "
-							+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>"
-							+ $.i18n.prop("UPDATE")
-							+ "</button>"
-							+ "<button id='cancelVol-"
-							+ vessel
-							+ "' class='holo-button modeclass' "
-							+ "onclick='cancelVolEdit(vessel); waitForMsg(); return false;'>"
-							+ $.i18n.prop("CANCEL") + "</button>" + "</form>"
-							+ "</div>");
+	 var $tr = $(element);
+     
+     $tr.popover('destroy');
+	 //$tr.popover();
+     $.ajax({
+         url: '/getVolumeForm',
+         data: {vessel: vessel},
+         dataType: 'html',
+         success: function(html) {
+             $tr.popover({
+                 title: 'Volume Edit',
+                 content: html,
+                 placement: 'top',
+                 html: true,
+                 trigger: 'manual'
+             }).popover('show');
+         }
+     });
 }
 
 function editDevice(element) {
@@ -660,13 +627,13 @@ function editDevice(element) {
 							+ "' /><br/>"
 							+ "<button id='update-"
 							+ vessel
-							+ "' class='holo-button modeclass' "
+							+ "' class='btn modeclass' "
 							+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>"
 							+ $.i18n.prop("UPDATE")
 							+ "</button>"
 							+ "<button id='cancel-"
 							+ vessel
-							+ "' class='holo-button modeclass' "
+							+ "' class='btn modeclass' "
 							+ "onclick='cancelEdit("
 							+ vessel
 							+ "); waitForMsg(); return false;'>"
@@ -675,7 +642,7 @@ function editDevice(element) {
 							+ "</form>"
 							+ "<button id='hide-"
 							+ vessel
-							+ "' class='holo-button modeclass' "
+							+ "' class='btn modeclass' "
 							+ "onclick='toggleDevice(\""
 							+ vessel
 							+ "\"); waitForMsg(); sleep(1000); location.reload();'>"
@@ -1157,11 +1124,11 @@ function addPump() {
 							+ "<label>"
 							+ "<input type='checkbox' name='invert' />" + $.i18n.prop("INVERT_GPIO")
 							+ "</label><br/>"
-							+ "<button id='add-pump' class='holo-button modeclass' "
+							+ "<button id='add-pump' class='btn modeclass' "
 							+ "onclick='submitNewPump(this.form); return false;'>"
 							+ $.i18n.prop("ADD")
 							+ "</button>"
-							+ "<button id='cancel-add-pump' class='holo-button modeclass' "
+							+ "<button id='cancel-add-pump' class='btn modeclass' "
 							+ "onclick='cancelAddPump(); waitForMsg(); return false;'>"
 							+ $.i18n.prop("" + $.i18n.prop("CANCEL") + "")
 							+ "</button>" + "</form>" + "</div>");
@@ -1215,11 +1182,11 @@ function addTimer() {
 							+ "<input type='text' name='new_name' id='new_name' value='' placeholder='"
 							+ $.i18n.prop("NAME")
 							+ "' /><br/>"
-							+ "<button id='add-timer' class='holo-button modeclass' "
+							+ "<button id='add-timer' class='btn modeclass' "
 							+ "onclick='submitNewTimer(this.form); return false;'>"
 							+ $.i18n.prop("ADD")
 							+ "</button>"
-							+ "<button id='cancel-add-timer' class='holo-button modeclass' "
+							+ "<button id='cancel-add-timer' class='btn modeclass' "
 							+ "onclick='cancelAddTimer(); waitForMsg(); return false;'>"
 							+ $.i18n.prop("CANCEL") + "</button>" + "</form>"
 							+ "</div>");
@@ -1289,11 +1256,11 @@ function addNewMashStep(button) {
 							+ "<input type='hidden' name='step' value='"
 							+ ($("#mashTable" + pid + " > tbody > tr").length)
 							+ "' />"
-							+ "<button id='add-timer' class='holo-button modeclass' "
+							+ "<button id='add-timer' class='btn modeclass' "
 							+ "onclick='submitNewMashStep(this.form); return false;'>"
 							+ $.i18n.prop("ADD")
 							+ "</button>"
-							+ "<button id='cancel-add-mash-step' class='holo-button modeclass' "
+							+ "<button id='cancel-add-mash-step' class='btn modeclass' "
 							+ "onclick='cancelAddMashStep(" + pid
 							+ "); waitForMsg(); return false;'>"
 							+ $.i18n.prop("CANCEL") + "</button>" + "</form>"
@@ -2247,6 +2214,7 @@ function readWriteDevices() {
 						} else {
 							this.setAttribute("onclick", "editDevice(this);");
 						}
+						$('[id=' + vessel + '-volumeeditbutton').css('display', 'table-cell');
 						$('[id=' + vessel + '-title]').css('cursor', "pointer");
 						// display the mash table if needs be
 						if ($('[id=mashTable' + vessel + '] > tbody > tr').length == 0) {
@@ -2267,6 +2235,7 @@ function readOnlyDevices() {
 						if (vessel == "messages") {
 							return;
 						}
+						$('[id=' + vessel + '-volumeeditbutton').css('display', 'none');
 						var vesselForm = 'form[id="' + vessel + '-form"]';
 						var devAddr = $(
 								'#' + vesselForm
@@ -2408,7 +2377,6 @@ function displaySystemSettings() {
 							'<label>' +
 								'<input type="checkbox" name="recorder">Recorder Enabled' +
 							'</label>' +
-							'</span>' +
 						'</div>');
 				}
 				$('form[id="settings-form"] div[id="recorder_enabled"] input').prop("checked", data.recorder);

@@ -166,7 +166,7 @@ public class ServeHTML {
             }
 
         }
-        pumpContent += "<span class='holo-button pump' id=\"NewPump\""
+        pumpContent += "<span class='btn pump' id=\"NewPump\""
                 + " type=\"submit\""
                 + "ondrop='dropDeletePump(event);' "
                 + "ondragover='allowDropPump(event);'"
@@ -184,7 +184,7 @@ public class ServeHTML {
         page += "<div id=\"timers\">" + lineSep;
         page += addTimers();
         page += "</div>" + lineSep;
-        page += "<br /> <br /><div><span class='holo-button' id=\"CheckUpdates\""
+        page += "<br /> <br /><div><span class='btn' id=\"CheckUpdates\""
                 + " type=\"submit\""
                 + " onClick='checkUpdates();'>"
                 + Messages.UPDATE_CHECK+"</span>"

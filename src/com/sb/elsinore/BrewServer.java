@@ -31,6 +31,7 @@ import org.rendersnake.HtmlCanvas;
 import com.sb.elsinore.NanoHTTPD.Response.Status;
 import com.sb.elsinore.NanoHTTPD.Response;
 import com.sb.elsinore.html.RenderHTML;
+import com.sb.elsinore.html.VolumeEditForm;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -2510,5 +2511,36 @@ public class BrewServer extends NanoHTTPD {
 
         return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                 "Updated Brewday");
+    }
+
+    @UrlEndpoint(url = "/getvolumeform")
+    public Response getVolumeForm() {
+        if (!parameters.containsKey("vessel")) {
+            LaunchControl.setMessage("No Vessel provided");
+            return new Response(Status.BAD_REQUEST, MIME_HTML,
+                    "No vessel provided");
+        }
+
+        // Check to make sure we have a valid vessel
+        Temp temp = LaunchControl.findTemp(parameters.get("vessel"));
+        if (temp == null) {
+            return new Response(Status.BAD_REQUEST, MIME_HTML,
+                    "Could not find vessel: " + parameters.get("vessel"));
+        }
+
+        // Render away
+        VolumeEditForm volEditForm = new VolumeEditForm(
+                temp);
+        HtmlCanvas html = new HtmlCanvas();
+        String result = "";
+        try {
+            volEditForm.renderOn(html);
+            result = html.toHtml();
+        } catch (IOException e) {
+            e.printStackTrace();
+            result = e.getMessage();
+            LaunchControl.setMessage(result);
+        }
+        return new Response(Status.OK, MIME_HTML, result);
     }
 }

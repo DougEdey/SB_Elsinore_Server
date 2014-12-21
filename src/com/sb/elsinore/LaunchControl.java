@@ -682,7 +682,7 @@ public final class LaunchControl {
                     JSONObject volumeJSON = new JSONObject();
                     volumeJSON.put("volume", t.getVolume());
                     volumeJSON.put("units", t.getVolumeUnit());
-                    if (t.getVolumeAIN() >= 0) {
+                    if (!t.getVolumeAIN().equals("")) {
                         volumeJSON.put("ain", t.getVolumeAIN());
                     } else {
                         volumeJSON.put("address", t.getVolumeAddress());
@@ -1894,7 +1894,7 @@ public final class LaunchControl {
             }
 
             if (fTemp.getVolumeBase() != null) {
-                if (fTemp.getVolumeAIN() != -1) {
+                if (!fTemp.getVolumeAIN().equals("")) {
                     saveVolume(fTemp.getName(), fTemp.getVolumeAIN(),
                             fTemp.getVolumeUnit(), fTemp.getVolumeBase());
                 } else if (fTemp.getVolumeAddress() != null
@@ -2119,9 +2119,9 @@ public final class LaunchControl {
         if (temp.hasVolume()) {
             BrewServer.LOG.info("Saving volume");
             setElementText(device, "volume-units", temp.getVolumeUnit());
-            if (temp.getVolumeAIN() >= 0) {
+            if (!temp.getVolumeAIN().equals("")) {
                 setElementText(device, "volume-ain",
-                        Integer.toString(temp.getVolumeAIN()));
+                        temp.getVolumeAIN());
             } else {
                 setElementText(device, "volume-address",
                         temp.getVolumeAddress());
@@ -2199,7 +2199,7 @@ public final class LaunchControl {
      * @param concurrentHashMap
      *            Hashmap of the volume ranges and readings
      */
-    private void saveVolume(final String name, final int volumeAIN,
+    private void saveVolume(final String name, final String volumeAIN,
             final String volumeUnit,
             final ConcurrentHashMap<BigDecimal, BigDecimal> concurrentHashMap) {
 
@@ -2214,7 +2214,7 @@ public final class LaunchControl {
             tElement = addNewElement(device, "volume-pin");
         }
 
-        tElement.setTextContent(Integer.toString(volumeAIN));
+        tElement.setTextContent(volumeAIN);
 
     }
 
@@ -3105,7 +3105,7 @@ public final class LaunchControl {
 
         if (!headSha.equals(currentSha)) {
             LaunchControl.setMessage("Update Available. "
-                    + "<span class='holo-button' id=\"UpdatesFromGit\""
+                    + "<span class='btn' id=\"UpdatesFromGit\""
                     + " type=\"submit\"" + " onClick='updateElsinore();'>"
                     + "Click here to update</span>");
         } else {
@@ -3332,5 +3332,31 @@ public final class LaunchControl {
         LaunchControl.recorderEnabled = false;
         LaunchControl.recorder.stop();
         LaunchControl.recorder = null;
+    }
+
+    public static List<String> getOneWireDevices(String prefix) {
+        List<String> devices = new ArrayList<String>();
+        try {
+            List<String> owfsDirs = owfsConnection.listDirectory("/");
+            if (owfsDirs.size() > 0) {
+                BrewServer.LOG.info("Listing OWFS devices on " + owfsServer
+                        + ":" + owfsPort);
+            }
+            Iterator<String> dirIt = owfsDirs.iterator();
+            String dir = null;
+
+            while (dirIt.hasNext()) {
+                dir = dirIt.next();
+                if (dir.startsWith(prefix)) {
+                    devices.add(dir);
+                }
+            }
+        } catch (OwfsException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return devices;
     }
 }

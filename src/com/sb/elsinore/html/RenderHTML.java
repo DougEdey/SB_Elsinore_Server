@@ -64,12 +64,12 @@ public class RenderHTML implements Renderable {
                         html.render(new PumpComponent(pump.getName()));
                     }
 
-                    html.span(id("NewPump").class_("holo-button pump")
+                    html.button(id("NewPump").class_("btn pump")
                         .type("submit").onDrop("dropDeletePump(event);")
                         .onDragover("allowDropPump(event)")
                         .onClick("addPump()"))
                         .write(Messages.NEW_PUMP)
-                    ._span()
+                    ._button()
                 ._div()
             ._div()
         ._div();
@@ -86,22 +86,22 @@ public class RenderHTML implements Renderable {
                         html.render(new TimerComponent(timer.getName()));
                     }
 
-                    html.span(id("NewTimer").class_("holo-button timer")
+                    html.button(id("NewTimer").class_("btn timer")
                         .type("submit").onDrop("dropDeleteTimer(event")
                         .onDragover("allowDropTimer(event)")
                         .onClick("addTimer()"))
                         .write(Messages.NEW_TIMER)
-                    ._span()
+                    ._button()
                 ._div()
             ._div()
         ._div();
 
         // Check updates button
         html.br().br().div()
-            .span(id("CheckUpdates").class_("holo-button")
+            .button(id("CheckUpdates").class_("btn")
                     .type("submit").onClick("checkUpdates();"))
                 .write(Messages.UPDATE_CHECK)
-            ._span()
+            ._button()
         ._div()
         ._body()._html();
 

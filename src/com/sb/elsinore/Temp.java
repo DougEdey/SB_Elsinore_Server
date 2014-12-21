@@ -922,8 +922,11 @@ public final class Temp implements Runnable {
     /**
      * @return The analogue input
      */
-    public int getVolumeAIN() {
-        return this.volumeAIN;
+    public String getVolumeAIN() {
+        if (this.volumeAIN == -1) {
+            return "";
+        }
+        return Integer.toString(this.volumeAIN);
     }
 
     /**
@@ -1072,5 +1075,10 @@ public final class Temp implements Runnable {
 
     public BigDecimal getGravity() {
         return this.gravity;
+    }
+
+    @Override
+    public String toString() {
+        return this.getName();
     }
 }
