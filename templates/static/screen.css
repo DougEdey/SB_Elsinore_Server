@@ -33,6 +33,11 @@
 		  float:left;
 }
 
+#phSensors {
+          padding: 1em;
+		  float:left;
+}
+
 #tempProbes {
 		  padding: 1em;
 		  float:left;
