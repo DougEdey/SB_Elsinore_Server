@@ -3245,7 +3245,7 @@ public final class LaunchControl {
      * Add a message to the current one.
      * @param newMessage The message to append.
      */
-    static void addMessage(final String newMessage) {
+    public static void addMessage(final String newMessage) {
         LaunchControl.message += "\n" + newMessage;
     }
 
@@ -3254,14 +3254,14 @@ public final class LaunchControl {
      *
      * @return The current message.
      */
-    static String getMessage() {
+    public static String getMessage() {
         return LaunchControl.message;
     }
 
     /**
      * @return The brewery name.
      */
-    static String getName() {
+    public static String getName() {
         return LaunchControl.breweryName;
     }
 
@@ -3271,7 +3271,7 @@ public final class LaunchControl {
      * @param newName
      *            New brewery name.
      */
-    static void setName(final String newName) {
+    public static void setName(final String newName) {
         BrewServer.LOG.info("Updating brewery name from "
                 + LaunchControl.breweryName + " to " + newName);
         LaunchControl.breweryName = newName;

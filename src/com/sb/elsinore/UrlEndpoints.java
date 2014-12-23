@@ -571,6 +571,16 @@ public class UrlEndpoints {
         JSONParser parser = new JSONParser();
         String errorMsg = "No Changes Made";
 
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Add or update a Temperature probe to the system,"
+                + " incoming object"
+                + " should be a JSON Literal of \nold_name: {details}");
+        usage.put("new_name", "The name of the Temperature Probe to add");
+        usage.put("new_gpio", "The GPIO for the PID to work on");
+        usage.put("aux_gpio", "The Auxilliary GPIO for the PID to work on");
+        usage.put("Error", "Invalid parameters passed " + errorMsg + " = "
+                + params.toString());
+
         // Try to Parse JSON Data
         while (it.hasNext()) {
             param = it.next();
@@ -648,6 +658,9 @@ public class UrlEndpoints {
 
         if (tProbe == null) {
             LaunchControl.setMessage("Couldn't find PID: " + inputUnit);
+
+            return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
+                    usage.toJSONString());
         }
 
         if (tProbe != null && !newName.equals("")) {
@@ -714,19 +727,8 @@ public class UrlEndpoints {
             }
         }
 
-        JSONObject usage = new JSONObject();
-        usage.put("Usage", "Add or update a Temperature probe to the system,"
-                + " incoming object"
-                + " should be a JSON Literal of \nold_name: {details}");
-        usage.put("new_name", "The name of the Temperature Probe to add");
-        usage.put("new_gpio", "The GPIO for the PID to work on");
-        usage.put("aux_gpio", "The Auxilliary GPIO for the PID to work on");
-        usage.put("Error", "Invalid parameters passed " + errorMsg + " = "
-                + params.toString());
-
         return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
                 usage.toJSONString());
-
     }
 
     /**
