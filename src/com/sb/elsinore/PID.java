@@ -293,10 +293,16 @@ public final class PID implements Runnable {
 
     private boolean minTimePassed() {
         if (this.timeDiff.compareTo(this.minTime) <= 0) {
-            LaunchControl.setMessage("Waiting for minimum time before changing outputs "
-                    + this.minTime.subtract(this.timeDiff) + " mins remaining");
+            BigDecimal remaining = this.minTime.subtract(this.timeDiff);
+            if (remaining.compareTo(new BigDecimal(10.0/60.0)) >= 0) {
+                LaunchControl.setMessage(
+                    "Waiting for minimum time before changing outputs,"
+                    + " less than "
+                    + remaining.setScale(0, BigDecimal.ROUND_UP)
+                    + " mins remaining");
+            }
             return false;
-        } else { 
+        } else {
             if (LaunchControl.getMessage().startsWith("Waiting for minimum")) {
                 LaunchControl.setMessage("");
             }
@@ -954,7 +960,8 @@ public final class PID implements Runnable {
         
         if (this.getTempF().compareTo(minTempF) < 0) {
             if (this.hasValidHeater()) {
-                if (this.minTimePassed()) {
+                if (this.duty_cycle.compareTo(new BigDecimal(100)) != 0
+                        && this.minTimePassed()) {
                     BrewServer.LOG.info("Current temp is less than the minimum temp, turning on 100");
                     this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                     this.duty_cycle = new BigDecimal(100);
@@ -963,7 +970,8 @@ public final class PID implements Runnable {
                             this.minTime.multiply(new BigDecimal(60)));
                 }
             } else if (this.hasValidCooler()) {
-                if (this.minTimePassed()) {
+                if (this.duty_cycle.compareTo(new BigDecimal(0)) != 0
+                        &&  this.minTimePassed()) {
                     BrewServer.LOG.info("Slept for long enough, turning off");
                     // Make sure the thread wakes up for the new settings
                     this.duty_cycle = new BigDecimal(0);
@@ -971,15 +979,15 @@ public final class PID implements Runnable {
                     this.outputThread.interrupt();
                 }
              }
-            
+
             // Make sure the thread wakes up for the new settings
             this.outputThread.interrupt();
-            
         } else if (this.getTempF().compareTo(maxTempF) >= 0) {
             // TimeDiff is now in minutes
             // Is the cooling output on?
             if (this.hasValidCooler()) {
-                if (this.minTimePassed()) {
+                if (this.duty_cycle.compareTo(new BigDecimal(-100)) != 0
+                        && this.minTimePassed()) {
                     BrewServer.LOG.info("Current temp is greater than the max temp, turning on -100");
                     this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                     this.duty_cycle = new BigDecimal(-100);
@@ -990,8 +998,8 @@ public final class PID implements Runnable {
             } else if(this.hasValidHeater()) {
                BrewServer.LOG.info("Current temp is more than the max temp");
                // We're over the maximum temp, but should we wake up the thread?
-               
-               if (this.minTimePassed()) {
+               if (this.duty_cycle.compareTo(new BigDecimal(0)) != 0
+                       && this.minTimePassed()) {
                    BrewServer.LOG.info("Slep for long enough, turning off");
                    // Make sure the thread wakes up for the new settings        
                    this.duty_cycle = BigDecimal.ZERO;
