@@ -51,7 +51,7 @@ public class BrewServer extends NanoHTTPD {
     /**
      * The Root Directory of the files to be served.
      */
-    private File rootDir;
+    public File rootDir;
 
     /**
      * The Logger object.
@@ -66,7 +66,7 @@ public class BrewServer extends NanoHTTPD {
         /**
          * The Serial UID.
          */
-        private static final long serialVersionUID = 1L;
+        public static final long serialVersionUID = 1L;
 
         {
             put("css", "text/css");
@@ -570,7 +570,7 @@ public class BrewServer extends NanoHTTPD {
      *            The URI to be encoded
      * @return The Encoded URI
      */
-    private static String encodeUri(final String uri) {
+    public static String encodeUri(final String uri) {
         String newUri = "";
         StringTokenizer st = new StringTokenizer(uri, "/ ", true);
         while (st.hasMoreTokens()) {
