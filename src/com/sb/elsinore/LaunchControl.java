@@ -1463,7 +1463,7 @@ public final class LaunchControl {
                 // Check to see if theres a non temp probe (DS18x20)
                 if (!currentFile.getName().startsWith("28") && !useOWFS) {
                     if (prompt) {
-                        BrewServer.LOG.warning("Detected a non temp probe."
+                        System.out.println("Detected a non temp probe."
                                 + currentFile.getName() + "\n"
                                 + "Do you want to switch to OWFS? [y/N]");
                         String t = readInput();
