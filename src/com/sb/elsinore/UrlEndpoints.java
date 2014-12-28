@@ -1386,6 +1386,10 @@ public class UrlEndpoints {
                             + " to zipfile");
                 }
             }
+            try {
+                zipFile.closeZip();
+            } catch (IOException e) {
+            }
             return BrewServer.serveFile(zipFileName, params, rootDir);
         }
 

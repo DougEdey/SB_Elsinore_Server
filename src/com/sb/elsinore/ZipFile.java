@@ -45,7 +45,7 @@ public class ZipFile {
 
         File file = new File(fileName);
         FileInputStream fis = new FileInputStream(file);
-        ZipEntry zipEntry = new ZipEntry(fileName);
+        ZipEntry zipEntry = new ZipEntry(file.getName());
         zos.putNextEntry(zipEntry);
 
         byte[] bytes = new byte[1024];
