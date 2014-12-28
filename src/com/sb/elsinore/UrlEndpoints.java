@@ -733,13 +733,11 @@ public class UrlEndpoints {
 
     /**
      * Add a new timer to the brewery.
-     * 
-     * @param parameters
-     *            The parameter list
+     *
      * @return True if added ok
      */
     @UrlEndpoint(url = "/addtimer")
-    public Response addTimer() {
+    public final Response addTimer() {
         String oldName = "", newName = "", gpio = "";
         String inputUnit = "";
 
