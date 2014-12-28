@@ -4,7 +4,11 @@ import org.eclipse.osgi.util.NLS;
 
 public class Messages extends NLS {
     private static final String BUNDLE_NAME = "com.sb.elsinore.nls.messages"; // $NON-NLS-1$
-    
+
+    public static String PH_MODEL;
+    public static String PH_SENSORS;
+    public static String NEW_PHSENSOR;
+    public static String UPDATE_VALUE;
     public static String TEMPERATURE;
     public static String TEMP;
     public static String PUMPS;
@@ -51,9 +55,11 @@ public class Messages extends NLS {
     public static String DS2450_ADDRESS;
     public static String DS2450_OFFSET;
     public static String LITRES;
+    public static String UK_GALLONS;
+    public static String US_GALLONS;
     public static String CUTOFF_TEMP;
     public static String INVALID_GPIO;
-
+   
     public static String NAME;
 
     public static String PUMPNAMEBLANK;
@@ -67,11 +73,13 @@ public class Messages extends NLS {
     public static String DELETE_TIMER;
 
     public static String EDIT;
+    public static String EDIT_VOLUME;
     public static String LOCK;
     public static String DUTYPERC;
     public static String HEAT;
     public static String COOL;
     public static String DELAY;
+    public static String CALIBRATE;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);

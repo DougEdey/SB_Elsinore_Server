@@ -324,7 +324,7 @@ public class PIDComponent implements Renderable {
                 ._tr()
                 ._table()
                 .div(class_("holo-buttons"))
-                .button(id(name + "Aux").class_("holo-button pump").onClick(
+                .button(id(name + "Aux").class_("btn pump").onClick(
                         "toggleAux('" + name + "'),"
                                 + " waitForMsg(); return false;"))
                 .write(Messages.AUX_ON)
@@ -337,8 +337,17 @@ public class PIDComponent implements Renderable {
                                 "submitForm(this.form); waitForMsg();"
                                         + " return false"))
                 .write(Messages.SEND_COMMAND)._button()._div()._form()._div()
-                .div(id(name + "-volume").onClick("editVolume(this);"))._div()
-                ._div()._div()._div();
+                .div(id(name + "-volume"))
+                        .div(id(name + "-volumeAmount"))._div()
+                        .button(id(name + "-volumeeditbutton")
+                                .class_("btn pump")
+                                .onClick("editVolume(this);"))
+                                .write(Messages.EDIT_VOLUME)
+                        ._button()
+                ._div()
+            ._div()
+        ._div()
+    ._div();
     }
 
 }

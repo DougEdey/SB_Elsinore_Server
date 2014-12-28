@@ -83,6 +83,9 @@ import Cosm.Unit;
 
 import com.sb.common.CollectionsUtil;
 import com.sb.common.ServeHTML;
+import com.sb.elsinore.NanoHTTPD.Response;
+import com.sb.elsinore.NanoHTTPD.Response.Status;
+import com.sb.elsinore.inputs.PhSensor;
 
 /**
  * LaunchControl is the core class of Elsinore. It reads the config file,
@@ -96,26 +99,26 @@ import com.sb.common.ServeHTML;
 public final class LaunchControl {
     /* MAGIC NUMBERS! */
     public static int EXIT_UPDATE = 128;
-    private static boolean loadCompleted = false;
+    public static boolean loadCompleted = false;
     /**
      * The default OWFS Port.
      */
-    private static final int DEFAULT_OWFS_PORT = 4304;
+    public static final int DEFAULT_OWFS_PORT = 4304;
     /**
      * The default port to serve on, can be overridden with -p <port>.
      */
-    private static final int DEFAULT_PORT = 8080;
-    private int server_port = 8080;
+    public static final int DEFAULT_PORT = 8080;
+    public int server_port = 8080;
     /**
      * The pump parameters length for creating the config.
      */
-    private static final int PUMP_PARAM_LENGTH = 3;
+    public static final int PUMP_PARAM_LENGTH = 3;
     /**
      * The Minimum number of volume data points.
      */
-    private static final int MIN_VOLUME_SIZE = 3;
+    public static final int MIN_VOLUME_SIZE = 3;
     public static final String RepoURL = "http://dougedey.github.io/SB_Elsinore_Server/";
-    private static String baseUser = null;
+    public static String baseUser = null;
 
     /**
      * List of PIDs.
@@ -137,111 +140,114 @@ public final class LaunchControl {
      * List of MashControl profiles.
      */
     public static List<MashControl> mashList = new ArrayList<MashControl>();
-
+    /**
+     * List of pH Sensors.
+     */
+    public static ArrayList<PhSensor> phSensorList = new ArrayList<PhSensor>();
     /**
      * Temperature Thread list.
      */
-    private static List<Thread> tempThreads = new ArrayList<Thread>();
+    public static List<Thread> tempThreads = new ArrayList<Thread>();
     /**
      * PID Thread List.
      */
-    private static List<Thread> pidThreads = new ArrayList<Thread>();
+    public static List<Thread> pidThreads = new ArrayList<Thread>();
     /**
      * Mash Threads list.
      */
-    private static List<Thread> mashThreads = new ArrayList<Thread>();
+    public static List<Thread> mashThreads = new ArrayList<Thread>();
 
     /**
      * ConfigParser, legacy for the older users that haven't converted.
      */
-    private static ConfigParser configCfg = null;
+    public static ConfigParser configCfg = null;
     /**
      * Config Document, for the XML data.
      */
-    private static Document configDoc = null;
+    public static Document configDoc = null;
 
     /**
      * Default config filename. Can be overridden with -c <filename>
      */
-    private static String configFileName = "elsinore.cfg";
+    public static String configFileName = "elsinore.cfg";
 
     /**
      * The BrewServer runner object that'll be used.
      */
-    private static ServerRunner sRunner = null;
+    public static ServerRunner sRunner = null;
 
-    private static StatusRecorder recorder = null;
+    public static StatusRecorder recorder = null;
 
-    /* Private fields to hold data for various functions */
+    /* public fields to hold data for various functions */
     /**
      * COSM stuff, probably unused by most people.
      */
-    private static Cosm cosm = null;
+    public static Cosm cosm = null;
     /**
      * The actual feed that's in use by COSM.
      */
-    private static Feed cosmFeed = null;
+    public static Feed cosmFeed = null;
     /**
      * The list of available datastreams from COSM.
      */
-    private static Datastream[] cosmStreams = null;
+    public static Datastream[] cosmStreams = null;
 
     /**
      * The Default scale to be used.
      */
-    private static String scale = "F";
+    public static String scale = "F";
 
     /**
      * The BrewDay object to manage timers.
      */
-    private static BrewDay brewDay = null;
+    public static BrewDay brewDay = null;
     /**
      * One Wire File System Connection.
      */
-    private static OwfsConnection owfsConnection = null;
+    public static OwfsConnection owfsConnection = null;
     /**
      * Flag whether the user has selected OWFS.
      */
-    private static boolean useOWFS = false;
+    public static boolean useOWFS = false;
     /**
      * The Default OWFS server name.
      */
-    private static String owfsServer = "localhost";
+    public static String owfsServer = "localhost";
     /**
      * The OWFS port value.
      */
-    private static Integer owfsPort = DEFAULT_OWFS_PORT;
+    public static Integer owfsPort = DEFAULT_OWFS_PORT;
 
     /**
      * The accepted startup options.
      */
-    private static Options startupOptions = null;
+    public static Options startupOptions = null;
     /**
      * The Command line used.
      */
-    private static CommandLine startupCommand = null;
+    public static CommandLine startupCommand = null;
 
     /**
      * Xpath factory. This'll not change.
      */
-    private static XPathFactory xPathfactory = XPathFactory.newInstance();
+    public static XPathFactory xPathfactory = XPathFactory.newInstance();
 
     /**
      * XPath static for the helper.
      */
-    private static XPath xpath = xPathfactory.newXPath();
+    public static XPath xpath = xPathfactory.newXPath();
     /**
      * Xpath Expression static for the helpers.
      */
-    private static XPathExpression expr = null;
-    private static String message = "";
-    private static double recorderDiff = .15d;
-    private static boolean recorderEnabled = true;
-    private static String recorderDirectory = StatusRecorder.defaultDirectory;
-    private static String breweryName = null;
+    public static XPathExpression expr = null;
+    public static String message = "";
+    public static double recorderDiff = .15d;
+    public static boolean recorderEnabled = true;
+    public static String recorderDirectory = StatusRecorder.defaultDirectory;
+    public static String breweryName = null;
     public static String theme = "default";
-    private static boolean pageLock = false;
-    private static boolean allDevicesListed = false;
+    public static boolean pageLock = false;
+    public static boolean allDevicesListed = false;
 
     /*****
      * Main method to launch the brewery.
@@ -357,7 +363,7 @@ public final class LaunchControl {
     /*******
      * Used to setup the options for the command line parser.
      */
-    private static void createOptions() {
+    public static void createOptions() {
         startupOptions = new Options();
 
         startupOptions.addOption("h", "help", false, "Show this help");
@@ -526,7 +532,7 @@ public final class LaunchControl {
      * @param feedID
      *            The FeedID to get
      */
-    private void startCosm(final String apiKey, final int feedID) {
+    public void startCosm(final String apiKey, final int feedID) {
         BrewServer.LOG.info("API: " + apiKey + " Feed: " + feedID);
         cosm = new Cosm(apiKey);
         if (cosm == null) {
@@ -680,7 +686,7 @@ public final class LaunchControl {
                     JSONObject volumeJSON = new JSONObject();
                     volumeJSON.put("volume", t.getVolume());
                     volumeJSON.put("units", t.getVolumeUnit());
-                    if (t.getVolumeAIN() >= 0) {
+                    if (!t.getVolumeAIN().equals("")) {
                         volumeJSON.put("ain", t.getVolumeAIN());
                     } else {
                         volumeJSON.put("address", t.getVolumeAddress());
@@ -751,6 +757,8 @@ public final class LaunchControl {
         if (LaunchControl.getMessage() != null) {
             rObj.put("message", LaunchControl.getMessage());
         }
+        
+        
 
         rObj.put("language", Locale.getDefault().toString());
         return rObj.toString();
@@ -813,7 +821,7 @@ public final class LaunchControl {
      * @param config
      *            The General element to be parsed.
      */
-    private void parseGeneral(final Element config) {
+    public void parseGeneral(final Element config) {
         if (config == null) {
             return;
         }
@@ -957,7 +965,7 @@ public final class LaunchControl {
      * @param config
      *            The element that contains the pumps information
      */
-    private void parsePumps(final Element config) {
+    public void parsePumps(final Element config) {
         if (config == null) {
             return;
         }
@@ -1011,7 +1019,7 @@ public final class LaunchControl {
      * @param config
      *            the Element containing the timers
      */
-    private void parseTimers(final Element config) {
+    public void parseTimers(final Element config) {
         if (config == null) {
             return;
         }
@@ -1031,6 +1039,33 @@ public final class LaunchControl {
             }
             synchronized (timerList) {
                 timerList.add(temp);
+            }
+        }
+    }
+
+    /**
+     * Parse the list of phSensors in an XML Element.
+     *
+     * @param config
+     *            the Element containing the ph Sensors
+     */
+    public void parsePhSensors(final Element config) {
+        if (config == null) {
+            return;
+        }
+        NodeList sensors = config.getChildNodes();
+
+        for (int i = 0; i < sensors.getLength(); i++) {
+            Element tElement = (Element) sensors.item(i);
+            PhSensor temp = new PhSensor();
+            temp.setName(tElement.getNodeName().replace("_", " "));
+            temp.setDsAddress(tElement.getAttribute("dsAddress"));
+            temp.setDsOffset(tElement.getAttribute("dsOffset"));
+            temp.setAinPin(tElement.getAttribute("ainPin"));
+            temp.setOffset(tElement.getAttribute("offset"));
+            temp.setModel(tElement.getAttribute("model"));
+            synchronized (phSensorList) {
+                phSensorList.add(temp);
             }
         }
     }
@@ -1141,7 +1176,7 @@ public final class LaunchControl {
      *            The GPIO to use, null doesn't start the device.
      * @return The new Temp probe. Use it to look up the PID if applicable.
      */
-    private Temp startDevice(final String input, final String probe,
+    public Temp startDevice(final String input, final String probe,
             final String gpio) {
 
         // Startup the thread
@@ -1186,7 +1221,7 @@ public final class LaunchControl {
      *            The tag to search for
      * @return The found Datastream, or null if it doesn't find anything
      */
-    private static Datastream findDatastream(final String tag) {
+    public static Datastream findDatastream(final String tag) {
         // iterate the list by tag
         List<Datastream> cList = Arrays.asList(cosmStreams);
         Iterator<Datastream> iterator = cList.iterator();
@@ -1309,7 +1344,7 @@ public final class LaunchControl {
 
     /**
      * Delete the specified pump.
-     * 
+     *
      * @param name
      *            The pump to delete.
      */
@@ -1332,7 +1367,7 @@ public final class LaunchControl {
 
     /**************
      * Find the Timer in the current list.
-     * 
+     *
      * @param name
      *            The timer to find
      * @return return the Timer object
@@ -1389,17 +1424,21 @@ public final class LaunchControl {
      * List the One Wire devices from the standard one wire file system. in
      * /sys/bus/w1/devices, basic access
      */
-    private static void listOneWireSys() {
+    public static void listOneWireSys() {
         listOneWireSys(true);
     }
 
     /**
      * List the one wire devices in /sys/bus/w1/devices.
-     * 
+     *
      * @param prompt
      *            Prompt to select OWFS if needed
      */
-    private static void listOneWireSys(final boolean prompt) {
+    public static void listOneWireSys(final boolean prompt) {
+        if (useOWFS) {
+            listOWFSDevices();
+            return;
+        }
         // try to access the list of 1-wire devices
         File w1Folder = new File("/sys/bus/w1/devices/");
         if (!w1Folder.exists()) {
@@ -1424,7 +1463,7 @@ public final class LaunchControl {
                 // Check to see if theres a non temp probe (DS18x20)
                 if (!currentFile.getName().startsWith("28") && !useOWFS) {
                     if (prompt) {
-                        BrewServer.LOG.warning("Detected a non temp probe."
+                        System.out.println("Detected a non temp probe."
                                 + currentFile.getName() + "\n"
                                 + "Do you want to switch to OWFS? [y/N]");
                         String t = readInput();
@@ -1471,33 +1510,19 @@ public final class LaunchControl {
     }
 
     /**
-     * Remove any non setup devices.
-     */
-    private static void removeNonSetupDevices() {
-        // synchronized (tempList) {
-        // for (Temp t: tempList) {
-        // if (t.getName().equals(t.getProbe())) {
-        // t.shutdown();
-        // }
-        // tempList.remove(t);
-        // }
-        // }
-    }
-
-    /**
      * update the device list.
      */
-    private static void updateDeviceList() {
+    public static void updateDeviceList() {
         updateDeviceList(true);
     }
 
     /**
      * Update the device list.
-     * 
+     *
      * @param prompt
      *            Prompt for OWFS usage.
      */
-    private static void updateDeviceList(boolean prompt) {
+    public static void updateDeviceList(boolean prompt) {
         if (useOWFS) {
             listOWFSDevices();
         } else {
@@ -1509,7 +1534,7 @@ public final class LaunchControl {
      * Setup the configuration. We get here if the configuration file doesn't
      * exist.
      */
-    private void createConfig() {
+    public void createConfig() {
 
         if (startupCommand != null && startupCommand.hasOption("owfs")) {
             createOWFS();
@@ -1544,7 +1569,7 @@ public final class LaunchControl {
     /**
      * Save the configuration file to the default config filename as xml.
      */
-    private static void saveConfigFile() {
+    public static void saveConfigFile() {
         if (!LaunchControl.loadCompleted) {
             return;
         }
@@ -1693,7 +1718,7 @@ public final class LaunchControl {
     /**
      * Create the OWFS Connection to the server (owserver).
      */
-    private static void createOWFS() {
+    public static void createOWFS() {
 
         BrewServer.LOG.warning("Creating the OWFS configuration.");
         BrewServer.LOG.warning("What is the OWFS server host?"
@@ -1733,7 +1758,7 @@ public final class LaunchControl {
     /***********
      * List the One-Wire devices in OWFS. Much more fully featured access
      */
-    private static void listOWFSDevices() {
+    public static void listOWFSDevices() {
         try {
             List<String> owfsDirs = owfsConnection.listDirectory("/");
             if (owfsDirs.size() > 0) {
@@ -1792,7 +1817,7 @@ public final class LaunchControl {
 
     /***********
      * Helper method to read a path value from OWFS with all checks.
-     * 
+     *
      * @param path
      *            The path to read from
      * @return A string representing the value (or null if there's an error
@@ -1830,7 +1855,7 @@ public final class LaunchControl {
      * 
      * @return Trimmed String representing the UserInput
      */
-    private static String readInput() {
+    public static String readInput() {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String input = "";
         try {
@@ -1844,7 +1869,7 @@ public final class LaunchControl {
     /*******
      * Prints the list of probes that're found.
      */
-    private void displaySensors() {
+    public void displaySensors() {
         // iterate the list of temperature Threads to get values
         Integer i = 1;
         synchronized (tempList) {
@@ -1902,7 +1927,7 @@ public final class LaunchControl {
             }
 
             if (fTemp.getVolumeBase() != null) {
-                if (fTemp.getVolumeAIN() != -1) {
+                if (!fTemp.getVolumeAIN().equals("")) {
                     saveVolume(fTemp.getName(), fTemp.getVolumeAIN(),
                             fTemp.getVolumeUnit(), fTemp.getVolumeBase());
                 } else if (fTemp.getVolumeAddress() != null
@@ -1984,6 +2009,44 @@ public final class LaunchControl {
                 invertElement.setTextContent(
                         Boolean.toString(tPump.getInverted()));
                 newPump.appendChild(invertElement);
+            }
+        }
+
+        // Delete all the ph Sensors first
+        Element phSensorsElement = getFirstElement(null, "phSensors");
+
+        if (phSensorsElement == null) {
+            phSensorsElement = addNewElement(null, "phSensors");
+        }
+
+        Node childSensor = phSensorsElement.getFirstChild();
+        while (childSensor != null) {
+            phSensorsElement.removeChild(childSensor);
+            childSensor = phSensorsElement.getFirstChild();
+        }
+
+        // Save the Pumps
+        if (phSensorList.size() > 0) {
+
+            Iterator<PhSensor> phSensorIt = phSensorList.iterator();
+
+            while (phSensorIt.hasNext()) {
+
+                PhSensor tSensor = phSensorIt.next();
+
+                Element newSensor = getFirstElementByXpath(null,
+                        "/elsinore/phSensors/" + tSensor.getName());
+
+                if (newSensor == null) {
+                    // No timer by this name
+                    newSensor = addNewElement(phSensorsElement,
+                            tSensor.getName());
+                }
+                newSensor.setAttribute("model", tSensor.getModel());
+                newSensor.setAttribute("ainPin", tSensor.getAIN());
+                newSensor.setAttribute("dsAddress", tSensor.getDsAddress());
+                newSensor.setAttribute("dsOffset", tSensor.getDsOffset());
+                newSensor.setAttribute("offset", "" + tSensor.getOffset());
             }
         }
     }
@@ -2127,9 +2190,9 @@ public final class LaunchControl {
         if (temp.hasVolume()) {
             BrewServer.LOG.info("Saving volume");
             setElementText(device, "volume-units", temp.getVolumeUnit());
-            if (temp.getVolumeAIN() >= 0) {
+            if (!temp.getVolumeAIN().equals("")) {
                 setElementText(device, "volume-ain",
-                        Integer.toString(temp.getVolumeAIN()));
+                        temp.getVolumeAIN());
             } else {
                 setElementText(device, "volume-address",
                         temp.getVolumeAddress());
@@ -2169,7 +2232,7 @@ public final class LaunchControl {
      * @param concurrentHashMap
      *            Hashmap of the volume ranges and readings
      */
-    private void saveVolume(final String name, final String address,
+    public void saveVolume(final String name, final String address,
             final String offset, final String volumeUnit,
             final ConcurrentHashMap<BigDecimal, BigDecimal> concurrentHashMap) {
 
@@ -2207,7 +2270,7 @@ public final class LaunchControl {
      * @param concurrentHashMap
      *            Hashmap of the volume ranges and readings
      */
-    private void saveVolume(final String name, final int volumeAIN,
+    public void saveVolume(final String name, final String volumeAIN,
             final String volumeUnit,
             final ConcurrentHashMap<BigDecimal, BigDecimal> concurrentHashMap) {
 
@@ -2222,7 +2285,7 @@ public final class LaunchControl {
             tElement = addNewElement(device, "volume-pin");
         }
 
-        tElement.setTextContent(Integer.toString(volumeAIN));
+        tElement.setTextContent(volumeAIN);
 
     }
 
@@ -2278,7 +2341,7 @@ public final class LaunchControl {
     /******
      * Helper method to initialize the configuration.
      */
-    private static void initializeConfig() {
+    public static void initializeConfig() {
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = null;
         try {
@@ -2332,7 +2395,7 @@ public final class LaunchControl {
     /**
      * Parse the config using the XML Parser.
      */
-    private void parseXMLSections() {
+    public void parseXMLSections() {
         NodeList configSections = configDoc.getDocumentElement()
                 .getChildNodes();
 
@@ -2342,6 +2405,7 @@ public final class LaunchControl {
         // setup general first
         parseGeneral(getFirstElement(null, "general"));
         parsePumps(getFirstElement(null, "pumps"));
+        parsePhSensors(getFirstElement(null, "phSensors"));
 
         for (int i = 0; i < configSections.getLength(); i++) {
             Node temp = configSections.item(i);
@@ -2349,18 +2413,10 @@ public final class LaunchControl {
                 Element e = (Element) temp;
                 BrewServer.LOG.info("Checking section " + e.getNodeName());
                 // Parsed general first
-                if (e.getNodeName().equalsIgnoreCase("general")) {
-                    continue;
-                } else if (e.getNodeName().equalsIgnoreCase("pumps")) {
-                    // parsePumps(e);
-                    continue;
-                } else if (e.getNodeName().equalsIgnoreCase("timers")) {
+                if (e.getNodeName().equalsIgnoreCase("timers")) {
                     parseTimers(e);
                 } else if (e.getNodeName().equalsIgnoreCase("device")) {
                     parseDevice(e);
-                } else {
-                    BrewServer.LOG.info("Unrecognized section "
-                            + e.getNodeName());
                 }
             }
         }
@@ -2372,7 +2428,7 @@ public final class LaunchControl {
      * @param config
      *            The configuration element to parse.
      */
-    private void parseDevice(final Element config) {
+    public void parseDevice(final Element config) {
         String probe = null;
         String heatGPIO = null;
         String coolGPIO = null;
@@ -2699,7 +2755,7 @@ public final class LaunchControl {
     /**
      * Sets up the base configuration Document.
      */
-    private static void setupConfigDoc() {
+    public static void setupConfigDoc() {
 
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = null;
@@ -2724,7 +2780,7 @@ public final class LaunchControl {
      *            The node name to match
      * @return A NodeList of matching node names
      */
-    private static NodeList getAllNodes(final Element baseNode,
+    public static NodeList getAllNodes(final Element baseNode,
             final String nodeName) {
 
         Element trueBase = baseNode;
@@ -2751,7 +2807,7 @@ public final class LaunchControl {
      *            The nodeName to find.
      * @return The First matching element.
      */
-    private static Element getFirstElement(final Element baseNode,
+    public static Element getFirstElement(final Element baseNode,
             final String nodeName) {
 
         NodeList nodeList = getAllNodes(baseNode, nodeName);
@@ -2773,7 +2829,7 @@ public final class LaunchControl {
      *            The new node name to add.
      * @return The newly created element.
      */
-    private static Element addNewElement(final Element baseNode,
+    public static Element addNewElement(final Element baseNode,
             final String nodeName) {
 
         if (configDoc == null) {
@@ -2819,7 +2875,7 @@ public final class LaunchControl {
      *            The Xpath to search.
      * @return The first matching element
      */
-    private static NodeList getElementsByXpath(final Element baseNode,
+    public static NodeList getElementsByXpath(final Element baseNode,
             final String xpathIn) {
 
         NodeList tList = null;
@@ -2850,7 +2906,7 @@ public final class LaunchControl {
      *            The Xpath to search.
      * @return The first matching element
      */
-    private static Element getFirstElementByXpath(final Element baseNode,
+    public static Element getFirstElementByXpath(final Element baseNode,
             final String xpathIn) {
 
         Element tElement = null;
@@ -2875,7 +2931,7 @@ public final class LaunchControl {
      * @param textContent
      *            The new text content
      */
-    private static void setElementText(final Element baseNode,
+    public static void setElementText(final Element baseNode,
             final String elementName, final String textContent) {
 
         Element trueBase = baseNode;
@@ -2902,7 +2958,7 @@ public final class LaunchControl {
      * @param elementName
      *            The child element name to delete
      */
-    private static void deleteElement(Element baseNode, String elementName) {
+    public static void deleteElement(Element baseNode, String elementName) {
         Element trueBase = baseNode;
         if (baseNode == null) {
             trueBase = configDoc.getDocumentElement();
@@ -3113,7 +3169,7 @@ public final class LaunchControl {
 
         if (!headSha.equals(currentSha)) {
             LaunchControl.setMessage("Update Available. "
-                    + "<span class='holo-button' id=\"UpdatesFromGit\""
+                    + "<span class='btn' id=\"UpdatesFromGit\""
                     + " type=\"submit\"" + " onClick='updateElsinore();'>"
                     + "Click here to update</span>");
         } else {
@@ -3178,19 +3234,19 @@ public final class LaunchControl {
     /**
      * Set the system message for the UI.
      *
-     * @param message
+     * @param newMessage
      *            The message to set.
      */
-    static void setMessage(String message) {
-        LaunchControl.message = message;
+    public static void setMessage(final String newMessage) {
+        LaunchControl.message = newMessage;
     }
 
     /**
      * Add a message to the current one.
-     * @param message
+     * @param newMessage The message to append.
      */
-    static void addMessage(String message) {
-        LaunchControl.message += "\n" + message;
+    public static void addMessage(final String newMessage) {
+        LaunchControl.message += "\n" + newMessage;
     }
 
     /**
@@ -3198,14 +3254,14 @@ public final class LaunchControl {
      *
      * @return The current message.
      */
-    static String getMessage() {
+    public static String getMessage() {
         return LaunchControl.message;
     }
 
     /**
      * @return The brewery name.
      */
-    static String getName() {
+    public static String getName() {
         return LaunchControl.breweryName;
     }
 
@@ -3215,7 +3271,7 @@ public final class LaunchControl {
      * @param newName
      *            New brewery name.
      */
-    static void setName(final String newName) {
+    public static void setName(final String newName) {
         BrewServer.LOG.info("Updating brewery name from "
                 + LaunchControl.breweryName + " to " + newName);
         LaunchControl.breweryName = newName;
@@ -3273,16 +3329,6 @@ public final class LaunchControl {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-    }
-
-    public static void lockPage() {
-        LaunchControl.removeNonSetupDevices();
-        LaunchControl.pageLock = true;
-    }
-
-    public static void unlockPage() {
-        LaunchControl.listOneWireSys(false);
-        LaunchControl.pageLock = false;
     }
 
     public static boolean setTempScales(String scale) {
@@ -3350,5 +3396,68 @@ public final class LaunchControl {
         LaunchControl.recorderEnabled = false;
         LaunchControl.recorder.stop();
         LaunchControl.recorder = null;
+    }
+
+    public static List<String> getOneWireDevices(String prefix) {
+        List<String> devices = new ArrayList<String>();
+        try {
+            List<String> owfsDirs = owfsConnection.listDirectory("/");
+            if (owfsDirs.size() > 0) {
+                BrewServer.LOG.info("Listing OWFS devices on " + owfsServer
+                        + ":" + owfsPort);
+            }
+            Iterator<String> dirIt = owfsDirs.iterator();
+            String dir = null;
+
+            while (dirIt.hasNext()) {
+                dir = dirIt.next();
+                if (dir.startsWith(prefix)) {
+                    devices.add(dir);
+                }
+            }
+        } catch (OwfsException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return devices;
+    }
+
+    public static PhSensor findPhSensor(String string) {
+        synchronized (phSensorList) {
+            Iterator<PhSensor> iterator = phSensorList.iterator();
+            PhSensor tPh = null;
+            while (iterator.hasNext()) {
+                tPh = iterator.next();
+                if (tPh.getName().equalsIgnoreCase(string)) {
+                    return tPh;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Delete the specified pH Sensor.
+     *
+     * @param name
+     *            The sensor to delete.
+     */
+    public static void deletePhSensor(final String name) {
+        // search based on the input name
+        synchronized (phSensorList) {
+            Iterator<PhSensor> iterator = phSensorList.iterator();
+            PhSensor tSensor = null;
+
+            while (iterator.hasNext()) {
+                tSensor = iterator.next();
+                if (tSensor.getName().equalsIgnoreCase(name)) {
+                    iterator.remove();
+                    return;
+                }
+            }
+
+        }
     }
 }
