@@ -1435,10 +1435,6 @@ public final class LaunchControl {
      *            Prompt to select OWFS if needed
      */
     public static void listOneWireSys(final boolean prompt) {
-        if (useOWFS) {
-            listOWFSDevices();
-            return;
-        }
         // try to access the list of 1-wire devices
         File w1Folder = new File("/sys/bus/w1/devices/");
         if (!w1Folder.exists()) {
@@ -1465,7 +1461,7 @@ public final class LaunchControl {
                     if (prompt) {
                         System.out.println("Detected a non temp probe."
                                 + currentFile.getName() + "\n"
-                                + "Do you want to switch to OWFS? [y/N]");
+                                + "Do you want to setup OWFS? [y/N]");
                         String t = readInput();
                         if (t.toLowerCase().startsWith("y")) {
                             if (owfsConnection == null) {
@@ -1473,19 +1469,11 @@ public final class LaunchControl {
                             }
 
                             useOWFS = true;
-                            synchronized (tempList) {
-                                tempList.clear();
-                            }
-                            listOWFSDevices();
-                            return;
                         }
                     }
                     // Skip this iteration
                     continue;
                 }
-
-                owfsServer = null;
-                owfsPort = null;
 
                 // Check to see if this probe exists
                 if (probeExists(currentFile.getName())) {
@@ -1523,11 +1511,7 @@ public final class LaunchControl {
      *            Prompt for OWFS usage.
      */
     public static void updateDeviceList(boolean prompt) {
-        if (useOWFS) {
-            listOWFSDevices();
-        } else {
-            listOneWireSys(prompt);
-        }
+        listOneWireSys(prompt);
     }
 
     /**********
@@ -1755,53 +1739,9 @@ public final class LaunchControl {
         setupOWFS();
     }
 
-    /***********
-     * List the One-Wire devices in OWFS. Much more fully featured access
-     */
-    public static void listOWFSDevices() {
-        try {
-            List<String> owfsDirs = owfsConnection.listDirectory("/");
-            if (owfsDirs.size() > 0) {
-                BrewServer.LOG.info("Listing OWFS devices on " + owfsServer
-                        + ":" + owfsPort);
-            }
-            Iterator<String> dirIt = owfsDirs.iterator();
-            String dir = null;
-
-            while (dirIt.hasNext()) {
-                dir = dirIt.next();
-                if (dir.startsWith("/28")) {
-                    /*
-                     * we have a "good' directory, I'm only aware that
-                     * directories starting with a number of 28 are good got a
-                     * directory, check for a temp
-                     */
-                    dir = dir.substring(1);
-                    if (probeExists(dir)) {
-                        continue;
-                    }
-                    BrewServer.LOG.info("Checking for " + dir);
-                    Temp currentTemp = new Temp(dir, dir);
-                    tempList.add(currentTemp);
-                    // setup the scale for each temp probe
-                    currentTemp.setScale(scale);
-                    // setup the threads
-                    Thread tThread = new Thread(currentTemp);
-                    tThread.setName("Temp_" + currentTemp.getName());
-                    tempThreads.add(tThread);
-                    tThread.start();
-                }
-            }
-        } catch (OwfsException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     /**
      * Check to see if this probe already exists.
-     * 
+     *
      * @param address
      *            to check
      * @return true if the probe is setup.
@@ -1852,7 +1792,7 @@ public final class LaunchControl {
 
     /*******
      * Helper function to read the user input and tidy it up.
-     * 
+     *
      * @return Trimmed String representing the UserInput
      */
     public static String readInput() {
@@ -1874,7 +1814,6 @@ public final class LaunchControl {
         Integer i = 1;
         synchronized (tempList) {
             Iterator<Temp> iterator = tempList.iterator();
-            
             while (iterator.hasNext()) {
                 // launch all the PIDs first,
                 // since they will launch the temp theads too
@@ -2074,7 +2013,7 @@ public final class LaunchControl {
 
     /******
      * Save the PID to the config doc.
-     * 
+     *
      * @param pid
      *            The PID to save
      */
@@ -2151,7 +2090,7 @@ public final class LaunchControl {
 
     /*******
      * Add a temperature device to the configuration file.
-     * 
+     *
      * @param probe
      *            The probe address.
      * @param name
@@ -2220,7 +2159,7 @@ public final class LaunchControl {
 
     /*******
      * Save the volume details to the config.
-     * 
+     *
      * @param name
      *            name of the device to add the information to
      * @param address
@@ -2260,7 +2199,7 @@ public final class LaunchControl {
 
     /******
      * Save the volume information for an onboard Analogue Input.
-     * 
+     *
      * @param name
      *            Device name
      * @param volumeAIN
@@ -2291,7 +2230,7 @@ public final class LaunchControl {
 
     /**
      * Save the volume measurements for a device.
-     * 
+     *
      * @param name
      *            The name of the Device to save the volume measurements to
      * @param volumeBase
@@ -2424,7 +2363,7 @@ public final class LaunchControl {
 
     /**
      * Parse a configuration section, such as a specific device.
-     * 
+     *
      * @param config
      *            The configuration element to parse.
      */
@@ -2773,7 +2712,7 @@ public final class LaunchControl {
     /**
      * Get a list of all the nodes that match the nodeName. If no baseNode is
      * provided (null) then it checks from the document root.
-     * 
+     *
      * @param baseNode
      *            The root element to check from, null for the base element
      * @param nodeName
@@ -2800,7 +2739,7 @@ public final class LaunchControl {
     /**
      * Get the first element matching nodeName from the baseNode. If baseNode is
      * null, use the document root
-     * 
+     *
      * @param baseNode
      *            The base element to search, null matches from the root
      * @param nodeName
@@ -2822,7 +2761,7 @@ public final class LaunchControl {
 
     /**
      * Add a new element to the specified baseNode.
-     * 
+     *
      * @param baseNode
      *            The baseNode to append to, if null, use the document root
      * @param nodeName
@@ -2868,7 +2807,7 @@ public final class LaunchControl {
 
     /**
      * Returns all the elements using an Xpath Search.
-     * 
+     *
      * @param baseNode
      *            The base node to search on. if null, use the document root.
      * @param xpathIn
@@ -2899,7 +2838,7 @@ public final class LaunchControl {
 
     /**
      * Returns the first element using an Xpath Search.
-     * 
+     *
      * @param baseNode
      *            The base node to search on. if null, use the document root.
      * @param xpathIn
@@ -2923,7 +2862,7 @@ public final class LaunchControl {
 
     /**
      * Sets the first found named element text.
-     * 
+     *
      * @param baseNode
      *            The baseNode to use, if null, use the root.
      * @param elementName

@@ -96,48 +96,6 @@ public final class Temp implements Runnable {
                     return;
                 }
             }
-        } else if (LaunchControl.getOWFS() != null) {
-            try {
-                aName = aName.replace("-", ".");
-                BrewServer.LOG.info("Using OWFS for " + aName + "/temperature");
-                if ("" == LaunchControl.readOWFSPath(aName + "/temperature")) {
-                    String[] newAddress = aName.split("\\.|-");
-
-                    // OWFS contains "-", W1 contained "."
-                    if (newAddress.length == 2 && aName.indexOf("-") != 2) {
-                        String devFamily = newAddress[0];
-                        StringBuilder devAddress = new StringBuilder();
-
-                        // Byte Swap time!
-                        devAddress.append(newAddress[1].subSequence(10, 12));
-                        devAddress.append(newAddress[1].subSequence(8, 10));
-                        devAddress.append(newAddress[1].subSequence(6, 8));
-                        devAddress.append(newAddress[1].subSequence(4, 6));
-                        devAddress.append(newAddress[1].subSequence(2, 4));
-                        devAddress.append(newAddress[1].subSequence(0, 2));
-
-                        String fixedAddress =
-                            devFamily.toString() + "."
-                            + devAddress.toString().toUpperCase();
-
-                        BrewServer.LOG.info("Converted address: "
-                            + fixedAddress);
-
-                        aName = fixedAddress;
-                        if ("" == LaunchControl.readOWFSPath(
-                                aName + "/temperature")) {
-                            BrewServer.LOG.severe(
-                                "This is not a temperature probe " + aName);
-                        }
-                    }
-                }
-            } catch (OwfsException e) {
-                BrewServer.LOG.log(Level.SEVERE,
-                    "This is not a temperature probe!", e);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            fProbe = null;
         } else {
 
             File probePath =
