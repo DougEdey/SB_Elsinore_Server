@@ -3400,6 +3400,11 @@ public final class LaunchControl {
 
     public static List<String> getOneWireDevices(String prefix) {
         List<String> devices = new ArrayList<String>();
+        if (owfsConnection == null) {
+            LaunchControl.setMessage("OWFS is not setup,"
+                    + " please delete your configuration file and start again");
+            return devices;
+        }
         try {
             List<String> owfsDirs = owfsConnection.listDirectory("/");
             if (owfsDirs.size() > 0) {
