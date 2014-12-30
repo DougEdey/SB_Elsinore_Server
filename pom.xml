@@ -123,6 +123,12 @@
 			<artifactId>rendersnake</artifactId>
 			<version>1.9-SNAPSHOT</version>
 		</dependency>
+		
+		<dependency>
+         <groupId>org.reflections</groupId>
+         <artifactId>reflections</artifactId>
+         <version>0.9.9-RC1</version>
+     </dependency>
 	</dependencies>
 
 

@@ -2,6 +2,8 @@ package com.sb.elsinore;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.DateFormat;
@@ -13,10 +15,16 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.joda.time.DateTime;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.reflections.Reflections;
+
+import com.sb.elsinore.triggers.TriggerInterface;
+
+import sun.reflect.Reflection;
 
 
 /********************
@@ -52,28 +60,37 @@ public class MashControl implements Runnable {
     /**
      * The list of mash steps, position -> Step.
      */
-    private ArrayList<MashStep> mashStepList =
-            new ArrayList<MashStep>();
-
-    /**
-     * Append a new mashstep to the list.
-     * @return The new mash step
-     */
-    public final MashStep addMashStep() {
-        synchronized (mashStepList) {
-            return addMashStep(mashStepList.size());
-        }
-    }
+    private ArrayList<TriggerInterface> triggerList =
+            new ArrayList<TriggerInterface>();
 
     /**
      * Add a mashstep at a position, overriding the old one.
      * @param position The position to add the mashstep at
      * @return The new Mash Step
      */
-    public final MashStep addMashStep(final int position) {
-        MashStep mashstep = new MashStep(position);
-        mashStepList.add(mashstep);
-        return mashstep;
+    public final TriggerInterface addMashStep(final int position, String type, JSONObject parameters) {
+        Set<Class<? extends TriggerInterface>> triggerSet = new Reflections("com.sb.elsinore.triggers")
+            .getSubTypesOf(TriggerInterface.class);
+        String seekName = type + "Trigger";
+        TriggerInterface triggerStep = null;
+        for (Class<? extends TriggerInterface> triggerClass: triggerSet) {
+            if (triggerClass.getName().equals(seekName)) {
+                try {
+                    Constructor<? extends TriggerInterface> triggerConstructor
+                        = triggerClass.getConstructor(int.class, JSONObject.class);
+                    triggerStep = triggerConstructor.newInstance(position, parameters);
+                    triggerList.add(triggerStep);
+                } catch (InstantiationException | IllegalAccessException
+                        | IllegalArgumentException | InvocationTargetException
+                        | NoSuchMethodException | SecurityException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+
+        }
+        
+        return triggerStep;
     }
 
     /**
@@ -81,7 +98,7 @@ public class MashControl implements Runnable {
      * @return The size of the mash step list
      */
     public final int getMashStepSize() {
-        return mashStepList.size();
+        return triggerList.size();
     }
 
     /**
@@ -89,17 +106,17 @@ public class MashControl implements Runnable {
      * @param position The position to get the mash step at
      * @return The mash step at the specified position.
      */
-    public final MashStep getMashStep(final Integer position) {
+    public final TriggerInterface getTrigger(final Integer position) {
         this.sortMashSteps();
-        return this.mashStepList.get(position);
+        return this.triggerList.get(position);
     }
 
     /**
      * Get the current mash step that's activated.
      * @return And entry with the position and the mash step
      */
-    public final MashStep getCurrentMashStep() {
-        for (MashStep m: mashStepList) {
+    public final TriggerInterface getCurrentTrigger() {
+        for (TriggerInterface m: triggerList) {
             if (m.isActive()) {
                 return m;
             }
@@ -113,83 +130,40 @@ public class MashControl implements Runnable {
     @Override
     public final void run() {
         // Run through and update the times based on the currently active step
-        MashStep mashEntry = getCurrentMashStep();
+        TriggerInterface triggerEntry = getCurrentTrigger();
 
-        MashStep currentStep = null;
-        Integer currentStepPosition = -1;
+        TriggerInterface currentTrigger = null;
+        Integer currentTriggerPosition = -1;
 
         // active step
-        if (mashEntry != null) {
-            currentStep = mashEntry;
-            currentStepPosition = mashEntry.getPosition();
+        if (triggerEntry != null) {
+            currentTrigger = triggerEntry;
+            currentTriggerPosition = triggerEntry.getPosition();
         }
 
         PID currentPID = LaunchControl.findPID(getOutputControl());
 
         while (true) {
             // Is there a step and an output control?
-            if (currentStep == null && currentPID != null) {
-                mashEntry = getCurrentMashStep();
+            if (currentTrigger == null && currentPID != null) {
+                triggerEntry = getCurrentTrigger();
 
                 // active step
-                if (mashEntry != null) {
-                    currentStep = mashEntry;
-                    currentStepPosition = mashEntry.getPosition();
+                if (triggerEntry != null) {
+                    currentTrigger = triggerEntry;
+                    currentTriggerPosition = triggerEntry.getPosition();
                     BrewServer.LOG.warning("Found an active mash step: "
-                        + currentStepPosition);
+                        + currentTriggerPosition);
                 }
             }
 
-            if (currentStep != null && currentPID != null) {
+            if (currentTrigger != null && currentPID != null) {
                 // Do stuff with the active step
-                Date cDate = new Date();
-
-                // Does the times need to be changed?
-                BigDecimal currentTempF = currentPID.getTempProbe().getTempF();
-                BrewServer.LOG.warning("Current Temp: " + currentTempF
-                        + " Target: " + currentStep.getTargetTempAs("F"));
-
-                // Give ourselves a 2F range, this can be changed in the future
-                if (currentTempF.doubleValue() <= currentStep.getUpperTargetTempAs("F").doubleValue()
-                    && currentTempF.doubleValue() >= currentStep.getLowerTargetTempAs("F").doubleValue()) {
-                    BrewServer.LOG.warning("Target mash temp");
-
-                    if (currentStep.getStart() == null) {
-                        BrewServer.LOG.warning("Setting start date");
-                        // We've hit the target step temp, set the start date
-                        DateTime tDate = new DateTime();
-                        currentStep.setStart(tDate.toDate());
-
-                        // set the target End Date stamp
-                        BigInteger minutes = currentStep.getDuration().toBigInteger();
-                        tDate = tDate.plusMinutes(minutes.intValue());
-                        currentStep.setTargetEnd(tDate.toDate());
-                    }
-                }
-
-                // Have we gone past this mashStep Duration?
-                if (currentStep.getTargetEnd() != null
-                    && cDate.compareTo(currentStep.getTargetEnd()) >= 0) {
-                    BrewServer.LOG.warning("End Temp hit");
-                    // Over or equal to the target end time, deactivate
-                    currentStep.deactivate(true);
-                    // Get the next step target time
-                    currentStepPosition += 1;
-                    currentStep = getMashStep(currentStepPosition);
-                    currentStep.activate();
-
-                    currentPID.setTemp(
-                        currentStep.getTargetTempAs(
-                            currentPID.getTempProbe().getScale()));
-                }
-
-                // Does the target temp need to be updated
-                if (currentPID.getTempF() != currentStep.getTargetTempAs("F")) {
-                    String tScale = currentPID.getTempProbe().getScale();
-                    currentPID.setTemp(currentStep.getTargetTempAs(tScale));
-                }
+                currentTrigger.waitForTrigger();
+                currentTriggerPosition += 1;
+                currentTrigger = getTrigger(currentTriggerPosition);
+                currentTrigger.setActive();
             }
-
             try {
                 // Sleep for 10 seconds
                 Thread.sleep(10000);
@@ -208,23 +182,23 @@ public class MashControl implements Runnable {
      * @param position The position to activate the step at
      * @return True if activated OK, false if there's an error
      */
-    public final boolean activateStep(final Integer position) {
+    public final boolean activateTrigger(final Integer position) {
         // deactivate all the steps first
-        MashStep mashEntry = getMashStep(position);
+        TriggerInterface triggerEntry = getTrigger(position);
 
         // Do we have a value
-        if (mashEntry == null) {
+        if (triggerEntry == null) {
             BrewServer.LOG.warning("Index out of bounds");
             return false;
         }
 
         // Now we can reset the others
-        if (!deactivateStep(-1)) {
+        if (!deactivateTrigger(-1)) {
             BrewServer.LOG.warning("Couldn't disable all the mash steps");
             return false;
         }
 
-        mashEntry.activate();
+        triggerEntry.setActive();
         return true;
     }
 
@@ -233,22 +207,22 @@ public class MashControl implements Runnable {
      * @param position The step to deactivate. If < 0 deactivate all.
      * @return True if deactivated OK, false if not.
      */
-    public final boolean deactivateStep(final Integer position) {
+    public final boolean deactivateTrigger(final Integer position) {
         // deactivate all the steps first
 
         if (position >= 0) {
-            MashStep mashEntry = getMashStep(position);
+            TriggerInterface triggerEntry = getTrigger(position);
 
             // Do we have a value
-            if (mashEntry == null) {
+            if (triggerEntry == null) {
                 BrewServer.LOG.warning("Index out of bounds");
                 return false;
             }
-            mashEntry.deactivate();
+            triggerEntry.deactivate();
         } else {
             // Otherwise deactivate all the steps
-            for (MashStep mEntry : mashStepList) {
-                mEntry.deactivate(false);
+            for (TriggerInterface mEntry : triggerList) {
+                mEntry.deactivate();
             }
         }
 
@@ -279,33 +253,9 @@ public class MashControl implements Runnable {
         JSONArray masterArray = new JSONArray();
         DateFormat lFormat = new SimpleDateFormat("yyyy/MM/dd'T'HH:mm:ssZ");
         //masterArray.put("pid", this.getOutputControl());
-        synchronized (mashStepList) {
-            for (MashStep e : mashStepList) {
-                MashStep step = e;
-                JSONObject mashstep = new JSONObject();
-                mashstep.put("index", e.getPosition());
-                mashstep.put("target_temp", step.getTargetTemp());
-                mashstep.put("target_temp_unit", step.getTempUnit());
-                mashstep.put("duration", step.getDuration());
-                mashstep.put("method", step.getMethod());
-                mashstep.put("type", step.getType());
-
-                if (step.isActive()) {
-                    mashstep.put("active", true);
-                }
-
-                try {
-                    mashstep.put("start_time", lFormat.format(step.getStart()));
-                    mashstep.put("target_time",
-                        lFormat.format(step.getTargetEnd()));
-                    mashstep.put("end_time", lFormat.format(step.getEnd()));
-                } catch (NullPointerException npe) {
-                    // We know that some of these may be null, but don't care
-                    BrewServer.LOG.info("Failed to get a date: "
-                        + npe.getLocalizedMessage());
-                }
-
-                masterArray.add(mashstep);
+        synchronized (triggerList) {
+            for (TriggerInterface e : triggerList) {
+                masterArray.add(e.getJsonStatus());
             }
         }
         return masterArray;
@@ -340,23 +290,23 @@ public class MashControl implements Runnable {
     }
 
     public void sortMashSteps() {
-        Collections.sort(this.mashStepList);
+       // Collections.sort(this.triggerList);
     }
 
     /**
      * Delete the specified mash step.
-     * @param position
+     * @param position The step position to delete
      */
-    public void delMashStep(int position) {
+    public final void delMashStep(final int position) {
         sortMashSteps();
-        for (int i = 0; i < mashStepList.size(); i++) {
-            if (mashStepList.get(i).getPosition() == position) {
-                this.mashStepList.remove(i);
+        for (int i = 0; i < triggerList.size(); i++) {
+            if (triggerList.get(i).getPosition() == position) {
+                this.triggerList.remove(i);
             }
         }
 
         // No more steps, turn off the MashControl
-        if (mashStepList.size() == 0) {
+        if (triggerList.size() == 0) {
             setShutdownFlag(true);
             Thread.currentThread().interrupt();
         }

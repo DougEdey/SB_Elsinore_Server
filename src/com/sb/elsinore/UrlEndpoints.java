@@ -216,22 +216,23 @@ public class UrlEndpoints {
                     }
 
                     // We have a good step count, parse the value
-                    BigDecimal duration = new BigDecimal(
-                            valueObj.get("duration")
-                            .toString().replace(",", "."));
-                    BigDecimal temp = new BigDecimal(valueObj.get("temp")
-                            .toString().replace(",", "."));
-
-                    String method = valueObj.get("method").toString();
-                    String type = valueObj.get("type").toString();
+                    String mashStepType = (String) valueObj.get("Trigger");
+//                    BigDecimal duration = new BigDecimal(
+//                            valueObj.get("duration")
+//                            .toString().replace(",", "."));
+//                    BigDecimal temp = new BigDecimal(valueObj.get("temp")
+//                            .toString().replace(",", "."));
+//
+//                    String method = valueObj.get("method").toString();
+//                    String type = valueObj.get("type").toString();
 
                     // Add the step
-                    MashStep newStep = mControl.addMashStep(stepCount);
-                    newStep.setDuration(duration);
-                    newStep.setTemp(temp);
-                    newStep.setMethod(method);
-                    newStep.setType(type);
-                    newStep.setTempUnit(tempUnit, false);
+                    MashStep newStep = mControl.addMashStep(stepCount, mashStepType, valueObj);
+//                    newStep.setDuration(duration);
+//                    newStep.setTemp(temp);
+//                    newStep.setMethod(method);
+//                    newStep.setType(type);
+//                    newStep.setTempUnit(tempUnit, false);
 
                     BrewServer.LOG.info(newStep.toString());
                 } catch (NumberFormatException e) {
@@ -538,7 +539,7 @@ public class UrlEndpoints {
             BrewServer.LOG
                     .warning("Activated " + pid + " step at " + stepToUse);
         } else {
-            mObj.deactivateStep(stepToUse);
+            mObj.deactivateTrigger(stepToUse);
             BrewServer.LOG.warning("Deactivated " + pid + " step at "
                     + stepToUse);
         }
