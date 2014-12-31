@@ -2132,7 +2132,7 @@ public final class LaunchControl {
 
         BrewServer.LOG.info("Checking for volume");
         if (temp.hasVolume()) {
-            BrewServer.LOG.info("Saving volume");
+            System.out.println("Saving volume");
             setElementText(device, "volume-units", temp.getVolumeUnit());
             if (!temp.getVolumeAIN().equals("")) {
                 setElementText(device, "volume-ain",
@@ -2150,7 +2150,7 @@ public final class LaunchControl {
 
             if (volumeBase != null) {
                 for (Entry<BigDecimal, BigDecimal> e : volumeBase.entrySet()) {
-                    BrewServer.LOG.info("Saving volume point " + e.getKey()
+                    System.out.println("Saving volume point " + e.getKey()
                             + " value " + e.getValue());
                     Element volEntry = getFirstElementByXpath(null,
                             "/elsinore/device[@id='" + name + "']"
@@ -2274,7 +2274,7 @@ public final class LaunchControl {
                 .iterator();
         while (volIter.hasNext()) {
             Entry<BigDecimal, BigDecimal> entry = volIter.next();
-            BrewServer.LOG.info("Looking for volume entry: "
+            System.out.println("Looking for volume entry: "
                     + entry.getKey().toString());
 
             tElement = getFirstElementByXpath(null, "/elsinore/device[@id='"
