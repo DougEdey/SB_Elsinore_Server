@@ -795,7 +795,7 @@ public final class Temp implements Runnable {
         // record 10 readings and average it
         BigDecimal maxReads = BigDecimal.TEN;
         BigDecimal total = new BigDecimal(0);
-        
+        System.out.println(this.name + ": Adding volume data point " + volume);
         for (int i = 0; i < maxReads.intValue(); i++) {
             try {
                 try {
@@ -835,12 +835,11 @@ public final class Temp implements Runnable {
 
         // read in ten values
         BigDecimal avgValue = MathUtil.divide(total, maxReads);
-        
         BrewServer.LOG.info("Read " + avgValue + " for "
                 + volume + " " + volumeUnit.toString());
 
         this.addVolumeMeasurement(volume, avgValue);
-
+        System.out.println(this.name + ": Added volume data point " + volume);
         return true;
     }
 
