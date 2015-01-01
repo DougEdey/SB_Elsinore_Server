@@ -46,10 +46,10 @@ Then you can go to
 
 To run setup.
 
-Installing as an init.d script
+Installing as an init.d script on Ubuntu
 ==============================
 
-Elsinore now has a script which allows you to setup Elsinore as a service.
+Elsinore now has a script which allows you to setup Elsinore as a service. This only works on Ubuntu at the moment.
 
 You must EDIT the file ``` extras/elsinore ``` to ensure the ELSINORE_PATH variable matches the location you have cloned Elsinore into.
 
