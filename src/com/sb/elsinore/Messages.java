@@ -81,6 +81,9 @@ public class Messages extends NLS {
     public static String DELAY;
     public static String CALIBRATE;
 
+    public static String TRIGGERS;
+    public static String ADD_TRIGGER;
+    
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);
     }

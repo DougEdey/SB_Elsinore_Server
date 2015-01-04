@@ -139,7 +139,7 @@ public final class LaunchControl {
     /**
      * List of MashControl profiles.
      */
-    public static List<MashControl> mashList = new ArrayList<MashControl>();
+    public static List<TriggerControl> triggerControlList = new ArrayList<TriggerControl>();
     /**
      * List of pH Sensors.
      */
@@ -430,10 +430,10 @@ public final class LaunchControl {
                     }
                 }
 
-                synchronized (mashList) {
-                    if (mashList.size() > 0) {
+                synchronized (triggerControlList) {
+                    if (triggerControlList.size() > 0) {
                         BrewServer.LOG.warning("Shutting down MashControl threads.");
-                        for (MashControl m : mashList) {
+                        for (TriggerControl m : triggerControlList) {
                             m.setShutdownFlag(true);
                         }
                     }
@@ -744,9 +744,9 @@ public final class LaunchControl {
         }
 
         // Check for mash steps
-        if (mashList.size() > 0) {
+        if (triggerControlList.size() > 0) {
             tJSON = new JSONObject();
-            for (MashControl m : mashList) {
+            for (TriggerControl m : triggerControlList) {
                 tJSON.put(m.getOutputControl(), m.getJSONData());
             }
             rObj.put("mash", tJSON);
@@ -1185,7 +1185,7 @@ public final class LaunchControl {
             return null;
         }
 
-        if (!probe.startsWith("28")) {
+        if (!probe.startsWith("28") && !input.equals("System")) {
             BrewServer.LOG.warning(probe + " is not a temperature probe");
             return null;
         }
@@ -2597,7 +2597,10 @@ public final class LaunchControl {
         }
 
         Temp newTemp = startDevice(deviceName, probe, heatGPIO);
-
+        if (newTemp == null) {
+            System.out.println("Problems parsing device " + deviceName);
+            System.exit(-1);
+        }
         try {
             if (heatGPIO != null && GPIO.getPinNumber(heatGPIO) >= 0) {
                 PID tPID = LaunchControl.findPID(newTemp.getName());
@@ -2923,14 +2926,14 @@ public final class LaunchControl {
      * @param mControl
      *            The new mashControl to add
      */
-    public static void addMashControl(final MashControl mControl) {
-        if (findMashControl(mControl.getOutputControl()) != null) {
+    public static void addMashControl(final TriggerControl mControl) {
+        if (findTriggerControl(mControl.getOutputControl()) != null) {
             BrewServer.LOG
                     .warning("Duplicate Mash Profile detected! Not adding: "
                             + mControl.getOutputControl());
             return;
         }
-        mashList.add(mControl);
+        triggerControlList.add(mControl);
     }
 
     /**
@@ -2940,7 +2943,7 @@ public final class LaunchControl {
      *            The PID to find the mash control thread for.
      */
     public static void startMashControl(final String pid) {
-        MashControl mControl = findMashControl(pid);
+        TriggerControl mControl = findTriggerControl(pid);
         Thread mThread = new Thread(mControl);
         mThread.setName("Mash-Thread[" + pid + "]");
         mashThreads.add(mThread);
@@ -2948,25 +2951,24 @@ public final class LaunchControl {
     }
 
     /**
-     * Look for the MashControl for the specified PID.
-     * 
+     * Look for the TriggerControl for the specified PID.
+     *
      * @param pid
      *            The PID string to search for.
      * @return The MashControl for the PID.
      */
-    public static MashControl findMashControl(final String pid) {
-        for (MashControl m : mashList) {
+    public static TriggerControl findTriggerControl(final String pid) {
+        for (TriggerControl m : triggerControlList) {
             if (m.getOutputControl().equalsIgnoreCase(pid)) {
                 return m;
             }
         }
-
         return null;
     }
 
     /**
      * Get the current OWFS connection.
-     * 
+     *
      * @return The current OWFS Connection object
      */
     public static OwfsConnection getOWFS() {
@@ -2975,7 +2977,7 @@ public final class LaunchControl {
 
     /**
      * Helper to get the current list of timers.
-     * 
+     *
      * @return The current list of timers.
      */
     public static CopyOnWriteArrayList<Timer> getTimerList() {
@@ -3295,12 +3297,6 @@ public final class LaunchControl {
                     if (scale.equals("F")) {
                         p.setTemp(Temp.cToF(p.getSetPoint()));
                     }
-                }
-            }
-            MashControl m = LaunchControl.findMashControl(t.getName());
-            if (m != null) {
-                for (int i = 0; i < m.getMashStepSize(); i++) {
-                    m.getMashStep(i).setTempUnit(scale, true);
                 }
             }
             t.setScale(scale);

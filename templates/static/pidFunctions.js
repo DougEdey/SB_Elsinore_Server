@@ -394,21 +394,21 @@ function addMashTable(vesselName) {
 		table = "<table id='mashTable" + vesselName
 				+ "' class='table table-curved'>";
 		table += "<thead><tr>";
-		table += "<th colspan='2'>" + $.i18n.prop("MASH_STEP") + "</th>";
-		table += "<th>" + $.i18n.prop("TEMP") + "</th>";
-		table += "<th>" + $.i18n.prop("TIME") + "</th>";
+		table += "<th colspan='2'>" + $.i18n.prop("TRIGGER") + "</th>";
+		table += "<th></th>";
+		table += "<th></th>";
 		table += "</tr></thead>";
 		table += "<tbody class='tbody'></tbody>"
 
 		table += "<tfoot><tr><td colspan='2'>"
-				+ "<button class='btn btn-success' id='addMash-" + vesselName
-				+ "' type='button' onclick='addNewMashStep(this)' "
-				+ "ondrop='dropDeleteMashStep(event);' "
-				+ "ondragover='allowDropMashStep(event);'>"
+				+ "<button class='btn btn-success' id='addTrigger-" + vesselName
+				+ "' type='button' onclick='addNewTrigger(this)' "
+				+ "ondrop='dropDeleteTrigger(event);' "
+				+ "ondragover='allowDropTrigger(event);'>"
 				+ $.i18n.prop("ADD") + "</button></td>";
-		table += "<td colspan='2'><button class='btn btn-success' id='mashButton-"
+		table += "<td colspan='2'><button class='btn btn-success' id='triggerButton-"
 				+ vesselName
-				+ "' type='button' onclick='mashToggle(this)'>"
+				+ "' type='button' onclick='triggerToggle(this)'>"
 				+ $.i18n.prop("ACTIVATE") + "</button></td></tr></tfoot>";
 		+"</tbody></table>";
 		table += "<br id='mashTable" + vesselName + "footer'/>";
@@ -1252,59 +1252,56 @@ function submitNewTimer(form) {
 	return false;
 }
 
-function addNewMashStep(button) {
-	var pid = button.id.replace("addMash-", "");
+function addNewTrigger(button) {
+	var pid = button.id.replace("addTrigger-", "");
 	// Insert a couple of new form elements
 	var tempUnit = $("#" + pid + " div >div >div[id='tempUnit']")[0].textContent;
-	$('#mashTable' + pid + "footer")
-			.after(
-					"<div id='"
-							+ pid
-							+ "-mashadd'>"
-							+ "<form id='"
-							+ pid
-							+ "-mash-add-form' name='"
-							+ pid
-							+ "-mash-add'>"
-							+ "<input type='text' name='temp' id='temp' value='' placeholder='"
-							+ $.i18n.prop("TEMP")
-							+ "' />"
-							+ "<input type='text' name='temp_unit' id='temp_unit' value='"
-							+ tempUnit
-							+ "' placeholder='"
-							+ $.i18n.prop("TEMP_UNIT")
-							+ "' /><br/>"
-							+ "<input type='text' name='method' id='method' value='' placeholder='"
-							+ $.i18n.prop("METHOD")
-							+ "' /><br/>"
-							+ "<input type='text' name='type' id='type' value='' placeholder='"
-							+ $.i18n.prop("TYPE")
-							+ "' /><br/>"
-							+ "<input type='text' name='duration' id='duration' value='' placeholder='DURATION' /><br/>"
-							+ "<input type='hidden' name='pid' value='"
-							+ pid
-							+ "' />"
-							+ "<input type='hidden' name='step' value='"
-							+ ($("#mashTable" + pid + " > tbody > tr").length)
-							+ "' />"
-							+ "<button id='add-timer' class='btn modeclass' "
-							+ "onclick='submitNewMashStep(this.form); return false;'>"
-							+ $.i18n.prop("ADD")
-							+ "</button>"
-							+ "<button id='cancel-add-mash-step' class='btn modeclass' "
-							+ "onclick='cancelAddMashStep(" + pid
-							+ "); waitForMsg(); return false;'>"
-							+ $.i18n.prop("CANCEL") + "</button>" + "</form>"
-							+ "</div>");
+	var $tr = $(button);
+    
+    $tr.popover('destroy');
+	 //$tr.popover();
+    $.ajax({
+        url: '/getNewTriggers',
+        data: {temp: pid},
+        dataType: 'html',
+        success: function(html) {
+            $tr.popover({
+                title: 'Create New Trigger',
+                content: html,
+                placement: 'top',
+                html: true,
+                trigger: 'manual'
+            }).popover('show');
+        }
+    });
 	return false;
 }
 
-function cancelAddMashStep(vessel) {
-	$("#" + pid + "-mashadd").empty();
+function newTrigger(button, probe) {
+	// Do we need to disable the input form?
+	if ($(button).closest("#newTriggersForm").find("[name=type] option:selected").val() == "") {
+		$(button).closest(".popover-content").find("#childInput").html("");
+		return false;
+	}
+	
+	$.ajax({
+        url: '/getTriggerForm',
+        data: $(button.parentElement).serializeObject(),
+        dataType: 'html',
+        success: function(html) {
+        	$(button).closest(".popover-content").find("#childInput").html(html)
+        }
+    });
 	return false;
 }
 
-function submitNewMashStep(form) {
+function cancelAddTrigger(vessel) {
+	var $tr = $(vessel);
+	$tr.popover('destroy');
+	return false;
+}
+
+function submitNewTrigger(form) {
 	var data = JSON.stringify(jQuery(form).serializeObject());
 	$.ajax({
 		url : 'addmashstep',
@@ -1321,12 +1318,12 @@ function submitNewMashStep(form) {
 	return false;
 }
 
-function deleteMashStep(vessel, position) {
+function deleteTrigger(vessel, position) {
 	// Delete the mash step at the specified position
 	$.ajax({
-		url : 'delMashStep',
+		url : 'delTrigger',
 		type : 'POST',
-		data : "pid=" + vessel + "&position=" + position,
+		data : "temp=" + vessel + "&position=" + position,
 		success : function(data) {
 			data = null
 		}
@@ -1335,11 +1332,11 @@ function deleteMashStep(vessel, position) {
 	return false;
 }
 
-function mashToggle(button, position) {
+function triggerToggle(button, position) {
 	// Parse out the PID from the controller
-	var pid = button.id.replace("mashButton-", "");
+	var pid = button.id.replace("triggerButton-", "");
 	postData = {};
-	postData['pid'] = pid;
+	postData['trigger'] = pid;
 	postData['status'] = button.innerText.toLowerCase();
 
 	if (position !== 'undefined') {
@@ -1347,7 +1344,7 @@ function mashToggle(button, position) {
 	}
 
 	$.ajax({
-		url : 'toggleMash',
+		url : 'toggleTrigger',
 		type : 'POST',
 		data : postData,
 		success : function(data) {

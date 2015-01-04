@@ -1,6 +1,9 @@
 package com.sb.elsinore.triggers;
 
+import java.io.IOException;
+
 import org.json.simple.JSONObject;
+import org.rendersnake.HtmlCanvas;
 
 /**
  * This is the base Trigger interface, a trigger should cause an action.
@@ -10,20 +13,14 @@ import org.json.simple.JSONObject;
 public interface TriggerInterface {
 
     /**
+     * Get the name of this Trigger.
+     * @return The name of the trigger.
+     */
+    String getName();
+    /**
      * Causes a wait until the trigger condition is met.
      */
     void waitForTrigger();
-
-    /**
-     * Set the action to be performed when this trigger is met.
-     * @param action The Action object to associate with this Trigger.
-     */
-    void setAction(ActionInterface action);
-    /**
-     * Get the action to perform next.
-     * @return The Action Object that's being returned
-     */
-    ActionInterface getAction();
 
     /**
      * Get a JSON Object representing the current status of the object.
@@ -43,4 +40,18 @@ public interface TriggerInterface {
      * @return The trigger position.
      */
     int getPosition();
+
+    /**
+     * Get the input form for this trigger.
+     * @return The {@link org.rendersnake.HtmlCanvas} object that
+     * represents this trigger.
+     * @throws IOException If the HtmlCanvas creation causes an exception.
+     */
+    HtmlCanvas getForm() throws IOException;
+
+    /**
+     * Set the position of this Trigger.
+     * @param newPos The new position.
+     */
+    void setPosition(int newPos);
 }

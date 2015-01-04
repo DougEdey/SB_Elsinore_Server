@@ -1,6 +1,7 @@
 package com.sb.elsinore.triggers;
 
 import org.json.simple.JSONObject;
+import org.rendersnake.HtmlCanvas;
 
 /**
  * Base Interface for actions.
@@ -19,4 +20,11 @@ public interface ActionInterface {
      * Perform the action in the object.
      */
     void performAction();
+
+    /**
+     * Return the Form HTML Canvas representing this interface for input.
+     * @param stepCount The position to add to any details.
+     * @return The HTML Canvas representing the input form for this Trigger.
+     */
+    HtmlCanvas getForm(int stepCount);
 }

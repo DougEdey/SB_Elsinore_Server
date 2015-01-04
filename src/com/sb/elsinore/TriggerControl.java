@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -21,6 +22,10 @@ import org.joda.time.DateTime;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.reflections.Reflections;
+import org.rendersnake.HtmlCanvas;
+import org.rendersnake.tools.PrettyWriter;
+
+import static org.rendersnake.HtmlAttributesFactory.*;
 
 import com.sb.elsinore.triggers.TriggerInterface;
 
@@ -35,7 +40,7 @@ import sun.reflect.Reflection;
  *
  */
 
-public class MashControl implements Runnable {
+public class TriggerControl implements Runnable {
 
     /**
      * The output PID to be controlled & read from.
@@ -43,19 +48,9 @@ public class MashControl implements Runnable {
     private String outputControl = "";
 
     /**
-     * The Pump to be controlled (not in use yet).
-     */
-    private String pumpControl = "";
-
-    /**
      * A flag to tell the thread to shutdown.
      */
     private boolean shutdownFlag = false;
-
-    /**
-     * The default variance.
-     */
-    private double varianceF = 2.0;
 
     /**
      * The list of mash steps, position -> Step.
@@ -66,31 +61,128 @@ public class MashControl implements Runnable {
     /**
      * Add a mashstep at a position, overriding the old one.
      * @param position The position to add the mashstep at
+     * @param type The Type of the Trigger to add.
+     * @param parameters The Incoming parameter JSONObject
+     * to use to setup the trigger
      * @return The new Mash Step
      */
-    public final TriggerInterface addMashStep(final int position, String type, JSONObject parameters) {
-        Set<Class<? extends TriggerInterface>> triggerSet = new Reflections("com.sb.elsinore.triggers")
-            .getSubTypesOf(TriggerInterface.class);
-        String seekName = type + "Trigger";
+    public final TriggerInterface addTrigger(final int position,
+            final String type, final JSONObject parameters) {
         TriggerInterface triggerStep = null;
-        for (Class<? extends TriggerInterface> triggerClass: triggerSet) {
-            if (triggerClass.getName().equals(seekName)) {
-                try {
-                    Constructor<? extends TriggerInterface> triggerConstructor
-                        = triggerClass.getConstructor(int.class, JSONObject.class);
-                    triggerStep = triggerConstructor.newInstance(position, parameters);
-                    triggerList.add(triggerStep);
-                } catch (InstantiationException | IllegalAccessException
-                        | IllegalArgumentException | InvocationTargetException
-                        | NoSuchMethodException | SecurityException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-
+        Class<? extends TriggerInterface> triggerClass = getTriggerOfName(type);
+        if (triggerClass == null) {
+            return null;
         }
-        
+
+        // Find the constructor.
+        try {
+            Constructor<? extends TriggerInterface> triggerConstructor
+                = triggerClass.getConstructor(
+                        int.class, JSONObject.class);
+            triggerStep = triggerConstructor.newInstance(
+                    position, parameters);
+            triggerList.add(triggerStep);
+        } catch (InstantiationException | IllegalAccessException
+                | IllegalArgumentException | InvocationTargetException
+                | NoSuchMethodException | SecurityException e) {
+            e.printStackTrace();
+        }
+
         return triggerStep;
+    }
+
+    /**
+     * Get the input trigger form for the specified type.
+     * @param position The position to add the new trigger at.
+     * @param type The Type of the Trigger interface to get.
+     * @return The HtmlCanvas representing the form.
+     */
+    public static final HtmlCanvas getNewTriggerForm(final int position,
+            final String type) {
+        TriggerInterface triggerStep = null;
+        Class<? extends TriggerInterface> triggerClass = getTriggerOfName(type);
+        if (triggerClass == null) {
+            LaunchControl.setMessage(
+                    "Couldn't find the Trigger Class for " + type);
+            return null;
+        }
+
+        // Find the constructor.
+        try {
+            Constructor<? extends TriggerInterface> triggerConstructor
+                = triggerClass.getConstructor(
+                        int.class);
+            if (triggerConstructor == null) {
+                LaunchControl.setMessage(
+                    "Couldn't find the basic constructor for " + type);
+                return null;
+            }
+            triggerStep = triggerConstructor.newInstance(
+                    position);
+            return triggerStep.getForm();
+        } catch (InstantiationException | IllegalAccessException
+                | IllegalArgumentException | InvocationTargetException
+                | NoSuchMethodException | SecurityException | IOException e) {
+            LaunchControl.setMessage(e.getMessage());
+            e.printStackTrace();
+        }
+        LaunchControl.setMessage("Failed to create trigger form for " + type);
+        return null;
+    }
+
+    /**
+     * Get the Trigger Class that matches the incoming name.
+     * @param name The name of the trigger to get.
+     * @return The Class representing the trigger.
+     */
+    public static final Class<? extends TriggerInterface> getTriggerOfName(
+            final String name) {
+        String seekName = name + "Trigger";
+        // Find the trigger.
+        return getTriggerList().get(seekName);
+    }
+
+    /**
+     * Get a map of the triggerInterface classes.
+     * @return A Map of className: Class.
+     */
+    public static final Map<String, Class<? extends TriggerInterface>>
+        getTriggerList() {
+        HashMap<String, Class<? extends TriggerInterface>> interfaceMap =
+                new HashMap<String, Class<? extends TriggerInterface>>();
+
+        Set<Class<? extends TriggerInterface>> triggerSet =
+                new Reflections("com.sb.elsinore.triggers")
+                    .getSubTypesOf(TriggerInterface.class);
+        for (Class<? extends TriggerInterface> triggerClass: triggerSet) {
+            interfaceMap.put(triggerClass.getSimpleName(), triggerClass);
+        }
+
+        return interfaceMap;
+    }
+
+    public static final Map<String, String> getTriggerTypes() {
+        Map<String, Class<? extends TriggerInterface>> interfaceMap =
+                getTriggerList();
+        Map<String, String> typeMap = new HashMap<String, String>();
+
+        // Get the String, String array
+        for (Entry<String, Class<? extends TriggerInterface>> entry:
+            interfaceMap.entrySet()) {
+            Constructor<? extends TriggerInterface> tempTrigger = null;
+            try {
+                tempTrigger = entry.getValue().getConstructor();
+                typeMap.put(entry.getKey().replace("Trigger",  ""),
+                        tempTrigger.newInstance().getName());
+            } catch (NoSuchMethodException | SecurityException |
+                    InstantiationException | IllegalAccessException |
+                    IllegalArgumentException | InvocationTargetException e) {
+                BrewServer.LOG.warning("Couldn't get the default constructor for: "
+                        + entry.getKey() + ". " + e.getLocalizedMessage());
+            }
+        }
+
+        return typeMap;
     }
 
     /**
@@ -310,5 +402,38 @@ public class MashControl implements Runnable {
             setShutdownFlag(true);
             Thread.currentThread().interrupt();
         }
+    }
+
+    /**
+     * Get the new triggers form for display.
+     * @param probe The name of the probe to attach to.
+     * @return The new triggers canvas
+     * @throws IOException If the form couldn't be created.
+     */
+    public static final HtmlCanvas getNewTriggersForm(final String probe)
+            throws IOException {
+        HtmlCanvas htmlCanvas = new HtmlCanvas(new PrettyWriter());
+        htmlCanvas.div(id("newTriggersForm"))
+            .form()
+                .select(name("type")
+                        .onClick("newTrigger(this, '" + probe + "');"));
+            htmlCanvas.option(value("").selected_if(true))
+                .write("Select Trigger Type")
+            ._option();
+            Map<String, String> triggers = getTriggerTypes();
+            for (Entry<String, String> entry: triggers.entrySet()) {
+                htmlCanvas.option(value(entry.getKey()))
+                    .write(entry.getValue())
+                ._option();
+            }
+                htmlCanvas._select();
+                htmlCanvas.input(id("temp").name("temp")
+                        .hidden("true").value(probe));
+                htmlCanvas.input(id("position").name("position")
+                        .hidden("true").value("-1"))
+            ._form()
+        ._div()
+        .div(id("childInput"))._div();
+        return htmlCanvas;
     }
 }
