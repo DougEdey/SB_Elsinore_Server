@@ -12,6 +12,7 @@ import static org.rendersnake.HtmlAttributesFactory.*;
 
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
+import com.sb.elsinore.Messages;
 import com.sb.elsinore.Temp;
 
 /**
@@ -79,14 +80,14 @@ public class TemperatureTrigger implements TriggerInterface {
     public TemperatureTrigger(final int inPosition,
             final JSONObject parameters) {
         this.position = inPosition;
-        BigDecimal temp = new BigDecimal(
-              parameters.get("temp").toString().replace(",", "."));
+        BigDecimal tTemp = new BigDecimal(
+              parameters.get("targetTemp").toString().replace(",", "."));
 
         String method = parameters.get("method").toString();
-        String type = parameters.get("type").toString();
+        String type = parameters.get("stepType").toString();
         String tempProbe = parameters.get("tempProbe").toString();
 
-        this.targetTemp = temp;
+        this.targetTemp = tTemp;
         setTemperatureProbe(tempProbe);
         this.mode = method + ": " + type;
     }
@@ -208,8 +209,20 @@ public class TemperatureTrigger implements TriggerInterface {
     @Override
     public final HtmlCanvas getForm() throws IOException {
         HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
-        html.div(id("NewTempTrigger").class_(""))
-            .write("TempTrigger Input Form")
+        html.div(id("NewTempTrigger").class_(""));
+            html.input(id("type").name("type")
+                        .hidden("true").value("Temperature"));
+            html.input(class_("inputBox temperature")
+                    .type("number").add("step", "any")
+                    .name("temperature").value(""));
+            html.input(class_("inputBox").name("method").value("")
+                    .add("placeholder", Messages.METHOD));
+            html.input(class_("inputBox").name("stepType").value("")
+                    .add("placeholder", Messages.TYPE));
+            html.button(name("submitTemperature")
+                    .onClick("submitNewTriggerStep(this);"))
+                .write(Messages.ADD_TRIGGER)
+            ._button()
         ._div();
         return html;
     }

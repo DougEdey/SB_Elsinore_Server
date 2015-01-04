@@ -199,30 +199,30 @@ function waitForMsg() {
 
 					}
 
-					if ("mash" in data) {
-						val = data.mash;
+					if ("trigger" in data) {
+						val = data.trigger;
 						if (val != 'Unset') {
 
 							val = sortObjectByKey(val);
 
 							$.each(val,
-									function(mashPID, mashDetails) {
+									function(triggerPID, triggerDetails) {
 										// Iterate the list of mash Lists
-										addMashTable(mashPID);
-										$.each(mashDetails, function(mashStep,
-												mashData) {
-											if (mashStep != 'pid') {
-												addMashStep(mashStep, mashData,
-														mashPID);
+										addTriggerTable(triggerPID);
+										$.each(triggerDetails, function(triggerStep,
+												triggerData) {
+											if (triggerStep != 'pid') {
+												addtriggerStep(triggerStep, triggerData,
+														triggerPID);
 											}
 										});
 
-										if ($("#mashTable" + mashPID).find(
+										if ($("#triggerTable" + triggerPID).find(
 												'.success').length > 0) {
-											$("#mashButton-" + mashPID).text(
+											$("#triggerButton-" + triggerPID).text(
 													$.i18n.prop("DISABLE"));
 										} else {
-											$("#mashButton-" + mashPID).text(
+											$("#triggerButton-" + triggerPID).text(
 													$.i18n.prop("ACTIVATE"));
 										}
 
@@ -232,32 +232,29 @@ function waitForMsg() {
 
 					if ("pumps" in data) {
 						val = data.pumps;
-						$
-								.each(
-										val,
-										function(pumpName, pumpStatus) {
-											// enable or disable the pump as
-											// required
-											if (pumpStatus) {
-												jQuery('button[id^="'
-														+ pumpName + '"]')[0].style.background = "red";
-												jQuery('button[id^="'
-														+ pumpName + '"]')[0].innerHTML = pumpName
-														.replace("_", " ")
-														+ " "
-														+ $.i18n
-																.prop("PUMP_ON");
-											} else {
-												jQuery('button[id^="'
-														+ pumpName + '"]')[0].style.background = "#666666";
-												jQuery('button[id^="'
-														+ pumpName + '"]')[0].innerHTML = pumpName
-														.replace("_", " ")
-														+ " "
-														+ $.i18n
-																.prop("PUMP_OFF");
-											}
-										});
+						$.each(
+							val,
+							function(pumpName, pumpStatus) {
+								// enable or disable the pump as
+								// required
+								if (pumpStatus) {
+									jQuery('button[id^="'
+											+ pumpName + '"]')[0].style.background = "red";
+									jQuery('button[id^="'
+											+ pumpName + '"]')[0].innerHTML = pumpName
+											.replace("_", " ")
+											+ " "
+											+ $.i18n.prop("PUMP_ON");
+								} else {
+									jQuery('button[id^="'
+											+ pumpName + '"]')[0].style.background = "#666666";
+									jQuery('button[id^="'
+											+ pumpName + '"]')[0].innerHTML = pumpName
+											.replace("_", " ")
+											+ " "
+											+ $.i18n.prop("PUMP_OFF");
+								}
+							});
 					}
 
 					if (window.disableUpdates) {
@@ -300,16 +297,13 @@ function waitForMsg() {
 													return;
 												}
 											}
-
+											addTriggerTable(vesselName);
 											if ("tempprobe" in vesselStatus) {
 												updateTempProbe(vesselName,
 														vesselStatus.tempprobe);
 											}
 
 											if ("pidstatus" in vesselStatus) {
-
-												addMashTable(vesselName);
-
 												updatePIDStatus(vesselName,
 														vesselStatus.pidstatus);
 
@@ -389,9 +383,9 @@ function waitForMsg() {
 
 }
 
-function addMashTable(vesselName) {
-	if ($("#mashTable" + vesselName).length == 0) {
-		table = "<table id='mashTable" + vesselName
+function addTriggerTable(vesselName) {
+	if ($("#triggerTable" + vesselName).length == 0) {
+		table = "<table id='triggerTable" + vesselName
 				+ "' class='table table-curved'>";
 		table += "<thead><tr>";
 		table += "<th colspan='2'>" + $.i18n.prop("TRIGGER") + "</th>";
@@ -411,9 +405,9 @@ function addMashTable(vesselName) {
 				+ "' type='button' onclick='triggerToggle(this)'>"
 				+ $.i18n.prop("ACTIVATE") + "</button></td></tr></tfoot>";
 		+"</tbody></table>";
-		table += "<br id='mashTable" + vesselName + "footer'/>";
+		table += "<br id='triggerTable" + vesselName + "footer'/>";
 
-		$("#" + vesselName + "-gage").after(table);
+		$("#" + vesselName + "-graph_wrapper").after(table);
 
 	}
 }
@@ -1301,10 +1295,15 @@ function cancelAddTrigger(vessel) {
 	return false;
 }
 
-function submitNewTrigger(form) {
-	var data = JSON.stringify(jQuery(form).serializeObject());
+function submitNewTriggerStep(button) {
+	var data = $(button).closest("#newTriggersForm").serializeObject();
+	if (!("tempProbe" in data)) {
+		var addTriggerID = $(button).closest("[id^=triggerTable]").id;
+		data.tempProbe = addTriggerID.substring("triggerTable".length);
+	} 
+	
 	$.ajax({
-		url : 'addmashstep',
+		url : 'addtriggertotemp',
 		type : 'POST',
 		data : data,
 		success : function(data) {
@@ -1506,31 +1505,30 @@ function toggleAux(PIDName) {
 	return false;
 }
 
-function addMashStep(mashStep, mashData, pid) {
-	// Mashstep is the int position
-	// mashData contains the actual data to be displayed
-	if (mashStep == "mashstep" || "index" in mashData) {
-		mashStep = mashData['index'];
+function addTriggerStep(triggerStep, triggerData, pid) {
+	// 
+	if (triggerStep == "triggerstep" || "index" in triggerData) {
+		triggerStep = triggerData['index'];
 	}
 
-	var mashStepRow = $("#mashRow" + pid + "-" + mashStep);
-	if (mashStepRow.length == 0) {
+	var triggerStepRow = $("#triggerRow" + pid + "-" + triggerStep);
+	if (triggerStepRow.length == 0) {
 		// Add a new row to the Mash Table
-		tableRow = "<tr id='mashRow" + pid + "-" + mashStep + "'"
-				+ " ondragstart='dragMashStep(event);' draggable='true'"
-				+ " ondrop='dropMashStep(event);'"
-				+ " ondragover='allowDropMashStep(event);'>"
-		tableRow += ("<td>" + mashData['type'] + "</td>");
-		tableRow += ("<td>" + mashData['method'] + "</td>");
-		tableRow += ("<td>" + mashData['target_temp']
-				+ mashData['target_temp_unit'] + "</td>");
-		tableRow += ("<td id='mashTimer" + pid + "'>" + mashData['duration'] + "</td>");
+		tableRow = "<tr id='triggerRow" + pid + "-" + triggerStep + "'"
+				+ " ondragstart='dragTriggerStep(event);' draggable='true'"
+				+ " ondrop='dropTriggerStep(event);'"
+				+ " ondragover='allowDropTriggerStep(event);'>"
+		tableRow += ("<td>" + triggerData['type'] + "</td>");
+		tableRow += ("<td>" + triggerData['method'] + "</td>");
+		tableRow += ("<td>" + triggerData['target_temp']
+				+ triggerData['target_temp_unit'] + "</td>");
+		tableRow += ("<td id='mashTimer" + pid + "'>" + triggerData['duration'] + "</td>");
 		tableRow += ("</tr>");
 
-		if ($("#mashTable" + pid + " > tbody > tr").length == 0) {
-			$("#mashTable" + pid + " > tbody").append(tableRow);
+		if ($("#triggerTable" + pid + " > tbody > tr").length == 0) {
+			$("#triggerTable" + pid + " > tbody").append(tableRow);
 		} else {
-			mashStepRow = $("#mashTable" + pid + " > tbody > tr").eq(
+			mashStepRow = $("#triggerTable" + pid + " > tbody > tr").eq(
 					mashStep - 1).after(tableRow);
 		}
 
@@ -1995,7 +1993,7 @@ function dropMashStep(ev) {
 			refNode.nextSibling);
 
 	var newOrder = "pid=" + vessel + "&";
-	$("#mashTable" + vessel + " > tbody > tr").each(function(index) {
+	$("#triggerTable" + vessel + " > tbody > tr").each(function(index) {
 		var divID = this.id;
 		if (divID == "") {
 			return;
@@ -2281,9 +2279,9 @@ function readWriteDevices() {
 						$('[id=' + vessel + '-volumeeditbutton').css('display', 'table-cell');
 						$('[id=' + vessel + '-title]').css('cursor', "pointer");
 						// display the mash table if needs be
-						if ($('[id=mashTable' + vessel + '] > tbody > tr').length == 0) {
+						if ($('[id=triggerTable' + vessel + '] > tbody > tr').length == 0) {
 							// show it
-							$('[id=mashTable' + vessel + ']').css('display',
+							$('[id=triggerTable' + vessel + ']').css('display',
 									'block');
 						}
 					});
@@ -2315,9 +2313,9 @@ function readOnlyDevices() {
 						$('[id=' + vessel + '-title]').css('cursor', "auto");
 
 						// disable the mash table if needs be
-						if ($('[id=mashTable' + vessel + '] > tbody > tr').length == 0) {
+						if ($('[id=triggerTable' + vessel + '] > tbody > tr').length == 0) {
 							// hide
-							$('[id=mashTable' + vessel + ']').css('display',
+							$('[id=triggerTable' + vessel + ']').css('display',
 									'none');
 						}
 					});
