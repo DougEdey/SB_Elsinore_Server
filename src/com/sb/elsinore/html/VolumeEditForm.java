@@ -28,14 +28,14 @@ public class VolumeEditForm implements Renderable {
                     .name(vessel.getName() + "-edit"))
                 .input(type("hidden").name("name").id("name")
                         .value(vessel.getName()))
-                .br()
-//                html.input(type("text").class_("form-control")
-//                        .name("adc_pin")
-//                        .id("adc_pin").value(vessel.getVolumeAIN())
-//                        .add("placeholder", Messages.ANALOGUE_PIN))
-//                .br()
+                .br();
+                html.input(type("text").class_("form-control")
+                        .name("adc_pin")
+                        .id("adc_pin").value(vessel.getVolumeAIN())
+                        .add("placeholder", Messages.ANALOGUE_PIN))
+                .br();
                 // Replace this with a list
-                .select(class_("holo-spinner").name("onewire_address")
+                html.select(class_("holo-spinner").name("onewire_address")
                         .id("onewire_address"));
                 html.option(value("").selected_if(
                         "".equals(vessel.getVolumeAddress())))
