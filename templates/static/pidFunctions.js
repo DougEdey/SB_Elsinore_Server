@@ -1262,7 +1262,7 @@ function addNewTrigger(button) {
             $tr.popover({
                 title: 'Create New Trigger',
                 content: html,
-                placement: 'top',
+                placement: 'bottom',
                 html: true,
                 trigger: 'manual'
             }).popover('show');
@@ -1298,7 +1298,7 @@ function cancelAddTrigger(vessel) {
 function submitNewTriggerStep(button) {
 	var data = $(button).closest("#newTriggersForm").serializeObject();
 	if (!("tempProbe" in data)) {
-		var addTriggerID = $(button).closest("[id^=triggerTable]").id;
+		var addTriggerID = $(button).closest("[id^=triggerTable]")[0].id;
 		data.tempProbe = addTriggerID.substring("triggerTable".length);
 	} 
 	

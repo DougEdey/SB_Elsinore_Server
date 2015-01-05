@@ -220,6 +220,7 @@ public class TemperatureTrigger implements TriggerInterface {
             html.input(class_("inputBox").name("stepType").value("")
                     .add("placeholder", Messages.TYPE));
             html.button(name("submitTemperature")
+                    .add("data-toggle", "clickover")
                     .onClick("submitNewTriggerStep(this);"))
                 .write(Messages.ADD_TRIGGER)
             ._button()
