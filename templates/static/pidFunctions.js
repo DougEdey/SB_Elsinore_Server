@@ -1301,6 +1301,10 @@ function submitNewTriggerStep(button) {
 		var addTriggerID = $(button).closest("[id^=triggerTable]")[0].id;
 		data.tempProbe = addTriggerID.substring("triggerTable".length);
 	} 
+	if (!("position" in data)) {
+		var position = $(button).closest("[id^=triggerTable]").find('tbody > tr').length;
+		data.position = position;
+	}
 	
 	$.ajax({
 		url : 'addtriggertotemp',
@@ -1310,9 +1314,7 @@ function submitNewTriggerStep(button) {
 			data = null
 		}
 	});
-	// Increment the step.
-	$("#" + form.id + " > input[name='step']").val(
-			parseInt($("#" + form.id + " > input[name='step']").val()) + 1);
+
 	window.disableUpdates = 0;
 	return false;
 }
@@ -2251,74 +2253,74 @@ function readWritePhSensors() {
 
 function readWriteDevices() {
 	// Check the devices to see which ones aren't configured.
-	$("[id$='-title']")
-			.each(
-					function(index) {
-						var vessel = this.id.replace("-title", "")
-						var vesselForm = 'form[id="' + vessel + '-form"]';
-						var devAddr = $(
-								'#' + vesselForm
-										+ ' > input[name="deviceaddr"]').val();
-						if (devAddr == this.textContent) {
-							$('[id=' + this.id.replace("-form", "") + ']').css(
-									'display', 'block')
-						}
+	$("[id$='-title']").each(
+		function(index) {
+			var vessel = this.id.replace("-title", "")
+			var vesselForm = 'form[id="' + vessel + '-form"]';
+			var devAddr = $(
+					'#' + vesselForm
+							+ ' > input[name="deviceaddr"]').val();
+			if (devAddr == this.textContent) {
+				$('[id=' + this.id.replace("-form", "") + ']').css(
+						'display', 'block')
+			}
 
-						if (vessel.toLowerCase() == "system") {
-							if ($('[id=System-tempGauge]').length == 0) {
-								// not enabled
-								this.setAttribute("onclick",
-										"enableSystem(this);");
-							} else {
-								this.setAttribute("onclick",
-										"disableSystem(this);");
-							}
-						} else {
-							this.setAttribute("onclick", "editDevice(this);");
-						}
-						$('[id=' + vessel + '-volumeeditbutton').css('display', 'table-cell');
-						$('[id=' + vessel + '-title]').css('cursor', "pointer");
-						// display the mash table if needs be
-						if ($('[id=triggerTable' + vessel + '] > tbody > tr').length == 0) {
-							// show it
-							$('[id=triggerTable' + vessel + ']').css('display',
-									'block');
-						}
-					});
+			if (vessel.toLowerCase() == "system") {
+				if ($('[id=System-tempGauge]').length == 0) {
+					// not enabled
+					this.setAttribute("onclick",
+							"enableSystem(this);");
+				} else {
+					this.setAttribute("onclick",
+							"disableSystem(this);");
+				}
+			} else {
+				this.setAttribute("onclick", "editDevice(this);");
+			}
+			$('[id=' + vessel + '-volumeeditbutton').css('display', 'table-cell');
+			$('[id=' + vessel + '-title]').css('cursor', "pointer");
+			// display the mash table if needs be
+			if ($('[id=triggerTable' + vessel + '] > tbody > tr').length == 0) {
+				// show it
+				$('[id=triggerTable' + vessel + ']').css('display',
+						'block');
+			}
+		}
+	);
 }
 
 function readOnlyDevices() {
 	// Check the devices to see which ones aren't configured.
-	$("[id$='-title']")
-			.each(
-					function(index) {
+	$("[id$='-title']").each(
+		function(index) {
 
-						var vessel = this.id.replace("-title", "")
-						if (vessel == "messages") {
-							return;
-						}
-						$('[id=' + vessel + '-volumeeditbutton').css('display', 'none');
-						var vesselForm = 'form[id="' + vessel + '-form"]';
-						var devAddr = $(
-								'#' + vesselForm
-										+ ' > input[name="deviceaddr"]').val();
-						if (devAddr == this.textContent) {
-							if (vessel != "System"
-									|| this.getAttribute("onClick")
-											.lastIndexOf("enable") == 0) {
-								$('[id=' + vessel + ']').css('display', 'none')
-							}
-						}
-						this.removeAttribute("onClick");
-						$('[id=' + vessel + '-title]').css('cursor', "auto");
+			var vessel = this.id.replace("-title", "")
+			if (vessel == "messages") {
+				return;
+			}
+			$('[id=' + vessel + '-volumeeditbutton').css('display', 'none');
+			var vesselForm = 'form[id="' + vessel + '-form"]';
+			var devAddr = $(
+					'#' + vesselForm
+							+ ' > input[name="deviceaddr"]').val();
+			if (devAddr == this.textContent) {
+				if (vessel != "System"
+						|| this.getAttribute("onClick")
+								.lastIndexOf("enable") == 0) {
+					$('[id=' + vessel + ']').css('display', 'none')
+				}
+			}
+			this.removeAttribute("onClick");
+			$('[id=' + vessel + '-title]').css('cursor', "auto");
 
-						// disable the mash table if needs be
-						if ($('[id=triggerTable' + vessel + '] > tbody > tr').length == 0) {
-							// hide
-							$('[id=triggerTable' + vessel + ']').css('display',
-									'none');
-						}
-					});
+			// disable the mash table if needs be
+			if ($('[id=triggerTable' + vessel + '] > tbody > tr').length == 0) {
+				// hide
+				$('[id=triggerTable' + vessel + ']').css('display',
+						'none');
+			}
+		}
+	);
 }
 
 function enableSystem(element) {

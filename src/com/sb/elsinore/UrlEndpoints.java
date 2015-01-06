@@ -2151,4 +2151,19 @@ public class UrlEndpoints {
 
         return new Response(status, MIME_HTML, htmlCanvas.toHtml());
     }
+
+    /**
+     * Add a new Trigger to the incoming tempProbe object.
+     * @return A response for the user.
+     */
+    @UrlEndpoint(url = "/addtriggertotemp")
+    public final Response addNewTrigger() {
+        Status status = Status.OK;
+        int position = Integer.parseInt(parameters.get("position"));
+        String type = parameters.get("type");
+        Temp tempProbe = LaunchControl.findTemp(parameters.get("tempProbe"));
+        TriggerControl triggerControl = tempProbe.getTriggerControl();
+        triggerControl.addTrigger(position, type, new JSONObject(parameters));
+        return new Response(status, MIME_HTML, "OK");
+    }
 }

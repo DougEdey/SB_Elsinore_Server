@@ -277,7 +277,8 @@ public final class Temp implements Runnable {
     private InPin volumePin = null;
     private boolean stopVolumeLogging;
     private BigDecimal calibration = BigDecimal.ZERO;
-    
+    private TriggerControl triggerControl = null;
+
     /**
      * @return Get the current temperature
      */
@@ -795,7 +796,7 @@ public final class Temp implements Runnable {
         // record 10 readings and average it
         BigDecimal maxReads = BigDecimal.TEN;
         BigDecimal total = new BigDecimal(0);
-        
+
         for (int i = 0; i < maxReads.intValue(); i++) {
             try {
                 try {
@@ -1038,5 +1039,17 @@ public final class Temp implements Runnable {
     @Override
     public String toString() {
         return this.getName();
+    }
+
+    /**
+     * Get the current TriggerControl object, create a new one if it doesn't
+     * exist.
+     * @return the TriggerControl.
+     */
+    public TriggerControl getTriggerControl() {
+        if (this.triggerControl == null) {
+            this.triggerControl = new TriggerControl();
+        }
+        return triggerControl;
     }
 }
