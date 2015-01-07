@@ -659,6 +659,7 @@ public final class LaunchControl {
         // get each setting add it to the JSON
         JSONObject rObj = new JSONObject();
         JSONObject tJSON = null;
+        JSONObject triggerJSON = new JSONObject();
         rObj.put("locked", LaunchControl.pageLock);
         rObj.put("breweryName", LaunchControl.getName());
 
@@ -724,9 +725,16 @@ public final class LaunchControl {
                     }
 
                 }
+
+                if (t.getTriggerControl() != null
+                        && t.getTriggerControl().triggerCount() > 0) {
+                    triggerJSON.put(t.getName(),
+                            t.getTriggerControl().getJSONData());
+                }
             }
         }
         rObj.put("vessels", vesselJSON);
+        rObj.put("triggers", triggerJSON);
 
         if (brewDay != null) {
             rObj.put("brewday", brewDay.brewDayStatus());
@@ -743,22 +751,9 @@ public final class LaunchControl {
             rObj.put("pumps", tJSON);
         }
 
-        // Check for mash steps
-        if (triggerControlList.size() > 0) {
-            tJSON = new JSONObject();
-            for (TriggerControl m : triggerControlList) {
-                tJSON.put(m.getOutputControl(), m.getJSONData());
-            }
-            rObj.put("mash", tJSON);
-        } else {
-            rObj.put("mash", "Unset");
-        }
-
         if (LaunchControl.getMessage() != null) {
             rObj.put("message", LaunchControl.getMessage());
         }
-        
-        
 
         rObj.put("language", Locale.getDefault().toString());
         return rObj.toString();
@@ -766,7 +761,7 @@ public final class LaunchControl {
 
     /**
      * Get the system status.
-     * 
+     *
      * @return a JSON Object representing the current system status
      */
     public static String getSystemStatus() {

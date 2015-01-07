@@ -132,101 +132,22 @@ public class UrlEndpoints {
 
     /**
      * Parse the parameters to update the MashProfile.
-     *
-     * @param parms
-     *            The parameters map from the original request
      * @return True if the profile is updated successfully.
      */
-    @UrlEndpoint(url = "/mashprofile")
-    public Response updateMashProfile() {
-        String inputUnit = null;
-        Set<Entry<String, String>> incomingParams = parameters.entrySet();
-        Iterator<Entry<String, String>> it = incomingParams.iterator();
-        Entry<String, String> param = null;
-        JSONObject incomingData = new JSONObject();
-        JSONParser parser = new JSONParser();
-
-        // Try to Parse JSON Data
-        while (it.hasNext()) {
-            param = it.next();
-            BrewServer.LOG.info("Key: " + param.getKey());
-            BrewServer.LOG.info("Entry: " + param.getValue());
-            try {
-                Object parsedData = parser.parse(param.getKey());
-                if (parsedData instanceof JSONArray) {
-                    incomingData = (JSONObject) ((JSONArray) parsedData).get(0);
-                } else {
-                    incomingData = (JSONObject) parsedData;
-                }
-            } catch (Exception e) {
-                BrewServer.LOG.info("couldn't read " + param.getValue()
-                        + " as a JSON Value " + e.getMessage());
-            }
+    @UrlEndpoint(url = "/triggerprofile")
+    public final Response updateTriggerProfile() {
+        String tempProbe = parameters.get("tempProbe");
+        if (tempProbe == null) {
+            LaunchControl.setMessage("Could not trigger profile,"
+                    + " no tempProbe provided");
+            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
+                    "FAILED");
         }
-
-        if (incomingData != null) {
-            // Use the JSON Data
-            BrewServer.LOG.info("Found valid data for " + inputUnit);
-            BrewServer.LOG.info(incomingData.toJSONString());
-
-            TriggerControl triggerControl = null;
-
-            String temp = null;
-
-            if (incomingData.containsKey("temp")) {
-                temp = incomingData.get("temp").toString();
-                triggerControl = LaunchControl.findTriggerControl(temp);
-
-                if (triggerControl == null) {
-                    // Add a new MashControl to the list
-                    triggerControl = new TriggerControl();
-                    LaunchControl.addMashControl(triggerControl);
-                    triggerControl.setOutputControl(temp);
-                }
-
-                incomingData.remove("pid");
-            } else {
-                BrewServer.LOG.warning("Couldn't find the PID for this update");
-
-                return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
-                        "Failed to update Mash Profile");
-            }
-
-            // Iterate through the JSON
-            for (Object key : incomingData.keySet()) {
-                String cKey = key.toString();
-
-                try {
-
-                    JSONObject valueObj = (JSONObject) incomingData.get(key);
-                    int stepCount = -1;
-                    try {
-                        stepCount = Integer.parseInt(cKey);
-                    } catch (NumberFormatException nfe) {
-                        stepCount = (Integer) valueObj.get("position");
-                    }
-
-                    if (stepCount < 0) {
-                        continue;
-                    }
-
-                    // We have a good step count, parse the value
-                    String triggerType = (String) valueObj.get("Trigger");
-
-                    // Add the trigger
-                    TriggerInterface newTrigger = triggerControl.addTrigger(
-                            stepCount, triggerType, valueObj);
-
-                    BrewServer.LOG.info(newTrigger.toString());
-                } catch (NumberFormatException e) {
-                    // Couldn't work out what this is
-                    BrewServer.LOG.warning("Couldn't parse " + cKey);
-                    BrewServer.LOG.warning(incomingData.get(key).toString());
-                    e.printStackTrace();
-                }
-            }
-            triggerControl.sortMashSteps();
-            LaunchControl.startMashControl(temp);
+        Temp tProbe = LaunchControl.findTemp(tempProbe);
+        TriggerControl triggerControl = tProbe.getTriggerControl();
+        if (triggerControl.triggerCount() > 0) {
+            triggerControl.sortTriggerSteps();
+            triggerControl.activateTrigger(0);
         }
 
         return new NanoHTTPD.Response(Status.OK, MIME_HTML,
@@ -234,110 +155,30 @@ public class UrlEndpoints {
     }
 
     /**
-     * Add a mash step (and mash control if needed) to a PID.
-     * @param params The incoming parameters.
-     * @return The NanoHTTPD response to return to the browser.
-     */
-    @UrlEndpoint(url = "/addmashstep")
-    public Response addMashStep() {
-        // Parse the response
-        // Temp unit, PID, duration, temp, method, type, step number
-        // Default to the existing temperature scale
-        Map<String, String> params = this.parameters;
-        JSONObject usage = new JSONObject();
-        usage.put("Usage", "Add a new mashstep to the specified PID");
-        usage.put("type", "The mash step type");
-        usage.put("position", "The step number");
-        params = ParseParams(params);
-
-        Status status = Response.Status.OK;
-        String pid = params.get("temp");
-        String type = params.get("type");
-
-        try {
-            BigDecimal duration = new BigDecimal(
-                    params.get("duration").replace(",", "."));
-            BigDecimal temp = new BigDecimal(
-                    params.get("temp").replace(",", "."));
-            int stepNumber = Integer.parseInt(params.get("step"));
-
-            // Double check for any issues.
-            if (pid == null) {
-                throw new IllegalStateException(
-                        "Couldn't add Trigger: No temp probe provided");
-            }
-            if (type == null) {
-                throw new IllegalStateException(
-                        "Couldn't add Trigger: No type provided");
-            }
-
-            if (LaunchControl.findPID(pid) == null) {
-                throw new IllegalStateException(
-                        "Couldn't add mashstep: Couldn't find PID: " + pid);
-            }
-
-            TriggerControl mControl = LaunchControl.findTriggerControl(pid);
-
-            if (mControl == null) {
-                // Add a new MashControl to the list
-                mControl = new TriggerControl();
-                LaunchControl.addMashControl(mControl);
-                mControl.setOutputControl(pid);
-                LaunchControl.startMashControl(pid);
-            }
-
-            TriggerInterface newStep = mControl.addTrigger(
-                    stepNumber, type, new JSONObject(parameters));
-            mControl.sortMashSteps();
-        } catch (NullPointerException nfe) {
-            LaunchControl.setMessage(
-                    "Couldn't add mashstep, problem parsing values: "
-                        + params.toString() + nfe.getMessage());
-            status = Response.Status.BAD_REQUEST;
-        } catch (NumberFormatException nfe) {
-            LaunchControl.setMessage(
-                "Couldn't add mashstep, problem parsing values: "
-                        + params.toString());
-            status = Response.Status.BAD_REQUEST;
-        } catch (IllegalStateException ise) {
-            LaunchControl.setMessage(ise.getMessage());
-            status = Response.Status.BAD_REQUEST;
-        }
-
-        return new Response(status, MIME_TYPES.get("json"),
-                usage.toJSONString());
-    }
-
-    /**
-     * Reorder the mash steps.
-     * @param params The incoming params, check the usage.
+     * Reorder the triggers steps.
      * @return The Response object.
      */
-    @UrlEndpoint(url = "/reordermashprofile")
-    public Response reorderMashProfile() {
+    @UrlEndpoint(url = "/reordertriggers")
+    public final Response reorderMashProfile() {
         Map<String, String> params = this.parameters;
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Set the order for the mash profile.");
-        usage.put("pid", "The name of the PID to change the mash profile order on.");
+        usage.put("tempProbe",
+                "The name of the TempProbe to change the mash profile order on.");
         usage.put(":old=:new", "The old position and the new position");
         // Resort the mash profile for the PID, then sort the rest
-        String pid = params.get("pid");
+        String tempProbe = params.get("tempProbe");
         // Do we have a PID coming in?
-        if (pid == null) {
-            LaunchControl.setMessage("No PID supplied for mash profile order sort");
+        if (tempProbe == null) {
+            LaunchControl.setMessage(
+                    "No Temp Probe supplied for trigger profile order sort");
             return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
                     usage.toJSONString());
         }
         // Prevent any errors from the PID not being a number.
-        params.remove("pid");
+        params.remove("tempProbe");
         // Do we have a mash control for the PID?
-        TriggerControl mControl = LaunchControl.findTriggerControl(pid);
-        if (mControl == null) {
-            LaunchControl.setMessage("No Mash specified for the PID supplied " + pid);
-            return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
-                    usage.toJSONString());
-        }
-
+        TriggerControl mControl = LaunchControl.findTriggerControl(tempProbe);
         // Should be good to go, iterate and update!
         for (Map.Entry<String, String> mEntry: params.entrySet()) {
             if (mEntry.getKey().equals("NanoHttpd.QUERY_STRING")) {
@@ -348,51 +189,44 @@ public class UrlEndpoints {
                 int newPos = Integer.parseInt(mEntry.getValue());
                 mControl.getTrigger(oldPos).setPosition(newPos);
             } catch (NumberFormatException nfe) {
-                LaunchControl.setMessage("Failed to parse Mash reorder value, things may get weird" + mEntry.getKey() + ": " + mEntry.getValue());
+                LaunchControl.setMessage(
+                    "Failed to parse Trigger reorder value,"
+                    + " things may get weird: "
+                    + mEntry.getKey() + ": " + mEntry.getValue());
             } catch (IndexOutOfBoundsException ie) {
-                LaunchControl.setMessage("Invalid mash position, things may get weird");
+                LaunchControl.setMessage(
+                        "Invalid trigger position, things may get weird");
             }
         }
-        mControl.sortMashSteps();
+        mControl.sortTriggerSteps();
         return new Response(Status.OK, MIME_TYPES.get("json"),
                 usage.toJSONString());
     }
 
     /**
-     * Delete the specified mash step.
-     * @param params The details.
+     * Delete the specified trigger step.
      * @return The Response.
      */
-    @UrlEndpoint(url = "/delmashstep")
-    public Response delMashStep() {
+    @UrlEndpoint(url = "/deltriggerstep")
+    public Response delTriggerStep() {
         Map<String, String> params = this.parameters;
         // Parse the response
         // Temp unit, PID, duration, temp, method, type, step number
         // Default to the existing temperature scale
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Add a new mashstep to the specified PID");
-        usage.put("pid", "The PID to delete the mash step from");
+        usage.put("tempProbe", "The PID to delete the mash step from");
         usage.put("position", "The mash step to delete");
         Status status = Status.OK;
 
         try {
-            String pid = params.get("pid");
+            String tempProbe = params.get("tempProbe");
             int position = Integer.parseInt(params.get("position"));
-            TriggerControl mControl = LaunchControl.findTriggerControl(pid);
-
-            if (mControl == null) {
-                // Add a mash control
-                if (LaunchControl.findPID(pid) == null) {
-                    LaunchControl.setMessage(
-                            "Could not find the specified PID: " + pid);
-                } else {
-                    mControl = new TriggerControl();
-                    mControl.setOutputControl(pid);
-                }
-            }
+            TriggerControl mControl = LaunchControl
+                    .findTemp(tempProbe).getTriggerControl();
 
             if (mControl != null) {
-                mControl.delMashStep(position);
+                mControl.delTriggerStep(position);
             } else {
                 status = Status.BAD_REQUEST;
             }
@@ -416,18 +250,16 @@ public class UrlEndpoints {
 
     /**
      * Toggle the state of the mash profile on/off.
-     * @param parameters
-     *            The parameters from the original request.
      * @return True if set, false if there's an error
      */
-    @UrlEndpoint(url = "/togglemash")
-    public Response toggleMashProfile() {
+    @UrlEndpoint(url = "/toggleTrigger")
+    public Response toggleTriggerProfile() {
 
-        String pid = null;
-        if (parameters.containsKey("pid")) {
-            pid = parameters.get("pid");
+        String tempProbe = null;
+        if (parameters.containsKey("tempProbe")) {
+            tempProbe = parameters.get("tempProbe");
         } else {
-            BrewServer.LOG.warning("No PID provided to toggle Mash Profile");
+            BrewServer.LOG.warning("No Temp provided to toggle Trigger Profile");
             return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
                     "Failed to toggle mash profile");
         }
@@ -438,7 +270,7 @@ public class UrlEndpoints {
                 activate = true;
             }
         } else {
-            BrewServer.LOG.warning("No Status provided to toggle Mash Profile");
+            BrewServer.LOG.warning("No Status provided to toggle Profile");
             return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
                     "Failed to toggle mash profile");
         }
@@ -455,66 +287,48 @@ public class UrlEndpoints {
             }
         }
 
-        TriggerControl mObj = LaunchControl.findTriggerControl(pid);
+        TriggerControl mObj = LaunchControl
+                .findTemp(tempProbe).getTriggerControl();
 
-        if (mObj == null) {
-            return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
-                    "Failed to toggle mash profile");
-        }
 
         TriggerInterface triggerEntry = mObj.getCurrentTrigger();
 
-        // No active mash step
         int stepToUse = -1;
-        if (triggerEntry == null) {
-            if (position >= 0) {
-                stepToUse = position;
-                BrewServer.LOG.warning("Using initial mash step for " + pid
-                        + " at position " + position);
-            } else {
-                // No position wanted, activate the first step
-                stepToUse = 0;
-                BrewServer.LOG.warning("Using initial mash step for " + pid);
-            }
-        } else {
-            // We have a mash step position
-            if (position >= 0) {
-                stepToUse = position;
-                BrewServer.LOG.warning("Using mash step for " + pid
-                        + " at position " + position);
-            }
+        // We have a mash step position
+        if (position >= 0) {
+            stepToUse = position;
+            BrewServer.LOG.warning("Using mash step for " + tempProbe
+                    + " at position " + position);
+        }
 
-            if (!activate) {
-                // We're de-activating everything
-                stepToUse = -1;
+        if (!activate) {
+            // We're de-activating everything
+            stepToUse = -1;
+        } else {
+            if (triggerEntry == null && mObj.triggerCount() > 0) {
+                stepToUse = 0;
             } else {
-                BrewServer.LOG.warning("A mash is in progress for " + pid
-                        + " but no positional argument is set");
-                return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
-                        "Failed to toggle mash profile");
+                stepToUse = triggerEntry.getPosition();
             }
         }
 
         if (stepToUse >= 0 && activate) {
             mObj.activateTrigger(stepToUse);
-            BrewServer.LOG
-                    .warning("Activated " + pid + " step at " + stepToUse);
+            BrewServer.LOG.warning(
+                    "Activated " + tempProbe + " step at " + stepToUse);
         } else {
             mObj.deactivateTrigger(stepToUse);
-            BrewServer.LOG.warning("Deactivated " + pid + " step at "
+            BrewServer.LOG.warning("Deactivated " + tempProbe + " step at "
                     + stepToUse);
         }
 
 
         return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                "Toggled mash profile");
+                "Toggled profile");
     }
 
     /**
      * Read the incoming parameters and edit the vessel as appropriate.
-     *
-     * @param params
-     *            The parameters from the client.
      * @return True is success, false if failure.
      */
     @UrlEndpoint(url = "/editdevice")

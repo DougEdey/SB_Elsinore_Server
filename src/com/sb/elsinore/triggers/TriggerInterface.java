@@ -10,7 +10,7 @@ import org.rendersnake.HtmlCanvas;
  * @author doug
  *
  */
-public interface TriggerInterface {
+public interface TriggerInterface extends Comparable<TriggerInterface> {
 
     /**
      * Get the name of this Trigger.
@@ -54,4 +54,10 @@ public interface TriggerInterface {
      * @param newPos The new position.
      */
     void setPosition(int newPos);
+
+    /**
+     * Get the current status of this object as a JSONObject.
+     * @return the current status.
+     */
+    JSONObject getJSONStatus();
 }

@@ -199,35 +199,30 @@ function waitForMsg() {
 
 					}
 
-					if ("trigger" in data) {
-						val = data.trigger;
-						if (val != 'Unset') {
+					if ("triggers" in data) {
+						val = sortObjectByKey(data.triggers);
 
-							val = sortObjectByKey(val);
+						$.each(val, function(triggerPID, triggerDetails) {
+							// Iterate the list of mash Lists
+							addTriggerTable(triggerPID);
+							$.each(triggerDetails, function(triggerStep,
+									triggerData) {
+								if (triggerStep != 'pid') {
+									addTriggerStep(triggerStep, triggerData,
+											triggerPID);
+								}
+							});
 
-							$.each(val,
-									function(triggerPID, triggerDetails) {
-										// Iterate the list of mash Lists
-										addTriggerTable(triggerPID);
-										$.each(triggerDetails, function(triggerStep,
-												triggerData) {
-											if (triggerStep != 'pid') {
-												addtriggerStep(triggerStep, triggerData,
-														triggerPID);
-											}
-										});
+							if ($("#triggerTable" + triggerPID).find(
+									'.success').length > 0) {
+								$("#triggerButton-" + triggerPID).text(
+										$.i18n.prop("DISABLE"));
+							} else {
+								$("#triggerButton-" + triggerPID).text(
+										$.i18n.prop("ACTIVATE"));
+							}
 
-										if ($("#triggerTable" + triggerPID).find(
-												'.success').length > 0) {
-											$("#triggerButton-" + triggerPID).text(
-													$.i18n.prop("DISABLE"));
-										} else {
-											$("#triggerButton-" + triggerPID).text(
-													$.i18n.prop("ACTIVATE"));
-										}
-
-									});
-						}
+						});
 					}
 
 					if ("pumps" in data) {
@@ -283,87 +278,73 @@ function waitForMsg() {
 								sysTemp.remove();
 							}
 						}
-						$
-								.each(
-										val,
-										function(vesselName, vesselStatus) {
+						$.each(val, function(vesselName, vesselStatus) {
 
-											// This should always be there
-											if ("name" in vesselStatus) {
-												vesselName = vesselStatus.name;
-												if (vesselName == $.i18n
-														.prop("SYSTEM")
-														&& $('[id=System-tempGauge]').length == 0) {
-													return;
-												}
-											}
-											addTriggerTable(vesselName);
-											if ("tempprobe" in vesselStatus) {
-												updateTempProbe(vesselName,
-														vesselStatus.tempprobe);
-											}
+							// This should always be there
+							if ("name" in vesselStatus) {
+								vesselName = vesselStatus.name;
+								if (vesselName == $.i18n.prop("SYSTEM")
+										&& $('[id=System-tempGauge]').length == 0) {
+									return;
+								}
+							}
+							addTriggerTable(vesselName);
+							if ("tempprobe" in vesselStatus) {
+								updateTempProbe(vesselName,
+										vesselStatus.tempprobe);
+							}
 
-											if ("pidstatus" in vesselStatus) {
-												updatePIDStatus(vesselName,
-														vesselStatus.pidstatus);
+							if ("pidstatus" in vesselStatus) {
+								updatePIDStatus(vesselName,
+										vesselStatus.pidstatus);
 
-												// Hide the gauge if needs be
-												if (vesselStatus.pidstatus.mode == "off") {
-													$(
-															'div[id^="'
-																	+ vesselName
-																	+ '-gage"]')
-															.toggleClass("hidden", true);
-												} else {
-													$(
-															'div[id^="'
-																	+ vesselName
-																	+ '-gage"]')
-															.toggleClass("hidden", false);
-													var duty = vesselStatus.pidstatus.duty;
-													if ("actualduty" in vesselStatus.pidstatus) {
-														duty = vesselStatus.pidstatus.actualduty;
-													}
+								// Hide the gauge if needs be
+								if (vesselStatus.pidstatus.mode == "off") {
+									$('div[id^="' + vesselName + '-gage"]')
+											.toggleClass("hidden", true);
+								} else {
+									$('div[id^="' + vesselName + '-gage"]')
+											.toggleClass("hidden", false);
+									var duty = vesselStatus.pidstatus.duty;
+									if ("actualduty" in vesselStatus.pidstatus) {
+										duty = vesselStatus.pidstatus.actualduty;
+									}
 
-													if (duty < 0) {
-														if (Gauges[vesselName].config.textMax != "0") {
-															Gauges[vesselName].config.levelColors = [
-																	"#0033CC",
-																	"#CC00CC",
-																	"#a9d70b" ];
-														}
-														Gauges[vesselName]
-																.refreshBoth(
-																		duty,
-																		-100,
-																		"0");
-													} else {
-														if (Gauges[vesselName].config.textMax != "0") {
-															Gauges[vesselName].config.levelColors = [
-																	"#a9d70b",
-																	"#f9c802",
-																	"#ff0000" ];
-														}
-														Gauges[vesselName]
-																.refreshBoth(
-																		duty,
-																		"0",
-																		100);
-													}
+									if (duty < 0) {
+										if (Gauges[vesselName].config.textMax != "0") {
+											Gauges[vesselName].config.levelColors = [
+													"#0033CC",
+													"#CC00CC",
+													"#a9d70b" ];
+										}
+										Gauges[vesselName]
+												.refreshBoth(
+														duty,
+														-100,
+														"0");
+									} else {
+										if (Gauges[vesselName].config.textMax != "0") {
+											Gauges[vesselName].config.levelColors = [
+													"#a9d70b",
+													"#f9c802",
+													"#ff0000" ];
+										}
+										Gauges[vesselName].refreshBoth(duty, "0", 100);
+									}
 
-												}
-											} else {
-												hidePIDForm(vesselName);
-											}
+								}
+							} else {
+								hidePIDForm(vesselName);
+							}
 
-											if ("volume" in vesselStatus) {
-												updateVolumeStatus(vesselName,
-														vesselStatus.volume);
-											} else {
-												jQuery("#" + vesselName+ "-volumeAmount")
-													.text($.i18n.prop("NO_VOLUME"));
-											}
-										});
+							if ("volume" in vesselStatus) {
+								updateVolumeStatus(vesselName,
+										vesselStatus.volume);
+							} else {
+								jQuery("#" + vesselName+ "-volumeAmount")
+									.text($.i18n.prop("NO_VOLUME"));
+							}
+						});
 					}
 
 					if ("locked" in data) {
@@ -386,19 +367,19 @@ function waitForMsg() {
 function addTriggerTable(vesselName) {
 	if ($("#triggerTable" + vesselName).length == 0) {
 		table = "<table id='triggerTable" + vesselName
-				+ "' class='table table-curved'>";
+				+ "' class='table table-bordered col-md-8'>";
 		table += "<thead><tr>";
-		table += "<th colspan='2'>" + $.i18n.prop("TRIGGER") + "</th>";
-		table += "<th></th>";
-		table += "<th></th>";
+		table += "<th>" + $.i18n.prop("START") + "</th>";
+		table += "<th>" + $.i18n.prop("DESCRIPTION") + "</th>";
+		table += "<th>" + $.i18n.prop("TARGET") + "</th>";
 		table += "</tr></thead>";
 		table += "<tbody class='tbody'></tbody>"
 
-		table += "<tfoot><tr><td colspan='2'>"
+		table += "<tfoot><tr><td colspan='1'>"
 				+ "<button class='btn btn-success' id='addTrigger-" + vesselName
 				+ "' type='button' onclick='addNewTrigger(this)' "
-				+ "ondrop='dropDeleteTrigger(event);' "
-				+ "ondragover='allowDropTrigger(event);'>"
+				+ "ondrop='dropDeleteTriggerStep(event);' "
+				+ "ondragover='allowDropTriggerStep(event);'>"
 				+ $.i18n.prop("ADD") + "</button></td>";
 		table += "<td colspan='2'><button class='btn btn-success' id='triggerButton-"
 				+ vesselName
@@ -1253,19 +1234,19 @@ function addNewTrigger(button) {
 	var $tr = $(button);
     
     $tr.popover('destroy');
-	 //$tr.popover();
+    $tr.popover({
+        title: 'Create New Trigger',
+        content: "Loading...",
+        placement: 'bottom',
+        html: true,
+        trigger: 'manual'
+    }).popover('show');
     $.ajax({
         url: '/getNewTriggers',
         data: {temp: pid},
         dataType: 'html',
         success: function(html) {
-            $tr.popover({
-                title: 'Create New Trigger',
-                content: html,
-                placement: 'bottom',
-                html: true,
-                trigger: 'manual'
-            }).popover('show');
+            $(".popover-content").html(html);
         }
     });
 	return false;
@@ -1277,7 +1258,7 @@ function newTrigger(button, probe) {
 		$(button).closest(".popover-content").find("#childInput").html("");
 		return false;
 	}
-	
+	$(button).closest(".popover-content").find("#childInput").html("Loading...");
 	$.ajax({
         url: '/getTriggerForm',
         data: $(button.parentElement).serializeObject(),
@@ -1337,7 +1318,7 @@ function triggerToggle(button, position) {
 	// Parse out the PID from the controller
 	var pid = button.id.replace("triggerButton-", "");
 	postData = {};
-	postData['trigger'] = pid;
+	postData['tempProbe'] = pid;
 	postData['status'] = button.innerText.toLowerCase();
 
 	if (position !== 'undefined') {
@@ -1520,49 +1501,47 @@ function addTriggerStep(triggerStep, triggerData, pid) {
 				+ " ondragstart='dragTriggerStep(event);' draggable='true'"
 				+ " ondrop='dropTriggerStep(event);'"
 				+ " ondragover='allowDropTriggerStep(event);'>"
-		tableRow += ("<td>" + triggerData['type'] + "</td>");
-		tableRow += ("<td>" + triggerData['method'] + "</td>");
-		tableRow += ("<td>" + triggerData['target_temp']
-				+ triggerData['target_temp_unit'] + "</td>");
-		tableRow += ("<td id='mashTimer" + pid + "'>" + triggerData['duration'] + "</td>");
+		tableRow += ("<td>" + triggerData['start'] + "</td>");
+		tableRow += ("<td>" + triggerData['description'] + "</td>");
+		tableRow += ("<td>" + triggerData['target'] + "</td>");
 		tableRow += ("</tr>");
 
 		if ($("#triggerTable" + pid + " > tbody > tr").length == 0) {
 			$("#triggerTable" + pid + " > tbody").append(tableRow);
 		} else {
-			mashStepRow = $("#triggerTable" + pid + " > tbody > tr").eq(
-					mashStep - 1).after(tableRow);
+			triggerStepRow = $("#triggerTable" + pid + " > tbody > tr").eq(
+					triggerStep - 1).after(tableRow);
 		}
 
-		mashStepRow = mashStepRow.next();
+		triggerStepRow = triggerStepRow.next();
 	}
 
 	// Do we have a start time?
-	if ("start_time" in mashData) {
+	if ("start" in triggerData) {
 		// if there's an end time, we can show the actual time difference
-		if ("end_time" in mashData) {
-			startDate = moment(mashData['start_time'], "YYYY/MM/DDTHH:mm:ssZZ");
-			endDate = moment(mashData['end_time'], "YYYY/MM/DDTHH:mm:ssZZ");
+		if ("end" in triggerData) {
+			startDate = moment(triggerData['start'], "YYYY/MM/DDTHH:mm:ssZZ");
+			endDate = moment(triggerData['end'], "YYYY/MM/DDTHH:mm:ssZZ");
 			diff = Math.abs(endDate - startDate);
 			seconds = diff / 1000;
 			minutes = Math.floor(seconds / 60);
 			seconds = seconds - (minutes * 60);
 
-			mashStepRow.find("#mashTimer" + pid).text(
+			triggerStepRow.find("#triggerTimer" + pid).text(
 					minutes + ":" + pad(seconds, 2, 0));
-		} else {
+		} else if ("targetTime" in triggerData){
 			// start the timer
-			var endMoment = moment(mashData['target_time'], "YYYY/MM/DDTHH:mm:ssZZ");
-			mashStepRow.find("#mashTimer" + pid).tinyTimer({
+			var endMoment = moment(triggerData['target'], "YYYY/MM/DDTHH:mm:ssZZ");
+			triggerStepRow.find("#triggerTimer" + pid).tinyTimer({
 				to : endMoment.toString()
 			});
 		}
 	}
 	// active the current row if needs be
-	if ("active" in mashData) {
-		mashStepRow.addClass('success');
+	if ("active" in triggerData && triggerData.active == "true") {
+		triggerStepRow.addClass('success');
 	} else {
-		mashStepRow.removeClass('success');
+		triggerStepRow.removeClass('success');
 	}
 }
 
@@ -1952,9 +1931,9 @@ function dropDeleteTimer(ev) {
 // END OF TIMERS
 
 // Drag and drop functions for mash steps
-function getVesselFromMashStep(divID) {
-	if (divID.lastIndexOf("mashStep") == 0) {
-		var temp = divID.substring(8);
+function getVesselFromTriggerStep(divID) {
+	if (divID.lastIndexOf("triggerStep") == 0) {
+		var temp = divID.substring("triggerStep".length);
 	} else {
 		var temp = divID;
 	}
@@ -1963,9 +1942,9 @@ function getVesselFromMashStep(divID) {
 	return vessel;
 }
 
-function getPositionFromMashStep(divID) {
-	if (divID.lastIndexOf("mashStep") == 0) {
-		var temp = divID.substring(8);
+function getPositionFromTriggerStep(divID) {
+	if (divID.lastIndexOf("triggerStep") == 0) {
+		var temp = divID.substring("triggerStep".length);
 	} else {
 		var temp = divID;
 	}
@@ -1974,39 +1953,39 @@ function getPositionFromMashStep(divID) {
 	return position;
 }
 
-function dragMashStep(ev) {
+function dragTriggerStep(ev) {
 	var divID = ev.target.id;
 
 	// Explode out
-	var vessel = getVesselFromMashStep(divID.substring(7));
+	var vessel = getVesselFromTriggerStep(divID.substring(10));
 	// var position = getPositionFromMashStep(divID);
-	ev.dataTransfer.setData("mashStepname", divID);
-	$('#addMash-' + vessel)[0].innerHTML = $.i18n.prop("DELETE");
+	ev.dataTransfer.setData("triggerStepname", divID);
+	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("DELETE");
 }
 
-function dropMashStep(ev) {
+function dropTriggerStep(ev) {
 	ev.preventDefault();
-	var mashStepName = ev.dataTransfer.getData("mashStepname");
-	var vessel = getVesselFromMashStep(mashStepName.substring(7));
-	var position = getPositionFromMashStep(mashStepName);
+	var triggerData = ev.dataTransfer.getData("triggerStepname");
+	var vessel = getVesselFromTriggerStep(triggerData.substring(10));
+	var position = getPositionFromTriggerStep(triggerData);
 
 	var refNode = ev.target.parentElement;
-	refNode.parentNode.insertBefore(document.getElementById(mashStepName),
+	refNode.parentNode.insertBefore(document.getElementById(triggerData),
 			refNode.nextSibling);
 
-	var newOrder = "pid=" + vessel + "&";
+	var newOrder = "tempprobe=" + vessel + "&";
 	$("#triggerTable" + vessel + " > tbody > tr").each(function(index) {
 		var divID = this.id;
 		if (divID == "") {
 			return;
 		}
 
-		var oldStep = getPositionFromMashStep(divID);
+		var oldStep = getPositionFromTriggerStep(divID);
 		newOrder += oldStep + "=" + index + "&";
 	});
-	$('#addMash-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
+	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
 	$.ajax({
-		url : 'reordermashprofile',
+		url : 'reordertriggers',
 		type : 'POST',
 		data : newOrder,
 		success : function(data) {
@@ -2017,24 +1996,24 @@ function dropMashStep(ev) {
 	// DONE!
 }
 
-function allowDropMashStep(ev) {
+function allowDropTriggerStep(ev) {
 	ev.preventDefault();
 }
 
-function dropDeleteMashStep(ev) {
+function dropDeleteTriggerStep(ev) {
 	ev.preventDefault();
-	var mashStepName = ev.dataTransfer.getData("mashstepname");
-	var vessel = getVesselFromMashStep(mashStepName.substring(7));
-	var position = getPositionFromMashStep(mashStepName);
+	var triggerStepName = ev.dataTransfer.getData("triggerStepname");
+	var vessel = getVesselFromTriggerStep(triggerStepName.substring(10));
+	var position = getPositionFromTriggerStep(triggerStepName);
 
-	$('[id="' + mashStepName + '"]').empty().remove();
-	var newOrder = "pid=" + vessel + "&position=" + position;
+	$('[id="' + triggerStepName + '"]').empty().remove();
+	var delData = "tempProbe=" + vessel + "&position=" + position;
 
-	$('#addMash-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
+	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
 	$.ajax({
-		url : 'delMashStep',
+		url : 'delTriggerStep',
 		type : 'POST',
-		data : newOrder,
+		data : delData,
 		success : function(data) {
 			data = null
 		}

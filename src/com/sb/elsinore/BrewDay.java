@@ -300,10 +300,12 @@ public final class BrewDay {
                 if (startDate != null && endDate == null) {
                     // Are we counting up?
                     if (startDate.getTime() < currentDate.getTime()) {
-                        seconds = (currentDate.getTime() - startDate.getTime()) / 1000;
+                        seconds = (currentDate.getTime() - startDate.getTime())
+                                / 1000;
                         mode = "up";
                     } else {
-                        seconds = (startDate.getTime() - currentDate.getTime()) / 1000;
+                        seconds = (startDate.getTime() - currentDate.getTime())
+                                / 1000;
                         mode = "down";
                     }
                 } else if (startDate != null && endDate != null) {

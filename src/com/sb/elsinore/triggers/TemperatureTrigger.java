@@ -10,6 +10,7 @@ import org.rendersnake.tools.PrettyWriter;
 
 import static org.rendersnake.HtmlAttributesFactory.*;
 
+import com.sb.elsinore.BrewDay;
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Messages;
@@ -81,7 +82,7 @@ public class TemperatureTrigger implements TriggerInterface {
             final JSONObject parameters) {
         this.position = inPosition;
         BigDecimal tTemp = new BigDecimal(
-              parameters.get("targetTemp").toString().replace(",", "."));
+              parameters.get("targetTemperature").toString().replace(",", "."));
 
         String method = parameters.get("method").toString();
         String type = parameters.get("stepType").toString();
@@ -210,26 +211,65 @@ public class TemperatureTrigger implements TriggerInterface {
     public final HtmlCanvas getForm() throws IOException {
         HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
         html.div(id("NewTempTrigger").class_(""));
-            html.input(id("type").name("type")
-                        .hidden("true").value("Temperature"));
-            html.input(class_("inputBox temperature")
-                    .type("number").add("step", "any")
-                    .name("temperature").value(""));
-            html.input(class_("inputBox").name("method").value("")
-                    .add("placeholder", Messages.METHOD));
-            html.input(class_("inputBox").name("stepType").value("")
-                    .add("placeholder", Messages.TYPE));
-            html.button(name("submitTemperature")
-                    .add("data-toggle", "clickover")
-                    .onClick("submitNewTriggerStep(this);"))
-                .write(Messages.ADD_TRIGGER)
-            ._button()
-        ._div();
+            html.form(id("newTriggersForm"));
+                html.input(id("type").name("type")
+                            .hidden("true").value("Temperature"));
+                html.input(class_("inputBox temperature form-control")
+                        .type("number").add("step", "any")
+                        .name("targetTemperature").value(""));
+                html.input(class_("inputBox form-control")
+                        .name("method").value("")
+                        .add("placeholder", Messages.METHOD));
+                html.input(class_("inputBox form-control")
+                        .name("stepType").value("")
+                        .add("placeholder", Messages.TYPE));
+                html.button(name("submitTemperature")
+                        .add("data-toggle", "clickover")
+                        .onClick("submitNewTriggerStep(this);"))
+                    .write(Messages.ADD_TRIGGER)
+                ._button();
+            html._form();
+        html._div();
         return html;
     }
 
     @Override
     public String getName() {
         return TRIGGER_NAME;
+    }
+
+    /**
+     * Return the Position, startdate, target temperature, and description.
+     * @return The current status as a JSONObject.
+     */
+    @Override
+    public final JSONObject getJSONStatus() {
+
+        String targetTempString = this.targetTemp
+                + this.temperatureProbe.getScale();
+        String description = this.mode;
+        String startDateStamp = "";
+        if (this.startDate != null) {
+            startDateStamp = BrewDay.lFormat.format(this.startDate);
+        }
+
+        JSONObject currentStatus = new JSONObject();
+        currentStatus.put("position", this.position);
+        currentStatus.put("start", startDateStamp);
+        currentStatus.put("target", targetTempString);
+        currentStatus.put("description", description);
+        currentStatus.put("active", Boolean.toString(this.active));
+
+        return currentStatus;
+    }
+
+    /**
+     * Compare by position.
+     * @param o the TriggerInterface to compare to.
+     * @return Compare.
+     */
+    @Override
+    public final int compareTo(final TriggerInterface o) {
+        return (this.position - o.getPosition());
     }
 }

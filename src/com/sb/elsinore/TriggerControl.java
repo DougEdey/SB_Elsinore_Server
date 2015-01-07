@@ -66,12 +66,16 @@ public class TriggerControl implements Runnable {
      * to use to setup the trigger
      * @return The new Mash Step
      */
-    public final TriggerInterface addTrigger(final int position,
+    public final TriggerInterface addTrigger(int position,
             final String type, final JSONObject parameters) {
         TriggerInterface triggerStep = null;
         Class<? extends TriggerInterface> triggerClass = getTriggerOfName(type);
         if (triggerClass == null) {
             return null;
+        }
+
+        if (position < 0) {
+            position = triggerList.size();
         }
 
         // Find the constructor.
@@ -199,7 +203,7 @@ public class TriggerControl implements Runnable {
      * @return The mash step at the specified position.
      */
     public final TriggerInterface getTrigger(final Integer position) {
-        this.sortMashSteps();
+        this.sortTriggerSteps();
         return this.triggerList.get(position);
     }
 
@@ -347,7 +351,7 @@ public class TriggerControl implements Runnable {
         //masterArray.put("pid", this.getOutputControl());
         synchronized (triggerList) {
             for (TriggerInterface e : triggerList) {
-                masterArray.add(e.getJsonStatus());
+                masterArray.add(e.getJSONStatus());
             }
         }
         return masterArray;
@@ -381,21 +385,26 @@ public class TriggerControl implements Runnable {
         this.outputControl = newControl;
     }
 
-    public void sortMashSteps() {
-       // Collections.sort(this.triggerList);
+    public void sortTriggerSteps() {
+       Collections.sort(this.triggerList);
     }
 
     /**
-     * Delete the specified mash step.
+     * Delete the specified trigger step.
      * @param position The step position to delete
      */
-    public final void delMashStep(final int position) {
-        sortMashSteps();
+    public final void delTriggerStep(final int position) {
+        sortTriggerSteps();
         for (int i = 0; i < triggerList.size(); i++) {
             if (triggerList.get(i).getPosition() == position) {
                 this.triggerList.remove(i);
             }
+            // Drop the rest of the positions down by one.
+            if (i > position) {
+                triggerList.get(i).setPosition(i - 1);
+            }
         }
+        sortTriggerSteps();
 
         // No more steps, turn off the MashControl
         if (triggerList.size() == 0) {
@@ -435,5 +444,13 @@ public class TriggerControl implements Runnable {
         ._div()
         .div(id("childInput"))._div();
         return htmlCanvas;
+    }
+
+    /**
+     * Return the count of how many triggers have been added.
+     * @return The size of the trigger list.
+     */
+    public final int triggerCount() {
+        return this.triggerList.size();
     }
 }
