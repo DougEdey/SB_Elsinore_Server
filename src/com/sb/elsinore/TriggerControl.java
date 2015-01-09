@@ -240,11 +240,9 @@ public class TriggerControl implements Runnable {
             currentTriggerPosition = triggerEntry.getPosition();
         }
 
-        PID currentPID = LaunchControl.findPID(getOutputControl());
-
         while (true) {
             // Is there a step and an output control?
-            if (currentTrigger == null && currentPID != null) {
+            if (currentTrigger == null) {
                 triggerEntry = getCurrentTrigger();
 
                 // active step
@@ -256,9 +254,10 @@ public class TriggerControl implements Runnable {
                 }
             }
 
-            if (currentTrigger != null && currentPID != null) {
+            if (currentTrigger != null) {
                 // Do stuff with the active step
                 currentTrigger.waitForTrigger();
+                currentTrigger.deactivate();
                 currentTriggerPosition += 1;
                 if (currentTriggerPosition >= this.triggerCount()) {
                     return;

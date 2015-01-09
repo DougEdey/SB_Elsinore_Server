@@ -321,7 +321,7 @@ public class UrlEndpoints {
             BrewServer.LOG.warning("Deactivated " + tempProbe + " step at "
                     + stepToUse);
         }
-        
+
         LaunchControl.startMashControl(tempProbe);
 
         return new NanoHTTPD.Response(Status.OK, MIME_HTML,
