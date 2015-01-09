@@ -14,6 +14,7 @@ import com.sb.elsinore.BrewDay;
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Messages;
+import com.sb.elsinore.PID;
 import com.sb.elsinore.Temp;
 
 /**
@@ -36,6 +37,7 @@ public class TemperatureTrigger implements TriggerInterface {
     public static String DECREASE = "DECREASE";
     private Date startDate = null;
     private String TRIGGER_NAME =  "Temperature";
+    private String TRIGGER_TYPE = "ANY";
 
     public TemperatureTrigger() {
         BrewServer.LOG.info("Created an empty Temperature Trigger");
@@ -54,11 +56,18 @@ public class TemperatureTrigger implements TriggerInterface {
     }
 
     /**
-     * The Target temperature of this TemperatureTrigger.
-     * @param inTemp The {@link java.math.BigDecimal} temperature.
+     * Set The Target temperature of the PID
+     * Associated with this temperatureTrigger.
      */
-    public final void setTargetTemperature(final BigDecimal inTemp) {
-        this.targetTemp = inTemp;
+    public final void setTargetTemperature() {
+        PID pid = LaunchControl.findPID(this.temperatureProbe.getName());
+        if (pid == null) {
+            LaunchControl.setMessage(temperatureProbe.getName()
+                + " is not associated with a PID. "
+                + "Trigger will wait for it to hit the target temperature.");
+        } else {
+            pid.setTemp(this.targetTemp);
+        }
     }
 
     /**
@@ -89,7 +98,7 @@ public class TemperatureTrigger implements TriggerInterface {
         String tempProbe = parameters.get("tempProbe").toString();
 
         this.targetTemp = tTemp;
-        setTemperatureProbe(tempProbe);
+        this.temperatureProbe = LaunchControl.findTemp(tempProbe);
         this.mode = method + ": " + type;
     }
 
@@ -98,6 +107,7 @@ public class TemperatureTrigger implements TriggerInterface {
      */
     @Override
     public final void waitForTrigger() {
+
         if (targetTemp == null) {
             BrewServer.LOG.warning("No Target Temperature Set");
             return;
@@ -110,11 +120,8 @@ public class TemperatureTrigger implements TriggerInterface {
             BrewServer.LOG.warning("No Mode Set");
             return;
         }
-        if (duration == null) {
-            BrewServer.LOG.warning("No Duration Set");
-            return;
-        }
 
+        setTargetTemperature();
         setStart(new Date());
         if (this.mode.equals(TemperatureTrigger.INCREASE)) {
             while (this.temperatureProbe.getTemp().compareTo(
@@ -137,26 +144,6 @@ public class TemperatureTrigger implements TriggerInterface {
                 }
             }
         }
-    }
-
-    /**
-     * @return a {@link org.json.simple.JSONObject}
-     *  representing this TemperatureTrigger.
-     */
-    @SuppressWarnings("unchecked")
-    @Override
-    public final JSONObject getJsonStatus() {
-        JSONObject currentStatus = new JSONObject();
-        currentStatus.put("type", "temperature");
-        currentStatus.put("mode", this.mode);
-        currentStatus.put("targetTemperature",
-                this.targetTemp.toString());
-        currentStatus.put("temperatureProbe",
-                this.temperatureProbe.getName());
-        if (this.startDate != null) {
-            currentStatus.put("startDate", this.startDate.toString());
-        }
-        return currentStatus;
     }
 
     /**
@@ -271,5 +258,14 @@ public class TemperatureTrigger implements TriggerInterface {
     @Override
     public final int compareTo(final TriggerInterface o) {
         return (this.position - o.getPosition());
+    }
+
+    /**
+     * This is for Any device.
+     * @return any
+     */
+    @Override
+    public final boolean getTriggerType(String inType) {
+        return true;
     }
 }

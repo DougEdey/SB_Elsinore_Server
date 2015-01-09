@@ -23,12 +23,6 @@ public interface TriggerInterface extends Comparable<TriggerInterface> {
     void waitForTrigger();
 
     /**
-     * Get a JSON Object representing the current status of the object.
-     * @return The current status as a JSONObject
-     */
-    JSONObject getJsonStatus();
-
-    /**
      * Return true is this is the current trigger that is waiting.
      * @return true if this is active.
      */
@@ -60,4 +54,11 @@ public interface TriggerInterface extends Comparable<TriggerInterface> {
      * @return the current status.
      */
     JSONObject getJSONStatus();
+
+    /**
+     * Get the type of device this trigger is intended for.
+     * pid, temp, any.
+     * @return The trigger type
+     */
+    boolean getTriggerType(String inType);
 }

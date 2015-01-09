@@ -165,7 +165,7 @@ public class TriggerControl implements Runnable {
         return interfaceMap;
     }
 
-    public static final Map<String, String> getTriggerTypes() {
+    public static final Map<String, String> getTriggerTypes(final String inType) {
         Map<String, Class<? extends TriggerInterface>> interfaceMap =
                 getTriggerList();
         Map<String, String> typeMap = new HashMap<String, String>();
@@ -176,8 +176,11 @@ public class TriggerControl implements Runnable {
             Constructor<? extends TriggerInterface> tempTrigger = null;
             try {
                 tempTrigger = entry.getValue().getConstructor();
-                typeMap.put(entry.getKey().replace("Trigger",  ""),
+                if (tempTrigger.newInstance()
+                        .getTriggerType(inType)) {
+                    typeMap.put(entry.getKey().replace("Trigger",  ""),
                         tempTrigger.newInstance().getName());
+                }
             } catch (NoSuchMethodException | SecurityException |
                     InstantiationException | IllegalAccessException |
                     IllegalArgumentException | InvocationTargetException e) {
@@ -257,6 +260,9 @@ public class TriggerControl implements Runnable {
                 // Do stuff with the active step
                 currentTrigger.waitForTrigger();
                 currentTriggerPosition += 1;
+                if (currentTriggerPosition >= this.triggerCount()) {
+                    return;
+                }
                 currentTrigger = getTrigger(currentTriggerPosition);
                 currentTrigger.setActive();
             }
@@ -348,7 +354,6 @@ public class TriggerControl implements Runnable {
     public final JSONArray getJSONData() {
         JSONArray masterArray = new JSONArray();
         DateFormat lFormat = new SimpleDateFormat("yyyy/MM/dd'T'HH:mm:ssZ");
-        //masterArray.put("pid", this.getOutputControl());
         synchronized (triggerList) {
             for (TriggerInterface e : triggerList) {
                 masterArray.add(e.getJSONStatus());
@@ -421,6 +426,13 @@ public class TriggerControl implements Runnable {
      */
     public static final HtmlCanvas getNewTriggersForm(final String probe)
             throws IOException {
+        String probeType;
+        if (LaunchControl.findPID(probe) != null) {
+            probeType = "pid";
+        } else {
+            probeType = "temp";
+        }
+
         HtmlCanvas htmlCanvas = new HtmlCanvas(new PrettyWriter());
         htmlCanvas.div(id("newTriggersForm"))
             .form()
@@ -429,7 +441,7 @@ public class TriggerControl implements Runnable {
             htmlCanvas.option(value("").selected_if(true))
                 .write("Select Trigger Type")
             ._option();
-            Map<String, String> triggers = getTriggerTypes();
+            Map<String, String> triggers = getTriggerTypes(probeType);
             for (Entry<String, String> entry: triggers.entrySet()) {
                 htmlCanvas.option(value(entry.getKey()))
                     .write(entry.getValue())

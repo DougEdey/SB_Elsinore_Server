@@ -1049,6 +1049,7 @@ public final class Temp implements Runnable {
     public TriggerControl getTriggerControl() {
         if (this.triggerControl == null) {
             this.triggerControl = new TriggerControl();
+            this.triggerControl.setOutputControl(this.getName());
         }
         return triggerControl;
     }

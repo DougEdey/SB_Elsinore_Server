@@ -155,7 +155,7 @@ public final class LaunchControl {
     /**
      * Mash Threads list.
      */
-    public static List<Thread> mashThreads = new ArrayList<Thread>();
+    public static List<Thread> triggerThreads = new ArrayList<Thread>();
 
     /**
      * ConfigParser, legacy for the older users that haven't converted.
@@ -2917,7 +2917,7 @@ public final class LaunchControl {
 
     /**
      * Add a MashControl object to the master mash control list.
-     * 
+     *
      * @param mControl
      *            The new mashControl to add
      */
@@ -2933,7 +2933,7 @@ public final class LaunchControl {
 
     /**
      * Start the mashControl thread associated with the PID.
-     * 
+     *
      * @param pid
      *            The PID to find the mash control thread for.
      */
@@ -2941,7 +2941,7 @@ public final class LaunchControl {
         TriggerControl mControl = findTriggerControl(pid);
         Thread mThread = new Thread(mControl);
         mThread.setName("Mash-Thread[" + pid + "]");
-        mashThreads.add(mThread);
+        triggerThreads.add(mThread);
         mThread.start();
     }
 
@@ -2953,12 +2953,7 @@ public final class LaunchControl {
      * @return The MashControl for the PID.
      */
     public static TriggerControl findTriggerControl(final String pid) {
-        for (TriggerControl m : triggerControlList) {
-            if (m.getOutputControl().equalsIgnoreCase(pid)) {
-                return m;
-            }
-        }
-        return null;
+        return LaunchControl.findTemp(pid).getTriggerControl();
     }
 
     /**
