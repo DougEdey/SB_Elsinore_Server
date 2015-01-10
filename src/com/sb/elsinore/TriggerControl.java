@@ -435,7 +435,7 @@ public class TriggerControl implements Runnable {
         HtmlCanvas htmlCanvas = new HtmlCanvas(new PrettyWriter());
         htmlCanvas.div(id("newTriggersForm"))
             .form()
-                .select(name("type")
+                .select(name("type").class_("holo-spinner")
                         .onClick("newTrigger(this, '" + probe + "');"));
             htmlCanvas.option(value("").selected_if(true))
                 .write("Select Trigger Type")

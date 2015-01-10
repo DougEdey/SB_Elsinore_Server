@@ -1901,12 +1901,14 @@ public class UrlEndpoints {
 
     @UrlEndpoint(url = "/delphsensor")
     public Response delPhSensor() {
-        PhSensor phSensor = null;
-        String result = "";
-        if (parameters.containsKey("name")) {
-            LaunchControl.deletePhSensor(parameters.get("name"));
-            LaunchControl.setMessage("pH Sensor " + parameters.get("name")
-                    + " deleted.");
+        String sensorName = parameters.get("name");
+        if (sensorName != null
+                && LaunchControl.deletePhSensor(sensorName)) {
+            LaunchControl.setMessage("pH Sensor '" + sensorName
+                    + "' deleted.");
+        } else {
+            LaunchControl.setMessage("Could not find pH Sensor with name: "
+                    + sensorName);
         }
 
         return new Response(Status.OK, MIME_HTML, "");

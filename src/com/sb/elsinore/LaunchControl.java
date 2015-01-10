@@ -3360,6 +3360,7 @@ public final class LaunchControl {
     }
 
     public static PhSensor findPhSensor(String string) {
+        string = string.replace(" ", "_");
         synchronized (phSensorList) {
             Iterator<PhSensor> iterator = phSensorList.iterator();
             PhSensor tPh = null;
@@ -3378,21 +3379,24 @@ public final class LaunchControl {
      *
      * @param name
      *            The sensor to delete.
+     * @return true if the sensor is deleted.
      */
-    public static void deletePhSensor(final String name) {
+    public static boolean deletePhSensor(final String name) {
         // search based on the input name
+        String realName = name.replace(" ", "_");
         synchronized (phSensorList) {
             Iterator<PhSensor> iterator = phSensorList.iterator();
             PhSensor tSensor = null;
 
             while (iterator.hasNext()) {
                 tSensor = iterator.next();
-                if (tSensor.getName().equalsIgnoreCase(name)) {
+                if (tSensor.getName().equalsIgnoreCase(realName)) {
                     iterator.remove();
-                    return;
+                    return true;
                 }
             }
 
         }
+        return false;
     }
 }

@@ -1930,6 +1930,49 @@ function dropDeleteTimer(ev) {
 
 // END OF TIMERS
 
+// Start of Ph Sensors 
+function dragPhSensor(ev) {
+	ev.dataTransfer.setData("sensorname", ev.target.id);
+	$('#NewPhSensor')[0].innerHTML = $.i18n.prop("DELETE_PHSENSOR");
+}
+
+function allowDropPhSensor(ev) {
+	ev.preventDefault();
+	return;
+}
+
+function leavePhSensor(ev) {
+	ev.preventDefault();
+	return;
+}
+
+function dropDeletePhSensor(ev) {
+	ev.preventDefault();
+	var sensorName = ev.dataTransfer.getData("sensorname");
+
+	if (sensorName.lastIndexOf("div-") != 0) {
+		var baseSensorName = sensorName;
+		sensorName = "div-" + sensorName;
+	} else {
+		var baseSensorName = sensorName.substring(4);
+	}
+	
+
+	$('[id="' + sensorName + '"]').empty().remove();
+	var newOrder = "name=" + baseSensorName;
+
+	$('#NewPhSensor')[0].innerHTML = $.i18n.prop("NEW_PHSENSOR");
+	$.ajax({
+		url : 'delphsensor',
+		type : 'POST',
+		data : newOrder,
+		success : function(data) {
+			data = null
+		}
+	});
+}
+
+// END OF PH SENSORS
 // Drag and drop functions for mash steps
 function getVesselFromTriggerStep(divID) {
 	if (divID.lastIndexOf("triggerStep") == 0) {
@@ -2468,3 +2511,23 @@ function readPhSensor(element, name) {
 		}
 	});
 }
+
+function selectPhAddress(element) {
+	if (element.value == "") {
+		$("[id=adc_pin]").show();
+	} else {
+		$("[id=adc_pin]").hide();
+	}
+}
+
+function phAINChange(element) {
+	
+	if (element.value == "") {
+		$("[id=dsAddress]").show();
+		$("[id=dsOffset]").show();
+	} else {
+		$("[id=dsAddress]").hide();
+		$("[id=dsOffset]").hide();
+	}
+}
+
