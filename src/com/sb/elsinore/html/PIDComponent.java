@@ -15,15 +15,9 @@ import com.sb.elsinore.PID;
 public class PIDComponent implements Renderable {
 
     private String name = null;
-    private String type = null;
 
     public PIDComponent(String name) {
         this.name = name.trim();
-        if (LaunchControl.findPID(name.trim()) == null) {
-            this.type = "temp";
-        } else {
-            this.type = "pid";
-        }
     }
 
     @Override
