@@ -41,7 +41,7 @@ public class RenderHTML implements Renderable {
             }
 
             for (Temp temp: LaunchControl.tempList) {
-                if (LaunchControl.isLocked() 
+                if (LaunchControl.isLocked()
                         && temp.getName().equals(temp.getProbe())) {
                     continue;
                 }

@@ -2079,6 +2079,15 @@ function toggleEdit(manualChange) {
 		if (window.locked) {
 			readWrite(manualChange);
 			$(".controller").each(function hideDevice(count, element) {
+				if ($(element).find("div[id$=-title]").length > 0) {
+					titleStr = $(element).find("div[id$=-title]").html().trim();
+				}
+
+				if ($(element).find("input[id='hidden']").val() == "true" 
+					&& !titleStr.match(/ \[Hidden\]$/)) {
+					titleStr += " [Hidden]";
+					$(element).find("div[id$=-title]").html(titleStr);
+				}
 				$(element).toggleClass("hidden", false);
 			});
 			return;
