@@ -35,7 +35,7 @@ public class PIDComponent implements Renderable {
 
         html.div(
                 id(name).class_(
-                        "holo-content controller panel panel-primary " + type))
+                        "holo-content controller panel panel-primary pid"))
                 .script()
                 .write(TempComponent.getGaugeScript(name), false)
                 ._script()

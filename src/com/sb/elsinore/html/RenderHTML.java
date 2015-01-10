@@ -32,19 +32,17 @@ public class RenderHTML implements Renderable {
             .br();
 
         // Add all the PIDs
-        html.div(id("PIDs"));
+        html.div(id("Probes"));
             for (Temp temp: LaunchControl.tempList) {
                 PID pid = LaunchControl.findPID(temp.getName());
                 if (pid != null) {
                     html.render(new PIDComponent(pid.getName()));
                 }
             }
-        html._div();
 
-        // Add all the Temps
-        html.div(id("tempProbes"));
             for (Temp temp: LaunchControl.tempList) {
-                if (LaunchControl.isLocked() && temp.getName().equals(temp.getProbe())) {
+                if (LaunchControl.isLocked() 
+                        && temp.getName().equals(temp.getProbe())) {
                     continue;
                 }
                 PID pid = LaunchControl.findPID(temp.getName());
