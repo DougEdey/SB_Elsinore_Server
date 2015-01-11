@@ -231,7 +231,6 @@ public class TemperatureTrigger implements TriggerInterface {
      */
     @Override
     public final JSONObject getJSONStatus() {
-
         String targetTempString = this.targetTemp
                 + this.temperatureProbe.getScale();
         String description = this.mode;
