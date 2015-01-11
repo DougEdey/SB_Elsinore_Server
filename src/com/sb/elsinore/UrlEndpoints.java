@@ -43,7 +43,6 @@ public class UrlEndpoints {
          * The Serial UID.
          */
         public static final long serialVersionUID = 1L;
-    
         {
             put("css", "text/css");
             put("htm", "text/html");
@@ -136,7 +135,7 @@ public class UrlEndpoints {
      */
     @UrlEndpoint(url = "/triggerprofile")
     public final Response updateTriggerProfile() {
-        String tempProbe = parameters.get("tempProbe");
+        String tempProbe = parameters.get("tempprobe");
         if (tempProbe == null) {
             LaunchControl.setMessage("Could not trigger profile,"
                     + " no tempProbe provided");
@@ -163,11 +162,11 @@ public class UrlEndpoints {
         Map<String, String> params = this.parameters;
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Set the order for the mash profile.");
-        usage.put("tempProbe",
+        usage.put("tempprobe",
                 "The name of the TempProbe to change the mash profile order on.");
         usage.put(":old=:new", "The old position and the new position");
         // Resort the mash profile for the PID, then sort the rest
-        String tempProbe = params.get("tempProbe");
+        String tempProbe = params.get("tempprobe");
         // Do we have a PID coming in?
         if (tempProbe == null) {
             LaunchControl.setMessage(
@@ -176,7 +175,7 @@ public class UrlEndpoints {
                     usage.toJSONString());
         }
         // Prevent any errors from the PID not being a number.
-        params.remove("tempProbe");
+        params.remove("tempprobe");
         // Do we have a mash control for the PID?
         TriggerControl mControl = LaunchControl.findTriggerControl(tempProbe);
         // Should be good to go, iterate and update!
@@ -215,12 +214,12 @@ public class UrlEndpoints {
         // Default to the existing temperature scale
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Add a new mashstep to the specified PID");
-        usage.put("tempProbe", "The PID to delete the mash step from");
+        usage.put("tempprobe", "The PID to delete the mash step from");
         usage.put("position", "The mash step to delete");
         Status status = Status.OK;
 
         try {
-            String tempProbe = params.get("tempProbe");
+            String tempProbe = params.get("tempprobe");
             int position = Integer.parseInt(params.get("position"));
             TriggerControl mControl = LaunchControl
                     .findTemp(tempProbe).getTriggerControl();
@@ -256,8 +255,8 @@ public class UrlEndpoints {
     public Response toggleTriggerProfile() {
 
         String tempProbe = null;
-        if (parameters.containsKey("tempProbe")) {
-            tempProbe = parameters.get("tempProbe");
+        if (parameters.containsKey("tempprobe")) {
+            tempProbe = parameters.get("tempprobe");
         } else {
             BrewServer.LOG.warning("No Temp provided to toggle Trigger Profile");
             return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
@@ -1970,6 +1969,26 @@ public class UrlEndpoints {
     }
 
     /**
+     * Get the trigger edit form for the specified parameters.
+     * @return The Edit form.
+     */
+    @UrlEndpoint(url = "/gettriggeredit")
+    public final Response getTriggerEditForm() {
+        Status status = Status.OK;
+        int position = Integer.parseInt(parameters.get("position"));
+        String type = parameters.get("type");
+        String tempProbeName = parameters.get("tempprobe");
+        Temp tempProbe = LaunchControl.findTemp(tempProbeName);
+        TriggerControl triggerControl = tempProbe.getTriggerControl();
+        HtmlCanvas canvas = triggerControl.getEditTriggerForm(
+                position, new JSONObject(parameters));
+        if (canvas != null) {
+            return new Response(status, MIME_HTML, canvas.toHtml());
+        }
+        return new Response(Status.BAD_REQUEST, MIME_HTML, "BAD");
+    }
+
+    /**
      * Add a new Trigger to the incoming tempProbe object.
      * @return A response for the user.
      */
@@ -1978,9 +1997,26 @@ public class UrlEndpoints {
         Status status = Status.OK;
         int position = Integer.parseInt(parameters.get("position"));
         String type = parameters.get("type");
-        Temp tempProbe = LaunchControl.findTemp(parameters.get("tempProbe"));
+        String tempProbeName = parameters.get("tempprobe");
+        Temp tempProbe = LaunchControl.findTemp(tempProbeName);
         TriggerControl triggerControl = tempProbe.getTriggerControl();
         triggerControl.addTrigger(position, type, new JSONObject(parameters));
+        return new Response(status, MIME_HTML, "OK");
+    }
+
+    /**
+     * Update the trigger.
+     * @return The Edit form.
+     */
+    @UrlEndpoint(url = "/updatetrigger")
+    public final Response updateTrigger() {
+        Status status = Status.OK;
+        int position = Integer.parseInt(parameters.get("position"));
+        String type = parameters.get("type");
+        String tempProbeName = parameters.get("tempprobe");
+        Temp tempProbe = LaunchControl.findTemp(tempProbeName);
+        TriggerControl triggerControl = tempProbe.getTriggerControl();
+        triggerControl.updateTrigger(position, new JSONObject(parameters));
         return new Response(status, MIME_HTML, "OK");
     }
 }

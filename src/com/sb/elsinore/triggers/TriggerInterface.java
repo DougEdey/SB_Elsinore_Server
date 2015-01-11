@@ -44,6 +44,13 @@ public interface TriggerInterface extends Comparable<TriggerInterface> {
     HtmlCanvas getForm() throws IOException;
 
     /**
+     * Get the Edit form for this trigger.
+     * @return The Edit Form as a HTML Canvas
+     * @throws IOException If the form could not be created.
+     */
+    HtmlCanvas getEditForm() throws IOException;
+
+    /**
      * Set the position of this Trigger.
      * @param newPos The new position.
      */
@@ -58,7 +65,14 @@ public interface TriggerInterface extends Comparable<TriggerInterface> {
     /**
      * Get the type of device this trigger is intended for.
      * pid, temp, any.
-     * @return The trigger type
+     * @param inType The type of the trigger to check against.
+     * @return True if this is a valid trigger.
      */
     boolean getTriggerType(String inType);
+
+    /**
+     * Method to update this trigger.
+     * @param params The Parameters to update with.
+     */
+    void updateTrigger(JSONObject params);
 }

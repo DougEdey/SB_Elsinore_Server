@@ -262,7 +262,7 @@ function waitForMsg() {
 						if (!("system" in data.vessels)
 								&& !("System" in data.vessels)) {
 							// No System temperature, add a header to add it in.
-							var sysTemp = $("[id=tempProbes] > [id=System]");
+							var sysTemp = $("[id=Probes] > [id=System]");
 							if (sysTemp.length == 0 && !data.locked) {
 								var sysHtml = '<div id="System" class="holo-content controller panel panel-primary Temp">'
 										+ '<div id="System-title" class="title panel-heading "'
@@ -271,9 +271,9 @@ function waitForMsg() {
 										+ '</div>'
 										+ '</div>';
 
-								$("[id=tempProbes]").append(sysHtml)
+								$("[id=Probes]").append(sysHtml)
 							}
-							if ($("[id=tempProbes] > [id=System] > div").length == 1
+							if ($("[id=Probes] > [id=System] > div").length == 1
 									&& data.locked) {
 								sysTemp.remove();
 							}
@@ -1278,9 +1278,9 @@ function cancelAddTrigger(vessel) {
 
 function submitNewTriggerStep(button) {
 	var data = $(button).closest("#newTriggersForm").serializeObject();
-	if (!("tempProbe" in data)) {
+	if (!("tempprobe" in data)) {
 		var addTriggerID = $(button).closest("[id^=triggerTable]")[0].id;
-		data.tempProbe = addTriggerID.substring("triggerTable".length);
+		data.tempprobe = addTriggerID.substring("triggerTable".length);
 	} 
 	if (!("position" in data)) {
 		var position = $(button).closest("[id^=triggerTable]").find('tbody > tr').length;
@@ -1297,6 +1297,52 @@ function submitNewTriggerStep(button) {
 	});
 
 	window.disableUpdates = 0;
+	return false;
+}
+
+function updateTriggerStep(element) {
+	var data = $(element).closest("#editTriggersForm").serializeObject();
+	if (!("tempprobe" in data)) {
+		var addTriggerID = $(element).closest("[id^=triggerTable]")[0].id;
+		data.tempprobe = addTriggerID.substring("triggerTable".length);
+	}
+	
+	$.ajax({
+		url : 'updatetrigger',
+		type : 'POST',
+		data : data,
+		success : function(data) {
+			data = null
+		}
+	});
+
+	window.disableUpdates = 0;
+	return false;
+}
+
+function editTriggerStep(element) {
+	var probename = $(element).closest("[id^=triggerTable]")[0].id.replace("triggerTable", "");
+	var position = element.id.substring(element.id.indexOf("-")+1);
+	// Insert a couple of new form elements
+	var tempUnit = $("#" + probename + " div >div >div[id='tempUnit']")[0].textContent;
+	var $tr = $(element);
+    
+    $tr.popover('destroy');
+    $tr.popover({
+        title: 'Edit Trigger',
+        content: "Loading...",
+        placement: 'bottom',
+        html: true,
+        trigger: 'manual'
+    }).popover('show');
+    $.ajax({
+        url: '/getTriggerEdit',
+        data: {tempprobe: probename, position: position},
+        dataType: 'html',
+        success: function(html) {
+            $(".popover-content").html(html);
+        }
+    });
 	return false;
 }
 
@@ -1318,7 +1364,7 @@ function triggerToggle(button, position) {
 	// Parse out the PID from the controller
 	var pid = button.id.replace("triggerButton-", "");
 	postData = {};
-	postData['tempProbe'] = pid;
+	postData['tempprobe'] = pid;
 	postData['status'] = button.innerText.toLowerCase();
 
 	if (position !== 'undefined') {
@@ -1500,7 +1546,8 @@ function addTriggerStep(triggerStep, triggerData, pid) {
 		tableRow = "<tr id='triggerRow" + pid + "-" + triggerStep + "'"
 				+ " ondragstart='dragTriggerStep(event);' draggable='true'"
 				+ " ondrop='dropTriggerStep(event);'"
-				+ " ondragover='allowDropTriggerStep(event);'>"
+				+ " ondragover='allowDropTriggerStep(event);'"
+				+ " ondblclick='editTriggerStep(this);' >"
 		tableRow += ("<td>" + triggerData['start'] + "</td>");
 		tableRow += ("<td>" + triggerData['description'] + "</td>");
 		tableRow += ("<td>" + triggerData['target'] + "</td>");
@@ -1741,7 +1788,7 @@ function dropPump(ev) {
 
 	var refNode = ev.target.parentElement;
 	refNode.parentNode.insertBefore(document.getElementById(pumpName),
-			refNode.nextSibling);
+			refNode);
 
 	// TODO: Update the server with the new location
 	var newOrder = "";
@@ -1851,7 +1898,7 @@ function dropTimer(ev) {
 
 	var refNode = ev.target.parentElement;
 	refNode.parentNode.insertBefore(document.getElementById(timerName),
-			refNode.nextSibling);
+			refNode);
 
 	// TODO: Update the server with the new location
 	var newOrder = "";
@@ -2014,7 +2061,7 @@ function dropTriggerStep(ev) {
 
 	var refNode = ev.target.parentElement;
 	refNode.parentNode.insertBefore(document.getElementById(triggerData),
-			refNode.nextSibling);
+			refNode);
 
 	var newOrder = "tempprobe=" + vessel + "&";
 	$("#triggerTable" + vessel + " > tbody > tr").each(function(index) {
@@ -2050,7 +2097,7 @@ function dropDeleteTriggerStep(ev) {
 	var position = getPositionFromTriggerStep(triggerStepName);
 
 	$('[id="' + triggerStepName + '"]').empty().remove();
-	var delData = "tempProbe=" + vessel + "&position=" + position;
+	var delData = "tempprobe=" + vessel + "&position=" + position;
 
 	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
 	$.ajax({
@@ -2539,4 +2586,3 @@ function phAINChange(element) {
 		$("[id=dsOffset]").hide();
 	}
 }
-

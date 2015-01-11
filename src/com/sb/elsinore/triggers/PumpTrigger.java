@@ -48,7 +48,7 @@ public class PumpTrigger implements TriggerInterface {
      */
     public PumpTrigger(final int inPos, final JSONObject parameters) {
         this.position = inPos;
-        this.pumpName = (String) parameters.get("name");
+        this.pumpName = (String) parameters.get("pumpname");
         this.activate = (String) parameters.get("activate");
     }
 
@@ -79,6 +79,13 @@ public class PumpTrigger implements TriggerInterface {
         if (this.pumpName == null && this.activate != null) {
             return;
         }
+        triggerPump();
+    }
+
+    /**
+     * Trigger the pump.
+     */
+    private void triggerPump() {
         Pump pump = LaunchControl.findPump(this.pumpName);
         if (pump != null) {
             if (this.activate.equals("on")) {
@@ -152,11 +159,11 @@ public class PumpTrigger implements TriggerInterface {
                 html.option(value(""))
                         .write("")
                 ._option();
-                html.option(value(Messages.PUMP_ON))
-                    .write("on")
+                html.option(value("on"))
+                    .write(Messages.PUMP_ON)
                 ._option();
-                html.option(value(Messages.PUMP_OFF))
-                    .write("off")
+                html.option(value("off"))
+                    .write(Messages.PUMP_OFF)
                 ._option();
             html._select();
 
@@ -169,6 +176,82 @@ public class PumpTrigger implements TriggerInterface {
         html._form();
         html._div();
         return html;
+    }
+
+    /**
+     * @return The HTML elements for this form.
+     * @throws IOException if the form could not be created.
+     */
+    @Override
+    public final HtmlCanvas getEditForm() throws IOException {
+        HtmlCanvas html = new HtmlCanvas();
+        html.div(id("EditPumpTrigger").class_(""));
+        html.form(id("editTriggersForm"));
+            html.input(id("type").name("type")
+                        .hidden("true").value("Pump"));
+            html.input(id("type").name("position")
+                    .hidden("position").value("" + this.position));
+            // Add the Pumps as a drop down list.
+            html.select(class_("holo-spinner").name("pumpname")
+                    .id("pumpName"));
+                html.option(value(""))
+                        .write(Messages.PUMPS)
+                ._option();
+                for (Pump tPump: LaunchControl.pumpList) {
+                    String tName = tPump.getName();
+                    html.option(value(tName)
+                            .selected_if(this.pumpName.equals(tName)))
+                        .write(tName)
+                    ._option();
+                }
+            html._select();
+
+            // Add the on/off values
+            html.select(class_("holo-spinner").name("activate")
+                    .id("activate"));
+                html.option(value(""))
+                        .write("")
+                ._option();
+                html.option(value(Messages.PUMP_ON)
+                        .selected_if(this.activate.equals("on")))
+                    .write("On")
+                ._option();
+                html.option(value(Messages.PUMP_OFF)
+                        .selected_if(this.activate.equals("off")))
+                    .write("Off")
+                ._option();
+            html._select();
+
+            html.button(name("submitPumpTrigger")
+                    .class_("btn col-md-12")
+                    .add("data-toggle", "clickover")
+                    .onClick("updateTriggerStep(this);"))
+                .write(Messages.EDIT)
+            ._button();
+        html._form();
+        html._div();
+        return html;
+    }
+
+    /**
+     * Update this trigger.
+     * @param params The parameters to update with.
+     */
+    @Override
+    public final void updateTrigger(final JSONObject params) {
+        String tName = (String) params.get("pumpname");
+        String tActivate = (String) params.get("activate");
+
+        // Update the variables.
+        if (tActivate != null) {
+            this.activate = tActivate;
+        }
+        if (tName != null && LaunchControl.findPump(tName) != null) {
+            this.pumpName = tName;
+            if (this.active) {
+                triggerPump();
+            }
+        }
     }
 
     /**

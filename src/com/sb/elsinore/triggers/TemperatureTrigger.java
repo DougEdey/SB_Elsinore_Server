@@ -30,11 +30,13 @@ public class TemperatureTrigger implements TriggerInterface {
     private BigDecimal targetTemp = null;
     private BigDecimal duration = null;
     private Temp temperatureProbe = null;
-    private String mode = null;
+    private String method = null;
+    private String type = null;
     private boolean active;
     private int position = -1;
     public static String INCREASE = "INCREASE";
     public static String DECREASE = "DECREASE";
+    private String mode = null;
     private Date startDate = null;
     private String TRIGGER_NAME =  "Temperature";
     private String TRIGGER_TYPE = "ANY";
@@ -85,7 +87,7 @@ public class TemperatureTrigger implements TriggerInterface {
      * "temp": The TargetTemperature for this step.
      * "method": A string used to represent this trigger.
      * "type": A String used to represent this trigger.
-     * "tempProbe": The name of the temperature probe to use.
+     * "tempprobe": The name of the temperature probe to use.
      */
     public TemperatureTrigger(final int inPosition,
             final JSONObject parameters) {
@@ -93,13 +95,40 @@ public class TemperatureTrigger implements TriggerInterface {
         BigDecimal tTemp = new BigDecimal(
               parameters.get("targetTemperature").toString().replace(",", "."));
 
-        String method = parameters.get("method").toString();
-        String type = parameters.get("stepType").toString();
-        String tempProbe = parameters.get("tempProbe").toString();
+        String inMethod = parameters.get("method").toString();
+        String inType = parameters.get("stepType").toString();
+        String inTempProbe = parameters.get("tempprobe").toString();
+        String inMode = parameters.get("mode").toString();
 
         this.targetTemp = tTemp;
-        this.temperatureProbe = LaunchControl.findTemp(tempProbe);
-        this.mode = method + ": " + type;
+        this.temperatureProbe = LaunchControl.findTemp(inTempProbe);
+        this.method = inMethod;
+        this.type = inType;
+        this.mode = inMode;
+    }
+
+    /**
+     * Update the current trigger.
+     */
+    @Override
+    public void updateTrigger(final JSONObject parameters) {
+        BigDecimal tTemp = new BigDecimal(
+            parameters.get("targetTemperature").toString().replace(",", "."));
+
+        String newMode = parameters.get("mode").toString();
+        String newMethod = parameters.get("method").toString();
+        String newType = parameters.get("stepType").toString();
+        String newTempProbe = parameters.get("tempprobe").toString();
+
+        this.targetTemp = tTemp;
+        this.temperatureProbe = LaunchControl.findTemp(newTempProbe);
+        this.method = newMethod;
+        this.type = newType;
+        this.mode = newMode;
+
+        if (this.active) {
+            setTargetTemperature();
+        }
     }
 
     /**
@@ -116,6 +145,7 @@ public class TemperatureTrigger implements TriggerInterface {
             BrewServer.LOG.warning("No Temperature Probe Set");
             return;
         }
+
         if (mode == null) {
             BrewServer.LOG.warning("No Mode Set");
             return;
@@ -201,6 +231,8 @@ public class TemperatureTrigger implements TriggerInterface {
             html.form(id("newTriggersForm"));
                 html.input(id("type").name("type")
                             .hidden("true").value("Temperature"));
+                html.input(id("type").name("position")
+                        .hidden("position").value("" + this.position));
                 html.input(class_("inputBox temperature form-control")
                         .type("number").add("step", "any")
                         .add("placeholder", Messages.SET_POINT)
@@ -211,10 +243,77 @@ public class TemperatureTrigger implements TriggerInterface {
                 html.input(class_("inputBox form-control")
                         .name("stepType").value("")
                         .add("placeholder", Messages.TYPE));
+             // Add the on/off values
+                html.select(class_("holo-spinner").name("mode")
+                        .id("mode"));
+                    html.option(value(""))
+                            .write("")
+                    ._option();
+                    html.option(value(TemperatureTrigger.INCREASE))
+                        .write(TemperatureTrigger.INCREASE)
+                    ._option();
+                    html.option(value(TemperatureTrigger.DECREASE))
+                        .write(TemperatureTrigger.DECREASE)
+                    ._option();
+                html._select();
                 html.button(name("submitTemperature")
                         .class_("btn col-md-12")
                         .add("data-toggle", "clickover")
                         .onClick("submitNewTriggerStep(this);"))
+                    .write(Messages.ADD_TRIGGER)
+                ._button();
+            html._form();
+        html._div();
+        return html;
+    }
+    /**
+     * Get the Form HTML Canvas representing a temperature trigger.
+     * @return {@link org.rendersnake.HtmlCanvas} representing the input form.
+     * @throws IOException when the HTMLCanvas could not be created.
+     */
+    @Override
+    public final HtmlCanvas getEditForm() throws IOException {
+        HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
+        html.div(id("EditTempTrigger").class_(""));
+            html.form(id("editTriggersForm"));
+                html.input(id("type").name("type")
+                            .hidden("true").value("Temperature"));
+                html.input(id("type").name("position")
+                        .hidden("position").value("" + this.position));
+                html.input(class_("inputBox temperature form-control")
+                        .type("number").add("step", "any")
+                        .add("placeholder", Messages.SET_POINT)
+                        .value(this.targetTemp.toPlainString())
+                        .name("targetTemperature").value(""));
+                html.input(class_("inputBox form-control")
+                        .name("method").value("")
+                        .value(this.method)
+                        .add("placeholder", Messages.METHOD));
+                html.input(class_("inputBox form-control")
+                        .name("stepType").value("")
+                        .value(this.type)
+                        .add("placeholder", Messages.TYPE));
+                // Add the on/off values
+                html.select(class_("holo-spinner").name("mode")
+                        .id("mode"));
+                    html.option(value(""))
+                            .write("")
+                    ._option();
+                    html.option(value(TemperatureTrigger.INCREASE)
+                            .selected_if(
+                                this.mode.equals(TemperatureTrigger.INCREASE)))
+                        .write(TemperatureTrigger.INCREASE)
+                    ._option();
+                    html.option(value(TemperatureTrigger.DECREASE)
+                            .selected_if(
+                                this.mode.equals(TemperatureTrigger.DECREASE)))
+                        .write(TemperatureTrigger.DECREASE)
+                    ._option();
+                html._select();
+                html.button(name("submitTemperature")
+                        .class_("btn col-md-12")
+                        .add("data-toggle", "clickover")
+                        .onClick("updateTriggerStep(this);"))
                     .write(Messages.ADD_TRIGGER)
                 ._button();
             html._form();
@@ -235,7 +334,7 @@ public class TemperatureTrigger implements TriggerInterface {
     public final JSONObject getJSONStatus() {
         String targetTempString = this.targetTemp
                 + this.temperatureProbe.getScale();
-        String description = this.mode;
+        String description = this.method + ": " + this.type + "(" + this.mode + ")";
         String startDateStamp = "";
         if (this.startDate != null) {
             startDateStamp = BrewDay.lFormat.format(this.startDate);

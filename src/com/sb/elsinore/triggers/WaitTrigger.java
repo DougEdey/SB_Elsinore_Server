@@ -29,6 +29,8 @@ public class WaitTrigger implements TriggerInterface {
     private BigDecimal waitTime = BigDecimal.ZERO;
     private Date startDate, endDate;
     private boolean active = false;
+    private double minutes = 0.0;
+    private double seconds = 0.0;
 
     public WaitTrigger() {
         BrewServer.LOG.info("Created an empty wait trigger");
@@ -40,21 +42,37 @@ public class WaitTrigger implements TriggerInterface {
 
     public WaitTrigger(final int newPos, final JSONObject parameters) {
         this.position = newPos;
+        updateParams(parameters);
+    }
+
+    /**
+     * Set the values of this trigger.
+     * @param parameters The updated parameters.
+     */
+    private void updateParams(final JSONObject parameters) {
         String waitTimeMins = "0";
         if (parameters.get("waitTimeMins") != "") {
                 waitTimeMins = (String) parameters.get("waitTimeMins");
+                if (waitTimeMins.length() == 0) {
+                    waitTimeMins = "0";
+                }
         }
-
+        this.minutes = Double.parseDouble(waitTimeMins);
         String waitTimeSecs = "0";
         if (parameters.get("waitTimeSecs") != "") {
                 waitTimeSecs = (String) parameters.get("waitTimeSecs");
+                if (waitTimeSecs.length() == 0) {
+                    waitTimeSecs = "0";
+                }
         }
+        this.seconds = Double.parseDouble(waitTimeSecs);
         BigDecimal totalTime = new BigDecimal(
-                Double.parseDouble(waitTimeMins) * 60);
+                this.minutes * 60);
         totalTime = totalTime.add(new BigDecimal(
-                Double.parseDouble(waitTimeSecs)));
+                this.seconds));
         this.waitTime = totalTime;
     }
+
     /**
      * Suspend the thread for a certain period of time.
      * @param ms The time in milliseconds to suspend for.
@@ -123,10 +141,12 @@ public class WaitTrigger implements TriggerInterface {
             endDateStamp = this.waitTime.toPlainString();
         }
 
+        String targetStr = this.minutes + " " + Messages.MIN + " "
+                + this.seconds + " " + Messages.SECS;
         JSONObject currentStatus = new JSONObject();
         currentStatus.put("position", this.position);
         currentStatus.put("start", startDateStamp);
-        currentStatus.put("target", this.waitTime.toPlainString());
+        currentStatus.put("target", targetStr);
         currentStatus.put("description", endDateStamp);
         currentStatus.put("active", Boolean.toString(this.active));
 
@@ -183,6 +203,45 @@ public class WaitTrigger implements TriggerInterface {
     @Override
     public void setPosition(int newPos) {
         this.position = newPos;
+    }
+
+    @Override
+    public HtmlCanvas getEditForm() throws IOException {
+        HtmlCanvas html = new HtmlCanvas();
+        html.div(id("EditWaitTrigger").class_(""));
+            html.form(id("editTriggersForm"));
+                html.input(id("type").name("type")
+                            .hidden("true").value("Wait"));
+                html.input(id("type").name("position")
+                        .hidden("position").value("" + this.position));
+                html.input(class_("inputBox temperature form-control")
+                        .type("number").add("step", "any")
+                        .add("placeholder", Messages.MINUTES)
+                        .name("waitTimeMins")
+                        .value(Double.toString(this.minutes)));
+                html.input(class_("inputBox temperature form-control")
+                        .type("number").add("step", "any")
+                        .add("placeholder", Messages.SECS)
+                        .name("waitTimeSecs")
+                        .value(Double.toString(this.seconds)));
+                html.button(name("submitWait")
+                        .class_("btn col-md-12")
+                        .add("data-toggle", "clickover")
+                        .onClick("updateTriggerStep(this);"))
+                    .write(Messages.ADD_TRIGGER)
+                ._button();
+            html._form();
+        html._div();
+        return html;
+    }
+
+    /**
+     * Update the wait trigger with new timings.
+     * @param params The new parameters.
+     */
+    @Override
+    public final void updateTrigger(final JSONObject params) {
+        updateParams(params);
     }
 
 }

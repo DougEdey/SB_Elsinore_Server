@@ -135,6 +135,36 @@ public class TriggerControl implements Runnable {
     }
 
     /**
+     * Get the input trigger form for the specified type.
+     * @param position The position to add the new trigger at.
+     * @param params The incoming params.
+     * @return The HtmlCanvas representing the form.
+     */
+    public final HtmlCanvas getEditTriggerForm(final int position,
+            final JSONObject params) {
+        TriggerInterface trigger = this.triggerList.get(position);
+        // Try to get the form.
+        try {
+            return trigger.getEditForm();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Update the trigger.
+     * @param position The position to update the new trigger at.
+     * @param params The new parameters
+     */
+    public final void updateTrigger(final int position,
+            final JSONObject params) {
+        TriggerInterface trigger = this.triggerList.get(position);
+        trigger.updateTrigger(params);
+    }
+
+
+    /**
      * Get the Trigger Class that matches the incoming name.
      * @param name The name of the trigger to get.
      * @return The Class representing the trigger.
