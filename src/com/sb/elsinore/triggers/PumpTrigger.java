@@ -161,13 +161,14 @@ public class PumpTrigger implements TriggerInterface {
             html._select();
 
             html.button(name("submitPumpTrigger")
+                    .class_("btn col-md-12")
                     .add("data-toggle", "clickover")
                     .onClick("submitNewTriggerStep(this);"))
                 .write(Messages.ADD_TRIGGER)
             ._button();
         html._form();
-    html._div();
-        return null;
+        html._div();
+        return html;
     }
 
     /**

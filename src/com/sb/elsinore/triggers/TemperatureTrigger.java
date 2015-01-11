@@ -203,6 +203,7 @@ public class TemperatureTrigger implements TriggerInterface {
                             .hidden("true").value("Temperature"));
                 html.input(class_("inputBox temperature form-control")
                         .type("number").add("step", "any")
+                        .add("placeholder", Messages.SET_POINT)
                         .name("targetTemperature").value(""));
                 html.input(class_("inputBox form-control")
                         .name("method").value("")
@@ -211,6 +212,7 @@ public class TemperatureTrigger implements TriggerInterface {
                         .name("stepType").value("")
                         .add("placeholder", Messages.TYPE));
                 html.button(name("submitTemperature")
+                        .class_("btn col-md-12")
                         .add("data-toggle", "clickover")
                         .onClick("submitNewTriggerStep(this);"))
                     .write(Messages.ADD_TRIGGER)

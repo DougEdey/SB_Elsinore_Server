@@ -163,11 +163,14 @@ public class WaitTrigger implements TriggerInterface {
                             .hidden("true").value("Wait"));
                 html.input(class_("inputBox temperature form-control")
                         .type("number").add("step", "any")
+                        .add("placeholder", Messages.MINUTES)
                         .name("waitTimeMins").value(""));
                 html.input(class_("inputBox temperature form-control")
                         .type("number").add("step", "any")
+                        .add("placeholder", Messages.SECS)
                         .name("waitTimeSecs").value(""));
                 html.button(name("submitWait")
+                        .class_("btn col-md-12")
                         .add("data-toggle", "clickover")
                         .onClick("submitNewTriggerStep(this);"))
                     .write(Messages.ADD_TRIGGER)
