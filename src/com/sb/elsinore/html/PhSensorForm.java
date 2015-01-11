@@ -29,16 +29,16 @@ public class PhSensorForm implements Renderable {
                     .name(phSensor.getName() + "-edit"))
                 .input(type("text").class_("form-control")
                         .name("name").id("name")
-                        .value(phSensor.getName()))
-                .br();
+                        .value(phSensor.getName()));
                 html.input(type("text").class_("form-control")
-                        .name("adc_pin")
+                        .name("adc_pin").onInput("phAINChange(this);")
+                        .add("pattern", "[0-7]{1}")
+                        .title("Only 0-7 are accepted pins.")
                         .id("adc_pin").value(phSensor.getAIN())
-                        .add("placeholder", Messages.ANALOGUE_PIN))
-                .br()
-                // Replace this with a list
-                .select(class_("holo-spinner").name("dsAddress")
-                        .id("dsAddress"));
+                        .add("placeholder", Messages.ANALOGUE_PIN));
+                // Create a list of the DS2450 addresses
+                html.select(class_("holo-spinner").name("dsAddress")
+                        .id("dsAddress").onClick("selectPhAddress(this);"));
                 html.option(value("").selected_if(
                         "".equals(phSensor.getDsAddress())))
                         .write(Messages.DS2450_ADDRESS)
@@ -55,8 +55,9 @@ public class PhSensorForm implements Renderable {
                 html.input(type("text").class_("form-control")
                         .name("dsOffset")
                         .id("dsOffset").value(phSensor.getDsOffset())
-                        .add("placeholder", Messages.DS2450_OFFSET))
-                .br();
+                        .add("pattern", "[ABCD]{1}")
+                        .title("Only A, B, C, or D are accepted offsets")
+                        .add("placeholder", Messages.DS2450_OFFSET));
                 html.select(class_("holo-spinner").name("ph_model")
                         .id("ph_model"));
                 html.option(value("").selected_if(
@@ -75,8 +76,7 @@ public class PhSensorForm implements Renderable {
                         .add("step", "any")
                         .name("calibration")
                         .id("calibration").value("")
-                        .add("placeholder", Messages.CALIBRATE))
-                .br();
+                        .add("placeholder", Messages.CALIBRATE));
                 html.button(id("updatePhSensor-" + phSensor.getName())
                         .onClick("submitForm(this.form);")
                         .class_("btn"))

@@ -139,7 +139,7 @@ public final class LaunchControl {
     /**
      * List of MashControl profiles.
      */
-    public static List<MashControl> mashList = new ArrayList<MashControl>();
+    public static List<TriggerControl> triggerControlList = new ArrayList<TriggerControl>();
     /**
      * List of pH Sensors.
      */
@@ -155,7 +155,7 @@ public final class LaunchControl {
     /**
      * Mash Threads list.
      */
-    public static List<Thread> mashThreads = new ArrayList<Thread>();
+    public static List<Thread> triggerThreads = new ArrayList<Thread>();
 
     /**
      * ConfigParser, legacy for the older users that haven't converted.
@@ -430,10 +430,10 @@ public final class LaunchControl {
                     }
                 }
 
-                synchronized (mashList) {
-                    if (mashList.size() > 0) {
+                synchronized (triggerControlList) {
+                    if (triggerControlList.size() > 0) {
                         BrewServer.LOG.warning("Shutting down MashControl threads.");
-                        for (MashControl m : mashList) {
+                        for (TriggerControl m : triggerControlList) {
                             m.setShutdownFlag(true);
                         }
                     }
@@ -659,6 +659,7 @@ public final class LaunchControl {
         // get each setting add it to the JSON
         JSONObject rObj = new JSONObject();
         JSONObject tJSON = null;
+        JSONObject triggerJSON = new JSONObject();
         rObj.put("locked", LaunchControl.pageLock);
         rObj.put("breweryName", LaunchControl.getName());
 
@@ -724,9 +725,16 @@ public final class LaunchControl {
                     }
 
                 }
+
+                if (t.getTriggerControl() != null
+                        && t.getTriggerControl().triggerCount() > 0) {
+                    triggerJSON.put(t.getName(),
+                            t.getTriggerControl().getJSONData());
+                }
             }
         }
         rObj.put("vessels", vesselJSON);
+        rObj.put("triggers", triggerJSON);
 
         if (brewDay != null) {
             rObj.put("brewday", brewDay.brewDayStatus());
@@ -743,22 +751,9 @@ public final class LaunchControl {
             rObj.put("pumps", tJSON);
         }
 
-        // Check for mash steps
-        if (mashList.size() > 0) {
-            tJSON = new JSONObject();
-            for (MashControl m : mashList) {
-                tJSON.put(m.getOutputControl(), m.getJSONData());
-            }
-            rObj.put("mash", tJSON);
-        } else {
-            rObj.put("mash", "Unset");
-        }
-
         if (LaunchControl.getMessage() != null) {
             rObj.put("message", LaunchControl.getMessage());
         }
-        
-        
 
         rObj.put("language", Locale.getDefault().toString());
         return rObj.toString();
@@ -766,7 +761,7 @@ public final class LaunchControl {
 
     /**
      * Get the system status.
-     * 
+     *
      * @return a JSON Object representing the current system status
      */
     public static String getSystemStatus() {
@@ -1185,7 +1180,7 @@ public final class LaunchControl {
             return null;
         }
 
-        if (!probe.equals("") && !probe.startsWith("28")) {
+        if (!probe.startsWith("28") && !input.equals("System")) {
             BrewServer.LOG.warning(probe + " is not a temperature probe");
             return null;
         }
@@ -2601,7 +2596,10 @@ public final class LaunchControl {
         }
 
         Temp newTemp = startDevice(deviceName, probe, heatGPIO);
-
+        if (newTemp == null) {
+            System.out.println("Problems parsing device " + deviceName);
+            System.exit(-1);
+        }
         try {
             if (heatGPIO != null && GPIO.getPinNumber(heatGPIO) >= 0) {
                 PID tPID = LaunchControl.findPID(newTemp.getName());
@@ -2923,54 +2921,48 @@ public final class LaunchControl {
 
     /**
      * Add a MashControl object to the master mash control list.
-     * 
+     *
      * @param mControl
      *            The new mashControl to add
      */
-    public static void addMashControl(final MashControl mControl) {
-        if (findMashControl(mControl.getOutputControl()) != null) {
+    public static void addMashControl(final TriggerControl mControl) {
+        if (findTriggerControl(mControl.getOutputControl()) != null) {
             BrewServer.LOG
                     .warning("Duplicate Mash Profile detected! Not adding: "
                             + mControl.getOutputControl());
             return;
         }
-        mashList.add(mControl);
+        triggerControlList.add(mControl);
     }
 
     /**
      * Start the mashControl thread associated with the PID.
-     * 
+     *
      * @param pid
      *            The PID to find the mash control thread for.
      */
     public static void startMashControl(final String pid) {
-        MashControl mControl = findMashControl(pid);
+        TriggerControl mControl = findTriggerControl(pid);
         Thread mThread = new Thread(mControl);
         mThread.setName("Mash-Thread[" + pid + "]");
-        mashThreads.add(mThread);
+        triggerThreads.add(mThread);
         mThread.start();
     }
 
     /**
-     * Look for the MashControl for the specified PID.
-     * 
+     * Look for the TriggerControl for the specified PID.
+     *
      * @param pid
      *            The PID string to search for.
      * @return The MashControl for the PID.
      */
-    public static MashControl findMashControl(final String pid) {
-        for (MashControl m : mashList) {
-            if (m.getOutputControl().equalsIgnoreCase(pid)) {
-                return m;
-            }
-        }
-
-        return null;
+    public static TriggerControl findTriggerControl(final String pid) {
+        return LaunchControl.findTemp(pid).getTriggerControl();
     }
 
     /**
      * Get the current OWFS connection.
-     * 
+     *
      * @return The current OWFS Connection object
      */
     public static OwfsConnection getOWFS() {
@@ -2979,7 +2971,7 @@ public final class LaunchControl {
 
     /**
      * Helper to get the current list of timers.
-     * 
+     *
      * @return The current list of timers.
      */
     public static CopyOnWriteArrayList<Timer> getTimerList() {
@@ -3301,12 +3293,6 @@ public final class LaunchControl {
                     }
                 }
             }
-            MashControl m = LaunchControl.findMashControl(t.getName());
-            if (m != null) {
-                for (int i = 0; i < m.getMashStepSize(); i++) {
-                    m.getMashStep(i).setTempUnit(scale, true);
-                }
-            }
             t.setScale(scale);
         }
         LaunchControl.scale = scale;
@@ -3378,6 +3364,7 @@ public final class LaunchControl {
     }
 
     public static PhSensor findPhSensor(String string) {
+        string = string.replace(" ", "_");
         synchronized (phSensorList) {
             Iterator<PhSensor> iterator = phSensorList.iterator();
             PhSensor tPh = null;
@@ -3396,21 +3383,24 @@ public final class LaunchControl {
      *
      * @param name
      *            The sensor to delete.
+     * @return true if the sensor is deleted.
      */
-    public static void deletePhSensor(final String name) {
+    public static boolean deletePhSensor(final String name) {
         // search based on the input name
+        String realName = name.replace(" ", "_");
         synchronized (phSensorList) {
             Iterator<PhSensor> iterator = phSensorList.iterator();
             PhSensor tSensor = null;
 
             while (iterator.hasNext()) {
                 tSensor = iterator.next();
-                if (tSensor.getName().equalsIgnoreCase(name)) {
+                if (tSensor.getName().equalsIgnoreCase(realName)) {
                     iterator.remove();
-                    return;
+                    return true;
                 }
             }
 
         }
+        return false;
     }
 }

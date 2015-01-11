@@ -199,65 +199,57 @@ function waitForMsg() {
 
 					}
 
-					if ("mash" in data) {
-						val = data.mash;
-						if (val != 'Unset') {
+					if ("triggers" in data) {
+						val = sortObjectByKey(data.triggers);
 
-							val = sortObjectByKey(val);
+						$.each(val, function(triggerPID, triggerDetails) {
+							// Iterate the list of mash Lists
+							addTriggerTable(triggerPID);
+							$.each(triggerDetails, function(triggerStep,
+									triggerData) {
+								if (triggerStep != 'pid') {
+									addTriggerStep(triggerStep, triggerData,
+											triggerPID);
+								}
+							});
 
-							$.each(val,
-									function(mashPID, mashDetails) {
-										// Iterate the list of mash Lists
-										addMashTable(mashPID);
-										$.each(mashDetails, function(mashStep,
-												mashData) {
-											if (mashStep != 'pid') {
-												addMashStep(mashStep, mashData,
-														mashPID);
-											}
-										});
+							if ($("#triggerTable" + triggerPID).find(
+									'.success').length > 0) {
+								$("#triggerButton-" + triggerPID).text(
+										$.i18n.prop("DISABLE"));
+							} else {
+								$("#triggerButton-" + triggerPID).text(
+										$.i18n.prop("ACTIVATE"));
+							}
 
-										if ($("#mashTable" + mashPID).find(
-												'.success').length > 0) {
-											$("#mashButton-" + mashPID).text(
-													$.i18n.prop("DISABLE"));
-										} else {
-											$("#mashButton-" + mashPID).text(
-													$.i18n.prop("ACTIVATE"));
-										}
-
-									});
-						}
+						});
 					}
 
 					if ("pumps" in data) {
 						val = data.pumps;
-						$
-								.each(
-										val,
-										function(pumpName, pumpStatus) {
-											// enable or disable the pump as
-											// required
-											if (pumpStatus) {
-												jQuery('button[id^="'
-														+ pumpName + '"]')[0].style.background = "red";
-												jQuery('button[id^="'
-														+ pumpName + '"]')[0].innerHTML = pumpName
-														.replace("_", " ")
-														+ " "
-														+ $.i18n
-																.prop("PUMP_ON");
-											} else {
-												jQuery('button[id^="'
-														+ pumpName + '"]')[0].style.background = "#666666";
-												jQuery('button[id^="'
-														+ pumpName + '"]')[0].innerHTML = pumpName
-														.replace("_", " ")
-														+ " "
-														+ $.i18n
-																.prop("PUMP_OFF");
-											}
-										});
+						$.each(
+							val,
+							function(pumpName, pumpStatus) {
+								// enable or disable the pump as
+								// required
+								if (pumpStatus) {
+									jQuery('button[id^="'
+											+ pumpName + '"]')[0].style.background = "red";
+									jQuery('button[id^="'
+											+ pumpName + '"]')[0].innerHTML = pumpName
+											.replace("_", " ")
+											+ " "
+											+ $.i18n.prop("PUMP_ON");
+								} else {
+									jQuery('button[id^="'
+											+ pumpName + '"]')[0].style.background = "#666666";
+									jQuery('button[id^="'
+											+ pumpName + '"]')[0].innerHTML = pumpName
+											.replace("_", " ")
+											+ " "
+											+ $.i18n.prop("PUMP_OFF");
+								}
+							});
 					}
 
 					if (window.disableUpdates) {
@@ -286,90 +278,73 @@ function waitForMsg() {
 								sysTemp.remove();
 							}
 						}
-						$
-								.each(
-										val,
-										function(vesselName, vesselStatus) {
+						$.each(val, function(vesselName, vesselStatus) {
 
-											// This should always be there
-											if ("name" in vesselStatus) {
-												vesselName = vesselStatus.name;
-												if (vesselName == $.i18n
-														.prop("SYSTEM")
-														&& $('[id=System-tempGauge]').length == 0) {
-													return;
-												}
-											}
+							// This should always be there
+							if ("name" in vesselStatus) {
+								vesselName = vesselStatus.name;
+								if (vesselName == $.i18n.prop("SYSTEM")
+										&& $('[id=System-tempGauge]').length == 0) {
+									return;
+								}
+							}
+							addTriggerTable(vesselName);
+							if ("tempprobe" in vesselStatus) {
+								updateTempProbe(vesselName,
+										vesselStatus.tempprobe);
+							}
 
-											if ("tempprobe" in vesselStatus) {
-												updateTempProbe(vesselName,
-														vesselStatus.tempprobe);
-											}
+							if ("pidstatus" in vesselStatus) {
+								updatePIDStatus(vesselName,
+										vesselStatus.pidstatus);
 
-											if ("pidstatus" in vesselStatus) {
+								// Hide the gauge if needs be
+								if (vesselStatus.pidstatus.mode == "off") {
+									$('div[id^="' + vesselName + '-gage"]')
+											.toggleClass("hidden", true);
+								} else {
+									$('div[id^="' + vesselName + '-gage"]')
+											.toggleClass("hidden", false);
+									var duty = vesselStatus.pidstatus.duty;
+									if ("actualduty" in vesselStatus.pidstatus) {
+										duty = vesselStatus.pidstatus.actualduty;
+									}
 
-												addMashTable(vesselName);
+									if (duty < 0) {
+										if (Gauges[vesselName].config.textMax != "0") {
+											Gauges[vesselName].config.levelColors = [
+													"#0033CC",
+													"#CC00CC",
+													"#a9d70b" ];
+										}
+										Gauges[vesselName]
+												.refreshBoth(
+														duty,
+														-100,
+														"0");
+									} else {
+										if (Gauges[vesselName].config.textMax != "0") {
+											Gauges[vesselName].config.levelColors = [
+													"#a9d70b",
+													"#f9c802",
+													"#ff0000" ];
+										}
+										Gauges[vesselName].refreshBoth(duty, "0", 100);
+									}
 
-												updatePIDStatus(vesselName,
-														vesselStatus.pidstatus);
+								}
+							} else {
+								hidePIDForm(vesselName);
+							}
 
-												// Hide the gauge if needs be
-												if (vesselStatus.pidstatus.mode == "off") {
-													$(
-															'div[id^="'
-																	+ vesselName
-																	+ '-gage"]')
-															.toggleClass("hidden", true);
-												} else {
-													$(
-															'div[id^="'
-																	+ vesselName
-																	+ '-gage"]')
-															.toggleClass("hidden", false);
-													var duty = vesselStatus.pidstatus.duty;
-													if ("actualduty" in vesselStatus.pidstatus) {
-														duty = vesselStatus.pidstatus.actualduty;
-													}
-
-													if (duty < 0) {
-														if (Gauges[vesselName].config.textMax != "0") {
-															Gauges[vesselName].config.levelColors = [
-																	"#0033CC",
-																	"#CC00CC",
-																	"#a9d70b" ];
-														}
-														Gauges[vesselName]
-																.refreshBoth(
-																		duty,
-																		-100,
-																		"0");
-													} else {
-														if (Gauges[vesselName].config.textMax != "0") {
-															Gauges[vesselName].config.levelColors = [
-																	"#a9d70b",
-																	"#f9c802",
-																	"#ff0000" ];
-														}
-														Gauges[vesselName]
-																.refreshBoth(
-																		duty,
-																		"0",
-																		100);
-													}
-
-												}
-											} else {
-												hidePIDForm(vesselName);
-											}
-
-											if ("volume" in vesselStatus) {
-												updateVolumeStatus(vesselName,
-														vesselStatus.volume);
-											} else {
-												jQuery("#" + vesselName+ "-volumeAmount")
-													.text($.i18n.prop("NO_VOLUME"));
-											}
-										});
+							if ("volume" in vesselStatus) {
+								updateVolumeStatus(vesselName,
+										vesselStatus.volume);
+							} else {
+								jQuery("#" + vesselName+ "-volumeAmount")
+									.text($.i18n.prop("NO_VOLUME"));
+							}
+						});
 					}
 
 					if ("locked" in data) {
@@ -389,31 +364,31 @@ function waitForMsg() {
 
 }
 
-function addMashTable(vesselName) {
-	if ($("#mashTable" + vesselName).length == 0) {
-		table = "<table id='mashTable" + vesselName
-				+ "' class='table table-curved'>";
+function addTriggerTable(vesselName) {
+	if ($("#triggerTable" + vesselName).length == 0) {
+		table = "<table id='triggerTable" + vesselName
+				+ "' class='table table-bordered col-md-8'>";
 		table += "<thead><tr>";
-		table += "<th colspan='2'>" + $.i18n.prop("MASH_STEP") + "</th>";
-		table += "<th>" + $.i18n.prop("TEMP") + "</th>";
-		table += "<th>" + $.i18n.prop("TIME") + "</th>";
+		table += "<th>" + $.i18n.prop("START") + "</th>";
+		table += "<th>" + $.i18n.prop("DESCRIPTION") + "</th>";
+		table += "<th>" + $.i18n.prop("TARGET") + "</th>";
 		table += "</tr></thead>";
 		table += "<tbody class='tbody'></tbody>"
 
-		table += "<tfoot><tr><td colspan='2'>"
-				+ "<button class='btn btn-success' id='addMash-" + vesselName
-				+ "' type='button' onclick='addNewMashStep(this)' "
-				+ "ondrop='dropDeleteMashStep(event);' "
-				+ "ondragover='allowDropMashStep(event);'>"
+		table += "<tfoot><tr><td colspan='1'>"
+				+ "<button class='btn btn-success' id='addTrigger-" + vesselName
+				+ "' type='button' onclick='addNewTrigger(this)' "
+				+ "ondrop='dropDeleteTriggerStep(event);' "
+				+ "ondragover='allowDropTriggerStep(event);'>"
 				+ $.i18n.prop("ADD") + "</button></td>";
-		table += "<td colspan='2'><button class='btn btn-success' id='mashButton-"
+		table += "<td colspan='2'><button class='btn btn-success' id='triggerButton-"
 				+ vesselName
-				+ "' type='button' onclick='mashToggle(this)'>"
+				+ "' type='button' onclick='triggerToggle(this)'>"
 				+ $.i18n.prop("ACTIVATE") + "</button></td></tr></tfoot>";
 		+"</tbody></table>";
-		table += "<br id='mashTable" + vesselName + "footer'/>";
+		table += "<br id='triggerTable" + vesselName + "footer'/>";
 
-		$("#" + vesselName + "-gage").after(table);
+		$("#" + vesselName + "-graph_wrapper").after(table);
 
 	}
 }
@@ -1252,81 +1227,85 @@ function submitNewTimer(form) {
 	return false;
 }
 
-function addNewMashStep(button) {
-	var pid = button.id.replace("addMash-", "");
+function addNewTrigger(button) {
+	var pid = button.id.replace("addTrigger-", "");
 	// Insert a couple of new form elements
 	var tempUnit = $("#" + pid + " div >div >div[id='tempUnit']")[0].textContent;
-	$('#mashTable' + pid + "footer")
-			.after(
-					"<div id='"
-							+ pid
-							+ "-mashadd'>"
-							+ "<form id='"
-							+ pid
-							+ "-mash-add-form' name='"
-							+ pid
-							+ "-mash-add'>"
-							+ "<input type='text' name='temp' id='temp' value='' placeholder='"
-							+ $.i18n.prop("TEMP")
-							+ "' />"
-							+ "<input type='text' name='temp_unit' id='temp_unit' value='"
-							+ tempUnit
-							+ "' placeholder='"
-							+ $.i18n.prop("TEMP_UNIT")
-							+ "' /><br/>"
-							+ "<input type='text' name='method' id='method' value='' placeholder='"
-							+ $.i18n.prop("METHOD")
-							+ "' /><br/>"
-							+ "<input type='text' name='type' id='type' value='' placeholder='"
-							+ $.i18n.prop("TYPE")
-							+ "' /><br/>"
-							+ "<input type='text' name='duration' id='duration' value='' placeholder='DURATION' /><br/>"
-							+ "<input type='hidden' name='pid' value='"
-							+ pid
-							+ "' />"
-							+ "<input type='hidden' name='step' value='"
-							+ ($("#mashTable" + pid + " > tbody > tr").length)
-							+ "' />"
-							+ "<button id='add-timer' class='btn modeclass' "
-							+ "onclick='submitNewMashStep(this.form); return false;'>"
-							+ $.i18n.prop("ADD")
-							+ "</button>"
-							+ "<button id='cancel-add-mash-step' class='btn modeclass' "
-							+ "onclick='cancelAddMashStep(" + pid
-							+ "); waitForMsg(); return false;'>"
-							+ $.i18n.prop("CANCEL") + "</button>" + "</form>"
-							+ "</div>");
+	var $tr = $(button);
+    
+    $tr.popover('destroy');
+    $tr.popover({
+        title: 'Create New Trigger',
+        content: "Loading...",
+        placement: 'bottom',
+        html: true,
+        trigger: 'manual'
+    }).popover('show');
+    $.ajax({
+        url: '/getNewTriggers',
+        data: {temp: pid},
+        dataType: 'html',
+        success: function(html) {
+            $(".popover-content").html(html);
+        }
+    });
 	return false;
 }
 
-function cancelAddMashStep(vessel) {
-	$("#" + pid + "-mashadd").empty();
-	return false;
-}
-
-function submitNewMashStep(form) {
-	var data = JSON.stringify(jQuery(form).serializeObject());
+function newTrigger(button, probe) {
+	// Do we need to disable the input form?
+	if ($(button).closest("#newTriggersForm").find("[name=type] option:selected").val() == "") {
+		$(button).closest(".popover-content").find("#childInput").html("");
+		return false;
+	}
+	$(button).closest(".popover-content").find("#childInput").html("Loading...");
 	$.ajax({
-		url : 'addmashstep',
+        url: '/getTriggerForm',
+        data: $(button.parentElement).serializeObject(),
+        dataType: 'html',
+        success: function(html) {
+        	$(button).closest(".popover-content").find("#childInput").html(html)
+        }
+    });
+	return false;
+}
+
+function cancelAddTrigger(vessel) {
+	var $tr = $(vessel);
+	$tr.popover('destroy');
+	return false;
+}
+
+function submitNewTriggerStep(button) {
+	var data = $(button).closest("#newTriggersForm").serializeObject();
+	if (!("tempProbe" in data)) {
+		var addTriggerID = $(button).closest("[id^=triggerTable]")[0].id;
+		data.tempProbe = addTriggerID.substring("triggerTable".length);
+	} 
+	if (!("position" in data)) {
+		var position = $(button).closest("[id^=triggerTable]").find('tbody > tr').length;
+		data.position = position;
+	}
+	
+	$.ajax({
+		url : 'addtriggertotemp',
 		type : 'POST',
 		data : data,
 		success : function(data) {
 			data = null
 		}
 	});
-	// Increment the step.
-	$("#" + form.id + " > input[name='step']").val(
-			parseInt($("#" + form.id + " > input[name='step']").val()) + 1);
+
 	window.disableUpdates = 0;
 	return false;
 }
 
-function deleteMashStep(vessel, position) {
+function deleteTrigger(vessel, position) {
 	// Delete the mash step at the specified position
 	$.ajax({
-		url : 'delMashStep',
+		url : 'delTrigger',
 		type : 'POST',
-		data : "pid=" + vessel + "&position=" + position,
+		data : "temp=" + vessel + "&position=" + position,
 		success : function(data) {
 			data = null
 		}
@@ -1335,11 +1314,11 @@ function deleteMashStep(vessel, position) {
 	return false;
 }
 
-function mashToggle(button, position) {
+function triggerToggle(button, position) {
 	// Parse out the PID from the controller
-	var pid = button.id.replace("mashButton-", "");
+	var pid = button.id.replace("triggerButton-", "");
 	postData = {};
-	postData['pid'] = pid;
+	postData['tempProbe'] = pid;
 	postData['status'] = button.innerText.toLowerCase();
 
 	if (position !== 'undefined') {
@@ -1347,7 +1326,7 @@ function mashToggle(button, position) {
 	}
 
 	$.ajax({
-		url : 'toggleMash',
+		url : 'toggleTrigger',
 		type : 'POST',
 		data : postData,
 		success : function(data) {
@@ -1509,63 +1488,60 @@ function toggleAux(PIDName) {
 	return false;
 }
 
-function addMashStep(mashStep, mashData, pid) {
-	// Mashstep is the int position
-	// mashData contains the actual data to be displayed
-	if (mashStep == "mashstep" || "index" in mashData) {
-		mashStep = mashData['index'];
+function addTriggerStep(triggerStep, triggerData, pid) {
+	// 
+	if (triggerStep == "triggerstep" || "index" in triggerData) {
+		triggerStep = triggerData['index'];
 	}
 
-	var mashStepRow = $("#mashRow" + pid + "-" + mashStep);
-	if (mashStepRow.length == 0) {
+	var triggerStepRow = $("#triggerRow" + pid + "-" + triggerStep);
+	if (triggerStepRow.length == 0) {
 		// Add a new row to the Mash Table
-		tableRow = "<tr id='mashRow" + pid + "-" + mashStep + "'"
-				+ " ondragstart='dragMashStep(event);' draggable='true'"
-				+ " ondrop='dropMashStep(event);'"
-				+ " ondragover='allowDropMashStep(event);'>"
-		tableRow += ("<td>" + mashData['type'] + "</td>");
-		tableRow += ("<td>" + mashData['method'] + "</td>");
-		tableRow += ("<td>" + mashData['target_temp']
-				+ mashData['target_temp_unit'] + "</td>");
-		tableRow += ("<td id='mashTimer" + pid + "'>" + mashData['duration'] + "</td>");
+		tableRow = "<tr id='triggerRow" + pid + "-" + triggerStep + "'"
+				+ " ondragstart='dragTriggerStep(event);' draggable='true'"
+				+ " ondrop='dropTriggerStep(event);'"
+				+ " ondragover='allowDropTriggerStep(event);'>"
+		tableRow += ("<td>" + triggerData['start'] + "</td>");
+		tableRow += ("<td>" + triggerData['description'] + "</td>");
+		tableRow += ("<td>" + triggerData['target'] + "</td>");
 		tableRow += ("</tr>");
 
-		if ($("#mashTable" + pid + " > tbody > tr").length == 0) {
-			$("#mashTable" + pid + " > tbody").append(tableRow);
+		if ($("#triggerTable" + pid + " > tbody > tr").length == 0) {
+			$("#triggerTable" + pid + " > tbody").append(tableRow);
 		} else {
-			mashStepRow = $("#mashTable" + pid + " > tbody > tr").eq(
-					mashStep - 1).after(tableRow);
+			triggerStepRow = $("#triggerTable" + pid + " > tbody > tr").eq(
+					triggerStep - 1).after(tableRow);
 		}
 
-		mashStepRow = mashStepRow.next();
+		triggerStepRow = triggerStepRow.next();
 	}
 
 	// Do we have a start time?
-	if ("start_time" in mashData) {
+	if ("start" in triggerData) {
 		// if there's an end time, we can show the actual time difference
-		if ("end_time" in mashData) {
-			startDate = moment(mashData['start_time'], "YYYY/MM/DDTHH:mm:ssZZ");
-			endDate = moment(mashData['end_time'], "YYYY/MM/DDTHH:mm:ssZZ");
+		if ("end" in triggerData) {
+			startDate = moment(triggerData['start'], "YYYY/MM/DDTHH:mm:ssZZ");
+			endDate = moment(triggerData['end'], "YYYY/MM/DDTHH:mm:ssZZ");
 			diff = Math.abs(endDate - startDate);
 			seconds = diff / 1000;
 			minutes = Math.floor(seconds / 60);
 			seconds = seconds - (minutes * 60);
 
-			mashStepRow.find("#mashTimer" + pid).text(
+			triggerStepRow.find("#triggerTimer" + pid).text(
 					minutes + ":" + pad(seconds, 2, 0));
-		} else {
+		} else if ("targetTime" in triggerData){
 			// start the timer
-			var endMoment = moment(mashData['target_time'], "YYYY/MM/DDTHH:mm:ssZZ");
-			mashStepRow.find("#mashTimer" + pid).tinyTimer({
+			var endMoment = moment(triggerData['target'], "YYYY/MM/DDTHH:mm:ssZZ");
+			triggerStepRow.find("#triggerTimer" + pid).tinyTimer({
 				to : endMoment.toString()
 			});
 		}
 	}
 	// active the current row if needs be
-	if ("active" in mashData) {
-		mashStepRow.addClass('success');
+	if ("active" in triggerData && triggerData.active == "true") {
+		triggerStepRow.addClass('success');
 	} else {
-		mashStepRow.removeClass('success');
+		triggerStepRow.removeClass('success');
 	}
 }
 
@@ -1954,10 +1930,53 @@ function dropDeleteTimer(ev) {
 
 // END OF TIMERS
 
+// Start of Ph Sensors 
+function dragPhSensor(ev) {
+	ev.dataTransfer.setData("sensorname", ev.target.id);
+	$('#NewPhSensor')[0].innerHTML = $.i18n.prop("DELETE_PHSENSOR");
+}
+
+function allowDropPhSensor(ev) {
+	ev.preventDefault();
+	return;
+}
+
+function leavePhSensor(ev) {
+	ev.preventDefault();
+	return;
+}
+
+function dropDeletePhSensor(ev) {
+	ev.preventDefault();
+	var sensorName = ev.dataTransfer.getData("sensorname");
+
+	if (sensorName.lastIndexOf("div-") != 0) {
+		var baseSensorName = sensorName;
+		sensorName = "div-" + sensorName;
+	} else {
+		var baseSensorName = sensorName.substring(4);
+	}
+	
+
+	$('[id="' + sensorName + '"]').empty().remove();
+	var newOrder = "name=" + baseSensorName;
+
+	$('#NewPhSensor')[0].innerHTML = $.i18n.prop("NEW_PHSENSOR");
+	$.ajax({
+		url : 'delphsensor',
+		type : 'POST',
+		data : newOrder,
+		success : function(data) {
+			data = null
+		}
+	});
+}
+
+// END OF PH SENSORS
 // Drag and drop functions for mash steps
-function getVesselFromMashStep(divID) {
-	if (divID.lastIndexOf("mashStep") == 0) {
-		var temp = divID.substring(8);
+function getVesselFromTriggerStep(divID) {
+	if (divID.lastIndexOf("triggerStep") == 0) {
+		var temp = divID.substring("triggerStep".length);
 	} else {
 		var temp = divID;
 	}
@@ -1966,9 +1985,9 @@ function getVesselFromMashStep(divID) {
 	return vessel;
 }
 
-function getPositionFromMashStep(divID) {
-	if (divID.lastIndexOf("mashStep") == 0) {
-		var temp = divID.substring(8);
+function getPositionFromTriggerStep(divID) {
+	if (divID.lastIndexOf("triggerStep") == 0) {
+		var temp = divID.substring("triggerStep".length);
 	} else {
 		var temp = divID;
 	}
@@ -1977,39 +1996,39 @@ function getPositionFromMashStep(divID) {
 	return position;
 }
 
-function dragMashStep(ev) {
+function dragTriggerStep(ev) {
 	var divID = ev.target.id;
 
 	// Explode out
-	var vessel = getVesselFromMashStep(divID.substring(7));
+	var vessel = getVesselFromTriggerStep(divID.substring(10));
 	// var position = getPositionFromMashStep(divID);
-	ev.dataTransfer.setData("mashStepname", divID);
-	$('#addMash-' + vessel)[0].innerHTML = $.i18n.prop("DELETE");
+	ev.dataTransfer.setData("triggerStepname", divID);
+	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("DELETE");
 }
 
-function dropMashStep(ev) {
+function dropTriggerStep(ev) {
 	ev.preventDefault();
-	var mashStepName = ev.dataTransfer.getData("mashStepname");
-	var vessel = getVesselFromMashStep(mashStepName.substring(7));
-	var position = getPositionFromMashStep(mashStepName);
+	var triggerData = ev.dataTransfer.getData("triggerStepname");
+	var vessel = getVesselFromTriggerStep(triggerData.substring(10));
+	var position = getPositionFromTriggerStep(triggerData);
 
 	var refNode = ev.target.parentElement;
-	refNode.parentNode.insertBefore(document.getElementById(mashStepName),
+	refNode.parentNode.insertBefore(document.getElementById(triggerData),
 			refNode.nextSibling);
 
-	var newOrder = "pid=" + vessel + "&";
-	$("#mashTable" + vessel + " > tbody > tr").each(function(index) {
+	var newOrder = "tempprobe=" + vessel + "&";
+	$("#triggerTable" + vessel + " > tbody > tr").each(function(index) {
 		var divID = this.id;
 		if (divID == "") {
 			return;
 		}
 
-		var oldStep = getPositionFromMashStep(divID);
+		var oldStep = getPositionFromTriggerStep(divID);
 		newOrder += oldStep + "=" + index + "&";
 	});
-	$('#addMash-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
+	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
 	$.ajax({
-		url : 'reordermashprofile',
+		url : 'reordertriggers',
 		type : 'POST',
 		data : newOrder,
 		success : function(data) {
@@ -2020,24 +2039,24 @@ function dropMashStep(ev) {
 	// DONE!
 }
 
-function allowDropMashStep(ev) {
+function allowDropTriggerStep(ev) {
 	ev.preventDefault();
 }
 
-function dropDeleteMashStep(ev) {
+function dropDeleteTriggerStep(ev) {
 	ev.preventDefault();
-	var mashStepName = ev.dataTransfer.getData("mashstepname");
-	var vessel = getVesselFromMashStep(mashStepName.substring(7));
-	var position = getPositionFromMashStep(mashStepName);
+	var triggerStepName = ev.dataTransfer.getData("triggerStepname");
+	var vessel = getVesselFromTriggerStep(triggerStepName.substring(10));
+	var position = getPositionFromTriggerStep(triggerStepName);
 
-	$('[id="' + mashStepName + '"]').empty().remove();
-	var newOrder = "pid=" + vessel + "&position=" + position;
+	$('[id="' + triggerStepName + '"]').empty().remove();
+	var delData = "tempProbe=" + vessel + "&position=" + position;
 
-	$('#addMash-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
+	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
 	$.ajax({
-		url : 'delMashStep',
+		url : 'delTriggerStep',
 		type : 'POST',
-		data : newOrder,
+		data : delData,
 		success : function(data) {
 			data = null
 		}
@@ -2060,6 +2079,15 @@ function toggleEdit(manualChange) {
 		if (window.locked) {
 			readWrite(manualChange);
 			$(".controller").each(function hideDevice(count, element) {
+				if ($(element).find("div[id$=-title]").length > 0) {
+					titleStr = $(element).find("div[id$=-title]").html().trim();
+				}
+
+				if ($(element).find("input[id='hidden']").val() == "true" 
+					&& !titleStr.match(/ \[Hidden\]$/)) {
+					titleStr += " [Hidden]";
+					$(element).find("div[id$=-title]").html(titleStr);
+				}
 				$(element).toggleClass("hidden", false);
 			});
 			return;
@@ -2256,74 +2284,74 @@ function readWritePhSensors() {
 
 function readWriteDevices() {
 	// Check the devices to see which ones aren't configured.
-	$("[id$='-title']")
-			.each(
-					function(index) {
-						var vessel = this.id.replace("-title", "")
-						var vesselForm = 'form[id="' + vessel + '-form"]';
-						var devAddr = $(
-								'#' + vesselForm
-										+ ' > input[name="deviceaddr"]').val();
-						if (devAddr == this.textContent) {
-							$('[id=' + this.id.replace("-form", "") + ']').css(
-									'display', 'block')
-						}
+	$("[id$='-title']").each(
+		function(index) {
+			var vessel = this.id.replace("-title", "")
+			var vesselForm = 'form[id="' + vessel + '-form"]';
+			var devAddr = $(
+					'#' + vesselForm
+							+ ' > input[name="deviceaddr"]').val();
+			if (devAddr == this.textContent) {
+				$('[id=' + this.id.replace("-form", "") + ']').css(
+						'display', 'block')
+			}
 
-						if (vessel.toLowerCase() == "system") {
-							if ($('[id=System-tempGauge]').length == 0) {
-								// not enabled
-								this.setAttribute("onclick",
-										"enableSystem(this);");
-							} else {
-								this.setAttribute("onclick",
-										"disableSystem(this);");
-							}
-						} else {
-							this.setAttribute("onclick", "editDevice(this);");
-						}
-						$('[id=' + vessel + '-volumeeditbutton').css('display', 'table-cell');
-						$('[id=' + vessel + '-title]').css('cursor', "pointer");
-						// display the mash table if needs be
-						if ($('[id=mashTable' + vessel + '] > tbody > tr').length == 0) {
-							// show it
-							$('[id=mashTable' + vessel + ']').css('display',
-									'block');
-						}
-					});
+			if (vessel.toLowerCase() == "system") {
+				if ($('[id=System-tempGauge]').length == 0) {
+					// not enabled
+					this.setAttribute("onclick",
+							"enableSystem(this);");
+				} else {
+					this.setAttribute("onclick",
+							"disableSystem(this);");
+				}
+			} else {
+				this.setAttribute("onclick", "editDevice(this);");
+			}
+			$('[id=' + vessel + '-volumeeditbutton').css('display', 'table-cell');
+			$('[id=' + vessel + '-title]').css('cursor', "pointer");
+			// display the mash table if needs be
+			if ($('[id=triggerTable' + vessel + '] > tbody > tr').length == 0) {
+				// show it
+				$('[id=triggerTable' + vessel + ']').css('display',
+						'block');
+			}
+		}
+	);
 }
 
 function readOnlyDevices() {
 	// Check the devices to see which ones aren't configured.
-	$("[id$='-title']")
-			.each(
-					function(index) {
+	$("[id$='-title']").each(
+		function(index) {
 
-						var vessel = this.id.replace("-title", "")
-						if (vessel == "messages") {
-							return;
-						}
-						$('[id=' + vessel + '-volumeeditbutton').css('display', 'none');
-						var vesselForm = 'form[id="' + vessel + '-form"]';
-						var devAddr = $(
-								'#' + vesselForm
-										+ ' > input[name="deviceaddr"]').val();
-						if (devAddr == this.textContent) {
-							if (vessel != "System"
-									|| this.getAttribute("onClick")
-											.lastIndexOf("enable") == 0) {
-								$('[id=' + vessel + ']').css('display', 'none')
-							}
-						}
-						this.removeAttribute("onClick");
-						$('[id=' + vessel + '-title]').css('cursor', "auto");
+			var vessel = this.id.replace("-title", "")
+			if (vessel == "messages") {
+				return;
+			}
+			$('[id=' + vessel + '-volumeeditbutton').css('display', 'none');
+			var vesselForm = 'form[id="' + vessel + '-form"]';
+			var devAddr = $(
+					'#' + vesselForm
+							+ ' > input[name="deviceaddr"]').val();
+			if (devAddr == this.textContent) {
+				if (vessel != "System"
+						|| this.getAttribute("onClick")
+								.lastIndexOf("enable") == 0) {
+					$('[id=' + vessel + ']').css('display', 'none')
+				}
+			}
+			this.removeAttribute("onClick");
+			$('[id=' + vessel + '-title]').css('cursor', "auto");
 
-						// disable the mash table if needs be
-						if ($('[id=mashTable' + vessel + '] > tbody > tr').length == 0) {
-							// hide
-							$('[id=mashTable' + vessel + ']').css('display',
-									'none');
-						}
-					});
+			// disable the mash table if needs be
+			if ($('[id=triggerTable' + vessel + '] > tbody > tr').length == 0) {
+				// hide
+				$('[id=triggerTable' + vessel + ']').css('display',
+						'none');
+			}
+		}
+	);
 }
 
 function enableSystem(element) {
@@ -2492,3 +2520,23 @@ function readPhSensor(element, name) {
 		}
 	});
 }
+
+function selectPhAddress(element) {
+	if (element.value == "") {
+		$("[id=adc_pin]").show();
+	} else {
+		$("[id=adc_pin]").hide();
+	}
+}
+
+function phAINChange(element) {
+	
+	if (element.value == "") {
+		$("[id=dsAddress]").show();
+		$("[id=dsOffset]").show();
+	} else {
+		$("[id=dsAddress]").hide();
+		$("[id=dsOffset]").hide();
+	}
+}
+

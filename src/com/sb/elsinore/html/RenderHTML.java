@@ -32,19 +32,17 @@ public class RenderHTML implements Renderable {
             .br();
 
         // Add all the PIDs
-        html.div(id("PIDs"));
+        html.div(id("Probes"));
             for (Temp temp: LaunchControl.tempList) {
                 PID pid = LaunchControl.findPID(temp.getName());
                 if (pid != null) {
                     html.render(new PIDComponent(pid.getName()));
                 }
             }
-        html._div();
 
-        // Add all the Temps
-        html.div(id("tempProbes"));
             for (Temp temp: LaunchControl.tempList) {
-                if (LaunchControl.isLocked() && temp.getName().equals(temp.getProbe())) {
+                if (LaunchControl.isLocked()
+                        && temp.getName().equals(temp.getProbe())) {
                     continue;
                 }
                 PID pid = LaunchControl.findPID(temp.getName());
@@ -108,9 +106,9 @@ public class RenderHTML implements Renderable {
                         html.render(new PhSensorComponent(sensor));
                     }
                 html.button(id("NewPhSensor").class_("btn sensor")
-                        .type("submit").onDrop("dropDeletePhSensor(event")
-                        .onDragover("allowDropPhSensor(event)")
-                        .onClick("addPhSensor(this)"))
+                        .type("submit").onDrop("dropDeletePhSensor(event);")
+                        .onDragover("allowDropPhSensor(event);")
+                        .onClick("addPhSensor(this);"))
                         .write(Messages.NEW_PHSENSOR)
                     ._button()
                 ._div()

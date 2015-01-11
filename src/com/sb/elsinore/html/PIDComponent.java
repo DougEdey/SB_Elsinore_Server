@@ -15,15 +15,9 @@ import com.sb.elsinore.PID;
 public class PIDComponent implements Renderable {
 
     private String name = null;
-    private String type = null;
 
     public PIDComponent(String name) {
         this.name = name.trim();
-        if (LaunchControl.findPID(name.trim()) == null) {
-            this.type = "temp";
-        } else {
-            this.type = "pid";
-        }
     }
 
     @Override
@@ -35,7 +29,7 @@ public class PIDComponent implements Renderable {
 
         html.div(
                 id(name).class_(
-                        "holo-content controller panel panel-primary " + type))
+                        "holo-content controller panel panel-primary pid"))
                 .script()
                 .write(TempComponent.getGaugeScript(name), false)
                 ._script()
