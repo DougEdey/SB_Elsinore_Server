@@ -2127,7 +2127,7 @@ public final class LaunchControl {
 
         BrewServer.LOG.info("Checking for volume");
         if (temp.hasVolume()) {
-            BrewServer.LOG.info("Saving volume");
+            System.out.println("Saving volume");
             setElementText(device, "volume-units", temp.getVolumeUnit());
             if (!temp.getVolumeAIN().equals("")) {
                 setElementText(device, "volume-ain",
@@ -2145,9 +2145,17 @@ public final class LaunchControl {
 
             if (volumeBase != null) {
                 for (Entry<BigDecimal, BigDecimal> e : volumeBase.entrySet()) {
-                    BrewServer.LOG.info("Saving volume point " + e.getKey()
+                    System.out.println("Saving volume point " + e.getKey()
                             + " value " + e.getValue());
-                    Element volEntry = addNewElement(device, "volume");
+                    Element volEntry = getFirstElementByXpath(null,
+                            "/elsinore/device[@id='" + name + "']"
+                            + "/volume[@vol='" + e.getKey().toString()
+                            + "']");
+                    if (volEntry == null) {
+                        volEntry = addNewElement(device, "volume");
+                        volEntry.setAttribute("vol", e.getKey().toString());
+                    }
+
                     volEntry.setAttribute("vol", e.getKey().toString());
                     volEntry.setTextContent(e.getValue().toString());
                     device.appendChild(volEntry);
@@ -2261,7 +2269,7 @@ public final class LaunchControl {
                 .iterator();
         while (volIter.hasNext()) {
             Entry<BigDecimal, BigDecimal> entry = volIter.next();
-            BrewServer.LOG.info("Looking for volume entry: "
+            System.out.println("Looking for volume entry: "
                     + entry.getKey().toString());
 
             tElement = getFirstElementByXpath(null, "/elsinore/device[@id='"
@@ -2519,12 +2527,9 @@ public final class LaunchControl {
 
             NodeList tList = config.getElementsByTagName("volume");
 
-            if (tList.getLength() == 1) {
-                // we have volume elements
-                NodeList volumeOptions = tList.item(0).getChildNodes();
-
-                for (int j = 0; j < volumeOptions.getLength(); j++) {
-                    Element curOption = (Element) volumeOptions.item(j);
+            if (tList.getLength() >= 1) {
+                for (int j = 0; j < tList.getLength(); j++) {
+                    Element curOption = (Element) tList.item(j);
 
                     // Append the volume to the array
                     try {
@@ -2536,10 +2541,9 @@ public final class LaunchControl {
                         volumeArray.put(volValue, volReading);
                         // we can parse this as an integer
                     } catch (NumberFormatException e) {
-                        BrewServer.LOG.info("Could not parse "
+                        BrewServer.LOG.warning("Could not parse "
                                 + curOption.getNodeName() + " as an integer");
                     }
-
                 }
             }
 
@@ -2564,7 +2568,7 @@ public final class LaunchControl {
             }
 
             if (volumeUnits == null) {
-                BrewServer.LOG.info("Couldn't find a volume unit for "
+                BrewServer.LOG.warning("Couldn't find a volume unit for "
                         + deviceName);
                 volumeArray = null;
             }
@@ -2779,7 +2783,7 @@ public final class LaunchControl {
         }
 
         // See if this element exists.
-        if (baseNode != null) {
+        /*if (baseNode != null) {
             NodeList nl = baseNode.getChildNodes();
 
             if (nl.getLength() > 0) {
@@ -2790,7 +2794,7 @@ public final class LaunchControl {
                     }
                 }
             }
-        }
+        }*/
 
         Element newElement = configDoc.createElement(nodeName);
         Element trueBase = baseNode;

@@ -33,9 +33,9 @@ public class VolumeEditForm implements Renderable {
                         .name("adc_pin")
                         .id("adc_pin").value(vessel.getVolumeAIN())
                         .add("placeholder", Messages.ANALOGUE_PIN))
-                .br()
+                .br();
                 // Replace this with a list
-                .select(class_("holo-spinner").name("onewire_address")
+                html.select(class_("holo-spinner").name("onewire_address")
                         .id("onewire_address"));
                 html.option(value("").selected_if(
                         "".equals(vessel.getVolumeAddress())))
