@@ -1762,6 +1762,63 @@ var buildMultipart = function(data) {
 /*******************************************************************************
  * Drag And Drop functionality *
  ******************************************************************************/
+function dragDevice(ev) {
+	ev.dataTransfer.setData("devicename", ev.target.id);
+}
+
+function dropDevice(ev) {
+	ev.preventDefault();
+
+	var timer = ev.target;
+	if (timer.className != "pump_wrapper") {
+		timer = ev.target.parentElement;
+	}
+
+	timer.style.border = "1px solid white";
+
+	var devName = ev.dataTransfer.getData("devicename");
+	var refNode = $(ev.target).closest(".panel-primary");
+	refNode.before(document.getElementById(devName),
+			refNode);
+
+	var newOrder = "";
+	$("[id=Probes]").children().each(function(index) {
+		var divID = this.id;
+		newOrder += divID + "=" + index + "&";
+	});
+	
+	$.ajax({
+		url : 'reorderprobes',
+		type : 'POST',
+		data : newOrder,
+		success : function(data) {
+			data = null
+		}
+	});
+
+	// DONE!
+}
+
+function allowDropDevice(ev) {
+	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.className != "pump_wrapper") {
+		timer = ev.target.parentElement;
+	}
+	timer.style.border = "1px dashed black";
+}
+
+function leaveDevice(ev) {
+	ev.preventDefault();
+	var timer = ev.target;
+	if (timer.className != "pump_wrapper") {
+		timer = ev.target.parentElement;
+	}
+
+	timer.style.border = "1px solid white";
+}
+
+// End Devices
 
 function dragPump(ev) {
 	ev.dataTransfer.setData("pumpname", ev.target.childNodes[0].id);

@@ -34,7 +34,7 @@ import org.owfs.jowfsclient.OwfsException;
  * @author Doug Edey
  *
  */
-public final class Temp implements Runnable {
+public final class Temp implements Runnable, Comparable<Temp> {
 
     /**
      * Magic numbers.
@@ -278,6 +278,7 @@ public final class Temp implements Runnable {
     private boolean stopVolumeLogging;
     private BigDecimal calibration = BigDecimal.ZERO;
     private TriggerControl triggerControl = null;
+    private int position = -1;
 
     /**
      * @return Get the current temperature
@@ -937,6 +938,7 @@ public final class Temp implements Runnable {
         statusMap.put("cutoff", getCutoff());
         statusMap.put("calibration", getCalibration());
         statusMap.put("gravity", gravity);
+        statusMap.put("position", this.position);
 
         if (currentError != null) {
             statusMap.put("error", currentError);
@@ -1050,5 +1052,31 @@ public final class Temp implements Runnable {
             this.triggerControl.setOutputControl(this.getName());
         }
         return triggerControl;
+    }
+
+    /**
+     * @return The position of this temp probe in the list.
+     */
+    public int getPosition() {
+        return this.position;
+    }
+
+    /**
+     * Set the position of this temp probe.
+     * @param newPos The new position.
+     */
+    public void setPosition(final int newPos) {
+        this.position = newPos;
+    }
+
+    @Override
+    public int compareTo(final Temp o) {
+        if (o.getPosition() == this.position) {
+            return o.getName().compareTo(this.name);
+        }
+        if (this.position == -1) {
+            return 1;
+        }
+        return this.position - o.getPosition();
     }
 }

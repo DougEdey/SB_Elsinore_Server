@@ -23,6 +23,8 @@ import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -488,6 +490,7 @@ public final class LaunchControl {
         sRunner.run();
 
         // iterate the list of Threads to kick off any PIDs
+        Collections.sort(tempList);
         Iterator<Temp> iterator = tempList.iterator();
         while (iterator.hasNext()) {
             // launch all the PIDs first
@@ -2122,6 +2125,7 @@ public final class LaunchControl {
             device.setAttribute("id", name);
         }
         setElementText(device, "probe", probe);
+        setElementText(device, "position", "" + temp.getPosition());
         setElementText(device, "cutoff", cutoff);
         setElementText(device, "calibration", temp.getCalibration());
 
@@ -2393,7 +2397,7 @@ public final class LaunchControl {
                 coolCycle = new BigDecimal(0.0), cycle = new BigDecimal(0.0),
                 coolDelay = new BigDecimal(0.0);
         boolean coolInvert = false, heatInvert = false;
-        int analoguePin = -1;
+        int analoguePin = -1, position = -1;
 
         String deviceName = config.getAttribute("id");
 
@@ -2402,6 +2406,11 @@ public final class LaunchControl {
             Element tElement = getFirstElement(config, "probe");
             if (tElement != null) {
                 probe = tElement.getTextContent();
+            }
+
+            tElement = getFirstElement(config, "position");
+            if (tElement != null) {
+                position = Integer.parseInt(tElement.getTextContent());
             }
 
             tElement = getFirstElement(config, "duty_cycle");
@@ -2600,6 +2609,7 @@ public final class LaunchControl {
             System.out.println("Problems parsing device " + deviceName);
             System.exit(-1);
         }
+        newTemp.setPosition(position);
         try {
             if (heatGPIO != null && GPIO.getPinNumber(heatGPIO) >= 0) {
                 PID tPID = LaunchControl.findPID(newTemp.getName());

@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -2019,4 +2020,39 @@ public class UrlEndpoints {
         triggerControl.updateTrigger(position, new JSONObject(parameters));
         return new Response(status, MIME_HTML, "OK");
     }
+
+    /**
+     * Reorder the devices in the UI.
+     * @return A response object.
+     */
+    @UrlEndpoint(url = "/reorderprobes")
+    public final Response reorderProbes() {
+        Map<String, String> params = this.parameters;
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Set the order for the probes.");
+        usage.put(":name=:position", "The name and the new position");
+
+        // Should be good to go, iterate and update!
+        for (Map.Entry<String, String> mEntry: params.entrySet()) {
+            if (mEntry.getKey().equals("NanoHttpd.QUERY_STRING")) {
+                continue;
+            }
+            try {
+                String tName = mEntry.getKey();
+                int newPos = Integer.parseInt(mEntry.getValue());
+                LaunchControl.findTemp(tName).setPosition(newPos);
+            } catch (NumberFormatException nfe) {
+                LaunchControl.setMessage(
+                    "Failed to parse device reorder value,"
+                    + " things may get weird: "
+                    + mEntry.getKey() + ": " + mEntry.getValue());
+            }
+        }
+        synchronized (LaunchControl.tempList) {
+            Collections.sort(LaunchControl.tempList);
+        }
+        return new Response(Status.OK, MIME_TYPES.get("json"),
+                usage.toJSONString());
+    }
+
 }

@@ -29,7 +29,12 @@ public class PIDComponent implements Renderable {
 
         html.div(
                 id(name).class_(
-                        "holo-content controller panel panel-primary pid"))
+                        "holo-content controller panel panel-primary pid")
+                        .draggable("true")
+                        .onDragstart("dragDevice(event);")
+                        .onDrop("dropDevice(event);")
+                        .onDragover("allowDropDevice(event);")
+                        .onDragleave("leaveDevice(event);"))
                 .script()
                 .write(TempComponent.getGaugeScript(name), false)
                 ._script()
