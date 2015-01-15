@@ -4,6 +4,11 @@ ORIGINAL_USER="$(whoami)"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 JAVA="$(which java)"
 
+if [ $? -ne 0 ]; then
+    echo "Could not find Java on the path. Please ensure Java is setup correctly"
+    exit
+fi
+
 usage()
 {
 cat << EOF
