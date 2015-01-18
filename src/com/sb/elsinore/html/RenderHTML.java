@@ -32,7 +32,10 @@ public class RenderHTML implements Renderable {
             .br();
 
         // Add all the PIDs
-        html.div(id("Probes"));
+        html.div(id("main").class_("container-fluid col-md-10")
+                .style("padding-left:10px; padding-right:10px"));
+
+        html.div(id("Probes").class_("col-md-12"));
             for (Temp temp: LaunchControl.tempList) {
                 if (LaunchControl.isLocked()
                         && temp.getName().equals(temp.getProbe())) {
@@ -86,7 +89,7 @@ public class RenderHTML implements Renderable {
         ._div();
 
         // Add the pH Sensors
-        html.div(id("phSensors"))
+        html.div(id("phSensors").class_("col-md-3"))
             .div(class_("panel panel-info"))
                 .div(id("phSensors-header").class_("title panel-heading"))
                     .write(Messages.PH_SENSORS)
@@ -112,6 +115,8 @@ public class RenderHTML implements Renderable {
                 .write(Messages.UPDATE_CHECK)
             ._button()
         ._div()
+        ._div()
+        .render(new RightBar())
         ._body()._html();
 
     }
