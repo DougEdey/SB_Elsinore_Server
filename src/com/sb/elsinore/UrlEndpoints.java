@@ -30,6 +30,7 @@ import com.sb.elsinore.html.PhSensorForm;
 import com.sb.elsinore.html.RenderHTML;
 import com.sb.elsinore.html.VolumeEditForm;
 import com.sb.elsinore.inputs.PhSensor;
+import com.sb.elsinore.recipes.BeerXMLReader;
 import com.sb.elsinore.triggers.TriggerInterface;
 
 public class UrlEndpoints {
@@ -2053,6 +2054,37 @@ public class UrlEndpoints {
         }
         return new Response(Status.OK, MIME_TYPES.get("json"),
                 usage.toJSONString());
+    }
+
+    @SuppressWarnings("unchecked")
+    @UrlEndpoint(url = "/uploadbeerxml")
+    public Response uploadBeerXML() {
+
+        final Map<String, String> files = this.files;
+        JSONObject usage = new JSONObject();
+        usage.put("Usage", "Set the beerXML file");
+        usage.put("files", "The new beerXML file");
+
+        if (files.size() == 1) {
+            for (Map.Entry<String, String> entry : files.entrySet()) {
+
+                try {
+                    File uploadedFile = new File(entry.getValue());
+                    String fileType = Files.probeContentType(
+                            uploadedFile.toPath());
+
+                    if (fileType.equalsIgnoreCase(MIME_TYPES.get("xml")))
+                    {
+                        BeerXMLReader.getInstance().readFile(uploadedFile);
+                    }
+                } catch (IOException e) {
+                    usage.put("error", "Bad file");
+                }
+            }
+        }
+        return new Response(Response.Status.BAD_REQUEST,
+                MIME_TYPES.get("json"), usage.toJSONString());
+
     }
 
 }
