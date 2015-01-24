@@ -1428,7 +1428,7 @@ function toggleDiv(id) {
 function setTimer(button, stage) {
 	// get the current Datestamp
 	var curDate = moment().format("YYYY/MM/DDTHH:mm:ssZZ")
-	if (button.innerHTML == $.i18n.prop("START")) {
+	if (button.innerText == $.i18n.prop("START")) {
 		$("#" + stage).toggleClass("hidden", true);
 		$("#" + stage + "Timer").toggleClass("hidden", false);
 		formdata = stage + "Start=" + 0;
@@ -2497,12 +2497,12 @@ function changeScale() {
 
 function embedGraph(vessel) {
 	vessel = vessel.trim();
-	if ($('#' + vessel + "-graph_title")[0].innerHTML == $.i18n
+	if ($('#' + vessel + "-graph_title")[0].innerText == $.i18n
 			.prop("SHOW_GRAPH")) {
-		$('#' + vessel + "-graph_title")[0].innerHTML = $.i18n
+		$('#' + vessel + "-graph_title")[0].innerText = $.i18n
 				.prop("HIDE_GRAPH");
 	} else {
-		$('#' + vessel + "-graph_title")[0].innerHTML = $.i18n
+		$('#' + vessel + "-graph_title")[0].innerText = $.i18n
 				.prop("SHOW_GRAPH");
 	}
 
