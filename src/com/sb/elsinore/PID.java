@@ -1007,6 +1007,8 @@ public final class PID implements Runnable {
                    this.outputThread.interrupt();
                 }
             }
+        } else {
+            // Turn it all off. 
         }
     }
 
