@@ -8,8 +8,6 @@
 
 package ca.strangebrew.recipe;
 
-import ca.strangebrew.SBStringUtils;
-
 public class Hop extends Ingredient implements Comparable<Ingredient> {
 	private double alpha;
 	private String add;

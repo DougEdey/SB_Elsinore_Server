@@ -151,6 +151,18 @@ public class Style implements Comparable<Style> {
 	public double getOgLow() {
 		return ogLow;
 	}
+	/**
+     * @return Returns the fgHigh.
+     */
+    public double getFgHigh() {
+        return fgHigh;
+    }
+    /**
+     * @return Returns the fgLow.
+     */
+    public double getFgLow() {
+        return fgLow;
+    }
 	
 	public String getYear() {
 		return year;

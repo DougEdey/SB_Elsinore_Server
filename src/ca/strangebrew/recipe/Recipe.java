@@ -74,7 +74,7 @@ public class Recipe {
 	private boolean mashed;
 	private String name;
 	private Style style = new Style();
-	private Yeast yeast = new Yeast();
+	private List<Yeast> yeasts = new ArrayList<Yeast>();
 	private WaterProfile sourceWater = new WaterProfile();
 	private WaterProfile targetWater = new WaterProfile();
 	private List<Salt> brewingSalts = new ArrayList<Salt>();
@@ -166,7 +166,7 @@ public class Recipe {
 		this.mashed = r.mashed;
 		this.name = r.getName();
 		this.style = r.getStyleObj();
-		this.yeast = r.getYeastObj();
+		this.yeasts = r.getYeasts();
 		this.sourceWater = r.getSourceWater();
 		this.targetWater = r.getTargetWater();
 		this.brewingSalts = new ArrayList<Salt>(r.getSalts());
@@ -448,12 +448,12 @@ public class Recipe {
 		return totalMiscCost;
 	}
 
-	public String getYeast() {
-		return yeast.getName();
+	public String getYeast(int i) {
+		return yeasts.get(i).getName();
 	}
 
-	public Yeast getYeastObj() {
-		return yeast;
+	public Yeast getYeastObj(int i) {
+		return yeasts.get(i);
 	}
 
 	public boolean getDirty() {
@@ -604,14 +604,14 @@ public class Recipe {
 		calcMaltTotals();
 	}
 
-	public void setYeastName(final String s) {
+	public void setYeastName(final int i, final String s) {
 		isDirty = true;
-		yeast.setName(s);
+		yeasts.get(i).setName(s);
 	}
 
-	public void setYeast(final Yeast y) {
+	public void setYeast(final int i, final Yeast y) {
 		isDirty = true;
-		yeast = y;
+		yeasts.add(i, y);
 	}
 
 	public void setVersion(final String v) {
@@ -1389,157 +1389,7 @@ public class Recipe {
 		return in;
 	}
 
-	public String toXML(final String printOptions) {
-		final StringBuffer sb = new StringBuffer();
-
-		sb.append("<STRANGEBREWRECIPE version = \"" + version + "\">\n");
-		sb.append("<!-- This is a SBJava export.  StrangeBrew 1.8 will not import it. -->\n");
-		if (printOptions != null) {
-			sb.append(printOptions);
-		}
-		sb.append("  <DETAILS>\n");
-		sb.append("  <NAME>" + SBStringUtils.subEntities(name) + "</NAME>\n");
-		sb.append("  <BREWER>" + SBStringUtils.subEntities(brewer) + "</BREWER>\n");
-		sb.append("  <NOTES>" + SBStringUtils.subEntities(comments) + "</NOTES>\n");
-		sb.append("  <EFFICIENCY>" + efficiency + "</EFFICIENCY>\n");
-		sb.append("  <OG>" + SBStringUtils.format(estOg, 3) + "</OG>\n");
-		sb.append("  <FG>" + SBStringUtils.format(estFg, 3) + "</FG>\n");
-		sb.append("  <STYLE>" + style.getName() + "</STYLE>\n");
-		sb.append("  <MASH>" + mashed + "</MASH>\n");
-		// TODO: ebc vs srm
-		sb.append("  <LOV>" + SBStringUtils.format(getColour(BrewCalcs.SRM), 1) + "</LOV>\n");
-		sb.append("  <IBU>" + SBStringUtils.format(ibu, 1) + "</IBU>\n");
-		sb.append("  <ALC>" + SBStringUtils.format(getAlcohol(), 1) + "</ALC>\n");
-		sb.append("  <!-- SBJ1.0 Extensions: -->\n");
-		sb.append("  <EVAP>" + evap + "</EVAP>\n");
-		sb.append("  <EVAP_METHOD>" + evapMethod + "</EVAP_METHOD>\n");
-		sb.append("  <!-- END SBJ1.0 Extensions -->\n");
-		sb.append("  <BOIL_TIME>" + boilMinutes + "</BOIL_TIME>\n");
-		sb.append("  <PRESIZE>" + getPreBoilVol(getVolUnits()) + "</PRESIZE>\n");
-		sb.append("  <SIZE>" + getPostBoilVol(getVolUnits()) + "</SIZE>\n");
-		sb.append("  <SIZE_UNITS>" + getVolUnits() + "</SIZE_UNITS>\n");
-		sb.append("  <MALT_UNITS>" + maltUnits + "</MALT_UNITS>\n");
-		sb.append("  <HOPS_UNITS>" + hopUnits + "</HOPS_UNITS>\n");
-		sb.append("  <YEAST>" + yeast.getName() + "</YEAST>\n");
-		final SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
-		sb.append("  <RECIPE_DATE>" + df.format(created.getTime()) + "</RECIPE_DATE>\n");
-		sb.append("  <ATTENUATION>" + attenuation + "</ATTENUATION>\n");
-		sb.append("  <!-- SBJ1.0 Extensions: -->\n");
-		sb.append("  <ALC_METHOD>" + getAlcMethod() + "</ALC_METHOD>\n");
-		sb.append("  <IBU_METHOD>" + ibuCalcMethod + "</IBU_METHOD>\n");
-		sb.append("  <COLOUR_METHOD>" + colourMethod + "</COLOUR_METHOD>\n");
-		sb.append("  <KETTLE_LOSS>" + getKettleLoss(getVolUnits()) + "</KETTLE_LOSS>\n");
-		sb.append("  <TRUB_LOSS>" + getTrubLoss(getVolUnits()) + "</TRUB_LOSS>\n");
-		sb.append("  <MISC_LOSS>" + getMiscLoss(getVolUnits()) + "</MISC_LOSS>\n");
-		sb.append("  <PELLET_HOP_PCT>" + pelletHopPct + "</PELLET_HOP_PCT>\n");
-		sb.append("  <YEAST_COST>" + yeast.getCostPerU() + "</YEAST_COST>\n");
-		sb.append("  <OTHER_COST>" + otherCost + "</OTHER_COST>\n");
-		sb.append("  <!-- END SBJ1.0 Extensions -->\n");
-		sb.append("  </DETAILS>\n");
-
-		// fermentables list:
-		sb.append("  <FERMENTABLES>\n");
-		sb.append(SBStringUtils.xmlElement("TOTAL", "" + Quantity.convertUnit("lb", maltUnits, totalMaltLbs), 4));
-		for (int i = 0; i < fermentables.size(); i++) {
-			final Fermentable m = fermentables.get(i);
-			sb.append(m.toXML());
-		}
-		sb.append("  </FERMENTABLES>\n");
-
-		// hops list:
-		sb.append("  <HOPS>\n");
-		sb.append(SBStringUtils.xmlElement("TOTAL", "" + Quantity.convertUnit(Quantity.OZ, hopUnits, totalHopsOz), 4));
-		for (int i = 0; i < hops.size(); i++) {
-			final Hop h = hops.get(i);
-			sb.append(h.toXML());
-		}
-		sb.append("  </HOPS>\n");
-
-		// misc ingredients list:
-		sb.append("  <MISC>\n");
-		for (int i = 0; i < misc.size(); i++) {
-			final Misc mi = misc.get(i);
-			sb.append(mi.toXML());
-		}
-		sb.append("  </MISC>\n");
-
-		sb.append(mash.toXml());
-
-		// Fermentation Schedule
-		sb.append("   <FERMENTATION_SCHEDULE>\n");
-		for (int i = 0; i < fermentationSteps.size(); i++) {
-			sb.append(fermentationSteps.get(i).toXML());
-		}
-		sb.append("   </FERMENTATION_SCHEDULE>\n");
-
-		// Carb
-		sb.append("   <CARB>\n");
-		sb.append("      <BOTTLETEMP>" + SBStringUtils.format(bottleTemp, 1) + "</BOTTLETEMP>\n");
-		sb.append("      <SERVTEMP>" + SBStringUtils.format(servTemp, 1) + "</SERVTEMP>\n");
-		sb.append("      <VOL>" + SBStringUtils.format(targetVol, 1) + "</VOL>\n");
-		sb.append("      <SUGAR>" + primeSugar.getName() + "</SUGAR>\n");
-		sb.append("      <AMOUNT>" + SBStringUtils.format(primeSugar.getAmountAs(primeSugar.getUnits()), 1)
-				+ "</AMOUNT>\n");
-		sb.append("      <SUGARU>" + primeSugar.getUnitsAbrv() + "</SUGARU>\n");
-		sb.append("      <TEMPU>" + carbTempU + "</TEMPU>\n");
-		sb.append("      <KEG>" + Boolean.toString(kegged) + "</KEG>\n");
-		sb.append("      <PSI>" + SBStringUtils.format(kegPSI, 2) + "</PSI>\n");
-		sb.append("   </CARB>\n");
-
-		if ((sourceWater.getName() != "") || (targetWater.getName() != "")) {
-			sb.append("   <WATER_PROFILE>\n");
-			if (sourceWater.getName() != "") {
-				sb.append("      <SOURCE_WATER>\n");
-				sb.append(sourceWater.toXML(9));
-				sb.append("      </SOURCE_WATER>\n");
-			}
-			if (targetWater.getName() != "") {
-				sb.append("      <TARGET_WATER>\n");
-				sb.append(targetWater.toXML(9));
-				sb.append("      </TARGET_WATER>\n");
-			}
-
-			if (brewingSalts.size() > 0) {
-				sb.append("      <SALTS>\n");
-				for (int i = 0; i < brewingSalts.size(); i++) {
-					sb.append("         <SALT>\n");
-					sb.append(brewingSalts.get(i).toXML(12));
-					sb.append("         </SALT>\n");
-				}
-				sb.append("      </SALTS>\n");
-			}
-			sb.append("      <ACID>\n");
-			sb.append("         <NAME>" + acid.getName() + "</NAME>\n");
-			sb.append("         <AMT>" + SBStringUtils.format(getAcidAmount(), 2) + "</AMT>\n");
-			sb.append("         <ACIDU>" + acid.getAcidUnit() + "</ACIDU>\n");
-			sb.append("      </ACID>\n");
-
-			sb.append("   </WATER_PROFILE>\n");
-		}
-
-		// notes list:
-		sb.append("  <NOTES>\n");
-		for (int i = 0; i < notes.size(); i++) {
-			sb.append(notes.get(i).toXML());
-		}
-		sb.append("  </NOTES>\n");
-
-		// style xml:
-		sb.append(style.toXML());
-
-		sb.append("</STRANGEBREWRECIPE>");
-
-		return addXMLHeader(sb.toString());
-	}
-
-	public static String padLeft(final String str, final int fullLength, final char ch) {
-		return (fullLength > str.length()) ? str.concat(Recipe.buildString(ch, fullLength - str.length())) : str;
-	}
-
-	public static String padRight(final String str, final int fullLength, final char ch) {
-		return (fullLength > str.length()) ? Recipe.buildString(ch, fullLength - str.length()).concat(str) : str;
-	}
-
+	
 	public static String buildString(final char ch, final int length) {
 		final char newStr[] = new char[length];
 		for (int i = 0; i < length; ++i) {
@@ -1552,6 +1402,14 @@ public class Recipe {
 		return toText(false);
 	}
 
+	public static String padLeft(final String str, final int fullLength, final char ch) {
+        return (fullLength > str.length()) ? str.concat(Recipe.buildString(ch, fullLength - str.length())) : str;
+    }
+
+    public static String padRight(final String str, final int fullLength, final char ch) {
+        return (fullLength > str.length()) ? Recipe.buildString(ch, fullLength - str.length()).concat(str) : str;
+    }
+    
 	public String toText(boolean detailed) {
 		MessageFormat mf;
 		final StringBuffer sb = new StringBuffer();
@@ -1566,7 +1424,14 @@ public class Recipe {
 		final Object[] objs = { new Double(estOg), new Double(estFg), new Double(getAlcohol()), new Double(ibu) };
 		sb.append(mf.format(objs));
 		sb.append("(Alc method: by " + getAlcMethod() + "; IBU method: " + ibuCalcMethod + ")\n");
-		sb.append("\nYeast: " + yeast.getName() + "\n");
+		if (yeasts.size() == 1) {
+		    sb.append("\nYeast: ");
+		} else {
+		    sb.append("\nYeasts: ");
+		}
+		for (Yeast yeast: yeasts) {
+		    sb.append(yeast.getName() + "\n");
+		}
 		sb.append("\nFermentables:\n");
 		sb.append(Recipe.padLeft("Name ", 30, ' ') + " amount units  pppg    lov   %\n");
 
@@ -1936,17 +1801,49 @@ public class Recipe {
 		return Quantity.convertUnit(Quantity.GAL, Quantity.L, acidPerL);
 	}
 
+	/**
+	 * Implement a local comparator.
+	 */
 	Comparator<Fermentable> fermCompare = new Comparator<Fermentable>()  {
         public int compare(Fermentable h1, Fermentable h2){
-            if(h1.getAmountAs(Quantity.LB) > h2.getAmountAs(Quantity.LB))
+            if (h1.getAmountAs(Quantity.LB) > h2.getAmountAs(Quantity.LB))
                 return 1;
-            if(h1.getAmountAs(Quantity.LB) < h2.getAmountAs(Quantity.LB))
+            if (h1.getAmountAs(Quantity.LB) < h2.getAmountAs(Quantity.LB))
                 return -1;
-            if(h1.getAmountAs(Quantity.LB) == h2.getAmountAs(Quantity.LB))
+            if (h1.getAmountAs(Quantity.LB) == h2.getAmountAs(Quantity.LB))
                 return 0;
             return 0;
-            
         }
-    
     };
+
+    public List<Yeast> getYeasts() {
+        return yeasts;
+    }
+
+    /**
+     * Identify the type of this recipe.
+     * @return ALL GRAIN, PARTIAL MASH, or EXTRACT or UNKNOWN.
+     */
+    public final String getType() {
+        boolean hasMashed = false;
+        boolean notMashed = false;
+
+        for (int i = 0; i < this.fermentables.size(); i++) {
+            if (getFermentable(i).getMashed()) {
+                hasMashed = true;
+            } else {
+                hasMashed = false;
+            }
+        }
+
+        if (hasMashed && !notMashed) {
+            return "ALL GRAIN";
+        } else if (hasMashed && notMashed) {
+            return "PARTIAL MASH";
+        } else if (!hasMashed && notMashed) {
+            return "EXTRACT";
+        }
+
+        return "UNKNOWN";
+    }
 }
