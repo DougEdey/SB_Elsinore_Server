@@ -316,7 +316,7 @@ public class PIDComponent implements Renderable {
                 .td(id(name + "-timeinput"))
                 .input(class_("inputbox time").name("time")
                         .type("number").add("step", "any")
-                        .value(""))
+                        .min(1).value(""))
                 ._td()
                 .td(id(name + "unitTime"))
                 .write(Messages.MINUTES)

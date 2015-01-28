@@ -975,7 +975,7 @@ public final class PID implements Runnable {
                     BrewServer.LOG.info("Slept for long enough, turning off");
                     // Make sure the thread wakes up for the new settings
                     this.duty_cycle = new BigDecimal(0);
-                    this.outputControl.setDuty(this.duty_cycle);
+                    this.outputControl.setDuty(new BigDecimal(0));
                     this.outputThread.interrupt();
                 }
              }
