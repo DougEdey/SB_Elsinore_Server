@@ -2216,8 +2216,8 @@ function readOnly(manualChange) {
 	}
 	
 	if (manualChange) {
+		$('form[id=settings-form]').find(':checkbox:not(:checked)').attr('value', "off").prop('checked', true);
 		var formdata = JSON.stringify(jQuery('form[id=settings-form]').serializeObject());
-		formdata.recorder = $('form[id="settings-form"] div[id="recorder_enabled"] input').prop("checked");
 		$.ajax({
 			url : 'updateSystemSettings',
 			type : 'POST',
@@ -2605,6 +2605,18 @@ function displaySystemSettings() {
 				}
 				
 				$('form[id="settings-form"] div[id="recorder_time"] input').val(data.recorderTime);
+			}
+			if ("showright" in data) {
+				if ($('form[id="settings-form"] div[id="show_right"').length == 0) {
+					$('form[id="settings-form"]')
+					.append(
+						'<div class="col-md-4 checkbox" id="show_right">' +
+							'<label>' +
+								'<input type="checkbox" name="showright">Show right bar?' +
+							'</label>' +
+						'</div>');
+				}
+				$('form[id="settings-form"] div[id="show_right"] input').prop("checked", data.showright);
 			}
 			return;
 		}

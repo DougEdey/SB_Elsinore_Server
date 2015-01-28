@@ -1549,6 +1549,7 @@ public class UrlEndpoints {
         usage.put("recorderDiff", "The tolerance to record data changes.");
         usage.put("recorderTime",
                 "The time between sampling the data for recording.");
+        usage.put("showright", "on or off");
 
         if (params.containsKey("recorder")) {
             boolean recorderOn = params.get("recorder").equals("on");
@@ -1582,6 +1583,15 @@ public class UrlEndpoints {
                 LaunchControl.setMessage(
                     "Failed to parse Recorder time as a long\n" + e.getMessage()
                             + LaunchControl.getMessage());
+            }
+        }
+        if (params.containsKey("showright")) {
+            String rBar = params.get("showright");
+            if (rBar.equalsIgnoreCase("on")) {
+                LaunchControl.showRight = true;
+            }
+            if (rBar.equalsIgnoreCase("off")) {
+                LaunchControl.showRight = false;
             }
         }
         return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),

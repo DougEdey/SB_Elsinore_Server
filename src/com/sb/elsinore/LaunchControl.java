@@ -249,11 +249,12 @@ public final class LaunchControl {
     public static String breweryName = null;
     public static String theme = "default";
     public static boolean pageLock = false;
+    public static boolean showRight = true;
     public static boolean allDevicesListed = false;
 
     /*****
      * Main method to launch the brewery.
-     * 
+     *
      * @param arguments
      *            List of arguments from the command line
      */
@@ -664,6 +665,7 @@ public final class LaunchControl {
         JSONObject tJSON = null;
         JSONObject triggerJSON = new JSONObject();
         rObj.put("locked", LaunchControl.pageLock);
+        rObj.put("showright", LaunchControl.showRight);
         rObj.put("breweryName", LaunchControl.getName());
 
         // iterate the thread lists
@@ -772,6 +774,7 @@ public final class LaunchControl {
         retVal.put("recorder", LaunchControl.recorder != null);
         retVal.put("recorderTime", StatusRecorder.SLEEP);
         retVal.put("recorderDiff", StatusRecorder.THRESHOLD);
+        retVal.put("showright", LaunchControl.showRight);
         return retVal.toJSONString();
     }
 
