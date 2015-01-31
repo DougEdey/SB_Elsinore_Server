@@ -38,7 +38,7 @@ public class Header implements Renderable {
             .macros().javascript("/templates/static/raphael.js")
             .macros().javascript("/templates/static/justgage.js")
             .macros().javascript("/templates/static/tinytimer.min.js")
-            .macros().javascript("/templates/static/bootstrap-3.0.0/js/bootstrap.min.js")
+            .macros().javascript("/templates/static/bootstrap-3.0.0/js/bootstrap.js")
             .macros().javascript("/templates/static/file/jquery.ui.widget.js")
             .macros().javascript("/templates/static/file/jquery.iframe-transport.js")
             .macros().javascript("/templates/static/file/jquery.fileupload.js")

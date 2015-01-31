@@ -16,32 +16,31 @@ import jGPIO.InvalidGPIOException;
 public final class OutputControl implements Runnable {
 
     public boolean shuttingDown = false;
-    
     private OutputDevice cooler = null;
     private OutputDevice heater = null;
-    
+
     /**
-     * The Duty cycle.  Initialized to ZERO to prevent use of duty before it is set.
+     * The Duty cycle.
+     * Initialized to ZERO to prevent use of duty before it is set.
      */
     private BigDecimal fDuty = BigDecimal.ZERO;
-    
+
     private String status = "off";
-    
+
     public OutputControl() {
-        
     }
+
     /**
      * Constructor for a heat only pin.
      * @param aName Name of this instance.
      * @param fGPIO the heating GPIO pin.
-     * @param cycle_time the duty time for the heating output.
+     * @param cycleTime the duty time for the heating output.
      */
    public OutputControl(final String aName, final String fGPIO,
-           final BigDecimal cycle_time) {
+           final BigDecimal cycleTime) {
            // just for heating
-        heater = new OutputDevice(aName, fGPIO, cycle_time);
+        heater = new OutputDevice(aName, fGPIO, cycleTime);
         //cooler = new OutputDevice(aName, null, cycle_time);
-        
 
    }
 
@@ -53,10 +52,12 @@ public final class OutputControl implements Runnable {
     */
    public void setCool(final String gpio, final BigDecimal cycle_time,
            final BigDecimal delay) {
-       
-        //If there is a cooling delay between cycles, then assume this is a compressor device
-        if( BigDecimal.ZERO.compareTo(delay) == -1 ) {
-            CompressorDevice coolDevice = new CompressorDevice("cooler", gpio, cycle_time);
+
+        //If there is a cooling delay between cycles,
+        //then assume this is a compressor device
+        if (BigDecimal.ZERO.compareTo(delay) == -1) {
+            CompressorDevice coolDevice =
+                    new CompressorDevice("cooler", gpio, cycle_time);
             coolDevice.setDelay(delay);
             setCooler(coolDevice);
         }
@@ -78,31 +79,32 @@ public final class OutputControl implements Runnable {
 
                  try {
                      BrewServer.LOG.info("Fduty: " + this.fDuty);
-                     switch(fDuty.compareTo(BigDecimal.ZERO))
-                     {
-                         case 0:
-                             status = "off";
-                             if (getHeater() != null) 
-                                 getHeater().turnOff();
-                             if (getCooler() != null)
-                                 getCooler().turnOff();
-                             //Need to sleep because we're not running a cycle
-                             Thread.sleep(1000);
-                             break;
-                         case -1: //Less than 0
-                             status = "cooling";
-                             if (getHeater() != null)
-                                 getHeater().turnOff();
-                             if (getCooler() != null)
-                                 getCooler().runCycle(fDuty.negate());
-                             break;
-                         case 1: //Greater than 0
-                             status = "heating";
-                             if (getCooler() != null)
-                                 getCooler().turnOff();
-                             if (getHeater() != null)
-                                 getHeater().runCycle(fDuty);
-                             break;
+                     if (fDuty.compareTo(BigDecimal.ZERO) == 0) {
+                         status = "off";
+                         if (getHeater() != null) {
+                             getHeater().turnOff();
+                         }
+                         if (getCooler() != null) {
+                             getCooler().turnOff();
+                         }
+                         //Need to sleep because we're not running a cycle
+                         Thread.sleep(1000);
+                     } else if (fDuty.compareTo(BigDecimal.ZERO) < 0) {
+                         status = "cooling";
+                         if (getHeater() != null) {
+                             getHeater().turnOff();
+                         }
+                         if (getCooler() != null) {
+                             getCooler().runCycle(fDuty.negate());
+                         }
+                     } else {
+                         status = "heating";
+                         if (getCooler() != null) {
+                             getCooler().turnOff();
+                         }
+                         if (getHeater() != null) {
+                             getHeater().runCycle(fDuty);
+                         }
                      }
                  } catch (InterruptedException e) {
                      // Sleep interrupted, why did we wakeup
@@ -118,12 +120,11 @@ public final class OutputControl implements Runnable {
                  + " Did you start as root?");
              e.printStackTrace();
              return;
-         }
-         catch (InvalidGPIOException e1) {
+         } catch (InvalidGPIOException e1) {
              BrewServer.LOG.warning(e1.getMessage());
              e1.printStackTrace();
          } finally {
-         BrewServer.LOG.warning("Output Control turning off outputs");
+             BrewServer.LOG.warning("Output Control turning off outputs");
              if (getHeater() != null) {
                  getHeater().turnOff();
              }
@@ -158,7 +159,7 @@ public final class OutputControl implements Runnable {
    /**
     * @param duty The duty to set this control with.
     */
-    public synchronized void setDuty(BigDecimal duty) {
+    public synchronized boolean setDuty(BigDecimal duty) {
         // Fix Defect #28: Cap the duty as positive or negative.
         if (this.cooler == null && duty.compareTo(BigDecimal.ZERO) < 0) {
             duty = BigDecimal.ZERO;
@@ -167,8 +168,12 @@ public final class OutputControl implements Runnable {
         if (this.heater == null && duty.compareTo(BigDecimal.ZERO) > 0) {
             duty = BigDecimal.ZERO;
         }
+        if (fDuty.compareTo(duty) == 0) {
+            return false;
+        }
         this.fDuty = duty;
         BrewServer.LOG.info("IN: " + duty + " OUT: " + fDuty);
+        return true;
     }
 
     /**

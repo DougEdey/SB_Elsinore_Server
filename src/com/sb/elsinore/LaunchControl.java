@@ -23,6 +23,8 @@ import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -83,6 +85,9 @@ import Cosm.Unit;
 
 import com.sb.common.CollectionsUtil;
 import com.sb.common.ServeHTML;
+import com.sb.elsinore.NanoHTTPD.Response;
+import com.sb.elsinore.NanoHTTPD.Response.Status;
+import com.sb.elsinore.inputs.PhSensor;
 
 /**
  * LaunchControl is the core class of Elsinore. It reads the config file,
@@ -96,26 +101,26 @@ import com.sb.common.ServeHTML;
 public final class LaunchControl {
     /* MAGIC NUMBERS! */
     public static int EXIT_UPDATE = 128;
-    private static boolean loadCompleted = false;
+    public static boolean loadCompleted = false;
     /**
      * The default OWFS Port.
      */
-    private static final int DEFAULT_OWFS_PORT = 4304;
+    public static final int DEFAULT_OWFS_PORT = 4304;
     /**
      * The default port to serve on, can be overridden with -p <port>.
      */
-    private static final int DEFAULT_PORT = 8080;
-    private int server_port = 8080;
+    public static final int DEFAULT_PORT = 8080;
+    public int server_port = 8080;
     /**
      * The pump parameters length for creating the config.
      */
-    private static final int PUMP_PARAM_LENGTH = 3;
+    public static final int PUMP_PARAM_LENGTH = 3;
     /**
      * The Minimum number of volume data points.
      */
-    private static final int MIN_VOLUME_SIZE = 3;
+    public static final int MIN_VOLUME_SIZE = 3;
     public static final String RepoURL = "http://dougedey.github.io/SB_Elsinore_Server/";
-    private static String baseUser = null;
+    public static String baseUser = null;
 
     /**
      * List of PIDs.
@@ -136,116 +141,120 @@ public final class LaunchControl {
     /**
      * List of MashControl profiles.
      */
-    public static List<MashControl> mashList = new ArrayList<MashControl>();
-
+    public static List<TriggerControl> triggerControlList = new ArrayList<TriggerControl>();
+    /**
+     * List of pH Sensors.
+     */
+    public static ArrayList<PhSensor> phSensorList = new ArrayList<PhSensor>();
     /**
      * Temperature Thread list.
      */
-    private static List<Thread> tempThreads = new ArrayList<Thread>();
+    public static List<Thread> tempThreads = new ArrayList<Thread>();
     /**
      * PID Thread List.
      */
-    private static List<Thread> pidThreads = new ArrayList<Thread>();
+    public static List<Thread> pidThreads = new ArrayList<Thread>();
     /**
      * Mash Threads list.
      */
-    private static List<Thread> mashThreads = new ArrayList<Thread>();
+    public static List<Thread> triggerThreads = new ArrayList<Thread>();
 
     /**
      * ConfigParser, legacy for the older users that haven't converted.
      */
-    private static ConfigParser configCfg = null;
+    public static ConfigParser configCfg = null;
     /**
      * Config Document, for the XML data.
      */
-    private static Document configDoc = null;
+    public static Document configDoc = null;
 
     /**
-     * Default config filename. Can be overriden with -c <filename>
+     * Default config filename. Can be overridden with -c <filename>
      */
-    private static String configFileName = "elsinore.cfg";
+    public static String configFileName = "elsinore.cfg";
 
     /**
      * The BrewServer runner object that'll be used.
      */
-    private static ServerRunner sRunner = null;
+    public static ServerRunner sRunner = null;
 
-    private static StatusRecorder recorder = null;
+    public static StatusRecorder recorder = null;
 
-    /* Private fields to hold data for various functions */
+    /* public fields to hold data for various functions */
     /**
      * COSM stuff, probably unused by most people.
      */
-    private static Cosm cosm = null;
+    public static Cosm cosm = null;
     /**
      * The actual feed that's in use by COSM.
      */
-    private static Feed cosmFeed = null;
+    public static Feed cosmFeed = null;
     /**
      * The list of available datastreams from COSM.
      */
-    private static Datastream[] cosmStreams = null;
+    public static Datastream[] cosmStreams = null;
 
     /**
      * The Default scale to be used.
      */
-    private static String scale = "F";
+    public static String scale = "F";
 
     /**
      * The BrewDay object to manage timers.
      */
-    private static BrewDay brewDay = null;
+    public static BrewDay brewDay = null;
     /**
      * One Wire File System Connection.
      */
-    private static OwfsConnection owfsConnection = null;
+    public static OwfsConnection owfsConnection = null;
     /**
      * Flag whether the user has selected OWFS.
      */
-    private static boolean useOWFS = false;
+    public static boolean useOWFS = false;
     /**
      * The Default OWFS server name.
      */
-    private static String owfsServer = "localhost";
+    public static String owfsServer = "localhost";
     /**
      * The OWFS port value.
      */
-    private static Integer owfsPort = DEFAULT_OWFS_PORT;
+    public static Integer owfsPort = DEFAULT_OWFS_PORT;
 
     /**
      * The accepted startup options.
      */
-    private static Options startupOptions = null;
+    public static Options startupOptions = null;
     /**
      * The Command line used.
      */
-    private static CommandLine startupCommand = null;
+    public static CommandLine startupCommand = null;
 
     /**
      * Xpath factory. This'll not change.
      */
-    private static XPathFactory xPathfactory = XPathFactory.newInstance();
+    public static XPathFactory xPathfactory = XPathFactory.newInstance();
 
     /**
      * XPath static for the helper.
      */
-    private static XPath xpath = xPathfactory.newXPath();
+    public static XPath xpath = xPathfactory.newXPath();
     /**
      * Xpath Expression static for the helpers.
      */
-    private static XPathExpression expr = null;
-    private static String message = "";
-    private static double recorderDiff = .15d;
-    private static boolean recorderEnabled = true;
-    private static String recorderDirectory = StatusRecorder.defaultDirectory;
-    private static String breweryName = null;
+    public static XPathExpression expr = null;
+    public static String message = "";
+    public static double recorderDiff = .15d;
+    public static boolean recorderEnabled = true;
+    public static String recorderDirectory = StatusRecorder.defaultDirectory;
+    public static String breweryName = null;
     public static String theme = "default";
-    private static boolean pageLock = false;
-    private static boolean allDevicesListed = false;
+    public static boolean pageLock = false;
+    public static boolean showRight = true;
+    public static boolean allDevicesListed = false;
 
     /*****
      * Main method to launch the brewery.
-     * 
+     *
      * @param arguments
      *            List of arguments from the command line
      */
@@ -357,7 +366,7 @@ public final class LaunchControl {
     /*******
      * Used to setup the options for the command line parser.
      */
-    private static void createOptions() {
+    public static void createOptions() {
         startupOptions = new Options();
 
         startupOptions.addOption("h", "help", false, "Show this help");
@@ -402,8 +411,11 @@ public final class LaunchControl {
         // to make sure we close off the GPIO connections
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
-
+                BrewServer.LOG.warning("Shutting down. Saving configuration");
                 saveSettings();
+                BrewServer.LOG.warning("Configuration saved.");
+                
+                BrewServer.LOG.warning("Shutting down temperature probe threads.");
                 synchronized (tempList) {
                     for (Temp t : tempList) {
                         if (t != null) {
@@ -412,6 +424,7 @@ public final class LaunchControl {
                     }
                 }
 
+                BrewServer.LOG.warning("Shutting down PID threads.");
                 synchronized (pidList) {
                     for (PID n : pidList) {
                         if (n != null) {
@@ -420,9 +433,10 @@ public final class LaunchControl {
                     }
                 }
 
-                synchronized (mashList) {
-                    if (mashList.size() > 0) {
-                        for (MashControl m : mashList) {
+                synchronized (triggerControlList) {
+                    if (triggerControlList.size() > 0) {
+                        BrewServer.LOG.warning("Shutting down MashControl threads.");
+                        for (TriggerControl m : triggerControlList) {
                             m.setShutdownFlag(true);
                         }
                     }
@@ -430,6 +444,7 @@ public final class LaunchControl {
                 // Close off all the Pump GPIOs properly.
                 synchronized (pumpList) {
                     if (pumpList.size() > 0) {
+                        BrewServer.LOG.warning("Shutting down pumps.");
                         for (Pump p : pumpList) {
                             p.shutdown();
                         }
@@ -439,8 +454,10 @@ public final class LaunchControl {
                 saveConfigFile();
 
                 if (recorder != null) {
+                    BrewServer.LOG.warning("Shutting down recorder threads.");
                     recorder.stop();
                 }
+                BrewServer.LOG.warning("Goodbye!");
             }
         });
 
@@ -474,6 +491,7 @@ public final class LaunchControl {
         sRunner.run();
 
         // iterate the list of Threads to kick off any PIDs
+        Collections.sort(tempList);
         Iterator<Temp> iterator = tempList.iterator();
         while (iterator.hasNext()) {
             // launch all the PIDs first
@@ -518,7 +536,7 @@ public final class LaunchControl {
      * @param feedID
      *            The FeedID to get
      */
-    private void startCosm(final String apiKey, final int feedID) {
+    public void startCosm(final String apiKey, final int feedID) {
         BrewServer.LOG.info("API: " + apiKey + " Feed: " + feedID);
         cosm = new Cosm(apiKey);
         if (cosm == null) {
@@ -645,7 +663,9 @@ public final class LaunchControl {
         // get each setting add it to the JSON
         JSONObject rObj = new JSONObject();
         JSONObject tJSON = null;
+        JSONObject triggerJSON = new JSONObject();
         rObj.put("locked", LaunchControl.pageLock);
+        rObj.put("showright", LaunchControl.showRight);
         rObj.put("breweryName", LaunchControl.getName());
 
         // iterate the thread lists
@@ -672,12 +692,13 @@ public final class LaunchControl {
                     JSONObject volumeJSON = new JSONObject();
                     volumeJSON.put("volume", t.getVolume());
                     volumeJSON.put("units", t.getVolumeUnit());
-                    if (t.getVolumeAIN() >= 0) {
+                    if (!t.getVolumeAIN().equals("")) {
                         volumeJSON.put("ain", t.getVolumeAIN());
                     } else {
                         volumeJSON.put("address", t.getVolumeAddress());
                         volumeJSON.put("offset", t.getVolumeOffset());
                     }
+                    volumeJSON.put("gravity", t.getGravity());
 
                     tJSON.put("volume", volumeJSON);
                 }
@@ -709,9 +730,16 @@ public final class LaunchControl {
                     }
 
                 }
+
+                if (t.getTriggerControl() != null
+                        && t.getTriggerControl().triggerCount() > 0) {
+                    triggerJSON.put(t.getName(),
+                            t.getTriggerControl().getJSONData());
+                }
             }
         }
         rObj.put("vessels", vesselJSON);
+        rObj.put("triggers", triggerJSON);
 
         if (brewDay != null) {
             rObj.put("brewday", brewDay.brewDayStatus());
@@ -728,17 +756,6 @@ public final class LaunchControl {
             rObj.put("pumps", tJSON);
         }
 
-        // Check for mash steps
-        if (mashList.size() > 0) {
-            tJSON = new JSONObject();
-            for (MashControl m : mashList) {
-                tJSON.put(m.getOutputControl(), m.getJSONData());
-            }
-            rObj.put("mash", tJSON);
-        } else {
-            rObj.put("mash", "Unset");
-        }
-
         if (LaunchControl.getMessage() != null) {
             rObj.put("message", LaunchControl.getMessage());
         }
@@ -749,7 +766,7 @@ public final class LaunchControl {
 
     /**
      * Get the system status.
-     * 
+     *
      * @return a JSON Object representing the current system status
      */
     public static String getSystemStatus() {
@@ -757,6 +774,7 @@ public final class LaunchControl {
         retVal.put("recorder", LaunchControl.recorder != null);
         retVal.put("recorderTime", StatusRecorder.SLEEP);
         retVal.put("recorderDiff", StatusRecorder.THRESHOLD);
+        retVal.put("showright", LaunchControl.showRight);
         return retVal.toJSONString();
     }
 
@@ -804,7 +822,7 @@ public final class LaunchControl {
      * @param config
      *            The General element to be parsed.
      */
-    private void parseGeneral(final Element config) {
+    public void parseGeneral(final Element config) {
         if (config == null) {
             return;
         }
@@ -948,7 +966,7 @@ public final class LaunchControl {
      * @param config
      *            The element that contains the pumps information
      */
-    private void parsePumps(final Element config) {
+    public void parsePumps(final Element config) {
         if (config == null) {
             return;
         }
@@ -958,8 +976,14 @@ public final class LaunchControl {
         for (int i = 0; i < pumps.getLength(); i++) {
             Element curPump = (Element) pumps.item(i);
             String pumpName = curPump.getNodeName().replace("_", " ");
-            String gpio = curPump.getTextContent();
+            String gpio = null;
+            if (curPump.hasAttribute("gpio")) {
+                gpio = curPump.getAttribute("gpio");
+            } else {
+                gpio = curPump.getTextContent();
+            }
             int position = -1;
+
             String tempString = curPump.getAttribute("position");
             if (tempString == null) {
                 try {
@@ -976,8 +1000,15 @@ public final class LaunchControl {
             } catch (InvalidGPIOException e) {
                 BrewServer.LOG.warning("Invalid GPIO (" + gpio
                         + ") detected for pump " + pumpName);
-                BrewServer.LOG.warning("Please fix the config file before running");
+                BrewServer.LOG.warning(
+                        "Please fix the config file before running");
                 System.exit(-1);
+            }
+
+            Element invert = getFirstElement(curPump, "invert");
+            if (invert != null) {
+                LaunchControl.findPump(pumpName).setInverted(
+                    Boolean.parseBoolean(invert.getTextContent()));
             }
         }
 
@@ -989,7 +1020,7 @@ public final class LaunchControl {
      * @param config
      *            the Element containing the timers
      */
-    private void parseTimers(final Element config) {
+    public void parseTimers(final Element config) {
         if (config == null) {
             return;
         }
@@ -1014,8 +1045,35 @@ public final class LaunchControl {
     }
 
     /**
+     * Parse the list of phSensors in an XML Element.
+     *
+     * @param config
+     *            the Element containing the ph Sensors
+     */
+    public void parsePhSensors(final Element config) {
+        if (config == null) {
+            return;
+        }
+        NodeList sensors = config.getChildNodes();
+
+        for (int i = 0; i < sensors.getLength(); i++) {
+            Element tElement = (Element) sensors.item(i);
+            PhSensor temp = new PhSensor();
+            temp.setName(tElement.getNodeName().replace("_", " "));
+            temp.setDsAddress(tElement.getAttribute("dsAddress"));
+            temp.setDsOffset(tElement.getAttribute("dsOffset"));
+            temp.setAinPin(tElement.getAttribute("ainPin"));
+            temp.setOffset(tElement.getAttribute("offset"));
+            temp.setModel(tElement.getAttribute("model"));
+            synchronized (phSensorList) {
+                phSensorList.add(temp);
+            }
+        }
+    }
+
+    /**
      * Add a new pump to the server.
-     * 
+     *
      * @param name
      *            The name of the pump to add.
      * @param gpio
@@ -1119,12 +1177,17 @@ public final class LaunchControl {
      *            The GPIO to use, null doesn't start the device.
      * @return The new Temp probe. Use it to look up the PID if applicable.
      */
-    private Temp startDevice(final String input, final String probe,
+    public Temp startDevice(final String input, final String probe,
             final String gpio) {
 
         // Startup the thread
         if (probe == null || probe.equals("0")) {
             BrewServer.LOG.info("No Probe specified for " + input);
+            return null;
+        }
+
+        if (!probe.startsWith("28") && !input.equals("System")) {
+            BrewServer.LOG.warning(probe + " is not a temperature probe");
             return null;
         }
 
@@ -1164,7 +1227,7 @@ public final class LaunchControl {
      *            The tag to search for
      * @return The found Datastream, or null if it doesn't find anything
      */
-    private static Datastream findDatastream(final String tag) {
+    public static Datastream findDatastream(final String tag) {
         // iterate the list by tag
         List<Datastream> cList = Arrays.asList(cosmStreams);
         Iterator<Datastream> iterator = cList.iterator();
@@ -1287,7 +1350,7 @@ public final class LaunchControl {
 
     /**
      * Delete the specified pump.
-     * 
+     *
      * @param name
      *            The pump to delete.
      */
@@ -1310,7 +1373,7 @@ public final class LaunchControl {
 
     /**************
      * Find the Timer in the current list.
-     * 
+     *
      * @param name
      *            The timer to find
      * @return return the Timer object
@@ -1367,17 +1430,17 @@ public final class LaunchControl {
      * List the One Wire devices from the standard one wire file system. in
      * /sys/bus/w1/devices, basic access
      */
-    private static void listOneWireSys() {
+    public static void listOneWireSys() {
         listOneWireSys(true);
     }
 
     /**
      * List the one wire devices in /sys/bus/w1/devices.
-     * 
+     *
      * @param prompt
      *            Prompt to select OWFS if needed
      */
-    private static void listOneWireSys(final boolean prompt) {
+    public static void listOneWireSys(final boolean prompt) {
         // try to access the list of 1-wire devices
         File w1Folder = new File("/sys/bus/w1/devices/");
         if (!w1Folder.exists()) {
@@ -1400,11 +1463,11 @@ public final class LaunchControl {
                     && !currentFile.getName().startsWith("w1_bus_master")) {
 
                 // Check to see if theres a non temp probe (DS18x20)
-                if (!currentFile.getName().startsWith("28") && !useOWFS) {
-                    if (prompt) {
-                        BrewServer.LOG.warning("Detected a non temp probe."
+                if (!currentFile.getName().startsWith("28")) {
+                    if (!useOWFS && prompt) {
+                        System.out.println("Detected a non temp probe."
                                 + currentFile.getName() + "\n"
-                                + "Do you want to switch to OWFS? [y/N]");
+                                + "Do you want to setup OWFS? [y/N]");
                         String t = readInput();
                         if (t.toLowerCase().startsWith("y")) {
                             if (owfsConnection == null) {
@@ -1412,19 +1475,11 @@ public final class LaunchControl {
                             }
 
                             useOWFS = true;
-                            synchronized (tempList) {
-                                tempList.clear();
-                            }
-                            listOWFSDevices();
-                            return;
                         }
                     }
                     // Skip this iteration
                     continue;
                 }
-
-                owfsServer = null;
-                owfsPort = null;
 
                 // Check to see if this probe exists
                 if (probeExists(currentFile.getName())) {
@@ -1449,45 +1504,27 @@ public final class LaunchControl {
     }
 
     /**
-     * Remove any non setup devices.
-     */
-    private static void removeNonSetupDevices() {
-        // synchronized (tempList) {
-        // for (Temp t: tempList) {
-        // if (t.getName().equals(t.getProbe())) {
-        // t.shutdown();
-        // }
-        // tempList.remove(t);
-        // }
-        // }
-    }
-
-    /**
      * update the device list.
      */
-    private static void updateDeviceList() {
+    public static void updateDeviceList() {
         updateDeviceList(true);
     }
 
     /**
      * Update the device list.
-     * 
+     *
      * @param prompt
      *            Prompt for OWFS usage.
      */
-    private static void updateDeviceList(boolean prompt) {
-        if (useOWFS) {
-            listOWFSDevices();
-        } else {
-            listOneWireSys(prompt);
-        }
+    public static void updateDeviceList(boolean prompt) {
+        listOneWireSys(prompt);
     }
 
     /**********
      * Setup the configuration. We get here if the configuration file doesn't
      * exist.
      */
-    private void createConfig() {
+    public void createConfig() {
 
         if (startupCommand != null && startupCommand.hasOption("owfs")) {
             createOWFS();
@@ -1522,7 +1559,7 @@ public final class LaunchControl {
     /**
      * Save the configuration file to the default config filename as xml.
      */
-    private static void saveConfigFile() {
+    public static void saveConfigFile() {
         if (!LaunchControl.loadCompleted) {
             return;
         }
@@ -1656,18 +1693,22 @@ public final class LaunchControl {
 
         // Use the thread safe mechanism
         BrewServer.LOG.info("Connecting to " + owfsServer + ":" + owfsPort);
-        OwfsConnectionConfig owConfig = new OwfsConnectionConfig(owfsServer,
-                owfsPort);
-        owConfig.setPersistence(OwPersistence.ON);
-        owfsConnection = OwfsConnectionFactory
-                .newOwfsClientThreadSafe(owConfig);
-        useOWFS = true;
+        try {
+            OwfsConnectionConfig owConfig = new OwfsConnectionConfig(owfsServer,
+                    owfsPort);
+            owConfig.setPersistence(OwPersistence.ON);
+            owfsConnection = OwfsConnectionFactory
+                    .newOwfsClientThreadSafe(owConfig);
+            useOWFS = true;
+        } catch (NullPointerException npe) {
+            BrewServer.LOG.warning("OWFS is not able to be setup. You may need to rerun setup.");
+        }
     }
 
     /**
      * Create the OWFS Connection to the server (owserver).
      */
-    private static void createOWFS() {
+    public static void createOWFS() {
 
         BrewServer.LOG.warning("Creating the OWFS configuration.");
         BrewServer.LOG.warning("What is the OWFS server host?"
@@ -1704,53 +1745,9 @@ public final class LaunchControl {
         setupOWFS();
     }
 
-    /***********
-     * List the One-Wire devices in OWFS. Much more fully featured access
-     */
-    private static void listOWFSDevices() {
-        try {
-            List<String> owfsDirs = owfsConnection.listDirectory("/");
-            if (owfsDirs.size() > 0) {
-                BrewServer.LOG.info("Listing OWFS devices on " + owfsServer
-                        + ":" + owfsPort);
-            }
-            Iterator<String> dirIt = owfsDirs.iterator();
-            String dir = null;
-
-            while (dirIt.hasNext()) {
-                dir = dirIt.next();
-                if (dir.startsWith("/28")) {
-                    /*
-                     * we have a "good' directory, I'm only aware that
-                     * directories starting with a number of 28 are good got a
-                     * directory, check for a temp
-                     */
-                    dir = dir.substring(1);
-                    if (probeExists(dir)) {
-                        continue;
-                    }
-                    BrewServer.LOG.info("Checking for " + dir);
-                    Temp currentTemp = new Temp(dir, dir);
-                    tempList.add(currentTemp);
-                    // setup the scale for each temp probe
-                    currentTemp.setScale(scale);
-                    // setup the threads
-                    Thread tThread = new Thread(currentTemp);
-                    tThread.setName("Temp_" + currentTemp.getName());
-                    tempThreads.add(tThread);
-                    tThread.start();
-                }
-            }
-        } catch (OwfsException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     /**
      * Check to see if this probe already exists.
-     * 
+     *
      * @param address
      *            to check
      * @return true if the probe is setup.
@@ -1766,7 +1763,7 @@ public final class LaunchControl {
 
     /***********
      * Helper method to read a path value from OWFS with all checks.
-     * 
+     *
      * @param path
      *            The path to read from
      * @return A string representing the value (or null if there's an error
@@ -1782,6 +1779,7 @@ public final class LaunchControl {
             setupOWFS();
             if (owfsConnection == null) {
                 BrewServer.LOG.info("no OWFS connection");
+                return "";
             }
         }
         try {
@@ -1800,10 +1798,10 @@ public final class LaunchControl {
 
     /*******
      * Helper function to read the user input and tidy it up.
-     * 
+     *
      * @return Trimmed String representing the UserInput
      */
-    private static String readInput() {
+    public static String readInput() {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String input = "";
         try {
@@ -1817,12 +1815,11 @@ public final class LaunchControl {
     /*******
      * Prints the list of probes that're found.
      */
-    private void displaySensors() {
+    public void displaySensors() {
         // iterate the list of temperature Threads to get values
         Integer i = 1;
         synchronized (tempList) {
             Iterator<Temp> iterator = tempList.iterator();
-            
             while (iterator.hasNext()) {
                 // launch all the PIDs first,
                 // since they will launch the temp theads too
@@ -1875,7 +1872,7 @@ public final class LaunchControl {
             }
 
             if (fTemp.getVolumeBase() != null) {
-                if (fTemp.getVolumeAIN() != -1) {
+                if (!fTemp.getVolumeAIN().equals("")) {
                     saveVolume(fTemp.getName(), fTemp.getVolumeAIN(),
                             fTemp.getVolumeUnit(), fTemp.getVolumeBase());
                 } else if (fTemp.getVolumeAddress() != null
@@ -1912,7 +1909,8 @@ public final class LaunchControl {
                             "/elsinore/timers/timer[@id='" + t + "']");
                     if (timerElement == null) {
                         // No timer by this name
-                        Element newTimer = addNewElement(timersElement, "timer");
+                        Element newTimer =
+                                addNewElement(timersElement, "timer");
                         newTimer.setAttribute("id", t.getName());
                         newTimer.setAttribute("position", "" + t.getPosition());
                     }
@@ -1942,15 +1940,58 @@ public final class LaunchControl {
 
                 Pump tPump = pumpIt.next();
 
-                if (getFirstElementByXpath(null,
-                        "/elsinore/pumps/" + tPump.getNodeName()) == null) {
+                Element newPump = getFirstElementByXpath(null,
+                        "/elsinore/pumps/" + tPump.getNodeName());
+
+                if (newPump == null) {
                     // No timer by this name
-                    Element newPump = addNewElement(pumpsElement,
+                    newPump = addNewElement(pumpsElement,
                             tPump.getNodeName());
-                    newPump.appendChild(configDoc.createTextNode(tPump
-                            .getGPIO()));
-                    newPump.setAttribute("position", "" + tPump.getPosition());
                 }
+                newPump.setAttribute("gpio", tPump.getGPIO());
+                newPump.setAttribute("position", "" + tPump.getPosition());
+                Element invertElement = addNewElement(newPump, "invert");
+                invertElement.setTextContent(
+                        Boolean.toString(tPump.getInverted()));
+                newPump.appendChild(invertElement);
+            }
+        }
+
+        // Delete all the ph Sensors first
+        Element phSensorsElement = getFirstElement(null, "phSensors");
+
+        if (phSensorsElement == null) {
+            phSensorsElement = addNewElement(null, "phSensors");
+        }
+
+        Node childSensor = phSensorsElement.getFirstChild();
+        while (childSensor != null) {
+            phSensorsElement.removeChild(childSensor);
+            childSensor = phSensorsElement.getFirstChild();
+        }
+
+        // Save the Pumps
+        if (phSensorList.size() > 0) {
+
+            Iterator<PhSensor> phSensorIt = phSensorList.iterator();
+
+            while (phSensorIt.hasNext()) {
+
+                PhSensor tSensor = phSensorIt.next();
+
+                Element newSensor = getFirstElementByXpath(null,
+                        "/elsinore/phSensors/" + tSensor.getName());
+
+                if (newSensor == null) {
+                    // No timer by this name
+                    newSensor = addNewElement(phSensorsElement,
+                            tSensor.getName());
+                }
+                newSensor.setAttribute("model", tSensor.getModel());
+                newSensor.setAttribute("ainPin", tSensor.getAIN());
+                newSensor.setAttribute("dsAddress", tSensor.getDsAddress());
+                newSensor.setAttribute("dsOffset", tSensor.getDsOffset());
+                newSensor.setAttribute("offset", "" + tSensor.getOffset());
             }
         }
     }
@@ -1978,7 +2019,7 @@ public final class LaunchControl {
 
     /******
      * Save the PID to the config doc.
-     * 
+     *
      * @param pid
      *            The PID to save
      */
@@ -2009,7 +2050,8 @@ public final class LaunchControl {
         BrewServer.LOG.info("Using base node " + device.getNodeName()
                 + " with ID " + device.getAttribute("id"));
 
-        setElementText(device, "duty_cycle", pid.getDuty().toString());
+        setElementText(device, "duty_cycle", pid.getManualCycle().toString());
+        setElementText(device, "duty_time", pid.getManualTime().toString());
         setElementText(device, "set_point", pid.getSetPoint().toString());
 
         if (pid.getHeatSetting() != null) {
@@ -2019,8 +2061,11 @@ public final class LaunchControl {
             setElementText(heatElement, "proportional", pid.getHeatP()
                     .toString());
             setElementText(heatElement, "integral", pid.getHeatI().toString());
-            setElementText(heatElement, "derivative", pid.getHeatD().toString());
+            setElementText(heatElement, "derivative",
+                    pid.getHeatD().toString());
             setElementText(heatElement, "gpio", pid.getHeatGPIO());
+            setElementText(heatElement, "invert",
+                    Boolean.toString(pid.getHeatInverted()));
         }
 
         if (pid.getCoolSetting() != null) {
@@ -2031,8 +2076,11 @@ public final class LaunchControl {
             setElementText(coolElement, "proportional", pid.getCoolP()
                     .toString());
             setElementText(coolElement, "integral", pid.getCoolI().toString());
-            setElementText(coolElement, "derivative", pid.getCoolD().toString());
+            setElementText(coolElement, "derivative",
+                    pid.getCoolD().toString());
             setElementText(coolElement, "gpio", pid.getCoolGPIO());
+            setElementText(coolElement, "invert",
+                    Boolean.toString(pid.getCoolInverted()));
         }
 
         setElementText(device, "min", pid.getMin().toString());
@@ -2048,7 +2096,7 @@ public final class LaunchControl {
 
     /*******
      * Add a temperature device to the configuration file.
-     * 
+     *
      * @param probe
      *            The probe address.
      * @param name
@@ -2080,16 +2128,17 @@ public final class LaunchControl {
             device.setAttribute("id", name);
         }
         setElementText(device, "probe", probe);
+        setElementText(device, "position", "" + temp.getPosition());
         setElementText(device, "cutoff", cutoff);
         setElementText(device, "calibration", temp.getCalibration());
 
         BrewServer.LOG.info("Checking for volume");
         if (temp.hasVolume()) {
-            BrewServer.LOG.info("Saving volume");
+            System.out.println("Saving volume");
             setElementText(device, "volume-units", temp.getVolumeUnit());
-            if (temp.getVolumeAIN() >= 0) {
+            if (!temp.getVolumeAIN().equals("")) {
                 setElementText(device, "volume-ain",
-                        Integer.toString(temp.getVolumeAIN()));
+                        temp.getVolumeAIN());
             } else {
                 setElementText(device, "volume-address",
                         temp.getVolumeAddress());
@@ -2103,9 +2152,17 @@ public final class LaunchControl {
 
             if (volumeBase != null) {
                 for (Entry<BigDecimal, BigDecimal> e : volumeBase.entrySet()) {
-                    BrewServer.LOG.info("Saving volume point " + e.getKey()
+                    System.out.println("Saving volume point " + e.getKey()
                             + " value " + e.getValue());
-                    Element volEntry = addNewElement(device, "volume");
+                    Element volEntry = getFirstElementByXpath(null,
+                            "/elsinore/device[@id='" + name + "']"
+                            + "/volume[@vol='" + e.getKey().toString()
+                            + "']");
+                    if (volEntry == null) {
+                        volEntry = addNewElement(device, "volume");
+                        volEntry.setAttribute("vol", e.getKey().toString());
+                    }
+
                     volEntry.setAttribute("vol", e.getKey().toString());
                     volEntry.setTextContent(e.getValue().toString());
                     device.appendChild(volEntry);
@@ -2117,7 +2174,7 @@ public final class LaunchControl {
 
     /*******
      * Save the volume details to the config.
-     * 
+     *
      * @param name
      *            name of the device to add the information to
      * @param address
@@ -2129,7 +2186,7 @@ public final class LaunchControl {
      * @param concurrentHashMap
      *            Hashmap of the volume ranges and readings
      */
-    private void saveVolume(final String name, final String address,
+    public void saveVolume(final String name, final String address,
             final String offset, final String volumeUnit,
             final ConcurrentHashMap<BigDecimal, BigDecimal> concurrentHashMap) {
 
@@ -2157,7 +2214,7 @@ public final class LaunchControl {
 
     /******
      * Save the volume information for an onboard Analogue Input.
-     * 
+     *
      * @param name
      *            Device name
      * @param volumeAIN
@@ -2167,7 +2224,7 @@ public final class LaunchControl {
      * @param concurrentHashMap
      *            Hashmap of the volume ranges and readings
      */
-    private void saveVolume(final String name, final int volumeAIN,
+    public void saveVolume(final String name, final String volumeAIN,
             final String volumeUnit,
             final ConcurrentHashMap<BigDecimal, BigDecimal> concurrentHashMap) {
 
@@ -2182,13 +2239,13 @@ public final class LaunchControl {
             tElement = addNewElement(device, "volume-pin");
         }
 
-        tElement.setTextContent(Integer.toString(volumeAIN));
+        tElement.setTextContent(volumeAIN);
 
     }
 
     /**
      * Save the volume measurements for a device.
-     * 
+     *
      * @param name
      *            The name of the Device to save the volume measurements to
      * @param volumeBase
@@ -2219,7 +2276,7 @@ public final class LaunchControl {
                 .iterator();
         while (volIter.hasNext()) {
             Entry<BigDecimal, BigDecimal> entry = volIter.next();
-            BrewServer.LOG.info("Looking for volume entry: "
+            System.out.println("Looking for volume entry: "
                     + entry.getKey().toString());
 
             tElement = getFirstElementByXpath(null, "/elsinore/device[@id='"
@@ -2238,7 +2295,7 @@ public final class LaunchControl {
     /******
      * Helper method to initialize the configuration.
      */
-    private static void initializeConfig() {
+    public static void initializeConfig() {
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = null;
         try {
@@ -2292,7 +2349,7 @@ public final class LaunchControl {
     /**
      * Parse the config using the XML Parser.
      */
-    private void parseXMLSections() {
+    public void parseXMLSections() {
         NodeList configSections = configDoc.getDocumentElement()
                 .getChildNodes();
 
@@ -2302,6 +2359,7 @@ public final class LaunchControl {
         // setup general first
         parseGeneral(getFirstElement(null, "general"));
         parsePumps(getFirstElement(null, "pumps"));
+        parsePhSensors(getFirstElement(null, "phSensors"));
 
         for (int i = 0; i < configSections.getLength(); i++) {
             Node temp = configSections.item(i);
@@ -2309,18 +2367,10 @@ public final class LaunchControl {
                 Element e = (Element) temp;
                 BrewServer.LOG.info("Checking section " + e.getNodeName());
                 // Parsed general first
-                if (e.getNodeName().equalsIgnoreCase("general")) {
-                    continue;
-                } else if (e.getNodeName().equalsIgnoreCase("pumps")) {
-                    // parsePumps(e);
-                    continue;
-                } else if (e.getNodeName().equalsIgnoreCase("timers")) {
+                if (e.getNodeName().equalsIgnoreCase("timers")) {
                     parseTimers(e);
                 } else if (e.getNodeName().equalsIgnoreCase("device")) {
                     parseDevice(e);
-                } else {
-                    BrewServer.LOG.info("Unrecognized section "
-                            + e.getNodeName());
                 }
             }
         }
@@ -2328,26 +2378,29 @@ public final class LaunchControl {
 
     /**
      * Parse a configuration section, such as a specific device.
-     * 
+     *
      * @param config
      *            The configuration element to parse.
      */
-    private void parseDevice(final Element config) {
+    public void parseDevice(final Element config) {
         String probe = null;
         String heatGPIO = null;
         String coolGPIO = null;
         String volumeUnits = "Litres";
         String dsAddress = null, dsOffset = null;
         String cutoffTemp = null, auxPin = null, calibration = "";
-        ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray = new ConcurrentHashMap<BigDecimal, BigDecimal>();
-        BigDecimal duty = new BigDecimal(0), heatCycle = new BigDecimal(0.0), setpoint = new BigDecimal(
-                0.0), heatP = new BigDecimal(0.0), heatI = new BigDecimal(0.0), heatD = new BigDecimal(
-                0.0), min = new BigDecimal(0.0), max = new BigDecimal(0.0), time = new BigDecimal(
-                0.0), coolP = new BigDecimal(0.0), coolI = new BigDecimal(0.0), coolD = new BigDecimal(
-                0.0), coolCycle = new BigDecimal(0.0), coolDelay = new BigDecimal(
-                0.0);
-
-        int analoguePin = -1;
+        ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray =
+                new ConcurrentHashMap<BigDecimal, BigDecimal>();
+        BigDecimal duty = new BigDecimal(0), heatCycle = new BigDecimal(0.0),
+                setpoint = new BigDecimal(0.0), heatP = new BigDecimal(0.0),
+                heatI = new BigDecimal(0.0), heatD = new BigDecimal(0.0),
+                min = new BigDecimal(0.0), max = new BigDecimal(0.0),
+                time = new BigDecimal(0.0), coolP = new BigDecimal(0.0),
+                coolI = new BigDecimal(0.0), coolD = new BigDecimal(0.0),
+                coolCycle = new BigDecimal(0.0), cycle = new BigDecimal(0.0),
+                coolDelay = new BigDecimal(0.0);
+        boolean coolInvert = false, heatInvert = false;
+        int analoguePin = -1, position = -1;
 
         String deviceName = config.getAttribute("id");
 
@@ -2358,9 +2411,19 @@ public final class LaunchControl {
                 probe = tElement.getTextContent();
             }
 
+            tElement = getFirstElement(config, "position");
+            if (tElement != null) {
+                position = Integer.parseInt(tElement.getTextContent());
+            }
+
             tElement = getFirstElement(config, "duty_cycle");
             if (tElement != null) {
                 duty = new BigDecimal(tElement.getTextContent());
+            }
+
+            tElement = getFirstElement(config, "duty_time");
+            if (tElement != null) {
+                cycle = new BigDecimal(tElement.getTextContent());
             }
 
             tElement = getFirstElement(config, "set_point");
@@ -2368,69 +2431,79 @@ public final class LaunchControl {
                 setpoint = new BigDecimal(tElement.getTextContent());
             }
 
-            Element settingsElement = getFirstElement(config, "heat");
+            Element heatElement = getFirstElement(config, "heat");
 
-            if (settingsElement == null) {
-                settingsElement = config;
+            if (heatElement == null) {
+                heatElement = config;
             }
 
-            tElement = getFirstElement(settingsElement, "gpio");
+            tElement = getFirstElement(heatElement, "gpio");
             if (tElement != null) {
                 heatGPIO = tElement.getTextContent();
             }
 
-            tElement = getFirstElement(settingsElement, "cycle_time");
+            tElement = getFirstElement(heatElement, "cycle_time");
             if (tElement != null) {
                 heatCycle = new BigDecimal(tElement.getTextContent());
             }
 
-            tElement = getFirstElement(settingsElement, "proportional");
+            tElement = getFirstElement(heatElement, "proportional");
             if (tElement != null) {
                 heatP = new BigDecimal(tElement.getTextContent());
             }
 
-            tElement = getFirstElement(settingsElement, "integral");
+            tElement = getFirstElement(heatElement, "integral");
             if (tElement != null) {
                 heatI = new BigDecimal(tElement.getTextContent());
             }
 
-            tElement = getFirstElement(settingsElement, "derivative");
+            tElement = getFirstElement(heatElement, "derivative");
             if (tElement != null) {
                 heatD = new BigDecimal(tElement.getTextContent());
             }
 
-            settingsElement = getFirstElement(config, "cool");
+            tElement = getFirstElement(config, "invert");
+            if (tElement != null) {
+                heatInvert = Boolean.parseBoolean(tElement.getTextContent());
+            }
 
-            if (settingsElement != null) {
+            Element coolElement = getFirstElement(config, "cool");
 
-                tElement = getFirstElement(settingsElement, "cycle_time");
+            if (coolElement != null) {
+
+                tElement = getFirstElement(coolElement, "cycle_time");
                 if (tElement != null) {
                     coolCycle = new BigDecimal(tElement.getTextContent());
                 }
 
-                tElement = getFirstElement(settingsElement, "proportional");
+                tElement = getFirstElement(coolElement, "proportional");
                 if (tElement != null) {
                     coolP = new BigDecimal(tElement.getTextContent());
                 }
 
-                tElement = getFirstElement(settingsElement, "integral");
+                tElement = getFirstElement(coolElement, "integral");
                 if (tElement != null) {
                     coolI = new BigDecimal(tElement.getTextContent());
                 }
 
-                tElement = getFirstElement(settingsElement, "derivative");
+                tElement = getFirstElement(coolElement, "derivative");
                 if (tElement != null) {
                     coolD = new BigDecimal(tElement.getTextContent());
                 }
 
-                tElement = getFirstElement(settingsElement, "gpio");
+                tElement = getFirstElement(coolElement, "gpio");
                 if (tElement != null) {
                     coolGPIO = tElement.getTextContent();
                 }
 
-                tElement = getFirstElement(settingsElement, "delay");
+                tElement = getFirstElement(coolElement, "delay");
                 if (tElement != null) {
                     coolDelay = new BigDecimal(tElement.getTextContent());
+                }
+
+                tElement = getFirstElement(coolElement, "inverted");
+                if (tElement != null) {
+                    coolInvert = Boolean.parseBoolean(tElement.getTextContent());
                 }
             }
 
@@ -2466,12 +2539,9 @@ public final class LaunchControl {
 
             NodeList tList = config.getElementsByTagName("volume");
 
-            if (tList.getLength() == 1) {
-                // we have volume elements
-                NodeList volumeOptions = tList.item(0).getChildNodes();
-
-                for (int j = 0; j < volumeOptions.getLength(); j++) {
-                    Element curOption = (Element) volumeOptions.item(j);
+            if (tList.getLength() >= 1) {
+                for (int j = 0; j < tList.getLength(); j++) {
+                    Element curOption = (Element) tList.item(j);
 
                     // Append the volume to the array
                     try {
@@ -2483,10 +2553,9 @@ public final class LaunchControl {
                         volumeArray.put(volValue, volReading);
                         // we can parse this as an integer
                     } catch (NumberFormatException e) {
-                        BrewServer.LOG.info("Could not parse "
+                        BrewServer.LOG.warning("Could not parse "
                                 + curOption.getNodeName() + " as an integer");
                     }
-
                 }
             }
 
@@ -2511,7 +2580,7 @@ public final class LaunchControl {
             }
 
             if (volumeUnits == null) {
-                BrewServer.LOG.info("Couldn't find a volume unit for "
+                BrewServer.LOG.warning("Couldn't find a volume unit for "
                         + deviceName);
                 volumeArray = null;
             }
@@ -2524,7 +2593,7 @@ public final class LaunchControl {
                 // we don't have a basic level
                 // not implemented yet, math is hard
                 System.out
-                        .println("No Volume Presets, check your config or rerun the setup!");
+                    .println("No Volume Presets, check your config or rerun the setup!");
                 // otherwise we are OK
             }
 
@@ -2539,7 +2608,11 @@ public final class LaunchControl {
         }
 
         Temp newTemp = startDevice(deviceName, probe, heatGPIO);
-
+        if (newTemp == null) {
+            System.out.println("Problems parsing device " + deviceName);
+            System.exit(-1);
+        }
+        newTemp.setPosition(position);
         try {
             if (heatGPIO != null && GPIO.getPinNumber(heatGPIO) >= 0) {
                 PID tPID = LaunchControl.findPID(newTemp.getName());
@@ -2547,8 +2620,8 @@ public final class LaunchControl {
                     tPID.setHysteria(min, max, time);
                 } catch (NumberFormatException nfe) {
                     System.out
-                            .println("Invalid options when setting up Hysteria: "
-                                    + nfe.getMessage());
+                        .println("Invalid options when setting up Hysteria: "
+                                + nfe.getMessage());
                 }
 
                 tPID.updateValues("off", duty, heatCycle, setpoint, heatP,
@@ -2559,8 +2632,10 @@ public final class LaunchControl {
                 tPID.setCoolI(coolI);
                 tPID.setCoolD(coolD);
                 tPID.setCoolGPIO(coolGPIO);
-                
-
+                tPID.setCoolInverted(coolInvert);
+                tPID.setHeatInverted(heatInvert);
+                tPID.setManualTime(cycle);
+                tPID.setManualDuty(duty);
                 if (auxPin != null && !auxPin.equals("")) {
                     tPID.setAux(auxPin);
                 }
@@ -2639,7 +2714,7 @@ public final class LaunchControl {
     /**
      * Sets up the base configuration Document.
      */
-    private static void setupConfigDoc() {
+    public static void setupConfigDoc() {
 
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = null;
@@ -2657,14 +2732,14 @@ public final class LaunchControl {
     /**
      * Get a list of all the nodes that match the nodeName. If no baseNode is
      * provided (null) then it checks from the document root.
-     * 
+     *
      * @param baseNode
      *            The root element to check from, null for the base element
      * @param nodeName
      *            The node name to match
      * @return A NodeList of matching node names
      */
-    private static NodeList getAllNodes(final Element baseNode,
+    public static NodeList getAllNodes(final Element baseNode,
             final String nodeName) {
 
         Element trueBase = baseNode;
@@ -2684,14 +2759,14 @@ public final class LaunchControl {
     /**
      * Get the first element matching nodeName from the baseNode. If baseNode is
      * null, use the document root
-     * 
+     *
      * @param baseNode
      *            The base element to search, null matches from the root
      * @param nodeName
      *            The nodeName to find.
      * @return The First matching element.
      */
-    private static Element getFirstElement(final Element baseNode,
+    public static Element getFirstElement(final Element baseNode,
             final String nodeName) {
 
         NodeList nodeList = getAllNodes(baseNode, nodeName);
@@ -2706,14 +2781,14 @@ public final class LaunchControl {
 
     /**
      * Add a new element to the specified baseNode.
-     * 
+     *
      * @param baseNode
      *            The baseNode to append to, if null, use the document root
      * @param nodeName
      *            The new node name to add.
      * @return The newly created element.
      */
-    private static Element addNewElement(final Element baseNode,
+    public static Element addNewElement(final Element baseNode,
             final String nodeName) {
 
         if (configDoc == null) {
@@ -2721,7 +2796,7 @@ public final class LaunchControl {
         }
 
         // See if this element exists.
-        if (baseNode != null) {
+        /*if (baseNode != null) {
             NodeList nl = baseNode.getChildNodes();
 
             if (nl.getLength() > 0) {
@@ -2732,7 +2807,7 @@ public final class LaunchControl {
                     }
                 }
             }
-        }
+        }*/
 
         Element newElement = configDoc.createElement(nodeName);
         Element trueBase = baseNode;
@@ -2752,14 +2827,14 @@ public final class LaunchControl {
 
     /**
      * Returns all the elements using an Xpath Search.
-     * 
+     *
      * @param baseNode
      *            The base node to search on. if null, use the document root.
      * @param xpathIn
      *            The Xpath to search.
      * @return The first matching element
      */
-    private static NodeList getElementsByXpath(final Element baseNode,
+    public static NodeList getElementsByXpath(final Element baseNode,
             final String xpathIn) {
 
         NodeList tList = null;
@@ -2783,14 +2858,14 @@ public final class LaunchControl {
 
     /**
      * Returns the first element using an Xpath Search.
-     * 
+     *
      * @param baseNode
      *            The base node to search on. if null, use the document root.
      * @param xpathIn
      *            The Xpath to search.
      * @return The first matching element
      */
-    private static Element getFirstElementByXpath(final Element baseNode,
+    public static Element getFirstElementByXpath(final Element baseNode,
             final String xpathIn) {
 
         Element tElement = null;
@@ -2807,7 +2882,7 @@ public final class LaunchControl {
 
     /**
      * Sets the first found named element text.
-     * 
+     *
      * @param baseNode
      *            The baseNode to use, if null, use the root.
      * @param elementName
@@ -2815,7 +2890,7 @@ public final class LaunchControl {
      * @param textContent
      *            The new text content
      */
-    private static void setElementText(final Element baseNode,
+    public static void setElementText(final Element baseNode,
             final String elementName, final String textContent) {
 
         Element trueBase = baseNode;
@@ -2842,7 +2917,7 @@ public final class LaunchControl {
      * @param elementName
      *            The child element name to delete
      */
-    private static void deleteElement(Element baseNode, String elementName) {
+    public static void deleteElement(Element baseNode, String elementName) {
         Element trueBase = baseNode;
         if (baseNode == null) {
             trueBase = configDoc.getDocumentElement();
@@ -2859,54 +2934,48 @@ public final class LaunchControl {
 
     /**
      * Add a MashControl object to the master mash control list.
-     * 
+     *
      * @param mControl
      *            The new mashControl to add
      */
-    public static void addMashControl(final MashControl mControl) {
-        if (findMashControl(mControl.getOutputControl()) != null) {
+    public static void addMashControl(final TriggerControl mControl) {
+        if (findTriggerControl(mControl.getOutputControl()) != null) {
             BrewServer.LOG
                     .warning("Duplicate Mash Profile detected! Not adding: "
                             + mControl.getOutputControl());
             return;
         }
-        mashList.add(mControl);
+        triggerControlList.add(mControl);
     }
 
     /**
      * Start the mashControl thread associated with the PID.
-     * 
+     *
      * @param pid
      *            The PID to find the mash control thread for.
      */
     public static void startMashControl(final String pid) {
-        MashControl mControl = findMashControl(pid);
+        TriggerControl mControl = findTriggerControl(pid);
         Thread mThread = new Thread(mControl);
         mThread.setName("Mash-Thread[" + pid + "]");
-        mashThreads.add(mThread);
+        triggerThreads.add(mThread);
         mThread.start();
     }
 
     /**
-     * Look for the MashControl for the specified PID.
-     * 
+     * Look for the TriggerControl for the specified PID.
+     *
      * @param pid
      *            The PID string to search for.
      * @return The MashControl for the PID.
      */
-    public static MashControl findMashControl(final String pid) {
-        for (MashControl m : mashList) {
-            if (m.getOutputControl().equalsIgnoreCase(pid)) {
-                return m;
-            }
-        }
-
-        return null;
+    public static TriggerControl findTriggerControl(final String pid) {
+        return LaunchControl.findTemp(pid).getTriggerControl();
     }
 
     /**
      * Get the current OWFS connection.
-     * 
+     *
      * @return The current OWFS Connection object
      */
     public static OwfsConnection getOWFS() {
@@ -2915,7 +2984,7 @@ public final class LaunchControl {
 
     /**
      * Helper to get the current list of timers.
-     * 
+     *
      * @return The current list of timers.
      */
     public static CopyOnWriteArrayList<Timer> getTimerList() {
@@ -3053,7 +3122,7 @@ public final class LaunchControl {
 
         if (!headSha.equals(currentSha)) {
             LaunchControl.setMessage("Update Available. "
-                    + "<span class='holo-button' id=\"UpdatesFromGit\""
+                    + "<span class='btn' id=\"UpdatesFromGit\""
                     + " type=\"submit\"" + " onClick='updateElsinore();'>"
                     + "Click here to update</span>");
         } else {
@@ -3117,27 +3186,35 @@ public final class LaunchControl {
 
     /**
      * Set the system message for the UI.
-     * 
-     * @param message
+     *
+     * @param newMessage
      *            The message to set.
      */
-    static void setMessage(String message) {
-        LaunchControl.message = message;
+    public static void setMessage(final String newMessage) {
+        LaunchControl.message = newMessage;
+    }
+
+    /**
+     * Add a message to the current one.
+     * @param newMessage The message to append.
+     */
+    public static void addMessage(final String newMessage) {
+        LaunchControl.message += "\n" + newMessage;
     }
 
     /**
      * Get the current message.
-     * 
+     *
      * @return The current message.
      */
-    static String getMessage() {
+    public static String getMessage() {
         return LaunchControl.message;
     }
 
     /**
      * @return The brewery name.
      */
-    static String getName() {
+    public static String getName() {
         return LaunchControl.breweryName;
     }
 
@@ -3147,7 +3224,7 @@ public final class LaunchControl {
      * @param newName
      *            New brewery name.
      */
-    static void setName(final String newName) {
+    public static void setName(final String newName) {
         BrewServer.LOG.info("Updating brewery name from "
                 + LaunchControl.breweryName + " to " + newName);
         LaunchControl.breweryName = newName;
@@ -3207,16 +3284,6 @@ public final class LaunchControl {
         }
     }
 
-    public static void lockPage() {
-        LaunchControl.removeNonSetupDevices();
-        LaunchControl.pageLock = true;
-    }
-
-    public static void unlockPage() {
-        LaunchControl.listOneWireSys(false);
-        LaunchControl.pageLock = false;
-    }
-
     public static boolean setTempScales(String scale) {
         if (scale == null) {
             if (LaunchControl.scale.equals("C")) {
@@ -3237,12 +3304,6 @@ public final class LaunchControl {
                     if (scale.equals("F")) {
                         p.setTemp(Temp.cToF(p.getSetPoint()));
                     }
-                }
-            }
-            MashControl m = LaunchControl.findMashControl(t.getName());
-            if (m != null) {
-                for (int i = 0; i < m.getMashStepSize(); i++) {
-                    m.getMashStep(i).setTempUnit(scale, true);
                 }
             }
             t.setScale(scale);
@@ -3282,5 +3343,77 @@ public final class LaunchControl {
         LaunchControl.recorderEnabled = false;
         LaunchControl.recorder.stop();
         LaunchControl.recorder = null;
+    }
+
+    public static List<String> getOneWireDevices(String prefix) {
+        List<String> devices = new ArrayList<String>();
+        if (owfsConnection == null) {
+            LaunchControl.setMessage("OWFS is not setup,"
+                    + " please delete your configuration file and start again");
+            return devices;
+        }
+        try {
+            List<String> owfsDirs = owfsConnection.listDirectory("/");
+            if (owfsDirs.size() > 0) {
+                BrewServer.LOG.info("Listing OWFS devices on " + owfsServer
+                        + ":" + owfsPort);
+            }
+            Iterator<String> dirIt = owfsDirs.iterator();
+            String dir = null;
+
+            while (dirIt.hasNext()) {
+                dir = dirIt.next();
+                if (dir.startsWith(prefix)) {
+                    devices.add(dir);
+                }
+            }
+        } catch (OwfsException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return devices;
+    }
+
+    public static PhSensor findPhSensor(String string) {
+        string = string.replace(" ", "_");
+        synchronized (phSensorList) {
+            Iterator<PhSensor> iterator = phSensorList.iterator();
+            PhSensor tPh = null;
+            while (iterator.hasNext()) {
+                tPh = iterator.next();
+                if (tPh.getName().equalsIgnoreCase(string)) {
+                    return tPh;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Delete the specified pH Sensor.
+     *
+     * @param name
+     *            The sensor to delete.
+     * @return true if the sensor is deleted.
+     */
+    public static boolean deletePhSensor(final String name) {
+        // search based on the input name
+        String realName = name.replace(" ", "_");
+        synchronized (phSensorList) {
+            Iterator<PhSensor> iterator = phSensorList.iterator();
+            PhSensor tSensor = null;
+
+            while (iterator.hasNext()) {
+                tSensor = iterator.next();
+                if (tSensor.getName().equalsIgnoreCase(realName)) {
+                    iterator.remove();
+                    return true;
+                }
+            }
+
+        }
+        return false;
     }
 }

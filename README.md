@@ -46,6 +46,31 @@ Then you can go to
 
 To run setup.
 
+Installing as an init.d script on Ubuntu
+==============================
+
+Elsinore now has a script which allows you to setup Elsinore as a service. This only works on Ubuntu at the moment.
+
+You must EDIT the file ``` extras/elsinore.ubuntu ``` to ensure the ELSINORE_PATH variable matches the location you have cloned Elsinore into.
+
+If you're running on BeagleBone Black you'll also want to uncomment the W1_SETUP line and the lines indicated in d_start() to ensure that the One Wire and JGPIO files are exported correctly.
+
+Then run:
+
+```
+sudo cp extras/elsinore.ubuntu /etc/init.d/elsinore
+sudo update-rc.d elsinore defaults
+```
+
+And then you can manually start elsinore using
+``` sudo service elsinore start ```
+
+Stop using:
+
+``` sudo service elsinore stop ```
+
+And it'll automatically start/stop on boot/shutdown
+
 Setup
 =====
 

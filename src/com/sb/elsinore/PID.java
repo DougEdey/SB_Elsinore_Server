@@ -35,7 +35,8 @@ public final class PID implements Runnable {
     private BigDecimal duty_cycle = new BigDecimal(0);
     private BigDecimal calculatedDuty = new BigDecimal(0);
     private BigDecimal set_point = new BigDecimal(0);
-    private BigDecimal manual_cycle = new BigDecimal(0);
+    private BigDecimal manual_duty = new BigDecimal(0);
+    private BigDecimal manual_time = new BigDecimal(0);
     
     /* Hysteria Settings */
     private BigDecimal max = new BigDecimal(0);
@@ -58,6 +59,7 @@ public final class PID implements Runnable {
             integral = new BigDecimal(0),
             derivative = new BigDecimal(0),
             delay = new BigDecimal(0);
+        boolean inverted = false;
 
         /**
          * Default constructor.
@@ -67,8 +69,9 @@ public final class PID implements Runnable {
                     integral = derivative = new BigDecimal(0.0);
         }
     }
-    
+
     public OutputControl outputControl = null;
+    
     /**
      * Create a new PID with minimal information.
      * @param aTemp The Temperature probe object to use
@@ -194,7 +197,6 @@ public final class PID implements Runnable {
         this.minTime = newMinTime;
     }
 
-    
     public void useHysteria() {
         this.mode = "hysteria";
     }
@@ -253,19 +255,25 @@ public final class PID implements Runnable {
                                 calculate(tempAvg, true);
                             BrewServer.LOG.info(
                                     "Calculated: " + calculatedDuty);
-                            this.outputControl.setDuty(calculatedDuty);
-                            this.outputControl.getHeater().setCycleTime(
-                                    heatSetting.cycle_time);
+                            if (this.outputControl.setDuty(calculatedDuty)) {
+                                this.outputControl.getHeater().setCycleTime(
+                                        heatSetting.cycle_time);
+                                this.outputThread.interrupt();
+                            }
                         } else if (mode.equals("manual")) {
-                            this.outputControl.getHeater().setCycleTime(
-                                    this.manual_cycle);
-                            this.outputControl.setDuty(duty_cycle);
+                            if (this.outputControl.setDuty(this.manual_duty)) {
+                                this.outputControl.getHeater().setCycleTime(
+                                    this.manual_time);
+                                this.outputThread.interrupt();
+                            }
                         } else if (mode.equals("off")) {
                             this.outputControl.setDuty(BigDecimal.ZERO);
                             this.outputControl.getHeater().setCycleTime(
                                     heatSetting.cycle_time);
+                            this.outputThread.interrupt();
                         } else if (mode.equals("hysteria")) {
                             setHysteria();
+                            this.outputThread.interrupt();
                         }
                         BrewServer.LOG.info(mode + ": " + fName + " status: "
                             + fTempF + " duty cycle: "
@@ -285,10 +293,16 @@ public final class PID implements Runnable {
 
     private boolean minTimePassed() {
         if (this.timeDiff.compareTo(this.minTime) <= 0) {
-            LaunchControl.setMessage("Waiting for minimum time before changing outputs "
-                    + this.minTime.subtract(this.timeDiff) + " mins remaining");
+            BigDecimal remaining = this.minTime.subtract(this.timeDiff);
+            if (remaining.compareTo(new BigDecimal(10.0/60.0)) >= 0) {
+                LaunchControl.setMessage(
+                    "Waiting for minimum time before changing outputs,"
+                    + " less than "
+                    + remaining.setScale(0, BigDecimal.ROUND_UP)
+                    + " mins remaining");
+            }
             return false;
-        } else { 
+        } else {
             if (LaunchControl.getMessage().startsWith("Waiting for minimum")) {
                 LaunchControl.setMessage("");
             }
@@ -490,6 +504,36 @@ public final class PID implements Runnable {
      */
     public BigDecimal getHeatD() {
         return heatSetting.derivative;
+    }
+
+    /**
+     * @return true if the heating output is inverted.
+     */
+    public boolean getHeatInverted() {
+        return heatSetting.inverted;
+    }
+
+    public void setHeatInverted(boolean inverted) {
+        if (this.hasValidHeater()) {
+            heatSetting.inverted = inverted;
+            this.outputControl.getHeater().setInverted(inverted);
+            this.outputControl.getHeater().turnOff();
+        }
+    }
+
+    public void setCoolInverted(boolean inverted) {
+        if (this.hasValidCooler()) {
+            coolSetting.inverted = inverted;
+            this.outputControl.getCooler().setInverted(inverted);
+            this.outputControl.getCooler().turnOff();
+        }
+    }
+
+    /**
+     * @return true if the cooling output is inverted.
+     */
+    public boolean getCoolInverted() {
+        return coolSetting.inverted;
     }
     /**
      * @return  Get the current Duty Cycle Time
@@ -765,6 +809,7 @@ public final class PID implements Runnable {
         heatMap.put("i", getHeatI());
         heatMap.put("d", getHeatD());
         heatMap.put("gpio", getHeatGPIO());
+        heatMap.put("inverted", getHeatInverted());
         statusMap.put("heat", heatMap);
 
         // The cool settings
@@ -775,11 +820,13 @@ public final class PID implements Runnable {
         coolMap.put("d", getCoolD());
         coolMap.put("gpio", getCoolGPIO());
         coolMap.put("delay", getCoolDelay());
+        coolMap.put("inverted", getCoolInverted());
         statusMap.put("cool", coolMap);
 
         statusMap.put("duty", getDuty());
         statusMap.put("setpoint", getSetPoint());
-        statusMap.put("manualcycle", this.manual_cycle);
+        statusMap.put("manualduty", this.manual_duty);
+        statusMap.put("manualtime", this.manual_time);
         statusMap.put("min", this.min);
         statusMap.put("max", this.max);
         statusMap.put("time", this.minTime);
@@ -803,7 +850,8 @@ public final class PID implements Runnable {
         // Close down the existing OutputControl
         this.heatGPIO = gpio;
         if (this.outputControl == null) {
-            this.outputControl = new OutputControl(this.getName(), gpio, this.getHeatCycle());
+            this.outputControl = new OutputControl(
+                    this.getName(), gpio, this.getHeatCycle());
         }
         if (this.outputControl.getHeater() != null) {
             this.outputControl.getHeater().disable();
@@ -872,8 +920,12 @@ public final class PID implements Runnable {
         this.heatSetting.cycle_time = heatCycle;
     }
     
-    public void setManualCycle(BigDecimal cycle) {
-        this.manual_cycle = cycle;
+    public void setManualDuty(BigDecimal duty) {
+        this.manual_duty = duty;
+    }
+    
+    public void setManualTime(BigDecimal time) {
+        this.manual_time = time;
     }
     
     private void setHysteria() {
@@ -889,7 +941,6 @@ public final class PID implements Runnable {
          *      AND we have been on for the minimum time
          *      AND we have been off for the minimum delay
          *      THEN turn on the cooling output
-         * 
          */
         // Set the duty cycle to be 100, we can wake it up when we want to
         BrewServer.LOG.info("Checking current temp against " + this.min + " and " + this.max);
@@ -909,7 +960,8 @@ public final class PID implements Runnable {
         
         if (this.getTempF().compareTo(minTempF) < 0) {
             if (this.hasValidHeater()) {
-                if (this.minTimePassed()) {
+                if (this.duty_cycle.compareTo(new BigDecimal(100)) != 0
+                        && this.minTimePassed()) {
                     BrewServer.LOG.info("Current temp is less than the minimum temp, turning on 100");
                     this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                     this.duty_cycle = new BigDecimal(100);
@@ -918,23 +970,24 @@ public final class PID implements Runnable {
                             this.minTime.multiply(new BigDecimal(60)));
                 }
             } else if (this.hasValidCooler()) {
-                if (this.minTimePassed()) {
+                if (this.duty_cycle.compareTo(new BigDecimal(0)) != 0
+                        &&  this.minTimePassed()) {
                     BrewServer.LOG.info("Slept for long enough, turning off");
                     // Make sure the thread wakes up for the new settings
                     this.duty_cycle = new BigDecimal(0);
-                    this.outputControl.setDuty(this.duty_cycle);
+                    this.outputControl.setDuty(new BigDecimal(0));
                     this.outputThread.interrupt();
                 }
              }
-            
+
             // Make sure the thread wakes up for the new settings
             this.outputThread.interrupt();
-            
         } else if (this.getTempF().compareTo(maxTempF) >= 0) {
             // TimeDiff is now in minutes
             // Is the cooling output on?
             if (this.hasValidCooler()) {
-                if (this.minTimePassed()) {
+                if (this.duty_cycle.compareTo(new BigDecimal(-100)) != 0
+                        && this.minTimePassed()) {
                     BrewServer.LOG.info("Current temp is greater than the max temp, turning on -100");
                     this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                     this.duty_cycle = new BigDecimal(-100);
@@ -945,8 +998,8 @@ public final class PID implements Runnable {
             } else if(this.hasValidHeater()) {
                BrewServer.LOG.info("Current temp is more than the max temp");
                // We're over the maximum temp, but should we wake up the thread?
-               
-               if (this.minTimePassed()) {
+               if (this.duty_cycle.compareTo(new BigDecimal(0)) != 0
+                       && this.minTimePassed()) {
                    BrewServer.LOG.info("Slep for long enough, turning off");
                    // Make sure the thread wakes up for the new settings        
                    this.duty_cycle = BigDecimal.ZERO;
@@ -954,20 +1007,53 @@ public final class PID implements Runnable {
                    this.outputThread.interrupt();
                 }
             }
+        } else {
+            // Turn it all off. 
         }
     }
-    
+
+    /**
+     * Helper to check is a cooler is enabled correctly.
+     * @return True is a valid cooler is enabled
+     */
     public boolean hasValidCooler() {
         return (this.outputControl != null
                 && this.outputControl.getCooler() != null
                 && this.outputControl.getCooler().getGpio() != null
                 && !this.outputControl.getCooler().getGpio().equals(""));
     }
-    
+
+    /**
+     * Helper to check is a valid heater is enabled.
+     * @return True if a valid heater is detected.
+     */
     public boolean hasValidHeater() {
         return (this.outputControl != null
                 && this.outputControl.getHeater() != null
                 && this.outputControl.getHeater().getGpio() != null
                 && !this.outputControl.getHeater().getGpio().equals(""));
+    }
+
+    /**
+     * Invert the outputs.
+     * @param invert True to invert the outputs.
+     */
+    public void setInverted(final boolean invert) {
+        this.invertOutput = invert;
+    }
+
+    /**
+     * @return True if this device has inverted outputs.
+     */
+    public boolean isInverted() {
+        return this.invertOutput;
+    }
+
+    public BigDecimal getManualCycle() {
+        return this.manual_duty;
+    }
+    
+    public BigDecimal getManualTime() {
+        return this.manual_time;
     }
 }

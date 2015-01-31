@@ -280,7 +280,7 @@ div[id='timers'] > .panel > .panel-body > div {
     border-radius: 0 0 6px 0;
 }
 
-.left {
+/*.left {
 	float:left;
 	height:65px;
 }
@@ -302,4 +302,4 @@ div[id='timers'] > .panel > .panel-body > div {
 	height:65px;
 	display: table-cell;
 	overflow: hidden;
-}
+}*/

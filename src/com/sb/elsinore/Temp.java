@@ -34,7 +34,7 @@ import org.owfs.jowfsclient.OwfsException;
  * @author Doug Edey
  *
  */
-public final class Temp implements Runnable {
+public final class Temp implements Runnable, Comparable<Temp> {
 
     /**
      * Magic numbers.
@@ -96,48 +96,6 @@ public final class Temp implements Runnable {
                     return;
                 }
             }
-        } else if (LaunchControl.getOWFS() != null) {
-            try {
-                aName = aName.replace("-", ".");
-                BrewServer.LOG.info("Using OWFS for " + aName + "/temperature");
-                if ("" == LaunchControl.readOWFSPath(aName + "/temperature")) {
-                    String[] newAddress = aName.split("\\.|-");
-
-                    // OWFS contains "-", W1 contained "."
-                    if (newAddress.length == 2 && aName.indexOf("-") != 2) {
-                        String devFamily = newAddress[0];
-                        StringBuilder devAddress = new StringBuilder();
-
-                        // Byte Swap time!
-                        devAddress.append(newAddress[1].subSequence(10, 12));
-                        devAddress.append(newAddress[1].subSequence(8, 10));
-                        devAddress.append(newAddress[1].subSequence(6, 8));
-                        devAddress.append(newAddress[1].subSequence(4, 6));
-                        devAddress.append(newAddress[1].subSequence(2, 4));
-                        devAddress.append(newAddress[1].subSequence(0, 2));
-
-                        String fixedAddress =
-                            devFamily.toString() + "."
-                            + devAddress.toString().toUpperCase();
-
-                        BrewServer.LOG.info("Converted address: "
-                            + fixedAddress);
-
-                        aName = fixedAddress;
-                        if ("" == LaunchControl.readOWFSPath(
-                                aName + "/temperature")) {
-                            BrewServer.LOG.severe(
-                                "This is not a temperature probe " + aName);
-                        }
-                    }
-                }
-            } catch (OwfsException e) {
-                BrewServer.LOG.log(Level.SEVERE,
-                    "This is not a temperature probe!", e);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            fProbe = null;
         } else {
 
             File probePath =
@@ -287,7 +245,8 @@ public final class Temp implements Runnable {
             currentVolume = new BigDecimal(0),
             cutoffTemp = new BigDecimal(-999.0),
             volumeConstant = new BigDecimal(0),
-            volumeMultiplier = new BigDecimal(0.0);
+            volumeMultiplier = new BigDecimal(0.0),
+            gravity = new BigDecimal(1.000);
 
     /**
      * The current timestamp.
@@ -318,7 +277,9 @@ public final class Temp implements Runnable {
     private InPin volumePin = null;
     private boolean stopVolumeLogging;
     private BigDecimal calibration = BigDecimal.ZERO;
-    
+    private TriggerControl triggerControl = null;
+    private int position = -1;
+
     /**
      * @return Get the current temperature
      */
@@ -725,7 +686,7 @@ public final class Temp implements Runnable {
                 } catch (Exception e) {
                     if (!this.stopVolumeLogging) {
                         BrewServer.LOG.log(Level.SEVERE,
-                            "Could not update the volume reading from OWFS", e);
+                            "Could not update the volume reading from OWFS");
                         this.stopVolumeLogging = true;
                     }
                     BrewServer.LOG.info("Reconnecting OWFS");
@@ -805,6 +766,8 @@ public final class Temp implements Runnable {
                 this.currentVolume = tVolume;
             }
 
+            this.currentVolume = this.currentVolume.multiply(this.gravity);
+
             return pinValue;
         } catch (NumberFormatException e) {
             e.printStackTrace();
@@ -834,7 +797,6 @@ public final class Temp implements Runnable {
         // record 10 readings and average it
         BigDecimal maxReads = BigDecimal.TEN;
         BigDecimal total = new BigDecimal(0);
-        
         for (int i = 0; i < maxReads.intValue(); i++) {
             try {
                 try {
@@ -874,12 +836,11 @@ public final class Temp implements Runnable {
 
         // read in ten values
         BigDecimal avgValue = MathUtil.divide(total, maxReads);
-        
         BrewServer.LOG.info("Read " + avgValue + " for "
                 + volume + " " + volumeUnit.toString());
 
         this.addVolumeMeasurement(volume, avgValue);
-
+        System.out.println(this.name + ": Added volume data point " + volume);
         return true;
     }
 
@@ -919,8 +880,11 @@ public final class Temp implements Runnable {
     /**
      * @return The analogue input
      */
-    public int getVolumeAIN() {
-        return this.volumeAIN;
+    public String getVolumeAIN() {
+        if (this.volumeAIN == -1) {
+            return "";
+        }
+        return Integer.toString(this.volumeAIN);
     }
 
     /**
@@ -973,6 +937,8 @@ public final class Temp implements Runnable {
         statusMap.put("scale", getScale());
         statusMap.put("cutoff", getCutoff());
         statusMap.put("calibration", getCalibration());
+        statusMap.put("gravity", gravity);
+        statusMap.put("position", this.position);
 
         if (currentError != null) {
             statusMap.put("error", currentError);
@@ -1060,5 +1026,57 @@ public final class Temp implements Runnable {
         } else {
             return "HIDDEN";
         }
+    }
+ 
+    public void setGravity(BigDecimal newGravity) {
+        this.gravity = newGravity;
+    }
+
+    public BigDecimal getGravity() {
+        return this.gravity;
+    }
+
+    @Override
+    public String toString() {
+        return this.getName();
+    }
+
+    /**
+     * Get the current TriggerControl object, create a new one if it doesn't
+     * exist.
+     * @return the TriggerControl.
+     */
+    public TriggerControl getTriggerControl() {
+        if (this.triggerControl == null) {
+            this.triggerControl = new TriggerControl();
+            this.triggerControl.setOutputControl(this.getName());
+        }
+        return triggerControl;
+    }
+
+    /**
+     * @return The position of this temp probe in the list.
+     */
+    public int getPosition() {
+        return this.position;
+    }
+
+    /**
+     * Set the position of this temp probe.
+     * @param newPos The new position.
+     */
+    public void setPosition(final int newPos) {
+        this.position = newPos;
+    }
+
+    @Override
+    public int compareTo(final Temp o) {
+        if (o.getPosition() == this.position) {
+            return o.getName().compareTo(this.name);
+        }
+        if (this.position == -1) {
+            return 1;
+        }
+        return this.position - o.getPosition();
     }
 }

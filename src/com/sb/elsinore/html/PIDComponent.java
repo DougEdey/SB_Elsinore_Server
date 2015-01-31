@@ -15,15 +15,9 @@ import com.sb.elsinore.PID;
 public class PIDComponent implements Renderable {
 
     private String name = null;
-    private String type = null;
 
     public PIDComponent(String name) {
         this.name = name.trim();
-        if (LaunchControl.findPID(name.trim()) == null) {
-            this.type = "temp";
-        } else {
-            this.type = "pid";
-        }
     }
 
     @Override
@@ -35,7 +29,12 @@ public class PIDComponent implements Renderable {
 
         html.div(
                 id(name).class_(
-                        "holo-content controller panel panel-primary " + type))
+                        "holo-content controller panel panel-primary pid")
+                        .draggable("true")
+                        .onDragstart("dragDevice(event);")
+                        .onDrop("dropDevice(event);")
+                        .onDragover("allowDropDevice(event);")
+                        .onDragleave("leaveDevice(event);"))
                 .script()
                 .write(TempComponent.getGaugeScript(name), false)
                 ._script()
@@ -79,6 +78,8 @@ public class PIDComponent implements Renderable {
                 .input(type("hidden").name("deviceaddr").id("deviceaddr"))
                 .input(type("hidden").name("heatgpio").id("heatgpio"))
                 .input(type("hidden").name("coolgpio").id("coolgpio"))
+                .input(type("hidden").name("heatinvert").id("heatinvert"))
+                .input(type("hidden").name("coolinvert").id("coolinvert"))
                 .input(type("hidden").name("auxgpio").id("auxgpio"))
                 .input(type("hidden").name("cutoff").id("cutoff"))
                 .input(type("hidden").name("calibration").id("calibration"))
@@ -103,8 +104,8 @@ public class PIDComponent implements Renderable {
                 .write(Messages.SET_POINT)
                 ._td()
                 .td(id(name + "-setpoint"))
-                .input(class_("inputBox setpoint").type("text")
-                        .name("setpoint").maxlength("4").size("4").value(""))
+                .input(class_("inputBox setpoint").type("number").add("step", "any")
+                        .name("setpoint").value(""))
                 ._td()
                 .td(id(name + "-unitSP"))
                 .div(id("tempUnit"))
@@ -117,8 +118,9 @@ public class PIDComponent implements Renderable {
                 .write(Messages.DUTY_CYCLE)
                 ._td()
                 .td(id(name + "-dutycycle"))
-                .input(class_("inputBox dutycycle").type("text")
-                        .name("dutycycle").maxlength("6").size("6").value(""))
+                .input(class_("inputBox dutycycle").type("number")
+                        .add("step", "any")
+                        .name("dutycycle").value("0").min(-100).max(100))
                 ._td()
                 .td(id(name + "-unitDC"))
                 .write("%")
@@ -129,7 +131,7 @@ public class PIDComponent implements Renderable {
                 .write(Messages.DUTY_TIME)
                 ._td()
                 .td(id(name + "-cycletime"))
-                .input(class_("inputBox dutytime").type("text")
+                .input(class_("inputBox dutytime").type("number").add("step", "any")
                         .name("cycletime").maxlength("6").size("6").value(""))
                 ._td()
                 .td(id(name + "-unitDT"))
@@ -158,7 +160,7 @@ public class PIDComponent implements Renderable {
                 ._td()
                 .td(id(name + "-cycleTime"))
                 .input(class_("inputBox heatdutytime").name("heatcycletime")
-                        .maxlength("6").size(6).value(""))
+                        .type("number").add("step", "any").value(""))
                 ._td()
                 .td(id(name + "-unitDT"))
                 .write(Messages.SECS)
@@ -169,8 +171,8 @@ public class PIDComponent implements Renderable {
                 .write("P")
                 ._td()
                 .td(id(name + "-pinput"))
-                .input(class_("inputBox heatp").name("heatp").maxlength("6")
-                        .size(6).value(""))
+                .input(class_("inputBox heatp").name("heatp")
+                        .type("number").add("step", "any").value(""))
                 ._td()
                 .td(id(name + "-unitP"))
                 .write(Messages.SECS + "/&#176", false)
@@ -184,8 +186,9 @@ public class PIDComponent implements Renderable {
                 .write("I")
                 ._td()
                 .td(id(name + "-iinput"))
-                .input(class_("inputBox heati").name("heati").maxlength("6")
-                        .size(6).value(""))
+                .input(class_("inputBox heati").name("heati")
+                        .type("number").add("step", "any")
+                        .value(""))
                 ._td()
                 .td(id(name + "-unitI"))
                 .write(Messages.SECS + "&#176", false)
@@ -196,11 +199,12 @@ public class PIDComponent implements Renderable {
                 ._tr()
                 .tr(id(name + "-heatD").class_("holo-field"))
                 .td(id(name + "-labeld"))
-                .write("I")
+                .write("D")
                 ._td()
                 .td(id(name + "-dinput"))
-                .input(class_("inputBox heatd").name("heatd").maxlength("6")
-                        .size(6).value(""))
+                .input(class_("inputBox heatd").name("heatd")
+                        .type("number").add("step", "any")
+                        .value(""))
                 ._td()
                 .td(id(name + "-unitD"))
                 .write(Messages.SECS)
@@ -216,7 +220,8 @@ public class PIDComponent implements Renderable {
                 ._td()
                 .td(id(name + "-cycleTime"))
                 .input(class_("inputBox cooldutytime").name("coolcycletime")
-                        .maxlength("6").size(6).value(""))
+                        .type("number").add("step", "any")
+                        .value(""))
                 ._td()
                 .td(id(name + "-unitDT"))
                 .write(Messages.SECS)
@@ -227,8 +232,9 @@ public class PIDComponent implements Renderable {
                 .write("P")
                 ._td()
                 .td(id(name + "-pinput"))
-                .input(class_("inputBox coolp").name("coolp").maxlength("6")
-                        .size(6).value(""))
+                .input(class_("inputBox coolp").name("coolp")
+                        .type("number").add("step", "any")
+                        .value(""))
                 ._td()
                 .td(id(name + "-unitP"))
                 .write(Messages.SECS + "/&#176", false)
@@ -242,8 +248,9 @@ public class PIDComponent implements Renderable {
                 .write("I")
                 ._td()
                 .td(id(name + "-iinput"))
-                .input(class_("inputBox cooli").name("cooli").maxlength("6")
-                        .size(6).value(""))
+                .input(class_("inputBox cooli").name("cooli")
+                        .type("number").add("step", "any")
+                        .value(""))
                 ._td()
                 .td(id(name + "-unitI"))
                 .write(Messages.SECS + "&#176", false)
@@ -257,8 +264,9 @@ public class PIDComponent implements Renderable {
                 .write("I")
                 ._td()
                 .td(id(name + "-dinput"))
-                .input(class_("inputBox coold").name("coold").maxlength("6")
-                        .size(6).value(""))
+                .input(class_("inputBox coold").name("coold")
+                        .type("number").add("step", "any")
+                        .value(""))
                 ._td()
                 .td(id(name + "-unitD"))
                 .write(Messages.SECS)
@@ -274,7 +282,8 @@ public class PIDComponent implements Renderable {
                 .write(Messages.MIN)
                 ._td()
                 .td(id(name + "-mininput"))
-                .input(class_("inputbox min").name("min").maxlength(6).size(6)
+                .input(class_("inputbox min").name("min")
+                        .type("number").add("step", "any")
                         .value("6"))
                 ._td()
                 .td(id(name + "unitMin"))
@@ -289,7 +298,8 @@ public class PIDComponent implements Renderable {
                 .write(Messages.MAX)
                 ._td()
                 .td(id(name + "-maxinput"))
-                .input(class_("inputbox miax").name("max").maxlength(6).size(6)
+                .input(class_("inputbox miax").name("max")
+                        .type("number").add("step", "any")
                         .value(6))
                 ._td()
                 .td(id(name + "unitMax"))
@@ -304,8 +314,9 @@ public class PIDComponent implements Renderable {
                 .write(Messages.TIME)
                 ._td()
                 .td(id(name + "-timeinput"))
-                .input(class_("inputbox time").name("time").maxlength(6)
-                        .size(6).value("6"))
+                .input(class_("inputbox time").name("time")
+                        .type("number").add("step", "any")
+                        .min(1).value(""))
                 ._td()
                 .td(id(name + "unitTime"))
                 .write(Messages.MINUTES)
@@ -313,7 +324,7 @@ public class PIDComponent implements Renderable {
                 ._tr()
                 ._table()
                 .div(class_("holo-buttons"))
-                .button(id(name + "Aux").class_("holo-button pump").onClick(
+                .button(id(name + "Aux").class_("btn pump").onClick(
                         "toggleAux('" + name + "'),"
                                 + " waitForMsg(); return false;"))
                 .write(Messages.AUX_ON)
@@ -326,8 +337,17 @@ public class PIDComponent implements Renderable {
                                 "submitForm(this.form); waitForMsg();"
                                         + " return false"))
                 .write(Messages.SEND_COMMAND)._button()._div()._form()._div()
-                .div(id(name + "-volume").onClick("editVolume(this);"))._div()
-                ._div()._div()._div();
+                .div(id(name + "-volume"))
+                        .div(id(name + "-volumeAmount"))._div()
+                        .button(id(name + "-volumeeditbutton")
+                                .class_("btn pump")
+                                .onClick("editVolume(this);"))
+                                .write(Messages.EDIT_VOLUME)
+                        ._button()
+                ._div()
+            ._div()
+        ._div()
+    ._div();
     }
 
 }

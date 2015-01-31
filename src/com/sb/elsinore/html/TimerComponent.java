@@ -32,23 +32,22 @@ public class TimerComponent implements Renderable {
             ._div()
             .span(id(safeName).class_("holo-button pump")
                     .type("submit").value(name + "Timer")
-                    .onClick("setTimer(this, " + name
-                            + "); waitForMsg(); return false;"))
+                    .onClick("setTimer(this, '" + name
+                            + "'); waitForMsg(); return false;"))
                 .write(Messages.START)
             ._span()
-            .span(id(safeName).class_("holo-button pump").style("display:none")
+            .span(id(safeName + "Timer").class_("holo-button pump hidden")//.style("display:none")
                     .type("submit").value(name + "Timer")
-                    .onClick("setTimer(this, " + name
-                            + "); waitForMsg(); return false;"))
+                    .onClick("setTimer(this, '" + name
+                            + "'); waitForMsg(); return false;"))
             ._span()
             .span(id(safeName).class_("holo-button pump")
                     .type("submit").value(name + "Timer")
-                    .onClick("resetTimer(this, " + name
-                            + "); waitForMsg(); return false;"))
+                    .onClick("resetTimer(this, '" + name
+                            + "'); waitForMsg(); return false;"))
                 .write(Messages.RESET)
             ._span()
         ._div();
-
     }
 
 }
