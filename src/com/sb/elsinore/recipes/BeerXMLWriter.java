@@ -1,18 +1,12 @@
 package com.sb.elsinore.recipes;
 
+import ca.strangebrew.recipe.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.sb.elsinore.BrewServer;
-
-import ca.strangebrew.recipe.Fermentable;
-import ca.strangebrew.recipe.Hop;
-import ca.strangebrew.recipe.Quantity;
-import ca.strangebrew.recipe.Recipe;
-import ca.strangebrew.recipe.Style;
-import ca.strangebrew.recipe.Yeast;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -199,6 +193,22 @@ public class BeerXMLWriter {
         recipeElement.appendChild(createStyleElement(recipe.getStyleObj(),
                 recipeDocument));
 
+        Element miscElement = recipeDocument.createElement("MISCS");
+        for (int i = 0; i < recipe.getMiscListSize(); i++) {
+            Misc miscAddition = recipe.getMisc(i);
+            miscElement.appendChild(miscAddition.createElement(recipeDocument));
+        }
+        recipeElement.appendChild(miscElement);
+
+        Element watersElement = recipeDocument.createElement("WATERS");
+        if (recipe.getTargetWater() != null) {
+            watersElement.appendChild(recipe.getTargetWater().getElement(recipeDocument));
+        }
+        recipeElement.appendChild(watersElement);
+
+        if (recipe.getEquipmentProfile() != null) {
+            recipeElement.appendChild(this.createEquipmentProfile(recipe.getEquipmentProfile(), recipeDocument));
+        }
         return recipeElement;
     }
 
@@ -402,5 +412,63 @@ public class BeerXMLWriter {
         styleElement.appendChild(tElement);
 
         return styleElement;
+    }
+
+    private Element createEquipmentProfile(Equipment equipment, Document recipeDocument) {
+        Element equipElement = recipeDocument.createElement("EQUIPMENT");
+
+        Element tElement = recipeDocument.createElement("VERSION");
+        tElement.setTextContent("1");
+        equipElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("NAME");
+        tElement.setTextContent(equipment.getName());
+        equipElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("BOIL_SIZE");
+        tElement.setTextContent(Double.toString(equipment.getBoilSize()));
+        equipElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("BATCH_SIZE");
+        tElement.setTextContent(Double.toString(equipment.getBatchSize()));
+        equipElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("TUN_VOLUME");
+        tElement.setTextContent(Double.toString(equipment.getTunVolume()));
+        equipElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("TUN_WEIGHT");
+        tElement.setTextContent(Double.toString(equipment.getTunWeight()));
+        equipElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("TUN_SPECIFIC_HEAT");
+        tElement.setTextContent(Double.toString(equipment.getTunSpecificHeat()));
+        equipElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("TRUB_CHILLER_LOSS");
+        tElement.setTextContent(Double.toString(equipment.getTrubChillerLoss()));
+        equipElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("CALC_BOIL_VOLUME");
+        tElement.setTextContent(Boolean.toString(equipment.isCalcBoilVol()));
+        equipElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("LAUTER_DEADSPACE");
+        tElement.setTextContent(Double.toString(equipment.getLauterDeadspace()));
+        equipElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("TOP_UP_KETTLE");
+        tElement.setTextContent(Double.toString(equipment.getTopupKettle()));
+        equipElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("HOP_UTILIZATION");
+        tElement.setTextContent(Double.toString(equipment.getHopUtilization()));
+        equipElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("NOTES");
+        tElement.setTextContent(equipment.getNotes());
+        equipElement.appendChild(tElement);
+
+        return equipElement;
     }
 }

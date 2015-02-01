@@ -1,9 +1,7 @@
 package ca.strangebrew.recipe;
 
-import java.util.List;
-
-import ca.strangebrew.Database;
-import ca.strangebrew.SBStringUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 public class WaterProfile implements Comparable<WaterProfile> {
 	private String name;
@@ -18,38 +16,15 @@ public class WaterProfile implements Comparable<WaterProfile> {
 	private double tds;
 	private double ph;
 	private double alkalinity;
-	
-	public WaterProfile() {
+    private String notes;
+
+    public WaterProfile() {
 		name = "Distilled/RO";
 		ph = 5.80000019073486;
 	}
 	
 	public WaterProfile(String name) {
-		// Creates a new water profile based on the name from the db
-		List<WaterProfile> profiles = Database.getInstance().waterDB;
-		
-		for (int i = 0; i < profiles.size(); i++) {
-			WaterProfile p = profiles.get(i);
-			if (p.getName().equals(name)) {
-				this.name = p.getName();
-				this.description = p.getDescription();
-				this.ca = p.getCa();
-				this.mg = p.getMg();
-				this.na = p.getNa();
-				this.so4 = p.getSo4();
-				this.hco3 = p.getHco3();
-				this.cl = p.getCl();
-				this.hardness = p.getHardness();
-				this.tds = p.getTds();
-				this.ph = p.getPh();
-				this.alkalinity = p.getAlkalinity();				
-				
-				return;
-			}
-		}
-		
-		this.name = "Distilled/RO";
-		this.ph = 5.80000019073486;
+		this.name = name;
 	}
 
 	public double getAlkalinity() {
@@ -150,22 +125,8 @@ public class WaterProfile implements Comparable<WaterProfile> {
 	
 	public String toString() {		
 		
-		String str = String.format("%s => %3.1fCa %3.1fMg %3.1fNa %3.1fSo4 %3.1fHCO3 %3.1fCl %3.1fHardness %3.1fTDS %3.1fpH %3.1fAlk",
-				new Object[] {name,
-				new Double(ca),
-				new Double(mg),
-				new Double(na),
-				new Double(so4),
-				new Double(hco3),
-				new Double(cl),
-				new Double(hardness),
-				new Double(tds),
-				new Double(ph),
-				new Double(alkalinity)
-				});
-
-		
-		return str;
+		return String.format("%s => %3.1fCa %3.1fMg %3.1fNa %3.1fSo4 %3.1fHCO3 %3.1fCl %3.1fHardness %3.1fTDS %3.1fpH %3.1fAlk",
+                name, ca, mg, na, so4, hco3, cl, hardness, tds, ph, alkalinity);
 	}
 	
 	public String toXML(int indent) {
@@ -185,9 +146,58 @@ public class WaterProfile implements Comparable<WaterProfile> {
 
 		return xml;
 	}
-	
+
+    public Element getElement(Document recipeDocument) {
+        Element waterElement = recipeDocument.createElement("WATER");
+
+        Element tElement = recipeDocument.createElement("VERSION");
+        tElement.setTextContent("1");
+        waterElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("NAME");
+        tElement.setTextContent(this.getName());
+        waterElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("CALCIUM");
+        tElement.setTextContent(Double.toString(this.ca));
+        waterElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("BICARBONATE");
+        tElement.setTextContent(Double.toString(this.hco3));
+        waterElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("SULFATE");
+        tElement.setTextContent(Double.toString(this.so4));
+        waterElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("CHLORIDE");
+        tElement.setTextContent(Double.toString(this.cl));
+        waterElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("SODIUM");
+        tElement.setTextContent(Double.toString(this.na));
+        waterElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("MAGNESIUM");
+        tElement.setTextContent(Double.toString(this.mg));
+        waterElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("PH");
+        tElement.setTextContent(Double.toString(this.ph));
+        waterElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("NOTES");
+        tElement.setTextContent(this.notes);
+        waterElement.appendChild(tElement);
+
+        return waterElement;
+    }
 	public int compareTo(WaterProfile w) {
 		int result = this.getName().compareToIgnoreCase(w.getName());				
 		return (result == 0 ? -1 : result);		
 	}
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
 }

@@ -12,16 +12,10 @@ import javax.xml.xpath.XPathException;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import ca.strangebrew.recipe.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import ca.strangebrew.recipe.Fermentable;
-import ca.strangebrew.recipe.Hop;
-import ca.strangebrew.recipe.Quantity;
-import ca.strangebrew.recipe.Recipe;
-import ca.strangebrew.recipe.Style;
-import ca.strangebrew.recipe.Yeast;
 
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
@@ -151,24 +145,26 @@ public class BeerXMLReader {
 
         recipe.setName(recipeName);
         recipe.setBrewer(brewerName);
-        recipe.setPostBoil(new Quantity("litres", batchSize));
-        recipe.setPreBoil(new Quantity("litres", boilSize));
+        recipe.setPostBoil(new Quantity(Quantity.LITRES, batchSize));
+        recipe.setPreBoil(new Quantity(Quantity.LITRES, boilSize));
         recipe.setBoilMinutes(boilTime);
         recipe.setEfficiency(efficiency);
+        recipe.setComments(notes);
 
-        NodeList hopsList = (NodeList) xp.evaluate("HOPS",
-                recipeNode, XPathConstants.NODESET);
+        NodeList hopsList = (NodeList) xp.evaluate("HOPS", recipeNode, XPathConstants.NODESET);
         parseHops(recipe, hopsList);
-        NodeList maltList = (NodeList) xp.evaluate("FERMENTABLES",
-                recipeNode, XPathConstants.NODESET);
+        NodeList maltList = (NodeList) xp.evaluate("FERMENTABLES", recipeNode, XPathConstants.NODESET);
         parseMalts(recipe, maltList);
-        NodeList yeastList = (NodeList) xp.evaluate("YEASTS",
-                recipeNode, XPathConstants.NODESET);
+        NodeList yeastList = (NodeList) xp.evaluate("YEASTS", recipeNode, XPathConstants.NODESET);
         parseYeasts(recipe, yeastList);
-        Node styleList = (Node) xp.evaluate("STYLE",
-                recipeNode, XPathConstants.NODE);
+        NodeList styleList = (NodeList) xp.evaluate("STYLES", recipeNode, XPathConstants.NODESET);
         parseStyle(recipe, styleList);
-
+        NodeList miscList = (NodeList) xp.evaluate("MISCS", recipeNode, XPathConstants.NODESET);
+        parseMisc(recipe, miscList);
+        NodeList waterList = (NodeList) xp.evaluate("WATERS", recipeNode, XPathConstants.NODESET);
+        parseWaters(recipe, waterList);
+        Node equipmentList = (Node) xp.evaluate("EQUIPMENT", recipeNode, XPathConstants.NODE);
+        parseEquipment(recipe, equipmentList, xp);
         return recipe;
     }
 
@@ -332,71 +328,190 @@ public class BeerXMLReader {
         }
     }
 
-    private void parseStyle(Recipe recipe, Node style) throws XPathExpressionException {
-        if (style == null) {
+    private void parseStyle(Recipe recipe, NodeList styles) throws XPathExpressionException {
+        if (styles == null) {
             return;
         }
 
         XPath xp = XPathFactory.newInstance().newXPath();
+        NodeList styleList = (NodeList) xp.evaluate("STYLE", styles.item(0), XPathConstants.NODESET);
 
-        String name = (String) xp.evaluate("NAME", style, XPathConstants.STRING);
-        String notes = (String) xp.evaluate("NOTES", style, XPathConstants.STRING);
-        String categoryNumber = (String) xp.evaluate("CATEGORY_NUMBER", style, XPathConstants.STRING);
-        String styleLetter = (String) xp.evaluate("STYLE_LETTER", style, XPathConstants.STRING);
-        String styleGuide = (String) xp.evaluate("STYLE_GUIDE", style, XPathConstants.STRING);
-        String type = (String) xp.evaluate("TYPE", style, XPathConstants.STRING);
+        for (int i = 0; i < styleList.getLength(); i++) {
+            Node style = styleList.item(i);
+            String name = (String) xp.evaluate("NAME", style, XPathConstants.STRING);
+            String notes = (String) xp.evaluate("NOTES", style, XPathConstants.STRING);
+            String categoryNumber = (String) xp.evaluate("CATEGORY_NUMBER", style, XPathConstants.STRING);
+            String styleLetter = (String) xp.evaluate("STYLE_LETTER", style, XPathConstants.STRING);
+            String styleGuide = (String) xp.evaluate("STYLE_GUIDE", style, XPathConstants.STRING);
+            String type = (String) xp.evaluate("TYPE", style, XPathConstants.STRING);
 
-        double ogMin = getDouble(style, "OG_MIN", xp);
-        double ogMax = getDouble(style, "OG_MAX", xp);
-        double fgMin = getDouble(style, "FG_MIN", xp);
-        double fgMax = getDouble(style, "FG_MAX", xp);
-        double ibuMin = getDouble(style, "IBU_MIN", xp);
-        double ibuMax = getDouble(style, "IBU_MAX", xp);
-        double colorMin = getDouble(style, "COLOR_MIN", xp);
-        double colorMax = getDouble(style, "COLOR_MAX", xp);
-        double abvMin = getDouble(style, "ABV_MIN", xp);
-        double abvMax = getDouble(style, "ABV_MAX", xp);
+            double ogMin = getDouble(style, "OG_MIN", xp);
+            double ogMax = getDouble(style, "OG_MAX", xp);
+            double fgMin = getDouble(style, "FG_MIN", xp);
+            double fgMax = getDouble(style, "FG_MAX", xp);
+            double ibuMin = getDouble(style, "IBU_MIN", xp);
+            double ibuMax = getDouble(style, "IBU_MAX", xp);
+            double colorMin = getDouble(style, "COLOR_MIN", xp);
+            double colorMax = getDouble(style, "COLOR_MAX", xp);
+            double abvMin = getDouble(style, "ABV_MIN", xp);
+            double abvMax = getDouble(style, "ABV_MAX", xp);
 
-        // Check to see if we have this style
-        Style beerStyle = new Style();
-        beerStyle.setName(name);
-        beerStyle.setCategory(styleLetter);
-        beerStyle.setCatNum(categoryNumber);
-        beerStyle.setYear(styleGuide);
-        beerStyle.setComments(notes);
-        beerStyle.setType(type);
-        beerStyle.setAlcHigh(abvMax);
-        beerStyle.setAlcLow(abvMin);
-        beerStyle.setFgHigh(fgMax);
-        beerStyle.setFgLow(fgMin);
-        beerStyle.setOgHigh(ogMax);
-        beerStyle.setOgLow(ogMin);
-        beerStyle.setSrmHigh(colorMax);
-        beerStyle.setSrmLow(colorMin);
-        beerStyle.setIbuHigh(ibuMax);
-        beerStyle.setIbuLow(ibuMin);
-        recipe.setStyle(beerStyle);
+            // Check to see if we have this style
+            Style beerStyle = new Style();
+            beerStyle.setName(name);
+            beerStyle.setCategory(styleLetter);
+            beerStyle.setCatNum(categoryNumber);
+            beerStyle.setYear(styleGuide);
+            beerStyle.setComments(notes);
+            beerStyle.setType(type);
+            beerStyle.setAlcHigh(abvMax);
+            beerStyle.setAlcLow(abvMin);
+            beerStyle.setFgHigh(fgMax);
+            beerStyle.setFgLow(fgMin);
+            beerStyle.setOgHigh(ogMax);
+            beerStyle.setOgLow(ogMin);
+            beerStyle.setSrmHigh(colorMax);
+            beerStyle.setSrmLow(colorMin);
+            beerStyle.setIbuHigh(ibuMax);
+            beerStyle.setIbuLow(ibuMin);
+            recipe.setStyle(beerStyle);
+        }
     }
 
-    private double getDouble(NodeList element, String name, XPath xp) {
+    private void parseMisc(Recipe recipe, NodeList miscs) throws XPathExpressionException {
+        if (miscs == null) {
+            return;
+        }
+
+        XPath xp = XPathFactory.newInstance().newXPath();
+        NodeList miscList = (NodeList) xp.evaluate("MISC", miscs.item(0), XPathConstants.NODESET);
+
+        for (int i = 0; i < miscList.getLength(); i++) {
+            Node misc = miscList.item(i);
+            String name = getString(misc, "NAME", xp);
+            String notes = getString(misc, "NOTES", xp);
+            String type = getString(misc, "TYPE", xp);
+            String use = getString(misc, "USE", xp);
+            int time = getInteger(misc, "TIME", xp);
+            double amount = getDouble(misc, "AMOUNT", xp);
+            boolean isWeight = getBoolean(misc, "AMOUNT_IS_WEIGHT", xp, false);
+            String useFor = getString(misc, "USE_FOR", xp);
+
+            Misc newMisc = new Misc();
+            newMisc.setName(name);
+            newMisc.setComments(notes);
+            newMisc.setType(type);
+            newMisc.setUse(use);
+            newMisc.setTime(time);
+            if (isWeight) {
+                newMisc.setAmountAs(amount, Quantity.KG);
+            } else {
+                newMisc.setAmountAs(amount, Quantity.LITRES);
+            }
+            newMisc.setUseFor(useFor);
+            recipe.addMisc(newMisc);
+        }
+    }
+
+    public void parseWaters(Recipe recipe, NodeList waters) throws XPathExpressionException {
+        if (waters == null || waters.getLength() == 0) {
+            return;
+        }
+
+        XPath xp = XPathFactory.newInstance().newXPath();
+        NodeList waterList = (NodeList) xp.evaluate("WATER", waters.item(0), XPathConstants.NODESET);
+
+        for (int i = 0; i < waterList.getLength(); i++) {
+            Node water = waterList.item(i);
+            parseWater(recipe, water, xp);
+        }
+    }
+
+    private void parseWater(Recipe recipe, Node water, XPath xp) {
+        String name = getString(water, "NAME", xp);
+        double amount = getDouble(water, "AMOUNT", xp);
+        double calcium = getDouble(water, "CALCIUM", xp);
+        double bicarbonate = getDouble(water, "BICARBONATE", xp);
+        double sulfate = getDouble(water, "SULFATE", xp);
+        double chloride = getDouble(water, "CHLORIDE", xp);
+        double sodium = getDouble(water, "SODIUM", xp);
+        double magnesium = getDouble(water, "MAGNESIUM", xp);
+        double ph = getDouble(water, "PH", xp);
+        String notes = getString(water, "NOTES", xp);
+        WaterProfile waterProfile = new WaterProfile(name);
+        waterProfile.setCa(calcium);
+        waterProfile.setCl(chloride);
+        waterProfile.setSo4(sulfate);
+        waterProfile.setNa(sodium);
+        waterProfile.setHco3(bicarbonate);
+        waterProfile.setMg(magnesium);
+        waterProfile.setPh(ph);
+        waterProfile.setNotes(notes);
+        recipe.setTargetWater(waterProfile);
+    }
+
+    public void parseEquipments(Recipe recipe, NodeList equipments) throws XPathExpressionException {
+        if (equipments == null || equipments.getLength() == 0) {
+            return;
+        }
+
+        XPath xp = XPathFactory.newInstance().newXPath();
+        NodeList equipmentList = (NodeList) xp.evaluate("EQUIPMENT", equipments.item(0), XPathConstants.NODESET);
+
+        for (int i = 0; i < equipmentList.getLength(); i++) {
+            Node equipment = equipmentList.item(i);
+            parseEquipment(recipe, equipment, xp);
+        }
+    }
+
+    private void parseEquipment(Recipe recipe, Node equipment, XPath xp) {
+        String name = getString(equipment, "NAME", xp);
+        double boilSize = getDouble(equipment, "BOIL_SIZE", xp);
+        double batchSize = getDouble(equipment, "BATCH_SIZE", xp);
+        double tunVolume = getDouble(equipment, "TUN_VOLUME", xp);
+        double tunWeight = getDouble(equipment, "TUN_WEIGHT", xp);
+        double tunSpecificHeat = getDouble(equipment, "TUN_SPECIFIC_HEAT", xp);
+        double topupWater = getDouble(equipment, "TOP_UP_WATER", xp);
+        double trubChillerLoss = getDouble(equipment, "TRUB_CHILLER_LOSS", xp);
+        double evapRate = getDouble(equipment, "EVAP_RATE", xp);
+        double boilTime = getDouble(equipment, "BOIL_TIME", xp);
+        boolean calcBoilVol = getBoolean(equipment, "CALC_BOIL_VOLUME", xp, true);
+        double lauterDeadspace = getDouble(equipment, "LAUTER_DEADSPACE", xp);
+        double topupKettle = getDouble(equipment, "TOP_UP_KETTLE", xp);
+        double hopUtilization = getDouble(equipment, "HOP_UTILIZATION", xp);
+        String notes = getString(equipment, "NOTES", xp);
+
+        Equipment equipProfile = new Equipment();
+        equipProfile.setName(name);
+        equipProfile.setBoilSize(boilSize);
+        equipProfile.setBatchSize(batchSize);
+        equipProfile.setTunVolume(tunVolume);
+        equipProfile.setTunWeight(tunWeight);
+        equipProfile.setTunSpecificHeat(tunSpecificHeat);
+        equipProfile.setTopupKettle(topupKettle);
+        equipProfile.setTopupWater(topupWater);
+        equipProfile.setTrubChillerLoss(trubChillerLoss);
+        equipProfile.setEvapRate(evapRate);
+        equipProfile.setBoilTime(boilTime);
+        equipProfile.setCalcBoilVol(calcBoilVol);
+        equipProfile.setLauterDeadspace(lauterDeadspace);
+        equipProfile.setHopUtilization(hopUtilization);
+        equipProfile.setNotes(notes);
+        recipe.setEquipmentProfile(equipProfile);
+    }
+
+    private String getString(Node element, String name, XPath xp) {
         try {
-            String temp = (String) xp.evaluate(name.toUpperCase(), element, XPathConstants.STRING);
-            return Double.parseDouble(temp);
+            return (String) xp.evaluate(name.toUpperCase(), element, XPathConstants.STRING);
         } catch (XPathException xpe) {
-            return 0.0;
-        } catch (NumberFormatException nfe) {
-            nfe.printStackTrace();
-            return 0.0;
+            return null;
         }
     }
 
     private double getDouble(Node element, String name, XPath xp) {
         try {
-            String temp = (String) xp.evaluate(name.toUpperCase(), element, XPathConstants.STRING);
+            String temp = getString(element, name, xp);
             return Double.parseDouble(temp);
-        } catch (XPathException xpe) {
-            xpe.printStackTrace();
-            return 0.0;
         } catch (NumberFormatException nfe) {
             nfe.printStackTrace();
             return 0.0;
@@ -405,14 +520,20 @@ public class BeerXMLReader {
 
     private int getInteger(Node element, String name, XPath xp) {
         try {
-            String temp = (String) xp.evaluate(name.toUpperCase(), element, XPathConstants.STRING);
+            String temp = getString(element, name, xp);
             return Integer.parseInt(temp);
-        } catch (XPathException xpe) {
-            xpe.printStackTrace();
-            return 0;
         } catch (NumberFormatException nfe) {
             nfe.printStackTrace();
             return 0;
         }
+    }
+
+    private boolean getBoolean(Node element, String name, XPath xp, boolean defaultValue) {
+        String inValue = getString(element, name, xp);
+        if (inValue == null) {
+            return defaultValue;
+        }
+
+        return Boolean.parseBoolean(inValue);
     }
 }

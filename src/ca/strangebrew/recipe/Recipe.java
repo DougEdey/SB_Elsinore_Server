@@ -142,8 +142,9 @@ public class Recipe {
 	private List<FermentStep> fermentationSteps = new ArrayList<FermentStep>();
 	// notes
 	private List<Note> notes = new ArrayList<Note>();
+    private Equipment equipmentProfile;
 
-	// default constuctor
+    // default constuctor
 	public Recipe() {
 	}
 
@@ -1845,5 +1846,13 @@ public class Recipe {
         }
 
         return "UNKNOWN";
+    }
+
+    public void setEquipmentProfile(Equipment equipmentProfile) {
+        this.equipmentProfile = equipmentProfile;
+    }
+
+    public Equipment getEquipmentProfile() {
+        return equipmentProfile;
     }
 }

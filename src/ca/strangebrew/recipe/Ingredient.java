@@ -17,7 +17,7 @@ import ca.strangebrew.recipe.Quantity.Converter;
  * in the first place.
  */
 public class Ingredient implements Comparable<Ingredient> {
-	private Quantity amount = new Quantity();
+	Quantity amount = new Quantity();
 	private double costPerU;
 	private Date dateBought = new Date();
 	private String description="";

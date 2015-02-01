@@ -21,12 +21,20 @@ import java.util.List;
 
 public class Quantity {
 
-	private String type; // can be vol, weight, or temp
+    public static final String WEIGHT = "weight";
+    public static final String VOLUME = "volume";
+    public static final String PRESSURE = "pressure";
+
+    private String type; // can be vol, weight, or temp
 	private String unit = ""; // must match one of the known units
 	private String abrv; // ditto
 	private double value;
 
-	// why can't we have structs?????
+    public static String getUnitType(String units) {
+        return null;
+    }
+
+    // why can't we have structs?????
 	// because a static class is better for what we are trying to acomplish here!
 	public static class Converter {
 		public String abrv;
@@ -261,26 +269,26 @@ public class Quantity {
 			return u[i].abrv;
 	}
 
-	static private String getTypeFromUnit(String s){
+	public static String getTypeFromUnit(String s){
 		
 		for (int i = 0; i < weightUnits.length; i++) {
 			if (weightUnits[i].unit.equalsIgnoreCase(s) ||
 					weightUnits[i].abrv.equalsIgnoreCase(s)) {
-				return "weight";
+				return Quantity.WEIGHT;
 			}
 		}
 		
 		for (int i = 0; i < volUnits.length; i++) {
 			if (volUnits[i].unit.equalsIgnoreCase(s) ||
 					volUnits[i].abrv.equalsIgnoreCase(s)) {
-				return "vol";
+				return Quantity.VOLUME;
 			}
 		}
 		
 		for (int i = 0; i < pressureUnits.length; i++) {
 			if (pressureUnits[i].unit.equalsIgnoreCase(s) ||
 					pressureUnits[i].abrv.equalsIgnoreCase(s)) {
-				return "pressure";
+				return Quantity.PRESSURE;
 			}
 		}
 
