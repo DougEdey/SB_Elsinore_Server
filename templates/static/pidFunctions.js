@@ -1428,7 +1428,7 @@ function toggleDiv(id) {
 function setTimer(button, stage) {
 	// get the current Datestamp
 	var curDate = moment().format("YYYY/MM/DDTHH:mm:ssZZ")
-	if (button.innerText == $.i18n.prop("START")) {
+	if (button.innerHTML == $.i18n.prop("START")) {
 		$("#" + stage).toggleClass("hidden", true);
 		$("#" + stage + "Timer").toggleClass("hidden", false);
 		formdata = stage + "Start=" + 0;
@@ -2216,8 +2216,8 @@ function readOnly(manualChange) {
 	}
 	
 	if (manualChange) {
-		$('form[id=settings-form]').find(':checkbox:not(:checked)').attr('value', "off").prop('checked', true);
 		var formdata = JSON.stringify(jQuery('form[id=settings-form]').serializeObject());
+		formdata.recorder = $('form[id="settings-form"] div[id="recorder_enabled"] input').prop("checked");
 		$.ajax({
 			url : 'updateSystemSettings',
 			type : 'POST',
@@ -2497,12 +2497,12 @@ function changeScale() {
 
 function embedGraph(vessel) {
 	vessel = vessel.trim();
-	if ($('#' + vessel + "-graph_title")[0].innerText == $.i18n
+	if ($('#' + vessel + "-graph_title")[0].innerHTML == $.i18n
 			.prop("SHOW_GRAPH")) {
-		$('#' + vessel + "-graph_title")[0].innerText = $.i18n
+		$('#' + vessel + "-graph_title")[0].innerHTML = $.i18n
 				.prop("HIDE_GRAPH");
 	} else {
-		$('#' + vessel + "-graph_title")[0].innerText = $.i18n
+		$('#' + vessel + "-graph_title")[0].innerHTML = $.i18n
 				.prop("SHOW_GRAPH");
 	}
 
@@ -2605,18 +2605,6 @@ function displaySystemSettings() {
 				}
 				
 				$('form[id="settings-form"] div[id="recorder_time"] input').val(data.recorderTime);
-			}
-			if ("showright" in data) {
-				if ($('form[id="settings-form"] div[id="show_right"').length == 0) {
-					$('form[id="settings-form"]')
-					.append(
-						'<div class="col-md-4 checkbox" id="show_right">' +
-							'<label>' +
-								'<input type="checkbox" name="showright">Show right bar?' +
-							'</label>' +
-						'</div>');
-				}
-				$('form[id="settings-form"] div[id="show_right"] input').prop("checked", data.showright);
 			}
 			return;
 		}

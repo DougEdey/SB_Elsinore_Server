@@ -175,7 +175,7 @@ public final class BrewDay {
             continueTimer(name);
         } else {
             Entry<String, Date> stopEntry = new AbstractMap.SimpleEntry<String, Date>(
-                    "end", new Date());
+                    "end", parseDateString(stopIn));
             setTimer(name, stopEntry);
         }
     }

@@ -196,7 +196,7 @@ public class BrewServer extends NanoHTTPD {
             return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                     "Deleted system temperature");
         }
-
+        
         if (uri.equalsIgnoreCase("/getstatus")) {
             return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
                     LaunchControl.getJSONStatus());

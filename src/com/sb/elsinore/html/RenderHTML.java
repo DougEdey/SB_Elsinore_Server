@@ -115,11 +115,9 @@ public class RenderHTML implements Renderable {
                 .write(Messages.UPDATE_CHECK)
             ._button()
         ._div()
-        ._div();
-        if (LaunchControl.showRight) {
-            html.render(new RightBar());
-        }
-        html._body()._html();
+        ._div()
+        .render(new RightBar())
+        ._body()._html();
 
     }
 

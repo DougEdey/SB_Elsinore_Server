@@ -30,7 +30,7 @@
 		<level name="Maven: org.ini4j:ini4j:0.5.2" value="project"/>
 		<level name="Maven: joda-time:joda-time:2.2" value="project"/>
 		<level name="Maven: com.googlecode.json-simple:json-simple:1.1.1" value="project"/>
-		<level name="Maven: jGPIO:jGPIO:0.0.4" value="project"/>
+		<level name="Maven: jGPIO:jGPIO:0.0.5" value="project"/>
 		<level name="Maven: org.owfs:jowfsclient:1.2.6" value="project"/>
 		<level name="Maven: commons-pool:commons-pool:1.6" value="project"/>
 		<level name="Maven: org.slf4j:slf4j-api:1.7.2" value="project"/>
