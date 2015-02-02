@@ -1,7 +1,5 @@
 package ca.strangebrew.recipe;
 
-import ca.strangebrew.Options;
-
 public class FermentStep implements Comparable<FermentStep> {
 	private String type;
 	private String tempU;
@@ -12,13 +10,8 @@ public class FermentStep implements Comparable<FermentStep> {
 	static final public String CLEARING = "Clearing";
 	static final public String AGEING = "Ageing";
 	static final public String[] types = {PRIMARY, SECONDARY, CLEARING, AGEING};
-	static final Options opts = Options.getInstance();
 	
-	public FermentStep() {		
-		type = opts.getProperty("optFermentType");
-		tempU = opts.getProperty("optFermentTempU");
-		time = opts.getIProperty("optFermentTime");
-		temp = opts.getDProperty("optFermentTemp");
+	public FermentStep() {
 	}
 	
 	// Misc Utility

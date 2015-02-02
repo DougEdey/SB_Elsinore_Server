@@ -1,6 +1,5 @@
 package ca.strangebrew.recipe;
 
-import ca.strangebrew.SBStringUtils;
 
 /**
  * $Id: Style.java,v 1.7 2008/01/05 14:42:04 jimcdiver Exp $
@@ -197,7 +196,7 @@ public class Style implements Comparable<Style> {
 		this.catNum = catNum;
 	}
 	/**
-	 * @param examples The examples to set.
+	 * @param commercialEx The examples to set.
 	 */
 	public void setExamples(String commercialEx) {
 		this.examples = commercialEx;
@@ -217,14 +216,14 @@ public class Style implements Comparable<Style> {
 	/**
 	 * @param srmHigh The srmHigh to set.
 	 */
-	public void setSrmHigh(double lovHigh) {
-		this.srmHigh = lovHigh;
+	public void setSrmHigh(double srmHigh) {
+		this.srmHigh = srmHigh;
 	}
 	/**
 	 * @param srmLow The srmLow to set.
 	 */
-	public void setSrmLow(double lovLow) {
-		this.srmLow = lovLow;
+	public void setSrmLow(double srmLow) {
+		this.srmLow = srmLow;
 	}
 	/**
 	 * @param ogHigh The ogHigh to set.

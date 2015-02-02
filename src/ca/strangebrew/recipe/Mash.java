@@ -3,11 +3,8 @@ package ca.strangebrew.recipe;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import com.sb.elsinore.BrewServer;
 import org.json.simple.JSONObject;
-
-import ca.strangebrew.Debug;
-import ca.strangebrew.Options;
-import ca.strangebrew.SBStringUtils;
 
 /**
  * $Id: Mash.java,v 1.37 2008/01/16 17:55:04 jimcdiver Exp $
@@ -80,43 +77,76 @@ public class Mash {
 	static final public String[] types = {ACID, GLUCAN, PROTEIN, BETA, ALPHA, MASHOUT, SPARGE};
 	static final public String[] methods = {INFUSION, DECOCTION, DECOCTION_THICK, DECOCTION_THIN, DIRECT, CEREAL_MASH};
 	static final public String[] spargeMethods = {FLY, BATCH};
-	
-	
-	public Mash(Recipe r){
-		 Options opts = Options.getInstance();
-		 mashRatio = opts.getDProperty("optMashRatio");
-		 mashRatioU = opts.getProperty("optMashRatioU");;
-		 tempUnits = opts.getProperty("optMashTempU");
-		 
-		 if(myRecipe != null) {
-			 volUnits = myRecipe.getVolUnits();
-		 } else {
-			 volUnits = opts.getProperty("optMashVolU");
-		 }
-		 grainTempF = opts.getDProperty("optGrainTemp");
-		 boilTempF = opts.getDProperty("optBoilTempF");
-		 ACIDTMPF = opts.getFProperty("optAcidTmpF");
-		 GLUCANTMPF = opts.getFProperty("optGlucanTmpF");
-		 PROTEINTMPF = opts.getFProperty("optProteinTmpF");
-		 BETATMPF = opts.getFProperty("optBetaTmpF");
-		 ALPHATMPF = opts.getFProperty("optAlphaTmpF");
-		 MASHOUTTMPF = opts.getFProperty("optMashoutTmpF");
-		 SPARGETMPF = opts.getFProperty("optSpargeTmpF");
-		 thickDecoctRatio = opts.getDProperty("optThickDecoctRatio");
-		 thinDecoctRatio = opts.getDProperty("optThinDecoctRatio");
-		 cerealMashTemp = opts.getDProperty("optCerealMashTmpF");
-		 
-		 deadSpace = new Quantity();
-		 deadSpace.setAmount(opts.getDProperty("optDeadSpace"));
-		 deadSpace.setUnits(volUnits);
-		 
-		 tunLossF = opts.getDProperty("optTunLossF");
-		 name = "Mash";
+    private String notes;
+    private double tunTemp;
+    private double spargeTemp;
+    private double ph;
+    private double tunWeight;
+    private double tunSpecificHeat;
+    private boolean tunAdjust;
 
-		 myRecipe = r;
+
+    public Mash(String name){
+        this.name = name;
 	}
-	
-	public class MashStep implements Comparable<MashStep> {
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setTunTemp(double tunTemp) {
+        this.tunTemp = tunTemp;
+    }
+
+    public double getTunTemp() {
+        return tunTemp;
+    }
+
+    public void setSpargeTemp(double spargeTemp) {
+        this.spargeTemp = spargeTemp;
+    }
+
+    public double getSpargeTemp() {
+        return spargeTemp;
+    }
+
+    public void setPh(double ph) {
+        this.ph = ph;
+    }
+
+    public double getPh() {
+        return ph;
+    }
+
+    public void setTunWeight(double tunWeight) {
+        this.tunWeight = tunWeight;
+    }
+
+    public double getTunWeight() {
+        return tunWeight;
+    }
+
+    public void setTunSpecificHeat(double tunSpecificHeat) {
+        this.tunSpecificHeat = tunSpecificHeat;
+    }
+
+    public double getTunSpecificHeat() {
+        return tunSpecificHeat;
+    }
+
+    public void setTunAdjust(boolean tunAdjust) {
+        this.tunAdjust = tunAdjust;
+    }
+
+    public boolean isTunAdjust() {
+        return tunAdjust;
+    }
+
+    public class MashStep implements Comparable<MashStep> {
 		private String type;
 		private double startTemp;
 		private double endTemp;		
@@ -667,7 +697,7 @@ public class Mash {
 			
 			// if this is a former sparge step that's been changed, change
 			// the method to infusion
-			Debug.print("Mash step Type: " + stp.type + " Method: " + stp.method);
+			BrewServer.LOG.info("Mash step Type: " + stp.type + " Method: " + stp.method);
 			if (!stp.type.equals(SPARGE) && ( stp.method.equals(FLY) || stp.method.equals(BATCH)))
 					stp.method = INFUSION;
 			
@@ -802,7 +832,7 @@ public class Mash {
 
 			} else {
 			
-				Debug.print("Unrecognised mash step: " + stp.method);
+				BrewServer.LOG.warning("Unrecognised mash step: " + stp.method);
 			}
 
 			if (stp.type.equals(SPARGE)) 
@@ -821,15 +851,15 @@ public class Mash {
 		volQts = mashVolQTS;
 
 		// water use stats:
-		Debug.print("Total weight: " + totalWeightLbs);
+        BrewServer.LOG.warning("Total weight: " + totalWeightLbs);
 		absorbedQTS = totalWeightLbs * 0.52; // figure from HBD
 		
 		// spargeTotalQTS = (myRecipe.getPreBoilVol("qt")) - (mashWaterQTS - absorbedQTS);
 		totalWaterQTS = mashWaterQTS;
 		spargeQTS = myRecipe.getPreBoilVol(Quantity.QT) - 
 				(mashWaterQTS - absorbedQTS - deadSpace.getValueAs(Quantity.QT));
-		
-		Debug.print("Sparge Quarts: " + spargeQTS);
+
+        BrewServer.LOG.warning("Sparge Quarts: " + spargeQTS);
 		
 		// Now let's figure out the sparging:		
 		if (numSparge == 0)
@@ -863,9 +893,9 @@ public class Mash {
 		    batch_1_sparge_liters = (boil_size_l/<total number of steps> ) - mash_water_l + grain_wt_kg * 0.625)
 		    		batch_2_liters = boil_size_l / <total number of steps>
 		    	*/
-		   Debug.print("NumSparge: " + numSparge);
-		   
-			Debug.print("Collecting: " + col);
+            BrewServer.LOG.info("NumSparge: " + numSparge);
+
+            BrewServer.LOG.info("Collecting: " + col);
 			for (int i = 1; i < numSparge; i++) {
 				charge[i] = col;
 				collect[i] = col;

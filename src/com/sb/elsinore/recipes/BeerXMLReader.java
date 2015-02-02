@@ -165,6 +165,9 @@ public class BeerXMLReader {
         parseWaters(recipe, waterList);
         Node equipmentList = (Node) xp.evaluate("EQUIPMENT", recipeNode, XPathConstants.NODE);
         parseEquipment(recipe, equipmentList, xp);
+
+        Node mashProfile = (Node) xp.evaluate("MASH", recipeNode, XPathConstants.NODE);
+        parseMashProfile(recipe, mashProfile, xp);
         return recipe;
     }
 
@@ -498,6 +501,71 @@ public class BeerXMLReader {
         equipProfile.setHopUtilization(hopUtilization);
         equipProfile.setNotes(notes);
         recipe.setEquipmentProfile(equipProfile);
+    }
+
+    /**
+     * Add a mash Profile to a recipe.
+     * @param recipe The @{Recipe} object to add the mash profile to.
+     * @param mashProfile The node containing the beerXML Mash element.
+     * @param xp an XPath object to use to run XPath expressions.
+     * @throws XPathException If an XPath expression could not be run.
+     */
+    private void parseMashProfile(Recipe recipe, Node mashProfile, XPath xp) throws XPathException {
+        String name = getString(mashProfile, "NAME", xp);
+        double grainTemp = getDouble(mashProfile, "GRAIN_TEMP", xp);
+        Node mashSteps = (Node) xp.evaluate("MASH_STEPS", mashProfile, XPathConstants.NODE);
+        String notes = getString(mashProfile, "NOTES", xp);
+        double tunTemp = getDouble(mashProfile, "TUN_TEMP", xp);
+        double spargeTemp = getDouble(mashProfile, "SPARGE_TEMP", xp);
+        double ph = getDouble(mashProfile, "PH", xp);
+        double tunWeight = getDouble(mashProfile, "TUN_WEIGHT", xp);
+        double tunSpecificHeat = getDouble(mashProfile, "TUN_SPECIFIC_HEAT", xp);
+        boolean tunAdjust = getBoolean(mashProfile, "TUN_ADJUST", xp, false);
+
+        Mash mash = recipe.getMash();
+        if (mash == null) {
+            mash = new Mash(name);
+        } else {
+            mash.setName(name);
+        }
+
+        mash.setGrainTemp(grainTemp);
+        mash.setNotes(notes);
+        mash.setTunTemp(tunTemp);
+        mash.setSpargeTemp(spargeTemp);
+        mash.setPh(ph);
+        mash.setTunWeight(tunWeight);
+        mash.setTunSpecificHeat(tunSpecificHeat);
+        mash.setTunAdjust(tunAdjust);
+
+        parseMashSteps(mash, mashSteps, xp);
+    }
+
+    /**
+     * Iterate a node containing mash steps to add them to a recipe.
+     * @param mash The Mash object to add steps to.
+     * @param mashSteps The Node containing multiple child MASH_STEP elements.
+     * @param xp An XPath object.
+     * @throws XPathExpressionException If an XPath couldn't be run.
+     */
+    private void parseMashSteps(Mash mash, Node mashSteps, XPath xp) throws XPathExpressionException {
+        if (mashSteps == null) {
+            return;
+        }
+
+        NodeList stepList = (NodeList) xp.evaluate("MASH_STEP", mashSteps, XPathConstants.NODESET);
+        for (int i = 0; i < stepList.getLength(); i++) {
+            Node step = stepList.item(i);
+            String name = getString(step, "NAME", xp);
+            String type = getString(step, "TYPE", xp);
+            double infuseAmount = getDouble(step, "INFUSE_AMOUNT", xp);
+            double stepTemp = getDouble(step, "STEP_TEMP", xp);
+            int stepTime = getInteger(step, "STEP_TIME", xp);
+            int rampTime = getInteger(step, "RAMP_TIME", xp);
+            double endTemp = getDouble(step, "END_TEMP", xp);
+            // Add it in
+            mash.addStep(type, stepTemp, endTemp, name, stepTime, rampTime, infuseAmount);
+        }
     }
 
     private String getString(Node element, String name, XPath xp) {

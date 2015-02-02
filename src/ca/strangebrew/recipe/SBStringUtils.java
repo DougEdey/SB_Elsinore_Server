@@ -120,8 +120,6 @@ public class SBStringUtils {
 		String jpath = new File(SBStringUtils.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile().getPath();
 		//File nFile = new File(jpath).getParentFile().getPath();
 		appRoot = URLDecoder.decode(jpath, "UTF-8");
-		Debug.print("Path: "+ appRoot);
-		
 		
 		if (type.equals("data"))
 			path = appRoot + slash + "src" + slash + "ca" 

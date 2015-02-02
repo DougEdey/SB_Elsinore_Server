@@ -471,4 +471,86 @@ public class BeerXMLWriter {
 
         return equipElement;
     }
+
+    private Element createMashProfile(Mash mash, Document recipeDocument) {
+        Element mashElement = recipeDocument.createElement("MASH");
+
+        Element tElement = recipeDocument.createElement("VERSION");
+        tElement.setTextContent("1");
+        mashElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("NAME");
+        tElement.setTextContent(mash.getName());
+        mashElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("GRAIN_TEMP");
+        tElement.setTextContent(Double.toString(mash.getGrainTemp()));
+        mashElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("NOTES");
+        tElement.setTextContent(mash.getNotes());
+        mashElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("TUN_TEMP");
+        tElement.setTextContent(mash.getName());
+        mashElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("SPARGE_TEMP");
+        tElement.setTextContent(Double.toString(mash.getSpargeTemp()));
+        mashElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("PH");
+        tElement.setTextContent(Double.toString(mash.getPh()));
+        mashElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("TUN_WEIGHT");
+        tElement.setTextContent(Double.toString(mash.getTunWeight()));
+        mashElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("TUN_SPECIFIC_HEAT");
+        tElement.setTextContent(Double.toString(mash.getTunSpecificHeat()));
+        mashElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("EQUIP_ADJUST");
+        tElement.setTextContent(Boolean.toString(mash.isTunAdjust()));
+        mashElement.appendChild(tElement);
+
+        Element stepsElement = recipeDocument.createElement("MASH_STEPS");
+        for (int i = 0; i < mash.getStepSize(); i++) {
+            Element stepElement = recipeDocument.createElement("MASH_STEP");
+
+            tElement = recipeDocument.createElement("NAME");
+            tElement.setTextContent(mash.getStepMethod(i));
+            stepElement.appendChild(tElement);
+
+            tElement = recipeDocument.createElement("TYPE");
+            tElement.setTextContent(mash.getStepType(i));
+            stepElement.appendChild(tElement);
+
+            tElement = recipeDocument.createElement("INFUSE_AMOUNT");
+            tElement.setTextContent(Double.toString(mash.getStepInVol(i)));
+            stepElement.appendChild(tElement);
+
+            tElement = recipeDocument.createElement("STEP_TEMP");
+            tElement.setTextContent(Double.toString(mash.getStepTemp(i)));
+            stepElement.appendChild(tElement);
+
+            tElement = recipeDocument.createElement("STEP_TIME");
+            tElement.setTextContent(Integer.toString(mash.getStepMin(i)));
+            stepElement.appendChild(tElement);
+
+            tElement = recipeDocument.createElement("RAMP_TIME");
+            tElement.setTextContent(Integer.toString(mash.getStepRampMin(i)));
+            stepElement.appendChild(tElement);
+
+            tElement = recipeDocument.createElement("END_TEMP");
+            tElement.setTextContent(Double.toString(mash.getStepEndTemp(i)));
+            stepElement.appendChild(tElement);
+
+            stepsElement.appendChild(stepElement);
+        }
+
+        mashElement.appendChild(stepsElement);
+        return mashElement;
+    }
 }

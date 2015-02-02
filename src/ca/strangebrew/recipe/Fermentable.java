@@ -9,11 +9,6 @@
 
 package ca.strangebrew.recipe;
 
-import java.util.Comparator;
-
-import ca.strangebrew.Options;
-import ca.strangebrew.SBStringUtils;
-
 public class Fermentable extends Ingredient  {
 	
 	// base data

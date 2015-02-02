@@ -79,7 +79,7 @@ public class Recipe {
 	private WaterProfile targetWater = new WaterProfile();
 	private List<Salt> brewingSalts = new ArrayList<Salt>();
 	private Acid acid = Acid.getAcidByName(Acid.CITRIC);
-	public Mash mash;
+	public Mash mash = null;
 
 	// water use:
 	//

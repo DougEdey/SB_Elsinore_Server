@@ -8,7 +8,6 @@ package ca.strangebrew.recipe;
 import java.awt.Color;
 import java.util.List;
 
-import ca.strangebrew.Debug;
 
 public class BrewCalcs {
 
@@ -124,15 +123,12 @@ public class BrewCalcs {
 		ob = ob/1.04;
 		double abv = 0.0;
 		if(fb == 0.0) {
-			Debug.print("fb is 0.0");
 			abv = ((0.01/0.8192)*((ob)-(0.1808*(ob)+0.8192*(668.72*cubic-463.37-205.347*Math.pow(cubic,2))))/(2.0665-0.010665*(ob)));
 		}
 		else {
-			Debug.print("fb is set");
 			abv = (0.01/0.8192)*(ob-(0.1808*(ob)+0.8192*(668.72*fg-463.37-205.347*Math.pow(fg,2))))/(2.0665-0.010665*ob);
 		}
 		abv = abv*100;
-		Debug.print("OBFB: " + abv);
 		return abv;
 		
 	  /*double ri  = 1.33302 + 0.001427193*fb + 0.000005791157*fb*fb;

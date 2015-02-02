@@ -2,8 +2,6 @@ package ca.strangebrew.recipe;
 
 import java.text.MessageFormat;
 
-import ca.strangebrew.SBStringUtils;
-
 public class Salt {
 	private String name;
 	private String commonName;

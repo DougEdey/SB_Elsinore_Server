@@ -161,21 +161,24 @@ public class BrewServer extends NanoHTTPD {
     /**
      * The main method that checks the data coming into the server.
      *
-     * @param uri
-     *            The URI requested
-     * @param method
-     *            The type of the request (GET/POST/DELETE)
-     * @param header
-     *            The header map from the request
-     * @param parms
-     *            The incoming Parameter map.
-     * @param files
-     *            A map of incoming files.
+     * @param session The HTTP Session object.
      * @return A NanoHTTPD Response Object
      */
-    public final Response serve(final String uri, final Method method,
-            final Map<String, String> header, final Map<String, String> parms,
-            final Map<String, String> files) {
+    public final Response serve(IHTTPSession session) {
+        String uri = session.getUri();
+        Method method = session.getMethod();
+        Map<String, String> header = session.getHeaders();
+        Map<String, String> parms = session.getParms();
+        Map<String, String> files = new HashMap<String, String>();
+        if (Method.PUT.equals(method) || Method.POST.equals(method)) {
+            try {
+                session.parseBody(files);
+            } catch (IOException ioe) {
+                return new Response(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
+            } catch (ResponseException re) {
+                return new Response(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
+            }
+        }
 
         BrewServer.LOG.info("URL : " + uri + " method: " + method);
 
