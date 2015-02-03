@@ -190,28 +190,40 @@ public class BeerXMLReader {
             Node hop = hopList.item(i);
 
             // Get the values
-            String name = (String) xp.evaluate("NAME",
-                    hop, XPathConstants.STRING);
-            String temp = (String) xp.evaluate("AMOUNT",
-                    hop, XPathConstants.STRING);
-            double amount = Double.parseDouble(temp);
-            temp = (String) xp.evaluate("ALPHA", hop, XPathConstants.STRING);
-            double alpha = Double.parseDouble(temp);
+            String name = getString(hop, "NAME", xp);
+            double amount = getDouble(hop, "AMOUNT", xp);
+            double alpha = getDouble(hop, "ALPHA", xp);
 
-            temp = (String) xp.evaluate("TIME", hop, XPathConstants.STRING);
-            int time = (int) Math.round(Double.parseDouble(temp));
-            String use = (String) xp.evaluate("USE",
-                    hop, XPathConstants.STRING);
-            String displayAmount = (String) xp.evaluate("DISPLAY_AMOUNT",
-                    hop, XPathConstants.STRING);
-            String inventory = (String) xp.evaluate("INVENTORY",
-                    hop, XPathConstants.STRING);
-            String displayTime = (String) xp.evaluate("DISPLAY_TIME",
-                    hop, XPathConstants.STRING);
+            int time = (int) Math.round(getDouble(hop, "TIME", xp));
+            String use = getString(hop, "USE", xp);
+            String displayAmount = getString(hop, "DISPLAY_AMOUNT", xp);
+            String inventory = getString(hop, "INVENTORY", xp);
+            String displayTime = getString(hop, "DISPLAY_TIME", xp);
+            String form = getString(hop, "FORM", xp);
+            String type = getString(hop, "TYPE", xp);
+            double beta = getDouble(hop, "BETA", xp);
+            double hsi = getDouble(hop, "HSI", xp);
+            String origin = getString(hop, "ORIGIN", xp);
+            String substitutes = getString(hop, "SUBSTITUTES", xp);
+            double humulene = getDouble(hop, "HUMULENE", xp);
+            double caryophyllene = getDouble(hop, "CARYOPHYLLENE", xp);
+            double cohumulone = getDouble(hop, "COHUMULONE", xp);
+            double myrcene = getDouble(hop, "MYRCENE", xp);
+
             Hop hopObject = new Hop();
             hopObject.setName(name);
             hopObject.setAlpha(alpha);
             hopObject.setAmountAs(amount, Quantity.KG);
+            hopObject.setType(type);
+            hopObject.setForm(form);
+            hopObject.setBeta(beta);
+            hopObject.setHsi(hsi);
+            hopObject.setOrigin(origin);
+            hopObject.setSubstitutes(substitutes);
+            hopObject.setHumulene(humulene);
+            hopObject.setCaryophyllene(caryophyllene);
+            hopObject.setCohumulone(cohumulone);
+            hopObject.setMyrcene(myrcene);
             // Extensions
             if (displayAmount != null && !displayAmount.equals("")) {
                 hopObject.setAmountAndUnits(displayAmount);

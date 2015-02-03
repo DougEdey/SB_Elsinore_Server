@@ -28,8 +28,16 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
 
 	static final public String[] forms = { LEAF, PELLET, PLUG };
 	static final public String[] addTypes = { BOIL, FWH, DRY, MASH };
+    private double myrcene;
+    private double cohumulone;
+    private double caryophyllene;
+    private double humulene;
+    private String substitutes;
+    private double hsi;
+    private double beta;
+    private String form;
 
-	// Constructors:
+    // Constructors:
 
 	public Hop() {
 		// default constructor
@@ -154,5 +162,69 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
             BrewServer.LOG.info("Couldn't parse an integer.");
             BrewServer.LOG.warning(nfe.getMessage());
         }
+    }
+
+    public void setMyrcene(double myrcene) {
+        this.myrcene = myrcene;
+    }
+
+    public double getMyrcene() {
+        return myrcene;
+    }
+
+    public void setCohumulone(double cohumulone) {
+        this.cohumulone = cohumulone;
+    }
+
+    public double getCohumulone() {
+        return cohumulone;
+    }
+
+    public void setCaryophyllene(double caryophyllene) {
+        this.caryophyllene = caryophyllene;
+    }
+
+    public double getCaryophyllene() {
+        return caryophyllene;
+    }
+
+    public void setHumulene(double humulene) {
+        this.humulene = humulene;
+    }
+
+    public double getHumulene() {
+        return humulene;
+    }
+
+    public void setSubstitutes(String substitutes) {
+        this.substitutes = substitutes;
+    }
+
+    public String getSubstitutes() {
+        return substitutes;
+    }
+
+    public void setHsi(double hsi) {
+        this.hsi = hsi;
+    }
+
+    public double getHsi() {
+        return hsi;
+    }
+
+    public void setBeta(double beta) {
+        this.beta = beta;
+    }
+
+    public double getBeta() {
+        return beta;
+    }
+
+    public void setForm(String form) {
+        this.form = form;
+    }
+
+    public String getForm() {
+        return form;
     }
 }

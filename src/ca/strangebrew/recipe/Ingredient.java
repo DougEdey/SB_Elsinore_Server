@@ -26,6 +26,7 @@ public class Ingredient implements Comparable<Ingredient> {
 	private String type;
 	private boolean modified;
     private Quantity inventory = new Quantity();
+    private String origin;
 
 
     public Ingredient() {
@@ -182,5 +183,13 @@ public class Ingredient implements Comparable<Ingredient> {
 
     public Quantity getAmount() {
         return amount;
+    }
+
+    public void setOrigin(String origin) {
+        this.origin = origin;
+    }
+
+    public String getOrigin() {
+        return origin;
     }
 }

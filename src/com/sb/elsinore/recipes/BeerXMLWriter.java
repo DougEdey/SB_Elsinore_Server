@@ -264,6 +264,38 @@ public class BeerXMLWriter {
         tElement.setTextContent("" + hopAddition.getType());
         hopElement.appendChild(tElement);
 
+        tElement = recipeDocument.createElement("BETA");
+        tElement.setTextContent("" + hopAddition.getBeta());
+        hopElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("HSI");
+        tElement.setTextContent("" + hopAddition.getHsi());
+        hopElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("ORIGIN");
+        tElement.setTextContent(hopAddition.getOrigin());
+        hopElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("SUBSTITUTES");
+        tElement.setTextContent(hopAddition.getSubstitutes());
+        hopElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("HUMULENE");
+        tElement.setTextContent("" + hopAddition.getHumulene());
+        hopElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("CARYOPHYLLENE");
+        tElement.setTextContent("" + hopAddition.getCaryophyllene());
+        hopElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("COHUMULONE");
+        tElement.setTextContent("" + hopAddition.getCohumulone());
+        hopElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("MYRCENE");
+        tElement.setTextContent("" + hopAddition.getMyrcene());
+        hopElement.appendChild(tElement);
+
         // Add Extensions
         tElement = recipeDocument.createElement("DISPLAY_AMOUNT");
         tElement.setTextContent(hopAddition.getAmount().toString());
@@ -376,7 +408,7 @@ public class BeerXMLWriter {
         tElement = recipeDocument.createElement("POTENTIAL");
         tElement.setTextContent("" + maltAddition.getPppg());
         fermentableElement.appendChild(tElement);
-        
+
         return fermentableElement;
     }
 
