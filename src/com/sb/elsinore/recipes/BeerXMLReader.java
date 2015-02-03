@@ -362,17 +362,44 @@ public class BeerXMLReader {
             try {
                 Node yeastItem = yeastList.item(i);
 
-                String name = (String) xp.evaluate("NAME", yeastItem, XPathConstants.STRING);
-                String type = (String) xp.evaluate("TYPE", yeastItem, XPathConstants.STRING);
-                String form = (String) xp.evaluate("FORM", yeastItem, XPathConstants.STRING);
-                String attenuation = (String) xp.evaluate("ATTENUATION", yeastItem, XPathConstants.STRING);
+                String name = getString(yeastItem, "NAME", xp);
+                String type = getString(yeastItem, "TYPE", xp);
+                String form = getString(yeastItem, "FORM", xp);
+                double attenuation = getDouble(yeastItem, "ATTENUATION", xp);
+                double amount = getDouble(yeastItem, "AMOUNT", xp);
+                boolean amountIsWeight = getBoolean(yeastItem, "AMOUNT_IS_WEIGHT", xp, false);
+                String laboratory = getString(yeastItem, "LABORATORY", xp);
+                String productId = getString(yeastItem, "PRODUCT_ID", xp);
+                double minTemperature = getDouble(yeastItem, "MIN_TEMPERATURE", xp);
+                double maxTemperature = getDouble(yeastItem, "MAX_TEMPERATURE", xp);
+                String flocculation = getString(yeastItem, "FLOCCULATION", xp);
+                String notes = getString(yeastItem, "NOTES", xp);
+                String bestFor = getString(yeastItem, "BEST_FOR", xp);
+                int timesCultured = getInteger(yeastItem, "TIMES_CULTURED", xp);
+                int maxReuse = getInteger(yeastItem, "MAX_REUSE", xp);
+                boolean addToSecondary = getBoolean(yeastItem, "ADD_TO_SECONDARY", xp, false);
 
                 Yeast yeast = new Yeast();
                 yeast.setName(name);
                 yeast.setForm(form);
                 yeast.setType(type);
-                yeast.setAttenuation(Double.parseDouble(attenuation));
+                yeast.setAttenuation(attenuation);
                 recipe.setYeast(i, yeast);
+                if (amountIsWeight) {
+                    yeast.setAmountAs(amount, Quantity.KG);
+                } else {
+                    yeast.setAmountAs(amount, Quantity.L);
+                }
+                yeast.setLaboratory(laboratory);
+                yeast.setProductId(productId);
+                yeast.setMinTemperature(minTemperature);
+                yeast.setMaxTemperature(maxTemperature);
+                yeast.setFlocculation(flocculation);
+                yeast.setDescription(notes);
+                yeast.setBestFor(bestFor);
+                yeast.setTimesCultured(timesCultured);
+                yeast.setMaxReuse(maxReuse);
+                yeast.addToSecondary(addToSecondary);
             } catch (NumberFormatException nfe) {
                 BrewServer.LOG.warning("Couldn't parse a number: "
                         + nfe.getMessage());

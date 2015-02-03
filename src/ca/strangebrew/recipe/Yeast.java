@@ -11,7 +11,17 @@ public class Yeast extends Ingredient {
 	// but if we need to, we can add it here
 	private double attenuation = 80.0;
 	private String form = "dry";
-	// should handle defaults here:
+    private String laboratory;
+    private String productId;
+    private double minTemperature;
+    private double maxTemperature;
+    private String flocculation;
+    private String bestFor;
+    private int timesCultured;
+    private int maxReuse;
+    private boolean addToSecondary;
+
+    // should handle defaults here:
 	public Yeast(){
 		// setName("A yeast");
 	}
@@ -31,4 +41,76 @@ public class Yeast extends Ingredient {
 	public String getForm() {
 	    return this.form;
 	}
+
+    public void setLaboratory(String laboratory) {
+        this.laboratory = laboratory;
+    }
+
+    public String getLaboratory() {
+        return laboratory;
+    }
+
+    public void setProductId(String productId) {
+        this.productId = productId;
+    }
+
+    public String getProductId() {
+        return productId;
+    }
+
+    public void setMinTemperature(double minTemperature) {
+        this.minTemperature = minTemperature;
+    }
+
+    public double getMinTemperature() {
+        return minTemperature;
+    }
+
+    public void setMaxTemperature(double maxTemperature) {
+        this.maxTemperature = maxTemperature;
+    }
+
+    public double getMaxTemperature() {
+        return maxTemperature;
+    }
+
+    public void setFlocculation(String flocculation) {
+        this.flocculation = flocculation;
+    }
+
+    public String getFlocculation() {
+        return flocculation;
+    }
+
+    public void setBestFor(String bestFor) {
+        this.bestFor = bestFor;
+    }
+
+    public String getBestFor() {
+        return bestFor;
+    }
+
+    public void setTimesCultured(int timesCultured) {
+        this.timesCultured = timesCultured;
+    }
+
+    public int getTimesCultured() {
+        return timesCultured;
+    }
+
+    public void setMaxReuse(int maxReuse) {
+        this.maxReuse = maxReuse;
+    }
+
+    public int getMaxReuse() {
+        return maxReuse;
+    }
+
+    public void addToSecondary(boolean addToSecondary) {
+        this.addToSecondary = addToSecondary;
+    }
+
+    public boolean isAddToSecondary() {
+        return addToSecondary;
+    }
 }

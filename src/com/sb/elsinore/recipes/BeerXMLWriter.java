@@ -443,9 +443,52 @@ public class BeerXMLWriter {
         yeastElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("AMOUNT");
-        tElement.setTextContent("1");
+        tElement.setTextContent("" + yeast.getAmount().getValue());
         yeastElement.appendChild(tElement);
 
+        tElement = recipeDocument.createElement("AMOUNT_IS_WEIGHT");
+        tElement.setTextContent(Boolean.toString(yeast.getAmount().getUnits().equals(Quantity.KG)));
+        yeastElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("LABORATORY");
+        tElement.setTextContent(yeast.getLaboratory());
+        yeastElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("PRODUCT_ID");
+        tElement.setTextContent(yeast.getProductId());
+        yeastElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("MIN_TEMPERATURE");
+        tElement.setTextContent("" + yeast.getMinTemperature());
+        yeastElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("MAX_TEMPERATURE");
+        tElement.setTextContent("" + yeast.getMaxTemperature());
+        yeastElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("FLOCCULATION");
+        tElement.setTextContent("" + yeast.getFlocculation());
+        yeastElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("NOTES");
+        tElement.setTextContent(yeast.getDescription());
+        yeastElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("BEST_FOR");
+        tElement.setTextContent(yeast.getBestFor());
+        yeastElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("TIMES_CULTURED");
+        tElement.setTextContent("" + yeast.getTimesCultured());
+        yeastElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("MAX_REUSE");
+        tElement.setTextContent("" + yeast.getMaxReuse());
+        yeastElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("ADD_TO_SECONDARY");
+        tElement.setTextContent(Boolean.toString(yeast.isAddToSecondary()));
+        yeastElement.appendChild(tElement);
         return yeastElement;
     }
 
