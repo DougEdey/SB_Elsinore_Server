@@ -107,6 +107,7 @@ public class Ingredient implements Comparable<Ingredient> {
 		amount.setAmount(dAmount);
 		amount.setUnits(u.trim());
 	}
+
 	public void setAmountAs(double a, String u) {
 		double converted = Quantity.convertUnit(u, amount.getUnits(), a);
 		amount.setAmount(converted);

@@ -532,6 +532,7 @@ public class BeerXMLReader {
         double sodium = getDouble(water, "SODIUM", xp);
         double magnesium = getDouble(water, "MAGNESIUM", xp);
         double ph = getDouble(water, "PH", xp);
+        String displayAmount = getString(water, "DISPLAY_AMOUNT", xp);
         String notes = getString(water, "NOTES", xp);
         WaterProfile waterProfile = new WaterProfile(name);
         waterProfile.setCa(calcium);
@@ -542,6 +543,7 @@ public class BeerXMLReader {
         waterProfile.setMg(magnesium);
         waterProfile.setPh(ph);
         waterProfile.setNotes(notes);
+        waterProfile.setAmount(displayAmount);
         recipe.setTargetWater(waterProfile);
     }
 

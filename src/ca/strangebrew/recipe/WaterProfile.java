@@ -3,6 +3,10 @@ package ca.strangebrew.recipe;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.Locale;
+
 public class WaterProfile implements Comparable<WaterProfile> {
 	private String name;
 	private String description;
@@ -17,6 +21,7 @@ public class WaterProfile implements Comparable<WaterProfile> {
 	private double ph;
 	private double alkalinity;
     private String notes;
+    private Quantity amount;
 
     public WaterProfile() {
 		name = "Distilled/RO";
@@ -190,6 +195,12 @@ public class WaterProfile implements Comparable<WaterProfile> {
         tElement.setTextContent(this.notes);
         waterElement.appendChild(tElement);
 
+        if (this.amount != null && this.amount.getValue() != 0.0) {
+            tElement = recipeDocument.createElement("DISPLAY_AMOUNT");
+            tElement.setTextContent(this.amount.toString());
+            waterElement.appendChild(tElement);
+        }
+
         return waterElement;
     }
 	public int compareTo(WaterProfile w) {
@@ -199,5 +210,28 @@ public class WaterProfile implements Comparable<WaterProfile> {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public void setAmount(String newAmount) {
+        int i = newAmount.indexOf(" ");
+        String d = newAmount.substring(0,i);
+        String u = newAmount.substring(i);
+        Double dAmount = 0.0;
+        try {
+            NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
+            Number number = format.parse(d.trim());
+            dAmount = number.doubleValue();
+
+        } catch (NumberFormatException m) {
+            return;
+        } catch (ParseException e) {
+            return;
+        }
+        amount.setAmount(dAmount);
+        amount.setUnits(u.trim());
+    }
+
+    public Quantity getAmount() {
+        return amount;
     }
 }
