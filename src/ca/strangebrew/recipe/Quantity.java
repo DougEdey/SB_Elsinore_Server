@@ -24,6 +24,7 @@ public class Quantity {
     public static final String WEIGHT = "weight";
     public static final String VOLUME = "volume";
     public static final String PRESSURE = "pressure";
+    public static final String OTHER = "other";
 
     private String type; // can be vol, weight, or temp
 	private String unit = ""; // must match one of the known units
@@ -102,6 +103,11 @@ public class Quantity {
 		new Converter("bar", "bar", 0.068947635),
 		new Converter("atmospheres", "atm", 0.0680460253)
 	};
+
+    final static public Converter otherUnits[] =
+    {
+        new Converter("packages", "pkgs", 1)
+    };
 	// Get/Set:
 
 	public Quantity() {
@@ -291,6 +297,13 @@ public class Quantity {
 				return Quantity.PRESSURE;
 			}
 		}
+
+        for (int i = 0; i < otherUnits.length; i++) {
+            if (otherUnits[i].unit.equalsIgnoreCase(s) ||
+                    otherUnits[i].abrv.equalsIgnoreCase(s)) {
+                return Quantity.OTHER;
+            }
+        }
 
 		return "undefined";
 	}

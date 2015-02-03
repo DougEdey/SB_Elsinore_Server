@@ -20,7 +20,7 @@ public class Ingredient implements Comparable<Ingredient> {
 	Quantity amount = new Quantity();
 	private double costPerU;
 	private Date dateBought = new Date();
-	private String description="";
+	private String description = null;
 	private String name="";
 	private Quantity stock = new Quantity();
 	private String type;

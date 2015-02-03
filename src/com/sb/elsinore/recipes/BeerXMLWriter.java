@@ -458,37 +458,76 @@ public class BeerXMLWriter {
         tElement.setTextContent(yeast.getProductId());
         yeastElement.appendChild(tElement);
 
-        tElement = recipeDocument.createElement("MIN_TEMPERATURE");
-        tElement.setTextContent("" + yeast.getMinTemperature());
-        yeastElement.appendChild(tElement);
+        if (yeast.getMinTemperature() != 0.0) {
+            tElement = recipeDocument.createElement("MIN_TEMPERATURE");
+            tElement.setTextContent("" + yeast.getMinTemperature());
+            yeastElement.appendChild(tElement);
 
-        tElement = recipeDocument.createElement("MAX_TEMPERATURE");
-        tElement.setTextContent("" + yeast.getMaxTemperature());
-        yeastElement.appendChild(tElement);
+            tElement = recipeDocument.createElement("DISP_MIN_TEMP");
+            tElement.setTextContent(yeast.getMinTemperatureString());
+            yeastElement.appendChild(tElement);
+        }
 
-        tElement = recipeDocument.createElement("FLOCCULATION");
-        tElement.setTextContent("" + yeast.getFlocculation());
-        yeastElement.appendChild(tElement);
+        if (yeast.getMaxTemperature() != 0.0) {
+            tElement = recipeDocument.createElement("MAX_TEMPERATURE");
+            tElement.setTextContent("" + yeast.getMaxTemperature());
+            yeastElement.appendChild(tElement);
 
-        tElement = recipeDocument.createElement("NOTES");
-        tElement.setTextContent(yeast.getDescription());
-        yeastElement.appendChild(tElement);
+            tElement = recipeDocument.createElement("DISP_MAX_TEMP");
+            tElement.setTextContent(yeast.getMaxTemperatureString());
+            yeastElement.appendChild(tElement);
+        }
 
-        tElement = recipeDocument.createElement("BEST_FOR");
-        tElement.setTextContent(yeast.getBestFor());
-        yeastElement.appendChild(tElement);
+        if (yeast.getFlocculation() != null) {
+            tElement = recipeDocument.createElement("FLOCCULATION");
+            tElement.setTextContent("" + yeast.getFlocculation());
+            yeastElement.appendChild(tElement);
+        }
 
-        tElement = recipeDocument.createElement("TIMES_CULTURED");
-        tElement.setTextContent("" + yeast.getTimesCultured());
-        yeastElement.appendChild(tElement);
+        if (yeast.getDescription() != null) {
+            tElement = recipeDocument.createElement("NOTES");
+            tElement.setTextContent(yeast.getDescription());
+            yeastElement.appendChild(tElement);
+        }
 
-        tElement = recipeDocument.createElement("MAX_REUSE");
-        tElement.setTextContent("" + yeast.getMaxReuse());
-        yeastElement.appendChild(tElement);
+        if (yeast.getBestFor() != null) {
+            tElement = recipeDocument.createElement("BEST_FOR");
+            tElement.setTextContent(yeast.getBestFor());
+            yeastElement.appendChild(tElement);
+        }
 
+        if (yeast.getTimesCultured() > 0) {
+            tElement = recipeDocument.createElement("TIMES_CULTURED");
+            tElement.setTextContent("" + yeast.getTimesCultured());
+            yeastElement.appendChild(tElement);
+        }
+
+        if (yeast.getMaxReuse() > 0) {
+            tElement = recipeDocument.createElement("MAX_REUSE");
+            tElement.setTextContent("" + yeast.getMaxReuse());
+            yeastElement.appendChild(tElement);
+        }
+        
         tElement = recipeDocument.createElement("ADD_TO_SECONDARY");
         tElement.setTextContent(Boolean.toString(yeast.isAddToSecondary()));
         yeastElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("DISPLAY_AMOUNT");
+        tElement.setTextContent(yeast.getAmount().toString());
+        yeastElement.appendChild(tElement);
+
+
+        if (!yeast.getInventory().toString().equals("")) {
+            tElement = recipeDocument.createElement("INVENTORY");
+            tElement.setTextContent(yeast.getInventory().toString());
+            yeastElement.appendChild(tElement);
+        }
+
+        if (!yeast.getCultureDate().equals("")) {
+            tElement = recipeDocument.createElement("CULTURE_DATE");
+            tElement.setTextContent(yeast.getCultureDate());
+            yeastElement.appendChild(tElement);
+        }
         return yeastElement;
     }
 

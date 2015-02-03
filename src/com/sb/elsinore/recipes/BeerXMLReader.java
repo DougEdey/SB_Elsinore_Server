@@ -378,6 +378,11 @@ public class BeerXMLReader {
                 int timesCultured = getInteger(yeastItem, "TIMES_CULTURED", xp);
                 int maxReuse = getInteger(yeastItem, "MAX_REUSE", xp);
                 boolean addToSecondary = getBoolean(yeastItem, "ADD_TO_SECONDARY", xp, false);
+                String displayAmount = getString(yeastItem, "DISPLAY_AMOUNT", xp);
+                String dispMinTemp = getString(yeastItem, "DISP_MIN_TEMP", xp);
+                String dispMaxTemp = getString(yeastItem, "DISP_MAX_TEMP", xp);
+                String inventory = getString(yeastItem, "INVENTORY", xp);
+                String cultureDate = getString(yeastItem, "CULTURE_DATE", xp);
 
                 Yeast yeast = new Yeast();
                 yeast.setName(name);
@@ -394,12 +399,17 @@ public class BeerXMLReader {
                 yeast.setProductId(productId);
                 yeast.setMinTemperature(minTemperature);
                 yeast.setMaxTemperature(maxTemperature);
+                yeast.setMinTemperature(dispMinTemp);
+                yeast.setMaxTemperature(dispMaxTemp);
                 yeast.setFlocculation(flocculation);
                 yeast.setDescription(notes);
                 yeast.setBestFor(bestFor);
                 yeast.setTimesCultured(timesCultured);
                 yeast.setMaxReuse(maxReuse);
                 yeast.addToSecondary(addToSecondary);
+                yeast.setInventory(inventory);
+                yeast.setAmountAndUnits(displayAmount);
+                yeast.setCultureDate(cultureDate);
             } catch (NumberFormatException nfe) {
                 BrewServer.LOG.warning("Couldn't parse a number: "
                         + nfe.getMessage());
