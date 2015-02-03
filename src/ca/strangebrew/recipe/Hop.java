@@ -8,6 +8,8 @@
 
 package ca.strangebrew.recipe;
 
+import com.sb.elsinore.BrewServer;
+
 public class Hop extends Ingredient implements Comparable<Ingredient> {
 	private double alpha;
 	private String add;
@@ -136,7 +138,21 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
 			return (result == 0 ? -1 : result);
 		}
 	}
-	
-	
 
+
+    public void setTimeString(String timeString) {
+        String[] parts = timeString.split(" ");
+        try {
+            if (parts.length == 2) {
+                int period = Integer.parseInt(parts[0]);
+                if (parts[1].equals("days")) {
+                    period = period * 60 * 24;
+                }
+                this.setMinutes(period);
+            }
+        } catch (NumberFormatException nfe) {
+            BrewServer.LOG.info("Couldn't parse an integer.");
+            BrewServer.LOG.warning(nfe.getMessage());
+        }
+    }
 }

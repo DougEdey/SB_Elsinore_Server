@@ -202,11 +202,20 @@ public class BeerXMLReader {
             int time = (int) Math.round(Double.parseDouble(temp));
             String use = (String) xp.evaluate("USE",
                     hop, XPathConstants.STRING);
-
+            String displayAmount = (String) xp.evaluate("DISPLAY_AMOUNT",
+                    hop, XPathConstants.STRING);
+            String inventory = (String) xp.evaluate("INVENTORY",
+                    hop, XPathConstants.STRING);
+            String displayTime = (String) xp.evaluate("DISPLAY_TIME",
+                    hop, XPathConstants.STRING);
             Hop hopObject = new Hop();
             hopObject.setName(name);
             hopObject.setAlpha(alpha);
             hopObject.setAmountAs(amount, Quantity.KG);
+            // Extensions
+            if (displayAmount != null && !displayAmount.equals("")) {
+                hopObject.setAmountAndUnits(displayAmount);
+            }
 
             // Not all of these are used by beerxml 1.0
             if (use.equalsIgnoreCase("boil") || use.equalsIgnoreCase("aroma")
@@ -224,6 +233,13 @@ public class BeerXMLReader {
                 hopObject.setMinutes(time);
             }
 
+            if (inventory != null && !inventory.equals("")) {
+                hopObject.setInventory(inventory);
+            }
+
+            if (displayTime != null && !displayTime.equals("")) {
+                hopObject.setTimeString(displayTime);
+            }
             // Everything is OK here, so add it in.
             recipe.addHop(hopObject);
         }

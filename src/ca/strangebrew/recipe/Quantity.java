@@ -342,4 +342,13 @@ public class Quantity {
 		Quantity q = new Quantity(from,value);
 		return q.getValueAs(to);
 	}
+
+    /**
+     * Return the current Quantity as a string of "<volume> <units>"
+     * @return
+     */
+    @Override
+    public String toString() {
+        return this.getValue() + " " + this.getUnits();
+    }
 }

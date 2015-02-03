@@ -25,9 +25,10 @@ public class Ingredient implements Comparable<Ingredient> {
 	private Quantity stock = new Quantity();
 	private String type;
 	private boolean modified;
-	
-		
-	public Ingredient() {
+    private Quantity inventory = new Quantity();
+
+
+    public Ingredient() {
 		modified = true;
 	}
 	// override the equals so we can compare:
@@ -155,4 +156,31 @@ public class Ingredient implements Comparable<Ingredient> {
 		int result = this.getName().compareToIgnoreCase(i.getName());				
 		return result;				
 	}
+
+    public void setInventory(String inventory) {
+        int i = inventory.indexOf(" ");
+        String d = inventory.substring(0,i);
+        String u = inventory.substring(i);
+        Double dAmount = 0.0;
+        try {
+            NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
+            Number number = format.parse(d.trim());
+            dAmount = number.doubleValue();
+
+        } catch (NumberFormatException m) {
+            return;
+        } catch (ParseException e) {
+            return;
+        }
+        this.inventory.setAmount(dAmount);
+        this.inventory.setUnits(u.trim());
+    }
+
+    public Quantity getInventory() {
+        return inventory;
+    }
+
+    public Quantity getAmount() {
+        return amount;
+    }
 }

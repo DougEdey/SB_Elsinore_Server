@@ -209,6 +209,10 @@ public class BeerXMLWriter {
         if (recipe.getEquipmentProfile() != null) {
             recipeElement.appendChild(this.createEquipmentProfile(recipe.getEquipmentProfile(), recipeDocument));
         }
+
+        if (recipe.getMash() != null && recipe.getMash().getStepSize() > 0) {
+            recipeElement.appendChild(this.createMashProfile(recipe.getMash(), recipeDocument));
+        }
         return recipeElement;
     }
 
@@ -257,6 +261,27 @@ public class BeerXMLWriter {
 
         tElement = recipeDocument.createElement("FORM");
         tElement.setTextContent("" + hopAddition.getType());
+        hopElement.appendChild(tElement);
+
+        // Add Extensions
+        tElement = recipeDocument.createElement("DISPLAY_AMOUNT");
+        tElement.setTextContent(hopAddition.getAmount().toString());
+        hopElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("INVENTORY");
+        tElement.setTextContent(hopAddition.getInventory().toString());
+        hopElement.appendChild(tElement);
+
+        String unit = "min";
+        double hopTime = (double) hopAddition.getMinutes();
+        double daysDivider = 60 * 24;
+        if (hopTime > daysDivider) {
+            unit = "days";
+            hopTime = hopTime / daysDivider;
+        }
+
+        tElement = recipeDocument.createElement("DISPLAY_TIME");
+        tElement.setTextContent(hopTime + " " + unit);
         hopElement.appendChild(tElement);
 
         return hopElement;
