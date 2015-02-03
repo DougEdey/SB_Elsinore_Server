@@ -278,7 +278,20 @@ public class BeerXMLReader {
                 double amount = getDouble(fermentable, "AMOUNT", xp);
                 double color = getDouble(fermentable, "COLOR", xp);
                 double yield = getDouble(fermentable, "YIELD", xp);
-
+                boolean addAfterBoil = getBoolean(fermentable, "ADD_AFTER_BOIL", xp, false);
+                String notes = getString(fermentable, "NOTES", xp);
+                String origin = getString(fermentable, "ORIGIN", xp);
+                String supplier = getString(fermentable, "SUPPLIER", xp);
+                double coarseFineDiff = getDouble(fermentable, "COARSE_FINE_DIFF", xp);
+                double moisture = getDouble(fermentable, "MOISTURE", xp);
+                double diastaticPower = getDouble(fermentable, "DIASTATIC_POWER", xp);
+                double protein = getDouble(fermentable, "PROTEIN", xp);
+                double maxInBatch = getDouble(fermentable, "MAX_IN_BATCH", xp);
+                boolean recommendMash = getBoolean(fermentable, "RECOMMEND_MASH", xp, mashed);
+                double ibuGalPerLb = getDouble(fermentable, "IBU_GAL_PER_LB", xp);
+                String displayAmount = getString(fermentable, "DISPLAY_AMOUNT", xp);
+                String inventory = getString(fermentable, "INVENTORY", xp);
+                double potential = getDouble(fermentable, "POTENTIAL", xp);
 
                 Fermentable malt = new Fermentable();
                 malt.setName(name);
@@ -287,6 +300,20 @@ public class BeerXMLReader {
                 malt.setMashed(mashed);
                 malt.setAmount(amount);
                 malt.setUnits(Quantity.KG);
+                malt.setSteep(recommendMash);
+                malt.addAfterBoil(addAfterBoil);
+                malt.setOrigin(origin);
+                malt.setSupplier(supplier);
+                malt.setDescription(notes);
+                malt.setCoarseFineDiff(coarseFineDiff);
+                malt.setMoisture(moisture);
+                malt.setDiastaticPower(diastaticPower);
+                malt.setProtein(protein);
+                malt.setMaxInBatch(maxInBatch);
+                malt.setIbuGalPerLb(ibuGalPerLb);
+                malt.setAmountAndUnits(displayAmount);
+                malt.setInventory(inventory);
+                malt.setPppg(potential);
 
                 recipe.addMalt(malt);
             } catch (NumberFormatException nfe) {

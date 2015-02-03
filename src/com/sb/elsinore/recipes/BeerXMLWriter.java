@@ -1,6 +1,7 @@
 package com.sb.elsinore.recipes;
 
 import ca.strangebrew.recipe.*;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -329,6 +330,53 @@ public class BeerXMLWriter {
         tElement.setTextContent("" + maltAddition.getLov());
         fermentableElement.appendChild(tElement);
 
+        tElement = recipeDocument.createElement("ADD_AFTER_BOIL");
+        tElement.setTextContent(Boolean.toString(maltAddition.addAfterBoil()));
+        fermentableElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("NOTES");
+        tElement.setTextContent(maltAddition.getDescription());
+        fermentableElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("ORIGIN");
+        tElement.setTextContent(maltAddition.getOrigin());
+        fermentableElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("SUPPLIER");
+        tElement.setTextContent(maltAddition.getSupplier());
+        fermentableElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("COARSE_FINE_DIFF");
+        tElement.setTextContent("" + maltAddition.getCoarseFineDiff());
+        fermentableElement.appendChild(tElement);
+        tElement = recipeDocument.createElement("MOISTURE");
+        tElement.setTextContent("" + maltAddition.getMoisture());
+        fermentableElement.appendChild(tElement);
+        tElement = recipeDocument.createElement("DIASTATIC_POWER");
+        tElement.setTextContent("" + maltAddition.getDiastaticPower());
+        fermentableElement.appendChild(tElement);
+        tElement = recipeDocument.createElement("PROTEIN");
+        tElement.setTextContent("" + maltAddition.getProtein());
+        fermentableElement.appendChild(tElement);
+        tElement = recipeDocument.createElement("MAX_IN_BATCH");
+        tElement.setTextContent("" + maltAddition.getMaxInBatch());
+        fermentableElement.appendChild(tElement);
+        tElement = recipeDocument.createElement("RECOMMEND_MASH");
+        tElement.setTextContent("" + maltAddition.getSteep());
+        fermentableElement.appendChild(tElement);
+        tElement = recipeDocument.createElement("IBU_GAL_PER_LB");
+        tElement.setTextContent("" + maltAddition.getIbuGalPerLb());
+        fermentableElement.appendChild(tElement);
+        tElement = recipeDocument.createElement("DISPLAY_AMOUNT");
+        tElement.setTextContent(maltAddition.getAmount().toString());
+        fermentableElement.appendChild(tElement);
+        tElement = recipeDocument.createElement("INVENTORY");
+        tElement.setTextContent(maltAddition.getInventory().toString());
+        fermentableElement.appendChild(tElement);
+        tElement = recipeDocument.createElement("POTENTIAL");
+        tElement.setTextContent("" + maltAddition.getPppg());
+        fermentableElement.appendChild(tElement);
+        
         return fermentableElement;
     }
 

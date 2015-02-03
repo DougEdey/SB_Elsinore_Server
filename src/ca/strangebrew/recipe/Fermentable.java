@@ -21,8 +21,17 @@ public class Fermentable extends Ingredient  {
 	private boolean prime;
 	
 	final static private double basePppg = 1.047;
+    private boolean addAfterBoil = false;
+    private String origin;
+    private String supplier;
+    private double coarseFineDiff;
+    private double moisture;
+    private double diastaticPower;
+    private double ibuGalPerLb;
+    private double maxInBatch;
+    private double protein;
 
-	// constructors:
+    // constructors:
 	public Fermentable(String n, double p, double l, double a, String u) {
 		setName(n);
 		pppg = p;
@@ -106,4 +115,75 @@ public class Fermentable extends Ingredient  {
 	    return sb.toString();
 	}
 
+    public void addAfterBoil(boolean addAfterBoil) {
+        this.addAfterBoil = addAfterBoil;
+    }
+
+    public void setOrigin(String origin) {
+        this.origin = origin;
+    }
+
+    public String getOrigin() {
+        return origin;
+    }
+
+    public void setSupplier(String supplier) {
+        this.supplier = supplier;
+    }
+
+    public String getSupplier() {
+        return supplier;
+    }
+
+    public void setCoarseFineDiff(double coarseFineDiff) {
+        this.coarseFineDiff = coarseFineDiff;
+    }
+
+    public double getCoarseFineDiff() {
+        return coarseFineDiff;
+    }
+
+    public void setMoisture(double moisture) {
+        this.moisture = moisture;
+    }
+
+    public double getMoisture() {
+        return moisture;
+    }
+
+    public void setDiastaticPower(double diastaticPower) {
+        this.diastaticPower = diastaticPower;
+    }
+
+    public double getDiastaticPower() {
+        return diastaticPower;
+    }
+
+    public void setIbuGalPerLb(double ibuGalPerLb) {
+        this.ibuGalPerLb = ibuGalPerLb;
+    }
+
+    public double getIbuGalPerLb() {
+        return ibuGalPerLb;
+    }
+
+    public void setMaxInBatch(double maxInBatch) {
+        this.maxInBatch = maxInBatch;
+    }
+
+    public double getMaxInBatch() {
+        return maxInBatch;
+    }
+
+    public void setProtein(double protein) {
+        this.protein = protein;
+    }
+
+    public double getProtein() {
+        return protein;
+    }
+
+    public boolean addAfterBoil() {
+        return addAfterBoil;
+    }
 }
