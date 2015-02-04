@@ -2,6 +2,7 @@
 <component LANGUAGE_LEVEL="JDK_1_7" inheritJdk="true">
 	<output-test url="file://$MODULE_DIR$/target/test-classes"/>
 	<contentEntry url="file://$MODULE_DIR$">
+		<testFolder url="file://$MODULE_DIR$/src/test/java"/>
 		<excludeFolder url="file://$MODULE_DIR$/target"/>
 	</contentEntry>
 	<lib name="commons-logging-1.1.1.jar" scope="COMPILE">
@@ -22,6 +23,7 @@
 	<lib name="jGPIO.jar" scope="COMPILE">
 		<srcroot url="file:///jGPIO"/>
 	</lib>
+	<lib name="Maven: junit:junit:4.8.2" scope="TEST"/>
 	<levels>
 		<level name="Maven: commons-logging:commons-logging:1.1.1" value="project"/>
 		<level name="Maven: org.apache.httpcomponents:httpclient:4.2" value="project"/>
@@ -45,5 +47,6 @@
 		<level name="Maven: org.javassist:javassist:3.16.1-GA" value="project"/>
 		<level name="Maven: dom4j:dom4j:1.6.1" value="project"/>
 		<level name="Maven: xml-apis:xml-apis:1.0.b2" value="project"/>
+		<level name="Maven: junit:junit:4.8.2" value="project"/>
 	</levels>
 </component>
