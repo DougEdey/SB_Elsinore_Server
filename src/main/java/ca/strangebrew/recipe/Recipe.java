@@ -116,7 +116,7 @@ public class Recipe {
 	private String ibuCalcMethod  = "";
 	private double ibuHopUtil = 0.0;
 	private String evapMethod = "percent";
-	private String alcMethod = "";
+	private String alcMethod = BrewCalcs.ALC_BY_VOLUME;
 	private double pelletHopPct = 0.0;
 	private String bottleU = "";
 	private double bottleSize = 0.0;
@@ -144,6 +144,15 @@ public class Recipe {
 	private List<Note> notes = new ArrayList<Note>();
     private Equipment equipmentProfile;
     private Quantity preBoilVol = new Quantity();
+    private String tasteNotes;
+    private double tasteRating;
+    private double measuredOg;
+    private double measuredFg;
+    private String dateBrewed;
+    private double primeSugarEquiv;
+    private double kegPrimingFactor;
+    private String gravUnits = "SG";
+    private String carbMethod;
 
     // default constuctor
 	public Recipe() {
@@ -553,6 +562,9 @@ public class Recipe {
 	}
 
 	public void setIBUMethod(final String s) {
+        if (s == null || s.equals("")) {
+            return;
+        }
 		isDirty = true;
 		ibuCalcMethod = s;
 		calcHopsTotals();
@@ -663,6 +675,16 @@ public class Recipe {
 	public FermentStep getFermentStep(final int i) {
 		return fermentationSteps.get(i);
 	}
+
+    public FermentStep getFermentStep(final String stepType) {
+        for(FermentStep fs: fermentationSteps) {
+            if (fs.getType().equals(stepType)) {
+                return fs;
+            }
+        }
+
+        return new FermentStep();
+    }
 
 	public int getTotalFermentTime() {
 		return totalFermentTime;
@@ -1882,5 +1904,121 @@ public class Recipe {
 
     public Equipment getEquipmentProfile() {
         return equipmentProfile;
+    }
+
+    public void setTasteNotes(String tasteNotes) {
+        this.tasteNotes = tasteNotes;
+    }
+
+    public String getTasteNotes() {
+        return tasteNotes;
+    }
+
+    public void setTasteRating(double tasteRating) {
+        this.tasteRating = tasteRating;
+    }
+
+    public double getTasteRating() {
+        return tasteRating;
+    }
+
+    public void setMeasuredOg(double measuredOg) {
+        this.measuredOg = measuredOg;
+    }
+
+    public double getMeasuredOg() {
+        return measuredOg;
+    }
+
+    public void setMeasuredFg(double measuredFg) {
+        this.measuredFg = measuredFg;
+    }
+
+    public double getMeasuredFg() {
+        return measuredFg;
+    }
+
+    public void setDateBrewed(String dateBrewed) {
+        this.dateBrewed = dateBrewed;
+    }
+
+    public String getDateBrewed() {
+        return dateBrewed;
+    }
+
+    public void setPrimeSugarEquiv(double primeSugarEquiv) {
+        this.primeSugarEquiv = primeSugarEquiv;
+    }
+
+    public double getPrimeSugarEquiv() {
+        return primeSugarEquiv;
+    }
+
+    public void setKegPrimingFactor(double kegPrimingFactor) {
+        this.kegPrimingFactor = kegPrimingFactor;
+    }
+
+    public double getKegPrimingFactor() {
+        return kegPrimingFactor;
+    }
+
+    public double getMeasuredAlcohol() {
+        return BrewCalcs.calcAlcohol(getAlcMethod(), measuredOg, measuredFg);
+    }
+
+    public double getMeasuredEfficiency() {
+        double possiblePoints = 0;
+        for (int i = 0; i < fermentables.size(); i++) {
+            final Fermentable m = fermentables.get(i);
+            possiblePoints += (m.getPppg() - 1) * m.getAmountAs(Quantity.LB) / getPostBoilVol(Quantity.GAL);
+        }
+        return (measuredOg - 1) / possiblePoints * 100;
+    }
+
+    public String calcCalories() {
+        double alcCal = 1881.22 * measuredFg  * (measuredOg - measuredFg) / (1.775 - measuredOg);
+        double carbCal = 3550.0 * measuredFg * ((0.1808 * measuredOg) + (0.8192 * measuredFg) - 1.0004);
+
+        double totalCal = alcCal + carbCal;
+        return Double.toString(totalCal) + "Cal/12oz";
+    }
+
+    public String getGravUnits() {
+        return gravUnits;
+    }
+
+    public void setPostBoil(String display_batch_size) {
+        if (display_batch_size == null || display_batch_size.equals("")) {
+            return;
+        }
+
+        this.postBoilVol = new Quantity(display_batch_size);
+    }
+
+    public void setPreBoil(String preBoilString) {
+        if (preBoilString == null || preBoilString.equals("")) {
+            return;
+        }
+        Quantity p = new Quantity(preBoilString);
+        // The one-true-volume is postBoil.. so calc it, and set it
+        if (this.equipmentProfile != null && this.equipmentProfile.isCalcBoilVol()) {
+            Quantity post = new Quantity(getVolUnits(), p.getValueAs(getVolUnits()) - getEvapVol(getVolUnits())
+                    - getChillShrinkVol(getVolUnits()));
+            setPostBoil(post);
+        } else {
+            this.preBoilVol = p;
+        }
+    }
+
+    public void setCarbMethod(String carbMethod) {
+        this.carbMethod = carbMethod;
+    }
+
+    public String getCarbMethod() {
+        return carbMethod;
+    }
+
+    public void setMash(Mash mash) {
+        this.mash = mash;
     }
 }

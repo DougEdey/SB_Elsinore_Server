@@ -74,4 +74,16 @@ public class FermentStep implements Comparable<FermentStep> {
 //					result = fA.getTime() - fB.getTime();
 //				}			
 	}
+
+    public void convertTo(String newU) {
+        if (this.tempU.equalsIgnoreCase(newU)) {
+            return;
+        }
+        if (newU.equals("F")) {
+            this.temp = BrewCalcs.cToF(this.temp);
+        } else {
+            this.temp = BrewCalcs.fToC(this.temp);
+        }
+        this.tempU = newU;
+    }
 }

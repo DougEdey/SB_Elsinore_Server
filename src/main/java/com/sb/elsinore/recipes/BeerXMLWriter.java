@@ -1,7 +1,6 @@
 package com.sb.elsinore.recipes;
 
 import ca.strangebrew.recipe.*;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -143,23 +142,179 @@ public class BeerXMLWriter {
         recipeElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("BATCH_SIZE");
-        tElement.setTextContent("" + recipe.getPostBoilVol(Quantity.LITRES));
+        tElement.setTextContent(String.format("%.6f", recipe.getPostBoilVol(Quantity.LITRES)));
         recipeElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("BOIL_SIZE");
-        tElement.setTextContent("" + recipe.getPreBoilVol(Quantity.LITRES));
+        tElement.setTextContent(String.format("%.6f", recipe.getPreBoilVol(Quantity.LITRES)));
         recipeElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("BOIL_TIME");
-        tElement.setTextContent("" + recipe.getBoilMinutes());
+        tElement.setTextContent(Integer.toString(recipe.getBoilMinutes()));
         recipeElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("EFFICIENCY");
-        tElement.setTextContent("" + recipe.getEfficiency());
+        tElement.setTextContent(String.format("%.6f", recipe.getEfficiency()));
         recipeElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("NOTES");
         tElement.setTextContent(recipe.getComments());
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("TASTE_NOTES");
+        tElement.setTextContent(recipe.getTasteNotes());
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("TASTE_RATING");
+        tElement.setTextContent(String.format("%.6f", recipe.getTasteRating()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("OG");
+        tElement.setTextContent(String.format("%.3f", recipe.getMeasuredOg()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("FG");
+        tElement.setTextContent(String.format("%.3f", recipe.getMeasuredFg()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("FERMENTATION_STAGES");
+        tElement.setTextContent(Integer.toString(recipe.getFermentStepSize()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("PRIMARY_AGE");
+        tElement.setTextContent(Integer.toString(recipe.getFermentStep(FermentStep.PRIMARY).getTime()));
+        recipeElement.appendChild(tElement);
+        tElement = recipeDocument.createElement("PRIMARY_TEMP");
+        tElement.setTextContent(String.format("%.6f", recipe.getFermentStep(FermentStep.PRIMARY).getTemp()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("SECONDARY_AGE");
+        tElement.setTextContent(Integer.toString(recipe.getFermentStep(FermentStep.SECONDARY).getTime()));
+        recipeElement.appendChild(tElement);
+        tElement = recipeDocument.createElement("SECONDARY_TEMP");
+        tElement.setTextContent(String.format("%.6f", recipe.getFermentStep(FermentStep.SECONDARY).getTemp()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("TERTIARY_AGE");
+        tElement.setTextContent(Integer.toString(recipe.getFermentStep(FermentStep.CLEARING).getTime()));
+        recipeElement.appendChild(tElement);
+        tElement = recipeDocument.createElement("TERIARY_TEMP");
+        tElement.setTextContent(String.format("%.6f", recipe.getFermentStep(FermentStep.CLEARING).getTemp()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("AGE");
+        tElement.setTextContent(Integer.toString(recipe.getFermentStep(FermentStep.AGEING).getTime()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("AGE_TEMP");
+        tElement.setTextContent(String.format("%.6f", recipe.getFermentStep(FermentStep.AGEING).getTemp()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("DATE");
+        tElement.setTextContent(recipe.getDateBrewed());
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("CARBONATION");
+        tElement.setTextContent(String.format("%.6f", recipe.getTargetVol()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("FORCED_CARBONATION");
+        tElement.setTextContent(Boolean.toString(recipe.isKegged()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("PRIMING_SUGAR_NAME");
+        tElement.setTextContent(recipe.getDateBrewed());
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("CARBONATION_TEMP");
+        tElement.setTextContent(String.format("%.6f", recipe.getBottleTemp()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("PRIMING_SUGAR_EQUIV");
+        tElement.setTextContent(String.format("%.6f", recipe.getPrimeSugarEquiv()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("KEG_PRIMING_FACTOR");
+        tElement.setTextContent(String.format("%.6f", recipe.getKegPrimingFactor()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("EST_OG");
+        tElement.setTextContent(String.format("%.3f", recipe.getEstOg()));
+        recipeElement.appendChild(tElement);
+        tElement = recipeDocument.createElement("EST_FG");
+        tElement.setTextContent(String.format("%.3f", recipe.getEstFg()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("EST_COLOR");
+        tElement.setTextContent(String.format("%.6f", recipe.getColour()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("IBU");
+        tElement.setTextContent(String.format("%.6f", recipe.getIbu()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("IBU_METHOD");
+        tElement.setTextContent(recipe.getIBUMethod());
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("EST_ABV");
+        tElement.setTextContent(String.format("%.6f", recipe.getAlcohol()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("ABV");
+        tElement.setTextContent(String.format("%.6f", recipe.getMeasuredAlcohol()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("ACTUAL_EFFICIENCY");
+        tElement.setTextContent(String.format("%.6f", recipe.getMeasuredEfficiency()));
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("CALORIES");
+        tElement.setTextContent(recipe.calcCalories());
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("DISPLAY_BATCH_SIZE");
+        tElement.setTextContent(recipe.getPostBoilVol().toString());
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("DISPLAY_BOIL_SIZE");
+        tElement.setTextContent(recipe.getPreBoilVol(recipe.getPostBoilVol().getUnits()) + " " + recipe.getPostBoilVol().getUnits());
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("DISPLAY_OG");
+        tElement.setTextContent(recipe.getMeasuredOg() + recipe.getGravUnits());
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("DISPLAY_FG");
+        tElement.setTextContent(recipe.getMeasuredFg() + recipe.getGravUnits());
+        recipeElement.appendChild(tElement);
+
+        FermentStep fs = recipe.getFermentStep(FermentStep.PRIMARY);
+        tElement = recipeDocument.createElement("DISPLAY_PRIMARY_TEMP");
+        tElement.setTextContent(String.format("%.6f", fs.getTemp()) + " " + fs.getTempU());
+        recipeElement.appendChild(tElement);
+
+        fs = recipe.getFermentStep(FermentStep.SECONDARY);
+        tElement = recipeDocument.createElement("DISPLAY_SECONDARY_TEMP");
+        tElement.setTextContent(String.format("%.6f", fs.getTemp()) + " " + fs.getTempU());
+        recipeElement.appendChild(tElement);
+
+        fs = recipe.getFermentStep(FermentStep.CLEARING);
+        tElement = recipeDocument.createElement("DISPLAY_TERTIARY_TEMP");
+        tElement.setTextContent(String.format("%.6f", fs.getTemp()) + " " + fs.getTempU());
+        recipeElement.appendChild(tElement);
+
+        fs = recipe.getFermentStep(FermentStep.AGEING);
+        tElement = recipeDocument.createElement("DISPLAY_AGE_TEMP");
+        tElement.setTextContent(String.format("%.6f", fs.getTemp()) + " " + fs.getTempU());
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("DISPLAY_CARB_TEMP");
+        tElement.setTextContent(String.format("%.6f", recipe.getBottleTemp()) + " " + recipe.getCarbTempU());
+        recipeElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("CARBONATION_USED");
+        tElement.setTextContent(recipe.getCarbMethod());
         recipeElement.appendChild(tElement);
 
         Element hopsElement = recipeDocument.createElement("HOPS");
@@ -236,11 +391,11 @@ public class BeerXMLWriter {
         hopElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("ALPHA");
-        tElement.setTextContent("" + hopAddition.getAlpha());
+        tElement.setTextContent(String.format("%.6f", hopAddition.getAlpha()));
         hopElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("AMOUNT");
-        tElement.setTextContent(Double.toString(hopAddition.getAmountAs(
+        tElement.setTextContent(String.format("%.6f", hopAddition.getAmountAs(
                 Quantity.KILOGRAMS)));
         hopElement.appendChild(tElement);
 
@@ -249,27 +404,27 @@ public class BeerXMLWriter {
         hopElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("TIME");
-        tElement.setTextContent("" + hopAddition.getMinutes());
+        tElement.setTextContent(Integer.toString(hopAddition.getMinutes()));
         hopElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("NOTES");
-        tElement.setTextContent("" + hopAddition.getDescription());
+        tElement.setTextContent(hopAddition.getDescription());
         hopElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("TYPE");
-        tElement.setTextContent("" + hopAddition.getType());
+        tElement.setTextContent(hopAddition.getType());
         hopElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("FORM");
-        tElement.setTextContent("" + hopAddition.getType());
+        tElement.setTextContent(hopAddition.getType());
         hopElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("BETA");
-        tElement.setTextContent("" + hopAddition.getBeta());
+        tElement.setTextContent(String.format("%.6f", hopAddition.getBeta()));
         hopElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("HSI");
-        tElement.setTextContent("" + hopAddition.getHsi());
+        tElement.setTextContent(String.format("%.6f", hopAddition.getHsi()));
         hopElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("ORIGIN");
@@ -281,19 +436,19 @@ public class BeerXMLWriter {
         hopElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("HUMULENE");
-        tElement.setTextContent("" + hopAddition.getHumulene());
+        tElement.setTextContent(String.format("%.6f", hopAddition.getHumulene()));
         hopElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("CARYOPHYLLENE");
-        tElement.setTextContent("" + hopAddition.getCaryophyllene());
+        tElement.setTextContent(String.format("%.6f", hopAddition.getCaryophyllene()));
         hopElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("COHUMULONE");
-        tElement.setTextContent("" + hopAddition.getCohumulone());
+        tElement.setTextContent(String.format("%.6f", hopAddition.getCohumulone()));
         hopElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("MYRCENE");
-        tElement.setTextContent("" + hopAddition.getMyrcene());
+        tElement.setTextContent(String.format("%.6f", hopAddition.getMyrcene()));
         hopElement.appendChild(tElement);
 
         // Add Extensions
@@ -355,11 +510,11 @@ public class BeerXMLWriter {
         double gravity = maltAddition.getPppg();
         double yield = ((gravity - 1) / (1.046 - 1)) * 100;
         tElement = recipeDocument.createElement("YIELD");
-        tElement.setTextContent("" + yield);
+        tElement.setTextContent(String.format("%.0f", yield));
         fermentableElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("COLOR");
-        tElement.setTextContent("" + maltAddition.getLov());
+        tElement.setTextContent(String.format("%.6f", maltAddition.getLov()));
         fermentableElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("ADD_AFTER_BOIL");
@@ -379,25 +534,25 @@ public class BeerXMLWriter {
         fermentableElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("COARSE_FINE_DIFF");
-        tElement.setTextContent("" + maltAddition.getCoarseFineDiff());
+        tElement.setTextContent(String.format("%.6f", maltAddition.getCoarseFineDiff()));
         fermentableElement.appendChild(tElement);
         tElement = recipeDocument.createElement("MOISTURE");
-        tElement.setTextContent("" + maltAddition.getMoisture());
+        tElement.setTextContent(String.format("%.6f", maltAddition.getMoisture()));
         fermentableElement.appendChild(tElement);
         tElement = recipeDocument.createElement("DIASTATIC_POWER");
-        tElement.setTextContent("" + maltAddition.getDiastaticPower());
+        tElement.setTextContent(String.format("%.6f", maltAddition.getDiastaticPower()));
         fermentableElement.appendChild(tElement);
         tElement = recipeDocument.createElement("PROTEIN");
-        tElement.setTextContent("" + maltAddition.getProtein());
+        tElement.setTextContent(String.format("%.6f", maltAddition.getProtein()));
         fermentableElement.appendChild(tElement);
         tElement = recipeDocument.createElement("MAX_IN_BATCH");
-        tElement.setTextContent("" + maltAddition.getMaxInBatch());
+        tElement.setTextContent(String.format("%.6f", maltAddition.getMaxInBatch()));
         fermentableElement.appendChild(tElement);
         tElement = recipeDocument.createElement("RECOMMEND_MASH");
-        tElement.setTextContent("" + maltAddition.getSteep());
+        tElement.setTextContent(Boolean.toString(maltAddition.getSteep()));
         fermentableElement.appendChild(tElement);
         tElement = recipeDocument.createElement("IBU_GAL_PER_LB");
-        tElement.setTextContent("" + maltAddition.getIbuGalPerLb());
+        tElement.setTextContent(String.format("%.6f", maltAddition.getIbuGalPerLb()));
         fermentableElement.appendChild(tElement);
         tElement = recipeDocument.createElement("DISPLAY_AMOUNT");
         tElement.setTextContent(maltAddition.getAmount().toString());
@@ -406,7 +561,7 @@ public class BeerXMLWriter {
         tElement.setTextContent(maltAddition.getInventory().toString());
         fermentableElement.appendChild(tElement);
         tElement = recipeDocument.createElement("POTENTIAL");
-        tElement.setTextContent("" + maltAddition.getPppg());
+        tElement.setTextContent(String.format("%.6f", maltAddition.getPppg()));
         fermentableElement.appendChild(tElement);
 
         return fermentableElement;
@@ -431,7 +586,7 @@ public class BeerXMLWriter {
         yeastElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("ATTENUATION");
-        tElement.setTextContent("" + yeast.getAttenuation());
+        tElement.setTextContent(String.format("%.6f", yeast.getAttenuation()));
         yeastElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("TYPE");
@@ -443,7 +598,7 @@ public class BeerXMLWriter {
         yeastElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("AMOUNT");
-        tElement.setTextContent("" + yeast.getAmount().getValue());
+        tElement.setTextContent(String.format("%.6f", yeast.getAmount().getValue()));
         yeastElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("AMOUNT_IS_WEIGHT");
@@ -460,7 +615,7 @@ public class BeerXMLWriter {
 
         if (yeast.getMinTemperature() != 0.0) {
             tElement = recipeDocument.createElement("MIN_TEMPERATURE");
-            tElement.setTextContent("" + yeast.getMinTemperature());
+            tElement.setTextContent(String.format("%.6f", yeast.getMinTemperature()));
             yeastElement.appendChild(tElement);
 
             tElement = recipeDocument.createElement("DISP_MIN_TEMP");
@@ -470,7 +625,7 @@ public class BeerXMLWriter {
 
         if (yeast.getMaxTemperature() != 0.0) {
             tElement = recipeDocument.createElement("MAX_TEMPERATURE");
-            tElement.setTextContent("" + yeast.getMaxTemperature());
+            tElement.setTextContent(String.format("%.6f", yeast.getMaxTemperature()));
             yeastElement.appendChild(tElement);
 
             tElement = recipeDocument.createElement("DISP_MAX_TEMP");
@@ -480,7 +635,7 @@ public class BeerXMLWriter {
 
         if (yeast.getFlocculation() != null) {
             tElement = recipeDocument.createElement("FLOCCULATION");
-            tElement.setTextContent("" + yeast.getFlocculation());
+            tElement.setTextContent(yeast.getFlocculation());
             yeastElement.appendChild(tElement);
         }
 
@@ -498,13 +653,13 @@ public class BeerXMLWriter {
 
         if (yeast.getTimesCultured() > 0) {
             tElement = recipeDocument.createElement("TIMES_CULTURED");
-            tElement.setTextContent("" + yeast.getTimesCultured());
+            tElement.setTextContent(String.format("%.6f", yeast.getTimesCultured()));
             yeastElement.appendChild(tElement);
         }
 
         if (yeast.getMaxReuse() > 0) {
             tElement = recipeDocument.createElement("MAX_REUSE");
-            tElement.setTextContent("" + yeast.getMaxReuse());
+            tElement.setTextContent(Integer.toString(yeast.getMaxReuse()));
             yeastElement.appendChild(tElement);
         }
         
@@ -559,43 +714,43 @@ public class BeerXMLWriter {
         styleElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("OG_MIN");
-        tElement.setTextContent("" + style.getOgLow());
+        tElement.setTextContent(String.format("%.6f", style.getOgLow()));
         styleElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("OG_MAX");
-        tElement.setTextContent("" + style.getOgHigh());
+        tElement.setTextContent(String.format("%.6f", style.getOgHigh()));
         styleElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("FG_MIN");
-        tElement.setTextContent("" + style.getFgLow());
+        tElement.setTextContent(String.format("%.6f", style.getFgLow()));
         styleElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("FG_MAX");
-        tElement.setTextContent("" + style.getFgHigh());
+        tElement.setTextContent(String.format("%.6f", style.getFgHigh()));
         styleElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("IBU_MIN");
-        tElement.setTextContent("" + style.getIbuLow());
+        tElement.setTextContent(String.format("%.6f", style.getIbuLow()));
         styleElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("IBU_MAX");
-        tElement.setTextContent("" + style.getIbuHigh());
+        tElement.setTextContent(String.format("%.6f", style.getIbuHigh()));
         styleElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("COLOR_MIN");
-        tElement.setTextContent("" + style.getSrmLow());
+        tElement.setTextContent(String.format("%.6f", style.getSrmLow()));
         styleElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("COLOR_MAX");
-        tElement.setTextContent("" + style.getSrmHigh());
+        tElement.setTextContent(String.format("%.6f", style.getSrmHigh()));
         styleElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("ABV_MIN");
-        tElement.setTextContent("" + style.getAlcLow());
+        tElement.setTextContent(String.format("%.6f", style.getAlcLow()));
         styleElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("ABV_MAX");
-        tElement.setTextContent("" + style.getAlcHigh());
+        tElement.setTextContent(String.format("%.6f", style.getAlcHigh()));
         styleElement.appendChild(tElement);
 
         return styleElement;
@@ -679,7 +834,7 @@ public class BeerXMLWriter {
         mashElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("TUN_TEMP");
-        tElement.setTextContent(mash.getName());
+        tElement.setTextContent(Double.toString(mash.getTunTemp()));
         mashElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("SPARGE_TEMP");
@@ -691,7 +846,7 @@ public class BeerXMLWriter {
         mashElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("TUN_WEIGHT");
-        tElement.setTextContent(Double.toString(mash.getTunWeight()));
+        tElement.setTextContent(Double.toString(mash.getTunWeight().getValueAs(Quantity.KG)));
         mashElement.appendChild(tElement);
 
         tElement = recipeDocument.createElement("TUN_SPECIFIC_HEAT");
@@ -702,12 +857,44 @@ public class BeerXMLWriter {
         tElement.setTextContent(Boolean.toString(mash.isTunAdjust()));
         mashElement.appendChild(tElement);
 
+        tElement = recipeDocument.createElement("DISPLAY_GRAIN_TEMP");
+        String tempString;
+        if (mash.getMashTempUnits().equalsIgnoreCase("F")) {
+            tempString = Double.toString(BrewCalcs.cToF(mash.getGrainTemp()));
+        } else {
+            tempString = Double.toString(mash.getGrainTemp());
+        }
+        tElement.setTextContent(tempString + " " + mash.getMashTempUnits());
+        mashElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("DISPLAY_TUN_TEMP");
+        if (mash.getMashTempUnits().equalsIgnoreCase("F")) {
+            tempString = Double.toString(BrewCalcs.cToF(mash.getTunTemp()));
+        } else {
+            tempString = Double.toString(mash.getTunTemp());
+        }
+        tElement.setTextContent(tempString + " " + mash.getMashTempUnits());
+        mashElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("DISPLAY_SPARGE_TEMP");
+        if (mash.getMashTempUnits().equalsIgnoreCase("F")) {
+            tempString = Double.toString(BrewCalcs.cToF(mash.getSpargeTemp()));
+        } else {
+            tempString = Double.toString(mash.getSpargeTemp());
+        }
+        tElement.setTextContent(tempString + " " + mash.getMashTempUnits());
+        mashElement.appendChild(tElement);
+
+        tElement = recipeDocument.createElement("DISPLAY_TUN_WEIGHT");
+        tElement.setTextContent(mash.getTunWeight().toString());
+        mashElement.appendChild(tElement);
+
         Element stepsElement = recipeDocument.createElement("MASH_STEPS");
         for (int i = 0; i < mash.getStepSize(); i++) {
             Element stepElement = recipeDocument.createElement("MASH_STEP");
 
             tElement = recipeDocument.createElement("NAME");
-            tElement.setTextContent(mash.getStepMethod(i));
+            tElement.setTextContent(mash.getStepName(i));
             stepElement.appendChild(tElement);
 
             tElement = recipeDocument.createElement("TYPE");
@@ -715,11 +902,13 @@ public class BeerXMLWriter {
             stepElement.appendChild(tElement);
 
             tElement = recipeDocument.createElement("INFUSE_AMOUNT");
-            tElement.setTextContent(Double.toString(mash.getStepInVol(i)));
+            if (!mash.getStepMethod(i).startsWith(Mash.DECOCTION)) {
+                tElement.setTextContent(Double.toString(mash.getStepInQuantity(i).getValueAs(Quantity.LITRES)));
+            }
             stepElement.appendChild(tElement);
 
             tElement = recipeDocument.createElement("STEP_TEMP");
-            tElement.setTextContent(Double.toString(mash.getStepTemp(i)));
+            tElement.setTextContent(Double.toString(mash.getStepStartTemp(i)));
             stepElement.appendChild(tElement);
 
             tElement = recipeDocument.createElement("STEP_TIME");
@@ -732,6 +921,34 @@ public class BeerXMLWriter {
 
             tElement = recipeDocument.createElement("END_TEMP");
             tElement.setTextContent(Double.toString(mash.getStepEndTemp(i)));
+            stepElement.appendChild(tElement);
+
+            tElement = recipeDocument.createElement("DESCRIPTION");
+            tElement.setTextContent(mash.getStepDirections(i));
+            stepElement.appendChild(tElement);
+
+            tElement = recipeDocument.createElement("WATER_GRAIN_RATIO");
+            tElement.setTextContent(mash.getMashRatio(i) + " " + mash.getMashRatioU(i));
+            stepElement.appendChild(tElement);
+
+            tElement = recipeDocument.createElement("DECOCTION_AMOUNT");
+            if (mash.getStepMethod(i).startsWith(Mash.DECOCTION)) {
+                tElement.setTextContent(mash.getStepInQuantity(i).toString());
+            }
+            stepElement.appendChild(tElement);
+
+            tElement = recipeDocument.createElement("INFUSE_TEMP");
+            if (!mash.getStepMethod(i).startsWith(Mash.DECOCTION)) {
+                tElement.setTextContent(mash.getDisplayStrikeTemp(i));
+            }
+            stepElement.appendChild(tElement);
+
+            tElement = recipeDocument.createElement("DISPLAY_STEP_TEMP");
+            tElement.setTextContent(mash.getDisplayStepStartTemp(i));
+            stepElement.appendChild(tElement);
+
+            tElement = recipeDocument.createElement("DISPLAY_INFUSE_AMT");
+            tElement.setTextContent(mash.getStepInQuantity(i).toString());
             stepElement.appendChild(tElement);
 
             stepsElement.appendChild(stepElement);

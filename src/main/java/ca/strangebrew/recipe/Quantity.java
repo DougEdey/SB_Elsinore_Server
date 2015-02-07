@@ -8,8 +8,11 @@
 
 package ca.strangebrew.recipe;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author aavis
@@ -30,6 +33,25 @@ public class Quantity {
 	private String unit = ""; // must match one of the known units
 	private String abrv; // ditto
 	private double value;
+
+    public Quantity(String stringValue) {
+        int i = stringValue.indexOf(" ");
+        String d = stringValue.substring(0,i);
+        String u = stringValue.substring(i);
+        Double dAmount = 0.0;
+        try {
+            NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
+            Number number = format.parse(d.trim());
+            dAmount = number.doubleValue();
+
+        } catch (NumberFormatException m) {
+            return;
+        } catch (ParseException e) {
+            return;
+        }
+        this.setAmount(dAmount);
+        this.setUnits(u.trim());
+    }
 
     public static String getUnitType(String units) {
         return null;

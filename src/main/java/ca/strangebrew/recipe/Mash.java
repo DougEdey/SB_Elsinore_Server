@@ -28,7 +28,7 @@ public class Mash {
 	
 	// private double thermalMass;
 	private double tunLossF;
-	private Quantity deadSpace;
+	private Quantity deadSpace = new Quantity();
 	private double thinDecoctRatio;
 	private double thickDecoctRatio;
 	private double cerealMashTemp;
@@ -81,9 +81,10 @@ public class Mash {
     private double tunTemp;
     private double spargeTemp;
     private double ph;
-    private double tunWeight;
+    private Quantity tunWeight;
     private double tunSpecificHeat;
     private boolean tunAdjust;
+    private double totalMashLbs;
 
 
     public Mash(String name, Recipe recipe){
@@ -124,10 +125,16 @@ public class Mash {
     }
 
     public void setTunWeight(double tunWeight) {
-        this.tunWeight = tunWeight;
+        this.tunWeight = new Quantity();
+        this.tunWeight.setUnits(Quantity.KG);
+        this.tunWeight.setAmount(tunWeight);
     }
 
-    public double getTunWeight() {
+    public void setTunWeight(String weightString) {
+        this.tunWeight = new Quantity(weightString);
+    }
+
+    public Quantity getTunWeight() {
         return tunWeight;
     }
 
@@ -147,6 +154,57 @@ public class Mash {
         return tunAdjust;
     }
 
+    public double getMashRatio(int i) {
+        return steps.get(i).getMashRatio();
+    }
+
+    public String getMashRatioU(int i) {
+        return steps.get(i).getMashRatioU();
+    }
+
+    public String getStepInfuseTemp(int i) {
+        return steps.get(i).getInfuseTemp();
+    }
+
+    public String getStepTempU(int i) {
+        return steps.get(i).getStrikeTempU();
+    }
+
+    public String getStepName(int i) {
+        return steps.get(i).getName();
+    }
+
+    public double getStrikeTemp(int i) {
+        return steps.get(i).getStrikeTemp();
+    }
+
+    public String getDisplayStrikeTemp(int i) {
+        MashStep s = steps.get(i);
+        double temp = s.getStrikeTemp();
+        if (s.getStrikeTempU().equals("F")) {
+            temp = BrewCalcs.cToF(s.getStrikeTemp());
+        }
+
+        return temp + " " + s.getStrikeTempU();
+    }
+
+    public String getDisplayStepStartTemp(int i) {
+        MashStep s = steps.get(i);
+        double temp = s.getStartTemp();
+        if (s.getStrikeTempU().equals("F")) {
+            temp = BrewCalcs.cToF(s.getStartTemp());
+        }
+
+        return temp + " " + s.getStrikeTempU();
+    }
+
+    public double getTotalMashLbs() {
+        myRecipe.setAllowRecalcs(true);
+        myRecipe.calcMaltTotals();
+        myRecipe.setAllowRecalcs(false);
+        return myRecipe.getTotalMashLbs();
+    }
+
     public class MashStep implements Comparable<MashStep> {
 		private String type;
 		private double startTemp;
@@ -160,8 +218,15 @@ public class Mash {
 		
 		public Quantity inVol = new Quantity();
 		public Quantity outVol = new Quantity();
-		
-		// public Quantity decoctVol = new Quantity();
+        private double infuseTemp;
+        private String infuseTempUnit;
+        private double mashRatio;
+        private String mashRatioU;
+        private String strikeTempU;
+        private double strikeTemp;
+        private String name;
+
+        // public Quantity decoctVol = new Quantity();
 
 		public MashStep(String type, double startTemp, double endTemp, String method, int min,
 				int rmin) {
@@ -267,16 +332,86 @@ public class Mash {
 		public int compareTo(MashStep m) {
 				int result = ((Double)this.getStartTemp()).compareTo((Double)m.getStartTemp());
 				return (result == 0 ? -1 : result);
-		}		
-	}
+		}
 
-	public void addStep(String type, double st, double et, String m, int min,
-			int rmin, double weight) {
-		MashStep step = new MashStep(type, st, et, m, min, rmin);
-		if (m.equals(CEREAL_MASH))
-			step.weightLbs = weight;
+        public void setInVol(double infuseAmount) {
+            this.inVol.setUnits(Quantity.LITRES);
+            this.inVol.setAmount(infuseAmount);
+        }
+
+        public void setInfuseTemp(String infuseTemp) {
+            String[] split = infuseTemp.trim().split(" ");
+            try {
+                this.infuseTemp = Double.parseDouble(split[0].trim());
+                this.infuseTempUnit = split[1].trim();
+            } catch (NumberFormatException nfe) {
+                System.out.println("Couldn't parse: " + split[0] + " as a number.");
+                nfe.printStackTrace();
+            }
+        }
+
+        public String getInfuseTemp() {
+            return infuseTemp + " " + this.getStrikeTempU();
+        }
+
+        public void setMashRatio(String mashRatio) {
+            try {
+                this.mashRatio = Double.parseDouble(mashRatio);
+            } catch (NumberFormatException nfe) {
+                nfe.printStackTrace();
+            }
+        }
+
+        public double getMashRatio() {
+            return mashRatio;
+        }
+
+        public void setMashRatioU(String mashRatioU) {
+            this.mashRatioU = mashRatioU;
+        }
+
+        public String getMashRatioU() {
+            return mashRatioU;
+        }
+
+        public void setStrikeTempU(String strikeTempU) {
+            this.strikeTempU = strikeTempU;
+        }
+
+        public String getStrikeTempU() {
+            return strikeTempU;
+        }
+
+        public void setStrikeTemp(double strikeTemp) {
+            this.strikeTemp = strikeTemp;
+        }
+
+        public double getStrikeTemp() {
+            return strikeTemp;
+        }
+
+        public double getDisplayStrikeTemp() {
+            if (getStrikeTempU().equals("F"))
+                return BrewCalcs.cToF(strikeTemp);
+            return strikeTemp;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
+	public MashStep addStep(String type, double startTemp, double endTemp, String method, int min,
+			int rampmin, double weight) {
+		MashStep step = new MashStep(type, startTemp, endTemp, method, min, rampmin);
+        step.weightLbs = weight;
 		steps.add(step);		
 		calcMashSchedule();
+        return step;
 	}
 	
 	public int addStep(){
@@ -330,8 +465,12 @@ public class Mash {
 		calcMashSchedule();
 	}
 	
-	public void setMashTempUnits(String t){
-		tempUnits = t;
+	public void setMashTempUnits(String newUnits){
+        if (newUnits.trim().endsWith("F")) {
+            tempUnits = "F";
+        } else {
+            tempUnits = "C";
+        }
 		calcMashSchedule();
 	}
 	
@@ -558,19 +697,19 @@ public class Mash {
 		if (((MashStep)steps.get(i)).getTemp() == 0)
 			return 0;
 		if (tempUnits.equals("F"))
-			return ((MashStep)steps.get(i)).getTemp();	
+			return steps.get(i).getTemp();
 		else
-			return BrewCalcs.fToC(((MashStep)steps.get(i)).getTemp());
+			return BrewCalcs.fToC(steps.get(i).getTemp());
 	}
 	
 	public double getStepWeight(int i) {
-		double w = 	((MashStep)steps.get(i)).weightLbs;
+		double w = 	steps.get(i).weightLbs;
 		return Quantity.convertUnit(Quantity.LB, myRecipe.getMaltUnits(), w);
 	}
 	
 	public void setStepWeight(int i, double w){
 		// you can only set the weight on a cereal mash step
-		MashStep s = (MashStep)steps.get(i);
+		MashStep s = steps.get(i);
 		if (s.method.equals(CEREAL_MASH)){
 			double w2 = Quantity.convertUnit(myRecipe.getMaltUnits(), Quantity.LB, w);
 			s.weightLbs = w2;
@@ -579,24 +718,31 @@ public class Mash {
 	}
 	
 	public void setStepMin(int i, int m){
-		((MashStep)steps.get(i)).setMinutes(m);
+		steps.get(i).setMinutes(m);
 	}
 	
 	public int getStepMin(int i) {
-		return ((MashStep)steps.get(i)).getMinutes();	
+		return steps.get(i).getMinutes();
 	}
 
 	public double getStepInVol(int i) {
-		double vol = ((MashStep)steps.get(i)).getInVol().getValue();
+		double vol = steps.get(i).getInVol().getValue();
 		return Quantity.convertUnit(Quantity.QT, volUnits, vol);
-	
 	}
+
+    public Quantity getStepInQuantity(int i) {
+        return steps.get(i).getInVol();
+    }
 	
 	public double getStepOutVol(int i) {
-		double vol = ((MashStep)steps.get(i)).getOutVol().getValue();
+		double vol = steps.get(i).getOutVol().getValue();
 		return Quantity.convertUnit(Quantity.QT, volUnits, vol);
 	
 	}
+
+    public Quantity getStepOutQuantity(int i) {
+        return steps.get(i).getOutVol();
+    }
 	
 	public int getStepSize(){
 		return steps.size();
@@ -604,350 +750,338 @@ public class Mash {
 	
 	// Introducing: the big huge mash calc method!
 
-	public void calcMashSchedule() {
-		// Method to run through the mash table and calculate values
+    public void calcMashSchedule() {
+        // Method to run through the mash table and calculate values
 
-		if (!myRecipe.allowRecalcs)
-			return;
-		
-		double strikeTemp = 0;
-		double targetTemp = 0;
-		double waterAddedQTS = 0;
-		double waterEquiv = 0;
-		double mr = mashRatio;
-		double currentTemp = getGrainTemp();
+        if (!myRecipe.allowRecalcs)
+            return;
 
-		double displTemp = 0;
-		double tunLoss; // figure out a better way to do this, eg: themal mass
-		double decoct = 0;
-		int totalMashTime = 0;
-		int totalSpargeTime = 0;
-		double mashWaterQTS = 0;
-		double mashVolQTS = 0;
-		int numSparge = 0;
-		double totalWeightLbs = 0;
-		double totalCerealLbs = 0;
-		
-		maltWeightLbs = myRecipe.getTotalMashLbs();
-		
-		// convert mash ratio to qts/lb if in l/kg
-		if (mashRatioU.equalsIgnoreCase(L_PER_KG)) {
-			mr *= 0.479325;
-		}
+        double targetTemp = 0;
+        double waterAddedQTS = 0;
+        double waterEquiv = 0;
+        double currentTemp = getGrainTemp();
 
-		// convert CurrentTemp to F
-		if (tempUnits == "C") {
-			currentTemp = BrewCalcs.cToF(currentTemp);
-			tunLoss = tunLossF * 1.8;
-		}
-		else
-			tunLoss = tunLossF;
+        double displTemp = 0;
+        double tunLoss; // figure out a better way to do this, eg: themal mass
+        double decoct = 0;
+        int totalMashTime = 0;
+        int totalSpargeTime = 0;
+        double mashWaterQTS = 0;
+        double mashVolQTS = 0;
+        int numSparge = 0;
+        double totalWeightLbs = 0;
+        double totalCerealLbs = 0;
 
-		// perform calcs on first record	  
-		if (steps.isEmpty())
-			return;
-		
-		// sort the list
-		Collections.sort(steps);
-		
-		// add up the cereal mash lbs
-		for (int i=0; i<steps.size(); i++){
-			MashStep stp = ((MashStep) steps.get(i));
-			if (stp.method.equals("cereal mash")){
-				totalCerealLbs += stp.weightLbs;
-			}
-		}
-		
-		totalWeightLbs = maltWeightLbs - totalCerealLbs;
-		
+        maltWeightLbs = myRecipe.getTotalMashLbs();
 
-		// the first step is always an infusion
-		MashStep stp = ((MashStep) steps.get(0));
-		targetTemp = stp.startTemp;
-		strikeTemp = calcStrikeTemp(targetTemp, currentTemp, mr, tunLoss);
-		waterAddedQTS = mr * totalWeightLbs;
-		waterEquiv = totalWeightLbs * (0.192 + mr);
-		mashVolQTS = calcMashVol(totalWeightLbs, mr);
-		totalMashTime += stp.minutes;
-		mashWaterQTS += waterAddedQTS;		
-		stp.inVol.setUnits(Quantity.QT);
-		stp.inVol.setAmount(waterAddedQTS);
-		stp.temp = strikeTemp;
-		stp.method = INFUSION;
-		stp.weightLbs = totalWeightLbs;
+        // convert CurrentTemp to F
+        if (tempUnits.equals("C")) {
+            currentTemp = BrewCalcs.cToF(currentTemp);
+            tunLoss = tunLossF * 1.8;
+        } else {
+            tunLoss = tunLossF;
+        }
 
-		// subtract the water added from the Water Equiv so that they are correct when added in the next part of the loop
-		waterEquiv -= waterAddedQTS;
+        // perform calcs on first record
+        if (steps.isEmpty())
+            return;
 
-		// Updated the water added
+        // sort the list
+        Collections.sort(steps);
 
-		if (tempUnits == "C") {
-			strikeTemp = BrewCalcs.fToC(strikeTemp);
-		}
-		
-		stp.directions = "Mash in with " + SBStringUtils.format(stp.inVol.getValueAs(volUnits),1 ) + " " + volUnits
-				+ " of water at " + SBStringUtils.format(strikeTemp, 1) + " " + tempUnits;
+        // add up the cereal mash lbs
+        for (int i = 0; i < steps.size(); i++) {
+            MashStep stp = ((MashStep) steps.get(i));
+            // convert mash ratio to qts/lb if in l/kg
+            double mr = stp.getMashRatio();
+            if (stp.getMashRatioU().equalsIgnoreCase(L_PER_KG)) {
+                mr *= 0.479325;
+            }
+            if (stp.method.equals("cereal mash")) {
+                totalCerealLbs += stp.weightLbs;
+            }
+            stp.setStrikeTemp(calcStrikeTemp(stp.getStartTemp(), currentTemp, mr, tunLoss));
+            stp.setStrikeTempU(tempUnits);
+            waterAddedQTS += stp.weightLbs * mr;
+            waterEquiv += stp.weightLbs * (0.192 + mr);
+            mashVolQTS += calcMashVol(stp.weightLbs, mr);
+        }
 
-		// set TargetTemp to the end temp
-		targetTemp = stp.endTemp;
+        totalWeightLbs = maltWeightLbs - totalCerealLbs;
 
-		for (int i = 1; i < steps.size(); i++) {
-			stp = ((MashStep) steps.get(i));
-			currentTemp = targetTemp; // switch
-			targetTemp = stp.startTemp;
-			
-			// if this is a former sparge step that's been changed, change
-			// the method to infusion
-			BrewServer.LOG.info("Mash step Type: " + stp.type + " Method: " + stp.method);
-			if (!stp.type.equals(SPARGE) && ( stp.method.equals(FLY) || stp.method.equals(BATCH)))
-					stp.method = INFUSION;
-			
-			// do calcs
-			if (stp.method.equals(INFUSION)) { // calculate an infusion step
-				decoct = 0;
-				waterEquiv += waterAddedQTS; // add previous addition to get WE
-				strikeTemp = boilTempF; // boiling water 
+        // the first step is always an infusion
+        MashStep stp = steps.get(0);
+        totalMashTime += stp.minutes;
+        mashWaterQTS += waterAddedQTS;
+        stp.inVol.setUnits(Quantity.QT);
+        stp.inVol.setAmount(waterAddedQTS);
+        stp.method = INFUSION;
+        stp.weightLbs = totalWeightLbs;
 
-				// Updated the water added
-				waterAddedQTS = calcWaterAddition(targetTemp, currentTemp,
-						waterEquiv, boilTempF);
-				
-				stp.outVol.setAmount(0);
-				stp.inVol.setUnits(Quantity.QT);
-				stp.inVol.setAmount(waterAddedQTS);
-				stp.temp = strikeTemp;
-				stp.weightLbs = totalWeightLbs;
-				if (tempUnits == "C")
-					strikeTemp = 100;				
-				stp.directions = "Add " + SBStringUtils.format(stp.inVol.getValueAs(volUnits), 1) + " " + volUnits
-						+ " of water at " + SBStringUtils.format(strikeTemp, 1) + " " + tempUnits;
+        // subtract the water added from the Water Equiv so that they are correct when added in the next part of the loop
+        waterEquiv -= waterAddedQTS;
 
-				mashWaterQTS += waterAddedQTS;
-				mashVolQTS += waterAddedQTS;
+        stp.directions = "Mash in with " + SBStringUtils.format(stp.inVol.getValueAs(volUnits), 1) + " " + volUnits
+                + " of water at " + SBStringUtils.format(stp.getDisplayStrikeTemp(), 1) + " " + stp.getStrikeTempU();
 
-			}
+        // set TargetTemp to the end temp
+        targetTemp = stp.endTemp;
 
-			else if (stp.method.indexOf(DECOCTION) > -1) { // calculate a decoction step
+        for (int i = 1; i < steps.size(); i++) {
+            stp = steps.get(i);
+            currentTemp = targetTemp; // switch
+            targetTemp = stp.startTemp;
 
-				waterEquiv += waterAddedQTS; // add previous addition to get WE
-				waterAddedQTS = 0;
-				strikeTemp = boilTempF; // boiling water
-				double ratio=0.75;
+            // if this is a former sparge step that's been changed, change
+            // the method to infusion
+            BrewServer.LOG.info("Mash step Type: " + stp.type + " Method: " + stp.method);
+            if (!stp.type.equals(SPARGE) && (stp.method.equals(FLY) || stp.method.equals(BATCH)))
+                stp.method = INFUSION;
 
-				if (stp.method.indexOf(DECOCTION_THICK) > -1)
-					ratio = thickDecoctRatio;
-				else if (stp.method.indexOf(DECOCTION_THIN) > -1)
-					ratio = thinDecoctRatio;
-				// Calculate volume (qts) of mash to remove
-				decoct = calcDecoction2(targetTemp, currentTemp, mashWaterQTS, ratio, totalWeightLbs);				
-				stp.outVol.setUnits(Quantity.QT);
-				stp.outVol.setAmount(decoct);
-				stp.inVol.setAmount(0);
-				stp.temp = boilTempF;
-				stp.weightLbs = totalWeightLbs;
-				
-				// Updated the decoction, convert to right units & make directions
-				stp.directions = "Remove " + SBStringUtils.format(stp.outVol.getValueAs(volUnits), 1) + " " + volUnits
-						+ " of mash, boil, and return to mash.";
+            // do calcs
+            if (stp.method.equals(INFUSION)) { // calculate an infusion step
+                decoct = 0;
+                waterEquiv += waterAddedQTS; // add previous addition to get WE
+                double strikeTemp = boilTempF; // boiling water
 
-			} else if (stp.method.equals(DIRECT)) { // calculate a direct heat step
-				decoct = 0;
-				waterEquiv += waterAddedQTS; // add previous addition to get WE
-				waterAddedQTS = 0;
-				displTemp = stp.startTemp;
-				if (tempUnits.equals("C"))
-					displTemp = BrewCalcs.fToC(displTemp);
-				stp.directions = "Add direct heat until mash reaches " + displTemp
-						+ " " + tempUnits + ".";
-				stp.inVol.setAmount(0);
-				stp.outVol.setAmount(0);
-				stp.temp = 0;
-				stp.weightLbs = totalWeightLbs;
-				
-			} else if (stp.method.indexOf(CEREAL_MASH) > -1) { // calculate a cereal mash step
+                // Updated the water added
+                waterAddedQTS = calcWaterAddition(targetTemp, currentTemp,
+                        waterEquiv, boilTempF);
 
-				waterEquiv += waterAddedQTS; // add previous addition to get WE
-				waterAddedQTS = 0;	
-				targetTemp = stp.startTemp;
-				double extraWaterQTS = 0;				
-				double cerealTemp = boilTempF;
-				double cerealTargTemp = cerealMashTemp;
-				String addStr = "";
-				
+                stp.outVol.setAmount(0);
+                stp.inVol.setUnits(Quantity.QT);
+                stp.inVol.setAmount(waterAddedQTS);
+                stp.temp = strikeTemp;
+                stp.weightLbs = totalWeightLbs;
+                if (tempUnits == "C")
+                    strikeTemp = 100;
+                stp.directions = "Add " + SBStringUtils.format(stp.inVol.getValueAs(volUnits), 1) + " " + volUnits
+                        + " of water at " + SBStringUtils.format(strikeTemp, 1) + " " + tempUnits;
+
+                mashWaterQTS += waterAddedQTS;
+                mashVolQTS += waterAddedQTS;
+
+            } else if (stp.method.indexOf(DECOCTION) > -1) { // calculate a decoction step
+
+                waterEquiv += waterAddedQTS; // add previous addition to get WE
+                waterAddedQTS = 0;
+                double ratio = 0.75;
+
+                if (stp.method.indexOf(DECOCTION_THICK) > -1)
+                    ratio = thickDecoctRatio;
+                else if (stp.method.indexOf(DECOCTION_THIN) > -1)
+                    ratio = thinDecoctRatio;
+                // Calculate volume (qts) of mash to remove
+                decoct = calcDecoction2(targetTemp, currentTemp, mashWaterQTS, ratio, totalWeightLbs);
+                stp.outVol.setUnits(Quantity.QT);
+                stp.outVol.setAmount(decoct);
+                stp.inVol.setAmount(0);
+                stp.temp = boilTempF;
+                stp.weightLbs = totalWeightLbs;
+
+                // Updated the decoction, convert to right units & make directions
+                stp.directions = "Remove " + SBStringUtils.format(stp.outVol.getValueAs(volUnits), 1) + " " + volUnits
+                        + " of mash, boil, and return to mash.";
+
+            } else if (stp.method.equals(DIRECT)) { // calculate a direct heat step
+                waterEquiv += waterAddedQTS; // add previous addition to get WE
+                waterAddedQTS = 0;
+                displTemp = stp.startTemp;
+                if (tempUnits.equals("C"))
+                    displTemp = BrewCalcs.fToC(displTemp);
+                stp.directions = "Add direct heat until mash reaches " + displTemp
+                        + " " + tempUnits + ".";
+                stp.inVol.setAmount(0);
+                stp.outVol.setAmount(0);
+                stp.temp = 0;
+                stp.weightLbs = totalWeightLbs;
+
+            } else if (stp.method.indexOf(CEREAL_MASH) > -1) { // calculate a cereal mash step
+                double mr = stp.getMashRatio();
+                if (stp.getMashRatioU().equalsIgnoreCase(L_PER_KG)) {
+                    mr *= 0.479325;
+                }
+                waterEquiv += waterAddedQTS; // add previous addition to get WE
+                targetTemp = stp.startTemp;
+                double extraWaterQTS = 0;
+                double cerealTemp = boilTempF;
+                double cerealTargTemp = cerealMashTemp;
+                String addStr = "";
+
 				/*
-				 * 1. check the temp of the mash when you add the boiling cereal mash @ default ratio back
+                 * 1. check the temp of the mash when you add the boiling cereal mash @ default ratio back
 				 * 2. if it's > than the step temp, adjust the step temp
 				 * 3. if it's < than the step temp, add extra water to increase the "heat equivalencey" of the cereal mash 
 				 */
 
-				double cerealWaterEquiv = stp.weightLbs * (0.192 + mr);	
-				waterAddedQTS = mr * stp.weightLbs;
-				strikeTemp = calcStrikeTemp(cerealMashTemp, grainTempF, mr, 0);
-				
-				double newTemp = ((waterEquiv * currentTemp) + (cerealWaterEquiv * cerealTemp)) / (waterEquiv + cerealWaterEquiv);
-				
-				if (newTemp > targetTemp){
-					stp.startTemp = newTemp;
-				}
-				if (newTemp < targetTemp){
-					double addQts = ((waterEquiv * (targetTemp - currentTemp)) / (cerealTemp - targetTemp)) - 0.192;
-					extraWaterQTS = addQts - waterAddedQTS;
-					addStr = " Add " + SBStringUtils.format(Quantity.convertUnit("qt", volUnits, extraWaterQTS), 1) 
-					  + " " + volUnits + " water to the cereal mash.";
-				}
-				
-				// Calculate final temp of cereal mash
-				// cerealTemp = (targetTemp * (waterEquiv + cerealWaterEquiv) - (waterEquiv * currentTemp)) / cerealWaterEquiv;				
+                double cerealWaterEquiv = stp.weightLbs * (0.192 + mr);
+                waterAddedQTS = mr * stp.weightLbs;
+                double strikeTemp = calcStrikeTemp(cerealMashTemp, grainTempF, mr, 0);
+
+                double newTemp = ((waterEquiv * currentTemp) + (cerealWaterEquiv * cerealTemp)) / (waterEquiv + cerealWaterEquiv);
+
+                if (newTemp > targetTemp) {
+                    stp.startTemp = newTemp;
+                }
+                if (newTemp < targetTemp) {
+                    double addQts = ((waterEquiv * (targetTemp - currentTemp)) / (cerealTemp - targetTemp)) - 0.192;
+                    extraWaterQTS = addQts - waterAddedQTS;
+                    addStr = " Add " + SBStringUtils.format(Quantity.convertUnit("qt", volUnits, extraWaterQTS), 1)
+                            + " " + volUnits + " water to the cereal mash.";
+                }
+
+                // Calculate final temp of cereal mash
+                // cerealTemp = (targetTemp * (waterEquiv + cerealWaterEquiv) - (waterEquiv * currentTemp)) / cerealWaterEquiv;
 
 
-				totalMashTime += stp.minutes;				
-				mashWaterQTS += waterAddedQTS + extraWaterQTS;		
-				stp.inVol.setUnits(Quantity.QT);
-				stp.inVol.setAmount(waterAddedQTS);
-				stp.outVol.setAmount(0);
-				stp.temp = strikeTemp;				
-				
-				// make directions
-				
-				String weightStr = SBStringUtils.format(Quantity.convertUnit(Quantity.LB, myRecipe.getMaltUnits(), stp.weightLbs), 1) 
-				+ " " + myRecipe.getMaltUnits(); 
-				String volStr = SBStringUtils.format(Quantity.convertUnit(Quantity.QT, volUnits, waterAddedQTS), 1) 
-				+ " " + volUnits;				
-				if (tempUnits == "C"){
-					strikeTemp = BrewCalcs.fToC(strikeTemp);
-					cerealTemp = BrewCalcs.fToC(cerealTemp);
-					targetTemp = BrewCalcs.fToC(targetTemp);
-					cerealTargTemp = BrewCalcs.fToC(cerealTargTemp);
-				}
-				String tempStr = SBStringUtils.format(strikeTemp, 1) + tempUnits;
-				String tempStr2 = SBStringUtils.format(cerealTemp, 1) + tempUnits;
-				String tempStr3 = SBStringUtils.format(targetTemp, 1) + tempUnits;
-				String tempStr4 = SBStringUtils.format(cerealTargTemp, 1) + tempUnits;
-				stp.directions = "Cereal mash: mash " + weightStr + " grain with " + volStr + " water at " + 
-					tempStr + " to hit " + tempStr4 + " and rest.";
-				stp.directions += addStr;
-				stp.directions += " Raise to " +  tempStr2 + " and add to the main mash to reach " + tempStr3;
-				
-				// add cereal mash to total weight
-				totalWeightLbs += stp.weightLbs;
+                totalMashTime += stp.minutes;
+                mashWaterQTS += waterAddedQTS + extraWaterQTS;
+                stp.inVol.setUnits(Quantity.QT);
+                stp.inVol.setAmount(waterAddedQTS);
+                stp.outVol.setAmount(0);
+                stp.temp = strikeTemp;
 
-			} else {
-			
-				BrewServer.LOG.warning("Unrecognised mash step: " + stp.method);
-			}
+                // make directions
 
-			if (stp.type.equals(SPARGE)) 
-				numSparge++;
+                String weightStr = SBStringUtils.format(Quantity.convertUnit(Quantity.LB, myRecipe.getMaltUnits(), stp.weightLbs), 1)
+                        + " " + myRecipe.getMaltUnits();
+                String volStr = SBStringUtils.format(Quantity.convertUnit(Quantity.QT, volUnits, waterAddedQTS), 1)
+                        + " " + volUnits;
+                if (tempUnits == "C") {
+                    strikeTemp = BrewCalcs.fToC(strikeTemp);
+                    cerealTemp = BrewCalcs.fToC(cerealTemp);
+                    targetTemp = BrewCalcs.fToC(targetTemp);
+                    cerealTargTemp = BrewCalcs.fToC(cerealTargTemp);
+                }
+                String tempStr = SBStringUtils.format(strikeTemp, 1) + tempUnits;
+                String tempStr2 = SBStringUtils.format(cerealTemp, 1) + tempUnits;
+                String tempStr3 = SBStringUtils.format(targetTemp, 1) + tempUnits;
+                String tempStr4 = SBStringUtils.format(cerealTargTemp, 1) + tempUnits;
+                stp.directions = "Cereal mash: mash " + weightStr + " grain with " + volStr + " water at " +
+                        tempStr + " to hit " + tempStr4 + " and rest.";
+                stp.directions += addStr;
+                stp.directions += " Raise to " + tempStr2 + " and add to the main mash to reach " + tempStr3;
 
-		    else {
-				totalMashTime += stp.minutes;
-			}				
-			// set target temp to end temp for next step
-			targetTemp = stp.endTemp;
+                // add cereal mash to total weight
+                totalWeightLbs += stp.weightLbs;
 
-		} // for steps.size()
+            } else {
 
-		waterEquiv += waterAddedQTS; // add previous addition to get WE
-		totalTime = totalMashTime;
-		volQts = mashVolQTS;
+                BrewServer.LOG.warning("Unrecognised mash step: " + stp.method);
+            }
 
-		// water use stats:
+            if (stp.type.equals(SPARGE))
+                numSparge++;
+
+            else {
+                totalMashTime += stp.minutes;
+            }
+            // set target temp to end temp for next step
+            targetTemp = stp.endTemp;
+
+        } // for steps.size()
+
+        waterEquiv += waterAddedQTS; // add previous addition to get WE
+        totalTime = totalMashTime;
+        volQts = mashVolQTS;
+
+        // water use stats:
         BrewServer.LOG.warning("Total weight: " + totalWeightLbs);
-		absorbedQTS = totalWeightLbs * 0.52; // figure from HBD
-		
-		// spargeTotalQTS = (myRecipe.getPreBoilVol("qt")) - (mashWaterQTS - absorbedQTS);
-		totalWaterQTS = mashWaterQTS;
-		spargeQTS = myRecipe.getPreBoilVol(Quantity.QT) - 
-				(mashWaterQTS - absorbedQTS - deadSpace.getValueAs(Quantity.QT));
+        absorbedQTS = totalWeightLbs * 0.52; // figure from HBD
+
+        // spargeTotalQTS = (myRecipe.getPreBoilVol("qt")) - (mashWaterQTS - absorbedQTS);
+        totalWaterQTS = mashWaterQTS;
+        spargeQTS = myRecipe.getPreBoilVol(Quantity.QT) -
+                (mashWaterQTS - absorbedQTS - deadSpace.getValueAs(Quantity.QT));
 
         BrewServer.LOG.warning("Sparge Quarts: " + spargeQTS);
-		
-		// Now let's figure out the sparging:		
-		if (numSparge == 0)
-			return;
-		
-		// Amount to collect per sparge
-		double col = myRecipe.getPreBoilVol(Quantity.QT) / numSparge;
-		double charge[] = new double[numSparge];
-	    double collect[] = new double[numSparge];
-	    double totalCollectQts = myRecipe.getPreBoilVol(Quantity.QT);
-	    
-	    
-	    // do we need to add more water to charge up
-	    // is the amount we need to collect less than the initial mash volume - absorbption
-	    System.out.println("Collecting: " + col + " MashWater " + mashWaterQTS + 
-	    		" Absorbed " + absorbedQTS + " Loss: " + deadSpace.getValueAs(Quantity.QT));
-	    
-		if (col <= (mashWaterQTS - absorbedQTS)) {
-			charge[0] = 0;
-			collect[0] = mashWaterQTS - absorbedQTS; // how much is left over from the mash
-			totalCollectQts = totalCollectQts - collect[0];
-		} else {
-			charge[0] = col - (mashWaterQTS - absorbedQTS); // add the additional water to get out the desired first collection amount PER sparge
-			collect[0] = col;
-			totalCollectQts = totalCollectQts - collect[0];
-		}
-	    
-       // do we need any more steps?
-	    if(numSparge > 1) {
-	    	/*
-		    batch_1_sparge_liters = (boil_size_l/<total number of steps> ) - mash_water_l + grain_wt_kg * 0.625)
+
+        // Now let's figure out the sparging:
+        if (numSparge == 0)
+            return;
+
+        // Amount to collect per sparge
+        double col = myRecipe.getPreBoilVol(Quantity.QT) / numSparge;
+        double charge[] = new double[numSparge];
+        double collect[] = new double[numSparge];
+        double totalCollectQts = myRecipe.getPreBoilVol(Quantity.QT);
+
+
+        // do we need to add more water to charge up
+        // is the amount we need to collect less than the initial mash volume - absorbption
+        System.out.println("Collecting: " + col + " MashWater " + mashWaterQTS +
+                " Absorbed " + absorbedQTS + " Loss: " + deadSpace.getValueAs(Quantity.QT));
+
+        if (col <= (mashWaterQTS - absorbedQTS)) {
+            charge[0] = 0;
+            collect[0] = mashWaterQTS - absorbedQTS; // how much is left over from the mash
+            totalCollectQts = totalCollectQts - collect[0];
+        } else {
+            charge[0] = col - (mashWaterQTS - absorbedQTS); // add the additional water to get out the desired first collection amount PER sparge
+            collect[0] = col;
+            totalCollectQts = totalCollectQts - collect[0];
+        }
+
+        // do we need any more steps?
+        if (numSparge > 1) {
+            /*
+            batch_1_sparge_liters = (boil_size_l/<total number of steps> ) - mash_water_l + grain_wt_kg * 0.625)
 		    		batch_2_liters = boil_size_l / <total number of steps>
 		    	*/
             BrewServer.LOG.info("NumSparge: " + numSparge);
 
             BrewServer.LOG.info("Collecting: " + col);
-			for (int i = 1; i < numSparge; i++) {
-				charge[i] = col;
-				collect[i] = col;
-			}
-		}
-	    
-	    int j=0;
-		for (int i = 1; i < steps.size(); i++) {
-			stp = ((MashStep) steps.get(i));			
-			if (stp.getType().equals(SPARGE)) {
+            for (int i = 1; i < numSparge; i++) {
+                charge[i] = col;
+                collect[i] = col;
+            }
+        }
 
-				stp.inVol.setUnits(Quantity.QT);
-				stp.inVol.setAmount(charge[j]);
-				
-				stp.outVol.setUnits(Quantity.QT);
-				stp.outVol.setAmount(collect[j]);
-				
-				stp.temp = SPARGETMPF;
-				totalSpargeTime += stp.getMinutes();
-				String collectStr = SBStringUtils.format(Quantity.convertUnit(Quantity.QT, volUnits, collect[j]), 2) +
-				" " + volUnits;
-				String tempStr;
-				if (tempUnits.equals("F")){
-					tempStr = "" + SBStringUtils.format(SPARGETMPF, 1) + "F";					
-				} else { 
-					tempStr = SBStringUtils.format(BrewCalcs.fToC(SPARGETMPF), 1) + "C";
-				}
-				
-				if (numSparge > 1){
-					stp.setMethod(BATCH);
-					String add = SBStringUtils.format(Quantity.convertUnit(Quantity.QT, volUnits, charge[j]), 2) +
-					" " + volUnits;			
-					stp.setDirections("Add " + add + " at " + tempStr + " to collect " + collectStr);
-					
-				} else {
-					stp.inVol.setUnits(Quantity.QT);
-					stp.inVol.setAmount(spargeQTS);
+        int j = 0;
+        for (int i = 1; i < steps.size(); i++) {
+            stp = ((MashStep) steps.get(i));
+            if (stp.getType().equals(SPARGE)) {
 
-					stp.outVol.setUnits(Quantity.QT);
-					stp.outVol.setAmount(collect[j]);
-					
-					stp.setMethod(FLY);					
-					stp.setDirections("Sparge with " + 
-							SBStringUtils.format(Quantity.convertUnit("qt", volUnits, spargeQTS), 1) +
-							" " + volUnits + " at " + tempStr + " to collect " + collectStr);
-				}				
-				j++;				
-			}
-		}
-	}
-	
+                stp.inVol.setUnits(Quantity.QT);
+                stp.inVol.setAmount(charge[j]);
+
+                stp.outVol.setUnits(Quantity.QT);
+                stp.outVol.setAmount(collect[j]);
+
+                stp.temp = SPARGETMPF;
+                totalSpargeTime += stp.getMinutes();
+                String collectStr = SBStringUtils.format(Quantity.convertUnit(Quantity.QT, volUnits, collect[j]), 2) +
+                        " " + volUnits;
+                String tempStr;
+                if (tempUnits.equals("F")) {
+                    tempStr = "" + SBStringUtils.format(SPARGETMPF, 1) + "F";
+                } else {
+                    tempStr = SBStringUtils.format(BrewCalcs.fToC(SPARGETMPF), 1) + "C";
+                }
+
+                if (numSparge > 1) {
+                    stp.setMethod(BATCH);
+                    String add = SBStringUtils.format(Quantity.convertUnit(Quantity.QT, volUnits, charge[j]), 2) +
+                            " " + volUnits;
+                    stp.setDirections("Add " + add + " at " + tempStr + " to collect " + collectStr);
+
+                } else {
+                    stp.inVol.setUnits(Quantity.QT);
+                    stp.inVol.setAmount(spargeQTS);
+
+                    stp.outVol.setUnits(Quantity.QT);
+                    stp.outVol.setAmount(collect[j]);
+
+                    stp.setMethod(FLY);
+                    stp.setDirections("Sparge with " +
+                            SBStringUtils.format(Quantity.convertUnit("qt", volUnits, spargeQTS), 1) +
+                            " " + volUnits + " at " + tempStr + " to collect " + collectStr);
+                }
+                j++;
+            }
+        }
+    }
+
 
 	// private methods:
 	

@@ -147,6 +147,30 @@ public class BeerXMLReader {
         double batchSize = getDouble(recipeNode, "BATCH_SIZE", xp);
         double boilSize = getDouble(recipeNode, "BOIL_SIZE", xp);
         int boilTime = getInteger(recipeNode, "BOIL_TIME", xp);
+        String tasteNotes = getString(recipeNode, "TASTE_NOTES", xp);
+        double tasteRating = getDouble(recipeNode, "TASTE_RATING", xp);
+        double measuredOg = getDouble(recipeNode, "OG", xp);
+        double measuredFg = getDouble(recipeNode, "FG", xp);
+        int fermentationStages = getInteger(recipeNode, "FERMENTATION_STAGES", xp);
+        int primaryAge = getInteger(recipeNode, "PRIMARY_AGE", xp);
+        double primaryTemp = getDouble(recipeNode, "PRIMARY_TEMP", xp);
+        int secondaryAge = getInteger(recipeNode, "SECONDARY_AGE", xp);
+        double secondaryTemp = getDouble(recipeNode, "SECONDARY_TEMP", xp);
+        int tertiaryAge = getInteger(recipeNode, "TERTIARY_AGE", xp);
+        double tertiaryTemp = getDouble(recipeNode, "TERTIARY_TEMP", xp);
+        int bottleAge = getInteger(recipeNode, "AGE", xp);
+        double bottleAgeTemp = getDouble(recipeNode, "AGE_TEMP", xp);
+        String dateBrewed = getString(recipeNode, "DATE", xp);
+        double carbonation = getDouble(recipeNode, "CARBONATION", xp);
+        boolean forcedCarbonation = getBoolean(recipeNode, "FORCED_CARBONATION", xp, false);
+        String primingSugarName = getString(recipeNode, "PRIMING_SUGAR_NAME", xp);
+        double carbonationTemp = getDouble(recipeNode, "CARBONATION_TEMP", xp);
+        double primingSugarEquiv = getDouble(recipeNode, "PRIMING_SUGAR_EQUIV", xp);
+        double kegPrimingFactor = getDouble(recipeNode, "KEG_PRIMING_FACTOR", xp);
+        String displayPrimaryTemp = getString(recipeNode, "DISPLAY_PRIMARY_TEMP", xp);
+        String displaySecondaryTemp = getString(recipeNode, "DISPLAY_SECONDARY_TEMP", xp);
+        String displayTertiaryTemp = getString(recipeNode, "DISPLAY_TERTIARY_TEMP", xp);
+        String displayAgeTemp = getString(recipeNode, "DISPLAY_AGE_TEMP", xp);
 
         recipe.setName(recipeName);
         recipe.setBrewer(brewerName);
@@ -154,10 +178,76 @@ public class BeerXMLReader {
         recipe.setEfficiency(efficiency);
         recipe.setComments(notes);
         recipe.setPreBoil(new Quantity(Quantity.LITRES, boilSize));
+        recipe.setPreBoil(getString(recipeNode, "DISPLAY_BOIL_SIZE", xp));
         recipe.setPostBoil(new Quantity(Quantity.LITRES, batchSize));
-        System.out.println("Batch Size: " + batchSize);
-        System.out.println("Post Boil: " + recipe.getPostBoilVol(Quantity.L));
-        System.out.println("Pre Boil: " + recipe.getPreBoilVol(Quantity.L));
+        recipe.setPostBoil(getString(recipeNode, "DISPLAY_BATCH_SIZE", xp));
+        recipe.setTasteNotes(tasteNotes);
+        recipe.setTasteRating(tasteRating);
+        recipe.setMeasuredOg(measuredOg);
+        recipe.setMeasuredFg(measuredFg);
+        // Add primary fermentation.
+        if (primaryTemp != 0.0 && primaryAge != 0.0) {
+            FermentStep primary = new FermentStep();
+            primary.setType(FermentStep.PRIMARY);
+            primary.setTemp(primaryTemp);
+            primary.setTempU("C");
+            if (displayPrimaryTemp.trim().toUpperCase().endsWith("F")) {
+                primary.convertTo("F");
+            }
+            primary.setTime(primaryAge);
+            recipe.addFermentStep(primary);
+        }
+        // Add Secondary fermentation.
+        if (secondaryTemp != 0.0 && secondaryAge != 0.0) {
+            FermentStep secondary = new FermentStep();
+            secondary.setType(FermentStep.SECONDARY);
+            secondary.setTemp(secondaryTemp);
+            secondary.setTempU("C");
+            secondary.setTime(secondaryAge);
+            if (displaySecondaryTemp.trim().toUpperCase().endsWith("F")) {
+                secondary.convertTo("F");
+            }
+            recipe.addFermentStep(secondary);
+        }
+        // Add clearing fermentation.
+        if (tertiaryTemp != 0.0 && tertiaryAge != 0.0) {
+            FermentStep tertiary = new FermentStep();
+            tertiary.setType(FermentStep.CLEARING);
+            tertiary.setTemp(tertiaryTemp);
+            tertiary.setTempU("C");
+            tertiary.setTime(tertiaryAge);
+            if (displayTertiaryTemp.trim().toUpperCase().endsWith("F")) {
+                tertiary.convertTo("F");
+            }
+            recipe.addFermentStep(tertiary);
+        }
+        // Add aging fermentation.
+        if (bottleAge != 0.0 && bottleAgeTemp != 0.0) {
+            FermentStep aging = new FermentStep();
+            aging.setType(FermentStep.AGEING);
+            aging.setTemp(bottleAgeTemp);
+            aging.setTempU("C");
+            aging.setTime(bottleAge);
+            if (displayAgeTemp.trim().toUpperCase().endsWith("F")) {
+                aging.convertTo("F");
+            }
+            recipe.addFermentStep(aging);
+        }
+
+        if (recipe.getFermentStepSize() != fermentationStages) {
+            BrewServer.LOG.warning("Fermentation Steps invalid! Expected to find: " + fermentationStages
+                    + " but the recipe has: " + recipe.getFermentStepSize());
+        }
+        recipe.setDateBrewed(dateBrewed);
+        recipe.setCarbTempU("C");
+        recipe.setBottleTemp(carbonationTemp);
+        recipe.setTargetVol(carbonation);
+        recipe.setKegged(forcedCarbonation);
+        recipe.setPrimeSugarName(primingSugarName);
+        recipe.setPrimeSugarEquiv(primingSugarEquiv);
+        recipe.setKegPrimingFactor(kegPrimingFactor);
+        recipe.setIBUMethod(getString(recipeNode, "IBU_METHOD", xp));
+        recipe.setCarbMethod(getString(recipeNode, "CARBONATION_USED", xp));
 
         NodeList hopsList = (NodeList) xp.evaluate("HOPS", recipeNode, XPathConstants.NODESET);
         parseHops(recipe, hopsList);
@@ -188,6 +278,10 @@ public class BeerXMLReader {
         recipe.calcKegPSI();
         recipe.calcMaltTotals();
         recipe.calcPrimeSugar();
+        if (recipe.getMash() != null) {
+            recipe.getMash().calcMashSchedule();
+        }
+        recipe.setAllowRecalcs(true);
         return recipe;
     }
 
@@ -218,7 +312,6 @@ public class BeerXMLReader {
             String use = getString(hop, "USE", xp);
             String displayAmount = getString(hop, "DISPLAY_AMOUNT", xp);
             String inventory = getString(hop, "INVENTORY", xp);
-            String displayTime = getString(hop, "DISPLAY_TIME", xp);
             String form = getString(hop, "FORM", xp);
             String type = getString(hop, "TYPE", xp);
             double beta = getDouble(hop, "BETA", xp);
@@ -233,7 +326,8 @@ public class BeerXMLReader {
             Hop hopObject = new Hop();
             hopObject.setName(name);
             hopObject.setAlpha(alpha);
-            hopObject.setAmountAs(amount, Quantity.KG);
+            hopObject.setUnits(Quantity.KG);
+            hopObject.setAmount(amount);
             hopObject.setType(type);
             hopObject.setForm(form);
             hopObject.setBeta(beta);
@@ -267,10 +361,6 @@ public class BeerXMLReader {
 
             if (inventory != null && !inventory.equals("")) {
                 hopObject.setInventory(inventory);
-            }
-
-            if (displayTime != null && !displayTime.equals("")) {
-                hopObject.setTimeString(displayTime);
             }
             // Everything is OK here, so add it in.
             recipe.addHop(hopObject);
@@ -411,9 +501,11 @@ public class BeerXMLReader {
                 yeast.setAttenuation(attenuation);
                 recipe.setYeast(i, yeast);
                 if (amountIsWeight) {
-                    yeast.setAmountAs(amount, Quantity.KG);
+                    yeast.setUnits(Quantity.KG);
+                    yeast.setAmount(amount);
                 } else {
-                    yeast.setAmountAs(amount, Quantity.L);
+                    yeast.setUnits(Quantity.L);
+                    yeast.setAmount(amount);
                 }
                 yeast.setLaboratory(laboratory);
                 yeast.setProductId(productId);
@@ -525,9 +617,11 @@ public class BeerXMLReader {
             newMisc.setUse(use);
             newMisc.setTime(time);
             if (isWeight) {
-                newMisc.setAmountAs(amount, Quantity.KG);
+                newMisc.setUnits(Quantity.KG);
+                newMisc.setAmount(amount);
             } else {
-                newMisc.setAmountAs(amount, Quantity.LITRES);
+                newMisc.setUnits(Quantity.LITRES);
+                newMisc.setAmount(amount);
             }
             newMisc.setUseFor(useFor);
             recipe.addMisc(newMisc);
@@ -648,6 +742,7 @@ public class BeerXMLReader {
         Mash mash = recipe.getMash();
         if (mash == null) {
             mash = new Mash(name, recipe);
+            recipe.setMash(mash);
         } else {
             mash.setName(name);
         }
@@ -660,6 +755,8 @@ public class BeerXMLReader {
         mash.setTunWeight(tunWeight);
         mash.setTunSpecificHeat(tunSpecificHeat);
         mash.setTunAdjust(tunAdjust);
+        mash.setTunWeight(getString(mashProfile, "DISPLAY_TUN_WEIGHT", xp));
+        mash.setMashTempUnits(getString(mashProfile, "DISPLAY_GRAIN_TEMP", xp));
 
         parseMashSteps(mash, mashSteps, xp);
     }
@@ -686,8 +783,26 @@ public class BeerXMLReader {
             int stepTime = getInteger(step, "STEP_TIME", xp);
             int rampTime = getInteger(step, "RAMP_TIME", xp);
             double endTemp = getDouble(step, "END_TEMP", xp);
+
             // Add it in
-            mash.addStep(type, stepTemp, endTemp, name, stepTime, rampTime, infuseAmount);
+            Mash.MashStep newStep = mash.addStep(type, stepTemp, endTemp, name, stepTime, rampTime, mash.getTotalMashLbs());
+            newStep.setName(name);
+            newStep.setInVol(infuseAmount);
+            if (type.equals(Mash.DECOCTION) || type.equals(Mash.DECOCTION_THICK) || type.equals(Mash.DECOCTION_THIN)) {
+                String decoctionAmount = getString(step, "DECOCTION_AMT", xp);
+                newStep.setInVol(new Quantity(decoctionAmount));
+            } else if (type.equals(Mash.INFUSION)) {
+                String infuseTemp = getString(step, "INFUSE_TEMP", xp);
+                newStep.setInfuseTemp(infuseTemp);
+            }
+            String[] mashRatio = getString(step, "WATER_GRAIN_RATIO", xp).split(" ");
+            newStep.setMashRatio(mashRatio[0]);
+            newStep.setMashRatioU(mashRatio[1]);
+
+            String displayInfuseAmount = getString(step, "DISPLAY_INFUSE_AMT", xp);
+            if (!displayInfuseAmount.equals("")) {
+                newStep.setInVol(new Quantity(displayInfuseAmount));
+            }
         }
     }
 
