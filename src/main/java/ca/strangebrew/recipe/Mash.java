@@ -222,7 +222,7 @@ public class Mash {
         private String infuseTempUnit;
         private double mashRatio;
         private String mashRatioU;
-        private String strikeTempU;
+        private String strikeTempU = "C";
         private double strikeTemp;
         private String name;
 

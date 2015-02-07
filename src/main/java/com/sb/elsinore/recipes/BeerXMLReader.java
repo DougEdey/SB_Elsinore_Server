@@ -279,7 +279,7 @@ public class BeerXMLReader {
         recipe.calcMaltTotals();
         recipe.calcPrimeSugar();
         if (recipe.getMash() != null) {
-            recipe.getMash().calcMashSchedule();
+            //recipe.getMash().calcMashSchedule();
         }
         recipe.setAllowRecalcs(true);
         return recipe;
@@ -788,16 +788,20 @@ public class BeerXMLReader {
             Mash.MashStep newStep = mash.addStep(type, stepTemp, endTemp, name, stepTime, rampTime, mash.getTotalMashLbs());
             newStep.setName(name);
             newStep.setInVol(infuseAmount);
+            newStep.setDirections(getString(step, "DESCRIPTION", xp));
             if (type.equals(Mash.DECOCTION) || type.equals(Mash.DECOCTION_THICK) || type.equals(Mash.DECOCTION_THIN)) {
                 String decoctionAmount = getString(step, "DECOCTION_AMT", xp);
                 newStep.setInVol(new Quantity(decoctionAmount));
-            } else if (type.equals(Mash.INFUSION)) {
+            } else {
                 String infuseTemp = getString(step, "INFUSE_TEMP", xp);
                 newStep.setInfuseTemp(infuseTemp);
             }
             String[] mashRatio = getString(step, "WATER_GRAIN_RATIO", xp).split(" ");
             newStep.setMashRatio(mashRatio[0]);
-            newStep.setMashRatioU(mashRatio[1]);
+            newStep.setMashRatioU(Mash.QT_PER_LB);
+            if (mashRatio.length == 2) {
+                newStep.setMashRatioU(mashRatio[1]);
+            }
 
             String displayInfuseAmount = getString(step, "DISPLAY_INFUSE_AMT", xp);
             if (!displayInfuseAmount.equals("")) {

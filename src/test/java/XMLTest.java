@@ -22,6 +22,8 @@ public class XMLTest {
     public void readXMLFile() {
         testYellowSnow();
         testGreenhouseIPA();
+        testBarrelAgedStout();
+        testRobertsMild();
     }
 
     public void testYellowSnow() {
@@ -105,6 +107,55 @@ public class XMLTest {
             e.printStackTrace();
             assert(true);
         }
+    }
 
+    public void testRobertsMild() {
+        File robertsMildFile = new File("recipes/RobertsMild.xml");
+        assert(robertsMildFile.exists());
+        assert(robertsMildFile.canRead());
+        assert(BeerXMLReader.getInstance().readFile(robertsMildFile));
+        Recipe[] recipes = null;
+        try {
+            recipes = BeerXMLReader.getInstance().readAllRecipes();
+            assertEquals(recipes.length, 1);
+        } catch (XPathException e) {
+            e.printStackTrace();
+            assert(true);
+        }
+
+        Recipe[] output = new Recipe[1];
+        output[0] = recipes[0];
+        BeerXMLWriter recipeWriter = new BeerXMLWriter(output);
+        try {
+            recipeWriter.writeRecipes(new File("recipes/robertsmildoutput.xml"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            assert(true);
+        }
+    }
+
+    public void testBarrelAgedStout() {
+        File barrelAgedStoutFile = new File("recipes/barrel-aged-stout.xml");
+        assert(barrelAgedStoutFile.exists());
+        assert(barrelAgedStoutFile.canRead());
+        assert(BeerXMLReader.getInstance().readFile(barrelAgedStoutFile));
+        Recipe[] recipes = null;
+        try {
+            recipes = BeerXMLReader.getInstance().readAllRecipes();
+            assertEquals(recipes.length, 1);
+        } catch (XPathException e) {
+            e.printStackTrace();
+            assert(true);
+        }
+
+        Recipe[] output = new Recipe[1];
+        output[0] = recipes[0];
+        BeerXMLWriter recipeWriter = new BeerXMLWriter(output);
+        try {
+            recipeWriter.writeRecipes(new File("recipes/barrelagedstoutoutput.xml"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            assert(true);
+        }
     }
 }

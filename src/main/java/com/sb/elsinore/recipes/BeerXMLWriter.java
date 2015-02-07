@@ -939,7 +939,7 @@ public class BeerXMLWriter {
 
             tElement = recipeDocument.createElement("INFUSE_TEMP");
             if (!mash.getStepMethod(i).startsWith(Mash.DECOCTION)) {
-                tElement.setTextContent(mash.getDisplayStrikeTemp(i));
+                tElement.setTextContent(mash.getStepInfuseTemp(i));
             }
             stepElement.appendChild(tElement);
 
