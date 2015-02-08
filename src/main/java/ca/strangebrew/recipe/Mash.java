@@ -342,7 +342,7 @@ public class Mash {
         public void setInfuseTemp(String infuseTemp) {
             String[] split = infuseTemp.trim().split(" ");
             try {
-                this.infuseTemp = Double.parseDouble(split[0].trim());
+                this.infuseTemp = Double.parseDouble(split[0].trim().replace(",", ""));
                 this.infuseTempUnit = split[1].trim();
             } catch (NumberFormatException nfe) {
                 System.out.println("Couldn't parse: " + split[0] + " as a number.");
