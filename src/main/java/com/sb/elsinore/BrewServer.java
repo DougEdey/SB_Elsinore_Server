@@ -11,13 +11,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.file.Files;
-import java.util.Date;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.Iterator;
-import java.util.StringTokenizer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -96,6 +91,7 @@ public class BrewServer extends NanoHTTPD {
             put("json", "application/json");
         }
     };
+    private static ArrayList<String> recipeList;
 
     /**
      * Constructor to create the HTTP Server.
@@ -137,6 +133,14 @@ public class BrewServer extends NanoHTTPD {
         if (rootDir.exists() && rootDir.isDirectory()) {
             LOG.info("Root directory: " + rootDir.toString());
         }
+    }
+
+    public static void setRecipeList(ArrayList<String> recipeList) {
+        BrewServer.recipeList = recipeList;
+    }
+
+    public static ArrayList<String> getRecipeList() {
+        return recipeList;
     }
 
     /**

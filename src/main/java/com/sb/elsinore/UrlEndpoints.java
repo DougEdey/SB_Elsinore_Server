@@ -33,6 +33,7 @@ import com.sb.elsinore.inputs.PhSensor;
 import com.sb.elsinore.recipes.BeerXMLReader;
 import com.sb.elsinore.triggers.TriggerInterface;
 
+@SuppressWarnings("unchecked")
 public class UrlEndpoints {
 
     public File rootDir;
@@ -91,7 +92,7 @@ public class UrlEndpoints {
         Set<Entry<String, String>> incomingParams = params.entrySet();
         Map<String, String> parms;
         Iterator<Entry<String, String>> it = incomingParams.iterator();
-        Entry<String, String> param = null;
+        Entry<String, String> param;
         JSONObject incomingData = null;
         JSONParser parser = new JSONParser();
         String inputUnit = null;
@@ -256,7 +257,7 @@ public class UrlEndpoints {
     @UrlEndpoint(url = "/toggleTrigger")
     public Response toggleTriggerProfile() {
 
-        String tempProbe = null;
+        String tempProbe;
         if (parameters.containsKey("tempprobe")) {
             tempProbe = parameters.get("tempprobe");
         } else {
@@ -294,10 +295,9 @@ public class UrlEndpoints {
 
         TriggerInterface triggerEntry = mObj.getCurrentTrigger();
 
-        int stepToUse = -1;
+        int stepToUse;
         // We have a mash step position
         if (position >= 0) {
-            stepToUse = position;
             BrewServer.LOG.warning("Using mash step for " + tempProbe
                     + " at position " + position);
         }
@@ -305,12 +305,12 @@ public class UrlEndpoints {
         if (!activate) {
             // We're de-activating everything
             stepToUse = -1;
+        } else if (triggerEntry == null && mObj.triggerCount() > 0) {
+            stepToUse = 0;
+        } else if (triggerEntry != null) {
+            stepToUse = triggerEntry.getPosition();
         } else {
-            if (triggerEntry == null && mObj.triggerCount() > 0) {
-                stepToUse = 0;
-            } else {
-                stepToUse = triggerEntry.getPosition();
-            }
+            stepToUse = -1;
         }
 
         if (stepToUse >= 0 && activate) {
@@ -333,6 +333,7 @@ public class UrlEndpoints {
      * Read the incoming parameters and edit the vessel as appropriate.
      * @return True is success, false if failure.
      */
+    @SuppressWarnings("ConstantConditions")
     @UrlEndpoint(url = "/editdevice")
     public Response editVessel() {
         final Map<String, String> params = this.parameters;
@@ -344,7 +345,7 @@ public class UrlEndpoints {
         Set<Entry<String, String>> incomingParams = params.entrySet();
         Map<String, String> parms;
         Iterator<Entry<String, String>> it = incomingParams.iterator();
-        Entry<String, String> param = null;
+        Entry<String, String> param;
         JSONObject incomingData = null;
         JSONParser parser = new JSONParser();
         String errorMsg = "No Changes Made";
@@ -422,7 +423,6 @@ public class UrlEndpoints {
 
         if (inputUnit.equals("")) {
             BrewServer.LOG.warning("No Valid input unit");
-            errorMsg = "No Valid Input Unit";
         }
 
         Temp tProbe = LaunchControl.findTemp(inputUnit);
@@ -516,13 +516,13 @@ public class UrlEndpoints {
      */
     @UrlEndpoint(url = "/addtimer")
     public final Response addTimer() {
-        String oldName = "", newName = "", gpio = "";
+        String newName = "";
         String inputUnit = "";
 
         Set<Entry<String, String>> incomingParams = parameters.entrySet();
         Map<String, String> parms;
         Iterator<Entry<String, String>> it = incomingParams.iterator();
-        Entry<String, String> param = null;
+        Entry<String, String> param;
         JSONObject incomingData = null;
         JSONParser parser = new JSONParser();
 
@@ -550,7 +550,6 @@ public class UrlEndpoints {
             BrewServer.LOG.info("Found valid data for " + inputUnit);
             parms = (Map<String, String>) incomingData;
         } else {
-            inputUnit = parameters.get("form");
             parms = parameters;
         }
 
@@ -577,8 +576,6 @@ public class UrlEndpoints {
     /**
      * Add a new pump to the brewery.
      * 
-     * @param params
-     *            The parameter list
      * @return True if added ok
      */
     @UrlEndpoint(url = "/addpump")
@@ -590,7 +587,7 @@ public class UrlEndpoints {
         Set<Entry<String, String>> incomingParams = this.parameters.entrySet();
         Map<String, String> parms;
         Iterator<Entry<String, String>> it = incomingParams.iterator();
-        Entry<String, String> param = null;
+        Entry<String, String> param;
         JSONObject incomingData = null;
         JSONParser parser = new JSONParser();
 
@@ -618,7 +615,6 @@ public class UrlEndpoints {
             BrewServer.LOG.info("Found valid data for " + inputUnit);
             parms = (Map<String, String>) incomingData;
         } else {
-            inputUnit = this.parameters.get("form");
             parms = this.parameters;
         }
 
@@ -656,16 +652,14 @@ public class UrlEndpoints {
 
     /**
      * Read the incoming parameters and update the PID as appropriate.
-     * 
-     * @param parameters
-     *            The parameters from the client
+     *
      * @return True if success, false if failure
      */
     @SuppressWarnings("unchecked")
     @UrlEndpoint(url = "/updatepid")
     public Response updatePID() {
         String temp, mode = "off";
-        BigDecimal dTemp = new BigDecimal(0), duty = new BigDecimal(0),
+        BigDecimal dTemp, duty = new BigDecimal(0),
                 heatcycle = new BigDecimal(0), setpoint = new BigDecimal(0),
                 heatp = new BigDecimal(0), heati = new BigDecimal(0),
                 heatd = new BigDecimal(0), min = new BigDecimal(0),
@@ -920,36 +914,27 @@ public class UrlEndpoints {
             return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
                     usage.toJSONString()); 
         }
-        
-        if (tPID != null) {
-            if (mode.equalsIgnoreCase("hysteria")) {
-                tPID.setHysteria(min, max, time);
-                tPID.useHysteria();
-            } else {
-                BrewServer.LOG.info(mode + ":" + duty + ":" + heatcycle + ":"
-                        + setpoint + ":" + heatp + ":" + heati + ":" + heatd);
-                tPID.updateValues(mode, duty, heatcycle, setpoint, heatp, heati, heatd);
-                tPID.setCoolCycle(coolcycle);
-                tPID.setCoolP(coolp);
-                tPID.setCoolI(cooli);
-                tPID.setCoolD(coold);
-                tPID.setCoolDelay(cooldelay);
 
-                if (mode.equalsIgnoreCase("manual")) {
-                    tPID.setManualDuty(duty);
-                    tPID.setManualTime(cycle);
-                }
-            }
-            return new Response(Status.OK, MIME_HTML, "PID " + inputUnit
-                    + " updated");
+        if (mode.equalsIgnoreCase("hysteria")) {
+            tPID.setHysteria(min, max, time);
+            tPID.useHysteria();
         } else {
-            BrewServer.LOG.warning("Attempted to update a non existent PID, "
-                    + inputUnit + ". Please check your client");
-            usage.put("Error", "Non existent PID specified: " + inputUnit);
-            return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
-                    usage.toJSONString());
-        }
+            BrewServer.LOG.info(mode + ":" + duty + ":" + heatcycle + ":"
+                    + setpoint + ":" + heatp + ":" + heati + ":" + heatd);
+            tPID.updateValues(mode, duty, heatcycle, setpoint, heatp, heati, heatd);
+            tPID.setCoolCycle(coolcycle);
+            tPID.setCoolP(coolp);
+            tPID.setCoolI(cooli);
+            tPID.setCoolD(coold);
+            tPID.setCoolDelay(cooldelay);
 
+            if (mode.equalsIgnoreCase("manual")) {
+                tPID.setManualDuty(duty);
+                tPID.setManualTime(cycle);
+            }
+        }
+        return new Response(Status.OK, MIME_HTML, "PID " + inputUnit
+                + " updated");
     }
 
     /**
@@ -960,7 +945,6 @@ public class UrlEndpoints {
     public Response addVolumePoint() {
         JSONObject usage = new JSONObject();
         Map<String, String> parms = ParseParams(this.parameters);
-        String inputUnit = parms.get("inputunit");
         usage.put("name", "Temperature probe name to add a volume point to");
         usage.put("volume",
                 "Volume that is in the vessel to add a datapoint for");
@@ -972,15 +956,15 @@ public class UrlEndpoints {
                 "The one wire offset to be used for analogue reads");
         usage.put("adc_pin", "The ADC Pin to be used for analogue reads");
 
-        String name = parms.get("name").trim();
-        String volume = parms.get("volume").trim();
-        String units = parms.get("units").trim();
+        String name = parms.get("name");
+        String volume = parms.get("volume");
+        String units = parms.get("units");
 
-        String onewire_add = parms.get("onewire_address").trim();
-        String onewire_offset = parms.get("onewire_offset").trim();
-        String adc_pin = parms.get("adc_pin").trim();
+        String onewire_add = parms.get("onewire_address");
+        String onewire_offset = parms.get("onewire_offset");
+        String adc_pin = parms.get("adc_pin");
 
-        String error_msg = "";
+        String error_msg;
 
         if (name == null || volume == null) {
             error_msg = "No name or volume supplied";
@@ -1086,7 +1070,7 @@ public class UrlEndpoints {
 
         if (parms.containsKey("size")) {
             try {
-                size = Integer.parseInt((String) params.get("size"));
+                size = Integer.parseInt(params.get("size"));
             } catch (NumberFormatException nfe) {
                 size = 1000;
             }
@@ -1094,7 +1078,7 @@ public class UrlEndpoints {
 
         String vessel = "";
         if (parms.containsKey("vessel")) {
-            vessel = (String) parms.get("vessel");
+            vessel = parms.get("vessel");
         }
 
         // Read CSV files and make a JSON Response
@@ -1110,6 +1094,10 @@ public class UrlEndpoints {
             File file = new File("graph-data/");
             if (file.isDirectory()) {
                 File[] contents = file.listFiles();
+                if (contents == null) {
+                    return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
+                            "No files.");
+                }
                 for (File content : contents) {
                     String name = content.getName();
                     try {
@@ -1133,7 +1121,6 @@ public class UrlEndpoints {
         File[] contents = directoryFile.listFiles();
         JSONObject xsData = new JSONObject();
         JSONObject axes = new JSONObject();
-        JSONObject columns = new JSONObject();
         JSONArray dataBuffer = new JSONArray();
         long currentTime = System.currentTimeMillis();
 
@@ -1149,6 +1136,11 @@ public class UrlEndpoints {
                 BrewServer.LOG.warning(
                         "Couldn't create zip file at: " + zipFileName);
                 BrewServer.LOG.warning(ioe.getLocalizedMessage());
+            }
+
+            if (contents == null || zipFile == null) {
+                return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
+                        "No files.");
             }
 
             for (File content : contents) {
@@ -1167,10 +1159,15 @@ public class UrlEndpoints {
             try {
                 zipFile.closeZip();
             } catch (IOException e) {
+                e.printStackTrace();
             }
             return BrewServer.serveFile(zipFileName, params, rootDir);
         }
 
+        if (contents == null) {
+            return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
+                    "{Bad: Request}");
+        }
         for (File content : contents) {
             if (content.getName().endsWith(".csv")
                     && content.getName().toLowerCase()
@@ -1182,7 +1179,7 @@ public class UrlEndpoints {
                 name = name.replace('-', ' ');
 
                 if (parms.containsKey("bindto")
-                        && ((String) parms.get("bindto"))
+                        && (parms.get("bindto"))
                         .endsWith("-graph_body")) {
                     name = name.substring(name.lastIndexOf(" ") + 1);
                 }
@@ -1201,20 +1198,21 @@ public class UrlEndpoints {
                 xArray.add("x" + name);
                 dataArray.add(name);
 
-                String lastLine = null;
                 BufferedReader reader = null;
                 try {
                     reader = new BufferedReader(new FileReader(content));
                     String line;
                     String[] lArray = null;
 
-                    while ((line = reader.readLine()) != null) {
+                    int count = 0;
+                    while ((line = reader.readLine()) != null && count < size) {
                         // Each line contains the timestamp and the value
                         lArray = line.split(",");
                         xArray.add(BrewDay.sFormat
                                 .format(new Date(Long.parseLong(lArray[0])))
                                 );
                         dataArray.add(lArray[1].trim());
+                        count++;
                     }
 
                     if (lArray != null && Long.parseLong(lArray[0]) != currentTime) {
@@ -1321,7 +1319,7 @@ public class UrlEndpoints {
         Map<String, String> parms = ParseParams(this.parameters);
         String newName = parms.get("name");
 
-        if (newName != null && newName != "" && newName.length() > 0) {
+        if (newName != null && !newName.equals("") && newName.length() > 0) {
             LaunchControl.setName(newName);
             return new Response(Response.Status.OK,
                     MIME_TYPES.get("json"), usage.toJSONString());
@@ -1359,13 +1357,14 @@ public class UrlEndpoints {
                         || fileType.equalsIgnoreCase(MIME_TYPES.get("png")))
                     {
                         File targetFile = new File(rootDir, "brewerImage.gif");
-                        if (targetFile.exists()) {
-                            targetFile.delete();
+                        if (targetFile.exists() && !targetFile.delete()) {
+                            BrewServer.LOG.warning("Failed to delete " + targetFile.getCanonicalPath());
                         }
                         LaunchControl.copyFile(uploadedFile, targetFile);
 
-                        targetFile.setReadable(true, false);
-                        targetFile.setWritable(true, false);
+                        if (!targetFile.setReadable(true, false) || targetFile.setWritable(true, false)) {
+                            BrewServer.LOG.warning("Failed to set read write permissions on " + targetFile.getCanonicalPath());
+                        }
 
                         LaunchControl.setFileOwner(targetFile);
                     }
@@ -1481,7 +1480,6 @@ public class UrlEndpoints {
 
     /**
      * Delete a timer.
-     * @param parms
      * @return a response
      */
     @UrlEndpoint(url = "/deletetimer")
@@ -1556,7 +1554,7 @@ public class UrlEndpoints {
             // If we're on, disable the recorder
             if (!recorderOn) {
                 LaunchControl.disableRecorder();
-            } else if (recorderOn) {
+            } else {
                 LaunchControl.enableRecorder();
             }
         } else {
@@ -1591,7 +1589,6 @@ public class UrlEndpoints {
 
     /**
      * Set the gravity for the specified device.
-     * @param parms
      * @return A response
      */
     @UrlEndpoint(url = "/setgravity")
@@ -1641,7 +1638,7 @@ public class UrlEndpoints {
     public Response renderController() {
         RenderHTML renderController = new RenderHTML();
         HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
-        String result = "";
+        String result;
         try {
             renderController.renderOn(html);
             result = html.toHtml();
@@ -1714,8 +1711,7 @@ public class UrlEndpoints {
                 usage.put("Error", "Invalid name supplied: " + pumpname);
                 usage.put("toggle", "The name of the Pump to toggle on/off");
                 return new Response(Status.BAD_REQUEST,
-                        MIME_TYPES.get("txt"), "Invalid pump: " + pumpname
-                                + " provided.");
+                        MIME_TYPES.get("json"), usage.toJSONString());
             }
         }
 
@@ -1762,7 +1758,7 @@ public class UrlEndpoints {
         }
 
         Iterator<Entry<String, String>> it = parameters.entrySet().iterator();
-        Entry<String, String> e = null;
+        Entry<String, String> e;
 
         while (it.hasNext()) {
             e = it.next();
@@ -1805,7 +1801,7 @@ public class UrlEndpoints {
         VolumeEditForm volEditForm = new VolumeEditForm(
                 temp);
         HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
-        String result = "";
+        String result;
         try {
             volEditForm.renderOn(html);
             result = html.toHtml();
@@ -1819,7 +1815,7 @@ public class UrlEndpoints {
 
     @UrlEndpoint(url = "/getphsensorform")
     public Response getPhSensorForm() {
-        PhSensor phSensor = null;
+        PhSensor phSensor;
 
         if (!parameters.containsKey("sensor")) {
             phSensor = new PhSensor();
@@ -1830,7 +1826,7 @@ public class UrlEndpoints {
         // Render away
         PhSensorForm phSensorForm = new PhSensorForm(phSensor);
         HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
-        String result = "";
+        String result;
         try {
             phSensorForm.renderOn(html);
             result = html.toHtml();
@@ -1953,7 +1949,7 @@ public class UrlEndpoints {
     @UrlEndpoint(url = "/getNewTriggers")
     public final Response getNewTriggersForm() {
         Status status = Status.OK;
-        HtmlCanvas htmlCanvas = null;
+        HtmlCanvas htmlCanvas;
         String probe = parameters.get("temp");
         if (probe == null) {
             LaunchControl.setMessage("No Temperature probe set.");
@@ -1965,6 +1961,7 @@ public class UrlEndpoints {
                     "Failed to get the new triggers form: "
                             + ioe.getLocalizedMessage());
             status = Status.BAD_REQUEST;
+            htmlCanvas = new HtmlCanvas();
         }
 
         return new Response(status, MIME_HTML, htmlCanvas.toHtml());
@@ -1978,7 +1975,6 @@ public class UrlEndpoints {
     public final Response getTriggerEditForm() {
         Status status = Status.OK;
         int position = Integer.parseInt(parameters.get("position"));
-        String type = parameters.get("type");
         String tempProbeName = parameters.get("tempprobe");
         Temp tempProbe = LaunchControl.findTemp(tempProbeName);
         TriggerControl triggerControl = tempProbe.getTriggerControl();
@@ -2014,7 +2010,6 @@ public class UrlEndpoints {
     public final Response updateTrigger() {
         Status status = Status.OK;
         int position = Integer.parseInt(parameters.get("position"));
-        String type = parameters.get("type");
         String tempProbeName = parameters.get("tempprobe");
         Temp tempProbe = LaunchControl.findTemp(tempProbeName);
         TriggerControl triggerControl = tempProbe.getTriggerControl();
@@ -2049,7 +2044,7 @@ public class UrlEndpoints {
                     + mEntry.getKey() + ": " + mEntry.getValue());
             }
         }
-        synchronized (LaunchControl.tempList) {
+        synchronized (LaunchControl.timerList) {
             Collections.sort(LaunchControl.tempList);
         }
         return new Response(Status.OK, MIME_TYPES.get("json"),
@@ -2064,7 +2059,7 @@ public class UrlEndpoints {
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Set the beerXML file");
         usage.put("files", "The new beerXML file");
-
+        Status status = Status.ACCEPTED;
         if (files.size() == 1) {
             for (Map.Entry<String, String> entry : files.entrySet()) {
 
@@ -2076,13 +2071,15 @@ public class UrlEndpoints {
                     if (fileType.equalsIgnoreCase(MIME_TYPES.get("xml")))
                     {
                         BeerXMLReader.getInstance().readFile(uploadedFile);
+                        BrewServer.setRecipeList(BeerXMLReader.getInstance().getListOfRecipes());
                     }
                 } catch (IOException e) {
                     usage.put("error", "Bad file");
+                    status = Status.BAD_REQUEST;
                 }
             }
         }
-        return new Response(Response.Status.BAD_REQUEST,
+        return new Response(status,
                 MIME_TYPES.get("json"), usage.toJSONString());
 
     }
