@@ -855,4 +855,12 @@ public class BeerXMLReader {
     public Recipe[] readAllRecipes() throws XPathException {
         return readRecipe(this.recipeDocument, null);
     }
+
+    public Recipe readRecipe(String name) throws XPathException {
+        Recipe[] recipes = readRecipe(this.recipeDocument, name);
+        if (recipes != null && recipes.length > 0) {
+            return  recipes[0];
+        }
+        return null;
+    }
 }

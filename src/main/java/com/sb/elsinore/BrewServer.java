@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 
+import ca.strangebrew.recipe.Recipe;
 import jGPIO.InvalidGPIOException;
 
 import java.io.File;
@@ -43,6 +44,7 @@ import java.io.FileReader;
  */
 public class BrewServer extends NanoHTTPD {
 
+    private static Recipe currentRecipe;
     /**
      * The Root Directory of the files to be served.
      */
@@ -141,6 +143,14 @@ public class BrewServer extends NanoHTTPD {
 
     public static ArrayList<String> getRecipeList() {
         return recipeList;
+    }
+
+    public static void setCurrentRecipe(Recipe recipe) {
+        BrewServer.currentRecipe = recipe;
+    }
+
+    public static Recipe getCurrentRecipe() {
+        return BrewServer.currentRecipe;
     }
 
     /**
@@ -288,7 +298,7 @@ public class BrewServer extends NanoHTTPD {
 
         // NLS Support
         if (uri.startsWith("/nls/")) {
-            return serveFile(uri.replace("/nls/", "/src/com/sb/elsinore/nls/"),
+            return serveFile(uri.replace("/nls/", "/src/main/java/com/sb/elsinore/nls/"),
                 header, rootDir);
         }
 

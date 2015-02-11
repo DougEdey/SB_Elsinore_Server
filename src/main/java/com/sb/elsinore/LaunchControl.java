@@ -759,6 +759,15 @@ public final class LaunchControl {
         }
 
         rObj.put("language", Locale.getDefault().toString());
+
+        // Add some recipe info.
+        if (BrewServer.getCurrentRecipe() != null) {
+            rObj.put("recipe", BrewServer.getCurrentRecipe().getName());
+        }
+
+        if (BrewServer.getRecipeList().size() > 0) {
+            rObj.put("recipeCount", BrewServer.getRecipeList().size());
+        }
         return rObj.toString();
     }
 

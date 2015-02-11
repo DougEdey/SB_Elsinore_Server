@@ -52,6 +52,15 @@ function setup() {
 		}
 	});
 
+	$('#beerxml').fileupload({
+    		dataType : 'json',
+    		done : function(e, data) {
+    			$.each(data.result.files, function(index, file) {
+    				$('<p/>').text(file.name).appendTo(document.body);
+    			});
+    		}
+    	});
+
 	var temp =$('div[class="center-left"]');
 	
 	if (temp == undefined || temp.length == 0) {

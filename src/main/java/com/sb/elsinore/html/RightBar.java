@@ -17,7 +17,15 @@ public class RightBar implements Renderable {
             .div(class_("breweryImage"))
                 .img(height("200").width("200").id("brewerylogo").src(" "))
             ._div()
-            .input(type("file").id("logo").add("data-url", "uploadImage"))
+            .span(class_("btn btn-default btn-file")).write("Upload Logo")
+                .input(type("file").id("logo").add("data-url", "uploadImage"))
+            ._span()
+
+            .div(class_("recipe"))
+            ._div()
+            .span(class_("btn btn-default btn-file")).write("Upload BeerXML")
+                .input(type("file").id("beerxml").add("data-url", "uploadbeerxml"))
+            ._span()
         ._div();
 
     }

@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 
+import com.sb.elsinore.html.RecipeListForm;
 import jGPIO.InvalidGPIOException;
 
 import java.io.BufferedReader;
@@ -9,12 +10,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.json.simple.JSONArray;
@@ -32,6 +28,8 @@ import com.sb.elsinore.html.VolumeEditForm;
 import com.sb.elsinore.inputs.PhSensor;
 import com.sb.elsinore.recipes.BeerXMLReader;
 import com.sb.elsinore.triggers.TriggerInterface;
+
+import javax.xml.xpath.XPathException;
 
 @SuppressWarnings("unchecked")
 public class UrlEndpoints {
@@ -51,6 +49,7 @@ public class UrlEndpoints {
             put("htm", "text/html");
             put("html", "text/html");
             put("xml", "text/xml");
+            put("axml", "application/xml");
             put("txt", "text/plain");
             put("asc", "text/plain");
             put("gif", "image/gif");
@@ -2068,20 +2067,36 @@ public class UrlEndpoints {
                     String fileType = Files.probeContentType(
                             uploadedFile.toPath());
 
-                    if (fileType.equalsIgnoreCase(MIME_TYPES.get("xml")))
+                    if (fileType.endsWith("/xml"))
                     {
                         BeerXMLReader.getInstance().readFile(uploadedFile);
-                        BrewServer.setRecipeList(BeerXMLReader.getInstance().getListOfRecipes());
+                        ArrayList<String> recipeList = BeerXMLReader.getInstance().getListOfRecipes();
+                        BrewServer.setRecipeList(recipeList);
+                        if (recipeList.size() == 1) {
+                            BrewServer.setCurrentRecipe(BeerXMLReader.getInstance().readRecipe(recipeList.get(0)));
+                        }
                     }
                 } catch (IOException e) {
                     usage.put("error", "Bad file");
                     status = Status.BAD_REQUEST;
+                } catch (XPathException e) {
+                    e.printStackTrace();
                 }
             }
         }
         return new Response(status,
                 MIME_TYPES.get("json"), usage.toJSONString());
-
     }
 
+    @UrlEndpoint(url = "/getrecipelist")
+    public Response getRecipeList() {
+        HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
+        try {
+            new RecipeListForm().renderOn(html);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new Response(Status.OK, MIME_HTML, html.toHtml());
+    }
 }
