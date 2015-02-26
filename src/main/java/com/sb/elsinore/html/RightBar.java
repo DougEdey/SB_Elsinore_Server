@@ -1,21 +1,20 @@
 package com.sb.elsinore.html;
 
-import static org.rendersnake.HtmlAttributesFactory.class_;
-import static org.rendersnake.HtmlAttributesFactory.height;
-import static org.rendersnake.HtmlAttributesFactory.type;
-
 import java.io.IOException;
 
+import com.sb.elsinore.BrewServer;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.Renderable;
+
+import static org.rendersnake.HtmlAttributesFactory.*;
 
 public class RightBar implements Renderable {
 
     @Override
     public void renderOn(HtmlCanvas html) throws IOException {
-        html.div(class_("col-md-2"))
+        html.div(class_("col-md-2 text-center"))
             .div(class_("breweryImage"))
-                .img(height("200").width("200").id("brewerylogo").src(" "))
+                .img(class_("center-block").height("200").width("200").id("brewerylogo").src(" "))
             ._div()
             .span(class_("btn btn-default btn-file")).write("Upload Logo")
                 .input(type("file").id("logo").add("data-url", "uploadImage"))
@@ -25,8 +24,22 @@ public class RightBar implements Renderable {
             ._div()
             .span(class_("btn btn-default btn-file")).write("Upload BeerXML")
                 .input(type("file").id("beerxml").add("data-url", "uploadbeerxml"))
-            ._span()
-        ._div();
+            ._span();
+
+        if (BrewServer.getRecipeList() != null && BrewServer.getRecipeList().size() > 1) {
+            html.select(name("selectRecipe").class_("holo-spinner")
+                .onSelect("chooseRecipe(this);"));
+            html.option(value("").selected_if(true))
+                    .write("Select Recipe")
+                    ._option();
+            for (String entry: BrewServer.getRecipeList()) {
+                html.option(value(entry))
+                        .write(entry)
+                        ._option();
+            }
+            html._select();
+        }
+        html._div();
 
     }
 
