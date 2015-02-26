@@ -98,6 +98,10 @@ public class Messages extends NLS {
     public static String SET_BOIL_HOP_PROFILE;
     public static String SET_DRY_HOP_PROFILE;
 
+    public static String UPLOAD_LOGO;
+    public static String UPLOAD_BEERXML;
+    public static String SHOW_RECIPE;
+
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);
     }
