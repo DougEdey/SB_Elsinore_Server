@@ -2653,3 +2653,38 @@ function phAINChange(element) {
 		$("[id=dsOffset]").hide();
 	}
 }
+
+function showRecipe(element, recipeSelect) {
+
+	window.disableUpdates = 1;
+
+	// Is the edit form already displayed
+	var recipeView = $("recipeView");
+	if (recipeView.val() != undefined) {
+		return;
+	}
+
+	// Insert a couple of new form elements
+	var $tr = $(element);
+    $tr.popover('destroy');
+
+    var curRecipeName = null;
+    if (element.id == "selectRecipe") {
+        curRecipeName = element.find(":selected").text();
+    }
+
+    $.ajax({
+        url: '/showrecipe',
+        data: {recipeName: curRecipeName},
+        dataType: 'html',
+        success: function(html) {
+            $tr.popover({
+            title: 'Volume Edit',
+            content: html,
+            placement: 'bottom',
+            html: true,
+            trigger: 'manual'
+        }).popover('show');
+    }
+});
+}
