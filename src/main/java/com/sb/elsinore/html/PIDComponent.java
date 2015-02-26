@@ -10,7 +10,6 @@ import static org.rendersnake.HtmlAttributesFactory.*;
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Messages;
-import com.sb.elsinore.PID;
 
 public class PIDComponent implements Renderable {
 
