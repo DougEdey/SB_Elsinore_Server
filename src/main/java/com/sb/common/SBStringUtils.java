@@ -6,6 +6,8 @@
 
 package com.sb.common;
 
+import com.sb.elsinore.Messages;
+
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -158,5 +160,30 @@ public class SBStringUtils {
 		BigDecimal bd = new BigDecimal(Double.toString(d));
 		bd = bd.setScale(decimalPlace,BigDecimal.ROUND_HALF_UP);
 		return bd.doubleValue();
-	}	
+	}
+
+
+    /**
+     * Format the incoming time to a human value from minutes.
+     * @param timeMinutes The time in minutes to format.
+     * @return A string representing the time.
+     */
+    public static String formatTime(int timeMinutes) {
+        if (timeMinutes < 60) {
+            return timeMinutes + " " + Messages.MINS;
+        }
+        // Hours
+        double time = timeMinutes/60.0;
+        if (time < 24) {
+            return time + " " + Messages.HOURS;
+        }
+        // Days
+        time = time/24;
+        if (time < 7) {
+            return time + " " + Messages.DAYS;
+        }
+        // Weeks
+        time = time/7;
+        return time + " " + Messages.WEEKS;
+    }
 }
