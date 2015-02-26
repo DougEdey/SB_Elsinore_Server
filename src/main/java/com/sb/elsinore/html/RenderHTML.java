@@ -1,8 +1,6 @@
 package com.sb.elsinore.html;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Iterator;
 
 import org.rendersnake.DocType;
 import org.rendersnake.HtmlCanvas;
@@ -10,11 +8,8 @@ import org.rendersnake.Renderable;
 
 import static org.rendersnake.HtmlAttributesFactory.*;
 
-import org.rendersnake.ext.jquery.JQueryLibrary;
-
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Messages;
-import com.sb.elsinore.PID;
 import com.sb.elsinore.Pump;
 import com.sb.elsinore.Temp;
 import com.sb.elsinore.Timer;
@@ -35,18 +30,24 @@ public class RenderHTML implements Renderable {
         html.div(id("main").class_("container-fluid col-md-10")
                 .style("padding-left:10px; padding-right:10px"));
 
-        html.div(id("Probes").class_("col-md-12"));
+        html.div(id("Probes").class_("row no-gutter"));
+        int i = 0;
             for (Temp temp: LaunchControl.tempList) {
                 if (LaunchControl.isLocked()
                         && temp.getName().equals(temp.getProbe())) {
                     continue;
                 }
+                if (i % 4 == 0) {
+                    html._div();
+                    html.div(id("Probes").class_("row no-gutter"));
+                }
+                i++;
                 html.render(new PIDComponent(temp.getName()));
             }
         html._div();
-
         // Add in the pumps
-        html.div(id("pumps"))
+        html.div(class_("row no-gutter"));
+        html.div(id("pumps").class_("col-md-2"))
             .div(class_("panel panel-info"))
                 .div(id("pumps-titled").class_("title panel-heading"))
                     .write(Messages.PUMPS)
@@ -67,7 +68,7 @@ public class RenderHTML implements Renderable {
         ._div();
 
         // Add the timers
-        html.div(id("timers"))
+        html.div(id("timers").class_("col-md-2"))
             .div(class_("panel panel-info"))
                 .div(id("timers-header").class_("title panel-heading"))
                     .write(Messages.TIMERS)
@@ -89,7 +90,7 @@ public class RenderHTML implements Renderable {
         ._div();
 
         // Add the pH Sensors
-        html.div(id("phSensors").class_("col-md-3"))
+        html.div(id("phSensors").class_("col-md-2"))
             .div(class_("panel panel-info"))
                 .div(id("phSensors-header").class_("title panel-heading"))
                     .write(Messages.PH_SENSORS)
@@ -107,7 +108,7 @@ public class RenderHTML implements Renderable {
                 ._div()
             ._div()
         ._div();
-
+        html._div();
         // Check updates button
         html.br().br().div()
             .button(id("CheckUpdates").class_("btn")
