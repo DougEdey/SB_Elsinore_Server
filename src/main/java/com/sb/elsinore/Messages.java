@@ -59,10 +59,10 @@ public class Messages extends NLS {
     public static String US_GALLONS;
     public static String CUTOFF_TEMP;
     public static String INVALID_GPIO;
-   
     public static String NAME;
 
     public static String PUMPNAMEBLANK;
+
     public static String GPIO_BLANK;
     public static String TIMERNAMEBLANK;
     public static String TEMP_UNIT;
@@ -71,8 +71,8 @@ public class Messages extends NLS {
     public static String BREWERY_QUESTION;
     public static String DELETE_PUMP;
     public static String DELETE_TIMER;
-
     public static String EDIT;
+
     public static String EDIT_VOLUME;
     public static String LOCK;
     public static String DUTYPERC;
@@ -80,10 +80,24 @@ public class Messages extends NLS {
     public static String COOL;
     public static String DELAY;
     public static String CALIBRATE;
-
     public static String TRIGGERS;
+
     public static String ADD_TRIGGER;
-    
+    public static String MINS;
+    public static String HOURS;
+    public static String DAYS;
+    public static String WEEKS;
+
+    public static String DRY_ADDITIONS;
+    public static String BOIL_ADDITIONS;
+    public static String MASH_PROFILE;
+    public static String FERMENT_PROFILE;
+
+    public static String SET_MASH_PROFILE;
+    public static String SET_FERM_PROFILE;
+    public static String SET_BOIL_HOP_PROFILE;
+    public static String SET_DRY_HOP_PROFILE;
+
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);
     }
