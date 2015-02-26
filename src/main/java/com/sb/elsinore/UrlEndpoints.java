@@ -1,6 +1,7 @@
 package com.sb.elsinore;
 
-import com.sb.elsinore.html.RecipeListForm;
+import ca.strangebrew.recipe.Recipe;
+import com.sb.elsinore.html.*;
 import jGPIO.InvalidGPIOException;
 
 import java.io.BufferedReader;
@@ -22,9 +23,6 @@ import org.rendersnake.tools.PrettyWriter;
 import com.sb.elsinore.NanoHTTPD.Response;
 import com.sb.elsinore.NanoHTTPD.Response.Status;
 import com.sb.elsinore.annotations.UrlEndpoint;
-import com.sb.elsinore.html.PhSensorForm;
-import com.sb.elsinore.html.RenderHTML;
-import com.sb.elsinore.html.VolumeEditForm;
 import com.sb.elsinore.inputs.PhSensor;
 import com.sb.elsinore.recipes.BeerXMLReader;
 import com.sb.elsinore.triggers.TriggerInterface;
@@ -2093,6 +2091,37 @@ public class UrlEndpoints {
         HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
         try {
             new RecipeListForm().renderOn(html);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new Response(Status.OK, MIME_HTML, html.toHtml());
+    }
+
+    @UrlEndpoint(url = "/showrecipe")
+    public Response showRecipe(){
+        String recipeName = this.parameters.get("recipeName");
+        if (recipeName == null && BrewServer.getCurrentRecipe() == null) {
+            return new Response(Status.BAD_REQUEST, MIME_HTML, "No recipe name provided");
+        }
+
+        Recipe recipe = null;
+        if (recipeName != null) {
+            try {
+                recipe = BeerXMLReader.getInstance().readRecipe(recipeName);
+            } catch (XPathException e) {
+                e.printStackTrace();
+            }
+        } else {
+            recipe = BrewServer.getCurrentRecipe();
+        }
+
+        if (recipe == null) {
+            return new Response(Status.BAD_REQUEST, MIME_HTML, "Could not find recipe: " + recipeName);
+        }
+        HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
+        try {
+            new RecipeViewForm(recipe).renderOn(html);
         } catch (IOException e) {
             e.printStackTrace();
         }
