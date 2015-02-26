@@ -29,7 +29,7 @@ public class PIDComponent implements Renderable {
 
         html.div(
                 id(name).class_(
-                        "holo-content controller panel panel-primary pid")
+                        "col-md-2 holo-content controller panel panel-primary pid")
                         .draggable("true")
                         .onDragstart("dragDevice(event);")
                         .onDrop("dropDevice(event);")
@@ -42,7 +42,7 @@ public class PIDComponent implements Renderable {
                         "editDevice(this);"))
                         .write(name.replace("_", " "))
                 ._div()
-                .div(id(name + "-error").class_("panel-error").onClick(
+                .div(id(name + "-error").class_("btn-warning").onClick(
                         "dismissError(this)"))
                 ._div()
                 .div(id(name + "-body").class_("panel-body"))
