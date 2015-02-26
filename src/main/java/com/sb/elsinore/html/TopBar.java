@@ -17,8 +17,8 @@ public class TopBar implements Renderable {
 
     @Override
     public final void renderOn(HtmlCanvas htmlCanvas) throws IOException {
-        htmlCanvas.div(id("topbar").class_("col-md-12"))
-            .div(id("breweryTitle").class_("left  col-md-2"))
+        htmlCanvas.div(id("topbar").class_("row"))
+            .div(id("breweryTitle").class_("left col-md-2"))
                 .h1(class_("breweryNameHeader").onClick("editBreweryName()"))
                     .div(id("breweryName")).write("Elsinore")._div()
                     .small()
@@ -30,7 +30,7 @@ public class TopBar implements Renderable {
             .div(class_("center-left col-md-4"))._div()
             .div(class_("center-right col-md-4"))._div()
         ._div()
-        .div(id("messages").style("display:none"))
+        .div(id("messages").class_("row").style("display:none"))
             .div(class_("panel panel-warning"))
                 .div(id("messages-title").class_("title panel-heading"))._div()
                 .div(id("messages-body").class_("panel-body"))._div()
