@@ -1,13 +1,12 @@
 package com.sb.elsinore;
 import com.sb.util.MathUtil;
-
+import javax.annotation.Nonnull;
 import jGPIO.GPIO.Direction;
 import jGPIO.InPin;
 import jGPIO.InvalidGPIOException;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -102,27 +101,26 @@ public final class Temp implements Runnable, Comparable<Temp> {
                 new File("/sys/bus/w1/devices/" + aName + "/w1_slave");
 
             // Lets assume that OWFS has "." separated names
-            if (!probePath.exists() && aName.indexOf(".") != -1) {
+            if (!probePath.exists() && aName.contains(".")) {
                 String[] newAddress = aName.split("\\.|-");
 
                 if (newAddress.length == 2) {
                     String devFamily = newAddress[0];
-                    StringBuilder devAddress = new StringBuilder();
+                    String devAddress = "";
                     // Byte swap!
-                    devAddress.append(newAddress[1].subSequence(10, 12));
-                    devAddress.append(newAddress[1].subSequence(8, 10));
-                    devAddress.append(newAddress[1].subSequence(6, 8));
-                    devAddress.append(newAddress[1].subSequence(4, 6));
-                    devAddress.append(newAddress[1].subSequence(2, 4));
-                    devAddress.append(newAddress[1].subSequence(0, 2));
+                    devAddress += newAddress[1].subSequence(10, 12);
+                    devAddress += newAddress[1].subSequence(8, 10);
+                    devAddress += newAddress[1].subSequence(6, 8);
+                    devAddress += newAddress[1].subSequence(4, 6);
+                    devAddress += newAddress[1].subSequence(2, 4);
+                    devAddress += newAddress[1].subSequence(0, 2);
 
-                    String fixedAddress = devFamily.toString() + "."
-                        + devAddress.toString().toLowerCase();
+                    String fixedAddress = devFamily + "."
+                        + devAddress.toLowerCase();
 
                     BrewServer.LOG.info("Converted address: " + fixedAddress);
 
                     aName = fixedAddress;
-                    probePath = null;
                 }
             }
             this.fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
@@ -139,7 +137,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
     public void run() {
 
         while (keepalive) {
-            if (updateTemp() == ERROR_TEMP) {
+            if (updateTemp().equals(ERROR_TEMP)) {
                 if (fProbe != null && fProbe.equals(
                         "/sys/class/thermal/thermal_zone0/temp")) {
                     return;
@@ -386,7 +384,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * @return The current temperature as read. -999 if it's bad.
      */
     public BigDecimal updateTemp() {
-        BigDecimal result = ERROR_TEMP;
+        BigDecimal result;
 
         if (badTemp && this.currentError.equals("")) {
             BrewServer.LOG.warning("Trying to recover " + this.getName());
@@ -493,7 +491,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
             if (loggingOn) {
                 this.currentError = "Couldn't find the device under: " + fProbe;
                 BrewServer.LOG.warning(currentError);
-                if (fProbe == rpiSystemTemp) {
+                if (fProbe.equals(rpiSystemTemp)) {
                     fProbe = bbbSystemTemp;
                 }
             }
@@ -623,8 +621,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
         Entry<BigDecimal, BigDecimal> prevPair = null;
 
         while (it.hasNext()) {
-            Entry<BigDecimal, BigDecimal> pairs =
-                    (Entry<BigDecimal, BigDecimal>) it.next();
+            Entry<BigDecimal, BigDecimal> pairs = it.next();
             if (prevPair != null) {
                 // diff the pair value and dive by the diff of the key
                 BigDecimal keyDiff = pairs.getKey().subtract(prevPair.getKey());
@@ -635,7 +632,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
                         pairs.getValue().subtract(valueDiff.multiply(keyDiff));
 
                 if (volumeMultiplier.compareTo(BigDecimal.ZERO) != 0) {
-                    if (newMultiplier != volumeMultiplier) {
+                    if (newMultiplier.equals(volumeMultiplier)) {
                         BrewServer.LOG.info(
                             "The newMultiplier isn't the same as the old one,"
                             + " if this is a big difference, be careful!"
@@ -648,7 +645,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
                 }
 
                 if (volumeConstant.compareTo(BigDecimal.ZERO) != 0) {
-                    if (newConstant != volumeConstant) {
+                    if (newConstant.equals(volumeConstant)) {
                         BrewServer.LOG.info("The new constant "
                             + "isn't the same as the old one, if this is a big"
                             + " difference, be careful!"
@@ -660,6 +657,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
                     this.volumeConstant = newConstant;
                 }
             }
+            prevPair = pairs;
         }
 
         // we should be done now
@@ -671,7 +669,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      */
     public BigDecimal updateVolume() {
         try {
-            BigDecimal pinValue = null;
+            BigDecimal pinValue;
             if (volumeAIN != -1) {
                 pinValue = new BigDecimal(volumePin.readValue());
             } else if (volumeAddress != null && volumeOffset != null) {
@@ -706,7 +704,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
             SortedSet<BigDecimal> keys = null;
             try {
                 keys = Collections.synchronizedSortedSet(
-                    new TreeSet<BigDecimal>(volumeBase.keySet()));
+                    new TreeSet<>(volumeBase.keySet()));
             } catch (NullPointerException npe) {
                 // No VolumeBase setup, so we're probably calibrating
                 return pinValue;
@@ -745,7 +743,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
 
                 }
 
-                if (tVolume == null && curKey != null && prevKey != null) {
+                if (tVolume == null && curKey != null) {
                     // Try to extrapolate
                     BigDecimal volRange = curKey.subtract(prevKey);
                     BigDecimal readingRange = curValue.subtract(prevValue);
@@ -770,13 +768,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
             this.currentVolume = this.currentVolume.multiply(this.gravity);
 
             return pinValue;
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (RuntimeException | IOException e) {
             e.printStackTrace();
         }
         return BigDecimal.ZERO;
@@ -785,6 +777,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
     /**
      * @param unit Unit to set the volume units to.
      */
+    @SuppressWarnings("unused")
     public void setVolumeUnit(final String unit) {
         this.volumeUnit = unit;
     }
@@ -810,7 +803,6 @@ public final class Temp implements Runnable, Comparable<Temp> {
                                 LaunchControl.readOWFSPath(
                                     volumeAddress + "/volt." + volumeOffset)));
                         } catch (OwfsException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                         }
                     }
@@ -838,7 +830,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
         // read in ten values
         BigDecimal avgValue = MathUtil.divide(total, maxReads);
         BrewServer.LOG.info("Read " + avgValue + " for "
-                + volume + " " + volumeUnit.toString());
+                + volume + " " + volumeUnit);
 
         this.addVolumeMeasurement(volume, avgValue);
         System.out.println(this.name + ": Added volume data point " + volume);
@@ -854,7 +846,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
             final BigDecimal key, final BigDecimal value) {
         BrewServer.LOG.info("Adding " + key + " with value " + value);
         if (volumeBase == null) {
-            this.volumeBase = new ConcurrentHashMap<BigDecimal, BigDecimal>();
+            this.volumeBase = new ConcurrentHashMap<>();
         }
         this.volumeBase.put(key, value);
     }
@@ -914,16 +906,8 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * @return true if there's a valid volume input on this class
      */
     public boolean hasVolume() {
-        if (this.volumeAddress != null && !this.volumeAddress.equals("")
-                && this.volumeOffset != null && !this.volumeOffset.equals("")) {
-            return true;
-        }
-
-        if (this.volumeAIN != -1) {
-            return true;
-        }
-
-        return false;
+        return (this.volumeAddress != null && !this.volumeAddress.equals("")
+                && this.volumeOffset != null && !this.volumeOffset.equals("")) || (this.volumeAIN != -1);
     }
 
     /*****
@@ -931,7 +915,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * @return The current status of the temperature probe.
      */
     public Map<String, Object> getMapStatus() {
-        Map<String, Object> statusMap = new HashMap<String, Object>();
+        Map<String, Object> statusMap = new HashMap<>();
         statusMap.put("hidden", isHidden());
         statusMap.put("temp", getTemp());
         statusMap.put("elapsed", getTime());
@@ -975,7 +959,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
             }
             // Create the temp
             BigDecimal temperature = new BigDecimal(number);
-            temperature.setScale(2);
+            temperature = temperature.setScale(2, BigDecimal.ROUND_DOWN);
             String unit = tempMatcher.group(4);
 
             if (unit == null || unit.equals(this.scale)) {
@@ -1071,7 +1055,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
     }
 
     @Override
-    public int compareTo(final Temp o) {
+    public int compareTo(@Nonnull final Temp o) {
         if (o.getPosition() == this.position) {
             return o.getName().compareTo(this.name);
         }
