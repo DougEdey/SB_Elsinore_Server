@@ -2072,6 +2072,9 @@ public class UrlEndpoints {
                         BrewServer.setRecipeList(recipeList);
                         if (recipeList.size() == 1) {
                             BrewServer.setCurrentRecipe(BeerXMLReader.getInstance().readRecipe(recipeList.get(0)));
+                            LaunchControl.setMessage("A single recipe has been read in and set: " + BrewServer.getCurrentRecipe().getName());
+                        } else {
+                            LaunchControl.setMessage(recipeList.size() + " recipes read in.");
                         }
                     }
                 } catch (IOException e) {
@@ -2106,7 +2109,7 @@ public class UrlEndpoints {
         }
 
         Recipe recipe = null;
-        if (recipeName != null) {
+        if (recipeName != null && !recipeName.equals("")) {
             try {
                 recipe = BeerXMLReader.getInstance().readRecipe(recipeName);
             } catch (XPathException e) {
