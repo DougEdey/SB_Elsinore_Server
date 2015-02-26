@@ -452,13 +452,14 @@ function updateTempProbe(vessel, val) {
 	Temp = null;
 
 	// Check for an error message
-	if ("errorMessage" in val) {
-		jQuery("#" + vessel + "-error").text(val.errorMessage);
-		jQuery("#" + vessel + "-error").toggleClass("hidden", false);
-	} else {
-		jQuery("#" + vessel + "-error").toggleClass("hidden", true);
-	}
-
+    if ("error" in val) {
+        if ($("#" + vessel + "-error").text() != val.error) {
+            $("#" + vessel + "-error").text(val.error);
+        }
+        $("#" + vessel + "-error").toggleClass("hidden", false);
+    } else {
+        $("#" + vessel + "-error").toggleClass("hidden", true);
+    }
 }
 
 function updateVolumeStatus(vessel, status) {
