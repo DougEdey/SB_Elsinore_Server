@@ -250,28 +250,41 @@ public class BeerXMLReader {
         recipe.setCarbMethod(getString(recipeNode, "CARBONATION_USED", xp));
 
         NodeList hopsList = (NodeList) xp.evaluate("HOPS", recipeNode, XPathConstants.NODESET);
-        parseHops(recipe, hopsList);
+        if (hopsList != null && hopsList.getLength() > 0) {
+            parseHops(recipe, hopsList);
+        }
         NodeList maltList = (NodeList) xp.evaluate("FERMENTABLES", recipeNode, XPathConstants.NODESET);
-        parseMalts(recipe, maltList);
+        if (maltList != null && maltList.getLength() > 0) {
+            parseMalts(recipe, maltList);
+        }
         NodeList yeastList = (NodeList) xp.evaluate("YEASTS", recipeNode, XPathConstants.NODESET);
-        parseYeasts(recipe, yeastList);
+        if (yeastList != null && yeastList.getLength() > 0) {
+            parseYeasts(recipe, yeastList);
+        }
         NodeList styleList = (NodeList) xp.evaluate("STYLES", recipeNode, XPathConstants.NODESET);
-
-        if (styleList.getLength() == 1) {
+        if (styleList != null && styleList.getLength() == 1) {
             parseStyle(recipe, styleList);
         } else {
             parseStyleDetail(recipe,
                     (Node) xp.evaluate("STYLE", recipeNode, XPathConstants.NODE));
         }
         NodeList miscList = (NodeList) xp.evaluate("MISCS", recipeNode, XPathConstants.NODESET);
-        parseMisc(recipe, miscList);
+        if (miscList != null && miscList.getLength() > 0) {
+            parseMisc(recipe, miscList);
+        }
         NodeList waterList = (NodeList) xp.evaluate("WATERS", recipeNode, XPathConstants.NODESET);
-        parseWaters(recipe, waterList);
+        if (waterList != null && waterList.getLength() > 0) {
+            parseWaters(recipe, waterList);
+        }
         Node equipmentList = (Node) xp.evaluate("EQUIPMENT", recipeNode, XPathConstants.NODE);
-        parseEquipment(recipe, equipmentList, xp);
+        if (equipmentList != null && equipmentList.hasChildNodes()) {
+            parseEquipment(recipe, equipmentList, xp);
+        }
 
         Node mashProfile = (Node) xp.evaluate("MASH", recipeNode, XPathConstants.NODE);
-        parseMashProfile(recipe, mashProfile, xp);
+        if (mashProfile != null && mashProfile.hasChildNodes()) {
+            parseMashProfile(recipe, mashProfile, xp);
+        }
         recipe.allowRecalcs = true;
         recipe.calcFermentTotals();
         recipe.calcHopsTotals();
@@ -821,7 +834,7 @@ public class BeerXMLReader {
     private double getDouble(Node element, String name, XPath xp) {
         try {
             String temp = getString(element, name, xp);
-            if (temp.equals("")) {
+            if (temp == null || temp.equals("")) {
                 return 0.0;
             }
             return Double.parseDouble(temp);
@@ -834,7 +847,7 @@ public class BeerXMLReader {
     private int getInteger(Node element, String name, XPath xp) {
         try {
             String temp = getString(element, name, xp);
-            if (temp.equals("")) {
+            if (temp == null || temp.equals("")) {
                 return 0;
             }
             return (int) Double.parseDouble(temp);
