@@ -46,7 +46,7 @@ public class RenderHTML implements Renderable {
             }
         html._div();
         // Add in the pumps
-        html.div(class_("row no-gutter"));
+        html.div(class_("row"));
         html.div(id("pumps").class_("col-md-2"))
             .div(class_("panel panel-info"))
                 .div(id("pumps-titled").class_("title panel-heading"))
