@@ -388,7 +388,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
     public BigDecimal updateTemp() {
         BigDecimal result = ERROR_TEMP;
 
-        if (badTemp) {
+        if (badTemp && this.currentError.equals("")) {
             BrewServer.LOG.warning("Trying to recover " + this.getName());
         }
         if (fProbe == null) {
@@ -405,6 +405,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
         if (badTemp) {
             badTemp = false;
             BrewServer.LOG.warning("Recovered temperature reading for " + this.getName());
+            this.currentError = "";
         }
 
         // OWFS/One wire always uses Celsius
