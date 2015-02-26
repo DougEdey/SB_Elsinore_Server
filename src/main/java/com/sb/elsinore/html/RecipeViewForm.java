@@ -64,7 +64,7 @@ public class RecipeViewForm implements Renderable {
                         ._option();
             }
             html._select();
-            html.button(id("setMashProfile").onClick("setMashProfile(this)")).write(Messages.SET_MASH_PROFILE)._button();
+            html.button(id("setMashProfile").class_("btn").onClick("setMashProfile(this)")).write(Messages.SET_MASH_PROFILE)._button();
             html._div();
         }
 
@@ -98,7 +98,7 @@ public class RecipeViewForm implements Renderable {
                         ._option();
             }
             html._select();
-            html.button(id("setBoilHopProfile").onClick("setBoilHopProfile(this)")).write(Messages.SET_BOIL_HOP_PROFILE)._button();
+            html.button(id("setBoilHopProfile").class_("btn").onClick("setBoilHopProfile(this)")).write(Messages.SET_BOIL_HOP_PROFILE)._button();
             html._div();
         }
 
@@ -124,7 +124,7 @@ public class RecipeViewForm implements Renderable {
                         ._option();
             }
             html._select();
-            html.button(id("setFermProfile").onClick("setFermProfile(this)")).write(Messages.SET_FERM_PROFILE)._button();
+            html.button(id("setFermProfile").class_("btn").onClick("setFermProfile(this)")).write(Messages.SET_FERM_PROFILE)._button();
             html._div();
         }
 
@@ -159,7 +159,7 @@ public class RecipeViewForm implements Renderable {
                         ._option();
             }
             html._select();
-            html.button(id("setDryHopProfile").onClick("setDryHopProfile(this)")).write(Messages.SET_DRY_HOP_PROFILE)._button();
+            html.button(id("setDryHopProfile").class_("btn").onClick("setDryHopProfile(this)")).write(Messages.SET_DRY_HOP_PROFILE)._button();
             html._div();
         }
         html._div();
