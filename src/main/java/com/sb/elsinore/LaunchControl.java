@@ -765,7 +765,7 @@ public final class LaunchControl {
             rObj.put("recipe", BrewServer.getCurrentRecipe().getName());
         }
 
-        if (BrewServer.getRecipeList().size() > 0) {
+        if (BrewServer.getRecipeList() != null && BrewServer.getRecipeList().size() > 0) {
             rObj.put("recipeCount", BrewServer.getRecipeList().size());
         }
         return rObj.toString();
