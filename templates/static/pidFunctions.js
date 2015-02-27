@@ -397,7 +397,7 @@ function addTriggerTable(vesselName) {
 		+"</tbody></table>";
 		table += "<br id='triggerTable" + vesselName + "footer'/>";
 
-		$("#" + vesselName + "-graph_wrapper").after(table);
+		$("#" + vesselName + "-volume").before(table);
 
 	}
 }
@@ -2226,12 +2226,12 @@ function readOnly(manualChange) {
 	}
 	
 	if (manualChange) {
-		var formdata = JSON.stringify(jQuery('form[id=settings-form]').serializeObject());
-		formdata.recorder = $('form[id="settings-form"] div[id="recorder_enabled"] input').prop("checked");
+		var formdata = $('form[id=settings-form]').serializeObject();
 		$.ajax({
 			url : 'updateSystemSettings',
 			type : 'POST',
 			data: formdata,
+			dataType: "json",
 			success : function(data) {
 				data = null
 			}
@@ -2655,9 +2655,6 @@ function phAINChange(element) {
 }
 
 function showRecipe(element, recipeSelect) {
-
-	window.disableUpdates = 1;
-
 	// Is the edit form already displayed
 	var recipeView = $("recipeView");
 	if (recipeView.val() != undefined) {
@@ -2678,13 +2675,39 @@ function showRecipe(element, recipeSelect) {
         data: {recipeName: curRecipeName},
         dataType: 'html',
         success: function(html) {
-            $tr.popover({
-            title: 'Volume Edit',
-            content: html,
-            placement: 'bottom',
-            html: true,
-            trigger: 'manual'
-        }).popover('show');
-    }
-});
+                $tr.popover({
+                title: 'Recipe Summary',
+                content: html,
+                placement: 'bottom',
+                html: true,
+                trigger: 'manual'
+            }).popover('show');
+            $tr.parent().find('.popover').css('max-width', "600px");
+        }
+    });
+}
+
+function setMashProfile(element) {
+    setProfile(element, "mash");
+}
+
+function setBoilHopProfile(element) {
+    setProfile(element, "boil");
+}
+
+function setFermProfile(element) {
+    setProfile(element, "ferm");
+}
+
+function setDryHopProfile(element) {
+    setProfile(element, "dry");
+}
+
+function setProfile(element, profile) {
+    var tempProbe = $(element).parent().find("[name=tempprobe] > :selected").val();
+    $.ajax({
+        url: '/setprofile',
+        data: {profile: profile, tempprobe: tempProbe},
+        dataType: "html"
+    })
 }
