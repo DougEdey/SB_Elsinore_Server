@@ -15,29 +15,31 @@ import com.sb.elsinore.BrewDay;
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Messages;
-import com.sb.elsinore.Pump;
+import com.sb.elsinore.Switch;
 
-public class PumpTrigger implements TriggerInterface {
+import javax.annotation.Nonnull;
+
+@SuppressWarnings("unused")
+public class SwitchTrigger implements TriggerInterface {
 
     private int position = -1;
-    private static String NAME = "Pump";
     private String activate = null;
-    private String pumpName = null;
+    private String switchName = null;
     private boolean active = false;
     private Date startDate = null;
 
     /**
-     * Create a blank pump trigger.
+     * Create a blank switch trigger.
      */
-    public PumpTrigger() {
-        BrewServer.LOG.info("Creating an empty Pump Trigger");
+    public SwitchTrigger() {
+        BrewServer.LOG.info("Creating an empty Switch Trigger");
     }
 
     /**
      * Create a trigger with a specific position.
      * @param inPosition The position to create.
      */
-    public PumpTrigger(final int inPosition) {
+    public SwitchTrigger(final int inPosition) {
         this.position = inPosition;
     }
 
@@ -46,9 +48,9 @@ public class PumpTrigger implements TriggerInterface {
      * @param inPos The position to create the trigger at.
      * @param parameters The parameters.
      */
-    public PumpTrigger(final int inPos, final JSONObject parameters) {
+    public SwitchTrigger(final int inPos, final JSONObject parameters) {
         this.position = inPos;
-        this.pumpName = (String) parameters.get("pumpname");
+        this.switchName = (String) parameters.get("switchname");
         this.activate = (String) parameters.get("activate");
     }
 
@@ -58,7 +60,7 @@ public class PumpTrigger implements TriggerInterface {
      * @return Compare.
      */
     @Override
-    public final int compareTo(final TriggerInterface o) {
+    public final int compareTo(@Nonnull TriggerInterface o) {
         return (this.position - o.getPosition());
     }
 
@@ -67,31 +69,31 @@ public class PumpTrigger implements TriggerInterface {
      */
     @Override
     public final String getName() {
-        return PumpTrigger.NAME;
+        return "Switch";
     }
 
     /**
-     * Activate or deactivate the pump.
+     * Activate or deactivate the switch.
      */
     @Override
     public final void waitForTrigger() {
         this.startDate = new Date();
-        if (this.pumpName == null && this.activate != null) {
+        if (this.switchName == null && this.activate != null) {
             return;
         }
-        triggerPump();
+        triggerSwitch();
     }
 
     /**
-     * Trigger the pump.
+     * Trigger the switch.
      */
-    private void triggerPump() {
-        Pump pump = LaunchControl.findPump(this.pumpName);
-        if (pump != null) {
+    private void triggerSwitch() {
+        Switch aSwitch = LaunchControl.findSwitch(this.switchName);
+        if (aSwitch != null) {
             if (this.activate.equals("on")) {
-                pump.turnOn();
+                aSwitch.turnOn();
             } else if (this.activate.equals("off")) {
-                pump.turnOff();
+                aSwitch.turnOff();
             }
         }
     }
@@ -135,18 +137,18 @@ public class PumpTrigger implements TriggerInterface {
     @Override
     public final HtmlCanvas getForm() throws IOException {
         HtmlCanvas html = new HtmlCanvas();
-        html.div(id("NewPumpTrigger").class_(""));
+        html.div(id("NewSwitchTrigger").class_(""));
         html.form(id("newTriggersForm"));
             html.input(id("type").name("type")
-                        .hidden("true").value("Pump"));
-            // Add the Pumps as a drop down list.
-            html.select(class_("holo-spinner").name("pumpname")
-                    .id("pumpName"));
+                        .hidden("true").value("Switch"));
+            // Add the Switches as a drop down list.
+            html.select(class_("holo-spinner").name("switchname")
+                    .id("switchName"));
                 html.option(value(""))
-                        .write(Messages.PUMPS)
+                        .write(Messages.SWITCHES)
                 ._option();
-                for (Pump tPump: LaunchControl.pumpList) {
-                    String tName = tPump.getName();
+                for (Switch tSwitch : LaunchControl.switchList) {
+                    String tName = tSwitch.getName();
                     html.option(value(tName))
                         .write(tName)
                     ._option();
@@ -160,14 +162,14 @@ public class PumpTrigger implements TriggerInterface {
                         .write("")
                 ._option();
                 html.option(value("on"))
-                    .write(Messages.PUMP_ON)
+                    .write(Messages.SWITCH_ON)
                 ._option();
                 html.option(value("off"))
-                    .write(Messages.PUMP_OFF)
+                    .write(Messages.SWITCH_OFF)
                 ._option();
             html._select();
 
-            html.button(name("submitPumpTrigger")
+            html.button(name("submitSwitchTrigger")
                     .class_("btn col-md-12")
                     .add("data-toggle", "clickover")
                     .onClick("submitNewTriggerStep(this);"))
@@ -185,22 +187,22 @@ public class PumpTrigger implements TriggerInterface {
     @Override
     public final HtmlCanvas getEditForm() throws IOException {
         HtmlCanvas html = new HtmlCanvas();
-        html.div(id("EditPumpTrigger").class_(""));
+        html.div(id("EditSwitchTrigger").class_(""));
         html.form(id("editTriggersForm"));
             html.input(id("type").name("type")
-                        .hidden("true").value("Pump"));
+                        .hidden("true").value("switch"));
             html.input(id("type").name("position")
                     .hidden("position").value("" + this.position));
-            // Add the Pumps as a drop down list.
-            html.select(class_("holo-spinner").name("pumpname")
-                    .id("pumpName"));
+            // Add the Switches as a drop down list.
+            html.select(class_("holo-spinner").name("switchname")
+                    .id("switchName"));
                 html.option(value(""))
-                        .write(Messages.PUMPS)
+                        .write(Messages.SWITCHES)
                 ._option();
-                for (Pump tPump: LaunchControl.pumpList) {
-                    String tName = tPump.getName();
+                for (Switch tSwitch : LaunchControl.switchList) {
+                    String tName = tSwitch.getName();
                     html.option(value(tName)
-                            .selected_if(this.pumpName.equals(tName)))
+                            .selected_if(this.switchName.equals(tName)))
                         .write(tName)
                     ._option();
                 }
@@ -212,17 +214,17 @@ public class PumpTrigger implements TriggerInterface {
                 html.option(value(""))
                         .write("")
                 ._option();
-                html.option(value(Messages.PUMP_ON)
+                html.option(value(Messages.SWITCH_ON)
                         .selected_if(this.activate.equals("on")))
                     .write("On")
                 ._option();
-                html.option(value(Messages.PUMP_OFF)
+                html.option(value(Messages.SWITCH_OFF)
                         .selected_if(this.activate.equals("off")))
                     .write("Off")
                 ._option();
             html._select();
 
-            html.button(name("submitPumpTrigger")
+            html.button(name("submitSwitchTrigger")
                     .class_("btn col-md-12")
                     .add("data-toggle", "clickover")
                     .onClick("updateTriggerStep(this);"))
@@ -239,17 +241,17 @@ public class PumpTrigger implements TriggerInterface {
      */
     @Override
     public final void updateTrigger(final JSONObject params) {
-        String tName = (String) params.get("pumpname");
+        String tName = (String) params.get("switchname");
         String tActivate = (String) params.get("activate");
 
         // Update the variables.
         if (tActivate != null) {
             this.activate = tActivate;
         }
-        if (tName != null && LaunchControl.findPump(tName) != null) {
-            this.pumpName = tName;
+        if (tName != null && LaunchControl.findSwitch(tName) != null) {
+            this.switchName = tName;
             if (this.active) {
-                triggerPump();
+                triggerSwitch();
             }
         }
     }
@@ -267,7 +269,7 @@ public class PumpTrigger implements TriggerInterface {
      */
     @Override
     public final JSONObject getJSONStatus() {
-        String description = this.pumpName + ": " + this.activate;
+        String description = this.switchName + ": " + this.activate;
         String startDateStamp = "";
         if (this.startDate  != null) {
             startDateStamp = BrewDay.lFormat.format(this.startDate);
@@ -284,12 +286,12 @@ public class PumpTrigger implements TriggerInterface {
     }
 
     /**
-     * @return true if at least one pump is setup.
+     * @return true if at least one switch is setup.
      * @param inType The type of the device to check against.
      */
     @Override
     public final boolean getTriggerType(final String inType) {
-        return (LaunchControl.pumpList.size() > 0);
+        return (LaunchControl.switchList.size() > 0);
     }
 
 }

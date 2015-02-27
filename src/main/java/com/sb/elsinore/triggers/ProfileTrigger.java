@@ -15,11 +15,8 @@ import com.sb.elsinore.BrewDay;
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Messages;
-import com.sb.elsinore.NanoHTTPD;
-import com.sb.elsinore.Pump;
 import com.sb.elsinore.Temp;
 import com.sb.elsinore.TriggerControl;
-import com.sb.elsinore.NanoHTTPD.Response.Status;
 
 public class ProfileTrigger implements TriggerInterface {
 
@@ -125,7 +122,7 @@ public class ProfileTrigger implements TriggerInterface {
         html.form(id("newTriggersForm"));
             html.input(id("type").name("type")
                         .hidden("true").value("Profile"));
-            // Add the Pumps as a drop down list.
+            // Add the probe as a drop down list.
             html.select(class_("holo-spinner").name("targetname")
                     .id("targetname"));
                 html.option(value(""))
@@ -177,7 +174,7 @@ public class ProfileTrigger implements TriggerInterface {
                         .hidden("true").value("Profile"));
             html.input(id("type").name("position")
                     .hidden("position").value(this.position));
-            // Add the Pumps as a drop down list.
+            // Add the triggers as a drop down list.
             html.select(class_("holo-spinner").name("targetname")
                     .id("targetname"));
                 html.option(value(""))

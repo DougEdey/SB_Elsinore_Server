@@ -12,13 +12,13 @@ public class Messages extends NLS {
     public static String UPDATE_VALUE;
     public static String TEMPERATURE;
     public static String TEMP;
-    public static String PUMPS;
+    public static String SWITCHES;
     public static String TIMERS;
     public static String SHOW_GRAPH;
     public static String HIDE_GRAPH;
     public static String CONTROLLER;
     public static String SERVER_MESSAGES;
-    public static String NEW_PUMP;
+    public static String NEW_SWITCH;
     public static String NEW_TIMER;
     public static String NEW_VOLUME;
     public static String UPDATE_CHECK;
@@ -27,8 +27,8 @@ public class Messages extends NLS {
     public static String MANUAL;
     public static String PID_ON;
     public static String PID_OFF;
-    public static String PUMP_ON;
-    public static String PUMP_OFF;
+    public static String SWITCH_ON;
+    public static String SWITCH_OFF;
     public static String SET_POINT;
     public static String DUTY_CYCLE;
     public static String DUTY_TIME;
@@ -62,7 +62,7 @@ public class Messages extends NLS {
     public static String INVALID_GPIO;
     public static String NAME;
 
-    public static String PUMPNAMEBLANK;
+    public static String SWITCHNAMEBLANK;
 
     public static String GPIO_BLANK;
     public static String TIMERNAMEBLANK;
@@ -70,7 +70,7 @@ public class Messages extends NLS {
     public static String METHOD;
     public static String TYPE;
     public static String BREWERY_QUESTION;
-    public static String DELETE_PUMP;
+    public static String DELETE_SWITCH;
     public static String DELETE_TIMER;
     public static String EDIT;
 

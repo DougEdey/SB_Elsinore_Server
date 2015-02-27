@@ -345,7 +345,7 @@ public class BrewServer extends NanoHTTPD {
         usage.put("getstatus", "Get the current status as a JSON object");
         usage.put("timers", "Get the current timer status");
 
-        usage.put("addpump", "Add a new pump");
+        usage.put("addswitch", "Add a new switch");
         usage.put("addtimer", "Add a new timer");
         usage.put("addvolpoint", "Add a new volume point");
 
@@ -355,7 +355,7 @@ public class BrewServer extends NanoHTTPD {
 
         usage.put("updatepid", "Update the PID Settings");
         usage.put("updateday", "Update the brewday information");
-        usage.put("updatepump", "Change the pump status off/on");
+        usage.put("updateswitch", "Change the switch status off/on");
 
         BrewServer.LOG.info("Invalid URI: " + uri);
         return new NanoHTTPD.Response(Status.NOT_FOUND, MIME_TYPES.get("json"),

@@ -10,7 +10,7 @@ import static org.rendersnake.HtmlAttributesFactory.*;
 
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Messages;
-import com.sb.elsinore.Pump;
+import com.sb.elsinore.Switch;
 import com.sb.elsinore.Temp;
 import com.sb.elsinore.Timer;
 import com.sb.elsinore.inputs.PhSensor;
@@ -44,23 +44,23 @@ public class RenderHTML implements Renderable {
                 html.render(new PIDComponent(temp.getName()));
             }
         html._div();
-        // Add in the pumps
+        // Add in the switches
         html.div(class_("row"));
-        html.div(id("pumps").class_("col-md-2"))
+        html.div(id("switches").class_("col-md-2"))
             .div(class_("panel panel-info"))
-                .div(id("pumps-titled").class_("title panel-heading"))
-                    .write(Messages.PUMPS)
+                .div(id("switches-titled").class_("title panel-heading"))
+                    .write(Messages.SWITCHES)
                 ._div()
-                .div(id("pumps-body").class_("panel-body"));
-                    for (Pump pump: LaunchControl.pumpList) {
-                        html.render(new PumpComponent(pump.getName()));
+                .div(id("switches-body").class_("panel-body"));
+                    for (Switch aSwitch : LaunchControl.switchList) {
+                        html.render(new SwitchComponent(aSwitch.getName()));
                     }
 
-                    html.button(id("NewPump").class_("btn pump")
-                        .type("submit").onDrop("dropDeletePump(event);")
-                        .onDragover("allowDropPump(event)")
-                        .onClick("addPump()"))
-                        .write(Messages.NEW_PUMP)
+                    html.button(id("NewSwitch").class_("btn switch")
+                        .type("submit").onDrop("dropDeleteSwitch(event);")
+                        .onDragover("allowDropSwitch(event)")
+                        .onClick("addSwitch()"))
+                        .write(Messages.NEW_SWITCH)
                     ._button()
                 ._div()
             ._div()

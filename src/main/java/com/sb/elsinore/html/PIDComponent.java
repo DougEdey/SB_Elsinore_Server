@@ -322,7 +322,7 @@ public class PIDComponent implements Renderable {
                 ._tr()
                 ._table()
                 .div(class_("holo-buttons"))
-                .button(id(name + "Aux").class_("btn pump").onClick(
+                .button(id(name + "Aux").class_("btn switch").onClick(
                         "toggleAux('" + name + "'),"
                                 + " waitForMsg(); return false;"))
                 .write(Messages.AUX_ON)
@@ -338,7 +338,7 @@ public class PIDComponent implements Renderable {
                 .div(id(name + "-volume"))
                         .div(id(name + "-volumeAmount"))._div()
                         .button(id(name + "-volumeeditbutton")
-                                .class_("btn pump")
+                                .class_("btn switch")
                                 .onClick("editVolume(this);"))
                                 .write(Messages.EDIT_VOLUME)
                         ._button()

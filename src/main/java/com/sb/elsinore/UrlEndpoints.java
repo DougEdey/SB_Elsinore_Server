@@ -560,7 +560,7 @@ public class UrlEndpoints {
         }
 
         JSONObject usage = new JSONObject();
-        usage.put("Usage", "Add a new pump to the system.");
+        usage.put("Usage", "Add a new switch to the system.");
         usage.put("new_name", "The name of the timer to add");
         usage.put("mode",
                 "The mode for the timer, increment, or decrement (optional)");
@@ -571,12 +571,12 @@ public class UrlEndpoints {
     }
 
     /**
-     * Add a new pump to the brewery.
+     * Add a new switch to the brewery.
      * 
      * @return True if added ok
      */
-    @UrlEndpoint(url = "/addpump")
-    public Response addPump() {
+    @UrlEndpoint(url = "/addswitch")
+    public Response addSwitch() {
         String newName = "", gpio = "";
         String inputUnit = "";
         boolean invert = false;
@@ -628,18 +628,18 @@ public class UrlEndpoints {
             invert = parms.get("invert").equals("on");
         }
 
-        if (LaunchControl.addPump(newName, gpio)) {
-            LaunchControl.findPump(newName).setInverted(invert);
-            return new Response(Status.OK, MIME_TYPES.get("txt"), "Pump Added");
+        if (LaunchControl.addSwitch(newName, gpio)) {
+            LaunchControl.findSwitch(newName).setInverted(invert);
+            return new Response(Status.OK, MIME_TYPES.get("txt"), "Switch Added");
         } else {
             LaunchControl.setMessage(
-                    "Could not add pump " + newName + ": " + gpio);
+                    "Could not add switch " + newName + ": " + gpio);
         }
 
         JSONObject usage = new JSONObject();
-        usage.put("Usage", "Add a new pump to the system");
-        usage.put("new_name", "The name of the pump to add");
-        usage.put("new_gpio", "The GPIO for the pump to work on");
+        usage.put("Usage", "Add a new switch to the system");
+        usage.put("new_name", "The name of the switch to add");
+        usage.put("new_gpio", "The GPIO for the switch to work on");
         usage.put("Error", "Invalid parameters passed "
                 + this.parameters.toString());
 
@@ -1376,14 +1376,14 @@ public class UrlEndpoints {
     }
 
     /**
-     * Update the pump order.
+     * Update the switch order.
      * @return A HTTP Response
      */
-    @UrlEndpoint(url = "/updatepumporder")
-    public Response updatePumpOrder() {
+    @UrlEndpoint(url = "/updateswitchorder")
+    public Response updateSwitchOrder() {
         Map<String, String> params = ParseParams(this.parameters);
         JSONObject usage = new JSONObject();
-        usage.put("Usage", "Re-order the pumps");
+        usage.put("Usage", "Re-order the switches");
         usage.put(":name=:position", "The new orders, starting at 0");
 
         Status status = Response.Status.BAD_REQUEST;
@@ -1392,16 +1392,16 @@ public class UrlEndpoints {
             if (entry.getKey().equals("NanoHttpd.QUERY_STRING")) {
                 continue;
             }
-            Pump tPump = LaunchControl.findPump(entry.getKey());
-            // Make Sure we're aware of this pump
-            if (tPump == null) {
+            Switch tSwitch = LaunchControl.findSwitch(entry.getKey());
+            // Make Sure we're aware of this switch
+            if (tSwitch == null) {
                 LaunchControl.setMessage(
-                        "Couldn't find Pump: " + entry.getKey());
+                        "Couldn't find Switch: " + entry.getKey());
                 continue;
             }
 
             try {
-                tPump.setPosition(Integer.parseInt(entry.getValue()));
+                tSwitch.setPosition(Integer.parseInt(entry.getValue()));
             } catch (NumberFormatException nfe) {
                 LaunchControl.setMessage(
                         "Couldn't parse " + entry.getValue()
@@ -1414,21 +1414,21 @@ public class UrlEndpoints {
     }
 
     /**
-     * Delete a pump.
+     * Delete a switch.
      * @return a reponse
      */
-    @UrlEndpoint(url = "/deletepump")
-    public Response deletePump() {
+    @UrlEndpoint(url = "/deleteswitch")
+    public Response deleteSwitch() {
         Map<String, String> params = ParseParams(this.parameters);
         JSONObject usage = new JSONObject();
-        usage.put("Usage", "Delete the specified pump");
-        usage.put("name=:pump", "The pump to delete");
+        usage.put("Usage", "Delete the specified switch");
+        usage.put("name=:switch", "The switch to delete");
         Status status = Response.Status.OK;
 
-        // find the pump
-        String pumpName = params.get("name");
-        if (pumpName != null) {
-            LaunchControl.deletePump(pumpName);
+        // find the switch
+        String switchName = params.get("name");
+        if (switchName != null) {
+            LaunchControl.deleteSwitch(switchName);
         }
         return new Response(status, MIME_TYPES.get("json"),
                 usage.toJSONString());
@@ -1456,7 +1456,7 @@ public class UrlEndpoints {
             }
 
             Timer tTimer = LaunchControl.findTimer(entry.getKey());
-            // Make Sure we're aware of this pump
+            // Make Sure we're aware of this switch
             if (tTimer == null) {
                 LaunchControl.setMessage(
                         "Couldn't find Timer: " + entry.getKey());
@@ -1487,7 +1487,7 @@ public class UrlEndpoints {
         usage.put("name=:timer", "The timer to delete");
         Status status = Response.Status.OK;
 
-        // find the pump
+        // find the switch
         String timerName = params.get("name");
         if (timerName != null) {
             LaunchControl.deleteTimer(timerName);
@@ -1687,26 +1687,26 @@ public class UrlEndpoints {
                 "{image: 'unavailable'}");
     }
 
-    @UrlEndpoint(url = "/updatepump")
-    public Response updatePump() {
+    @UrlEndpoint(url = "/updateswitch")
+    public Response updateSwitch() {
 
         if (parameters.containsKey("toggle")) {
-            String pumpname = parameters.get("toggle");
-            Pump tempPump =
-                    LaunchControl.findPump(pumpname.replaceAll("_", " "));
-            if (tempPump != null) {
-                if (tempPump.getStatus()) {
-                    tempPump.turnOff();
+            String switchname = parameters.get("toggle");
+            Switch tempSwitch =
+                    LaunchControl.findSwitch(switchname.replaceAll("_", " "));
+            if (tempSwitch != null) {
+                if (tempSwitch.getStatus()) {
+                    tempSwitch.turnOff();
                 } else {
-                    tempPump.turnOn();
+                    tempSwitch.turnOn();
                 }
 
                 return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                        "Updated Pump");
+                        "Updated Switch");
             } else {
                 JSONObject usage = new JSONObject();
-                usage.put("Error", "Invalid name supplied: " + pumpname);
-                usage.put("toggle", "The name of the Pump to toggle on/off");
+                usage.put("Error", "Invalid name supplied: " + switchname);
+                usage.put("toggle", "The name of the Switch to toggle on/off");
                 return new Response(Status.BAD_REQUEST,
                         MIME_TYPES.get("json"), usage.toJSONString());
             }

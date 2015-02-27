@@ -6,14 +6,15 @@ public class Timer implements Comparable<Timer> {
 
     private String name = "";
     private int position = -1;
+    private String mode;
 
     public Timer(String newName) {
         this.name = newName;
     }
 
     /**
-     * Set the new position of this pump.
-     * @param newPos The new position to use.
+     * Set the name of this timer.
+     * @param newName The new position to use.
      */
     public void setName(String newName) {
         this.name = newName;
@@ -28,7 +29,7 @@ public class Timer implements Comparable<Timer> {
     }
 
     /**
-     * Set the new position of this pump.
+     * Set the new position of this timer.
      * @param newPos The new position to use.
      */
     public void setPosition(int newPos) {
@@ -41,8 +42,14 @@ public class Timer implements Comparable<Timer> {
 
     @Override
     public int compareTo(Timer other) {
-        // TODO Auto-generated method stub
         return Integer.compare(this.position, other.getPosition());
     }
 
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
+
+    public String getMode() {
+        return mode;
+    }
 }

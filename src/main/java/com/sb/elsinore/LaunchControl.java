@@ -1,15 +1,32 @@
 package com.sb.elsinore;
 
+import Cosm.*;
+import com.sb.common.CollectionsUtil;
+import com.sb.elsinore.inputs.PhSensor;
 import jGPIO.GPIO;
 import jGPIO.InvalidGPIOException;
+import org.apache.commons.cli.*;
+import org.ini4j.ConfigParser;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.owfs.jowfsclient.Enums.OwPersistence;
+import org.owfs.jowfsclient.OwfsConnection;
+import org.owfs.jowfsclient.OwfsConnectionConfig;
+import org.owfs.jowfsclient.OwfsConnectionFactory;
+import org.owfs.jowfsclient.OwfsException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.*;
+import java.io.*;
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -18,76 +35,14 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
-import org.apache.commons.cli.BasicParser;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.logging.Log;
-import org.ini4j.ConfigParser;
-import org.ini4j.ConfigParser.InterpolationException;
-import org.ini4j.ConfigParser.NoOptionException;
-import org.ini4j.ConfigParser.NoSectionException;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.owfs.jowfsclient.Enums.OwPersistence;
-import org.owfs.jowfsclient.OwfsConnection;
-import org.owfs.jowfsclient.OwfsConnectionConfig;
-import org.owfs.jowfsclient.OwfsConnectionFactory;
-import org.owfs.jowfsclient.OwfsException;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Node;
-
-import Cosm.Cosm;
-import Cosm.CosmException;
-import Cosm.Datastream;
-import Cosm.Feed;
-import Cosm.Unit;
-
-import com.sb.common.CollectionsUtil;
-import com.sb.common.ServeHTML;
-import com.sb.elsinore.NanoHTTPD.Response;
-import com.sb.elsinore.NanoHTTPD.Response.Status;
-import com.sb.elsinore.inputs.PhSensor;
 
 /**
  * LaunchControl is the core class of Elsinore. It reads the config file,
@@ -98,6 +53,7 @@ import com.sb.elsinore.inputs.PhSensor;
  * @author doug
  * 
  */
+@SuppressWarnings("unused")
 public final class LaunchControl {
     /* MAGIC NUMBERS! */
     public static int EXIT_UPDATE = 128;
@@ -112,10 +68,6 @@ public final class LaunchControl {
     public static final int DEFAULT_PORT = 8080;
     public int server_port = 8080;
     /**
-     * The pump parameters length for creating the config.
-     */
-    public static final int PUMP_PARAM_LENGTH = 3;
-    /**
      * The Minimum number of volume data points.
      */
     public static final int MIN_VOLUME_SIZE = 3;
@@ -125,39 +77,39 @@ public final class LaunchControl {
     /**
      * List of PIDs.
      */
-    public static ArrayList<PID> pidList = new ArrayList<PID>();
+    public static final ArrayList<PID> pidList = new ArrayList<>();
     /**
      * List of Temperature probes.
      */
-    public static ArrayList<Temp> tempList = new ArrayList<Temp>();
+    public static final ArrayList<Temp> tempList = new ArrayList<>();
     /**
-     * List of Pumps.
+     * List of Switches.
      */
-    public static ArrayList<Pump> pumpList = new ArrayList<Pump>();
+    public static final ArrayList<Switch> switchList = new ArrayList<>();
     /**
      * List of Timers.
      */
-    public static CopyOnWriteArrayList<Timer> timerList = new CopyOnWriteArrayList<Timer>();
+    public static CopyOnWriteArrayList<Timer> timerList = new CopyOnWriteArrayList<>();
     /**
      * List of MashControl profiles.
      */
-    public static List<TriggerControl> triggerControlList = new ArrayList<TriggerControl>();
+    public static final List<TriggerControl> triggerControlList = new ArrayList<>();
     /**
      * List of pH Sensors.
      */
-    public static ArrayList<PhSensor> phSensorList = new ArrayList<PhSensor>();
+    public static final ArrayList<PhSensor> phSensorList = new ArrayList<>();
     /**
      * Temperature Thread list.
      */
-    public static List<Thread> tempThreads = new ArrayList<Thread>();
+    public static List<Thread> tempThreads = new ArrayList<>();
     /**
      * PID Thread List.
      */
-    public static List<Thread> pidThreads = new ArrayList<Thread>();
+    public static List<Thread> pidThreads = new ArrayList<>();
     /**
      * Mash Threads list.
      */
-    public static List<Thread> triggerThreads = new ArrayList<Thread>();
+    public static List<Thread> triggerThreads = new ArrayList<>();
 
     /**
      * ConfigParser, legacy for the older users that haven't converted.
@@ -249,7 +201,6 @@ public final class LaunchControl {
     public static String breweryName = null;
     public static String theme = "default";
     public static boolean pageLock = false;
-    public static boolean allDevicesListed = false;
 
     /*****
      * Main method to launch the brewery.
@@ -292,9 +243,8 @@ public final class LaunchControl {
 
                 if (startupCommand.hasOption("port")) {
                     try {
-                        int t = Integer.parseInt(startupCommand
+                        port = Integer.parseInt(startupCommand
                                 .getOptionValue("port"));
-                        port = t;
                     } catch (NumberFormatException e) {
                         BrewServer.LOG
                                 .warning("Couldn't parse port value as an integer: "
@@ -349,7 +299,7 @@ public final class LaunchControl {
         if (rootDir != null) {
             // Validate to make sure it's valid, otherwise things will go badly.
             File root = new File(rootDir);
-            if (root != null && root.exists() && root.isDirectory()) {
+            if (root.exists() && root.isDirectory()) {
                 System.setProperty("root_override", rootDir);
             } else {
                 BrewServer.LOG.warning("Invalid root directory proviced: "
@@ -440,11 +390,11 @@ public final class LaunchControl {
                         }
                     }
                 }
-                // Close off all the Pump GPIOs properly.
-                synchronized (pumpList) {
-                    if (pumpList.size() > 0) {
-                        BrewServer.LOG.warning("Shutting down pumps.");
-                        for (Pump p : pumpList) {
+                // Close off all the Switch GPIOs properly.
+                synchronized (switchList) {
+                    if (switchList.size() > 0) {
+                        BrewServer.LOG.warning("Shutting down switchess.");
+                        for (Switch p : switchList) {
                             p.shutdown();
                         }
                     }
@@ -491,17 +441,15 @@ public final class LaunchControl {
 
         // iterate the list of Threads to kick off any PIDs
         Collections.sort(tempList);
-        Iterator<Temp> iterator = tempList.iterator();
-        while (iterator.hasNext()) {
+        for (Temp tTemp : tempList) {
             // launch all the PIDs first
             // since they will launch the temperature threads too
-            Temp tTemp = iterator.next();
             findPID(tTemp.getName());
         }
 
         // Old way to close off the System
         BrewServer.LOG.info("Waiting for input... Type 'quit' to exit");
-        String input = "";
+        String input;
         String[] inputBroken;
 
         while (true) {
@@ -538,10 +486,6 @@ public final class LaunchControl {
     public void startCosm(final String apiKey, final int feedID) {
         BrewServer.LOG.info("API: " + apiKey + " Feed: " + feedID);
         cosm = new Cosm(apiKey);
-        if (cosm == null) {
-            BrewServer.LOG.warning("Couldn't connect to PACHUBE/COSM");
-            return;
-        }
 
         // get the data feed
         try {
@@ -554,7 +498,6 @@ public final class LaunchControl {
 
         // get the list of feeds
         cosmStreams = cosmFeed.getDatastreams();
-        return;
     }
 
     /*****
@@ -627,32 +570,9 @@ public final class LaunchControl {
         return "Grabbed images";
     }
 
-    /**
-     * Call to generate the HTML to be served back to the server.
-     * 
-     * @return The HTML of the controller page.
-     */
-    public static String getControlPage() {
-        HashMap<String, String> devList = new HashMap<String, String>();
-        synchronized (tempList) {
-            for (Temp t : tempList) {
-                PID tPid = findPID(t.getName());
-                String type = "Temp";
-
-                if (tPid != null) {
-                    type = "PID";
-                }
-                devList.put(t.getName(), type);
-            }
-        }
-
-        ServeHTML pidServe = new ServeHTML(devList, pumpList);
-        return pidServe.getPage();
-    }
-
     /******
      * Get the JSON Output String. This is the current Status of the PIDs,
-     * Temps, Pumps, etc...
+     * Temps, Switches, etc...
      * 
      * @return The JSON String of the current status.
      */
@@ -661,7 +581,7 @@ public final class LaunchControl {
 
         // get each setting add it to the JSON
         JSONObject rObj = new JSONObject();
-        JSONObject tJSON = null;
+        JSONObject tJSON;
         JSONObject triggerJSON = new JSONObject();
         rObj.put("locked", LaunchControl.pageLock);
         rObj.put("breweryName", LaunchControl.getName());
@@ -743,15 +663,15 @@ public final class LaunchControl {
             rObj.put("brewday", brewDay.brewDayStatus());
         }
 
-        // generate the list of pumps
-        if (pumpList != null && pumpList.size() > 0) {
+        // generate the list of switchess
+        if (switchList != null && switchList.size() > 0) {
             tJSON = new JSONObject();
 
-            for (Pump p : pumpList) {
+            for (Switch p : switchList) {
                 tJSON.put(p.getName().replaceAll(" ", "_"), p.getStatus());
             }
 
-            rObj.put("pumps", tJSON);
+            rObj.put("switches", tJSON);
         }
 
         if (LaunchControl.getMessage() != null) {
@@ -886,7 +806,7 @@ public final class LaunchControl {
                 }
             }
             String cosmAPIKey = null;
-            Integer cosmFeedID = null;
+            Integer cosmFeedID;
 
             // Check for the COSM Feed details
             tElement = getFirstElement(config, "cosm");
@@ -896,9 +816,7 @@ public final class LaunchControl {
             try {
                 cosmFeedID = Integer.parseInt(getFirstElement(config,
                         "cosm_feed").getTextContent());
-            } catch (NumberFormatException e) {
-                cosmFeedID = null;
-            } catch (NullPointerException ne) {
+            } catch (NumberFormatException | NullPointerException e) {
                 cosmFeedID = null;
             }
 
@@ -916,9 +834,7 @@ public final class LaunchControl {
                 try {
                     cosmFeedID = Integer.parseInt(getFirstElement(config,
                             "pachube_feed").getTextContent());
-                } catch (NumberFormatException e) {
-                    cosmFeedID = null;
-                } catch (NullPointerException e) {
+                } catch (NumberFormatException | NullPointerException e) {
                     cosmFeedID = null;
                 }
 
@@ -940,7 +856,7 @@ public final class LaunchControl {
                 owfsPort = null;
             }
 
-            if (owfsServer != null && owfsPort != null) {
+            if (owfsServer != null) {
                 BrewServer.LOG.log(Level.INFO, "Setup OWFS at " + owfsServer
                         + ":" + owfsPort);
 
@@ -967,54 +883,57 @@ public final class LaunchControl {
     }
 
     /**
-     * Parse the pumps in the specified element.
+     * Parse the switches in the specified element.
      * 
      * @param config
-     *            The element that contains the pumps information
+     *            The element that contains the switches information
      */
-    public void parsePumps(final Element config) {
+    public void parseSwitches(final Element config) {
         if (config == null) {
             return;
         }
 
-        NodeList pumps = config.getChildNodes();
+        NodeList switches = config.getChildNodes();
 
-        for (int i = 0; i < pumps.getLength(); i++) {
-            Element curPump = (Element) pumps.item(i);
-            String pumpName = curPump.getNodeName().replace("_", " ");
-            String gpio = null;
-            if (curPump.hasAttribute("gpio")) {
-                gpio = curPump.getAttribute("gpio");
+        for (int i = 0; i < switches.getLength(); i++) {
+            Element curSwitch = (Element) switches.item(i);
+            String switchName = curSwitch.getNodeName().replace("_", " ");
+            String gpio;
+            if (curSwitch.hasAttribute("gpio")) {
+                gpio = curSwitch.getAttribute("gpio");
             } else {
-                gpio = curPump.getTextContent();
+                gpio = curSwitch.getTextContent();
             }
             int position = -1;
 
-            String tempString = curPump.getAttribute("position");
+            String tempString = curSwitch.getAttribute("position");
             if (tempString == null) {
                 try {
+                    assert tempString != null;
                     position = Integer.parseInt(tempString);
                 } catch (NumberFormatException nfe) {
-                    BrewServer.LOG.warning("Couldn't parse pump " + pumpName
+                    BrewServer.LOG.warning("Couldn't parse switch: " + switchName
                             + " position: " + tempString);
                 }
             }
             try {
-                synchronized (pumpList) {
-                    pumpList.add(new Pump(pumpName, gpio));
+                synchronized (switchList) {
+                    Switch tSwitch = new Switch(switchName, gpio);
+                    tSwitch.setPosition(position);
+                    switchList.add(tSwitch);
                 }
             } catch (InvalidGPIOException e) {
                 BrewServer.LOG.warning("Invalid GPIO (" + gpio
-                        + ") detected for pump " + pumpName);
+                        + ") detected for switch " + switchName);
                 BrewServer.LOG.warning(
                         "Please fix the config file before running");
                 System.exit(-1);
             }
 
-            Element invert = getFirstElement(curPump, "invert");
+            Element invert = getFirstElement(curSwitch, "invert");
             if (invert != null) {
-                LaunchControl.findPump(pumpName).setInverted(
-                    Boolean.parseBoolean(invert.getTextContent()));
+                LaunchControl.findSwitch(switchName).setInverted(
+                        Boolean.parseBoolean(invert.getTextContent()));
             }
         }
 
@@ -1031,7 +950,7 @@ public final class LaunchControl {
             return;
         }
         NodeList timers = config.getChildNodes();
-        timerList = new CopyOnWriteArrayList<Timer>();
+        timerList = new CopyOnWriteArrayList<>();
 
         for (int i = 0; i < timers.getLength(); i++) {
             Element tElement = (Element) timers.item(i);
@@ -1078,30 +997,30 @@ public final class LaunchControl {
     }
 
     /**
-     * Add a new pump to the server.
+     * Add a new switch to the server.
      *
      * @param name
-     *            The name of the pump to add.
+     *            The name of the switch to add.
      * @param gpio
      *            The GPIO to add
      * @return True if added OK
      */
-    public static boolean addPump(final String name, final String gpio) {
-        if (name.equals("") || gpio.equals("") || pumpExists(name)) {
+    public static boolean addSwitch(final String name, final String gpio) {
+        if (name.equals("") || gpio.equals("") || switchExists(name)) {
             return false;
         }
-        if (LaunchControl.findPump(name) != null) {
+        if (LaunchControl.findSwitch(name) != null) {
             return false;
         }
 
         try {
-            Pump p = new Pump(name, gpio);
-            synchronized (pumpList) {
+            Switch p = new Switch(name, gpio);
+            synchronized (switchList) {
 
-                pumpList.add(p);
+                switchList.add(p);
             }
         } catch (Exception g) {
-            BrewServer.LOG.warning("Could not add pump: " + g.getMessage());
+            BrewServer.LOG.warning("Could not add switch: " + g.getMessage());
             g.printStackTrace();
             return false;
         }
@@ -1134,16 +1053,16 @@ public final class LaunchControl {
     }
 
     /**
-     * Check to see if a pump with the given name exists.
+     * Check to see if a switch with the given name exists.
      * 
      * @param name
-     *            The name of the pump to check
-     * @return True if the pump exists.
+     *            The name of the switch to check
+     * @return True if the switch exists.
      */
-    public static boolean pumpExists(final String name) {
-        synchronized (pumpList) {
-            for (Pump p : pumpList) {
-                if (p.getName().equals("name")) {
+    public static boolean switchExists(final String name) {
+        synchronized (switchList) {
+            for (Switch p : switchList) {
+                if (p.getName().equals(name)) {
                     return true;
                 }
             }
@@ -1166,7 +1085,9 @@ public final class LaunchControl {
             if (timerList.contains(name) || name.equals("")) {
                 return false;
             }
-            CollectionsUtil.addInOrder(timerList, new Timer(name));
+            Timer tTimer = new Timer(name);
+            tTimer.setMode(mode);
+            CollectionsUtil.addInOrder(timerList, tTimer);
         }
 
         return true;
@@ -1237,7 +1158,7 @@ public final class LaunchControl {
         // iterate the list by tag
         List<Datastream> cList = Arrays.asList(cosmStreams);
         Iterator<Datastream> iterator = cList.iterator();
-        Datastream tData = null;
+        Datastream tData;
         while (iterator.hasNext()) {
             // Iteratre the datastreams
             tData = iterator.next();
@@ -1252,7 +1173,7 @@ public final class LaunchControl {
         // always setup for Fahrenheit
 
         BrewServer.LOG.info("Creating new feed");
-        List<String> lTags = new ArrayList<String>();
+        List<String> lTags = new ArrayList<>();
 
         lTags.add("Elsinore");
         lTags.add("temperature");
@@ -1284,7 +1205,7 @@ public final class LaunchControl {
         // search based on the input name
         synchronized (tempList) {
             Iterator<Temp> iterator = tempList.iterator();
-            Temp tTemp = null;
+            Temp tTemp;
             while (iterator.hasNext()) {
                 tTemp = iterator.next();
                 if (tTemp.getName().equalsIgnoreCase(name)) {
@@ -1306,7 +1227,7 @@ public final class LaunchControl {
         // search based on the input name
         synchronized (pidList) {
             Iterator<PID> iterator = pidList.iterator();
-            PID tPid = null;
+            PID tPid;
             while (iterator.hasNext()) {
                 tPid = iterator.next();
                 if (tPid.getName().equalsIgnoreCase(name)) {
@@ -1333,21 +1254,21 @@ public final class LaunchControl {
     }
 
     /**************
-     * Find the Pump in the current list.
+     * Find the Switch in the server..
      * 
      * @param name
-     *            The pump to find
-     * @return return the PUMP object
+     *            The switch to find
+     * @return return the Switch object
      */
-    public static Pump findPump(final String name) {
+    public static Switch findSwitch(final String name) {
         // search based on the input name
-        synchronized (pumpList) {
-            Iterator<Pump> iterator = pumpList.iterator();
-            Pump tPump = null;
+        synchronized (switchList) {
+            Iterator<Switch> iterator = switchList.iterator();
+            Switch tSwitch;
             while (iterator.hasNext()) {
-                tPump = iterator.next();
-                if (tPump.getName().equalsIgnoreCase(name)) {
-                    return tPump;
+                tSwitch = iterator.next();
+                if (tSwitch.getName().equalsIgnoreCase(name)) {
+                    return tSwitch;
                 }
             }
         }
@@ -1355,20 +1276,20 @@ public final class LaunchControl {
     }
 
     /**
-     * Delete the specified pump.
+     * Delete the specified switch.
      *
      * @param name
-     *            The pump to delete.
+     *            The switch to delete.
      */
-    public static void deletePump(final String name) {
+    public static void deleteSwitch(final String name) {
         // search based on the input name
-        synchronized (pumpList) {
-            Iterator<Pump> iterator = pumpList.iterator();
-            Pump tPump = null;
+        synchronized (switchList) {
+            Iterator<Switch> iterator = switchList.iterator();
+            Switch tSwitch;
 
             while (iterator.hasNext()) {
-                tPump = iterator.next();
-                if (tPump.getName().equalsIgnoreCase(name)) {
+                tSwitch = iterator.next();
+                if (tSwitch.getName().equalsIgnoreCase(name)) {
                     iterator.remove();
                     return;
                 }
@@ -1388,7 +1309,7 @@ public final class LaunchControl {
         // search based on the input name
         synchronized (timerList) {
             Iterator<Timer> iterator = timerList.iterator();
-            Timer tTimer = null;
+            Timer tTimer;
             while (iterator.hasNext()) {
                 tTimer = iterator.next();
                 if (tTimer.getName().equalsIgnoreCase(name)) {
@@ -1409,7 +1330,7 @@ public final class LaunchControl {
         // search based on the input name
         synchronized (timerList) {
             Iterator<Timer> iterator = timerList.iterator();
-            Timer tTimer = null;
+            Timer tTimer;
             while (iterator.hasNext()) {
                 tTimer = iterator.next();
                 if (tTimer.getName().equalsIgnoreCase(name)) {
@@ -1457,6 +1378,7 @@ public final class LaunchControl {
         }
         File[] listOfFiles = w1Folder.listFiles();
 
+        assert listOfFiles != null;
         if (listOfFiles.length == 0) {
             BrewServer.LOG.warning("No 1Wire probes found! Please check your system!");
             BrewServer.LOG.warning("http://dougedey.github.io/2014/11/24/Why_Cant_I_Use_Elsinore_Without_Temperature_Probes/");
@@ -1577,7 +1499,7 @@ public final class LaunchControl {
             generalElement = addNewElement(null, "general");
         }
 
-        Element tempElement = null;
+        Element tempElement;
 
         tempElement = getFirstElement(generalElement, "pagelock");
 
@@ -1825,11 +1747,9 @@ public final class LaunchControl {
         // iterate the list of temperature Threads to get values
         Integer i = 1;
         synchronized (tempList) {
-            Iterator<Temp> iterator = tempList.iterator();
-            while (iterator.hasNext()) {
+            for (Temp tTemp : tempList) {
                 // launch all the PIDs first,
                 // since they will launch the temp theads too
-                Temp tTemp = iterator.next();
                 BigDecimal currentTemp = tTemp.updateTemp();
 
                 System.out.print(i.toString() + ") " + tTemp.getName());
@@ -1854,7 +1774,7 @@ public final class LaunchControl {
         // Delete the existing PIDs and Temps.
         NodeList devList = getElementsByXpath(null, "/elsinore/device");
 
-        Set<Element> delElements = new HashSet<Element>();
+        Set<Element> delElements = new HashSet<>();
         // Can't delete directly from the nodelist, concurrency issues.
         for (int i = 0; i < devList.getLength(); i++) {
             delElements.add((Element) devList.item(i));
@@ -1924,42 +1844,38 @@ public final class LaunchControl {
             }
         }
 
-        // Delete all the pumps first
-        Element pumpsElement = getFirstElement(null, "pumps");
+        // Delete all the switches first
+        Element switchElement = getFirstElement(null, "switches");
 
-        if (pumpsElement == null) {
-            pumpsElement = addNewElement(null, "pumps");
+        if (switchElement == null) {
+            switchElement = addNewElement(null, "switches");
         }
 
-        Node childPumps = pumpsElement.getFirstChild();
-        while (childPumps != null) {
-            pumpsElement.removeChild(childPumps);
-            childPumps = pumpsElement.getFirstChild();
+        Node childSwitches = switchElement.getFirstChild();
+        while (childSwitches != null) {
+            switchElement.removeChild(childSwitches);
+            childSwitches = switchElement.getFirstChild();
         }
 
-        // Save the Pumps
-        if (pumpList.size() > 0) {
+        // Save the switches
+        if (switchList.size() > 0) {
 
-            Iterator<Pump> pumpIt = pumpList.iterator();
+            for (Switch tSwitch : switchList) {
 
-            while (pumpIt.hasNext()) {
+                Element newSwitch = getFirstElementByXpath(null,
+                        "/elsinore/switches/" + tSwitch.getNodeName());
 
-                Pump tPump = pumpIt.next();
-
-                Element newPump = getFirstElementByXpath(null,
-                        "/elsinore/pumps/" + tPump.getNodeName());
-
-                if (newPump == null) {
+                if (newSwitch == null) {
                     // No timer by this name
-                    newPump = addNewElement(pumpsElement,
-                            tPump.getNodeName());
+                    newSwitch = addNewElement(switchElement,
+                            tSwitch.getNodeName());
                 }
-                newPump.setAttribute("gpio", tPump.getGPIO());
-                newPump.setAttribute("position", "" + tPump.getPosition());
-                Element invertElement = addNewElement(newPump, "invert");
+                newSwitch.setAttribute("gpio", tSwitch.getGPIO());
+                newSwitch.setAttribute("position", "" + tSwitch.getPosition());
+                Element invertElement = addNewElement(newSwitch, "invert");
                 invertElement.setTextContent(
-                        Boolean.toString(tPump.getInverted()));
-                newPump.appendChild(invertElement);
+                        Boolean.toString(tSwitch.getInverted()));
+                newSwitch.appendChild(invertElement);
             }
         }
 
@@ -1976,14 +1892,10 @@ public final class LaunchControl {
             childSensor = phSensorsElement.getFirstChild();
         }
 
-        // Save the Pumps
+        // Save the PH Sensors
         if (phSensorList.size() > 0) {
 
-            Iterator<PhSensor> phSensorIt = phSensorList.iterator();
-
-            while (phSensorIt.hasNext()) {
-
-                PhSensor tSensor = phSensorIt.next();
+            for (PhSensor tSensor : phSensorList) {
 
                 Element newSensor = getFirstElementByXpath(null,
                         "/elsinore/phSensors/" + tSensor.getName());
@@ -2103,10 +2015,8 @@ public final class LaunchControl {
     /*******
      * Add a temperature device to the configuration file.
      *
-     * @param probe
-     *            The probe address.
-     * @param name
-     *            The temperature probe name
+     * @param temp
+     *            The temp probe to save.
      * @return The newly created Document Element
      */
     public static Element addTempToConfig(Temp temp) {
@@ -2276,12 +2186,9 @@ public final class LaunchControl {
         if (tElement == null) {
             tElement = addNewElement(device, "volume-unit");
         }
-        tElement.setTextContent(volumeUnit.toString());
+        tElement.setTextContent(volumeUnit);
 
-        Iterator<Entry<BigDecimal, BigDecimal>> volIter = volumeBase.entrySet()
-                .iterator();
-        while (volIter.hasNext()) {
-            Entry<BigDecimal, BigDecimal> entry = volIter.next();
+        for (Entry<BigDecimal, BigDecimal> entry : volumeBase.entrySet()) {
             System.out.println("Looking for volume entry: "
                     + entry.getKey().toString());
 
@@ -2315,6 +2222,7 @@ public final class LaunchControl {
         }
 
         try {
+            assert dBuilder != null;
             configDoc = dBuilder.parse(existingConfig);
             XPath xp = XPathFactory.newInstance().newXPath();
             NodeList nl = (NodeList) xp.evaluate(
@@ -2364,7 +2272,7 @@ public final class LaunchControl {
         }
         // setup general first
         parseGeneral(getFirstElement(null, "general"));
-        parsePumps(getFirstElement(null, "pumps"));
+        parseSwitches(getFirstElement(null, "switches"));
         parsePhSensors(getFirstElement(null, "phSensors"));
 
         for (int i = 0; i < configSections.getLength(); i++) {
@@ -2396,7 +2304,7 @@ public final class LaunchControl {
         String dsAddress = null, dsOffset = null;
         String cutoffTemp = null, auxPin = null, calibration = "";
         ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray =
-                new ConcurrentHashMap<BigDecimal, BigDecimal>();
+                new ConcurrentHashMap<>();
         BigDecimal duty = new BigDecimal(0), heatCycle = new BigDecimal(0.0),
                 setpoint = new BigDecimal(0.0), heatP = new BigDecimal(0.0),
                 heatI = new BigDecimal(0.0), heatD = new BigDecimal(0.0),
@@ -2665,11 +2573,9 @@ public final class LaunchControl {
         }
 
         if (volumeArray != null && volumeArray.size() >= MIN_VOLUME_SIZE) {
-            Iterator<Entry<BigDecimal, BigDecimal>> volIter = volumeArray
-                    .entrySet().iterator();
 
-            while (volIter.hasNext()) {
-                Entry<BigDecimal, BigDecimal> entry = volIter.next();
+            for (Entry<BigDecimal, BigDecimal> entry : volumeArray
+                    .entrySet()) {
                 newTemp.addVolumeMeasurement(entry.getKey(), entry.getValue());
             }
         }
@@ -2692,8 +2598,9 @@ public final class LaunchControl {
     public static void copyFile(final File sourceFile, final File destFile)
             throws IOException {
 
-        if (!destFile.exists()) {
-            destFile.createNewFile();
+        if (!destFile.exists() && !destFile.createNewFile()) {
+            BrewServer.LOG.warning("Couldn't create " + destFile.getName());
+            return;
         }
 
         FileChannel source = null;
@@ -2723,7 +2630,7 @@ public final class LaunchControl {
     public static void setupConfigDoc() {
 
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder = null;
+        DocumentBuilder dBuilder;
         try {
             dBuilder = dbFactory.newDocumentBuilder();
             configDoc = dBuilder.newDocument();
@@ -2757,9 +2664,7 @@ public final class LaunchControl {
             trueBase = configDoc.getDocumentElement();
         }
 
-        NodeList foundList = trueBase.getElementsByTagName(nodeName);
-
-        return foundList;
+        return trueBase.getElementsByTagName(nodeName);
     }
 
     /**
@@ -2840,6 +2745,7 @@ public final class LaunchControl {
      *            The Xpath to search.
      * @return The first matching element
      */
+    @SuppressWarnings("unused")
     public static NodeList getElementsByXpath(final Element baseNode,
             final String xpathIn) {
 
@@ -3002,18 +2908,18 @@ public final class LaunchControl {
      */
     public static void checkForUpdates() {
         // Build command
-        File jarLocation = null;
+        File jarLocation;
 
         jarLocation = new File(LaunchControl.class.getProtectionDomain()
                 .getCodeSource().getLocation().getPath()).getParentFile();
 
-        List<String> commands = new ArrayList<String>();
+        List<String> commands = new ArrayList<>();
         commands.add("git");
         commands.add("fetch");
         ProcessBuilder pb = new ProcessBuilder(commands);
         pb.directory(jarLocation);
         pb.redirectErrorStream(true);
-        Process process = null;
+        Process process;
         try {
             process = pb.start();
             process.waitFor();
@@ -3024,7 +2930,7 @@ public final class LaunchControl {
             return;
         }
 
-        commands = new ArrayList<String>();
+        commands = new ArrayList<>();
         commands.add("git");
         // Add arguments
         commands.add("rev-parse");
@@ -3036,7 +2942,6 @@ public final class LaunchControl {
         pb = new ProcessBuilder(commands);
         pb.directory(jarLocation);
         pb.redirectErrorStream(true);
-        process = null;
         try {
             process = pb.start();
             process.waitFor();
@@ -3050,7 +2955,7 @@ public final class LaunchControl {
         StringBuilder out = new StringBuilder();
         BufferedReader br = new BufferedReader(new InputStreamReader(
                 process.getInputStream()));
-        String line = null, previous = null;
+        String line, previous = null;
         String currentSha = null;
 
         try {
@@ -3078,7 +2983,7 @@ public final class LaunchControl {
 
         // Build command for head check
 
-        commands = new ArrayList<String>();
+        commands = new ArrayList<>();
         commands.add("git");
         // Add arguments
         commands.add("rev-parse");
@@ -3099,7 +3004,6 @@ public final class LaunchControl {
         // Read output
         out = new StringBuilder();
         br = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        line = null;
         previous = null;
         String headSha = null;
 
@@ -3139,24 +3043,22 @@ public final class LaunchControl {
 
     /**
      * Update from GIT and restart.
-     * 
-     * @return
      */
     public static void updateFromGit() {
         // Build command
-        File jarLocation = null;
+        File jarLocation;
 
         jarLocation = new File(LaunchControl.class.getProtectionDomain()
                 .getCodeSource().getLocation().getPath()).getParentFile();
 
         BrewServer.LOG.info("Updating from Head");
-        List<String> commands = new ArrayList<String>();
+        List<String> commands = new ArrayList<>();
         commands.add("git");
         commands.add("pull");
         ProcessBuilder pb = new ProcessBuilder(commands);
         pb.directory(jarLocation);
         pb.redirectErrorStream(true);
-        Process process = null;
+        Process process;
         try {
             process = pb.start();
         } catch (IOException e3) {
@@ -3169,7 +3071,7 @@ public final class LaunchControl {
         StringBuilder out = new StringBuilder();
         BufferedReader br = new BufferedReader(new InputStreamReader(
                 process.getInputStream()));
-        String line = null, previous = null;
+        String line, previous = null;
 
         try {
             while ((line = br.readLine()) != null) {
@@ -3275,9 +3177,8 @@ public final class LaunchControl {
             }
         }
 
+        assert targetFile != null;
         Path path = Paths.get(targetFile.getAbsolutePath());
-        FileOwnerAttributeView view = Files.getFileAttributeView(path,
-                FileOwnerAttributeView.class);
         UserPrincipalLookupService lookupService = FileSystems.getDefault()
                 .getUserPrincipalLookupService();
         UserPrincipal userPrincipal;
@@ -3285,7 +3186,6 @@ public final class LaunchControl {
             userPrincipal = lookupService.lookupPrincipalByName(baseUser);
             Files.setOwner(path, userPrincipal);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -3352,7 +3252,8 @@ public final class LaunchControl {
     }
 
     public static List<String> getOneWireDevices(String prefix) {
-        List<String> devices = new ArrayList<String>();
+        List<String> devices;
+        devices = new ArrayList<String>();
         if (owfsConnection == null) {
             LaunchControl.setMessage("OWFS is not setup,"
                     + " please delete your configuration file and start again");
@@ -3365,7 +3266,7 @@ public final class LaunchControl {
                         + ":" + owfsPort);
             }
             Iterator<String> dirIt = owfsDirs.iterator();
-            String dir = null;
+            String dir;
 
             while (dirIt.hasNext()) {
                 dir = dirIt.next();
@@ -3373,9 +3274,7 @@ public final class LaunchControl {
                     devices.add(dir);
                 }
             }
-        } catch (OwfsException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (OwfsException | IOException e) {
             e.printStackTrace();
         }
 
@@ -3386,7 +3285,7 @@ public final class LaunchControl {
         string = string.replace(" ", "_");
         synchronized (phSensorList) {
             Iterator<PhSensor> iterator = phSensorList.iterator();
-            PhSensor tPh = null;
+            PhSensor tPh;
             while (iterator.hasNext()) {
                 tPh = iterator.next();
                 if (tPh.getName().equalsIgnoreCase(string)) {
@@ -3409,7 +3308,7 @@ public final class LaunchControl {
         String realName = name.replace(" ", "_");
         synchronized (phSensorList) {
             Iterator<PhSensor> iterator = phSensorList.iterator();
-            PhSensor tSensor = null;
+            PhSensor tSensor;
 
             while (iterator.hasNext()) {
                 tSensor = iterator.next();
