@@ -1064,4 +1064,12 @@ public final class Temp implements Runnable, Comparable<Temp> {
         }
         return this.position - o.getPosition();
     }
+
+    public BigDecimal convertF(BigDecimal temp) {
+        if (this.scale.equals("C")) {
+            return cToF(temp);
+        }
+
+        return temp;
+    }
 }
