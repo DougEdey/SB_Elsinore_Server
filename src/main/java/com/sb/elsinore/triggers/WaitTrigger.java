@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import com.sb.common.SBStringUtils;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 
@@ -16,21 +17,24 @@ import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.Messages;
 import com.sb.util.MathUtil;
 
+import javax.annotation.Nonnull;
+
 /**
  * A trigger that waits for a certain period of time before continuing.
  * @author Doug Edey
  */
+@SuppressWarnings("unused")
 public class WaitTrigger implements TriggerInterface {
 
-    volatile Object lck = new Object();
+    final Object lck = new Object();
     volatile boolean waitStatus = true;
     private int position = -1;
-    private String TRIGGER_TYPE = "any";
     private BigDecimal waitTime = BigDecimal.ZERO;
     private Date startDate, endDate;
     private boolean active = false;
     private double minutes = 0.0;
     private double seconds = 0.0;
+    private String note;
 
     public WaitTrigger() {
         BrewServer.LOG.info("Created an empty wait trigger");
@@ -43,6 +47,17 @@ public class WaitTrigger implements TriggerInterface {
     public WaitTrigger(final int newPos, final JSONObject parameters) {
         this.position = newPos;
         updateParams(parameters);
+    }
+
+    public WaitTrigger(final int newPos, final double waitMinutes, final double waitTimeSecs) {
+        this.position = newPos;
+        this.minutes = waitMinutes;
+        this.seconds = waitTimeSecs;
+        BigDecimal totalTime = new BigDecimal(
+                this.minutes * 60);
+        totalTime = totalTime.add(new BigDecimal(
+                this.seconds));
+        this.waitTime = totalTime;
     }
 
     /**
@@ -104,7 +119,7 @@ public class WaitTrigger implements TriggerInterface {
      * @return Compare.
      */
     @Override
-    public final int compareTo(final TriggerInterface o) {
+    public final int compareTo(@Nonnull final TriggerInterface o) {
         return (this.position - o.getPosition());
     }
 
@@ -129,26 +144,27 @@ public class WaitTrigger implements TriggerInterface {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public JSONObject getJSONStatus() {
         String startDateStamp = "";
         if (this.startDate != null) {
             startDateStamp = BrewDay.lFormat.format(this.startDate);
         }
-        String endDateStamp = "";
+        String endDateStamp;
         if (this.endDate != null) {
             endDateStamp = BrewDay.lFormat.format(this.endDate);
         } else {
-            endDateStamp = this.waitTime.toPlainString();
+            endDateStamp = "";
         }
 
-        String targetStr = this.minutes + " " + Messages.MIN + " "
-                + this.seconds + " " + Messages.SECS;
+        String targetStr = SBStringUtils.formatTime(this.minutes);
         JSONObject currentStatus = new JSONObject();
         currentStatus.put("position", this.position);
         currentStatus.put("start", startDateStamp);
         currentStatus.put("target", targetStr);
-        currentStatus.put("description", endDateStamp);
+        currentStatus.put("description", endDateStamp + "<br />\n" + this.note);
         currentStatus.put("active", Boolean.toString(this.active));
+
 
         return currentStatus;
     }
@@ -189,6 +205,10 @@ public class WaitTrigger implements TriggerInterface {
                         .type("number").add("step", "any")
                         .add("placeholder", Messages.SECS)
                         .name("waitTimeSecs").value(""));
+                html.input(class_("inputBox form-control")
+                    .name("notes").value("")
+                    .add("placeholder", Messages.NOTES)
+                    .value(this.note));
                 html.button(name("submitWait")
                         .class_("btn col-md-12")
                         .add("data-toggle", "clickover")
@@ -211,7 +231,7 @@ public class WaitTrigger implements TriggerInterface {
         html.div(id("EditWaitTrigger").class_(""));
             html.form(id("editTriggersForm"));
                 html.input(id("type").name("type")
-                            .hidden("true").value("Wait"));
+                        .hidden("true").value("Wait"));
                 html.input(id("type").name("position")
                         .hidden("position").value("" + this.position));
                 html.input(class_("inputBox temperature form-control")
@@ -224,6 +244,10 @@ public class WaitTrigger implements TriggerInterface {
                         .add("placeholder", Messages.SECS)
                         .name("waitTimeSecs")
                         .value(Double.toString(this.seconds)));
+                html.input(class_("inputBox form-control")
+                    .name("notes").value("")
+                    .add("placeholder", Messages.NOTES)
+                    .value(this.note));
                 html.button(name("submitWait")
                         .class_("btn col-md-12")
                         .add("data-toggle", "clickover")
@@ -244,4 +268,11 @@ public class WaitTrigger implements TriggerInterface {
         updateParams(params);
     }
 
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public String getNote() {
+        return note;
+    }
 }
