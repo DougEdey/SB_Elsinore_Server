@@ -1,36 +1,20 @@
 package com.sb.elsinore;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import org.joda.time.DateTime;
+import com.sb.elsinore.triggers.TriggerInterface;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.reflections.Reflections;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.tools.PrettyWriter;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.Map.Entry;
+
 import static org.rendersnake.HtmlAttributesFactory.*;
-
-import com.sb.elsinore.triggers.TriggerInterface;
-
-import sun.reflect.Reflection;
-
 
 /********************
  * This class is for storing the mash steps.
@@ -55,8 +39,8 @@ public class TriggerControl implements Runnable {
     /**
      * The list of mash steps, position -> Step.
      */
-    private ArrayList<TriggerInterface> triggerList =
-            new ArrayList<TriggerInterface>();
+    private final ArrayList<TriggerInterface> triggerList =
+            new ArrayList<>();
 
     /**
      * Add a mashstep at a position, overriding the old one.
@@ -101,9 +85,9 @@ public class TriggerControl implements Runnable {
      * @param type The Type of the Trigger interface to get.
      * @return The HtmlCanvas representing the form.
      */
-    public static final HtmlCanvas getNewTriggerForm(final int position,
+    public static HtmlCanvas getNewTriggerForm(final int position,
             final String type) {
-        TriggerInterface triggerStep = null;
+        TriggerInterface triggerStep;
         Class<? extends TriggerInterface> triggerClass = getTriggerOfName(type);
         if (triggerClass == null) {
             LaunchControl.setMessage(
@@ -140,6 +124,7 @@ public class TriggerControl implements Runnable {
      * @param params The incoming params.
      * @return The HtmlCanvas representing the form.
      */
+    @SuppressWarnings("unused")
     public final HtmlCanvas getEditTriggerForm(final int position,
             final JSONObject params) {
         TriggerInterface trigger = this.triggerList.get(position);
@@ -169,7 +154,7 @@ public class TriggerControl implements Runnable {
      * @param name The name of the trigger to get.
      * @return The Class representing the trigger.
      */
-    public static final Class<? extends TriggerInterface> getTriggerOfName(
+    public static Class<? extends TriggerInterface> getTriggerOfName(
             final String name) {
         String seekName = name + "Trigger";
         // Find the trigger.
@@ -180,10 +165,9 @@ public class TriggerControl implements Runnable {
      * Get a map of the triggerInterface classes.
      * @return A Map of className: Class.
      */
-    public static final Map<String, Class<? extends TriggerInterface>>
+    public static Map<String, Class<? extends TriggerInterface>>
         getTriggerList() {
-        HashMap<String, Class<? extends TriggerInterface>> interfaceMap =
-                new HashMap<String, Class<? extends TriggerInterface>>();
+        HashMap<String, Class<? extends TriggerInterface>> interfaceMap = new HashMap<>();
 
         Set<Class<? extends TriggerInterface>> triggerSet =
                 new Reflections("com.sb.elsinore.triggers")
@@ -195,15 +179,15 @@ public class TriggerControl implements Runnable {
         return interfaceMap;
     }
 
-    public static final Map<String, String> getTriggerTypes(final String inType) {
+    public static Map<String, String> getTriggerTypes(final String inType) {
         Map<String, Class<? extends TriggerInterface>> interfaceMap =
                 getTriggerList();
-        Map<String, String> typeMap = new HashMap<String, String>();
+        Map<String, String> typeMap = new HashMap<>();
 
         // Get the String, String array
         for (Entry<String, Class<? extends TriggerInterface>> entry:
             interfaceMap.entrySet()) {
-            Constructor<? extends TriggerInterface> tempTrigger = null;
+            Constructor<? extends TriggerInterface> tempTrigger;
             try {
                 tempTrigger = entry.getValue().getConstructor();
                 if (tempTrigger.newInstance()
@@ -223,10 +207,10 @@ public class TriggerControl implements Runnable {
     }
 
     /**
-     * Get the current size of the mash step list.
-     * @return The size of the mash step list
+     * Get the current size of the trigger list.
+     * @return The size of the trigger list
      */
-    public final int getMashStepSize() {
+    public final int getTriggersSize() {
         return triggerList.size();
     }
 
@@ -382,7 +366,6 @@ public class TriggerControl implements Runnable {
     @SuppressWarnings("unchecked")
     public final JSONArray getJSONData() {
         JSONArray masterArray = new JSONArray();
-        DateFormat lFormat = new SimpleDateFormat("yyyy/MM/dd'T'HH:mm:ssZ");
         synchronized (triggerList) {
             for (TriggerInterface e : triggerList) {
                 masterArray.add(e.getJSONStatus());
@@ -453,7 +436,7 @@ public class TriggerControl implements Runnable {
      * @return The new triggers canvas
      * @throws IOException If the form couldn't be created.
      */
-    public static final HtmlCanvas getNewTriggersForm(final String probe)
+    public static HtmlCanvas getNewTriggersForm(final String probe)
             throws IOException {
         String probeType;
         if (LaunchControl.findPID(probe) != null) {
@@ -493,5 +476,13 @@ public class TriggerControl implements Runnable {
      */
     public final int triggerCount() {
         return this.triggerList.size();
+    }
+
+    public void clear() {
+        this.triggerList.clear();
+    }
+
+    public void addTrigger(TriggerInterface newTrigger) {
+        this.triggerList.add(newTrigger);
     }
 }
