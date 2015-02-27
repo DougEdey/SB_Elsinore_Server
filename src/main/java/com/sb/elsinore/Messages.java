@@ -4,6 +4,7 @@ import org.eclipse.osgi.util.NLS;
 
 public class Messages extends NLS {
     private static final String BUNDLE_NAME = "com.sb.elsinore.nls.messages"; // $NON-NLS-1$
+    public static String HOLD_STEP;
 
     public static String PH_MODEL;
     public static String PH_SENSORS;
@@ -101,6 +102,13 @@ public class Messages extends NLS {
     public static String UPLOAD_LOGO;
     public static String UPLOAD_BEERXML;
     public static String SHOW_RECIPE;
+
+    public static String END_TEMP;
+    public static String NOTES;
+    public static String HOP;
+    public static String ALPHA;
+    public static String IBU;
+    public static String AMOUNT;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);
