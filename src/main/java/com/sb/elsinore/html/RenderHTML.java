@@ -46,7 +46,7 @@ public class RenderHTML implements Renderable {
         html._div();
         // Add in the switches
         html.div(class_("row"));
-        html.div(id("switches").class_("col-md-2"))
+        html.div(id("switches").class_("col-md-3 text-center"))
             .div(class_("panel panel-info"))
                 .div(id("switches-titled").class_("title panel-heading"))
                     .write(Messages.SWITCHES)
@@ -67,7 +67,7 @@ public class RenderHTML implements Renderable {
         ._div();
 
         // Add the timers
-        html.div(id("timers").class_("col-md-2"))
+        html.div(id("timers").class_("col-md-3 text-center"))
             .div(class_("panel panel-info"))
                 .div(id("timers-header").class_("title panel-heading"))
                     .write(Messages.TIMERS)
@@ -89,7 +89,7 @@ public class RenderHTML implements Renderable {
         ._div();
 
         // Add the pH Sensors
-        html.div(id("phSensors").class_("col-md-2"))
+        html.div(id("phSensors").class_("col-md-3 text-center"))
             .div(class_("panel panel-info"))
                 .div(id("phSensors-header").class_("title panel-heading"))
                     .write(Messages.PH_SENSORS)
