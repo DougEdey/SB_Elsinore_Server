@@ -27,8 +27,7 @@ public class RenderHTML implements Renderable {
             .br();
 
         // Add all the PIDs
-        html.div(id("main").class_("container-fluid col-md-10")
-                .style("padding-left:10px; padding-right:10px"));
+        html.div(id("main").class_("container-fluid col-md-10"));
 
         html.div(id("Probes").class_("row no-gutter"));
         int i = 0;
