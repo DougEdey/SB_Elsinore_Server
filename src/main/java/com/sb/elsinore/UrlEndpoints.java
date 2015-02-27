@@ -11,12 +11,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.json.simple.JSONArray;
@@ -2051,37 +2046,6 @@ public class UrlEndpoints {
         }
         return new Response(Status.OK, MIME_TYPES.get("json"),
                 usage.toJSONString());
-    }
-
-    @SuppressWarnings("unchecked")
-    @UrlEndpoint(url = "/uploadbeerxml")
-    public Response uploadBeerXML() {
-
-        final Map<String, String> files = this.files;
-        JSONObject usage = new JSONObject();
-        usage.put("Usage", "Set the beerXML file");
-        usage.put("files", "The new beerXML file");
-
-        if (files.size() == 1) {
-            for (Map.Entry<String, String> entry : files.entrySet()) {
-
-                try {
-                    File uploadedFile = new File(entry.getValue());
-                    String fileType = Files.probeContentType(
-                            uploadedFile.toPath());
-
-                    if (fileType.equalsIgnoreCase(MIME_TYPES.get("xml")))
-                    {
-                        BeerXMLReader.getInstance().readFile(uploadedFile);
-                    }
-                } catch (IOException e) {
-                    usage.put("error", "Bad file");
-                }
-            }
-        }
-        return new Response(Response.Status.BAD_REQUEST,
-                MIME_TYPES.get("json"), usage.toJSONString());
-
     }
 
     @SuppressWarnings("unchecked")
