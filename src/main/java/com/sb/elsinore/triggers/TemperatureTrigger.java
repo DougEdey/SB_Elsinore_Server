@@ -25,10 +25,10 @@ import com.sb.elsinore.Temp;
  * @author Doug Edey
  *
  */
+@SuppressWarnings("unused")
 public class TemperatureTrigger implements TriggerInterface {
 
     private BigDecimal targetTemp = null;
-    private BigDecimal duration = null;
     private Temp temperatureProbe = null;
     private String method = null;
     private String type = null;
@@ -38,8 +38,7 @@ public class TemperatureTrigger implements TriggerInterface {
     public static String DECREASE = "DECREASE";
     private String mode = null;
     private Date startDate = null;
-    private String TRIGGER_NAME =  "Temperature";
-    private String TRIGGER_TYPE = "ANY";
+    private BigDecimal exitTemp;
 
     public TemperatureTrigger() {
         BrewServer.LOG.info("Created an empty Temperature Trigger");
@@ -49,6 +48,15 @@ public class TemperatureTrigger implements TriggerInterface {
         BrewServer.LOG.info("Created a Temperature Trigger at" + newPosition);
         this.position = newPosition;
     }
+
+    public TemperatureTrigger(int position, String tempProbe, double targetTemp, String stepType, String stepMethod) {
+        this.position = position;
+        this.targetTemp = new BigDecimal(targetTemp);
+        this.temperatureProbe = LaunchControl.findTemp(tempProbe);
+        this.type = stepType;
+        this.method = stepMethod;
+    }
+
     /**
      * Set the {@link java.util.Date} that this step is started.
      * @param inStart The Date that this step is started.
@@ -69,6 +77,21 @@ public class TemperatureTrigger implements TriggerInterface {
                 + "Trigger will wait for it to hit the target temperature.");
         } else {
             pid.setTemp(this.targetTemp);
+        }
+    }
+
+    /**
+     * Set The Target temperature of the PID
+     * Associated with this temperatureTrigger.
+     */
+    public final void setExitTemperature() {
+        PID pid = LaunchControl.findPID(this.temperatureProbe.getName());
+        if (pid == null) {
+            LaunchControl.setMessage(temperatureProbe.getName()
+                    + " is not associated with a PID. "
+                    + "Trigger will wait for it to hit the target temperature.");
+        } else {
+            pid.setTemp(this.exitTemp);
         }
     }
 
@@ -119,8 +142,14 @@ public class TemperatureTrigger implements TriggerInterface {
         String newMethod = parameters.get("method").toString();
         String newType = parameters.get("stepType").toString();
         String newTempProbe = parameters.get("tempprobe").toString();
+        String exitTemp = parameters.get("exitTemperature").toString();
 
         this.targetTemp = tTemp;
+        if (exitTemp.equals("")) {
+            this.exitTemp = this.targetTemp;
+        } else {
+            this.exitTemp = new BigDecimal(exitTemp.replace(",", "."));
+        }
         this.temperatureProbe = LaunchControl.findTemp(newTempProbe);
         this.method = newMethod;
         this.type = newType;
@@ -153,7 +182,18 @@ public class TemperatureTrigger implements TriggerInterface {
 
         setTargetTemperature();
         setStart(new Date());
-        if (this.mode.equals(TemperatureTrigger.INCREASE)) {
+        if (this.mode == null) {
+            // Just get to within 2F of the target Temp.
+            BrewServer.LOG.warning("Waiting to be within 2F of " + targetTemp);
+            while(temperatureProbe.convertF(temperatureProbe.getTemp().subtract(targetTemp).abs())
+                    .compareTo(new BigDecimal(2.0)) <= 0) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ie) {
+                    BrewServer.LOG.warning("Temperature Trigger interrupted.");
+                }
+            }
+        } else if (this.mode.equals(TemperatureTrigger.INCREASE)) {
             while (this.temperatureProbe.getTemp().compareTo(
                     this.targetTemp) <= 0) {
                 try {
@@ -173,6 +213,21 @@ public class TemperatureTrigger implements TriggerInterface {
                     return;
                 }
             }
+        } else {
+            // Just get to within 2F of the target Temp.
+            BrewServer.LOG.warning("Waiting to be within 2F of " + targetTemp);
+            while(temperatureProbe.convertF(temperatureProbe.getTemp().subtract(targetTemp).abs())
+                    .compareTo(new BigDecimal(2.0)) <= 0) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ie) {
+                    BrewServer.LOG.warning("Temperature Trigger interrupted.");
+                }
+            }
+        }
+
+        if (exitTemp.compareTo(targetTemp) != 0) {
+            setExitTemperature();
         }
     }
 
@@ -230,13 +285,17 @@ public class TemperatureTrigger implements TriggerInterface {
         html.div(id("NewTempTrigger").class_(""));
             html.form(id("newTriggersForm"));
                 html.input(id("type").name("type")
-                            .hidden("true").value("Temperature"));
+                        .hidden("true").value("Temperature"));
                 html.input(id("type").name("position")
                         .hidden("position").value("" + this.position));
                 html.input(class_("inputBox temperature form-control")
                         .type("number").add("step", "any")
                         .add("placeholder", Messages.SET_POINT)
                         .name("targetTemperature").value(""));
+                html.input(class_("inputBox temperature form-control")
+                    .type("number").add("step", "any")
+                    .add("placeholder", Messages.END_TEMP)
+                    .name("exitTemperature").value(""));
                 html.input(class_("inputBox form-control")
                         .name("method").value("")
                         .add("placeholder", Messages.METHOD));
@@ -279,20 +338,25 @@ public class TemperatureTrigger implements TriggerInterface {
                 html.input(id("type").name("type")
                             .hidden("true").value("Temperature"));
                 html.input(id("type").name("position")
-                        .hidden("position").value("" + this.position));
+                    .hidden("position").value("" + this.position));
                 html.input(class_("inputBox temperature form-control")
-                        .type("number").add("step", "any")
-                        .add("placeholder", Messages.SET_POINT)
-                        .value(this.targetTemp.toPlainString())
-                        .name("targetTemperature").value(""));
+                    .type("number").add("step", "any")
+                    .add("placeholder", Messages.SET_POINT)
+                    .value(this.targetTemp.toPlainString())
+                    .name("targetTemperature"));
+                html.input(class_("inputBox temperature form-control")
+                    .type("number").add("step", "any")
+                    .add("placeholder", Messages.END_TEMP)
+                    .value(this.targetTemp.toPlainString())
+                    .name("exitTemperature"));
                 html.input(class_("inputBox form-control")
-                        .name("method").value("")
-                        .value(this.method)
-                        .add("placeholder", Messages.METHOD));
+                    .name("method").value("")
+                    .value(this.method)
+                    .add("placeholder", Messages.METHOD));
                 html.input(class_("inputBox form-control")
-                        .name("stepType").value("")
-                        .value(this.type)
-                        .add("placeholder", Messages.TYPE));
+                    .name("stepType").value("")
+                    .value(this.type)
+                    .add("placeholder", Messages.TYPE));
                 // Add the on/off values
                 html.select(class_("holo-spinner").name("mode")
                         .id("mode"));
@@ -323,7 +387,7 @@ public class TemperatureTrigger implements TriggerInterface {
 
     @Override
     public String getName() {
-        return TRIGGER_NAME;
+        return "Temperature";
     }
 
     /**
@@ -332,9 +396,13 @@ public class TemperatureTrigger implements TriggerInterface {
      */
     @Override
     public final JSONObject getJSONStatus() {
-        String targetTempString = this.targetTemp
+        String targetTempString = String.format("%.2f", this.targetTemp)
                 + this.temperatureProbe.getScale();
-        String description = this.method + ": " + this.type + "(" + this.mode + ")";
+        String description = this.method + ": " + this.type;
+        if (this.mode != null) {
+            description +=" (" + this.mode + ")";
+        }
+
         String startDateStamp = "";
         if (this.startDate != null) {
             startDateStamp = BrewDay.lFormat.format(this.startDate);
@@ -367,5 +435,17 @@ public class TemperatureTrigger implements TriggerInterface {
     @Override
     public final boolean getTriggerType(String inType) {
         return true;
+    }
+
+    public void setTargetTemperature(double stepStartTemp) {
+        this.targetTemp = new BigDecimal(stepStartTemp);
+    }
+
+    public void setExitTemp(double exitTemp) {
+        this.exitTemp = new BigDecimal(exitTemp);
+    }
+
+    public BigDecimal getExitTemp() {
+        return exitTemp;
     }
 }
