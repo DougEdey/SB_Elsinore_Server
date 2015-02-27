@@ -1549,10 +1549,10 @@ public class UrlEndpoints {
         if (params.containsKey("recorder")) {
             boolean recorderOn = params.get("recorder").equals("on");
             // If we're on, disable the recorder
-            if (!recorderOn) {
-                LaunchControl.disableRecorder();
-            } else {
+            if (recorderOn) {
                 LaunchControl.enableRecorder();
+            } else {
+                LaunchControl.disableRecorder();
             }
         } else {
             LaunchControl.disableRecorder();
@@ -2130,5 +2130,49 @@ public class UrlEndpoints {
         }
 
         return new Response(Status.OK, MIME_HTML, html.toHtml());
+    }
+
+    @UrlEndpoint(url="/setprofile")
+    public Response setProfile() {
+        String profile = parameters.get("profile");
+        if (profile == null || profile.equals("")) {
+            LaunchControl.setMessage("No profile provided");
+            return new Response(Status.BAD_REQUEST, MIME_HTML, "No profile provided");
+        }
+
+        String tempProbe = parameters.get("tempprobe");
+        if (tempProbe == null || tempProbe.equals("")) {
+            LaunchControl.setMessage("No temperature probe provided");
+            return new Response(Status.BAD_REQUEST, MIME_HTML, "No temperature probe provided");
+        }
+
+        Temp temp = LaunchControl.findTemp(tempProbe);
+        if (temp == null) {
+            LaunchControl.setMessage("Couldn't find temp probe: " + tempProbe);
+            return new Response(Status.BAD_REQUEST, MIME_HTML, "Couldn't find temp probe: " + tempProbe);
+        }
+
+        if (BrewServer.getCurrentRecipe() == null) {
+            LaunchControl.setMessage("No recipe selected");
+            return new Response(Status.BAD_REQUEST, MIME_HTML, "No recipe selected?!");
+        }
+
+        if (profile.equalsIgnoreCase("mash")) {
+            BrewServer.getCurrentRecipe().setMashProfile(temp);
+        }
+
+        if (profile.equalsIgnoreCase("boil")) {
+            BrewServer.getCurrentRecipe().setBoilHops(temp);
+        }
+
+        if (profile.equalsIgnoreCase("ferm")) {
+            BrewServer.getCurrentRecipe().setFermProfile(temp);
+        }
+
+        if (profile.equalsIgnoreCase("dry")) {
+            BrewServer.getCurrentRecipe().setDryHops(temp);
+        }
+        LaunchControl.setMessage("Set " + profile + " profile for " + tempProbe);
+        return new Response(Status.OK, MIME_HTML, "Set " + profile + " profile for " + tempProbe);
     }
 }
