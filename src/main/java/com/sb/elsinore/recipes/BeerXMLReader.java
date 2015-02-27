@@ -39,7 +39,7 @@ public class BeerXMLReader {
      * Get the singleton instance of this reader.
      * @return The current BeerXMLReader instance.
      */
-    public static final BeerXMLReader getInstance() {
+    public static BeerXMLReader getInstance() {
         if (BeerXMLReader.instance == null) {
             BeerXMLReader.instance = new BeerXMLReader();
         }
@@ -56,7 +56,7 @@ public class BeerXMLReader {
         // Assume that it's a valid file.
 
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder = null;
+        DocumentBuilder dBuilder;
         try {
             dBuilder = dbFactory.newDocumentBuilder();
         } catch (ParserConfigurationException e1) {
@@ -78,8 +78,8 @@ public class BeerXMLReader {
     }
 
     public final ArrayList<String> getListOfRecipes() {
-        ArrayList<String> nameList = new ArrayList<String>();
-        XPath xp = null;
+        ArrayList<String> nameList = new ArrayList<>();
+        XPath xp;
         try {
             xp = XPathFactory.newInstance().newXPath();
             NodeList recipeList =
@@ -467,8 +467,8 @@ public class BeerXMLReader {
 
     /**
      * Parse the yeasts.
-     * @param recipe
-     * @param yeasts
+     * @param recipe The new Recipe.
+     * @param yeasts The Yeast List.
      * @throws XPathException
      * @throws NumberFormatException
      */
@@ -539,11 +539,7 @@ public class BeerXMLReader {
                 BrewServer.LOG.warning("Couldn't parse a number: "
                         + nfe.getMessage());
             } catch (Exception e) {
-                if (e instanceof XPathException) {
-                    throw (XPathException) e;
-                } else {
-                    BrewServer.LOG.warning(e.getMessage());
-                }
+                BrewServer.LOG.warning(e.getMessage());
             }
         }
     }
@@ -808,6 +804,9 @@ public class BeerXMLReader {
             } else {
                 String infuseTemp = getString(step, "INFUSE_TEMP", xp);
                 newStep.setInfuseTemp(infuseTemp);
+                if (infuseTemp.endsWith("F")) {
+                    newStep.convertTo("F");
+                }
             }
             String[] mashRatio = getString(step, "WATER_GRAIN_RATIO", xp).split(" ");
             newStep.setMashRatio(mashRatio[0]);
@@ -819,6 +818,11 @@ public class BeerXMLReader {
             String displayInfuseAmount = getString(step, "DISPLAY_INFUSE_AMT", xp);
             if (!displayInfuseAmount.equals("")) {
                 newStep.setInVol(new Quantity(displayInfuseAmount));
+            }
+
+            String displayMashTemp = getString(step, "DISPLAY_STEP_TEMP", xp);
+            if (displayMashTemp != null && !displayMashTemp.equals("") && displayMashTemp.endsWith("F")) {
+                newStep.convertTo("F");
             }
         }
     }
