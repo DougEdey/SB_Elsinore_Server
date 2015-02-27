@@ -1,5 +1,6 @@
 package ca.strangebrew.recipe;
 
+import com.sb.common.SBStringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -42,21 +43,21 @@ public class Misc extends Ingredient {
 	public void setTime(int t){ time = t; }
 
 	public String toXML(){
-	    StringBuffer sb = new StringBuffer();
+	    StringBuilder sb = new StringBuilder();
 	    sb.append("    <ITEM>\n");
-	    sb.append("      <NAME>"+getName()+"</NAME>\n");
+	    sb.append("      <NAME>").append(getName()).append("</NAME>\n");
         if (Quantity.getTypeFromUnit(this.getUnits()).equals(Quantity.WEIGHT)) {
-            sb.append("      <AMOUNT>" + getAmountAs(Quantity.KG) + "</AMOUNT>\n");
+            sb.append("      <AMOUNT>").append(getAmountAs(Quantity.KG)).append("</AMOUNT>\n");
             sb.append("      <UNITS>" + Quantity.KG + "</UNITS>\n" );
             sb.append("      <AMOUNT_IS_WEIGHT>true</AMOUNT_IS_WEIGHT>\n");
         } else {
-            sb.append("      <AMOUNT>" + getAmountAs(Quantity.LITRES) + "</AMOUNT>\n");
+            sb.append("      <AMOUNT>").append(getAmountAs(Quantity.LITRES)).append("</AMOUNT>\n");
             sb.append("      <UNITS>" + Quantity.LITRES + "</UNITS>\n" );
             sb.append("      <AMOUNT_IS_WEIGHT>false</AMOUNT_IS_WEIGHT>\n");
         }
-	    sb.append("      <STAGE>"+stage+"</STAGE>\n");
-	    sb.append("      <TIME>"+time+"</TIME>\n");
-	    sb.append("      <COMMENTS>"+SBStringUtils.subEntities(comments)+"</COMMENTS>\n");
+	    sb.append("      <STAGE>").append(stage).append("</STAGE>\n");
+	    sb.append("      <TIME>").append(time).append("</TIME>\n");
+	    sb.append("      <COMMENTS>").append(SBStringUtils.subEntities(comments)).append("</COMMENTS>\n");
 	    sb.append("    </ITEM>\n");
 	    return sb.toString();
 	}

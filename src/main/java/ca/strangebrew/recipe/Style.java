@@ -1,6 +1,8 @@
 package ca.strangebrew.recipe;
 
 
+import com.sb.common.SBStringUtils;
+
 /**
  * $Id: Style.java,v 1.7 2008/01/05 14:42:04 jimcdiver Exp $
  * Created on Oct 21, 2004

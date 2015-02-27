@@ -8,6 +8,7 @@
 
 package ca.strangebrew.recipe;
 
+import com.sb.common.SBStringUtils;
 import com.sb.elsinore.BrewServer;
 
 public class Hop extends Ingredient implements Comparable<Ingredient> {

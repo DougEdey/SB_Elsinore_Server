@@ -1,5 +1,7 @@
 package ca.strangebrew.recipe;
 
+import com.sb.common.SBStringUtils;
+
 import java.text.MessageFormat;
 
 public class Salt {

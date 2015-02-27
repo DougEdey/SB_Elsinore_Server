@@ -9,6 +9,8 @@
 
 package ca.strangebrew.recipe;
 
+import com.sb.common.SBStringUtils;
+
 public class Fermentable extends Ingredient  {
 	
 	// base data
@@ -98,11 +100,11 @@ public class Fermentable extends Ingredient  {
 	// Need to add the spaces and type attributes to make this
 	// backwards-compatible with SB1.8:
 	public String toXML(){
-	    StringBuffer sb = new StringBuffer();
+	    StringBuilder sb = new StringBuilder();
 	    sb.append( "    <ITEM>\n" );
 	    sb.append( "      <MALT>"+getName()+"</MALT>\n" );
 	    sb.append( "      <AMOUNT>"+getAmountAs(getUnits())+"</AMOUNT>\n" );
-	    sb.append( "      <PERCENT>"+SBStringUtils.format(percent, 1)+"</PERCENT>\n" );
+	    sb.append( "      <PERCENT>"+ SBStringUtils.format(percent, 1)+"</PERCENT>\n" );
 	    sb.append( "      <UNITS>"+getUnitsAbrv()+"</UNITS>\n" );
 	    sb.append( "      <POINTS>"+pppg+"</POINTS>\n" );
 	    sb.append( "      <LOV>"+lov+"</LOV>\n" );

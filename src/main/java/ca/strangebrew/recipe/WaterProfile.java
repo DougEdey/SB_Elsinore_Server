@@ -1,5 +1,6 @@
 package ca.strangebrew.recipe;
 
+import com.sb.common.SBStringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
