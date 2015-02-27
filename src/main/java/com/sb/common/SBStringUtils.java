@@ -168,8 +168,8 @@ public class SBStringUtils {
      * @param timeMinutes The time in minutes to format.
      * @return A string representing the time.
      */
-    public static String formatTime(int timeMinutes) {
-        if (timeMinutes < 60) {
+    public static String formatTime(double timeMinutes) {
+        if (timeMinutes <= 90) {
             return timeMinutes + " " + Messages.MINS;
         }
         // Hours
