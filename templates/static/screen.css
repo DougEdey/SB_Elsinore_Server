@@ -15,31 +15,29 @@
 }
 
 #Probes {
-		  padding: 1em;
 		  float: left;
 }
 #Temp {
-          padding: 1em;
 		  float: left;
 }
 
-#pumps {
-          padding: 1em;
+#switches {
 		  float:left;
 }
 
 #timers {
-          padding: 1em;
 		  float:left;
 }
 
 #phSensors {
-          padding: 1em;
 		  float:left;
 }
 
 #tempProbes {
-		  padding: 1em;
 		  float:left;
 }
 
+.no-gutter > [class*='col-'] {
+    padding-right:0;
+    padding-left:0;
+}

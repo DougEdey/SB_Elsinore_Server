@@ -52,6 +52,15 @@ function setup() {
 		}
 	});
 
+	$('#beerxml').fileupload({
+    		dataType : 'json',
+    		done : function(e, data) {
+    			$.each(data.result.files, function(index, file) {
+    				$('<p/>').text(file.name).appendTo(document.body);
+    			});
+    		}
+    	});
+
 	var temp =$('div[class="center-left"]');
 	
 	if (temp == undefined || temp.length == 0) {
@@ -225,29 +234,29 @@ function waitForMsg() {
 						});
 					}
 
-					if ("pumps" in data) {
-						val = data.pumps;
+					if ("switches" in data) {
+						val = data.switches;
 						$.each(
 							val,
-							function(pumpName, pumpStatus) {
-								// enable or disable the pump as
+							function(switchName, switchStatus) {
+								// enable or disable the switch as
 								// required
-								if (pumpStatus) {
+								if (switchStatus) {
 									jQuery('button[id^="'
-											+ pumpName + '"]')[0].style.background = "red";
+											+ switchName + '"]')[0].style.background = "red";
 									jQuery('button[id^="'
-											+ pumpName + '"]')[0].innerHTML = pumpName
+											+ switchName + '"]')[0].innerHTML = switchName
 											.replace("_", " ")
 											+ " "
-											+ $.i18n.prop("PUMP_ON");
+											+ $.i18n.prop("SWITCH_ON");
 								} else {
 									jQuery('button[id^="'
-											+ pumpName + '"]')[0].style.background = "#666666";
+											+ switchName + '"]')[0].style.background = "#666666";
 									jQuery('button[id^="'
-											+ pumpName + '"]')[0].innerHTML = pumpName
+											+ switchName + '"]')[0].innerHTML = switchName
 											.replace("_", " ")
 											+ " "
-											+ $.i18n.prop("PUMP_OFF");
+											+ $.i18n.prop("SWITCH_OFF");
 								}
 							});
 					}
@@ -388,7 +397,7 @@ function addTriggerTable(vesselName) {
 		+"</tbody></table>";
 		table += "<br id='triggerTable" + vesselName + "footer'/>";
 
-		$("#" + vesselName + "-graph_wrapper").after(table);
+		$("#" + vesselName + "-volume").before(table);
 
 	}
 }
@@ -443,13 +452,14 @@ function updateTempProbe(vessel, val) {
 	Temp = null;
 
 	// Check for an error message
-	if ("errorMessage" in val) {
-		jQuery("#" + vessel + "-error").text(val.errorMessage);
-		jQuery("#" + vessel + "-error").toggleClass("hidden", false);
-	} else {
-		jQuery("#" + vessel + "-error").toggleClass("hidden", true);
-	}
-
+    if ("error" in val) {
+        if ($("#" + vessel + "-error").text() != val.error) {
+            $("#" + vessel + "-error").text(val.error);
+        }
+        $("#" + vessel + "-error").toggleClass("hidden", false);
+    } else {
+        $("#" + vessel + "-error").toggleClass("hidden", true);
+    }
 }
 
 function updateVolumeStatus(vessel, status) {
@@ -1095,11 +1105,11 @@ function submitForm(form) {
 	return false;
 }
 
-function submitPump(pumpStatus) {
+function submitSwitch(switchStatus) {
 	$.ajax({
-		url : 'updatepump',
+		url : 'updateswitch',
 		type : 'POST',
-		data : "toggle=" + pumpStatus.id,
+		data : "toggle=" + switchStatus.id,
 		success : function(data) {
 			data = null
 		}
@@ -1108,20 +1118,20 @@ function submitPump(pumpStatus) {
 	return false;
 }
 
-function addPump() {
+function addSwitch() {
 	// Is the edit form already displayed
-	var pumpEditForm = $('#pumps-add');
-	if (pumpEditForm.val() != undefined) {
+	var switchEditForm = $('#switches-add');
+	if (switchEditForm.val() != undefined) {
 		return;
 	}
 
-	var pumpDiv = "pumps-titled";
+	var switchDiv = "switches-titled";
 
 	// Insert a couple of new form elements
-	$('#pumps-titled')
+	$('#switches-titled')
 			.append(
-					"<div id='pumps-add'>"
-							+ "<form id='pumps-add-form' name='pumps-add'>"
+					"<div id='switches-add'>"
+							+ "<form id='switches-add-form' name='switches-add'>"
 							+ "<input type='text' name='new_name' id='new_name' value='' placeholder='"
 							+ $.i18n.prop("NAME")
 							+ "'/><br/>"
@@ -1130,27 +1140,27 @@ function addPump() {
 							+ "<label>"
 							+ "<input type='checkbox' name='invert' />" + $.i18n.prop("INVERT_GPIO")
 							+ "</label><br/>"
-							+ "<button id='add-pump' class='btn modeclass' "
-							+ "onclick='submitNewPump(this.form); return false;'>"
+							+ "<button id='add-switch' class='btn modeclass' "
+							+ "onclick='submitNewSwitch(this.form); return false;'>"
 							+ $.i18n.prop("ADD")
 							+ "</button>"
-							+ "<button id='cancel-add-pump' class='btn modeclass' "
-							+ "onclick='cancelAddPump(); waitForMsg(); return false;'>"
+							+ "<button id='cancel-add-switch' class='btn modeclass' "
+							+ "onclick='cancelAddSwitch(); waitForMsg(); return false;'>"
 							+ $.i18n.prop("" + $.i18n.prop("CANCEL") + "")
 							+ "</button>" + "</form>" + "</div>");
 	return false;
 }
 
-function cancelAddPump() {
-	$('#pumps-add').empty().remove();
+function cancelAddSwitch() {
+	$('#switches-add').empty().remove();
 	return false;
 }
 
-function submitNewPump(form) {
-	var data = JSON.stringify(jQuery(form).serializeObject());
+function submitNewSwitch(form) {
+	var data = $(form).serializeObject();
 
 	if (form["new_name"].value == null || form["new_name"].value == "") {
-		alert($.i18n.prop("PUMPNAMEBLANK"));
+		alert($.i18n.prop("SWITCHNAMEBLANK"));
 		return false;
 	}
 
@@ -1160,9 +1170,10 @@ function submitNewPump(form) {
 	}
 
 	$.ajax({
-		url : 'addpump',
+		url : 'addswitch',
 		type : 'POST',
 		data : data,
+		dataType: "json",
 		success : function(data) {
 			data = null
 		}
@@ -1770,7 +1781,7 @@ function dropDevice(ev) {
 	ev.preventDefault();
 
 	var timer = ev.target;
-	if (timer.className != "pump_wrapper") {
+	if (timer.className != "switch_wrapper") {
 		timer = ev.target.parentElement;
 	}
 
@@ -1802,7 +1813,7 @@ function dropDevice(ev) {
 function allowDropDevice(ev) {
 	ev.preventDefault();
 	var timer = ev.target;
-	if (timer.className != "pump_wrapper") {
+	if (timer.className != "switch_wrapper") {
 		timer = ev.target.parentElement;
 	}
 	timer.style.border = "1px dashed black";
@@ -1811,7 +1822,7 @@ function allowDropDevice(ev) {
 function leaveDevice(ev) {
 	ev.preventDefault();
 	var timer = ev.target;
-	if (timer.className != "pump_wrapper") {
+	if (timer.className != "switch_wrapper") {
 		timer = ev.target.parentElement;
 	}
 
@@ -1820,36 +1831,36 @@ function leaveDevice(ev) {
 
 // End Devices
 
-function dragPump(ev) {
-	ev.dataTransfer.setData("pumpname", ev.target.childNodes[0].id);
-	$('#NewPump')[0].innerHTML = $.i18n.prop("DELETE_PUMP");
+function dragSwitch(ev) {
+	ev.dataTransfer.setData("switchname", ev.target.childNodes[0].id);
+	$('#NewSwitch')[0].innerHTML = $.i18n.prop("DELETE_SWITCH");
 }
 
-function dropPump(ev) {
+function dropSwitch(ev) {
 	ev.preventDefault();
 
 	var timer = ev.target;
-	if (timer.id != "NewPump") {
-		if (timer.className != "pump_wrapper") {
+	if (timer.id != "NewSwitch") {
+		if (timer.className != "switch_wrapper") {
 			timer = ev.target.parentElement;
 		}
 
 		timer.style.border = "1px solid white";
 	}
 
-	var pumpName = ev.dataTransfer.getData("pumpname");
+	var switchName = ev.dataTransfer.getData("switchname");
 
-	if (pumpName.lastIndexOf("div-") != 0) {
-		pumpName = "div-" + pumpName;
+	if (switchName.lastIndexOf("div-") != 0) {
+		switchName = "div-" + switchName;
 	}
 
 	var refNode = ev.target.parentElement;
-	refNode.parentNode.insertBefore(document.getElementById(pumpName),
+	refNode.parentNode.insertBefore(document.getElementById(switchName),
 			refNode);
 
 	// TODO: Update the server with the new location
 	var newOrder = "";
-	$("[id^='div-Pump']").each(function(index) {
+	$("[id^='div-Switch']").each(function(index) {
 		var divID = this.id;
 
 		if (divID.lastIndexOf('div-') == 0) {
@@ -1858,9 +1869,9 @@ function dropPump(ev) {
 
 		newOrder += divID + "=" + index + "&";
 	});
-	$('#NewPump')[0].innerHTML = $.i18n.prop("NEW_PUMP");
+	$('#NewSwitch')[0].innerHTML = $.i18n.prop("NEW_Switch");
 	$.ajax({
-		url : 'updatePumpOrder',
+		url : 'updateSwitchOrder',
 		type : 'POST',
 		data : newOrder,
 		success : function(data) {
@@ -1871,44 +1882,44 @@ function dropPump(ev) {
 	// DONE!
 }
 
-function allowDropPump(ev) {
+function allowDropSwitch(ev) {
 	ev.preventDefault();
 	var timer = ev.target;
-	if (timer.id == "NewPump") {
+	if (timer.id == "NewSwitch") {
 		return;
 	}
 
-	if (timer.className != "pump_wrapper") {
+	if (timer.className != "switch_wrapper") {
 		timer = ev.target.parentElement;
 	}
 
 	timer.style.border = "1px dashed black";
 }
 
-function dropDeletePump(ev) {
+function dropDeleteSwitch(ev) {
 	ev.preventDefault();
 	var timer = ev.target;
-	if (timer.id != "NewPump") {
-		if (timer.className != "pump_wrapper") {
+	if (timer.id != "NewSwitch") {
+		if (timer.className != "switch_wrapper") {
 			timer = ev.target.parentElement;
 		}
 
 		timer.style.border = "1px solid white";
 	}
 
-	var pumpName = ev.dataTransfer.getData("pumpname").replace(" ", "_");
+	var switchName = ev.dataTransfer.getData("switchname").replace(" ", "_");
 
-	if (pumpName.lastIndexOf("div-") != 0) {
-		basePumpName = pumpName;
-		pumpName = "div-" + pumpName;
+	if (switchName.lastIndexOf("div-") != 0) {
+		baseSwitchName = switchName;
+		switchName = "div-" + switchName;
 	}
 
-	$('[id="' + pumpName + '"]').empty().remove();
+	$('[id="' + switchName + '"]').empty().remove();
 
-	var newOrder = "name=" + basePumpName;
-	$('#NewPump')[0].innerHTML = $.i18n.prop("NEW_PUMP");
+	var newOrder = "name=" + baseSwitchName;
+	$('#NewSwitch')[0].innerHTML = $.i18n.prop("NEW_SWITCH");
 	$.ajax({
-		url : 'deletePump',
+		url : 'deleteSwitch',
 		type : 'POST',
 		data : newOrder,
 		success : function(data) {
@@ -1917,20 +1928,20 @@ function dropDeletePump(ev) {
 	});
 }
 
-function leavePump(ev) {
+function leaveSwitch(ev) {
 	ev.preventDefault();
 	var timer = ev.target;
-	if (timer.id == "NewPump") {
+	if (timer.id == "NewSwitch") {
 		return;
 	}
-	if (timer.className != "pump_wrapper") {
+	if (timer.className != "switch_wrapper") {
 		timer = ev.target.parentElement;
 	}
 
 	timer.style.border = "1px solid white";
 }
 
-// END OF PUMPS
+// END OF SWITCHES
 
 function dragTimer(ev) {
 	ev.dataTransfer.setData("timername", ev.target.childNodes[1].id);
@@ -2216,12 +2227,12 @@ function readOnly(manualChange) {
 	}
 	
 	if (manualChange) {
-		var formdata = JSON.stringify(jQuery('form[id=settings-form]').serializeObject());
-		formdata.recorder = $('form[id="settings-form"] div[id="recorder_enabled"] input').prop("checked");
+		var formdata = $('form[id=settings-form]').serializeObject();
 		$.ajax({
 			url : 'updateSystemSettings',
 			type : 'POST',
 			data: formdata,
+			dataType: "json",
 			success : function(data) {
 				data = null
 			}
@@ -2239,7 +2250,7 @@ function readOnly(manualChange) {
 		location.reload();
 	}
 	
-	readOnlyPumps();
+	readOnlySwitches();
 	readOnlyTimers();
 	readOnlyDevices();
 	readOnlyPhSensors();
@@ -2271,7 +2282,7 @@ function readWrite(manualChange) {
 		location.reload();
 	}
 	
-	readWritePumps();
+	readWriteSwitches();
 	readWriteTimers();
 	readWriteDevices();
 	readWritePhSensors();
@@ -2284,42 +2295,42 @@ function readWrite(manualChange) {
 	window.disableUpdates = 0;
 }
 
-function readOnlyPumps() {
-	// Check the size of the pump list
-	var currentCount = $("[id=pumps-body] > div").length;
+function readOnlySwitches() {
+	// Check the size of the switches list
+	var currentCount = $("[id=switches-body] > div").length;
 
 	if (currentCount == 0) {
 		// Hide the Div.
-		$('[id=pumps]').css('display', 'none');
+		$('[id=switches]').css('display', 'none');
 	} else {
 		// Hide the button
-		$('[id=NewPump]').css('display', 'none');
+		$('[id=NewSwitch]').css('display', 'none');
 		// Disable drag and drop
-		$("[id=pumps-body] > div").each(function(index) {
+		$("[id=switchess-body] > div").each(function(index) {
 			this.setAttribute('draggable', false);
 		});
 	}
 }
 
-function readWritePumps() {
-	// Check the size of the pump list
-	var currentCount = $("[id=pumps-body] > div").length;
+function readWriteSwitches() {
+	// Check the size of the switch list
+	var currentCount = $("[id=switches-body] > div").length;
 
 	if (currentCount == 0) {
 		// Hide the Div.
-		$('[id=pumps]').css('display', 'block');
+		$('[id=switches]').css('display', 'block');
 	} else {
 		// Hide the button
-		$('[id=NewPump]').css('display', 'block');
+		$('[id=NewSwitch]').css('display', 'block');
 		// Enable drag and drop
-		$("[id=pumps-body] > div ").each(function(index) {
+		$("[id=switches-body] > div ").each(function(index) {
 			this.setAttribute('draggable', true);
 		});
 	}
 }
 
 function readOnlyTimers() {
-	// Check the size of the pump list
+	// Check the size of the timer list
 	var currentCount = $("[id=timers-body] > div").length;
 
 	if (currentCount == 0) {
@@ -2336,7 +2347,7 @@ function readOnlyTimers() {
 }
 
 function readWriteTimers() {
-	// Check the size of the pump list
+	// Check the size of the Timer list
 	var currentCount = $("[id=timers-body] > div").length;
 
 	if (currentCount == 0) {
@@ -2353,7 +2364,7 @@ function readWriteTimers() {
 }
 
 function readOnlyPhSensors() {
-	// Check the size of the pump list
+	// Check the size of the pH Sensor list
 	var currentCount = $("[id=phSensors-body] > div").length;
 
 	if (currentCount == 0) {
@@ -2370,7 +2381,7 @@ function readOnlyPhSensors() {
 }
 
 function readWritePhSensors() {
-	// Check the size of the pump list
+	// Check the size of the pH Sensor list
 	var currentCount = $("[id=phSensors-body] > div").length;
 
 	if (currentCount == 0) {
@@ -2642,4 +2653,62 @@ function phAINChange(element) {
 		$("[id=dsAddress]").hide();
 		$("[id=dsOffset]").hide();
 	}
+}
+
+function showRecipe(element, recipeSelect) {
+	// Is the edit form already displayed
+	var recipeView = $("recipeView");
+	if (recipeView.val() != undefined) {
+		return;
+	}
+
+	// Insert a couple of new form elements
+	var $tr = $(element);
+    $tr.popover('destroy');
+
+    var curRecipeName = null;
+    if (element.id == "selectRecipe") {
+        curRecipeName = element.find(":selected").text();
+    }
+
+    $.ajax({
+        url: '/showrecipe',
+        data: {recipeName: curRecipeName},
+        dataType: 'html',
+        success: function(html) {
+                $tr.popover({
+                title: 'Recipe Summary',
+                content: html,
+                placement: 'bottom',
+                html: true,
+                trigger: 'manual'
+            }).popover('show');
+            $tr.parent().find('.popover').css('max-width', "600px");
+        }
+    });
+}
+
+function setMashProfile(element) {
+    setProfile(element, "mash");
+}
+
+function setBoilHopProfile(element) {
+    setProfile(element, "boil");
+}
+
+function setFermProfile(element) {
+    setProfile(element, "ferm");
+}
+
+function setDryHopProfile(element) {
+    setProfile(element, "dry");
+}
+
+function setProfile(element, profile) {
+    var tempProbe = $(element).parent().find("[name=tempprobe] > :selected").val();
+    $.ajax({
+        url: '/setprofile',
+        data: {profile: profile, tempprobe: tempProbe},
+        dataType: "html"
+    })
 }
