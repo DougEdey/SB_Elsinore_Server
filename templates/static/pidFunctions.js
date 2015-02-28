@@ -2423,7 +2423,7 @@ function readWriteDevices() {
 			} else {
 				this.setAttribute("onclick", "editDevice(this);");
 			}
-			$('[id=' + vessel + '-volumeeditbutton').css('display', 'table-cell');
+			$('[id=' + vessel + '-volumeeditbutton]').css('display', 'table-cell');
 			$('[id=' + vessel + '-title]').css('cursor', "pointer");
 			// display the mash table if needs be
 			if ($('[id=triggerTable' + vessel + '] > tbody > tr').length == 0) {
@@ -2444,7 +2444,7 @@ function readOnlyDevices() {
 			if (vessel == "messages") {
 				return;
 			}
-			$('[id=' + vessel + '-volumeeditbutton').css('display', 'none');
+			$('[id=' + vessel + '-volumeeditbutton]').css('display', 'none');
 			var vesselForm = 'form[id="' + vessel + '-form"]';
 			var devAddr = $(
 					'#' + vesselForm
