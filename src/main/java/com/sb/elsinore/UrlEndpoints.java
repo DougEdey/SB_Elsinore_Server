@@ -1166,6 +1166,7 @@ public class UrlEndpoints {
             return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
                     "{Bad: Request}");
         }
+        boolean dutyVisible = false;
         for (File content : contents) {
             if (content.getName().endsWith(".csv")
                     && content.getName().toLowerCase()
@@ -1186,6 +1187,7 @@ public class UrlEndpoints {
 
                 if (name.endsWith("duty")) {
                     axes.put(name, "y2");
+                    dutyVisible = true;
                 } else {
                     axes.put(name, "y");
                 }
@@ -1268,12 +1270,7 @@ public class UrlEndpoints {
         }
 
         JSONObject axisContent = new JSONObject();
-        JSONObject y2Label = new JSONObject();
-        y2Label.put("text", "Duty Cycle %");
-        y2Label.put("position", "outer-middle");
-        JSONObject y2 = new JSONObject();
-        y2.put("show", "true");
-        y2.put("label", y2Label);
+
 
         JSONObject y1Label = new JSONObject();
         y1Label.put("text", "Temperature");
@@ -1297,7 +1294,15 @@ public class UrlEndpoints {
         xContent.put("tick", formatJSON);
         axisContent.put("x", xContent);
         axisContent.put("y", y1);
-        axisContent.put("y2", y2);
+        if (dutyVisible) {
+            JSONObject y2Label = new JSONObject();
+            y2Label.put("text", "Duty Cycle %");
+            y2Label.put("position", "outer-middle");
+            JSONObject y2 = new JSONObject();
+            y2.put("show", "true");
+            y2.put("label", y2Label);
+            axisContent.put("y2", y2);
+        }
 
         JSONObject finalJSON = new JSONObject();
         finalJSON.put("data", dataContent);
@@ -2053,7 +2058,10 @@ public class UrlEndpoints {
             try {
                 String tName = mEntry.getKey();
                 int newPos = Integer.parseInt(mEntry.getValue());
-                LaunchControl.findTemp(tName).setPosition(newPos);
+                Temp temp = LaunchControl.findTemp(tName);
+                if (temp != null) {
+                    temp.setPosition(newPos);
+                }
             } catch (NumberFormatException nfe) {
                 LaunchControl.setMessage(
                     "Failed to parse device reorder value,"
