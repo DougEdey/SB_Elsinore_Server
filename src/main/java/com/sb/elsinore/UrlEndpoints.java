@@ -1258,7 +1258,7 @@ public class UrlEndpoints {
             for(int i = 0; i < dataBuffer.size(); i++) {
                 tJson = (JSONArray) dataBuffer.get(i);
                 String series = (String) tJson.get(0);
-                String color = "#ff0000";
+                String color = "";
                 if (series.equals("temp")) {
                     color = "#00ff00";
                 } else if (series.equals("duty")) {
