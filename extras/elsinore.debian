@@ -1,0 +1,70 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:          elsinore
+# Required-Start:    $remote_fs $syslog $network $named
+# Required-Stop:     $remote_fs $syslog $network $named
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: StrangeBrew Elsinore Brewery Controller
+# Description:       Start and stop the StrangeBrew Elsinore Brewery controller.
+### END INIT INFO
+
+ELSINORE_PATH=/root/SB
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+DESC="StrangeBrew Elsinore Brewery Controller"
+NAME="elsinore"
+DAEMON=$ELSINORE_PATH/launch.sh
+PID=/var/run/elsinore.pid
+ELSINORE_PORT=8088
+ELSINORE_CONF=$ELSINORE_PATH/elsinore.cfg
+
+d_start() {
+    # If not using a BBB comment section starting here
+    echo "init.d script for BBB"
+    echo "Checking for pressence of one wire modules"
+    if [ ! -d /sys/devices/w1_bus_master1 ]; then
+        echo "Not found, pushing one wire modules now"
+        $ELSINORE_PATH/extras/w1_setup.sh
+    else
+        echo "One wire modules operational"
+    fi
+    # And ending here
+    echo "Starting server on port" $ELSINORE_PORT
+    echo "Configuration loaded from" $ELSINORE_CONF
+    echo "Edit init.d script to change or specify further start up options..."
+    start-stop-daemon --start --background --exec $DAEMON --pidfile $PID --make-pidfile -- -p $ELSINORE_PORT -c $ELSINORE_CONF
+    echo $DESC "is now running as a background process with PID" `cat $PID`
+}
+
+d_stop() {
+    echo "Killing parent process with PID" `cat $PID`
+    pkill -TERM -P `cat $PID`
+    sleep 1
+    if [ -f $PID ] && ! ps h `cat $PID` > /dev/null
+    then
+        echo "PID file has been removed"
+        rm -f $PID
+    else
+        echo "PID file has not been removed"
+    fi
+    echo $DESC "is no longer running as a background process"
+}
+
+case "$1" in
+    start)
+        echo "Starting $DESC"
+        d_start
+        ;;
+    stop)
+        echo "Stopping $DESC"
+        d_stop
+        ;;
+    restart|force-reload)
+        echo "Restarting $DESC"
+        d_stop
+        d_start
+        ;;
+esac
+
+exit 0
