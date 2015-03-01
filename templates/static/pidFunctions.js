@@ -2532,6 +2532,10 @@ function embedGraph(vessel) {
 			if (chart == null) {
 				series["size"] = {};
 				series["size"]["height"] = 150;
+				series["zoom"] = {};
+				series["zoom"]["enabled"] = true;
+				series["axis"]["y"]["tick"] = {}
+				series["axis"]["y"]["tick"]["format"] = function(d) { return parseFloat(d).toFixed(2);}
 				chart = c3.generate(series);
 			} else {
 				chart.load(series);
