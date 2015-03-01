@@ -3223,6 +3223,7 @@ public final class LaunchControl {
                     // convert the target temp.
                     if (scale.equals("F")) {
                         p.setTemp(Temp.cToF(p.getSetPoint()));
+                        p.setHysteria(Temp.cToF(p.getMin()), Temp.cToF(p.getMax()), p.getTime());
                     }
                 }
             }
