@@ -2580,7 +2580,7 @@ function displaySystemSettings() {
 			}
 			
 			if ("recorder" in data) {
-				if ($('form[id="settings-form"] div[id="recorder_enabled"').length == 0) {
+				if ($('form[id="settings-form"] div[id="recorder_enabled"]').length == 0) {
 					$('form[id="settings-form"]')
 					.append(
 						'<div class="col-md-4 checkbox" id="recorder_enabled">' +
@@ -2593,7 +2593,7 @@ function displaySystemSettings() {
 			}
 			
 			if ("recorderDiff" in data) {
-				if ($('form[id="settings-form"] div[id="recorder_tolerence"').length == 0) {
+				if ($('form[id="settings-form"] div[id="recorder_tolerence"]').length == 0) {
 					$('form[id="settings-form"]')
 					.append(
 						'<div class="col-md-4 form-group" id="recorder_tolerence">' +
@@ -2606,7 +2606,7 @@ function displaySystemSettings() {
 			}
 			
 			if ("recorderTime" in data) {
-				if ($('form[id="settings-form"] div[id="recorder_time"').length == 0) {
+				if ($('form[id="settings-form"] div[id="recorder_time"]').length == 0) {
 					$('form[id="settings-form"]')
 					.append(
 						'<div class="col-md-4 form-group" id="recorder_time">' +
