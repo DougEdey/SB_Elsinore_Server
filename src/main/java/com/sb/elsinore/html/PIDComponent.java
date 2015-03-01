@@ -63,7 +63,8 @@ public class PIDComponent implements Renderable {
                                     + "-graph_body');"))
                 .write(Messages.SHOW_GRAPH)
             ._div()
-            .div(id(name + "-graph_body").onClick("showGraph(this);")
+            .div(id(name + "-graph_body").style("padding: 0px")
+                    .onClick("showGraph(this);")
                     .class_("panel-body"))
             ._div()
         ._div();

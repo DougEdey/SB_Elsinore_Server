@@ -1249,6 +1249,24 @@ public class UrlEndpoints {
         dataContent.put("axes", axes);
         dataContent.put("xFormat", "%H:%M:%S");
 
+        // DO the colours manually
+        JSONObject colorContent = new JSONObject();
+        if (!vessel.equals("")) {
+            JSONArray tJson;
+            for(int i = 0; i < dataBuffer.size(); i++) {
+                tJson = (JSONArray) dataBuffer.get(i);
+                String series = (String) tJson.get(0);
+                String color = "#ff0000";
+                if (series.equals("temp")) {
+                    color = "#00ff00";
+                } else if (series.equals("duty")) {
+                    color = "#0000ff";
+                }
+                colorContent.put(series, color);
+            }
+            dataContent.put("colors", colorContent);
+        }
+
         JSONObject axisContent = new JSONObject();
         JSONObject y2Label = new JSONObject();
         y2Label.put("text", "Duty Cycle %");
@@ -1273,6 +1291,7 @@ public class UrlEndpoints {
         formatJSON.put("format", "%H:%M:%S");
         formatJSON.put("culling", true);
         formatJSON.put("rotate", 90);
+        formatJSON.put("count", 4);
         JSONObject xContent = new JSONObject();
         xContent.put("type", "timeseries");
         xContent.put("tick", formatJSON);
