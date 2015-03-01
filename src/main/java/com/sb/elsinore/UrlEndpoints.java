@@ -2,6 +2,7 @@ package com.sb.elsinore;
 
 import ca.strangebrew.recipe.Recipe;
 import com.sb.elsinore.html.*;
+import com.sb.elsinore.notificiations.Notifications;
 import jGPIO.InvalidGPIOException;
 
 import java.io.BufferedReader;
@@ -2174,5 +2175,31 @@ public class UrlEndpoints {
         }
         LaunchControl.setMessage("Set " + profile + " profile for " + tempProbe);
         return new Response(Status.OK, MIME_HTML, "Set " + profile + " profile for " + tempProbe);
+    }
+
+    /**
+     * Clear the notification.
+     * @return A response object indicating whether the notification is cleared OK.
+     */
+    @UrlEndpoint(url="/clearnotification")
+    public Response clearNotification() {
+        String rInt = parameters.get("notification");
+        if (rInt == null) {
+            BrewServer.LOG.warning("No notification position supplied to clear");
+            return new Response(Status.BAD_REQUEST, MIME_HTML, "No notification position supplied to clear");
+        }
+
+        try {
+            int position = Integer.parseInt(rInt);
+            if (!Notifications.getInstance().clearNotification(position)) {
+                BrewServer.LOG.warning("Failed to clear notification: " + position);
+                return new Response(Status.BAD_REQUEST, MIME_HTML, "Failed to clear notification: " + position);
+            }
+        } catch (NumberFormatException ne) {
+            BrewServer.LOG.warning("No notification position supplied to clear: " + rInt);
+            return new Response(Status.BAD_REQUEST, MIME_HTML, "Invalid notification position supplied to clear: " + rInt);
+        }
+
+        return new Response(Status.OK, MIME_HTML, "Cleared notification: " + rInt);
     }
 }

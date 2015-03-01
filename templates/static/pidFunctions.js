@@ -265,6 +265,10 @@ function waitForMsg() {
 						return false;
 					}
 
+                    if ("notifications" in data) {
+                        showNotifications(data.notifications);
+                    }
+
 					if ("vessels" in data) {
 						val = data.vessels;
 
@@ -2711,4 +2715,59 @@ function setProfile(element, profile) {
         data: {profile: profile, tempprobe: tempProbe},
         dataType: "html"
     })
+}
+
+function showNotifications(notificationList) {
+    if (!("Notification" in window)) {
+        return;
+    }
+
+    if (window.notificationList == undefined) {
+        window.notificationList = [];
+    }
+    $.each(notificationList, function(index, notification) {
+        tag = notification.tag;
+        message = notification.message;
+        if (window.Notification && Notification.permission === "granted") {
+            if (window.notificationList[tag] != message) {
+                var n = new Notification(message, {tag: tag});
+                n.onclick = dismissNotification;
+                window.notificationList[tag] = message;
+            }
+        }
+
+        // If the user hasn't told if he wants to be notified or not
+        // Note: because of Chrome, we are not sure the permission property
+        // is set, therefore it's unsafe to check for the "default" value.
+        else if (window.Notification && Notification.permission !== "denied") {
+          Notification.requestPermission(function (status) {
+            if (Notification.permission !== status) {
+              Notification.permission = status;
+            }
+
+            // If the user said okay
+            if (status === "granted") {
+                if (window.notificationList[tag] != message) {
+                    var n = new Notification(message, {tag: tag});
+                    n.onclick = dismissNotification;
+                    window.notificationList[tag] = message;
+                }
+
+            }
+          });
+        }
+    });
+}
+
+function dismissNotification(event) {
+    var tag = event.target.tag;
+    var tagID = tag.substring(tag.lastIndexOf("-") + 1);
+    $.ajax({
+        url: '/clearnotification',
+        data: {notification: tagID},
+        dataType: 'json',
+        success: function(html) {
+           return;
+        }
+    });
 }

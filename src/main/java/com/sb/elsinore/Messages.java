@@ -5,8 +5,8 @@ import org.eclipse.osgi.util.NLS;
 public class Messages extends NLS {
     private static final String BUNDLE_NAME = "com.sb.elsinore.nls.messages"; // $NON-NLS-1$
     public static String HOLD_STEP;
-
     public static String PH_MODEL;
+
     public static String PH_SENSORS;
     public static String NEW_PHSENSOR;
     public static String UPDATE_VALUE;
@@ -61,10 +61,10 @@ public class Messages extends NLS {
     public static String CUTOFF_TEMP;
     public static String INVALID_GPIO;
     public static String NAME;
-
     public static String SWITCHNAMEBLANK;
 
     public static String GPIO_BLANK;
+
     public static String TIMERNAMEBLANK;
     public static String TEMP_UNIT;
     public static String METHOD;
@@ -73,8 +73,8 @@ public class Messages extends NLS {
     public static String DELETE_SWITCH;
     public static String DELETE_TIMER;
     public static String EDIT;
-
     public static String EDIT_VOLUME;
+
     public static String LOCK;
     public static String DUTYPERC;
     public static String HEAT;
@@ -82,33 +82,36 @@ public class Messages extends NLS {
     public static String DELAY;
     public static String CALIBRATE;
     public static String TRIGGERS;
-
     public static String ADD_TRIGGER;
+
     public static String MINS;
     public static String HOURS;
     public static String DAYS;
     public static String WEEKS;
-
     public static String DRY_ADDITIONS;
+
     public static String BOIL_ADDITIONS;
     public static String MASH_PROFILE;
     public static String FERMENT_PROFILE;
-
     public static String SET_MASH_PROFILE;
+
     public static String SET_FERM_PROFILE;
     public static String SET_BOIL_HOP_PROFILE;
     public static String SET_DRY_HOP_PROFILE;
-
     public static String UPLOAD_LOGO;
+
     public static String UPLOAD_BEERXML;
     public static String SHOW_RECIPE;
-
     public static String END_TEMP;
+
     public static String NOTES;
     public static String HOP;
     public static String ALPHA;
     public static String IBU;
     public static String AMOUNT;
+
+    public static String WAIT_TRIGGER_ACTIVE;
+    public static String TARGET_TEMP_TRIGGER;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);

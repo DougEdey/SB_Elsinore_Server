@@ -9,6 +9,9 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 import com.sb.common.SBStringUtils;
+import com.sb.elsinore.notificiations.Notification;
+import com.sb.elsinore.notificiations.Notifications;
+import com.sb.elsinore.notificiations.WebNotification;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 
@@ -35,6 +38,7 @@ public class WaitTrigger implements TriggerInterface {
     private double minutes = 0.0;
     private double seconds = 0.0;
     private String note;
+    private WebNotification webNotification = null;
 
     public WaitTrigger() {
         BrewServer.LOG.info("Created an empty wait trigger");
@@ -148,11 +152,11 @@ public class WaitTrigger implements TriggerInterface {
     public JSONObject getJSONStatus() {
         String startDateStamp = "";
         if (this.startDate != null) {
-            startDateStamp = BrewDay.lFormat.format(this.startDate);
+            startDateStamp = BrewDay.readableFormat.format(this.startDate);
         }
         String endDateStamp;
         if (this.endDate != null) {
-            endDateStamp = BrewDay.lFormat.format(this.endDate);
+            endDateStamp = BrewDay.readableFormat.format(this.endDate);
         } else {
             endDateStamp = "";
         }
@@ -162,10 +166,8 @@ public class WaitTrigger implements TriggerInterface {
         currentStatus.put("position", this.position);
         currentStatus.put("start", startDateStamp);
         currentStatus.put("target", targetStr);
-        currentStatus.put("description", endDateStamp + "<br />\n" + this.note);
+        currentStatus.put("description", "End: " + endDateStamp + "<br />\n" + this.note);
         currentStatus.put("active", Boolean.toString(this.active));
-
-
         return currentStatus;
     }
 
@@ -177,12 +179,18 @@ public class WaitTrigger implements TriggerInterface {
     @Override
     public void setActive() {
         this.active = true;
+        if (endDate != null) {
+            createNotifications(String.format(Messages.WAIT_TRIGGER_ACTIVE, SBStringUtils.dateFormatShort.format(endDate)));
+        } else {
+            createNotifications(String.format(Messages.WAIT_TRIGGER_ACTIVE, SBStringUtils.formatTime(this.minutes)));
+        }
 
     }
 
     @Override
     public void deactivate() {
         this.active = false;
+        clearNotifications();
     }
 
     @Override
@@ -274,5 +282,23 @@ public class WaitTrigger implements TriggerInterface {
 
     public String getNote() {
         return note;
+    }
+
+    public void createNotifications(String s) {
+        if (webNotification != null) {
+            //Clear the existing notifications
+            clearNotifications();
+        }
+        webNotification = new WebNotification();
+        webNotification.setMessage(s);
+        webNotification.sendNotification();
+        Notifications.getInstance().addNotification(webNotification);
+    }
+
+    public void clearNotifications() {
+        if (webNotification == null) {
+            return;
+        }
+        Notifications.getInstance().clearNotification(webNotification);
     }
 }

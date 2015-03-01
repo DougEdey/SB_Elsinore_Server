@@ -3,6 +3,7 @@ package com.sb.elsinore;
 import Cosm.*;
 import com.sb.common.CollectionsUtil;
 import com.sb.elsinore.inputs.PhSensor;
+import com.sb.elsinore.notificiations.Notifications;
 import jGPIO.GPIO;
 import jGPIO.InvalidGPIOException;
 import org.apache.commons.cli.*;
@@ -688,6 +689,9 @@ public final class LaunchControl {
         if (BrewServer.getRecipeList() != null && BrewServer.getRecipeList().size() > 0) {
             rObj.put("recipeCount", BrewServer.getRecipeList().size());
         }
+
+        // Add the notifications information
+        rObj.put("notifications", Notifications.getInstance().getNotificationStatus());
         return rObj.toString();
     }
 

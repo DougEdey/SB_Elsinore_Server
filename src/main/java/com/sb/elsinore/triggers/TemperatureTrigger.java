@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import com.sb.common.SBStringUtils;
+import com.sb.elsinore.notificiations.Notifications;
+import com.sb.elsinore.notificiations.WebNotification;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.tools.PrettyWriter;
@@ -39,6 +42,7 @@ public class TemperatureTrigger implements TriggerInterface {
     private String mode = null;
     private Date startDate = null;
     private BigDecimal exitTemp;
+    private WebNotification webNotification = null;
 
     public TemperatureTrigger() {
         BrewServer.LOG.info("Created an empty Temperature Trigger");
@@ -264,6 +268,7 @@ public class TemperatureTrigger implements TriggerInterface {
     @Override
     public final void setActive() {
         this.active = true;
+        createNotifications(String.format(Messages.TARGET_TEMP_TRIGGER, targetTemp, temperatureProbe.getScale()));
     }
 
     /**
@@ -272,6 +277,7 @@ public class TemperatureTrigger implements TriggerInterface {
     @Override
     public final void deactivate() {
         this.active = false;
+        clearNotifications();
     }
 
     /**
@@ -447,5 +453,23 @@ public class TemperatureTrigger implements TriggerInterface {
 
     public BigDecimal getExitTemp() {
         return exitTemp;
+    }
+
+    public void createNotifications(String s) {
+        if (webNotification != null) {
+            //Clear the existing notifications
+            clearNotifications();
+        }
+        webNotification = new WebNotification();
+        webNotification.setMessage(s);
+        webNotification.sendNotification();
+        Notifications.getInstance().addNotification(webNotification);
+    }
+
+    public void clearNotifications() {
+        if (webNotification == null) {
+            return;
+        }
+        Notifications.getInstance().clearNotification(webNotification);
     }
 }
