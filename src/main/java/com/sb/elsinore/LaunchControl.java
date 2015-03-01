@@ -4,6 +4,7 @@ import Cosm.*;
 import com.sb.common.CollectionsUtil;
 import com.sb.elsinore.inputs.PhSensor;
 import com.sb.elsinore.notificiations.Notifications;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import jGPIO.GPIO;
 import jGPIO.InvalidGPIOException;
 import org.apache.commons.cli.*;
@@ -2051,6 +2052,7 @@ public final class LaunchControl {
         setElementText(device, "position", "" + temp.getPosition());
         setElementText(device, "cutoff", cutoff);
         setElementText(device, "calibration", temp.getCalibration());
+        setElementText(device, "hidden", Boolean.toString(temp.isHidden()));
 
         BrewServer.LOG.info("Checking for volume");
         if (temp.hasVolume()) {
@@ -2317,7 +2319,7 @@ public final class LaunchControl {
                 coolI = new BigDecimal(0.0), coolD = new BigDecimal(0.0),
                 coolCycle = new BigDecimal(0.0), cycle = new BigDecimal(0.0),
                 coolDelay = new BigDecimal(0.0);
-        boolean coolInvert = false, heatInvert = false;
+        boolean coolInvert = false, heatInvert = false, hidden = false;
         int analoguePin = -1, position = -1;
 
         String deviceName = config.getAttribute("id");
@@ -2455,6 +2457,11 @@ public final class LaunchControl {
                 auxPin = tElement.getTextContent();
             }
 
+            tElement = getFirstElement(config, "hidden");
+            if (tElement != null) {
+                hidden = Boolean.parseBoolean(tElement.getTextContent());
+            }
+
             NodeList tList = config.getElementsByTagName("volume");
 
             if (tList.getLength() >= 1) {
@@ -2586,6 +2593,9 @@ public final class LaunchControl {
 
         if (newTemp != null) {
             newTemp.setCalibration(calibration);
+            if (hidden) {
+                newTemp.hide();
+            }
         }
     }
 
