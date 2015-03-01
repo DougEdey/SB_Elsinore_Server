@@ -1778,6 +1778,11 @@ var buildMultipart = function(data) {
  * Drag And Drop functionality *
  ******************************************************************************/
 function dragDevice(ev) {
+	var trId = $(ev.target).closest("tr").attr("id");
+	if (trId != undefined && trId.startsWith("trigger")) {
+	    dragTriggerStep(ev);
+		return;
+	}
 	ev.dataTransfer.setData("devicename", ev.target.id);
 }
 
@@ -1792,6 +1797,9 @@ function dropDevice(ev) {
 	timer.style.border = "1px solid white";
 
 	var devName = ev.dataTransfer.getData("devicename");
+	if (devName == "" ) {
+		return;
+	}
 	var refNode = $(ev.target).closest(".panel-primary");
 	refNode.before(document.getElementById(devName),
 			refNode);
@@ -1816,6 +1824,9 @@ function dropDevice(ev) {
 
 function allowDropDevice(ev) {
 	ev.preventDefault();
+	if (ev.dataTransfer.list != "devicename") {
+		return;
+	}
 	var timer = ev.target;
 	if (timer.className != "switch_wrapper") {
 		timer = ev.target.parentElement;
@@ -1825,6 +1836,9 @@ function allowDropDevice(ev) {
 
 function leaveDevice(ev) {
 	ev.preventDefault();
+	if (ev.dataTransfer.list != "devicename") {
+		return;
+	}
 	var timer = ev.target;
 	if (timer.className != "switch_wrapper") {
 		timer = ev.target.parentElement;
@@ -1853,7 +1867,6 @@ function dropSwitch(ev) {
 	}
 
 	var switchName = ev.dataTransfer.getData("switchname");
-
 	if (switchName.lastIndexOf("div-") != 0) {
 		switchName = "div-" + switchName;
 	}
@@ -1911,7 +1924,8 @@ function dropDeleteSwitch(ev) {
 		timer.style.border = "1px solid white";
 	}
 
-	var switchName = ev.dataTransfer.getData("switchname").replace(" ", "_");
+    var switchData = ev.dataTransfer.getData("switchname");
+	var switchName = switchData.replace(" ", "_");
 
 	if (switchName.lastIndexOf("div-") != 0) {
 		baseSwitchName = switchName;
@@ -1963,7 +1977,6 @@ function dropTimer(ev) {
 		timer.style.border = "1px solid white";
 	}
 	var timerName = ev.dataTransfer.getData("timername");
-
 	if (timerName.lastIndexOf("div-") != 0) {
 		timerName = "div-" + timerName;
 	}
@@ -2027,7 +2040,6 @@ function leaveTimer(ev) {
 function dropDeleteTimer(ev) {
 	ev.preventDefault();
 	var timerName = ev.dataTransfer.getData("timername");
-
 	if (timerName.lastIndexOf("div-") != 0) {
 		baseTimerName = timerName;
 		timerName = "div-" + timerName;
@@ -2068,7 +2080,6 @@ function leavePhSensor(ev) {
 function dropDeletePhSensor(ev) {
 	ev.preventDefault();
 	var sensorName = ev.dataTransfer.getData("sensorname");
-
 	if (sensorName.lastIndexOf("div-") != 0) {
 		var baseSensorName = sensorName;
 		sensorName = "div-" + sensorName;
@@ -2116,18 +2127,20 @@ function getPositionFromTriggerStep(divID) {
 }
 
 function dragTriggerStep(ev) {
-	var divID = ev.target.id;
-
+	var divID = $(ev.target).closest("tr").attr("id");
 	// Explode out
 	var vessel = getVesselFromTriggerStep(divID.substring(10));
 	// var position = getPositionFromMashStep(divID);
-	ev.dataTransfer.setData("triggerStepname", divID);
+	ev.dataTransfer.setData("triggerstepname", divID);
 	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("DELETE");
 }
 
 function dropTriggerStep(ev) {
 	ev.preventDefault();
-	var triggerData = ev.dataTransfer.getData("triggerStepname");
+	var triggerData = ev.dataTransfer.getData("triggerstepname");
+	if (ev.dataTransfer.list != "triggerstepname") {
+		return;
+	}
 	var vessel = getVesselFromTriggerStep(triggerData.substring(10));
 	var position = getPositionFromTriggerStep(triggerData);
 
@@ -2160,15 +2173,20 @@ function dropTriggerStep(ev) {
 
 function allowDropTriggerStep(ev) {
 	ev.preventDefault();
+	if (ev.dataTransfer.list != "triggerstepname") {
+	    return;
+	}
 }
 
 function dropDeleteTriggerStep(ev) {
 	ev.preventDefault();
-	var triggerStepName = ev.dataTransfer.getData("triggerStepname");
-	var vessel = getVesselFromTriggerStep(triggerStepName.substring(10));
-	var position = getPositionFromTriggerStep(triggerStepName);
+	if (ev.dataTransfer.list != "triggerstepname") {
+		return;
+	}
+	var vessel = getVesselFromTriggerStep(triggerstepname.substring(10));
+	var position = getPositionFromTriggerStep(triggerstepname);
 
-	$('[id="' + triggerStepName + '"]').empty().remove();
+	$('[id="' + triggerstepname + '"]').empty().remove();
 	var delData = "tempprobe=" + vessel + "&position=" + position;
 
 	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
