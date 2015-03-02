@@ -1,15 +1,12 @@
 package com.sb.elsinore;
 
 import ca.strangebrew.recipe.Recipe;
+import com.sb.common.SBStringUtils;
 import com.sb.elsinore.html.*;
 import com.sb.elsinore.notificiations.Notifications;
 import jGPIO.InvalidGPIOException;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.*;
@@ -1125,8 +1122,13 @@ public class UrlEndpoints {
         // Are we downloading the files?
         if (params.containsKey("download")
                 && params.get("download").equalsIgnoreCase("true")) {
-            String zipFileName = "graph-data/zipdownload-"
-                + currentTime + ".zip";
+            String rootPath = "";
+            try {
+                rootPath = SBStringUtils.getAppPath("");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            String zipFileName = rootPath + "graph-data/zipdownload-" + currentTime + ".zip";
             ZipFile zipFile = null;
             try {
                 zipFile = new ZipFile(zipFileName);
