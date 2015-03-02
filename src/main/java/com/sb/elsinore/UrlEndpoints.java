@@ -218,6 +218,9 @@ public class UrlEndpoints {
 
         try {
             String tempProbe = params.get("tempprobe");
+            if (tempProbe == null) {
+                BrewServer.LOG.warning("No tempprobe parameter supplied to delete trigger.");
+            }
             int position = Integer.parseInt(params.get("position"));
             TriggerControl mControl = LaunchControl
                     .findTemp(tempProbe).getTriggerControl();
@@ -228,10 +231,12 @@ public class UrlEndpoints {
                 status = Status.BAD_REQUEST;
             }
         } catch (NumberFormatException nfe) {
+            nfe.printStackTrace();
             LaunchControl.setMessage(
                     "Couldn't parse the position to delete: " + params);
             status = Status.BAD_REQUEST;
         } catch (NullPointerException ne) {
+            ne.printStackTrace();
             LaunchControl.setMessage(
                     "Couldn't parse the mash data to delete: " + params);
             status = Status.BAD_REQUEST;

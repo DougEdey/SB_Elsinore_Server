@@ -1,3 +1,4 @@
+var triggerSortableIn = 0;
 function getLanguage() {
 	$.ajax({
 		type : 'GET',
@@ -402,7 +403,60 @@ function addTriggerTable(vesselName) {
 		table += "<br id='triggerTable" + vesselName + "footer'/>";
 
 		$("#" + vesselName + "-volume").before(table);
+		$("#triggerTable" + vesselName + " tbody").sortable({
+		    update: function(e, ui) {
+                var sorted = $("#triggerTable" + vesselName + " tbody").sortable("toArray");
+                var newData = {};
+                newData["tempprobe"] = vesselName;
+                for (i = 0; i < sorted.length; i++) {
+                    var id = sorted[i];
+                    var oldid = id.substr(id.lastIndexOf("_")+1);
+                    newData[oldid] = i;
+                }
 
+                $.ajax({
+                    url : 'reordertriggers',
+                    type : 'POST',
+                    data : newData,
+                    success : function(data) {
+                        data = null
+                    },
+                    error: function(data) {
+                        console.log(data);
+                    }
+                });
+            },
+            out: function(e, ui) {
+                triggerSortableIn = 0;
+            },
+            receive: function(e, ui) {
+                triggerSortableIn = 1;
+            },
+            over: function(e, ui) {
+                triggerSortableIn = 1;
+            },
+            beforeStop: function(e, ui) {
+                if (triggerSortableIn == 0) {
+                    var id = ui.item.attr("id").replace("triggerRow", "");
+                    var vessel = id.substr(0, id.indexOf("_"));
+                    var position = id.substr(id.indexOf("_") + 1);
+
+                    $.ajax({
+                		url : 'deltriggerstep',
+                		type : 'POST',
+                		data : "tempprobe=" + vessel + "&position=" + position,
+                		success : function(data) {
+                			data = null
+                		}
+                	});
+                	window.disableUpdates = 0;
+                	sleep(2000);
+                	window.reload();
+                	return false;
+                }
+            }
+		});
+		$("#triggerTable" + vesselName + " tbody").disableSelection();
 	}
 }
 
@@ -1555,14 +1609,14 @@ function addTriggerStep(triggerStep, triggerData, pid) {
 		triggerStep = triggerData['index'];
 	}
 
-	var triggerStepRow = $("#triggerRow" + pid + "-" + triggerStep);
+	var triggerStepRow = $("#triggerRow" + pid + "_" + triggerStep);
 	if (triggerStepRow.length == 0) {
 		// Add a new row to the Mash Table
-		tableRow = "<tr id='triggerRow" + pid + "-" + triggerStep + "'"
-				+ " ondragstart='dragTriggerStep(event);' draggable='true'"
+		tableRow = "<tr id='triggerRow" + pid + "_" + triggerStep + "'>"
+				/*+ " ondragstart='dragTriggerStep(event);' draggable='true'"
 				+ " ondrop='dropTriggerStep(event);'"
 				+ " ondragover='allowDropTriggerStep(event);'"
-				+ " ondblclick='editTriggerStep(this);' >"
+				+ " ondblclick='editTriggerStep(this);' >"*/
 		tableRow += ("<td>" + triggerData['start'] + "</td>");
 		tableRow += ("<td>" + triggerData['description'] + "</td>");
 		tableRow += ("<td>" + triggerData['target'] + "</td>");

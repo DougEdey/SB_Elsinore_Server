@@ -29,6 +29,7 @@ public class Header implements Renderable {
                 .macros().javascript("templates/static/excanvas.js")
             .write("<![endif]-->", HtmlCanvas.NO_ESCAPE)            
             .macros().javascript("/templates/static/js/jquery.js")
+            .macros().javascript("/templates/static/js/jquery-ui.js")
             .script(language("javascript").type("text/javascript").src("templates/static/js/d3.js").enctype("utf-8"))._script()
             .macros().javascript("/templates/static/js/c3.js")
             .macros().javascript("/templates/static/jquery.fs.stepper.js")
