@@ -45,22 +45,12 @@ function setup() {
 	});
 
 	$('#logo').fileupload({
-		dataType : 'json',
-		done : function(e, data) {
-			$.each(data.result.files, function(index, file) {
-				$('<p/>').text(file.name).appendTo(document.body);
-			});
-		}
+		dataType : 'json'
 	});
 
 	$('#beerxml').fileupload({
-    		dataType : 'json',
-    		done : function(e, data) {
-    			$.each(data.result.files, function(index, file) {
-    				$('<p/>').text(file.name).appendTo(document.body);
-    			});
-    		}
-    	});
+        dataType : 'json'
+    });
 
 	var temp =$('div[class="center-left"]');
 	
@@ -268,6 +258,18 @@ function waitForMsg() {
 
                     if ("notifications" in data) {
                         showNotifications(data.notifications);
+                    }
+
+                    if ("recipeCount" in data && data.recipeCount > 1) {
+                        if ($("span[id='selectRecipe']").length == 0) {
+                            window.location.assign(window.location.href);
+                        }
+                    }
+
+                    if ("recipe" in data && data.recipe != "") {
+                        if ($("span[id='showCurrentRecipe']").length == 0) {
+                            window.location.assign(window.location.href);
+                        }
                     }
 
 					if ("vessels" in data) {
@@ -2671,7 +2673,7 @@ function displaySystemSettings() {
 				}
 				$('form[id="settings-form"] div[id="recorder_enabled"] input').prop("checked", data.recorder);
 			}
-			
+
 			if ("recorderDiff" in data) {
 				if ($('form[id="settings-form"] div[id="recorder_tolerence"]').length == 0) {
 					$('form[id="settings-form"]')
