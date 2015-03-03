@@ -1063,6 +1063,13 @@ public class UrlEndpoints {
         if (!LaunchControl.recorderEnabled()) {
             return new NanoHTTPD.Response("Recorder disabled");
         }
+        String rootPath = "";
+        try {
+            rootPath = SBStringUtils.getAppPath("");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
         Map<String, String> params = this.parameters;
         Map<String, String> parms = ParseParams(params);
         // Have we been asked for a size?
@@ -1091,7 +1098,7 @@ public class UrlEndpoints {
         if (live) {
 
             long newest = 0;
-            File file = new File("graph-data/");
+            File file = new File(rootPath + "/graph-data/");
             if (file.isDirectory()) {
                 File[] contents = file.listFiles();
                 if (contents == null) {
@@ -1116,7 +1123,7 @@ public class UrlEndpoints {
         // Else Read based on time
 
         // Get files from directory
-        File directoryFile = new File("graph-data/" + directory);
+        File directoryFile = new File(rootPath + "/graph-data/" + directory);
 
         File[] contents = directoryFile.listFiles();
         JSONObject xsData = new JSONObject();
@@ -1127,13 +1134,8 @@ public class UrlEndpoints {
         // Are we downloading the files?
         if (params.containsKey("download")
                 && params.get("download").equalsIgnoreCase("true")) {
-            String rootPath = "";
-            try {
-                rootPath = SBStringUtils.getAppPath("");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-            String zipFileName = rootPath + "graph-data/zipdownload-" + currentTime + ".zip";
+
+            String zipFileName = rootPath + "/graph-data/zipdownload-" + currentTime + ".zip";
             ZipFile zipFile = null;
             try {
                 zipFile = new ZipFile(zipFileName);
@@ -1166,7 +1168,8 @@ public class UrlEndpoints {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return BrewServer.serveFile(zipFileName, params, rootDir);
+            return BrewServer.serveFile("graph-data/zipdownload-" + currentTime + ".zip",
+                    params, rootDir);
         }
 
         if (contents == null) {
@@ -2235,5 +2238,12 @@ public class UrlEndpoints {
         }
 
         return new Response(Status.OK, MIME_HTML, "Cleared notification: " + rInt);
+    }
+
+    @UrlEndpoint(url="/resetrecorder")
+    public Response resetRecorder() {
+        LaunchControl.disableRecorder();
+        LaunchControl.enableRecorder();
+        return new Response(Status.OK, MIME_HTML, "Reset recorder.");
     }
 }
