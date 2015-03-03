@@ -430,12 +430,22 @@ function addTriggerTable(vesselName) {
             },
             out: function(e, ui) {
                 triggerSortableIn = 0;
+                if (!("startHtml" in ui.item)) {
+                    ui.item.startHtml = ui.item.html();
+                    ui.item.html('<span class="btn btn-warning">' + $.i18n.prop("DELETE") + '</span>')
+                }
             },
             receive: function(e, ui) {
                 triggerSortableIn = 1;
+                if ("startHtml" in ui.item) {
+                    ui.item.html(ui.item.startHtml);
+                }
             },
             over: function(e, ui) {
                 triggerSortableIn = 1;
+                if ("startHtml" in ui.item) {
+                    ui.item.html(ui.item.startHtml);
+                }
             },
             beforeStop: function(e, ui) {
                 if (triggerSortableIn == 0) {
