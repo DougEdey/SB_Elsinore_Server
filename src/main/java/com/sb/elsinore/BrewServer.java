@@ -308,8 +308,7 @@ public class BrewServer extends NanoHTTPD {
 
         for (java.lang.reflect.Method m
                 : UrlEndpoints.class.getDeclaredMethods()) {
-           UrlEndpoint urlMethod =
-                   (UrlEndpoint) m.getAnnotation(UrlEndpoint.class);
+           UrlEndpoint urlMethod = m.getAnnotation(UrlEndpoint.class);
            if (urlMethod != null) {
                if (urlMethod.url().equalsIgnoreCase(uri)) {
                    try {

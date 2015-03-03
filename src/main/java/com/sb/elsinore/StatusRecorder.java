@@ -32,7 +32,7 @@ public class StatusRecorder implements Runnable {
     public static String defaultDirectory = "graph-data/";
     public static String DIRECTORY_PROPERTY = "recorder_directory";
     public static String RECORDER_ENABLED = "recorder_enabled";
-    
+
     public StatusRecorder(String recorderDirectory) {
         this.recorderDirectory = recorderDirectory;
     }
@@ -56,6 +56,13 @@ public class StatusRecorder implements Runnable {
     public final void stop() {
         if (thread != null) {
             thread.interrupt();
+            while (thread.isAlive()) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
             thread = null;
         }
     }
@@ -73,7 +80,7 @@ public class StatusRecorder implements Runnable {
         //Keep checking the status until all the temperature sensors are initialized
         try {
             
-            while( ! checkInitialized() ){
+            while (!checkInitialized()) {
                 Thread.sleep(1000);
             }
         
@@ -137,27 +144,13 @@ public class StatusRecorder implements Runnable {
     
     protected boolean checkInitialized()
     {
-        String status = LaunchControl.getJSONStatus();
-        JSONObject newStatus = (JSONObject) JSONValue.parse(status);
-        JSONArray vessels = (JSONArray) newStatus.get("vessels");
-        boolean initialized = true;
-        for (int x = 0; x < vessels.size(); x++) {
-            JSONObject vessel = (JSONObject) vessels.get(x);
-               if (vessel.containsKey("tempprobe")) {
-                    String temp = ((JSONObject) vessel.get("tempprobe"))
-                            .get("temp").toString();
-                    initialized &= !temp.equals("0.0");
-                        
-                }
-        }
-        return initialized;
-             
+        return LaunchControl.isInitialized();
     }
 
     /**
      * Save the status to the directory.
      *
-     * @param now The current date to save the datapoint for.
+     * @param nowDate The current date to save the datapoint for.
      * @param newStatus The JSON Status object to dump
      * @param directory The graph data directory.
      */

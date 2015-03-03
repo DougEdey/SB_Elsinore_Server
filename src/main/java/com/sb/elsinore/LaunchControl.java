@@ -4,7 +4,6 @@ import Cosm.*;
 import com.sb.common.CollectionsUtil;
 import com.sb.elsinore.inputs.PhSensor;
 import com.sb.elsinore.notificiations.Notifications;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import jGPIO.GPIO;
 import jGPIO.InvalidGPIOException;
 import org.apache.commons.cli.*;
@@ -203,6 +202,7 @@ public final class LaunchControl {
     public static String breweryName = null;
     public static String theme = "default";
     public static boolean pageLock = false;
+    private static boolean initialized = false;
 
     /*****
      * Main method to launch the brewery.
@@ -440,14 +440,7 @@ public final class LaunchControl {
         BrewServer.LOG.log(Level.INFO, "CONFIG READ COMPLETED***********");
         sRunner = new ServerRunner(BrewServer.class, this.server_port);
         sRunner.run();
-
-        // iterate the list of Threads to kick off any PIDs
-        Collections.sort(tempList);
-        for (Temp tTemp : tempList) {
-            // launch all the PIDs first
-            // since they will launch the temperature threads too
-            findPID(tTemp.getName());
-        }
+        LaunchControl.initialized = true;
 
         // Old way to close off the System
         BrewServer.LOG.info("Waiting for input... Type 'quit' to exit");
@@ -475,6 +468,14 @@ public final class LaunchControl {
                 System.exit(0);
             }
         }
+    }
+
+    public static boolean isInitialized() {
+        return loadCompleted;
+    }
+
+    public static void setInitialized(boolean initialized) {
+        LaunchControl.initialized = initialized;
     }
 
     /************
@@ -912,9 +913,8 @@ public final class LaunchControl {
             int position = -1;
 
             String tempString = curSwitch.getAttribute("position");
-            if (tempString == null) {
+            if (tempString != null) {
                 try {
-                    assert tempString != null;
                     position = Integer.parseInt(tempString);
                 } catch (NumberFormatException nfe) {
                     BrewServer.LOG.warning("Couldn't parse switch: " + switchName
@@ -1087,7 +1087,7 @@ public final class LaunchControl {
     public static boolean addTimer(final String name, final String mode) {
         // Mode is a placeholder for now
         synchronized (timerList) {
-            if (timerList.contains(name) || name.equals("")) {
+            if (LaunchControl.findTimer(name) != null) {
                 return false;
             }
             Timer tTimer = new Timer(name);
@@ -3268,7 +3268,7 @@ public final class LaunchControl {
 
     public static List<String> getOneWireDevices(String prefix) {
         List<String> devices;
-        devices = new ArrayList<String>();
+        devices = new ArrayList<>();
         if (owfsConnection == null) {
             LaunchControl.setMessage("OWFS is not setup,"
                     + " please delete your configuration file and start again");
