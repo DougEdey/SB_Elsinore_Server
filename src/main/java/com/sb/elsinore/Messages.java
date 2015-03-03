@@ -112,6 +112,7 @@ public class Messages extends NLS {
 
     public static String WAIT_TRIGGER_ACTIVE;
     public static String TARGET_TEMP_TRIGGER;
+    public static String ADD_HOP;
 
     static {
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);

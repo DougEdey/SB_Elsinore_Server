@@ -156,7 +156,7 @@ public class WaitTrigger implements TriggerInterface {
         }
         String endDateStamp;
         if (this.endDate != null) {
-            endDateStamp = BrewDay.readableFormat.format(this.endDate);
+            endDateStamp = "End: " + BrewDay.readableFormat.format(this.endDate) + "<br />";
         } else {
             endDateStamp = "";
         }
@@ -166,7 +166,7 @@ public class WaitTrigger implements TriggerInterface {
         currentStatus.put("position", this.position);
         currentStatus.put("start", startDateStamp);
         currentStatus.put("target", targetStr);
-        currentStatus.put("description", "End: " + endDateStamp + "<br />\n" + this.note);
+        currentStatus.put("description", endDateStamp + "<br />\n" + this.note);
         currentStatus.put("active", Boolean.toString(this.active));
         return currentStatus;
     }
@@ -179,18 +179,21 @@ public class WaitTrigger implements TriggerInterface {
     @Override
     public void setActive() {
         this.active = true;
+        String message = "";
         if (endDate != null) {
-            createNotifications(String.format(Messages.WAIT_TRIGGER_ACTIVE, SBStringUtils.dateFormatShort.format(endDate)));
+            message = SBStringUtils.dateFormatShort.format(endDate);
+
         } else {
-            createNotifications(String.format(Messages.WAIT_TRIGGER_ACTIVE, SBStringUtils.formatTime(this.minutes)));
+            message = SBStringUtils.formatTime(this.minutes);
         }
+        message = message + "\n" + this.note;
+        createNotifications(String.format(Messages.WAIT_TRIGGER_ACTIVE, message));
 
     }
 
     @Override
     public void deactivate() {
         this.active = false;
-        clearNotifications();
     }
 
     @Override
@@ -285,10 +288,6 @@ public class WaitTrigger implements TriggerInterface {
     }
 
     public void createNotifications(String s) {
-        if (webNotification != null) {
-            //Clear the existing notifications
-            clearNotifications();
-        }
         webNotification = new WebNotification();
         webNotification.setMessage(s);
         webNotification.sendNotification();

@@ -2030,7 +2030,7 @@ public class Recipe {
             }
 
             WaitTrigger waitTrigger = new WaitTrigger(j, mins, 0);
-            waitTrigger.setNote(h.getName() + " " + h.getAmount().toString());
+            waitTrigger.setNote(String.format(Messages.ADD_HOP, h.getAmount().toString(), h.getName()));
             triggerControl.addTrigger(waitTrigger);
             j++;
             prevHop = h;
@@ -2080,7 +2080,7 @@ public class Recipe {
             }
 
             WaitTrigger waitTrigger = new WaitTrigger(j, mins, 0);
-            waitTrigger.setNote(h.getName() + " " + h.getAmount().toString());
+            waitTrigger.setNote(String.format(Messages.ADD_HOP, h.getAmount().toString(), h.getName()));
             triggerControl.addTrigger(waitTrigger);
             j++;
             prevHop = h;
