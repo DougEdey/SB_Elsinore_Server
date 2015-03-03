@@ -23,11 +23,15 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
+        <module name="jGPIO" />
         <module name="SB_Elsinore_Server" />
+        <module name="StrangeBrew" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="jGPIO" target="1.6" />
       <module name="SB_Elsinore_Server" target="1.7" />
+      <module name="StrangeBrew" target="1.7" />
     </bytecodeTargetLevel>
   </component>
 </project>

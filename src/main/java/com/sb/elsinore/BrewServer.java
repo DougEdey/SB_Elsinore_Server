@@ -1,39 +1,24 @@
 package com.sb.elsinore;
 
 import ca.strangebrew.recipe.Recipe;
-import jGPIO.InvalidGPIOException;
+import com.sb.elsinore.NanoHTTPD.Response.Status;
+import com.sb.elsinore.annotations.UrlEndpoint;
+import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
-import java.math.BigDecimal;
 import java.net.URLEncoder;
-import java.nio.file.Files;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.rendersnake.HtmlCanvas;
-
-import com.sb.elsinore.NanoHTTPD.Response.Status;
-import com.sb.elsinore.NanoHTTPD.Response;
-import com.sb.elsinore.annotations.UrlEndpoint;
-import com.sb.elsinore.html.PhSensorForm;
-import com.sb.elsinore.html.RenderHTML;
-import com.sb.elsinore.html.VolumeEditForm;
-import com.sb.elsinore.inputs.PhSensor;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
 
 /**
  * A custom HTTP server for Elsinore.
@@ -42,6 +27,7 @@ import java.io.FileReader;
  * @author Doug Edey
  *
  */
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class BrewServer extends NanoHTTPD {
 
     private static Recipe currentRecipe;
@@ -183,7 +169,7 @@ public class BrewServer extends NanoHTTPD {
         Method method = session.getMethod();
         Map<String, String> header = session.getHeaders();
         Map<String, String> parms = session.getParms();
-        Map<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<>();
         if (Method.PUT.equals(method) || Method.POST.equals(method)) {
             try {
                 session.parseBody(files);
@@ -318,12 +304,6 @@ public class BrewServer extends NanoHTTPD {
                        urlEndpoints.header = header;
                        urlEndpoints.rootDir = rootDir;
                        return (Response) m.invoke(urlEndpoints);
-                   } catch (IllegalAccessException e) {
-                       LOG.warning("Couldn't access URL: " + uri);
-                       e.printStackTrace();
-                   } catch (InvocationTargetException o) {
-                       LOG.warning("Couldn't access URL: " + uri);
-                       o.printStackTrace();
                    } catch (Exception e) {
                        LOG.warning("Couldn't access URL: " + uri);
                        e.printStackTrace();
