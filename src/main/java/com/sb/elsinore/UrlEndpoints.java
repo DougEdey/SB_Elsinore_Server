@@ -1092,38 +1092,8 @@ public class UrlEndpoints {
 
         // Assume live for now until we can build a UI to deal with this
         boolean live = true;
-
-        // If Live - read newest set
-        String directory = null;
-        if (live) {
-
-            long newest = 0;
-            File file = new File(rootPath + "/graph-data/");
-            if (file.isDirectory()) {
-                File[] contents = file.listFiles();
-                if (contents == null) {
-                    return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
-                            "No files.");
-                }
-                for (File content : contents) {
-                    String name = content.getName();
-                    try {
-                        long current = Long.parseLong(name);
-                        if (current > newest) {
-                            newest = current;
-                        }
-                    } catch (NumberFormatException nfe) {
-                        // Skip
-                    }
-                }
-            }
-            directory = String.valueOf(newest);
-        }
-
-        // Else Read based on time
-
         // Get files from directory
-        File directoryFile = new File(rootPath + "/graph-data/" + directory);
+        File directoryFile = new File(LaunchControl.getRecorder().getCurrentDir());
 
         File[] contents = directoryFile.listFiles();
         JSONObject xsData = new JSONObject();

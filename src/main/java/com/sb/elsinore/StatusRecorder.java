@@ -391,4 +391,8 @@ public class StatusRecorder implements Runnable {
     public void setTime(long time) {
         StatusRecorder.SLEEP = time;
     }
+
+    public String getCurrentDir() {
+        return this.recorderDirectory;
+    }
 }
