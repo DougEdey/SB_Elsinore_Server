@@ -393,9 +393,7 @@ function addTriggerTable(vesselName) {
 
 		table += "<tfoot><tr><td colspan='1'>"
 				+ "<button class='btn btn-success' id='addTrigger-" + vesselName
-				+ "' type='button' onclick='addNewTrigger(this)' "
-				+ "ondrop='dropDeleteTriggerStep(event);' "
-				+ "ondragover='allowDropTriggerStep(event);'>"
+				+ "' type='button' onclick='addNewTrigger(this)'>"
 				+ $.i18n.prop("ADD") + "</button></td>";
 		table += "<td colspan='2'><button class='btn btn-success' id='triggerButton-"
 				+ vesselName
@@ -2243,9 +2241,70 @@ function readWriteSwitches() {
 		// Hide the button
 		$('[id=NewSwitch]').css('display', 'block');
 		// Enable drag and drop
-		$("[id=switches-body] > div ").each(function(index) {
-			this.setAttribute('draggable', true);
-		});
+		$("[id=switches-body]").sortable({
+           update: function(e, ui) {
+               var sorted = $("[id=switches-body]").sortable("toArray");
+               var newData = {};
+               replaceContent = false;
+               $('#NewSwitch')[0].innerHTML = $.i18n.prop("NEW_SWITCH");
+               for (i = 0; i < sorted.length; i++) {
+                   var id = sorted[i];
+                   if (!id.startsWith("div-")) {
+                    continue;
+                   }
+                   var oldid = id.replace("div-", "");
+                   newData[oldid] = i;
+               }
+               $.ajax({
+                url : 'updateSwitchOrder',
+                type : 'POST',
+               	data : newData,
+            	success : function(data) {
+                    data = null
+                }
+               });
+           },
+           out: function(e, ui) {
+               if (!("startHtml" in ui.item) && replaceContent) {
+                   ui.item.startHtml = ui.item.html();
+                   ui.item.html('<span class="btn btn-warning">' + $.i18n.prop("DELETE") + '</span>')
+               }
+               triggerSortableIn = 0;
+           },
+           receive: function(e, ui) {
+               triggerSortableIn = 1;
+               if ("startHtml" in ui.item) {
+                   ui.item.html(ui.item.startHtml);
+               }
+           },
+           over: function(e, ui) {
+               triggerSortableIn = 1;
+               if ("startHtml" in ui.item) {
+                   ui.item.html(ui.item.startHtml);
+               }
+           },
+           beforeStop: function(e, ui) {
+               if (triggerSortableIn == 0) {
+                   var id = ui.item.attr("id").replace("triggerRow", "");
+                   var vessel = id.substr(0, id.indexOf("_"));
+                   var position = id.substr(id.indexOf("_") + 1);
+
+                   $.ajax({
+                       url : 'deleteswitch',
+                       type : 'POST',
+                       data : "tempprobe=" + vessel + "&position=" + position,
+                       success : function(data) {
+                           data = null
+                       }
+                   });
+                   window.disableUpdates = 0;
+                   sleep(2000);
+                   window.reload();
+                   return false;
+               }
+           }
+       });
+       $("[id=switches]").disableSelection();
 	}
 }
 

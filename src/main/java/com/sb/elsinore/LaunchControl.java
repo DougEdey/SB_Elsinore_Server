@@ -1272,7 +1272,7 @@ public final class LaunchControl {
             Switch tSwitch;
             while (iterator.hasNext()) {
                 tSwitch = iterator.next();
-                if (tSwitch.getName().equalsIgnoreCase(name)) {
+                if (tSwitch.getName().equalsIgnoreCase(name) || tSwitch.getNodeName().equalsIgnoreCase(name)) {
                     return tSwitch;
                 }
             }

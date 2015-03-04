@@ -15,12 +15,7 @@ public class SwitchComponent implements Renderable {
     
     @Override
     public void renderOn(HtmlCanvas html) throws IOException {
-        html.div(id("div-" + name.replaceAll(" ", "_")).class_("switch_wrapper")
-                .draggable("true")
-                .onDragstart("dragSwitch(event);")
-                .onDrop("dropSwitch(event);")
-                .onDragover("allowDropSwitch(event);")
-                .onDragleave("leaveSwitch(event);"))
+        html.div(id("div-" + name.replaceAll(" ", "_")).class_("switch_wrapper"))
             .button(id(name.replaceAll(" ", "_")).class_("holo-button switch")
                     .type("submit").value("SubmitCommand")
                     .onClick("submitSwitch(this); waitForMsg(); return false;"))

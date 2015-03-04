@@ -1442,6 +1442,9 @@ public class UrlEndpoints {
                         "Couldn't parse " + entry.getValue()
                         + " as an integer");
             }
+            synchronized (LaunchControl.switchList) {
+                Collections.sort(LaunchControl.switchList);
+            }
             status = Response.Status.OK;
         }
         return new Response(status,
