@@ -1063,246 +1063,9 @@ public class UrlEndpoints {
         if (!LaunchControl.recorderEnabled()) {
             return new NanoHTTPD.Response("Recorder disabled");
         }
-        String rootPath = "";
-        try {
-            rootPath = SBStringUtils.getAppPath("");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
 
-        Map<String, String> params = this.parameters;
-        Map<String, String> parms = ParseParams(params);
-        // Have we been asked for a size?
-        int size = 1000;
-
-        if (parms.containsKey("size")) {
-            try {
-                size = Integer.parseInt(params.get("size"));
-            } catch (NumberFormatException nfe) {
-                size = 1000;
-            }
-        }
-
-        String vessel = "";
-        if (parms.containsKey("vessel")) {
-            vessel = parms.get("vessel");
-        }
-
-        // Read CSV files and make a JSON Response
-
-        // Assume live for now until we can build a UI to deal with this
-        boolean live = true;
-        // Get files from directory
-        File directoryFile = new File(LaunchControl.getRecorder().getCurrentDir());
-
-        File[] contents = directoryFile.listFiles();
-        JSONObject xsData = new JSONObject();
-        JSONObject axes = new JSONObject();
-        JSONArray dataBuffer = new JSONArray();
-        long currentTime = System.currentTimeMillis();
-
-        // Are we downloading the files?
-        if (params.containsKey("download")
-                && params.get("download").equalsIgnoreCase("true")) {
-
-            String zipFileName = rootPath + "/graph-data/zipdownload-" + currentTime + ".zip";
-            ZipFile zipFile = null;
-            try {
-                zipFile = new ZipFile(zipFileName);
-            } catch (FileNotFoundException ioe) {
-                BrewServer.LOG.warning(
-                        "Couldn't create zip file at: " + zipFileName);
-                BrewServer.LOG.warning(ioe.getLocalizedMessage());
-            }
-
-            if (contents == null || zipFile == null) {
-                return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
-                        "No files.");
-            }
-
-            for (File content : contents) {
-                try {
-                    if (content.getName().endsWith(".csv")
-                            && content.getName().toLowerCase()
-                                    .startsWith(vessel.toLowerCase())) {
-                        zipFile.addToZipFile(content.getAbsolutePath());
-                    }
-                } catch (IOException ioe) {
-                    BrewServer.LOG.warning(
-                            "Couldn't add " + content.getAbsolutePath()
-                            + " to zipfile");
-                }
-            }
-            try {
-                zipFile.closeZip();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return BrewServer.serveFile("graph-data/zipdownload-" + currentTime + ".zip",
-                    params, rootDir);
-        }
-
-        if (contents == null) {
-            return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
-                    "{Bad: Request}");
-        }
-        boolean dutyVisible = false;
-        for (File content : contents) {
-            if (content.getName().endsWith(".csv")
-                    && content.getName().toLowerCase()
-                            .startsWith(vessel.toLowerCase())) {
-                String name = content.getName();
-
-                // Strip off .csv
-                name = name.substring(0, name.length() - 4);
-                name = name.replace('-', ' ');
-
-                if (parms.containsKey("bindto")
-                        && (parms.get("bindto"))
-                        .endsWith("-graph_body")) {
-                    name = name.substring(name.lastIndexOf(" ") + 1);
-                }
-
-                xsData.put(name, "x" + name);
-
-                if (name.endsWith("duty")) {
-                    axes.put(name, "y2");
-                    dutyVisible = true;
-                } else {
-                    axes.put(name, "y");
-                }
-
-                JSONArray xArray = new JSONArray();
-                JSONArray dataArray = new JSONArray();
-
-                xArray.add("x" + name);
-                dataArray.add(name);
-
-                BufferedReader reader = null;
-                try {
-                    reader = new BufferedReader(new FileReader(content));
-                    String line;
-                    String[] lArray = null;
-
-                    int count = 0;
-                    while ((line = reader.readLine()) != null && count < size) {
-                        // Each line contains the timestamp and the value
-                        lArray = line.split(",");
-                        xArray.add(BrewDay.sFormat
-                                .format(new Date(Long.parseLong(lArray[0])))
-                                );
-                        dataArray.add(lArray[1].trim());
-                        count++;
-                    }
-
-                    if (lArray != null && Long.parseLong(lArray[0]) != currentTime) {
-                        xArray.add(BrewDay.sFormat
-                                .format(new Date(currentTime)));
-                        dataArray.add(lArray[1].trim());
-                    }
-
-                    dataBuffer.add(xArray);
-                    dataBuffer.add(dataArray);
-                } catch (Exception e) {
-                    // Do nothing
-                } finally {
-                    if (reader != null) {
-                        try {
-                            reader.close();
-                        } catch (Exception e) {
-                            BrewServer.LOG.warning("Couldn't close file: "
-                                    + content.getAbsolutePath());
-                        }
-                    }
-                }
-
-            }
-        }
-
-        JSONObject dataContent = new JSONObject();
-        dataContent.put("columns", dataBuffer);
-        if (parms.containsKey("updates")
-                && Boolean.parseBoolean(parms.get("updates"))) {
-            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                    dataContent.toJSONString());
-        }
-
-        dataContent.put("xs", xsData);
-        dataContent.put("axes", axes);
-        dataContent.put("xFormat", "%H:%M:%S");
-
-        // DO the colours manually
-        JSONObject colorContent = new JSONObject();
-        if (!vessel.equals("")) {
-            JSONArray tJson;
-            for(int i = 0; i < dataBuffer.size(); i++) {
-                tJson = (JSONArray) dataBuffer.get(i);
-                String series = (String) tJson.get(0);
-                String color = "";
-                if (series.equals("temp")) {
-                    color = "#00ff00";
-                } else if (series.equals("duty")) {
-                    color = "#0000ff";
-                }
-                colorContent.put(series, color);
-            }
-            dataContent.put("colors", colorContent);
-        }
-
-        JSONObject axisContent = new JSONObject();
-
-
-        JSONObject y1Label = new JSONObject();
-        y1Label.put("text", "Temperature");
-        y1Label.put("position", "outer-middle");
-        JSONObject y1 = new JSONObject();
-        y1.put("show",  "true");
-        y1.put("label", y1Label);
-
-        JSONObject padding = new JSONObject();
-        padding.put("top", 0);
-        padding.put("bottom", 0);
-        y1.put("padding", padding);
-
-        JSONObject formatJSON = new JSONObject();
-        formatJSON.put("format", "%H:%M:%S");
-        formatJSON.put("culling", true);
-        formatJSON.put("rotate", 90);
-        formatJSON.put("count", 4);
-        JSONObject xContent = new JSONObject();
-        xContent.put("type", "timeseries");
-        xContent.put("tick", formatJSON);
-        axisContent.put("x", xContent);
-        axisContent.put("y", y1);
-        if (dutyVisible) {
-            JSONObject y2Label = new JSONObject();
-            y2Label.put("text", "Duty Cycle %");
-            y2Label.put("position", "outer-middle");
-            JSONObject y2 = new JSONObject();
-            y2.put("show", "true");
-            y2.put("label", y2Label);
-            axisContent.put("y2", y2);
-        }
-
-        JSONObject finalJSON = new JSONObject();
-        finalJSON.put("data", dataContent);
-        finalJSON.put("axis", axisContent);
-
-        if (parms.containsKey("bindto")) {
-            finalJSON.put("bindto", "#" + parms.get("bindto"));
-        } else {
-            finalJSON.put("bindto", "#chart");
-        }
-
-        if (!((String) finalJSON.get("bindto")).endsWith("_body")) {
-            JSONObject enabledJSON = new JSONObject();
-            enabledJSON.put("enabled", true);
-            finalJSON.put("zoom", enabledJSON);
-        }
-
-        return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                finalJSON.toJSONString());
-
+        Map<String, String> parms = ParseParams(parameters);
+        return LaunchControl.getRecorder().getData(parms);
     }
 
     /**
@@ -2217,5 +1980,16 @@ public class UrlEndpoints {
         LaunchControl.disableRecorder();
         LaunchControl.enableRecorder();
         return new Response(Status.OK, MIME_HTML, "Reset recorder.");
+    }
+
+    @UrlEndpoint(url="/deletegraphdata")
+    public Response deleteGraphData() {
+        if (LaunchControl.recorderEnabled) {
+            StatusRecorder temp = LaunchControl.disableRecorder();
+            Response response = temp.deleteAllData();
+            LaunchControl.enableRecorder();
+            return response;
+        }
+        return new Response("Recorder not enabled");
     }
 }

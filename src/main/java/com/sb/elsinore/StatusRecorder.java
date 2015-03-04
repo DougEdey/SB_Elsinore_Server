@@ -1,16 +1,14 @@
 package com.sb.elsinore;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-
+import com.sb.common.SBStringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+
+import java.io.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -21,10 +19,8 @@ public class StatusRecorder implements Runnable {
     public static double THRESHOLD = .15d;
     public static long SLEEP = 1000 * 5; // 5 seconds - is this too fast?
     private JSONObject lastStatus = null;
-    private long lastStatusTime = 0;
     private String logFile = null;
     private Thread thread;
-    private long startTime = 0;
     private String recorderDirectory = StatusRecorder.defaultDirectory;
     private HashMap<String, Status> temperatureMap;
     private HashMap<String, Status> dutyMap;
@@ -32,6 +28,7 @@ public class StatusRecorder implements Runnable {
     public static String defaultDirectory = "graph-data/";
     public static String DIRECTORY_PROPERTY = "recorder_directory";
     public static String RECORDER_ENABLED = "recorder_enabled";
+    private String currentDirectory = null;
 
     public StatusRecorder(String recorderDirectory) {
         this.recorderDirectory = recorderDirectory;
@@ -45,7 +42,7 @@ public class StatusRecorder implements Runnable {
             temperatureMap = new HashMap();
             dutyMap = new HashMap();
             thread = new Thread(this);
-            thread.setDaemon(true);
+            thread.setName("Status recorder");
             thread.start();
         }
     }
@@ -83,61 +80,53 @@ public class StatusRecorder implements Runnable {
             while (!checkInitialized()) {
                 Thread.sleep(1000);
             }
-        
-            startTime = System.currentTimeMillis();
 
-            String directory = recorderDirectory + startTime + "/";
-            File directoryFile = new File(directory);
-            directoryFile.mkdirs();
+            long startTime = System.currentTimeMillis();
+
+            currentDirectory = recorderDirectory + "/" + startTime + "/";
+            File directoryFile = new File(currentDirectory);
+            if (!directoryFile.mkdirs()) {
+                BrewServer.LOG.warning("Could not create directory: " + currentDirectory);
+                return;
+            }
             LaunchControl.setFileOwner(directoryFile.getParentFile());
             LaunchControl.setFileOwner(directoryFile);
 
             //Generate a new log file under the current directory
-            logFile = directory + "raw.log";
+            logFile = currentDirectory + "raw.log";
 
             File file = new File(this.logFile);
             boolean fileExists = file.exists();
             LaunchControl.setFileOwner(file);
 
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-
-        
-            while (true) {
+            boolean continueRunning = true;
+            while (continueRunning) {
                 //Just going to record when something changes
-                String status = LaunchControl.getJSONStatus();
-                JSONObject newStatus = (JSONObject) JSONValue.parse(status);
+                try {
+                    String status = LaunchControl.getJSONStatus();
+                    JSONObject newStatus = (JSONObject) JSONValue.parse(status);
+                    if (lastStatus == null || isDifferent(lastStatus, newStatus)) {
+                        //For now just log the whole status
+                        //Eventually we may want multiple logs, etc.
+                        if (writeRawLog) {
+                            writeToLog(newStatus, fileExists);
+                        }
 
-                if (lastStatus == null || isDifferent(lastStatus, newStatus)) {
-                    //For now just log the whole status
-                    //Eventually we may want multiple logs, etc.
-                    if (writeRawLog) {
-                        writeToLog(newStatus, fileExists);
+                        Date now = new Date();
+                        printJsonToCsv(now, newStatus, currentDirectory);
+                        lastStatus = newStatus;
+                        fileExists = true;
                     }
-
-                    Date now = new Date();
-
-//                    if (lastStatus != null
-//                            && now.getTime() - lastStatusTime > SLEEP) {
-//                        //Print out a point before now to make sure
-//                        // the plot lines are correct
-//                        printJsonToCsv(new Date(now.getTime() - SLEEP),
-//                                lastStatus, directory);
-//                    }
-
-                    printJsonToCsv(now, newStatus, directory);
-                    lastStatus = newStatus;
-                    lastStatusTime = now.getTime();
-
-                    fileExists = true;
+                } catch (Exception ioe) {
+                    if (ioe instanceof InterruptedException) {
+                        continueRunning = false;
+                    }
+                    continue;
                 }
-
                 Thread.sleep(SLEEP);
-
             }
         } catch (InterruptedException ex) {
             BrewServer.LOG.warning("Status Recorder shutting down");
-            return;
-            //Don't do anything, this is how we close this out.
         }
 
     }
@@ -159,8 +148,8 @@ public class StatusRecorder implements Runnable {
         //Now look for differences in the temperature and duty
         long now = nowDate.getTime();
         JSONArray vessels = (JSONArray) newStatus.get("vessels");
-        for (int x = 0; x < vessels.size(); x++) {
-            JSONObject vessel = (JSONObject) vessels.get(x);
+        for (Object vessel1 : vessels) {
+            JSONObject vessel = (JSONObject) vessel1;
             if (vessel.containsKey("name")) {
                 String name = vessel.get("name").toString();
 
@@ -180,7 +169,7 @@ public class StatusRecorder implements Runnable {
                             appendToLog(tempFile, now - SLEEP + "," + lastStatus.value + "\r\n");
                         }
                         appendToLog(tempFile, now + "," + temp + "\r\n");
-                        
+
                         temperatureMap.put(name, new Status(temp, now));
                     }
                 }
@@ -226,7 +215,7 @@ public class StatusRecorder implements Runnable {
             fileWriter.write(toAppend);
         } catch (IOException ex) {
             BrewServer.LOG.warning("Could not save to file: "
-                    + file.getAbsolutePath() + file.getName());
+                    + file.getAbsolutePath());
         } finally {
             try {
                 if (fileWriter != null) {
@@ -234,7 +223,7 @@ public class StatusRecorder implements Runnable {
                 }
             } catch (IOException ex) {
                 BrewServer.LOG.warning("Could not close filewriter: "
-                        + file.getAbsolutePath() + file.getName());
+                        + file.getAbsolutePath());
             }
         }
     }
@@ -265,8 +254,7 @@ public class StatusRecorder implements Runnable {
             return true;
         }
 
-        for (Iterator<Object> it = previous.keySet().iterator(); it.hasNext();) {
-            Object key = it.next();
+        for (Object key : previous.keySet()) {
             if (!"elapsed".equals(key)) {
                 Object previousValue = previous.get(key);
                 Object currentValue = current.get(key);
@@ -360,7 +348,7 @@ public class StatusRecorder implements Runnable {
                 double oldVal = Double.valueOf(value);
                 double newVal = Double.valueOf(newValue);
                 retVal = Math.abs(oldVal - newVal) > THRESHOLD;
-            } catch (Throwable t) {
+            } catch (Throwable ignored) {
             }
 
             return retVal;
@@ -373,7 +361,7 @@ public class StatusRecorder implements Runnable {
      * @param recorderDiff The threshold to use.
      */
     public void setThreshold(double recorderDiff) {
-        this.THRESHOLD = recorderDiff;
+        THRESHOLD = recorderDiff;
     }
     
     public double getDiff() {
@@ -393,6 +381,263 @@ public class StatusRecorder implements Runnable {
     }
 
     public String getCurrentDir() {
-        return this.recorderDirectory;
+        return this.currentDirectory;
     }
+
+    public NanoHTTPD.Response getData(Map<String, String> params) {
+        String rootPath;
+        try {
+            rootPath = SBStringUtils.getAppPath("");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return new NanoHTTPD.Response("No app path");
+        }
+
+        int size = 1000;
+        if (params.containsKey("size")) {
+            try {
+                size = Integer.parseInt(params.get("size"));
+            } catch (NumberFormatException nfe) {
+                size = 1000;
+            }
+        }
+
+        String vessel = "";
+        if (params.containsKey("vessel")) {
+            vessel = params.get("vessel");
+        }
+
+        File[] contents = new File(getCurrentDir()).listFiles();
+        JSONObject xsData = new JSONObject();
+        JSONObject axes = new JSONObject();
+        JSONArray dataBuffer = new JSONArray();
+        long currentTime = System.currentTimeMillis();
+
+        // Are we downloading the files?
+        if (params.containsKey("download")
+                && params.get("download").equalsIgnoreCase("true")) {
+
+            String zipFileName = rootPath + "/graph-data/zipdownload-" + currentTime + ".zip";
+            ZipFile zipFile = null;
+            try {
+                zipFile = new ZipFile(zipFileName);
+            } catch (FileNotFoundException ioe) {
+                BrewServer.LOG.warning(
+                        "Couldn't create zip file at: " + zipFileName);
+                BrewServer.LOG.warning(ioe.getLocalizedMessage());
+            }
+
+            if (contents == null || zipFile == null) {
+                return new NanoHTTPD.Response(NanoHTTPD.Response.Status.BAD_REQUEST, BrewServer.MIME_TYPES.get("json"),
+                        "No files.");
+            }
+
+            for (File content : contents) {
+                try {
+                    if (content.getName().endsWith(".csv")
+                            && content.getName().toLowerCase()
+                            .startsWith(vessel.toLowerCase())) {
+                        zipFile.addToZipFile(content.getAbsolutePath());
+                    }
+                } catch (IOException ioe) {
+                    BrewServer.LOG.warning(
+                            "Couldn't add " + content.getAbsolutePath()
+                                    + " to zipfile");
+                }
+            }
+            try {
+                zipFile.closeZip();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return BrewServer.serveFile("graph-data/zipdownload-" + currentTime + ".zip",
+                    params, new File(rootPath));
+        }
+
+        if (contents == null) {
+            return new NanoHTTPD.Response(NanoHTTPD.Response.Status.BAD_REQUEST, BrewServer.MIME_TYPES.get("json"),
+                    "{Bad: Request}");
+        }
+        boolean dutyVisible = false;
+        for (File content : contents) {
+            if (content.getName().endsWith(".csv")
+                    && content.getName().toLowerCase()
+                    .startsWith(vessel.toLowerCase())) {
+                String name = content.getName();
+
+                // Strip off .csv
+                name = name.substring(0, name.length() - 4);
+                name = name.replace('-', ' ');
+
+                if (params.containsKey("bindto")
+                        && (params.get("bindto"))
+                        .endsWith("-graph_body")) {
+                    name = name.substring(name.lastIndexOf(" ") + 1);
+                }
+
+                xsData.put(name, "x" + name);
+
+                if (name.endsWith("duty")) {
+                    axes.put(name, "y2");
+                    dutyVisible = true;
+                } else {
+                    axes.put(name, "y");
+                }
+
+                JSONArray xArray = new JSONArray();
+                JSONArray dataArray = new JSONArray();
+
+                xArray.add("x" + name);
+                dataArray.add(name);
+
+                BufferedReader reader = null;
+                try {
+                    reader = new BufferedReader(new FileReader(content));
+                    String line;
+                    String[] lArray = null;
+
+                    int count = 0;
+                    while ((line = reader.readLine()) != null && count < size) {
+                        // Each line contains the timestamp and the value
+                        lArray = line.split(",");
+                        xArray.add(BrewDay.sFormat
+                                        .format(new Date(Long.parseLong(lArray[0])))
+                        );
+                        dataArray.add(lArray[1].trim());
+                        count++;
+                    }
+
+                    if (lArray != null && Long.parseLong(lArray[0]) != currentTime) {
+                        xArray.add(BrewDay.sFormat
+                                .format(new Date(currentTime)));
+                        dataArray.add(lArray[1].trim());
+                    }
+
+                    dataBuffer.add(xArray);
+                    dataBuffer.add(dataArray);
+                } catch (Exception e) {
+                    // Do nothing
+                } finally {
+                    if (reader != null) {
+                        try {
+                            reader.close();
+                        } catch (Exception e) {
+                            BrewServer.LOG.warning("Couldn't close file: "
+                                    + content.getAbsolutePath());
+                        }
+                    }
+                }
+
+            }
+        }
+
+        JSONObject dataContent = new JSONObject();
+        dataContent.put("columns", dataBuffer);
+        if (params.containsKey("updates")
+                && Boolean.parseBoolean(params.get("updates"))) {
+            return new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, BrewServer.MIME_TYPES.get("json"),
+                    dataContent.toJSONString());
+        }
+
+        dataContent.put("xs", xsData);
+        dataContent.put("axes", axes);
+        dataContent.put("xFormat", "%H:%M:%S");
+
+        // DO the colours manually
+        JSONObject colorContent = new JSONObject();
+        if (!vessel.equals("")) {
+            JSONArray tJson;
+            for (Object aDataBuffer : dataBuffer) {
+                tJson = (JSONArray) aDataBuffer;
+                String series = (String) tJson.get(0);
+                String color = "";
+                if (series.equals("temp")) {
+                    color = "#00ff00";
+                } else if (series.equals("duty")) {
+                    color = "#0000ff";
+                }
+                colorContent.put(series, color);
+            }
+            dataContent.put("colors", colorContent);
+        }
+
+        JSONObject axisContent = new JSONObject();
+
+
+        JSONObject y1Label = new JSONObject();
+        y1Label.put("text", "Temperature");
+        y1Label.put("position", "outer-middle");
+        JSONObject y1 = new JSONObject();
+        y1.put("show",  "true");
+        y1.put("label", y1Label);
+
+        JSONObject padding = new JSONObject();
+        padding.put("top", 0);
+        padding.put("bottom", 0);
+        y1.put("padding", padding);
+
+        JSONObject formatJSON = new JSONObject();
+        formatJSON.put("format", "%H:%M:%S");
+        formatJSON.put("culling", true);
+        formatJSON.put("rotate", 90);
+        formatJSON.put("count", 4);
+        JSONObject xContent = new JSONObject();
+        xContent.put("type", "timeseries");
+        xContent.put("tick", formatJSON);
+        axisContent.put("x", xContent);
+        axisContent.put("y", y1);
+        if (dutyVisible) {
+            JSONObject y2Label = new JSONObject();
+            y2Label.put("text", "Duty Cycle %");
+            y2Label.put("position", "outer-middle");
+            JSONObject y2 = new JSONObject();
+            y2.put("show", "true");
+            y2.put("label", y2Label);
+            axisContent.put("y2", y2);
+        }
+
+        JSONObject finalJSON = new JSONObject();
+        finalJSON.put("data", dataContent);
+        finalJSON.put("axis", axisContent);
+
+        if (params.containsKey("bindto")) {
+            finalJSON.put("bindto", "#" + params.get("bindto"));
+        } else {
+            finalJSON.put("bindto", "#chart");
+        }
+
+        if (!((String) finalJSON.get("bindto")).endsWith("_body")) {
+            JSONObject enabledJSON = new JSONObject();
+            enabledJSON.put("enabled", true);
+            finalJSON.put("zoom", enabledJSON);
+        }
+
+        return new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, BrewServer.MIME_TYPES.get("json"),
+                finalJSON.toJSONString());
+    }
+
+    public NanoHTTPD.Response deleteAllData() {
+        File graphDir = new File(this.recorderDirectory);
+        for (File directory: graphDir.listFiles()) {
+            if (!deleteDir(directory)) {
+                BrewServer.LOG.warning("Failed to delete: " + directory.getAbsolutePath());
+            }
+        }
+        return new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, BrewServer.MIME_TYPES.get("json"),
+                "{Complete}");
+    }
+
+    public boolean deleteDir(File file) {
+        if (file.isDirectory()) {
+            String[] children = file.list();
+            for (int i = 0; i < children.length; i++) {
+                boolean success = deleteDir(new File(file, children[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+        }
+        return file.delete();
+    }
+
 }

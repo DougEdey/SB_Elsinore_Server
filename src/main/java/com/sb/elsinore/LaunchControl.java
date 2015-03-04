@@ -428,14 +428,6 @@ public final class LaunchControl {
         // See if we have an active configuration file
         readConfig();
 
-        if (LaunchControl.recorderEnabled) {
-            BrewServer.LOG.log(Level.INFO, "Starting Status Recorder");
-
-            recorder = new StatusRecorder(recorderDirectory);
-            recorder.setThreshold(recorderDiff);
-            recorder.start();
-        }
-
         // Debug info before launching the BrewServer itself
         LaunchControl.loadCompleted = true;
         BrewServer.LOG.log(Level.INFO, "CONFIG READ COMPLETED***********");
@@ -787,6 +779,8 @@ public final class LaunchControl {
                     LaunchControl.recorderEnabled = false;
                     LaunchControl.disableRecorder();
                 }
+            } else if (LaunchControl.recorderEnabled) {
+                LaunchControl.enableRecorder();
             }
 
             tElement = getFirstElement(config, "recorderDiff");
@@ -3259,14 +3253,16 @@ public final class LaunchControl {
         LaunchControl.recorder.start();
     }
 
-    public static void disableRecorder() {
+    public static StatusRecorder disableRecorder() {
         if (LaunchControl.recorder == null) {
-            return;
+            return null;
         }
         BrewServer.LOG.info("Disabling the recorder");
         LaunchControl.recorderEnabled = false;
         LaunchControl.recorder.stop();
+        StatusRecorder temp = LaunchControl.recorder;
         LaunchControl.recorder = null;
+        return temp;
     }
 
     public static List<String> getOneWireDevices(String prefix) {
