@@ -405,70 +405,6 @@ function addTriggerTable(vesselName) {
 		table += "<br id='triggerTable" + vesselName + "footer'/>";
 
 		$("#" + vesselName + "-volume").before(table);
-		$("#triggerTable" + vesselName + " tbody").sortable({
-		    update: function(e, ui) {
-                var sorted = $("#triggerTable" + vesselName + " tbody").sortable("toArray");
-                var newData = {};
-                newData["tempprobe"] = vesselName;
-                for (i = 0; i < sorted.length; i++) {
-                    var id = sorted[i];
-                    var oldid = id.substr(id.lastIndexOf("_")+1);
-                    newData[oldid] = i;
-                }
-
-                $.ajax({
-                    url : 'reordertriggers',
-                    type : 'POST',
-                    data : newData,
-                    success : function(data) {
-                        data = null
-                    },
-                    error: function(data) {
-                        console.log(data);
-                    }
-                });
-            },
-            out: function(e, ui) {
-                triggerSortableIn = 0;
-                if (!("startHtml" in ui.item)) {
-                    ui.item.startHtml = ui.item.html();
-                    ui.item.html('<span class="btn btn-warning">' + $.i18n.prop("DELETE") + '</span>')
-                }
-            },
-            receive: function(e, ui) {
-                triggerSortableIn = 1;
-                if ("startHtml" in ui.item) {
-                    ui.item.html(ui.item.startHtml);
-                }
-            },
-            over: function(e, ui) {
-                triggerSortableIn = 1;
-                if ("startHtml" in ui.item) {
-                    ui.item.html(ui.item.startHtml);
-                }
-            },
-            beforeStop: function(e, ui) {
-                if (triggerSortableIn == 0) {
-                    var id = ui.item.attr("id").replace("triggerRow", "");
-                    var vessel = id.substr(0, id.indexOf("_"));
-                    var position = id.substr(id.indexOf("_") + 1);
-
-                    $.ajax({
-                		url : 'deltriggerstep',
-                		type : 'POST',
-                		data : "tempprobe=" + vessel + "&position=" + position,
-                		success : function(data) {
-                			data = null
-                		}
-                	});
-                	window.disableUpdates = 0;
-                	sleep(2000);
-                	window.reload();
-                	return false;
-                }
-            }
-		});
-		$("#triggerTable" + vesselName + " tbody").disableSelection();
 	}
 }
 
@@ -1403,7 +1339,7 @@ function updateTriggerStep(element) {
 
 function editTriggerStep(element) {
 	var probename = $(element).closest("[id^=triggerTable]")[0].id.replace("triggerTable", "");
-	var position = element.id.substring(element.id.indexOf("-")+1);
+	var position = element.id.substring(element.id.indexOf("_")+1);
 	// Insert a couple of new form elements
 	var tempUnit = $("#" + probename + " div >div >div[id='tempUnit']")[0].textContent;
 	var $tr = $(element);
@@ -1624,11 +1560,7 @@ function addTriggerStep(triggerStep, triggerData, pid) {
 	var triggerStepRow = $("#triggerRow" + pid + "_" + triggerStep);
 	if (triggerStepRow.length == 0) {
 		// Add a new row to the Mash Table
-		tableRow = "<tr id='triggerRow" + pid + "_" + triggerStep + "'>"
-				/*+ " ondragstart='dragTriggerStep(event);' draggable='true'"
-				+ " ondrop='dropTriggerStep(event);'"
-				+ " ondragover='allowDropTriggerStep(event);'"
-				+ " ondblclick='editTriggerStep(this);' >"*/
+		tableRow = "<tr id='triggerRow" + pid + "_" + triggerStep + "' ondblclick='editTriggerStep(this);'>"
 		tableRow += ("<td>" + triggerData['start'] + "</td>");
 		tableRow += ("<td>" + triggerData['description'] + "</td>");
 		tableRow += ("<td>" + triggerData['target'] + "</td>");
@@ -1845,10 +1777,6 @@ var buildMultipart = function(data) {
  ******************************************************************************/
 function dragDevice(ev) {
 	var trId = $(ev.target).closest("tr").attr("id");
-	if (trId != undefined && trId.startsWith("trigger")) {
-	    dragTriggerStep(ev);
-		return;
-	}
 	ev.dataTransfer.setData("devicename", ev.target.id);
 }
 
@@ -2169,102 +2097,6 @@ function dropDeletePhSensor(ev) {
 }
 
 // END OF PH SENSORS
-// Drag and drop functions for mash steps
-function getVesselFromTriggerStep(divID) {
-	if (divID.lastIndexOf("triggerStep") == 0) {
-		var temp = divID.substring("triggerStep".length);
-	} else {
-		var temp = divID;
-	}
-	// Explode out
-	var vessel = temp.substring(0, temp.lastIndexOf("-"));
-	return vessel;
-}
-
-function getPositionFromTriggerStep(divID) {
-	if (divID.lastIndexOf("triggerStep") == 0) {
-		var temp = divID.substring("triggerStep".length);
-	} else {
-		var temp = divID;
-	}
-	// Explode out
-	var position = temp.substring(temp.lastIndexOf("-") + 1);
-	return position;
-}
-
-function dragTriggerStep(ev) {
-	var divID = $(ev.target).closest("tr").attr("id");
-	// Explode out
-	var vessel = getVesselFromTriggerStep(divID.substring(10));
-	// var position = getPositionFromMashStep(divID);
-	ev.dataTransfer.setData("triggerstepname", divID);
-	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("DELETE");
-}
-
-function dropTriggerStep(ev) {
-	ev.preventDefault();
-	var triggerData = ev.dataTransfer.getData("triggerstepname");
-	if (ev.dataTransfer.list != "triggerstepname") {
-		return;
-	}
-	var vessel = getVesselFromTriggerStep(triggerData.substring(10));
-	var position = getPositionFromTriggerStep(triggerData);
-
-	var refNode = ev.target.parentElement;
-	refNode.parentNode.insertBefore(document.getElementById(triggerData),
-			refNode);
-
-	var newOrder = "tempprobe=" + vessel + "&";
-	$("#triggerTable" + vessel + " > tbody > tr").each(function(index) {
-		var divID = this.id;
-		if (divID == "") {
-			return;
-		}
-
-		var oldStep = getPositionFromTriggerStep(divID);
-		newOrder += oldStep + "=" + index + "&";
-	});
-	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
-	$.ajax({
-		url : 'reordertriggers',
-		type : 'POST',
-		data : newOrder,
-		success : function(data) {
-			data = null
-		}
-	});
-
-	// DONE!
-}
-
-function allowDropTriggerStep(ev) {
-	ev.preventDefault();
-	if (ev.dataTransfer.list != "triggerstepname") {
-	    return;
-	}
-}
-
-function dropDeleteTriggerStep(ev) {
-	ev.preventDefault();
-	if (ev.dataTransfer.list != "triggerstepname") {
-		return;
-	}
-	var vessel = getVesselFromTriggerStep(triggerstepname.substring(10));
-	var position = getPositionFromTriggerStep(triggerstepname);
-
-	$('[id="' + triggerstepname + '"]').empty().remove();
-	var delData = "tempprobe=" + vessel + "&position=" + position;
-
-	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
-	$.ajax({
-		url : 'delTriggerStep',
-		type : 'POST',
-		data : delData,
-		success : function(data) {
-			data = null
-		}
-	});
-}
 
 function clearStatus() {
 	$.ajax({
@@ -2519,6 +2351,72 @@ function readWriteDevices() {
 				$('[id=triggerTable' + vessel + ']').css('display',
 						'block');
 			}
+			// Make the trigger table sortable.
+			replaceContent = true;
+            $("#triggerTable" + vessel + " tbody").sortable({
+                update: function(e, ui) {
+                    var sorted = $("#triggerTable" + vessel + " tbody").sortable("toArray");
+                    var newData = {};
+                    replaceContent = false;
+                    newData["tempprobe"] = vessel;
+                    for (i = 0; i < sorted.length; i++) {
+                        var id = sorted[i];
+                        var oldid = id.substr(id.lastIndexOf("_")+1);
+                        newData[oldid] = i;
+                    }
+                    $.ajax({
+                        url : 'reordertriggers',
+                        type : 'POST',
+                        data : newData,
+                        success : function(data) {
+                            data = null
+                        },
+                        error: function(data) {
+                            console.log(data);
+                        }
+                    });
+                },
+                out: function(e, ui) {
+                    if (!("startHtml" in ui.item) && replaceContent) {
+                        ui.item.startHtml = ui.item.html();
+                        ui.item.html('<span class="btn btn-warning">' + $.i18n.prop("DELETE") + '</span>')
+                    }
+                    triggerSortableIn = 0;
+                },
+                receive: function(e, ui) {
+                    triggerSortableIn = 1;
+                    if ("startHtml" in ui.item) {
+                        ui.item.html(ui.item.startHtml);
+                    }
+                },
+                over: function(e, ui) {
+                    triggerSortableIn = 1;
+                    if ("startHtml" in ui.item) {
+                        ui.item.html(ui.item.startHtml);
+                    }
+                },
+                beforeStop: function(e, ui) {
+                    if (triggerSortableIn == 0) {
+                        var id = ui.item.attr("id").replace("triggerRow", "");
+                        var vessel = id.substr(0, id.indexOf("_"));
+                        var position = id.substr(id.indexOf("_") + 1);
+
+                        $.ajax({
+                            url : 'deltriggerstep',
+                            type : 'POST',
+                            data : "tempprobe=" + vessel + "&position=" + position,
+                            success : function(data) {
+                                data = null
+                            }
+                        });
+                        window.disableUpdates = 0;
+                        sleep(2000);
+                        window.reload();
+                        return false;
+                    }
+                }
+            });
+            $("#triggerTable" + vessel + " tbody").disableSelection();
 		}
 	);
 }
@@ -2552,6 +2450,8 @@ function readOnlyDevices() {
 				// hide
 				$('[id=triggerTable' + vessel + ']').css('display',
 						'none');
+			} else {
+			    $('[id=triggerTable' + vessel + ']').sortable("option", "disabled", true);
 			}
 		}
 	);
