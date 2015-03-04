@@ -233,21 +233,13 @@ function waitForMsg() {
 								// enable or disable the switch as
 								// required
 								if (switchStatus) {
-									jQuery('button[id^="'
-											+ switchName + '"]')[0].style.background = "red";
-									jQuery('button[id^="'
-											+ switchName + '"]')[0].innerHTML = switchName
-											.replace("_", " ")
-											+ " "
-											+ $.i18n.prop("SWITCH_ON");
+									$('span[id^="' + switchName + '"]')[0].style.background = "red";
+									$('span[id^="'+ switchName + '"]')[0].innerHTML =
+									    switchName.replace("_", " ")+ " " + $.i18n.prop("SWITCH_ON");
 								} else {
-									jQuery('button[id^="'
-											+ switchName + '"]')[0].style.background = "#666666";
-									jQuery('button[id^="'
-											+ switchName + '"]')[0].innerHTML = switchName
-											.replace("_", " ")
-											+ " "
-											+ $.i18n.prop("SWITCH_OFF");
+									$('span[id^="' + switchName + '"]')[0].style.background = "#666666";
+									$('span[id^="' + switchName + '"]')[0].innerHTML =
+									    switchName.replace("_", " ") + " " + $.i18n.prop("SWITCH_OFF");
 								}
 							});
 					}
@@ -1144,14 +1136,14 @@ function addSwitch() {
 							+ "<label>"
 							+ "<input type='checkbox' name='invert' />" + $.i18n.prop("INVERT_GPIO")
 							+ "</label><br/>"
-							+ "<button id='add-switch' class='btn modeclass' "
+							+ "<span id='add-switch' class='btn btn-info modeclass' "
 							+ "onclick='submitNewSwitch(this.form); return false;'>"
 							+ $.i18n.prop("ADD")
-							+ "</button>"
-							+ "<button id='cancel-add-switch' class='btn modeclass' "
+							+ "</span>"
+							+ "<span id='cancel-add-switch' class='btn btn-info modeclass' "
 							+ "onclick='cancelAddSwitch(); waitForMsg(); return false;'>"
 							+ $.i18n.prop("" + $.i18n.prop("CANCEL") + "")
-							+ "</button>" + "</form>" + "</div>");
+							+ "</span>" + "</form>" + "</div>");
 	return false;
 }
 
@@ -1161,14 +1153,15 @@ function cancelAddSwitch() {
 }
 
 function submitNewSwitch(form) {
-	var data = $(form).serializeObject();
+	form = $(element).closest("form");
+    var data = form.serializeObject();
 
-	if (form["new_name"].value == null || form["new_name"].value == "") {
+    if (form.find("[name=new_name]").val() == "") {
 		alert($.i18n.prop("SWITCHNAMEBLANK"));
 		return false;
 	}
 
-	if (form["new_gpio"].value == null || form["new_gpio"].value == "") {
+	if (form.find("[name=new_gpio]").val() == "") {
 		alert($.i18n.prop("GPIO_BLANK"));
 		return false;
 	}
@@ -1196,21 +1189,20 @@ function addTimer() {
 	}
 
 	// Insert a couple of new form elements
-	$('#timers > .panel > .title')
-			.append(
-					"<div id='timer-add'>"
-							+ "<form id='timer-add-form' name='timer-add'>"
-							+ "<input type='text' name='new_name' id='new_name' value='' placeholder='"
-							+ $.i18n.prop("NAME")
-							+ "' /><br/>"
-							+ "<button id='add-timer' class='btn modeclass' "
-							+ "onclick='submitNewTimer(this.form); return false;'>"
-							+ $.i18n.prop("ADD")
-							+ "</button>"
-							+ "<button id='cancel-add-timer' class='btn modeclass' "
-							+ "onclick='cancelAddTimer(); waitForMsg(); return false;'>"
-							+ $.i18n.prop("CANCEL") + "</button>" + "</form>"
-							+ "</div>");
+	$('#timers > .panel > .title').append(
+                "<div id='timer-add'>"
+                + "<form id='timer-add-form' name='timer-add'>"
+                + "<input type='text' name='new_name' id='new_name' value='' placeholder='"
+                + $.i18n.prop("NAME")
+                + "' /><br/>"
+                + "<span id='add-timer' class='btn btn-info modeclass' "
+                + "onclick='submitNewTimer(this); return false;'>"
+                + $.i18n.prop("ADD")
+                + "</span>"
+                + "<span id='cancel-add-timer' class='btn btn-info modeclass' "
+                + "onclick='cancelAddTimer(); waitForMsg(); return false;'>"
+                + $.i18n.prop("CANCEL") + "</span>" + "</form>"
+                + "</div>");
 	return false;
 
 }
@@ -1220,10 +1212,11 @@ function cancelAddTimer() {
 	return false;
 }
 
-function submitNewTimer(form) {
-	var data = JSON.stringify(jQuery(form).serializeObject());
+function submitNewTimer(element) {
+    form = $(element).closest("form");
+	var data = form.serializeObject();
 
-	if (form["new_name"].value == null || form["new_name"].value == "") {
+	if (form.find("[name=new_name]").val() == "") {
 		alert($.i18n.prop("TIMERNAMEBLANK"));
 		return false;
 	}
@@ -1840,262 +1833,6 @@ function leaveDevice(ev) {
 }
 
 // End Devices
-
-function dragSwitch(ev) {
-	ev.dataTransfer.setData("switchname", ev.target.childNodes[0].id);
-	$('#NewSwitch')[0].innerHTML = $.i18n.prop("DELETE_SWITCH");
-}
-
-function dropSwitch(ev) {
-	ev.preventDefault();
-
-	var timer = ev.target;
-	if (timer.id != "NewSwitch") {
-		if (timer.className != "switch_wrapper") {
-			timer = ev.target.parentElement;
-		}
-
-		timer.style.border = "1px solid white";
-	}
-
-	var switchName = ev.dataTransfer.getData("switchname");
-	if (switchName.lastIndexOf("div-") != 0) {
-		switchName = "div-" + switchName;
-	}
-
-	var refNode = ev.target.parentElement;
-	refNode.parentNode.insertBefore(document.getElementById(switchName),
-			refNode);
-
-	// TODO: Update the server with the new location
-	var newOrder = "";
-	$("[id^='div-Switch']").each(function(index) {
-		var divID = this.id;
-
-		if (divID.lastIndexOf('div-') == 0) {
-			divID = divID.substring(4);
-		}
-
-		newOrder += divID + "=" + index + "&";
-	});
-	$('#NewSwitch')[0].innerHTML = $.i18n.prop("NEW_Switch");
-	$.ajax({
-		url : 'updateSwitchOrder',
-		type : 'POST',
-		data : newOrder,
-		success : function(data) {
-			data = null
-		}
-	});
-
-	// DONE!
-}
-
-function allowDropSwitch(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.id == "NewSwitch") {
-		return;
-	}
-
-	if (timer.className != "switch_wrapper") {
-		timer = ev.target.parentElement;
-	}
-
-	timer.style.border = "1px dashed black";
-}
-
-function dropDeleteSwitch(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.id != "NewSwitch") {
-		if (timer.className != "switch_wrapper") {
-			timer = ev.target.parentElement;
-		}
-
-		timer.style.border = "1px solid white";
-	}
-
-    var switchData = ev.dataTransfer.getData("switchname");
-	var switchName = switchData.replace(" ", "_");
-
-	if (switchName.lastIndexOf("div-") != 0) {
-		baseSwitchName = switchName;
-		switchName = "div-" + switchName;
-	}
-
-	$('[id="' + switchName + '"]').empty().remove();
-
-	var newOrder = "name=" + baseSwitchName;
-	$('#NewSwitch')[0].innerHTML = $.i18n.prop("NEW_SWITCH");
-	$.ajax({
-		url : 'deleteSwitch',
-		type : 'POST',
-		data : newOrder,
-		success : function(data) {
-			data = null
-		}
-	});
-}
-
-function leaveSwitch(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.id == "NewSwitch") {
-		return;
-	}
-	if (timer.className != "switch_wrapper") {
-		timer = ev.target.parentElement;
-	}
-
-	timer.style.border = "1px solid white";
-}
-
-// END OF SWITCHES
-
-function dragTimer(ev) {
-	ev.dataTransfer.setData("timername", ev.target.childNodes[1].id);
-	$('#NewTimer')[0].innerHTML = $.i18n.prop("DELETE_TIMER");
-}
-
-function dropTimer(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.id != "NewTimer") {
-		if (timer.className != "timer_wrapper") {
-			timer = ev.target.parentElement;
-		}
-
-		timer.style.border = "1px solid white";
-	}
-	var timerName = ev.dataTransfer.getData("timername");
-	if (timerName.lastIndexOf("div-") != 0) {
-		timerName = "div-" + timerName;
-	}
-
-	var refNode = ev.target.parentElement;
-	refNode.parentNode.insertBefore(document.getElementById(timerName),
-			refNode);
-
-	// TODO: Update the server with the new location
-	var newOrder = "";
-	$("div[id='timers'] > .panel > .panel-body > div").each(function(index) {
-		// this.style.border = "1px dashed black";
-		var divID = this.id;
-
-		if (divID.lastIndexOf('div-') == 0) {
-			divID = divID.substring(4);
-		}
-
-		newOrder += divID + "=" + index + "&";
-	});
-	$('#NewTimer')[0].innerHTML = $.i18n.prop("NEW_TIMER");
-	$.ajax({
-		url : 'updateTimerOrder',
-		type : 'POST',
-		data : newOrder,
-		success : function(data) {
-			data = null
-		}
-	});
-
-	// DONE!
-}
-
-function allowDropTimer(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.id == "NewTimer") {
-		return;
-	}
-
-	if (timer.className != "timer_wrapper") {
-		timer = ev.target.parentElement;
-	}
-
-	timer.style.border = "1px dashed black";
-}
-
-function leaveTimer(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.id == "NewTimer") {
-		return;
-	}
-	if (timer.className != "timer_wrapper") {
-		timer = ev.target.parentElement;
-	}
-
-	timer.style.border = "1px solid white";
-}
-
-function dropDeleteTimer(ev) {
-	ev.preventDefault();
-	var timerName = ev.dataTransfer.getData("timername");
-	if (timerName.lastIndexOf("div-") != 0) {
-		baseTimerName = timerName;
-		timerName = "div-" + timerName;
-	}
-
-	$('[id="' + timerName + '"]').empty().remove();
-	var newOrder = "name=" + baseTimerName;
-
-	$('#NewTimer')[0].innerHTML = $.i18n.prop("NEW_TIMER");
-	$.ajax({
-		url : 'deleteTimer',
-		type : 'POST',
-		data : newOrder,
-		success : function(data) {
-			data = null
-		}
-	});
-}
-
-// END OF TIMERS
-
-// Start of Ph Sensors 
-function dragPhSensor(ev) {
-	ev.dataTransfer.setData("sensorname", ev.target.id);
-	$('#NewPhSensor')[0].innerHTML = $.i18n.prop("DELETE_PHSENSOR");
-}
-
-function allowDropPhSensor(ev) {
-	ev.preventDefault();
-	return;
-}
-
-function leavePhSensor(ev) {
-	ev.preventDefault();
-	return;
-}
-
-function dropDeletePhSensor(ev) {
-	ev.preventDefault();
-	var sensorName = ev.dataTransfer.getData("sensorname");
-	if (sensorName.lastIndexOf("div-") != 0) {
-		var baseSensorName = sensorName;
-		sensorName = "div-" + sensorName;
-	} else {
-		var baseSensorName = sensorName.substring(4);
-	}
-	
-
-	$('[id="' + sensorName + '"]').empty().remove();
-	var newOrder = "name=" + baseSensorName;
-
-	$('#NewPhSensor')[0].innerHTML = $.i18n.prop("NEW_PHSENSOR");
-	$.ajax({
-		url : 'delphsensor',
-		type : 'POST',
-		data : newOrder,
-		success : function(data) {
-			data = null
-		}
-	});
-}
-
-// END OF PH SENSORS
-
 function clearStatus() {
 	$.ajax({
 		url : 'clearStatus',
@@ -2224,9 +1961,9 @@ function readOnlySwitches() {
 		// Hide the button
 		$('[id=NewSwitch]').css('display', 'none');
 		// Disable drag and drop
-		$("[id=switchess-body] > div").each(function(index) {
-			this.setAttribute('draggable', false);
-		});
+		if ($("[id=switches-body] > div").sortable("instance") != undefined) {
+    		$("[id=switches-body] > div").sortable("option", "disabled", true);
+		}
 	}
 }
 
@@ -2243,7 +1980,7 @@ function readWriteSwitches() {
 		// Enable drag and drop
 		$("[id=switches-body]").sortable({
            update: function(e, ui) {
-               var sorted = $("[id=switches-body]").sortable("toArray");
+               var sorted = $(e.target).sortable("toArray");
                var newData = {};
                replaceContent = false;
                $('#NewSwitch')[0].innerHTML = $.i18n.prop("NEW_SWITCH");
@@ -2285,21 +2022,19 @@ function readWriteSwitches() {
            },
            beforeStop: function(e, ui) {
                if (triggerSortableIn == 0) {
-                   var id = ui.item.attr("id").replace("triggerRow", "");
-                   var vessel = id.substr(0, id.indexOf("_"));
-                   var position = id.substr(id.indexOf("_") + 1);
+                   var id = ui.item.attr("id");
 
                    $.ajax({
                        url : 'deleteswitch',
                        type : 'POST',
-                       data : "tempprobe=" + vessel + "&position=" + position,
+                       data : "name=" + id.replace("div-", ""),
                        success : function(data) {
                            data = null
                        }
                    });
                    window.disableUpdates = 0;
                    sleep(2000);
-                   window.reload();
+                   location.reload();
                    return false;
                }
            }
@@ -2319,9 +2054,9 @@ function readOnlyTimers() {
 		// Hide the button
 		$('[id=NewTimer]').css('display', 'none');
 		// Disable drag and drop
-		$("[id=timers-body] > div").each(function(index) {
-			this.setAttribute('draggable', false);
-		});
+		if ($("[id=timers-body] > div").sortable("instance") != undefined) {
+		    $("[id=timers-body]").sortable("option", "disabled", true);
+		}
 	}
 }
 
@@ -2329,17 +2064,70 @@ function readWriteTimers() {
 	// Check the size of the Timer list
 	var currentCount = $("[id=timers-body] > div").length;
 
-	if (currentCount == 0) {
-		// Hide the Div.
-		$('[id=timers]').css('display', 'block');
-	} else {
-		// Hide the button
-		$('[id=NewTimer]').css('display', 'block');
-		// Disable drag and drop
-		$("[id=timers-body] > div").each(function(index) {
-			this.setAttribute('draggable', true);
-		});
-	}
+    $('[id=timers]').css('display', 'block');
+    $('[id=NewTimer]').css('display', 'block');
+    $("[id=timers-body]").sortable({
+           update: function(e, ui) {
+               var sorted = $(e.target).sortable("toArray");
+               var newData = {};
+               replaceContent = false;
+               $('#NewTimer')[0].innerHTML = $.i18n.prop("NEW_SWITCH");
+               for (i = 0; i < sorted.length; i++) {
+                   var id = sorted[i];
+                   if (!id.startsWith("div-")) {
+                    continue;
+                   }
+                   var oldid = id.replace("div-", "");
+                   newData[oldid] = i;
+               }
+               $.ajax({
+                url : 'updatetimerorder',
+                type : 'POST',
+               	data : newData,
+            	success : function(data) {
+                    data = null
+                }
+               });
+           },
+           out: function(e, ui) {
+               if (!("startHtml" in ui.item) && replaceContent) {
+                   ui.item.startHtml = ui.item.html();
+                   ui.item.html('<span class="btn btn-warning">' + $.i18n.prop("DELETE") + '</span>')
+               }
+               triggerSortableIn = 0;
+           },
+           receive: function(e, ui) {
+               triggerSortableIn = 1;
+               if ("startHtml" in ui.item) {
+                   ui.item.html(ui.item.startHtml);
+               }
+           },
+           over: function(e, ui) {
+               triggerSortableIn = 1;
+               if ("startHtml" in ui.item) {
+                   ui.item.html(ui.item.startHtml);
+               }
+           },
+           beforeStop: function(e, ui) {
+               if (triggerSortableIn == 0) {
+                   var id = ui.item.attr("id");
+
+                   $.ajax({
+                       url : 'deletetimer',
+                       type : 'POST',
+                       data : "name=" + id.replace("div-", ""),
+                       success : function(data) {
+                           data = null
+                       }
+                   });
+                   window.disableUpdates = 0;
+                   sleep(2000);
+                   location.reload();
+                   return false;
+               }
+           }
+       });
+       $("[id=timers]").disableSelection();
 }
 
 function readOnlyPhSensors() {
@@ -2347,37 +2135,83 @@ function readOnlyPhSensors() {
 	var currentCount = $("[id=phSensors-body] > div").length;
 
 	if (currentCount == 0) {
-		// Hide the Div.
-		$('[id=phSensors]').css('display', 'none');
-	} else {
-		// Hide the button
-		$('[id=NewPhSensor]').css('display', 'none');
-		// Disable drag and drop
-		$("[id=phSensors-body] > div").each(function(index) {
-			this.setAttribute('draggable', false);
-		});
+	    $("[id=phSensors]").css('display', "none");
 	}
+    $('[id=NewPhSensor]').css('display', 'none');
+
 }
 
 function readWritePhSensors() {
 	// Check the size of the pH Sensor list
 	var currentCount = $("[id=phSensors-body] > div").length;
+    $('[id=phSensors]').css('display', 'block');
+	$("[id=phSensors-body]").sortable({
+       update: function(e, ui) {
 
-	if (currentCount == 0) {
-		// Hide the Div.
-		$('[id=phSensors]').css('display', 'block');
-	} else {
-		// Hide the button
-		$('[id=NewPhSensor]').css('display', 'block');
-		// Disable drag and drop
-		$("[id=phSensors-body] > div").each(function(index) {
-			this.setAttribute('draggable', true);
-		});
-	}
+       },
+       out: function(e, ui) {
+           if (!("startHtml" in ui.item) && replaceContent) {
+               ui.item.startHtml = ui.item.html();
+               ui.item.html('<span class="btn btn-warning">' + $.i18n.prop("DELETE") + '</span>')
+           }
+           triggerSortableIn = 0;
+       },
+       receive: function(e, ui) {
+           triggerSortableIn = 1;
+           if ("startHtml" in ui.item) {
+               ui.item.html(ui.item.startHtml);
+           }
+       },
+       over: function(e, ui) {
+           triggerSortableIn = 1;
+           if ("startHtml" in ui.item) {
+               ui.item.html(ui.item.startHtml);
+           }
+       },
+       beforeStop: function(e, ui) {
+           if (triggerSortableIn == 0) {
+               var id = ui.item.attr("id");
+
+               $.ajax({
+                   url : 'delphsensor',
+                   type : 'POST',
+                   data : "name=" + id.replace("div-", ""),
+                   success : function(data) {
+                       data = null
+                   }
+               });
+               window.disableUpdates = 0;
+               sleep(2000);
+               location.reload();
+               return false;
+           }
+       }
+   });
+   $("[id=phSensors]").disableSelection();
 }
 
 function readWriteDevices() {
 	// Check the devices to see which ones aren't configured.
+	$("[id='Probes']").sortable({
+        update: function(e, ui) {
+            var sorted = $(e.target).sortable("toArray");
+            var newData = {};
+            replaceContent = false;
+            for (i = 0; i < sorted.length; i++) {
+                var id = sorted[i];
+                newData[id] = i;
+            }
+            $.ajax({
+                url : 'reorderprobes',
+                type : 'POST',
+                data : newData,
+                success : function(data) {
+                    data = null
+                }
+            });
+        }
+    });
+    $("[id='Probes']").disableSelection();
 	$("[id$='-title']").each(
 		function(index) {
 			var vessel = this.id.replace("-title", "")
@@ -2414,7 +2248,7 @@ function readWriteDevices() {
 			replaceContent = true;
             $("#triggerTable" + vessel + " tbody").sortable({
                 update: function(e, ui) {
-                    var sorted = $("#triggerTable" + vessel + " tbody").sortable("toArray");
+                    var sorted = $(e.target).sortable("toArray");
                     var newData = {};
                     replaceContent = false;
                     newData["tempprobe"] = vessel;
@@ -2470,7 +2304,7 @@ function readWriteDevices() {
                         });
                         window.disableUpdates = 0;
                         sleep(2000);
-                        window.reload();
+                        location.reload();
                         return false;
                     }
                 }
@@ -2509,11 +2343,14 @@ function readOnlyDevices() {
 				// hide
 				$('[id=triggerTable' + vessel + ']').css('display',
 						'none');
-			} else {
+			} else if ($('[id=triggerTable' + vessel + ']').sortable("instance") != undefined) {
 			    $('[id=triggerTable' + vessel + ']').sortable("option", "disabled", true);
 			}
 		}
 	);
+	if ($("[id=probes] > div").sortable("instance") != undefined) {
+	    $("[id=probes]").sortable("option", "disabled", true);
+	}
 }
 
 function enableSystem(element) {

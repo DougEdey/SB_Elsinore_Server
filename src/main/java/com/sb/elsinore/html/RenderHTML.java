@@ -56,12 +56,10 @@ public class RenderHTML implements Renderable {
                         html.render(new SwitchComponent(aSwitch.getName()));
                     }
 
-                    html.button(id("NewSwitch").class_("btn switch")
-                        .type("submit").onDrop("dropDeleteSwitch(event);")
-                        .onDragover("allowDropSwitch(event)")
+                    html.span(id("NewSwitch").class_("btn btn-info switch")
                         .onClick("addSwitch()"))
                         .write(Messages.NEW_SWITCH)
-                    ._button()
+                    ._span()
                 ._div()
             ._div()
         ._div();
@@ -78,12 +76,10 @@ public class RenderHTML implements Renderable {
                         html.render(new TimerComponent(timer.getName()));
                     }
 
-                    html.button(id("NewTimer").class_("btn timer")
-                        .type("submit").onDrop("dropDeleteTimer(event")
-                        .onDragover("allowDropTimer(event)")
+                    html.span(id("NewTimer").class_("btn btn-info timer")
                         .onClick("addTimer()"))
                         .write(Messages.NEW_TIMER)
-                    ._button()
+                    ._span()
                 ._div()
             ._div()
         ._div();
@@ -98,12 +94,11 @@ public class RenderHTML implements Renderable {
                     for (PhSensor sensor: LaunchControl.phSensorList) {
                         html.render(new PhSensorComponent(sensor));
                     }
-                html.button(id("NewPhSensor").class_("btn sensor")
-                        .type("submit").onDrop("dropDeletePhSensor(event);")
-                        .onDragover("allowDropPhSensor(event);")
+                html.span(id("NewPhSensor").class_("btn btn-info sensor")
+                        .type("submit")
                         .onClick("addPhSensor(this);"))
                         .write(Messages.NEW_PHSENSOR)
-                    ._button()
+                    ._span()
                 ._div()
             ._div()
         ._div();

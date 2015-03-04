@@ -16,11 +16,11 @@ public class SwitchComponent implements Renderable {
     @Override
     public void renderOn(HtmlCanvas html) throws IOException {
         html.div(id("div-" + name.replaceAll(" ", "_")).class_("switch_wrapper"))
-            .button(id(name.replaceAll(" ", "_")).class_("holo-button switch")
+            .span(id(name.replaceAll(" ", "_")).class_("holo-button switch")
                     .type("submit").value("SubmitCommand")
                     .onClick("submitSwitch(this); waitForMsg(); return false;"))
                 .write(name)
-            ._button()
+            ._span()
         ._div();
     }
 

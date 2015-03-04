@@ -22,11 +22,7 @@ public class TimerComponent implements Renderable {
 
     @Override
     public void renderOn(HtmlCanvas html) throws IOException {
-        html.div(id("div-" + safeName).class_("timer_wrapper")
-                .onDragstart("dragTimer(event);").draggable("true")
-                .onDrop("dropTimer(event);")
-                .onDragover("allowDropTimer(event);")
-                .onDragleave("leaveTimer(event);"))
+        html.div(id("div-" + safeName).class_("timer_wrapper"))
             .div(class_("timerName holo"))
                 .write(name)
             ._div()

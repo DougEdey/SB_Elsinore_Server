@@ -67,6 +67,7 @@ public final class LaunchControl {
      * The default port to serve on, can be overridden with -p <port>.
      */
     public static final int DEFAULT_PORT = 8080;
+    private static final Object timerLock = new Object();
     public int server_port = 8080;
     /**
      * The Minimum number of volume data points.
@@ -90,7 +91,7 @@ public final class LaunchControl {
     /**
      * List of Timers.
      */
-    public static CopyOnWriteArrayList<Timer> timerList = new CopyOnWriteArrayList<>();
+    public static ArrayList<Timer> timerList = new ArrayList<>();
     /**
      * List of MashControl profiles.
      */
@@ -955,7 +956,7 @@ public final class LaunchControl {
             return;
         }
         NodeList timers = config.getChildNodes();
-        timerList = new CopyOnWriteArrayList<>();
+        timerList = new ArrayList<>();
 
         for (int i = 0; i < timers.getLength(); i++) {
             Element tElement = (Element) timers.item(i);
@@ -968,7 +969,7 @@ public final class LaunchControl {
                     // Couldn't parse. Move on.
                 }
             }
-            synchronized (timerList) {
+            synchronized (timerLock) {
                 timerList.add(temp);
             }
         }
@@ -1086,7 +1087,7 @@ public final class LaunchControl {
      */
     public static boolean addTimer(final String name, final String mode) {
         // Mode is a placeholder for now
-        synchronized (timerList) {
+        synchronized (timerLock) {
             if (LaunchControl.findTimer(name) != null) {
                 return false;
             }
@@ -1294,7 +1295,7 @@ public final class LaunchControl {
 
             while (iterator.hasNext()) {
                 tSwitch = iterator.next();
-                if (tSwitch.getName().equalsIgnoreCase(name)) {
+                if (tSwitch.getName().equalsIgnoreCase(name) || tSwitch.getNodeName().equalsIgnoreCase(name)) {
                     iterator.remove();
                     return;
                 }
@@ -1312,7 +1313,7 @@ public final class LaunchControl {
      */
     public static Timer findTimer(final String name) {
         // search based on the input name
-        synchronized (timerList) {
+        synchronized (timerLock) {
             Iterator<Timer> iterator = timerList.iterator();
             Timer tTimer;
             while (iterator.hasNext()) {
@@ -1333,7 +1334,7 @@ public final class LaunchControl {
      */
     public static void deleteTimer(final String name) {
         // search based on the input name
-        synchronized (timerList) {
+        synchronized (timerLock) {
             Iterator<Timer> iterator = timerList.iterator();
             Timer tTimer;
             while (iterator.hasNext()) {
@@ -1834,7 +1835,7 @@ public final class LaunchControl {
                 childTimer = timersElement.getFirstChild();
             }
 
-            synchronized (timerList) {
+            synchronized (timerLock) {
                 for (Timer t : timerList) {
                     Element timerElement = getFirstElementByXpath(null,
                             "/elsinore/timers/timer[@id='" + t + "']");
@@ -2913,7 +2914,7 @@ public final class LaunchControl {
      *
      * @return The current list of timers.
      */
-    public static CopyOnWriteArrayList<Timer> getTimerList() {
+    public static ArrayList<Timer> getTimerList() {
         return timerList;
     }
 
@@ -3160,7 +3161,9 @@ public final class LaunchControl {
      */
     public static void deletePID(PID tPID) {
         tPID.stop();
-        pidList.remove(tPID);
+        synchronized(timerLock) {
+            pidList.remove(tPID);
+        }
     }
 
     /**
@@ -3335,5 +3338,17 @@ public final class LaunchControl {
 
         }
         return false;
+    }
+
+    public static void sortTimers() {
+        synchronized (LaunchControl.timerLock) {
+            Collections.sort(LaunchControl.timerList);
+        }
+    }
+
+    public static void sortDevices() {
+        synchronized (LaunchControl.timerLock) {
+            Collections.sort(LaunchControl.tempList);
+        }
     }
 }

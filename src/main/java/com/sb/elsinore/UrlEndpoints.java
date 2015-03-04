@@ -1509,6 +1509,7 @@ public class UrlEndpoints {
                         + " as an integer");
             }
         }
+        LaunchControl.sortTimers();
         return new Response(Response.Status.OK,
                 MIME_TYPES.get("json"), usage.toJSONString());
     }
@@ -2082,9 +2083,7 @@ public class UrlEndpoints {
                     + mEntry.getKey() + ": " + mEntry.getValue());
             }
         }
-        synchronized (LaunchControl.timerList) {
-            Collections.sort(LaunchControl.tempList);
-        }
+        LaunchControl.sortDevices();
         return new Response(Status.OK, MIME_TYPES.get("json"),
                 usage.toJSONString());
     }

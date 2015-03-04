@@ -28,12 +28,7 @@ public class PIDComponent implements Renderable {
 
         html.div(
                 id(name).class_(
-                        "col-md-2 holo-content controller panel panel-primary pid")
-                        .draggable("true")
-                        .onDragstart("dragDevice(event);")
-                        .onDrop("dropDevice(event);")
-                        .onDragover("allowDropDevice(event);")
-                        .onDragleave("leaveDevice(event);"))
+                        "col-md-2 holo-content controller panel panel-primary pid"))
                 .script()
                 .write(TempComponent.getGaugeScript(name), false)
                 ._script()

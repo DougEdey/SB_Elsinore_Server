@@ -19,11 +19,7 @@ public class PhSensorComponent implements Renderable {
     }
     @Override
     public void renderOn(HtmlCanvas html) throws IOException {
-        html.div(id("div-" + phSensor).class_("PhSensor_wrapper")
-                .onDragstart("dragPhSensor(event);").draggable("true")
-                .onDrop("dropPhSensor(event);")
-                .onDragover("allowDropTimer(event);")
-                .onDragleave("leavePhSensor(event);"))
+        html.div(id("div-" + phSensor).class_("PhSensor_wrapper"))
             .div(class_("phSensorName holo"))
                 .write(phSensor.toString())
             ._div()
