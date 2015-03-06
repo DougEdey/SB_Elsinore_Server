@@ -500,7 +500,7 @@ public class StatusRecorder implements Runnable {
                     while ((line = reader.readLine()) != null && count < size) {
                         // Each line contains the timestamp and the value
                         lArray = line.split(",");
-                        xArray.add(BrewDay.sFormat
+                        xArray.add(BrewDay.mFormat
                                         .format(new Date(Long.parseLong(lArray[0])))
                         );
                         dataArray.add(lArray[1].trim());
@@ -508,7 +508,7 @@ public class StatusRecorder implements Runnable {
                     }
 
                     if (lArray != null && Long.parseLong(lArray[0]) != currentTime) {
-                        xArray.add(BrewDay.sFormat
+                        xArray.add(BrewDay.mFormat
                                 .format(new Date(currentTime)));
                         dataArray.add(lArray[1].trim());
                     }
@@ -541,7 +541,7 @@ public class StatusRecorder implements Runnable {
 
         dataContent.put("xs", xsData);
         dataContent.put("axes", axes);
-        dataContent.put("xFormat", "%H:%M:%S");
+        dataContent.put("xFormat", "%Y/%m/%d %H:%M:%S%Z");
 
         // DO the colours manually
         JSONObject colorContent = new JSONObject();

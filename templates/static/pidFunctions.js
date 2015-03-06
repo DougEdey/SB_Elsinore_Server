@@ -2344,7 +2344,7 @@ function embedGraph(vessel) {
 				series["size"]["height"] = 150;
 				series["zoom"] = {};
 				series["zoom"]["enabled"] = true;
-				series["axis"]["y"]["tick"] = {}
+				series["axis"]["y"]["tick"] = {};
 				series["axis"]["y"]["tick"]["format"] = function(d) { return parseFloat(d).toFixed(2);}
 				chart = c3.generate(series);
 			} else {
