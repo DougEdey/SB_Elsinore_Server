@@ -29,7 +29,7 @@ public final class BrewDay {
     /**
      * The Map of timers for the dates.
      */
-    private Map<String, Object> timers = new ConcurrentHashMap<String, Object>();
+    private Map<String, Object> timers = new ConcurrentHashMap<>();
 
     // generate the date time parameters
     /**
@@ -124,7 +124,7 @@ public final class BrewDay {
                 .get(name);
 
         if (timerElements == null) {
-            timerElements = new HashMap<String, Date>();
+            timerElements = new HashMap<>();
         }
         
         timerElements.put(timerData.getKey(), timerData.getValue());
@@ -140,7 +140,7 @@ public final class BrewDay {
      *            The start time string to set.
      */
     public void startTimer(final String name, final String startIn) {
-        Date startDate = null;
+        Date startDate;
         try {
             Long startTime = Long.parseLong(startIn);
             // If it's 0 we start now. If it's anything else it's a count down.
@@ -153,7 +153,7 @@ public final class BrewDay {
         }
 
         Entry<String, Date> startEntry =
-                new AbstractMap.SimpleEntry<String, Date>("start", startDate);
+                new AbstractMap.SimpleEntry<>("start", startDate);
         setTimer(name, startEntry);
     }
 
@@ -165,7 +165,11 @@ public final class BrewDay {
      * @param stopIn
      *            The stop time as a string
      */
-    public void stopTimer(final String name, final String stopIn) {
+    public void stopTimer(String name, String stopIn) {
+        stopTimer(name, parseDateString(stopIn));
+    }
+
+    public void stopTimer(String name, Date stopIn) {
         HashMap<String, Date> valueEntry = (HashMap<String, Date>) timers.get(name);
         if (valueEntry == null) {
             LaunchControl.setMessage("Could not stop timer " + name);
@@ -176,8 +180,8 @@ public final class BrewDay {
             // Continue the timer
             continueTimer(name);
         } else {
-            Entry<String, Date> stopEntry = new AbstractMap.SimpleEntry<String, Date>(
-                    "end", parseDateString(stopIn));
+            Entry<String, Date> stopEntry = new AbstractMap.SimpleEntry<>(
+                    "end", stopIn);
             setTimer(name, stopEntry);
         }
     }
@@ -195,18 +199,18 @@ public final class BrewDay {
 
         startDate = new Date(Calendar.getInstance().getTimeInMillis() - current);
 
-        Entry<String, Date> stopEntry = new AbstractMap.SimpleEntry<String, Date>(
+        Entry<String, Date> stopEntry = new AbstractMap.SimpleEntry<>(
                 "end", null);
         setTimer(name, stopEntry);
-        Entry<String, Date> startEntry = new AbstractMap.SimpleEntry<String, Date>(
+        Entry<String, Date> startEntry = new AbstractMap.SimpleEntry<>(
                 "start", startDate);
         setTimer(name, startEntry);
     }
     
     public void resetTimer(String name) {
-        Entry<String, Date> startEntry = new AbstractMap.SimpleEntry<String, Date>(
+        Entry<String, Date> startEntry = new AbstractMap.SimpleEntry<>(
                 "start", null);
-        Entry<String, Date> stopEntry = new AbstractMap.SimpleEntry<String, Date>(
+        Entry<String, Date> stopEntry = new AbstractMap.SimpleEntry<>(
                 "end", null);
         setTimer(name, startEntry);
         setTimer(name, stopEntry);
@@ -277,7 +281,7 @@ public final class BrewDay {
 
         Iterator<Entry<String, Object>> it = timers.entrySet().iterator();
 
-        Entry<String, Object> e = null;
+        Entry<String, Object> e;
         Date currentDate = Calendar.getInstance().getTime();
 
         while (it.hasNext()) {
@@ -287,8 +291,6 @@ public final class BrewDay {
                 // iterate the child hash map
                 HashMap<String, Date> valueEntry = (HashMap<String, Date>) e
                         .getValue();
-                Iterator<Entry<String, Date>> dateIt = valueEntry.entrySet()
-                        .iterator();
 
                 // get the Timer Name Object
                 JSONObject timerJSON = new JSONObject();

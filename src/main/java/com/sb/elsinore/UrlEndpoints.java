@@ -1539,7 +1539,11 @@ public class UrlEndpoints {
             } else if (e.getKey().endsWith("End")) {
                 int trimEnd = e.getKey().length() - "End".length();
                 String name = e.getKey().substring(0, trimEnd);
-                brewDay.stopTimer(name, e.getValue());
+                if (e.getValue().equals("null")) {
+                    brewDay.stopTimer(name, new Date());
+                } else {
+                    brewDay.stopTimer(name, e.getValue());
+                }
             } else if (e.getKey().endsWith("Reset")) {
                 int trimEnd = e.getKey().length() - "Reset".length();
                 String name = e.getKey().substring(0, trimEnd);
