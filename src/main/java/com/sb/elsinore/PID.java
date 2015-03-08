@@ -1,15 +1,13 @@
 package com.sb.elsinore;
 import com.sb.elsinore.devices.OutputDevice;
 import com.sb.util.MathUtil;
-
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
@@ -157,7 +155,6 @@ public final class PID implements Runnable {
         BrewServer.LOG.info(this.heatSetting.proportional + ": "
             + heatSetting.integral + ": " + this.heatSetting.derivative);
         LaunchControl.savePID(this);
-        return;
     }
 
     /****
@@ -250,30 +247,35 @@ public final class PID implements Runnable {
                         tempList.add(fTemp.getTemp());
                         BigDecimal tempAvg = calcAverage();
                         // we have the current temperature
-                        if (mode.equals("auto")) {
-                            this.calculatedDuty =
-                                calculate(tempAvg, true);
-                            BrewServer.LOG.info(
-                                    "Calculated: " + calculatedDuty);
-                            if (this.outputControl.setDuty(calculatedDuty)) {
+                        switch (mode) {
+                            case "auto":
+                                this.calculatedDuty =
+                                        calculate(tempAvg);
+                                BrewServer.LOG.info(
+                                        "Calculated: " + calculatedDuty);
+                                if (this.outputControl.setDuty(calculatedDuty)) {
+                                    this.outputControl.getHeater().setCycleTime(
+                                            heatSetting.cycle_time);
+                                    this.outputThread.interrupt();
+                                }
+                                break;
+                            case "manual":
+                                if (this.outputControl.setDuty(this.manual_duty)) {
+                                    this.outputControl.getHeater().setCycleTime(
+                                            this.manual_time);
+                                    this.outputThread.interrupt();
+                                }
+                                break;
+                            case "off":
+                                this.outputControl.setDuty(BigDecimal.ZERO);
                                 this.outputControl.getHeater().setCycleTime(
                                         heatSetting.cycle_time);
                                 this.outputThread.interrupt();
-                            }
-                        } else if (mode.equals("manual")) {
-                            if (this.outputControl.setDuty(this.manual_duty)) {
-                                this.outputControl.getHeater().setCycleTime(
-                                    this.manual_time);
+                                break;
+                            case "hysteria":
+                                setHysteria();
                                 this.outputThread.interrupt();
-                            }
-                        } else if (mode.equals("off")) {
-                            this.outputControl.setDuty(BigDecimal.ZERO);
-                            this.outputControl.getHeater().setCycleTime(
-                                    heatSetting.cycle_time);
-                            this.outputThread.interrupt();
-                        } else if (mode.equals("hysteria")) {
-                            setHysteria();
-                            this.outputThread.interrupt();
+                                break;
                         }
                         BrewServer.LOG.info(mode + ": " + fName + " status: "
                             + fTempF + " duty cycle: "
@@ -285,7 +287,8 @@ public final class PID implements Runnable {
                 //pause execution for a second
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
-                System.err.println(ex);
+                BrewServer.LOG.warning("PID " + getName() + " Interrupted.");
+                ex.printStackTrace();
                 Thread.currentThread().interrupt();
             }
         }
@@ -608,13 +611,9 @@ public final class PID implements Runnable {
     }
 
     /**
-     * the current status.
-     */
-    private boolean fStatus = false;
-    /**
      * The current temperature Object.
      */
-    private Temp fTemp;
+    private final Temp fTemp;
     /**
      * The current temperature in F and C.
      */
@@ -626,7 +625,7 @@ public final class PID implements Runnable {
     /**
      * The previous five temperature readings.
      */
-    private List<BigDecimal> tempList = new ArrayList<BigDecimal>();
+    private List<BigDecimal> tempList = new ArrayList<>();
 
     /**
      * Various strings.
@@ -648,10 +647,6 @@ public final class PID implements Runnable {
      */
     private OutPin auxPin = null;
 
-    /**
-     *  Temp values for PID calculation.
-     */
-    private BigDecimal error = new BigDecimal(0.0);
     private BigDecimal totalError = new BigDecimal(0.0);
     private BigDecimal errorFactor = new BigDecimal(0.0);
     /**
@@ -666,10 +661,6 @@ public final class PID implements Runnable {
      *  Temp values for PID calculation.
      */
     private BigDecimal derivativeFactor = new BigDecimal(0.0);
-    /**
-     *  Temp values for PID calculation.
-     */
-    private BigDecimal output = new BigDecimal(0.0);
 
     /**
      * @return Get the current temp probe (for saving)
@@ -681,11 +672,9 @@ public final class PID implements Runnable {
     /*****
      * Calculate the current PID Duty.
      * @param avgTemp The current average temperature
-     * @param enable  Enable the output
      * @return  A Double of the duty cycle %
      */
-    private BigDecimal calculate(final BigDecimal avgTemp,
-            final boolean enable) {
+    private BigDecimal calculate(BigDecimal avgTemp) {
         this.currentTime = new BigDecimal(System.currentTimeMillis());
         if (previousTime.compareTo(BigDecimal.ZERO) == 0) {
             previousTime = currentTime;
@@ -697,26 +686,32 @@ public final class PID implements Runnable {
         }
 
         // Calculate the error
-        this.error = this.set_point.subtract(avgTemp);
+        /*
+       Temp values for PID calculation.
+     */
+        BigDecimal error = this.set_point.subtract(avgTemp);
 
-        if ((this.totalError.add(this.error).multiply(
+        if ((this.totalError.add(error).multiply(
                 this.integralFactor).compareTo(new BigDecimal(100)) < 0)
-                && (this.totalError.add(this.error).multiply(
+                && (this.totalError.add(error).multiply(
                         this.integralFactor).compareTo(new BigDecimal(0)) > 0))
         {
-            this.totalError = this.totalError.add(this.error);
+            this.totalError = this.totalError.add(error);
         }
 
-        this.heatSetting.proportional.multiply(this.error).add(
+        this.heatSetting.proportional.multiply(error).add(
                 heatSetting.integral.multiply(this.totalError)).add(
                         heatSetting.derivative.multiply(
-                                this.error.subtract(this.previousError)));
+                                error.subtract(this.previousError)));
 
         BrewServer.LOG.info("DT: " + dt + " Error: " + errorFactor
             + " integral: " + integralFactor
             + " derivative: " + derivativeFactor);
 
-        this.output = heatSetting.proportional.multiply(this.error)
+        /*
+       Temp values for PID calculation.
+     */
+        BigDecimal output = heatSetting.proportional.multiply(error)
                 .add(heatSetting.integral.multiply(integralFactor))
                 .add(heatSetting.derivative.multiply(derivativeFactor));
 
@@ -731,13 +726,13 @@ public final class PID implements Runnable {
         }
 
         if (output.compareTo(new BigDecimal(100)) > 0) {
-            this.output = new BigDecimal(100);
+            output = new BigDecimal(100);
         } else if (output.compareTo(new BigDecimal(-100)) < 0) {
-            this.output = new BigDecimal(-100);
+            output = new BigDecimal(-100);
         }
 
         this.previousTime = currentTime;
-        return this.output;
+        return output;
     }
 
     /**
@@ -769,6 +764,7 @@ public final class PID implements Runnable {
      * @param i the integral value
      * @param d the differential value
      */
+    @SuppressWarnings("unused")
     public void setCool(final String gpio, final BigDecimal duty,
             final BigDecimal delay, final BigDecimal cycle, final BigDecimal p,
             final BigDecimal i, final BigDecimal d) {
@@ -795,7 +791,7 @@ public final class PID implements Runnable {
      * @return The current status as a map
      */
     public Map<String, Object> getMapStatus() {
-        Map<String, Object> statusMap = new HashMap<String, Object>();
+        Map<String, Object> statusMap = new HashMap<>();
         statusMap.put("mode", getMode());
         // hack to get the real duty out
         if (getMode().contains("auto")) {
@@ -803,7 +799,7 @@ public final class PID implements Runnable {
         }
 
         // The Heat settings
-        Map<String, Object> heatMap = new HashMap<String, Object>();
+        Map<String, Object> heatMap = new HashMap<>();
         heatMap.put("cycle", getHeatCycle());
         heatMap.put("p", getHeatP());
         heatMap.put("i", getHeatI());
@@ -813,7 +809,7 @@ public final class PID implements Runnable {
         statusMap.put("heat", heatMap);
 
         // The cool settings
-        Map<String, Object> coolMap = new HashMap<String, Object>();
+        Map<String, Object> coolMap = new HashMap<>();
         coolMap.put("cycle", getCoolCycle());
         coolMap.put("p", getCoolP());
         coolMap.put("i", getCoolI());

@@ -25,6 +25,7 @@
 package ca.strangebrew.recipe;
 
 import com.sb.common.SBStringUtils;
+import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.Messages;
 import com.sb.elsinore.Temp;
 import com.sb.elsinore.TriggerControl;
@@ -1375,7 +1376,9 @@ public class Recipe {
             }
 
             aveOg = 1 + (((estOg - 1) + ((estOg - 1) / (adjPreSize / getPostBoilVol(Quantity.GAL)))) / 2);
-
+            double hopsUtil = 1.65 * Math.pow(0.000125, aveOg - 1);
+            ibuHopUtil = hopsUtil * (1 - Math.exp(-0.04*time)) / 4.15;
+            BrewServer.LOG.warning(String.format("IBU Util: %.2f, OG: %.3f, adjPreSize: %.2f", ibuHopUtil, aveOg, adjPreSize));
             switch (ibuCalcMethod) {
                 case BrewCalcs.TINSETH:
                     hop.setIBU(BrewCalcs.calcTinseth(hop.getAmountAs(Quantity.OZ), getPostBoilVol(Quantity.GAL), aveOg, time, hop
@@ -1390,9 +1393,11 @@ public class Recipe {
                             getPreBoilVol(Quantity.GAL), 1, hop.getAlpha()));
                     break;
             }
+            BrewServer.LOG.warning("Precalc: " + hop.getIBU());
             if (hop.getType().equalsIgnoreCase(Hop.PELLET)) {
                 hop.setIBU(hop.getIBU() * (1.0 + (getPelletHopPct() / 100)));
             }
+            BrewServer.LOG.warning("Postcalc: " + hop.getIBU());
 
             ibuTotal += hop.getIBU();
 

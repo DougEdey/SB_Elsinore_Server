@@ -9,10 +9,8 @@ import com.sb.elsinore.Temp;
 
 public class TempComponent implements Renderable {
     public static String lineSep = System.getProperty("line.separator");
-    private Temp temp = null;
-    
-    public TempComponent(Temp temp) {
-        this.temp = temp;
+
+    public TempComponent() {
     }
     @Override
     public void renderOn(HtmlCanvas html) throws IOException {

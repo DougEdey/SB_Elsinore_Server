@@ -1,12 +1,11 @@
 package ca.strangebrew.recipe;
 
+import javax.annotation.Nonnull;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-
-import ca.strangebrew.recipe.Quantity.Converter;
 
 /**
  * $Id: Ingredient.java,v 1.8 2012/06/02 19:40:58 dougedey Exp $
@@ -48,12 +47,8 @@ public class Ingredient implements Comparable<Ingredient> {
 	    return false;                                                                                   
 	    else                                                                                            
 	    {                                                                                                                            
-	      Ingredient tmp = (Ingredient)obj;                                                                                                
-	      if(tmp.name.equalsIgnoreCase(this.name)){	    	  
-	       return true;                            
-	      }
-	      else                                                                                          
-	       return false;                                                                                
+	        Ingredient tmp = (Ingredient)obj;
+            return tmp.name.equalsIgnoreCase(this.name);
 	    }                                                                                                                            
 	  }
 	public double getAmountAs(String s){ return amount.getValueAs(s); }
@@ -67,7 +62,8 @@ public class Ingredient implements Comparable<Ingredient> {
 	public String getName(){ return name; }	
 	public String getType(){ return type; }
 	public String getUnits(){ return amount.getUnits(); }
-	
+
+    @SuppressWarnings("unused")
 	public double getCostPerUAs(String to){
 		// current value / new value * cost
 		return costPerU;
@@ -86,25 +82,23 @@ public class Ingredient implements Comparable<Ingredient> {
 	 * Handles a string of the form "d u", where d is a double
 	 * amount, and u is a string of units.  For importing the
 	 * quantity attribute from QBrew xml.
-	 * @param a
+	 * @param a The new units.
 	 */
 	
 	public void setAmountAndUnits(String a){
 		int i = a.indexOf(" ");
 		String d = a.substring(0,i);
 		String u = a.substring(i);
-		Double dAmount = 0.0;
+		Double dAmount;
 		try {
 			NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
 			Number number = format.parse(d.trim());
 		    dAmount = number.doubleValue();
 			
-		} catch (NumberFormatException m) {
-			return;
-		} catch (ParseException e) {
+		} catch (NumberFormatException | ParseException m) {
 			return;
 		}
-		amount.setAmount(dAmount);
+        amount.setAmount(dAmount);
 		amount.setUnits(u.trim());
 	}
 
@@ -122,15 +116,14 @@ public class Ingredient implements Comparable<Ingredient> {
 			Number number = format.parse(c.trim());
 		    costPerU = number.doubleValue();
 			
-		} catch (NumberFormatException m) {
-		} catch (ParseException e) {
+		} catch (NumberFormatException | ParseException ignored) {
 		}
-	}
+    }
 	public void setDate(String d){ 
 		SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
 		try{
 		    dateBought = df.parse(d);
-		}catch (ParseException p){
+		}catch (ParseException ignored){
 		}
 		
 	}
@@ -154,24 +147,21 @@ public class Ingredient implements Comparable<Ingredient> {
 		return name;
 	}
 
-	public int compareTo(Ingredient i) {
-		int result = this.getName().compareToIgnoreCase(i.getName());				
-		return result;				
+	public int compareTo(@Nonnull Ingredient i) {
+        return this.getName().compareToIgnoreCase(i.getName());
 	}
 
-    public void setInventory(String inventory) {
+    public void setInventory(String inventory) throws ParseException {
         int i = inventory.indexOf(" ");
         String d = inventory.substring(0,i);
         String u = inventory.substring(i);
-        Double dAmount = 0.0;
+        Double dAmount;
         try {
             NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
             Number number = format.parse(d.trim());
             dAmount = number.doubleValue();
 
         } catch (NumberFormatException m) {
-            return;
-        } catch (ParseException e) {
             return;
         }
         this.inventory.setAmount(dAmount);

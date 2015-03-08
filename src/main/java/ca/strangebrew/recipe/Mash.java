@@ -843,8 +843,9 @@ public class Mash {
             if (!stp.type.equals(SPARGE) && (stp.method.equals(FLY) || stp.method.equals(BATCH)))
                 stp.method = INFUSION;
 
+            String tMethod = stp.method.toLowerCase();
             // do calcs
-            if (stp.method.equals(INFUSION)) { // calculate an infusion step
+            if (tMethod.equals(INFUSION)) { // calculate an infusion step
                 waterEquiv += waterAddedQTS; // add previous addition to get WE
                 double strikeTemp = boilTempF; // boiling water
 
@@ -865,7 +866,7 @@ public class Mash {
                 mashWaterQTS += waterAddedQTS;
                 mashVolQTS += waterAddedQTS;
 
-            } else if (stp.method.contains(DECOCTION)) { // calculate a decoction step
+            } else if (tMethod.contains(DECOCTION)) { // calculate a decoction step
 
                 waterEquiv += waterAddedQTS; // add previous addition to get WE
                 waterAddedQTS = 0;
@@ -887,7 +888,7 @@ public class Mash {
                 stp.directions = "Remove " + SBStringUtils.format(stp.outVol.getValueAs(volUnits), 1) + " " + volUnits
                         + " of mash, boil, and return to mash.";
 
-            } else if (stp.method.equals(DIRECT)) { // calculate a direct heat step
+            } else if (tMethod.equals(DIRECT)) { // calculate a direct heat step
                 waterEquiv += waterAddedQTS; // add previous addition to get WE
                 waterAddedQTS = 0;
                 displTemp = stp.startTemp;
@@ -900,7 +901,7 @@ public class Mash {
                 stp.temp = 0;
                 stp.weightLbs = totalWeightLbs;
 
-            } else if (stp.method.contains(CEREAL_MASH)) { // calculate a cereal mash step
+            } else if (tMethod.contains(CEREAL_MASH)) { // calculate a cereal mash step
                 double mr = stp.getMashRatio();
                 if (stp.getMashRatioU().equalsIgnoreCase(L_PER_KG)) {
                     mr *= 0.479325;

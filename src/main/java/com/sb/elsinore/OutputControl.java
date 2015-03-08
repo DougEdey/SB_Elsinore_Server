@@ -119,8 +119,7 @@ public final class OutputControl implements Runnable {
                  "Could not control the GPIO Pin during loop."
                  + " Did you start as root?");
              e.printStackTrace();
-             return;
-         } catch (InvalidGPIOException e1) {
+        } catch (InvalidGPIOException e1) {
              BrewServer.LOG.warning(e1.getMessage());
              e1.printStackTrace();
          } finally {

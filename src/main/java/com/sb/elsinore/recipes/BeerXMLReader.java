@@ -1,6 +1,7 @@
 package com.sb.elsinore.recipes;
 
 import java.io.File;
+import java.text.ParseException;
 import java.util.ArrayList;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -68,7 +69,7 @@ public class BeerXMLReader {
             recipeDocument = dBuilder.parse(inputFile);
         } catch (Exception e) {
             String output = String.format(
-                "Couldn't read beerXML File at: {0}",
+                "Couldn't read beerXML File at: %1s",
                 inputFile.getAbsolutePath());
             BrewServer.LOG.warning(output);
             LaunchControl.setMessage(output);
@@ -285,16 +286,15 @@ public class BeerXMLReader {
         if (mashProfile != null && mashProfile.hasChildNodes()) {
             parseMashProfile(recipe, mashProfile, xp);
         }
-        recipe.allowRecalcs = true;
-        recipe.calcFermentTotals();
-        recipe.calcHopsTotals();
-        recipe.calcKegPSI();
+        recipe.setAllowRecalcs(true);
         recipe.calcMaltTotals();
+        recipe.calcHopsTotals();
+        recipe.calcFermentTotals();
+        recipe.calcKegPSI();
         recipe.calcPrimeSugar();
         if (recipe.getMash() != null) {
-            //recipe.getMash().calcMashSchedule();
+            recipe.getMash().calcMashSchedule();
         }
-        recipe.setAllowRecalcs(true);
         return recipe;
     }
 
@@ -373,7 +373,11 @@ public class BeerXMLReader {
             }
 
             if (inventory != null && !inventory.equals("")) {
-                hopObject.setInventory(inventory);
+                try {
+                    hopObject.setInventory(inventory);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
             }
             // Everything is OK here, so add it in.
             recipe.addHop(hopObject);
@@ -794,7 +798,7 @@ public class BeerXMLReader {
             double endTemp = getDouble(step, "END_TEMP", xp);
 
             // Add it in
-            Mash.MashStep newStep = mash.addStep(type, stepTemp, endTemp, name, stepTime, rampTime, mash.getTotalMashLbs());
+            Mash.MashStep newStep = mash.addStep(name, stepTemp, endTemp, type, stepTime, rampTime, mash.getTotalMashLbs());
             newStep.setName(name);
             newStep.setInVol(infuseAmount);
             newStep.setDirections(getString(step, "DESCRIPTION", xp));

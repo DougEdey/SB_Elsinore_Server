@@ -85,11 +85,10 @@ public class BrewCalcs {
 	public static double brixToSG(double brix) {
 		// apply the wort correction factor
 		brix = brix/1.04;
-		double sg =((brix)/(258.6-(((brix)/258.2)*227.1))+1);
 		
 	  /*double sg = 1.000898 + 0.003859118*brix +
 	             0.00001370735*brix*brix + 0.00000003742517*brix*brix*brix;*/
-	  return sg;
+	  return ((brix)/(258.6-(((brix)/258.2)*227.1))+1);
 	}
 
 	public static double brixToFG(double ob, double fb){
@@ -97,12 +96,11 @@ public class BrewCalcs {
 		ob = ob/1.04;
 		fb = fb/1.04;
 		// ABV from OB and FB
-		double fg = 1.0000 - 0.00085683*ob + 0.0034941*fb;
 		
 	  /*double fg = 1.001843 - 0.002318474*ob -
 	             0.000007775*ob*ob - 0.000000034*ob*ob*ob +
 	             0.00574*fb + 0.00003344*fb*fb + 0.000000086*fb*fb*fb;*/
-	  return fg;
+	  return 1.0000 - 0.00085683*ob + 0.0034941*fb;
 	}
 
 	public static double SGBrixToABV(double sg, double fb){
@@ -111,8 +109,7 @@ public class BrewCalcs {
 		
 	  double ri  = 1.33302 + 0.001427193*fb + 0.000005791157*fb*fb;
 	  double abw = 1017.5596 - (277.4*sg) + ri*((937.8135*ri) - 1805.1228);
-	  double abv = abw * 1.25;
-	  return abv;
+        return abw * 1.25;
 	}
 	
 	public static double OBFBtoABV(double ob, double fb){
@@ -121,7 +118,7 @@ public class BrewCalcs {
 		double fg = brixToFG(ob, fb);
 		fb = fb/1.04;
 		ob = ob/1.04;
-		double abv = 0.0;
+		double abv;
 		if(fb == 0.0) {
 			abv = ((0.01/0.8192)*((ob)-(0.1808*(ob)+0.8192*(668.72*cubic-463.37-205.347*Math.pow(cubic,2))))/(2.0665-0.010665*(ob)));
 		}
@@ -155,18 +152,16 @@ public class BrewCalcs {
 	public static double dissolvedCO2(double BottleTemp)
 	  {
 	  // returns the amount of dissolved CO2 in beer at BottleTemp
-	   double disCO2 = (1.266789*BottleTemp) + 31.00342576 - (0.0000009243372*
-	        (Math.sqrt((1898155717178L* Math.pow(BottleTemp,2)) +
-	        91762600000000L*BottleTemp + 839352900000000L - 1710565000000L*14.5)));
-	   return disCO2;
+          return (1.266789*BottleTemp) + 31.00342576 - (0.0000009243372*
+               (Math.sqrt((1898155717178L* Math.pow(BottleTemp,2)) +
+               91762600000000L*BottleTemp + 839352900000000L - 1710565000000L*14.5)));
 	  }
 
 	public static double  KegPSI(double Temp, double VolsCO2)
 	{
 	  // returns the PSI needed to carbonate beer at Temp at VolsCO2
-		double PSI = -16.6999 - (0.0101059 * Temp) + (0.00116512 * Math.pow(Temp,2)) + (0.173354 * Temp * VolsCO2)
-	    + (4.24267 * VolsCO2) - (0.0684226 * Math.pow(VolsCO2,2));
-		return PSI;
+        return -16.6999 - (0.0101059 * Temp) + (0.00116512 * Math.pow(Temp,2)) + (0.173354 * Temp * VolsCO2)
++ (4.24267 * VolsCO2) - (0.0684226 * Math.pow(VolsCO2,2));
 	}
 
 	public static double PrimingSugarGL(double DisVolsCO2, double TargetVolsCO2, PrimeSugar sugar)
@@ -378,17 +373,11 @@ public class BrewCalcs {
 	 */
 	static public double calcTinseth(double amount, double size, double sg, double time, double aa,
 			double HopsUtil) {
-		double daautil; // decimal alpha acid utilization
-		double bigness; // bigness factor
-		double boil_fact; // boil time factor
 		double mgl_aaa; // mg/l of added alpha units
 		double ibu;
 
-		bigness = 1.65 * (Math.pow(0.000125, (sg - 1))); // 0.000125 original
-		boil_fact = (1 - (Math.exp(-0.04 * time))) / HopsUtil;
-		daautil = bigness * boil_fact;
 		mgl_aaa = (aa / 100) * amount * 7490 / size;
-		ibu = daautil * mgl_aaa;
+		ibu = HopsUtil * mgl_aaa;
 		return ibu;
 	}
 

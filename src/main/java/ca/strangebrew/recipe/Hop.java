@@ -11,6 +11,8 @@ package ca.strangebrew.recipe;
 import com.sb.common.SBStringUtils;
 import com.sb.elsinore.BrewServer;
 
+import javax.annotation.Nonnull;
+
 public class Hop extends Ingredient implements Comparable<Ingredient> {
 	private double alpha;
 	private String add;
@@ -116,7 +118,7 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
 		return sb.toString();
 	}
 
-	public int compareTo(Ingredient i) {
+	public int compareTo(@Nonnull Ingredient i) {
 		if (i instanceof Hop) {
 			return compareTo((Hop) i);
 		} else {
