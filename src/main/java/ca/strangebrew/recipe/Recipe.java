@@ -93,7 +93,7 @@ public class Recipe {
 	private String hopUnits  = "";
 	private String maltUnits  = "";
 	private String ibuCalcMethod  = "";
-	private double ibuHopUtil = 0.0;
+	private double ibuHopUtil = 1.0;
 	private String evapMethod = "percent";
 	private String alcMethod = BrewCalcs.ALC_BY_VOLUME;
 	private double pelletHopPct = 0.0;
@@ -1376,17 +1376,15 @@ public class Recipe {
             }
 
             aveOg = 1 + (((estOg - 1) + ((estOg - 1) / (adjPreSize / getPostBoilVol(Quantity.GAL)))) / 2);
-            double hopsUtil = 1.65 * Math.pow(0.000125, aveOg - 1);
-            ibuHopUtil = hopsUtil * (1 - Math.exp(-0.04*time)) / 4.15;
             BrewServer.LOG.warning(String.format("IBU Util: %.2f, OG: %.3f, adjPreSize: %.2f", ibuHopUtil, aveOg, adjPreSize));
             switch (ibuCalcMethod) {
                 case BrewCalcs.TINSETH:
-                    hop.setIBU(BrewCalcs.calcTinseth(hop.getAmountAs(Quantity.OZ), getPostBoilVol(Quantity.GAL), aveOg, time, hop
-                            .getAlpha(), ibuHopUtil));
+                    hop.setIBU(BrewCalcs.calcTinseth(hop.getAmountAs(Quantity.OZ), getPostBoilVol(Quantity.GAL), aveOg,
+                            time, hop.getAlpha()));
                     break;
                 case BrewCalcs.RAGER:
-                    hop.setIBU(BrewCalcs.CalcRager(hop.getAmountAs(Quantity.OZ), getPostBoilVol(Quantity.GAL), aveOg, time, hop
-                            .getAlpha()));
+                    hop.setIBU(BrewCalcs.CalcRager(hop.getAmountAs(Quantity.OZ), getPostBoilVol(Quantity.GAL), aveOg,
+                            time, hop.getAlpha()));
                     break;
                 default:
                     hop.setIBU(BrewCalcs.CalcGaretz(hop.getAmountAs(Quantity.OZ), getPostBoilVol(Quantity.GAL), aveOg, time,

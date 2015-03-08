@@ -371,13 +371,18 @@ public class BrewCalcs {
 	/*
 	 * Hop IBU calculation methods:
 	 */
-	static public double calcTinseth(double amount, double size, double sg, double time, double aa,
-			double HopsUtil) {
+	static public double calcTinseth(double amount, double size, double sg, double time, double aa) {
+		double daautil; // decimal alpha acid utilization
+		double bigness; // bigness factor
+		double boil_fact; // boil time factor
 		double mgl_aaa; // mg/l of added alpha units
 		double ibu;
 
+		bigness = 1.65 * (Math.pow(0.000125, (sg - 1))); // 0.000125 original
+		boil_fact = (1 - (Math.exp(-0.04 * time))) / 4.15;
+		daautil = bigness * boil_fact;
 		mgl_aaa = (aa / 100) * amount * 7490 / size;
-		ibu = HopsUtil * mgl_aaa;
+		ibu = daautil * mgl_aaa;
 		return ibu;
 	}
 
