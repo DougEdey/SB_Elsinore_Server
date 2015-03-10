@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/SB_Elsinore_Server.iml" filepath="$PROJECT_DIR$/SB_Elsinore_Server.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../StrangeBrew/StrangeBrew.iml" filepath="$PROJECT_DIR$/../StrangeBrew/StrangeBrew.iml" />
+      <module fileurl="file://$USER_HOME$/git/jGPIO/jGPIO.iml" filepath="$USER_HOME$/git/jGPIO/jGPIO.iml" />
+    </modules>
+  </component>
+</project>
