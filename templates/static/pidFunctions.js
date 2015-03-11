@@ -1137,7 +1137,7 @@ function addSwitch() {
 							+ "<input type='checkbox' name='invert' />" + $.i18n.prop("INVERT_GPIO")
 							+ "</label><br/>"
 							+ "<span id='add-switch' class='btn btn-info modeclass' "
-							+ "onclick='submitNewSwitch(this.form); return false;'>"
+							+ "onclick='submitNewSwitch(this); return false;'>"
 							+ $.i18n.prop("ADD")
 							+ "</span>"
 							+ "<span id='cancel-add-switch' class='btn btn-info modeclass' "
@@ -1152,7 +1152,7 @@ function cancelAddSwitch() {
 	return false;
 }
 
-function submitNewSwitch(form) {
+function submitNewSwitch(element) {
 	form = $(element).closest("form");
     var data = form.serializeObject();
 
