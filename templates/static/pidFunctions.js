@@ -1,3 +1,4 @@
+var triggerSortableIn = 0;
 function getLanguage() {
 	$.ajax({
 		type : 'GET',
@@ -44,13 +45,12 @@ function setup() {
 	});
 
 	$('#logo').fileupload({
-		dataType : 'json',
-		done : function(e, data) {
-			$.each(data.result.files, function(index, file) {
-				$('<p/>').text(file.name).appendTo(document.body);
-			});
-		}
+		dataType : 'json'
 	});
+
+	$('#beerxml').fileupload({
+        dataType : 'json'
+    });
 
 	var temp =$('div[class="center-left"]');
 	
@@ -225,29 +225,21 @@ function waitForMsg() {
 						});
 					}
 
-					if ("pumps" in data) {
-						val = data.pumps;
+					if ("switches" in data) {
+						val = data.switches;
 						$.each(
 							val,
-							function(pumpName, pumpStatus) {
-								// enable or disable the pump as
+							function(switchName, switchStatus) {
+								// enable or disable the switch as
 								// required
-								if (pumpStatus) {
-									jQuery('button[id^="'
-											+ pumpName + '"]')[0].style.background = "red";
-									jQuery('button[id^="'
-											+ pumpName + '"]')[0].innerHTML = pumpName
-											.replace("_", " ")
-											+ " "
-											+ $.i18n.prop("PUMP_ON");
+								if (switchStatus) {
+									$('span[id^="' + switchName + '"]')[0].style.background = "red";
+									$('span[id^="'+ switchName + '"]')[0].innerHTML =
+									    switchName.replace("_", " ")+ " " + $.i18n.prop("SWITCH_ON");
 								} else {
-									jQuery('button[id^="'
-											+ pumpName + '"]')[0].style.background = "#666666";
-									jQuery('button[id^="'
-											+ pumpName + '"]')[0].innerHTML = pumpName
-											.replace("_", " ")
-											+ " "
-											+ $.i18n.prop("PUMP_OFF");
+									$('span[id^="' + switchName + '"]')[0].style.background = "#666666";
+									$('span[id^="' + switchName + '"]')[0].innerHTML =
+									    switchName.replace("_", " ") + " " + $.i18n.prop("SWITCH_OFF");
 								}
 							});
 					}
@@ -255,6 +247,22 @@ function waitForMsg() {
 					if (window.disableUpdates) {
 						return false;
 					}
+
+                    if ("notifications" in data) {
+                        showNotifications(data.notifications);
+                    }
+
+                    if ("recipeCount" in data && data.recipeCount > 1) {
+                        if ($("span[id='selectRecipe']").length == 0) {
+                            window.location.assign(window.location.href);
+                        }
+                    }
+
+                    if ("recipe" in data && data.recipe != "") {
+                        if ($("span[id='showCurrentRecipe']").length == 0) {
+                            window.location.assign(window.location.href);
+                        }
+                    }
 
 					if ("vessels" in data) {
 						val = data.vessels;
@@ -377,9 +385,7 @@ function addTriggerTable(vesselName) {
 
 		table += "<tfoot><tr><td colspan='1'>"
 				+ "<button class='btn btn-success' id='addTrigger-" + vesselName
-				+ "' type='button' onclick='addNewTrigger(this)' "
-				+ "ondrop='dropDeleteTriggerStep(event);' "
-				+ "ondragover='allowDropTriggerStep(event);'>"
+				+ "' type='button' onclick='addNewTrigger(this)'>"
 				+ $.i18n.prop("ADD") + "</button></td>";
 		table += "<td colspan='2'><button class='btn btn-success' id='triggerButton-"
 				+ vesselName
@@ -388,8 +394,7 @@ function addTriggerTable(vesselName) {
 		+"</tbody></table>";
 		table += "<br id='triggerTable" + vesselName + "footer'/>";
 
-		$("#" + vesselName + "-graph_wrapper").after(table);
-
+		$("#" + vesselName + "-volume").before(table);
 	}
 }
 
@@ -443,13 +448,14 @@ function updateTempProbe(vessel, val) {
 	Temp = null;
 
 	// Check for an error message
-	if ("errorMessage" in val) {
-		jQuery("#" + vessel + "-error").text(val.errorMessage);
-		jQuery("#" + vessel + "-error").toggleClass("hidden", false);
-	} else {
-		jQuery("#" + vessel + "-error").toggleClass("hidden", true);
-	}
-
+    if ("error" in val) {
+        if ($("#" + vessel + "-error").text() != val.error) {
+            $("#" + vessel + "-error").text(val.error);
+        }
+        $("#" + vessel + "-error").toggleClass("hidden", false);
+    } else {
+        $("#" + vessel + "-error").toggleClass("hidden", true);
+    }
 }
 
 function updateVolumeStatus(vessel, status) {
@@ -1095,11 +1101,11 @@ function submitForm(form) {
 	return false;
 }
 
-function submitPump(pumpStatus) {
+function submitSwitch(switchStatus) {
 	$.ajax({
-		url : 'updatepump',
+		url : 'updateswitch',
 		type : 'POST',
-		data : "toggle=" + pumpStatus.id,
+		data : "toggle=" + switchStatus.id,
 		success : function(data) {
 			data = null
 		}
@@ -1108,20 +1114,20 @@ function submitPump(pumpStatus) {
 	return false;
 }
 
-function addPump() {
+function addSwitch() {
 	// Is the edit form already displayed
-	var pumpEditForm = $('#pumps-add');
-	if (pumpEditForm.val() != undefined) {
+	var switchEditForm = $('#switches-add');
+	if (switchEditForm.val() != undefined) {
 		return;
 	}
 
-	var pumpDiv = "pumps-titled";
+	var switchDiv = "switches-titled";
 
 	// Insert a couple of new form elements
-	$('#pumps-titled')
+	$('#switches-titled')
 			.append(
-					"<div id='pumps-add'>"
-							+ "<form id='pumps-add-form' name='pumps-add'>"
+					"<div id='switches-add'>"
+							+ "<form id='switches-add-form' name='switches-add'>"
 							+ "<input type='text' name='new_name' id='new_name' value='' placeholder='"
 							+ $.i18n.prop("NAME")
 							+ "'/><br/>"
@@ -1130,39 +1136,41 @@ function addPump() {
 							+ "<label>"
 							+ "<input type='checkbox' name='invert' />" + $.i18n.prop("INVERT_GPIO")
 							+ "</label><br/>"
-							+ "<button id='add-pump' class='btn modeclass' "
-							+ "onclick='submitNewPump(this.form); return false;'>"
+							+ "<span id='add-switch' class='btn btn-info modeclass' "
+							+ "onclick='submitNewSwitch(this); return false;'>"
 							+ $.i18n.prop("ADD")
-							+ "</button>"
-							+ "<button id='cancel-add-pump' class='btn modeclass' "
-							+ "onclick='cancelAddPump(); waitForMsg(); return false;'>"
+							+ "</span>"
+							+ "<span id='cancel-add-switch' class='btn btn-info modeclass' "
+							+ "onclick='cancelAddSwitch(); waitForMsg(); return false;'>"
 							+ $.i18n.prop("" + $.i18n.prop("CANCEL") + "")
-							+ "</button>" + "</form>" + "</div>");
+							+ "</span>" + "</form>" + "</div>");
 	return false;
 }
 
-function cancelAddPump() {
-	$('#pumps-add').empty().remove();
+function cancelAddSwitch() {
+	$('#switches-add').empty().remove();
 	return false;
 }
 
-function submitNewPump(form) {
-	var data = JSON.stringify(jQuery(form).serializeObject());
+function submitNewSwitch(element) {
+	form = $(element).closest("form");
+    var data = form.serializeObject();
 
-	if (form["new_name"].value == null || form["new_name"].value == "") {
-		alert($.i18n.prop("PUMPNAMEBLANK"));
+    if (form.find("[name=new_name]").val() == "") {
+		alert($.i18n.prop("SWITCHNAMEBLANK"));
 		return false;
 	}
 
-	if (form["new_gpio"].value == null || form["new_gpio"].value == "") {
+	if (form.find("[name=new_gpio]").val() == "") {
 		alert($.i18n.prop("GPIO_BLANK"));
 		return false;
 	}
 
 	$.ajax({
-		url : 'addpump',
+		url : 'addswitch',
 		type : 'POST',
 		data : data,
+		dataType: "json",
 		success : function(data) {
 			data = null
 		}
@@ -1181,21 +1189,20 @@ function addTimer() {
 	}
 
 	// Insert a couple of new form elements
-	$('#timers > .panel > .title')
-			.append(
-					"<div id='timer-add'>"
-							+ "<form id='timer-add-form' name='timer-add'>"
-							+ "<input type='text' name='new_name' id='new_name' value='' placeholder='"
-							+ $.i18n.prop("NAME")
-							+ "' /><br/>"
-							+ "<button id='add-timer' class='btn modeclass' "
-							+ "onclick='submitNewTimer(this.form); return false;'>"
-							+ $.i18n.prop("ADD")
-							+ "</button>"
-							+ "<button id='cancel-add-timer' class='btn modeclass' "
-							+ "onclick='cancelAddTimer(); waitForMsg(); return false;'>"
-							+ $.i18n.prop("CANCEL") + "</button>" + "</form>"
-							+ "</div>");
+	$('#timers > .panel > .title').append(
+                "<div id='timer-add'>"
+                + "<form id='timer-add-form' name='timer-add'>"
+                + "<input type='text' name='new_name' id='new_name' value='' placeholder='"
+                + $.i18n.prop("NAME")
+                + "' /><br/>"
+                + "<span id='add-timer' class='btn btn-info modeclass' "
+                + "onclick='submitNewTimer(this); return false;'>"
+                + $.i18n.prop("ADD")
+                + "</span>"
+                + "<span id='cancel-add-timer' class='btn btn-info modeclass' "
+                + "onclick='cancelAddTimer(); waitForMsg(); return false;'>"
+                + $.i18n.prop("CANCEL") + "</span>" + "</form>"
+                + "</div>");
 	return false;
 
 }
@@ -1205,10 +1212,11 @@ function cancelAddTimer() {
 	return false;
 }
 
-function submitNewTimer(form) {
-	var data = JSON.stringify(jQuery(form).serializeObject());
+function submitNewTimer(element) {
+    form = $(element).closest("form");
+	var data = form.serializeObject();
 
-	if (form["new_name"].value == null || form["new_name"].value == "") {
+	if (form.find("[name=new_name]").val() == "") {
 		alert($.i18n.prop("TIMERNAMEBLANK"));
 		return false;
 	}
@@ -1322,7 +1330,7 @@ function updateTriggerStep(element) {
 
 function editTriggerStep(element) {
 	var probename = $(element).closest("[id^=triggerTable]")[0].id.replace("triggerTable", "");
-	var position = element.id.substring(element.id.indexOf("-")+1);
+	var position = element.id.substring(element.id.indexOf("_")+1);
 	// Insert a couple of new form elements
 	var tempUnit = $("#" + probename + " div >div >div[id='tempUnit']")[0].textContent;
 	var $tr = $(element);
@@ -1428,7 +1436,7 @@ function toggleDiv(id) {
 function setTimer(button, stage) {
 	// get the current Datestamp
 	var curDate = moment().format("YYYY/MM/DDTHH:mm:ssZZ")
-	if (button.innerText == $.i18n.prop("START")) {
+	if (button.innerHTML.trim() == $.i18n.prop("START")) {
 		$("#" + stage).toggleClass("hidden", true);
 		$("#" + stage + "Timer").toggleClass("hidden", false);
 		formdata = stage + "Start=" + 0;
@@ -1440,7 +1448,7 @@ function setTimer(button, stage) {
 		}
 		$("#" + stage).toggleClass("hidden", false);
 		$("#" + stage + "Timer").toggleClass("hidden", true);
-		formdata = stage + "End=" + curDate;
+		formdata = stage + "End=null";
 	}
 
 	formdata += "&updated=" + curDate;
@@ -1540,14 +1548,10 @@ function addTriggerStep(triggerStep, triggerData, pid) {
 		triggerStep = triggerData['index'];
 	}
 
-	var triggerStepRow = $("#triggerRow" + pid + "-" + triggerStep);
+	var triggerStepRow = $("#triggerRow" + pid + "_" + triggerStep);
 	if (triggerStepRow.length == 0) {
 		// Add a new row to the Mash Table
-		tableRow = "<tr id='triggerRow" + pid + "-" + triggerStep + "'"
-				+ " ondragstart='dragTriggerStep(event);' draggable='true'"
-				+ " ondrop='dropTriggerStep(event);'"
-				+ " ondragover='allowDropTriggerStep(event);'"
-				+ " ondblclick='editTriggerStep(this);' >"
+		tableRow = "<tr id='triggerRow" + pid + "_" + triggerStep + "' ondblclick='editTriggerStep(this);'>"
 		tableRow += ("<td>" + triggerData['start'] + "</td>");
 		tableRow += ("<td>" + triggerData['description'] + "</td>");
 		tableRow += ("<td>" + triggerData['target'] + "</td>");
@@ -1759,414 +1763,6 @@ var buildMultipart = function(data) {
 	};
 };
 
-/*******************************************************************************
- * Drag And Drop functionality *
- ******************************************************************************/
-function dragDevice(ev) {
-	ev.dataTransfer.setData("devicename", ev.target.id);
-}
-
-function dropDevice(ev) {
-	ev.preventDefault();
-
-	var timer = ev.target;
-	if (timer.className != "pump_wrapper") {
-		timer = ev.target.parentElement;
-	}
-
-	timer.style.border = "1px solid white";
-
-	var devName = ev.dataTransfer.getData("devicename");
-	var refNode = $(ev.target).closest(".panel-primary");
-	refNode.before(document.getElementById(devName),
-			refNode);
-
-	var newOrder = "";
-	$("[id=Probes]").children().each(function(index) {
-		var divID = this.id;
-		newOrder += divID + "=" + index + "&";
-	});
-	
-	$.ajax({
-		url : 'reorderprobes',
-		type : 'POST',
-		data : newOrder,
-		success : function(data) {
-			data = null
-		}
-	});
-
-	// DONE!
-}
-
-function allowDropDevice(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.className != "pump_wrapper") {
-		timer = ev.target.parentElement;
-	}
-	timer.style.border = "1px dashed black";
-}
-
-function leaveDevice(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.className != "pump_wrapper") {
-		timer = ev.target.parentElement;
-	}
-
-	timer.style.border = "1px solid white";
-}
-
-// End Devices
-
-function dragPump(ev) {
-	ev.dataTransfer.setData("pumpname", ev.target.childNodes[0].id);
-	$('#NewPump')[0].innerHTML = $.i18n.prop("DELETE_PUMP");
-}
-
-function dropPump(ev) {
-	ev.preventDefault();
-
-	var timer = ev.target;
-	if (timer.id != "NewPump") {
-		if (timer.className != "pump_wrapper") {
-			timer = ev.target.parentElement;
-		}
-
-		timer.style.border = "1px solid white";
-	}
-
-	var pumpName = ev.dataTransfer.getData("pumpname");
-
-	if (pumpName.lastIndexOf("div-") != 0) {
-		pumpName = "div-" + pumpName;
-	}
-
-	var refNode = ev.target.parentElement;
-	refNode.parentNode.insertBefore(document.getElementById(pumpName),
-			refNode);
-
-	// TODO: Update the server with the new location
-	var newOrder = "";
-	$("[id^='div-Pump']").each(function(index) {
-		var divID = this.id;
-
-		if (divID.lastIndexOf('div-') == 0) {
-			divID = divID.substring(4);
-		}
-
-		newOrder += divID + "=" + index + "&";
-	});
-	$('#NewPump')[0].innerHTML = $.i18n.prop("NEW_PUMP");
-	$.ajax({
-		url : 'updatePumpOrder',
-		type : 'POST',
-		data : newOrder,
-		success : function(data) {
-			data = null
-		}
-	});
-
-	// DONE!
-}
-
-function allowDropPump(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.id == "NewPump") {
-		return;
-	}
-
-	if (timer.className != "pump_wrapper") {
-		timer = ev.target.parentElement;
-	}
-
-	timer.style.border = "1px dashed black";
-}
-
-function dropDeletePump(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.id != "NewPump") {
-		if (timer.className != "pump_wrapper") {
-			timer = ev.target.parentElement;
-		}
-
-		timer.style.border = "1px solid white";
-	}
-
-	var pumpName = ev.dataTransfer.getData("pumpname").replace(" ", "_");
-
-	if (pumpName.lastIndexOf("div-") != 0) {
-		basePumpName = pumpName;
-		pumpName = "div-" + pumpName;
-	}
-
-	$('[id="' + pumpName + '"]').empty().remove();
-
-	var newOrder = "name=" + basePumpName;
-	$('#NewPump')[0].innerHTML = $.i18n.prop("NEW_PUMP");
-	$.ajax({
-		url : 'deletePump',
-		type : 'POST',
-		data : newOrder,
-		success : function(data) {
-			data = null
-		}
-	});
-}
-
-function leavePump(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.id == "NewPump") {
-		return;
-	}
-	if (timer.className != "pump_wrapper") {
-		timer = ev.target.parentElement;
-	}
-
-	timer.style.border = "1px solid white";
-}
-
-// END OF PUMPS
-
-function dragTimer(ev) {
-	ev.dataTransfer.setData("timername", ev.target.childNodes[1].id);
-	$('#NewTimer')[0].innerHTML = $.i18n.prop("DELETE_TIMER");
-}
-
-function dropTimer(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.id != "NewTimer") {
-		if (timer.className != "timer_wrapper") {
-			timer = ev.target.parentElement;
-		}
-
-		timer.style.border = "1px solid white";
-	}
-	var timerName = ev.dataTransfer.getData("timername");
-
-	if (timerName.lastIndexOf("div-") != 0) {
-		timerName = "div-" + timerName;
-	}
-
-	var refNode = ev.target.parentElement;
-	refNode.parentNode.insertBefore(document.getElementById(timerName),
-			refNode);
-
-	// TODO: Update the server with the new location
-	var newOrder = "";
-	$("div[id='timers'] > .panel > .panel-body > div").each(function(index) {
-		// this.style.border = "1px dashed black";
-		var divID = this.id;
-
-		if (divID.lastIndexOf('div-') == 0) {
-			divID = divID.substring(4);
-		}
-
-		newOrder += divID + "=" + index + "&";
-	});
-	$('#NewTimer')[0].innerHTML = $.i18n.prop("NEW_TIMER");
-	$.ajax({
-		url : 'updateTimerOrder',
-		type : 'POST',
-		data : newOrder,
-		success : function(data) {
-			data = null
-		}
-	});
-
-	// DONE!
-}
-
-function allowDropTimer(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.id == "NewTimer") {
-		return;
-	}
-
-	if (timer.className != "timer_wrapper") {
-		timer = ev.target.parentElement;
-	}
-
-	timer.style.border = "1px dashed black";
-}
-
-function leaveTimer(ev) {
-	ev.preventDefault();
-	var timer = ev.target;
-	if (timer.id == "NewTimer") {
-		return;
-	}
-	if (timer.className != "timer_wrapper") {
-		timer = ev.target.parentElement;
-	}
-
-	timer.style.border = "1px solid white";
-}
-
-function dropDeleteTimer(ev) {
-	ev.preventDefault();
-	var timerName = ev.dataTransfer.getData("timername");
-
-	if (timerName.lastIndexOf("div-") != 0) {
-		baseTimerName = timerName;
-		timerName = "div-" + timerName;
-	}
-
-	$('[id="' + timerName + '"]').empty().remove();
-	var newOrder = "name=" + baseTimerName;
-
-	$('#NewTimer')[0].innerHTML = $.i18n.prop("NEW_TIMER");
-	$.ajax({
-		url : 'deleteTimer',
-		type : 'POST',
-		data : newOrder,
-		success : function(data) {
-			data = null
-		}
-	});
-}
-
-// END OF TIMERS
-
-// Start of Ph Sensors 
-function dragPhSensor(ev) {
-	ev.dataTransfer.setData("sensorname", ev.target.id);
-	$('#NewPhSensor')[0].innerHTML = $.i18n.prop("DELETE_PHSENSOR");
-}
-
-function allowDropPhSensor(ev) {
-	ev.preventDefault();
-	return;
-}
-
-function leavePhSensor(ev) {
-	ev.preventDefault();
-	return;
-}
-
-function dropDeletePhSensor(ev) {
-	ev.preventDefault();
-	var sensorName = ev.dataTransfer.getData("sensorname");
-
-	if (sensorName.lastIndexOf("div-") != 0) {
-		var baseSensorName = sensorName;
-		sensorName = "div-" + sensorName;
-	} else {
-		var baseSensorName = sensorName.substring(4);
-	}
-	
-
-	$('[id="' + sensorName + '"]').empty().remove();
-	var newOrder = "name=" + baseSensorName;
-
-	$('#NewPhSensor')[0].innerHTML = $.i18n.prop("NEW_PHSENSOR");
-	$.ajax({
-		url : 'delphsensor',
-		type : 'POST',
-		data : newOrder,
-		success : function(data) {
-			data = null
-		}
-	});
-}
-
-// END OF PH SENSORS
-// Drag and drop functions for mash steps
-function getVesselFromTriggerStep(divID) {
-	if (divID.lastIndexOf("triggerStep") == 0) {
-		var temp = divID.substring("triggerStep".length);
-	} else {
-		var temp = divID;
-	}
-	// Explode out
-	var vessel = temp.substring(0, temp.lastIndexOf("-"));
-	return vessel;
-}
-
-function getPositionFromTriggerStep(divID) {
-	if (divID.lastIndexOf("triggerStep") == 0) {
-		var temp = divID.substring("triggerStep".length);
-	} else {
-		var temp = divID;
-	}
-	// Explode out
-	var position = temp.substring(temp.lastIndexOf("-") + 1);
-	return position;
-}
-
-function dragTriggerStep(ev) {
-	var divID = ev.target.id;
-
-	// Explode out
-	var vessel = getVesselFromTriggerStep(divID.substring(10));
-	// var position = getPositionFromMashStep(divID);
-	ev.dataTransfer.setData("triggerStepname", divID);
-	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("DELETE");
-}
-
-function dropTriggerStep(ev) {
-	ev.preventDefault();
-	var triggerData = ev.dataTransfer.getData("triggerStepname");
-	var vessel = getVesselFromTriggerStep(triggerData.substring(10));
-	var position = getPositionFromTriggerStep(triggerData);
-
-	var refNode = ev.target.parentElement;
-	refNode.parentNode.insertBefore(document.getElementById(triggerData),
-			refNode);
-
-	var newOrder = "tempprobe=" + vessel + "&";
-	$("#triggerTable" + vessel + " > tbody > tr").each(function(index) {
-		var divID = this.id;
-		if (divID == "") {
-			return;
-		}
-
-		var oldStep = getPositionFromTriggerStep(divID);
-		newOrder += oldStep + "=" + index + "&";
-	});
-	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
-	$.ajax({
-		url : 'reordertriggers',
-		type : 'POST',
-		data : newOrder,
-		success : function(data) {
-			data = null
-		}
-	});
-
-	// DONE!
-}
-
-function allowDropTriggerStep(ev) {
-	ev.preventDefault();
-}
-
-function dropDeleteTriggerStep(ev) {
-	ev.preventDefault();
-	var triggerStepName = ev.dataTransfer.getData("triggerStepname");
-	var vessel = getVesselFromTriggerStep(triggerStepName.substring(10));
-	var position = getPositionFromTriggerStep(triggerStepName);
-
-	$('[id="' + triggerStepName + '"]').empty().remove();
-	var delData = "tempprobe=" + vessel + "&position=" + position;
-
-	$('#addTrigger-' + vessel)[0].innerHTML = $.i18n.prop("ADD");
-	$.ajax({
-		url : 'delTriggerStep',
-		type : 'POST',
-		data : delData,
-		success : function(data) {
-			data = null
-		}
-	});
-}
-
 function clearStatus() {
 	$.ajax({
 		url : 'clearStatus',
@@ -2216,12 +1812,12 @@ function readOnly(manualChange) {
 	}
 	
 	if (manualChange) {
-		$('form[id=settings-form]').find(':checkbox:not(:checked)').attr('value', "off").prop('checked', true);
-		var formdata = JSON.stringify(jQuery('form[id=settings-form]').serializeObject());
+		var formdata = $('form[id=settings-form]').serializeObject();
 		$.ajax({
 			url : 'updateSystemSettings',
 			type : 'POST',
 			data: formdata,
+			dataType: "json",
 			success : function(data) {
 				data = null
 			}
@@ -2239,7 +1835,7 @@ function readOnly(manualChange) {
 		location.reload();
 	}
 	
-	readOnlyPumps();
+	readOnlySwitches();
 	readOnlyTimers();
 	readOnlyDevices();
 	readOnlyPhSensors();
@@ -2271,7 +1867,7 @@ function readWrite(manualChange) {
 		location.reload();
 	}
 	
-	readWritePumps();
+	readWriteSwitches();
 	readWriteTimers();
 	readWriteDevices();
 	readWritePhSensors();
@@ -2284,42 +1880,101 @@ function readWrite(manualChange) {
 	window.disableUpdates = 0;
 }
 
-function readOnlyPumps() {
-	// Check the size of the pump list
-	var currentCount = $("[id=pumps-body] > div").length;
+function readOnlySwitches() {
+	// Check the size of the switches list
+	var currentCount = $("[id=switches-body] > div").length;
 
 	if (currentCount == 0) {
 		// Hide the Div.
-		$('[id=pumps]').css('display', 'none');
+		$('[id=switches]').css('display', 'none');
 	} else {
 		// Hide the button
-		$('[id=NewPump]').css('display', 'none');
+		$('[id=NewSwitch]').css('display', 'none');
 		// Disable drag and drop
-		$("[id=pumps-body] > div").each(function(index) {
-			this.setAttribute('draggable', false);
-		});
+		if ($("[id=switches-body] > div").sortable("instance") != undefined) {
+    		$("[id=switches-body] > div").sortable("option", "disabled", true);
+		}
 	}
 }
 
-function readWritePumps() {
-	// Check the size of the pump list
-	var currentCount = $("[id=pumps-body] > div").length;
+function readWriteSwitches() {
+	// Check the size of the switch list
+	var currentCount = $("[id=switches-body] > div").length;
 
 	if (currentCount == 0) {
 		// Hide the Div.
-		$('[id=pumps]').css('display', 'block');
+		$('[id=switches]').css('display', 'block');
 	} else {
 		// Hide the button
-		$('[id=NewPump]').css('display', 'block');
+		$('[id=NewSwitch]').css('display', 'block');
 		// Enable drag and drop
-		$("[id=pumps-body] > div ").each(function(index) {
-			this.setAttribute('draggable', true);
-		});
+		$("[id=switches-body]").sortable({
+           update: function(e, ui) {
+               var sorted = $(e.target).sortable("toArray");
+               var newData = {};
+               replaceContent = false;
+               $('#NewSwitch')[0].innerHTML = $.i18n.prop("NEW_SWITCH");
+               for (i = 0; i < sorted.length; i++) {
+                   var id = sorted[i];
+                   if (!id.startsWith("div-")) {
+                    continue;
+                   }
+                   var oldid = id.replace("div-", "");
+                   newData[oldid] = i;
+               }
+               $.ajax({
+                url : 'updateSwitchOrder',
+                type : 'POST',
+               	data : newData,
+            	success : function(data) {
+                    data = null
+                }
+               });
+           },
+           out: function(e, ui) {
+               if (!("startHtml" in ui.item) && replaceContent) {
+                   ui.item.startHtml = ui.item.html();
+                   ui.item.html('<span class="btn btn-warning">' + $.i18n.prop("DELETE") + '</span>')
+               }
+               triggerSortableIn = 0;
+           },
+           receive: function(e, ui) {
+               triggerSortableIn = 1;
+               if ("startHtml" in ui.item) {
+                   ui.item.html(ui.item.startHtml);
+               }
+           },
+           over: function(e, ui) {
+               triggerSortableIn = 1;
+               if ("startHtml" in ui.item) {
+                   ui.item.html(ui.item.startHtml);
+               }
+           },
+           beforeStop: function(e, ui) {
+               if (triggerSortableIn == 0) {
+                   var id = ui.item.attr("id");
+
+                   $.ajax({
+                       url : 'deleteswitch',
+                       type : 'POST',
+                       data : "name=" + id.replace("div-", ""),
+                       success : function(data) {
+                           data = null
+                       }
+                   });
+                   window.disableUpdates = 0;
+                   sleep(2000);
+                   location.reload();
+                   return false;
+               }
+           }
+       });
+       $("[id=switches]").disableSelection();
 	}
 }
 
 function readOnlyTimers() {
-	// Check the size of the pump list
+	// Check the size of the timer list
 	var currentCount = $("[id=timers-body] > div").length;
 
 	if (currentCount == 0) {
@@ -2329,65 +1984,164 @@ function readOnlyTimers() {
 		// Hide the button
 		$('[id=NewTimer]').css('display', 'none');
 		// Disable drag and drop
-		$("[id=timers-body] > div").each(function(index) {
-			this.setAttribute('draggable', false);
-		});
+		if ($("[id=timers-body] > div").sortable("instance") != undefined) {
+		    $("[id=timers-body]").sortable("option", "disabled", true);
+		}
 	}
 }
 
 function readWriteTimers() {
-	// Check the size of the pump list
+	// Check the size of the Timer list
 	var currentCount = $("[id=timers-body] > div").length;
 
-	if (currentCount == 0) {
-		// Hide the Div.
-		$('[id=timers]').css('display', 'block');
-	} else {
-		// Hide the button
-		$('[id=NewTimer]').css('display', 'block');
-		// Disable drag and drop
-		$("[id=timers-body] > div").each(function(index) {
-			this.setAttribute('draggable', true);
-		});
-	}
+    $('[id=timers]').css('display', 'block');
+    $('[id=NewTimer]').css('display', 'block');
+    $("[id=timers-body]").sortable({
+           update: function(e, ui) {
+               var sorted = $(e.target).sortable("toArray");
+               var newData = {};
+               replaceContent = false;
+               $('#NewTimer')[0].innerHTML = $.i18n.prop("NEW_SWITCH");
+               for (i = 0; i < sorted.length; i++) {
+                   var id = sorted[i];
+                   if (!id.startsWith("div-")) {
+                    continue;
+                   }
+                   var oldid = id.replace("div-", "");
+                   newData[oldid] = i;
+               }
+               $.ajax({
+                url : 'updatetimerorder',
+                type : 'POST',
+               	data : newData,
+            	success : function(data) {
+                    data = null
+                }
+               });
+           },
+           out: function(e, ui) {
+               if (!("startHtml" in ui.item) && replaceContent) {
+                   ui.item.startHtml = ui.item.html();
+                   ui.item.html('<span class="btn btn-warning">' + $.i18n.prop("DELETE") + '</span>')
+               }
+               triggerSortableIn = 0;
+           },
+           receive: function(e, ui) {
+               triggerSortableIn = 1;
+               if ("startHtml" in ui.item) {
+                   ui.item.html(ui.item.startHtml);
+               }
+           },
+           over: function(e, ui) {
+               triggerSortableIn = 1;
+               if ("startHtml" in ui.item) {
+                   ui.item.html(ui.item.startHtml);
+               }
+           },
+           beforeStop: function(e, ui) {
+               if (triggerSortableIn == 0) {
+                   var id = ui.item.attr("id");
+
+                   $.ajax({
+                       url : 'deletetimer',
+                       type : 'POST',
+                       data : "name=" + id.replace("div-", ""),
+                       success : function(data) {
+                           data = null
+                       }
+                   });
+                   window.disableUpdates = 0;
+                   sleep(2000);
+                   location.reload();
+                   return false;
+               }
+           }
+       });
+       $("[id=timers]").disableSelection();
 }
 
 function readOnlyPhSensors() {
-	// Check the size of the pump list
+	// Check the size of the pH Sensor list
 	var currentCount = $("[id=phSensors-body] > div").length;
 
 	if (currentCount == 0) {
-		// Hide the Div.
-		$('[id=phSensors]').css('display', 'none');
-	} else {
-		// Hide the button
-		$('[id=NewPhSensor]').css('display', 'none');
-		// Disable drag and drop
-		$("[id=phSensors-body] > div").each(function(index) {
-			this.setAttribute('draggable', false);
-		});
+	    $("[id=phSensors]").css('display', "none");
 	}
+    $('[id=NewPhSensor]').css('display', 'none');
+
 }
 
 function readWritePhSensors() {
-	// Check the size of the pump list
+	// Check the size of the pH Sensor list
 	var currentCount = $("[id=phSensors-body] > div").length;
+    $('[id=phSensors]').css('display', 'block');
+	$("[id=phSensors-body]").sortable({
+       update: function(e, ui) {
 
-	if (currentCount == 0) {
-		// Hide the Div.
-		$('[id=phSensors]').css('display', 'block');
-	} else {
-		// Hide the button
-		$('[id=NewPhSensor]').css('display', 'block');
-		// Disable drag and drop
-		$("[id=phSensors-body] > div").each(function(index) {
-			this.setAttribute('draggable', true);
-		});
-	}
+       },
+       out: function(e, ui) {
+           if (!("startHtml" in ui.item) && replaceContent) {
+               ui.item.startHtml = ui.item.html();
+               ui.item.html('<span class="btn btn-warning">' + $.i18n.prop("DELETE") + '</span>')
+           }
+           triggerSortableIn = 0;
+       },
+       receive: function(e, ui) {
+           triggerSortableIn = 1;
+           if ("startHtml" in ui.item) {
+               ui.item.html(ui.item.startHtml);
+           }
+       },
+       over: function(e, ui) {
+           triggerSortableIn = 1;
+           if ("startHtml" in ui.item) {
+               ui.item.html(ui.item.startHtml);
+           }
+       },
+       beforeStop: function(e, ui) {
+           if (triggerSortableIn == 0) {
+               var id = ui.item.attr("id");
+
+               $.ajax({
+                   url : 'delphsensor',
+                   type : 'POST',
+                   data : "name=" + id.replace("div-", ""),
+                   success : function(data) {
+                       data = null
+                   }
+               });
+               window.disableUpdates = 0;
+               sleep(2000);
+               location.reload();
+               return false;
+           }
+       }
+   });
+   $("[id=phSensors]").disableSelection();
 }
 
 function readWriteDevices() {
 	// Check the devices to see which ones aren't configured.
+	$("[id='Probes']").sortable({
+        update: function(e, ui) {
+            var sorted = $(e.target).sortable("toArray");
+            var newData = {};
+            replaceContent = false;
+            for (i = 0; i < sorted.length; i++) {
+                var id = sorted[i];
+                newData[id] = i;
+            }
+            $.ajax({
+                url : 'reorderprobes',
+                type : 'POST',
+                data : newData,
+                success : function(data) {
+                    data = null
+                }
+            });
+        }
+    });
+    $("[id='Probes']").disableSelection();
 	$("[id$='-title']").each(
 		function(index) {
 			var vessel = this.id.replace("-title", "")
@@ -2412,7 +2166,7 @@ function readWriteDevices() {
 			} else {
 				this.setAttribute("onclick", "editDevice(this);");
 			}
-			$('[id=' + vessel + '-volumeeditbutton').css('display', 'table-cell');
+			$('[id=' + vessel + '-volumeeditbutton]').css('display', 'table-cell');
 			$('[id=' + vessel + '-title]').css('cursor', "pointer");
 			// display the mash table if needs be
 			if ($('[id=triggerTable' + vessel + '] > tbody > tr').length == 0) {
@@ -2420,6 +2174,72 @@ function readWriteDevices() {
 				$('[id=triggerTable' + vessel + ']').css('display',
 						'block');
 			}
+			// Make the trigger table sortable.
+			replaceContent = true;
+            $("#triggerTable" + vessel + " tbody").sortable({
+                update: function(e, ui) {
+                    var sorted = $(e.target).sortable("toArray");
+                    var newData = {};
+                    replaceContent = false;
+                    newData["tempprobe"] = vessel;
+                    for (i = 0; i < sorted.length; i++) {
+                        var id = sorted[i];
+                        var oldid = id.substr(id.lastIndexOf("_")+1);
+                        newData[oldid] = i;
+                    }
+                    $.ajax({
+                        url : 'reordertriggers',
+                        type : 'POST',
+                        data : newData,
+                        success : function(data) {
+                            data = null
+                        },
+                        error: function(data) {
+                            console.log(data);
+                        }
+                    });
+                },
+                out: function(e, ui) {
+                    if (!("startHtml" in ui.item) && replaceContent) {
+                        ui.item.startHtml = ui.item.html();
+                        ui.item.html('<span class="btn btn-warning">' + $.i18n.prop("DELETE") + '</span>')
+                    }
+                    triggerSortableIn = 0;
+                },
+                receive: function(e, ui) {
+                    triggerSortableIn = 1;
+                    if ("startHtml" in ui.item) {
+                        ui.item.html(ui.item.startHtml);
+                    }
+                },
+                over: function(e, ui) {
+                    triggerSortableIn = 1;
+                    if ("startHtml" in ui.item) {
+                        ui.item.html(ui.item.startHtml);
+                    }
+                },
+                beforeStop: function(e, ui) {
+                    if (triggerSortableIn == 0) {
+                        var id = ui.item.attr("id").replace("triggerRow", "");
+                        var vessel = id.substr(0, id.indexOf("_"));
+                        var position = id.substr(id.indexOf("_") + 1);
+
+                        $.ajax({
+                            url : 'deltriggerstep',
+                            type : 'POST',
+                            data : "tempprobe=" + vessel + "&position=" + position,
+                            success : function(data) {
+                                data = null
+                            }
+                        });
+                        window.disableUpdates = 0;
+                        sleep(2000);
+                        location.reload();
+                        return false;
+                    }
+                }
+            });
+            $("#triggerTable" + vessel + " tbody").disableSelection();
 		}
 	);
 }
@@ -2433,7 +2253,7 @@ function readOnlyDevices() {
 			if (vessel == "messages") {
 				return;
 			}
-			$('[id=' + vessel + '-volumeeditbutton').css('display', 'none');
+			$('[id=' + vessel + '-volumeeditbutton]').css('display', 'none');
 			var vesselForm = 'form[id="' + vessel + '-form"]';
 			var devAddr = $(
 					'#' + vesselForm
@@ -2453,9 +2273,14 @@ function readOnlyDevices() {
 				// hide
 				$('[id=triggerTable' + vessel + ']').css('display',
 						'none');
+			} else if ($('[id=triggerTable' + vessel + ']').sortable("instance") != undefined) {
+			    $('[id=triggerTable' + vessel + ']').sortable("option", "disabled", true);
 			}
 		}
 	);
+	if ($("[id=probes] > div").sortable("instance") != undefined) {
+	    $("[id=probes]").sortable("option", "disabled", true);
+	}
 }
 
 function enableSystem(element) {
@@ -2497,12 +2322,12 @@ function changeScale() {
 
 function embedGraph(vessel) {
 	vessel = vessel.trim();
-	if ($('#' + vessel + "-graph_title")[0].innerText == $.i18n
+	if ($('#' + vessel + "-graph_title")[0].innerHTML.trim == $.i18n
 			.prop("SHOW_GRAPH")) {
-		$('#' + vessel + "-graph_title")[0].innerText = $.i18n
+		$('#' + vessel + "-graph_title")[0].innerHTML = $.i18n
 				.prop("HIDE_GRAPH");
 	} else {
-		$('#' + vessel + "-graph_title")[0].innerText = $.i18n
+		$('#' + vessel + "-graph_title")[0].innerHTML = $.i18n
 				.prop("SHOW_GRAPH");
 	}
 
@@ -2517,6 +2342,10 @@ function embedGraph(vessel) {
 			if (chart == null) {
 				series["size"] = {};
 				series["size"]["height"] = 150;
+				series["zoom"] = {};
+				series["zoom"]["enabled"] = true;
+				series["axis"]["y"]["tick"] = {};
+				series["axis"]["y"]["tick"]["format"] = function(d) { return parseFloat(d).toFixed(2);}
 				chart = c3.generate(series);
 			} else {
 				chart.load(series);
@@ -2569,7 +2398,7 @@ function displaySystemSettings() {
 			}
 			
 			if ("recorder" in data) {
-				if ($('form[id="settings-form"] div[id="recorder_enabled"').length == 0) {
+				if ($('form[id="settings-form"] div[id="recorder_enabled"]').length == 0) {
 					$('form[id="settings-form"]')
 					.append(
 						'<div class="col-md-4 checkbox" id="recorder_enabled">' +
@@ -2580,9 +2409,9 @@ function displaySystemSettings() {
 				}
 				$('form[id="settings-form"] div[id="recorder_enabled"] input').prop("checked", data.recorder);
 			}
-			
+
 			if ("recorderDiff" in data) {
-				if ($('form[id="settings-form"] div[id="recorder_tolerence"').length == 0) {
+				if ($('form[id="settings-form"] div[id="recorder_tolerence"]').length == 0) {
 					$('form[id="settings-form"]')
 					.append(
 						'<div class="col-md-4 form-group" id="recorder_tolerence">' +
@@ -2595,7 +2424,7 @@ function displaySystemSettings() {
 			}
 			
 			if ("recorderTime" in data) {
-				if ($('form[id="settings-form"] div[id="recorder_time"').length == 0) {
+				if ($('form[id="settings-form"] div[id="recorder_time"]').length == 0) {
 					$('form[id="settings-form"]')
 					.append(
 						'<div class="col-md-4 form-group" id="recorder_time">' +
@@ -2605,18 +2434,6 @@ function displaySystemSettings() {
 				}
 				
 				$('form[id="settings-form"] div[id="recorder_time"] input').val(data.recorderTime);
-			}
-			if ("showright" in data) {
-				if ($('form[id="settings-form"] div[id="show_right"').length == 0) {
-					$('form[id="settings-form"]')
-					.append(
-						'<div class="col-md-4 checkbox" id="show_right">' +
-							'<label>' +
-								'<input type="checkbox" name="showright">Show right bar?' +
-							'</label>' +
-						'</div>');
-				}
-				$('form[id="settings-form"] div[id="show_right"] input').prop("checked", data.showright);
 			}
 			return;
 		}
@@ -2654,4 +2471,117 @@ function phAINChange(element) {
 		$("[id=dsAddress]").hide();
 		$("[id=dsOffset]").hide();
 	}
+}
+
+function showRecipe(element, recipeSelect) {
+	// Is the edit form already displayed
+	var recipeView = $("recipeView");
+	if (recipeView.val() != undefined) {
+		return;
+	}
+
+	// Insert a couple of new form elements
+	var $tr = $(element);
+    $tr.popover('destroy');
+
+    var curRecipeName = null;
+    if (element.id == "selectRecipe") {
+        curRecipeName = element.find(":selected").text();
+    }
+
+    $.ajax({
+        url: '/showrecipe',
+        data: {recipeName: curRecipeName},
+        dataType: 'html',
+        success: function(html) {
+                $tr.popover({
+                title: 'Recipe Summary',
+                content: html,
+                placement: 'bottom',
+                html: true,
+                trigger: 'manual'
+            }).popover('show');
+            $tr.parent().find('.popover').css('max-width', "600px");
+        }
+    });
+}
+
+function setMashProfile(element) {
+    setProfile(element, "mash");
+}
+
+function setBoilHopProfile(element) {
+    setProfile(element, "boil");
+}
+
+function setFermProfile(element) {
+    setProfile(element, "ferm");
+}
+
+function setDryHopProfile(element) {
+    setProfile(element, "dry");
+}
+
+function setProfile(element, profile) {
+    var tempProbe = $(element).parent().find("[name=tempprobe] > :selected").val();
+    $.ajax({
+        url: '/setprofile',
+        data: {profile: profile, tempprobe: tempProbe},
+        dataType: "html"
+    })
+}
+
+function showNotifications(notificationList) {
+    if (!("Notification" in window)) {
+        return;
+    }
+
+    if (window.notificationList == undefined) {
+        window.notificationList = [];
+    }
+    $.each(notificationList, function(index, notification) {
+        tag = notification.tag;
+        message = notification.message;
+        if (window.Notification && Notification.permission === "granted") {
+            if (window.notificationList[tag] != message) {
+                var n = new Notification(message, {tag: tag});
+                n.onclick = dismissNotification;
+                window.notificationList[tag] = message;
+            }
+        }
+
+        // If the user hasn't told if he wants to be notified or not
+        // Note: because of Chrome, we are not sure the permission property
+        // is set, therefore it's unsafe to check for the "default" value.
+        else if (window.Notification && Notification.permission !== "denied") {
+          Notification.requestPermission(function (status) {
+            if (Notification.permission !== status) {
+              Notification.permission = status;
+            }
+
+            // If the user said okay
+            if (status === "granted") {
+                if (window.notificationList[tag] != message) {
+                    var n = new Notification(message, {tag: tag});
+                    n.onclick = dismissNotification;
+                    window.notificationList[tag] = message;
+                }
+
+            }
+          });
+        }
+    });
+}
+
+function dismissNotification(event) {
+    var tag = event.target.tag;
+    var tagID = tag.substring(tag.lastIndexOf("-") + 1);
+    $.ajax({
+        url: '/clearnotification',
+        data: {notification: tagID},
+        dataType: 'json',
+        success: function(html) {
+           return;
+        }
+    });
 }
