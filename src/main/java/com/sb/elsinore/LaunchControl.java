@@ -204,6 +204,7 @@ public final class LaunchControl {
     public static String theme = "default";
     public static boolean pageLock = false;
     private static boolean initialized = false;
+    private static ProcessBuilder pb = null;
 
     /*****
      * Main method to launch the brewery.
@@ -587,7 +588,7 @@ public final class LaunchControl {
         JSONArray vesselJSON = new JSONArray();
         synchronized (tempList) {
             for (Temp t : tempList) {
-                if (LaunchControl.pageLock && t.getName().equals(t.getProbe())) {
+                if (LaunchControl.pageLock && t.isHidden()) {
                     continue;
                 }
 
@@ -1104,13 +1105,12 @@ public final class LaunchControl {
      *            The GPIO to use, null doesn't start the device.
      * @return The new Temp probe. Use it to look up the PID if applicable.
      */
-    public Temp startDevice(final String input, final String probe,
-            final String gpio) {
+    public Temp startDevice(String input, String probe, String gpio) {
 
         // Startup the thread
         if (probe == null || probe.equals("0")) {
             BrewServer.LOG.info("No Probe specified for " + input);
-            return null;
+            probe = input;
         }
 
         if (!probe.startsWith("28") && !input.equals("System")) {
@@ -2029,10 +2029,13 @@ public final class LaunchControl {
         String name = temp.getName();
         String cutoff = temp.getCutoff();
 
+        /**
+         * Some people want to watch the world burn and don't name their probes!
         if (probe.equalsIgnoreCase(name)) {
             BrewServer.LOG.info("Probe: " + probe + " is not setup, not saving");
             return null;
         }
+        **/
         // save any changes
         BrewServer.LOG.info("Saving " + name + " with probe " + probe);
         // save any changes
@@ -2916,6 +2919,10 @@ public final class LaunchControl {
      * Check GIT for updates and update the UI.
      */
     public static void checkForUpdates() {
+        if (pb != null) {
+            BrewServer.LOG.warning("Update is already running");
+            return;
+        }
         // Build command
         File jarLocation;
 
@@ -2925,7 +2932,7 @@ public final class LaunchControl {
         List<String> commands = new ArrayList<>();
         commands.add("git");
         commands.add("fetch");
-        ProcessBuilder pb = new ProcessBuilder(commands);
+        pb = new ProcessBuilder(commands);
         pb.directory(jarLocation);
         pb.redirectErrorStream(true);
         Process process;
@@ -3034,7 +3041,7 @@ public final class LaunchControl {
         }
 
         if (headSha == null) {
-            BrewServer.LOG.info("Couldn't check ORIGIN revision");
+            BrewServer.LOG.warning("Couldn't check ORIGIN revision");
             LaunchControl.setMessage("Couldn't check ORIGIN revision");
             return;
         }
@@ -3047,7 +3054,7 @@ public final class LaunchControl {
         } else {
             LaunchControl.setMessage("No updates available!");
         }
-
+        pb = null;
     }
 
     /**
