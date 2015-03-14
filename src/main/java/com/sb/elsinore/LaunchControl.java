@@ -204,6 +204,7 @@ public final class LaunchControl {
     public static String theme = "default";
     public static boolean pageLock = false;
     private static boolean initialized = false;
+    private static ProcessBuilder pb = null;
 
     /*****
      * Main method to launch the brewery.
@@ -2916,6 +2917,10 @@ public final class LaunchControl {
      * Check GIT for updates and update the UI.
      */
     public static void checkForUpdates() {
+        if (pb != null) {
+            BrewServer.LOG.warning("Update is already running");
+            return;
+        }
         // Build command
         File jarLocation;
 
@@ -2925,7 +2930,7 @@ public final class LaunchControl {
         List<String> commands = new ArrayList<>();
         commands.add("git");
         commands.add("fetch");
-        ProcessBuilder pb = new ProcessBuilder(commands);
+        pb = new ProcessBuilder(commands);
         pb.directory(jarLocation);
         pb.redirectErrorStream(true);
         Process process;
@@ -3034,7 +3039,7 @@ public final class LaunchControl {
         }
 
         if (headSha == null) {
-            BrewServer.LOG.info("Couldn't check ORIGIN revision");
+            BrewServer.LOG.warning("Couldn't check ORIGIN revision");
             LaunchControl.setMessage("Couldn't check ORIGIN revision");
             return;
         }
@@ -3047,7 +3052,7 @@ public final class LaunchControl {
         } else {
             LaunchControl.setMessage("No updates available!");
         }
-
+        pb = null;
     }
 
     /**

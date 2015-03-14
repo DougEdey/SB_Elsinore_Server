@@ -36,7 +36,7 @@ public class RenderHTML implements Renderable {
                         && temp.getName().equals(temp.getProbe())) {
                     continue;
                 }
-                if (i % 4 == 0) {
+                if (i > 0 && i % 4 == 0) {
                     html._div();
                     html.div(id("Probes").class_("row no-gutter"));
                 }

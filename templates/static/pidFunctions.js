@@ -270,7 +270,7 @@ function waitForMsg() {
 						if (!("system" in data.vessels)
 								&& !("System" in data.vessels)) {
 							// No System temperature, add a header to add it in.
-							var sysTemp = $("[id=Probes] > [id=System]");
+							var sysTemp = $("[id=System]");
 							if (sysTemp.length == 0 && !data.locked) {
 								var sysHtml = '<div id="System" class="holo-content controller panel panel-primary Temp">'
 										+ '<div id="System-title" class="title panel-heading "'
@@ -279,9 +279,9 @@ function waitForMsg() {
 										+ '</div>'
 										+ '</div>';
 
-								$("[id=Probes]").append(sysHtml)
+								$("[id=Probes]").last().append(sysHtml)
 							}
-							if ($("[id=Probes] > [id=System] > div").length == 1
+							if ($("[id=System] > div").length == 1
 									&& data.locked) {
 								sysTemp.remove();
 							}
