@@ -1105,13 +1105,12 @@ public final class LaunchControl {
      *            The GPIO to use, null doesn't start the device.
      * @return The new Temp probe. Use it to look up the PID if applicable.
      */
-    public Temp startDevice(final String input, final String probe,
-            final String gpio) {
+    public Temp startDevice(String input, String probe, String gpio) {
 
         // Startup the thread
         if (probe == null || probe.equals("0")) {
             BrewServer.LOG.info("No Probe specified for " + input);
-            return null;
+            probe = input;
         }
 
         if (!probe.startsWith("28") && !input.equals("System")) {
@@ -2030,10 +2029,13 @@ public final class LaunchControl {
         String name = temp.getName();
         String cutoff = temp.getCutoff();
 
+        /**
+         * Some people want to watch the world burn and don't name their probes!
         if (probe.equalsIgnoreCase(name)) {
             BrewServer.LOG.info("Probe: " + probe + " is not setup, not saving");
             return null;
         }
+        **/
         // save any changes
         BrewServer.LOG.info("Saving " + name + " with probe " + probe);
         // save any changes
