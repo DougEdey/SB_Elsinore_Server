@@ -588,7 +588,7 @@ public final class LaunchControl {
         JSONArray vesselJSON = new JSONArray();
         synchronized (tempList) {
             for (Temp t : tempList) {
-                if (LaunchControl.pageLock && t.getName().equals(t.getProbe())) {
+                if (LaunchControl.pageLock && t.isHidden()) {
                     continue;
                 }
 

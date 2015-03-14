@@ -33,7 +33,7 @@ public class RenderHTML implements Renderable {
         int i = 0;
             for (Temp temp: LaunchControl.tempList) {
                 if (LaunchControl.isLocked()
-                        && temp.getName().equals(temp.getProbe())) {
+                        && temp.isHidden()) {
                     continue;
                 }
                 if (i > 0 && i % 4 == 0) {
