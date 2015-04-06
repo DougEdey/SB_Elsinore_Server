@@ -433,34 +433,14 @@ public final class LaunchControl {
         LaunchControl.loadCompleted = true;
         BrewServer.LOG.log(Level.INFO, "CONFIG READ COMPLETED***********");
         sRunner = new ServerRunner(BrewServer.class, this.server_port);
-        sRunner.run();
-        LaunchControl.initialized = true;
-
-        // Old way to close off the System
-        BrewServer.LOG.info("Waiting for input... Type 'quit' to exit");
-        String input;
-        String[] inputBroken;
-
-        while (true) {
-            System.out.print(">");
-            input = "";
-            // open up standard input
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    System.in));
-            try {
-                input = br.readLine();
-            } catch (IOException ioe) {
-                BrewServer.LOG.info("IO error trying to read your input: "
-                        + input);
-            }
-
-            // parse the input and determine where to throw the data
-            inputBroken = input.split(" ");
-            // is the first value something we recognize?
-            if (inputBroken[0].equalsIgnoreCase("quit")) {
-                BrewServer.LOG.info("Quitting");
-                System.exit(0);
-            }
+        Thread sRunnerThread = new Thread(sRunner);
+        sRunnerThread.run();
+        sRunnerThread.setDaemon(false);
+        try {
+            sRunnerThread.join();
+        } catch (InterruptedException ie) {
+            BrewServer.LOG.warning("Shutdown initiated.");
+            ie.printStackTrace();
         }
     }
 
