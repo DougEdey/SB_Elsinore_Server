@@ -1824,15 +1824,20 @@ function readOnly(manualChange) {
 		});
 		
 		$.ajax({
-			url : 'lockPage',
-			type : 'POST',
-			success : function(data) {
-				data = null
-			}
-		});
+            url : 'lockPage',
+            type : 'POST',
+            async: false,
+            success : function(data) {
+                data = null
+            }
+        }).done(function() { console.log('SUCCESS :)');
+         sleep(500);
+                location.reload();})
+           .fail(function(vara, varb) {
+           console.log('FAIL :( ' + varb);
+           })
+           .always(function() { console.log('Doh, I\'m fired anyway'); });
 
-		sleep(2000);
-		location.reload();
 	}
 	
 	readOnlySwitches();
@@ -1858,13 +1863,17 @@ function readWrite(manualChange) {
 		$.ajax({
 			url : 'unlockPage',
 			type : 'POST',
+			async: false,
 			success : function(data) {
 				data = null
 			}
-		});
-
-		sleep(2000);
-		location.reload();
+		}).done(function() { console.log('SUCCESS :)');
+		 sleep(500);
+         		location.reload();})
+           .fail(function(vara, varb) {
+           console.log('FAIL :( ' + varb);
+           })
+           .always(function() { console.log('Doh, I\'m fired anyway'); });
 	}
 	
 	readWriteSwitches();

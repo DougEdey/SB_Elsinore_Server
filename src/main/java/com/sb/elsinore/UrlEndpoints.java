@@ -1034,7 +1034,7 @@ public class UrlEndpoints {
             BigDecimal actualVol = new BigDecimal(volume.replace(",", "."));
             if (t.addVolumeMeasurement(actualVol)) {
                 return new Response(Response.Status.OK, MIME_TYPES.get("json"),
-                        "{'Result': 'OK'}");
+                        "{'Result':\"OK\"}");
             }
         } catch (NumberFormatException nfe) {
             error_msg = "Could not setup volumes for " + volume + " Units: "
@@ -1424,7 +1424,7 @@ public class UrlEndpoints {
         LaunchControl.pageLock = true;
         return new NanoHTTPD.Response(Status.OK,
                 BrewServer.MIME_TYPES.get("json"),
-                "{status: 'locked'}");
+                "{status: \"locked\"}");
     }
 
     @UrlEndpoint(url = "/unlockpage")
@@ -1433,7 +1433,7 @@ public class UrlEndpoints {
         LaunchControl.pageLock = false;
         return new NanoHTTPD.Response(Status.OK,
                 BrewServer.MIME_TYPES.get("json"),
-                "{status: 'unlocked'}");
+                "{status: \"unlocked\"");
     }
     
     @UrlEndpoint(url = "/brewerImage.gif")
@@ -1456,7 +1456,7 @@ public class UrlEndpoints {
 
         return new NanoHTTPD.Response(Status.BAD_REQUEST,
                 BrewServer.MIME_TYPES.get("json"),
-                "{image: 'unavailable'}");
+                "{image: \"unavailable\"}");
     }
 
     @UrlEndpoint(url = "/updateswitch")
