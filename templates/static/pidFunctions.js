@@ -286,7 +286,7 @@ function waitForMsg() {
 								sysTemp.remove();
 							}
 						}
-						$.each(val, function(vesselName, vesselStatus) {
+						$.each(val, function(vesselProbe, vesselStatus) {
 
 							// This should always be there
 							if ("name" in vesselStatus) {
@@ -296,22 +296,26 @@ function waitForMsg() {
 									return;
 								}
 							}
-							addTriggerTable(vesselName);
+
+							if ("deviceaddr" in vesselStatus) {
+							    vesselProbe = vesselStatus.deviceaddr;
+							}
+							addTriggerTable(vesselProbe);
 							if ("tempprobe" in vesselStatus) {
-								updateTempProbe(vesselName,
+								updateTempProbe(vesselProbe,
 										vesselStatus.tempprobe);
 							}
 
 							if ("pidstatus" in vesselStatus) {
-								updatePIDStatus(vesselName,
+								updatePIDStatus(vesselProbe,
 										vesselStatus.pidstatus);
 
 								// Hide the gauge if needs be
 								if (vesselStatus.pidstatus.mode == "off") {
-									$('div[id^="' + vesselName + '-gage"]')
+									$('div[id^="' + vesselProbe + '-gage"]')
 											.toggleClass("hidden", true);
 								} else {
-									$('div[id^="' + vesselName + '-gage"]')
+									$('div[id^="' + vesselProbe + '-gage"]')
 											.toggleClass("hidden", false);
 									var duty = vesselStatus.pidstatus.duty;
 									if ("actualduty" in vesselStatus.pidstatus) {
@@ -319,37 +323,37 @@ function waitForMsg() {
 									}
 
 									if (duty < 0) {
-										if (Gauges[vesselName].config.textMax != "0") {
-											Gauges[vesselName].config.levelColors = [
+										if (Gauges[vesselProbe].config.textMax != "0") {
+											Gauges[vesselProbe].config.levelColors = [
 													"#0033CC",
 													"#CC00CC",
 													"#a9d70b" ];
 										}
-										Gauges[vesselName]
+										Gauges[vesselProbe]
 												.refreshBoth(
 														duty,
 														-100,
 														"0");
 									} else {
-										if (Gauges[vesselName].config.textMax != "0") {
-											Gauges[vesselName].config.levelColors = [
+										if (Gauges[vesselProbe].config.textMax != "0") {
+											Gauges[vesselProbe].config.levelColors = [
 													"#a9d70b",
 													"#f9c802",
 													"#ff0000" ];
 										}
-										Gauges[vesselName].refreshBoth(duty, "0", 100);
+										Gauges[vesselProbe].refreshBoth(duty, "0", 100);
 									}
 
 								}
 							} else {
-								hidePIDForm(vesselName);
+								hidePIDForm(vesselProbe);
 							}
 
 							if ("volume" in vesselStatus) {
-								updateVolumeStatus(vesselName,
+								updateVolumeStatus(vesselProbe,
 										vesselStatus.volume);
 							} else {
-								jQuery("#" + vesselName+ "-volumeAmount")
+								jQuery("#" + vesselProbe+ "-volumeAmount")
 									.text($.i18n.prop("NO_VOLUME"));
 							}
 						});
@@ -372,9 +376,9 @@ function waitForMsg() {
 
 }
 
-function addTriggerTable(vesselName) {
-	if ($("#triggerTable" + vesselName).length == 0) {
-		table = "<table id='triggerTable" + vesselName
+function addTriggerTable(vesselProbe) {
+	if ($("#triggerTable" + vesselProbe).length == 0) {
+		table = "<table id='triggerTable" + vesselProbe
 				+ "' class='table table-bordered col-md-8'>";
 		table += "<thead><tr>";
 		table += "<th>" + $.i18n.prop("START") + "</th>";
@@ -384,17 +388,17 @@ function addTriggerTable(vesselName) {
 		table += "<tbody class='tbody'></tbody>"
 
 		table += "<tfoot><tr><td colspan='1'>"
-				+ "<button class='btn btn-success' id='addTrigger-" + vesselName
+				+ "<button class='btn btn-success' id='addTrigger-" + vesselProbe
 				+ "' type='button' onclick='addNewTrigger(this)'>"
 				+ $.i18n.prop("ADD") + "</button></td>";
 		table += "<td colspan='2'><button class='btn btn-success' id='triggerButton-"
-				+ vesselName
+				+ vesselProbe
 				+ "' type='button' onclick='triggerToggle(this)'>"
 				+ $.i18n.prop("ACTIVATE") + "</button></td></tr></tfoot>";
 		+"</tbody></table>";
-		table += "<br id='triggerTable" + vesselName + "footer'/>";
+		table += "<br id='triggerTable" + vesselProbe + "footer'/>";
 
-		$("#" + vesselName + "-volume").before(table);
+		$("#" + vesselProbe + "-volume").before(table);
 	}
 }
 
@@ -1081,7 +1085,9 @@ function submitForm(form) {
 		// We're editing
 		var vessel = form.id.substring(0, form.id.lastIndexOf("-edit"));
 		var formdata = {}
-		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
+		var serialized = $(form).serializeObject();
+		serialized.new_name = encodeURIComponent(serialized.new_name)
+		formdata[vessel] = JSON.stringify();
 		$.ajax({
 			url : 'editdevice',
 			type : 'POST',
