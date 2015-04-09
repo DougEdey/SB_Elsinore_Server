@@ -41,7 +41,7 @@ public class RenderHTML implements Renderable {
                     html.div(id("Probes").class_("row no-gutter"));
                 }
                 i++;
-                html.render(new PIDComponent(temp.getName()));
+                html.render(new PIDComponent(temp.getName(), temp.getProbe()));
             }
         html._div();
         // Add in the switches

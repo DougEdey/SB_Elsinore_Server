@@ -847,16 +847,7 @@ public final class LaunchControl {
 
             // Check for a system temperature
             if (getFirstElement(config, "System") != null) {
-                Temp tTemp = new Temp("System", "");
-                tempList.add(tTemp);
-                BrewServer.LOG.info("Adding " + tTemp.getName());
-                // setup the scale for each temp probe
-                tTemp.setScale(scale);
-                // setup the threads
-                Thread tThread = new Thread(tTemp);
-                tThread.setName("Temp_" + tTemp.getName());
-                tempThreads.add(tThread);
-                tThread.start();
+                addSystemTemp();
             }
         } catch (NumberFormatException nfe) {
             System.out.print("Number format problem!");
@@ -1012,7 +1003,7 @@ public final class LaunchControl {
 
     // Add the system temperature
     public static void addSystemTemp() {
-        Temp tTemp = new Temp("System", "");
+        Temp tTemp = new Temp("System", "System");
         tempList.add(tTemp);
         BrewServer.LOG.info("Adding " + tTemp.getName());
         // setup the scale for each temp probe
