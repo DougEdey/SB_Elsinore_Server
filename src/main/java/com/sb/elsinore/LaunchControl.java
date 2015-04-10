@@ -1179,7 +1179,7 @@ public final class LaunchControl {
             Temp tTemp;
             while (iterator.hasNext()) {
                 tTemp = iterator.next();
-                if (tTemp.getName().equalsIgnoreCase(name)) {
+                if (tTemp.getName().equalsIgnoreCase(name) || tTemp.getProbe().equalsIgnoreCase(name)) {
                     return tTemp;
                 }
             }
@@ -1201,7 +1201,7 @@ public final class LaunchControl {
             PID tPid;
             while (iterator.hasNext()) {
                 tPid = iterator.next();
-                if (tPid.getName().equalsIgnoreCase(name)) {
+                if (tPid.getName().equalsIgnoreCase(name) || tPid.getTempProbe().getProbe().equalsIgnoreCase(name)) {
                     return tPid;
                 }
             }
@@ -3138,6 +3138,12 @@ public final class LaunchControl {
         }
     }
 
+    public static void deleteTemp(Temp tTemp) {
+        tTemp.shutdown();
+        synchronized (timerLock) {
+            tempList.remove(tTemp);
+        }
+    }
     /**
      * Get the system temperature scale.
      * 
