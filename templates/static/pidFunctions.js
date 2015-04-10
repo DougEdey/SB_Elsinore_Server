@@ -590,7 +590,7 @@ function editDevice(element) {
 							+ vessel
 							+ "-edit'>"
 							+ "<input type='text' class='form-control' name='new_name' id='new_name' value='"
-							+ vessel
+							+ element.textContent.trim()
 							+ "' /><br/>"
 							+ "<input type='text' class='form-control' name='new_heat_gpio' id='new_heat_gpio' onblur='validate_gpio(this)' "
 							+ "value='"
@@ -634,21 +634,13 @@ function editDevice(element) {
 							+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>"
 							+ $.i18n.prop("UPDATE")
 							+ "</button>"
-							+ "<button id='cancel-"
-							+ vessel
-							+ "' class='btn modeclass' "
-							+ "onclick='cancelEdit("
-							+ vessel
-							+ "); waitForMsg(); return false;'>"
+							+ "<button id='cancel-" + vessel + "' class='btn modeclass' "
+							+ "onclick='cancelEdit("+ vessel + "); waitForMsg(); return false;'>"
 							+ $.i18n.prop("CANCEL")
 							+ "</button>"
 							+ "</form>"
-							+ "<button id='hide-"
-							+ vessel
-							+ "' class='btn modeclass' "
-							+ "onclick='toggleDevice(\""
-							+ vessel
-							+ "\"); waitForMsg(); sleep(1000); location.reload();'>"
+							+ "<button id='hide-" + "' class='btn modeclass' "
+							+ "onclick='toggleDevice(\"" + vessel + "\"); waitForMsg(); sleep(1000); location.reload();'>"
 							+ $.i18n.prop(toggle) + "</button>" + "</form>"
 							+ "</div>");
 	
@@ -1087,7 +1079,7 @@ function submitForm(form) {
 		var formdata = {}
 		var serialized = $(form).serializeObject();
 		serialized.new_name = encodeURIComponent(serialized.new_name)
-		formdata[vessel] = JSON.stringify();
+		formdata[vessel] = JSON.stringify(serialized);
 		$.ajax({
 			url : 'editdevice',
 			type : 'POST',
@@ -2154,7 +2146,44 @@ function readWriteDevices() {
                     data = null
                 }
             });
-        }
+        },
+        out: function(e, ui) {
+           if (!("startHtml" in ui.item) && replaceContent) {
+               ui.item.startHtml = ui.item.html();
+               ui.item.html('<span class="btn btn-warning">' + $.i18n.prop("DELETE") + '</span>')
+           }
+           triggerSortableIn = 0;
+       },
+       receive: function(e, ui) {
+           triggerSortableIn = 1;
+           if ("startHtml" in ui.item) {
+               ui.item.html(ui.item.startHtml);
+           }
+       },
+       over: function(e, ui) {
+           triggerSortableIn = 1;
+           if ("startHtml" in ui.item) {
+               ui.item.html(ui.item.startHtml);
+           }
+       },
+       beforeStop: function(e, ui) {
+           if (triggerSortableIn == 0) {
+               var id = ui.item.attr("id");
+
+               $.ajax({
+                   url : 'deleteprobe',
+                   type : 'POST',
+                   data : "probe=" + id.replace("div-", ""),
+                   success : function(data) {
+                       data = null
+                   }
+               });
+               window.disableUpdates = 0;
+               sleep(2000);
+               location.reload();
+               return false;
+           }
+       }
     });
     $("[id='Probes']").disableSelection();
 	$("[id$='-title']").each(

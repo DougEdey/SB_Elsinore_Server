@@ -1996,4 +1996,33 @@ public class UrlEndpoints {
         }
         return new Response("Recorder not enabled");
     }
+
+    @UrlEndpoint(url="/deleteprobe")
+    public Response deleteTempProbe() {
+        String probeName = parameters.get("probe");
+        Status status = Status.OK;
+        JSONObject result = new JSONObject();
+        if (probeName == null) {
+            status = Status.BAD_REQUEST;
+            result.put("failed", "No temp probe provided.");
+        } else {
+            Temp tempProbe = LaunchControl.findTemp(probeName);
+            if (tempProbe == null) {
+                status = Status.BAD_REQUEST;
+                result.put("failed", "Could not find temp probe: " + tempProbe);
+            } else {
+                PID pid = LaunchControl.findPID(probeName);
+                if (pid != null)
+                {
+                    LaunchControl.deletePID(pid);
+                    result.put("PID", "Deleted");
+                }
+                LaunchControl.deleteTemp(tempProbe);
+                result.put("Temp", "Deleted");
+            }
+        }
+        Response response = new Response(result.toJSONString());
+        response.setStatus(status);
+        return response;
+    }
 }
