@@ -60,10 +60,15 @@ function setup() {
 	temp.append(
 			"<button id='edit-page' class='col-md-4 btn' onclick='toggleEdit(true); return false;'>"
 							+ $.i18n.prop("EDIT") + "</button>");
-
 	temp.append(
 			"<button id='change-scale' class='col-md-6 btn' onclick='changeScale(); return false;'>"
-					+ $.i18n.prop("CHANGE_SCALE") + "</button>")
+					+ $.i18n.prop("CHANGE_SCALE") + "</button>");
+    temp.append(
+            "<button id='shutdown' class='col-md-4 btn' onclick='shutdown(); return false;'>"
+                    + $.i18n.prop("SHUTDOWN") + "</button>");
+    temp.append(
+                "<button id='shutdown-system' class='col-md-4 btn' onclick='shutdownSystem(); return false;'>"
+                        + $.i18n.prop("SHUTDOWN_SYSTEM") + "</button>");
 
 	$('div[id$=-graph_body]').each(function(index) {
 		$(this).slideToggle();
@@ -671,7 +676,7 @@ function validate_gpio(gpio_input) {
 		return true;
 	}
 
-	alert($.i18n.prop("INVALID_GPIO"))
+	sweetAlert($.i18n.prop("INVALID_GPIO"))
 	return false;
 }
 
@@ -1014,7 +1019,7 @@ function submitForm(form) {
 		}
 		
 		if (!validData) {
-			alert("Invalid data provided. Check your inputs: " + badInputs);
+			sweetAlert("Invalid data provided. Check your inputs: " + badInputs);
 			return false;
 		}
 		
@@ -1155,12 +1160,12 @@ function submitNewSwitch(element) {
     var data = form.serializeObject();
 
     if (form.find("[name=new_name]").val() == "") {
-		alert($.i18n.prop("SWITCHNAMEBLANK"));
+		sweetAlert($.i18n.prop("SWITCHNAMEBLANK"));
 		return false;
 	}
 
 	if (form.find("[name=new_gpio]").val() == "") {
-		alert($.i18n.prop("GPIO_BLANK"));
+		sweetAlert($.i18n.prop("GPIO_BLANK"));
 		return false;
 	}
 
@@ -1215,7 +1220,7 @@ function submitNewTimer(element) {
 	var data = form.serializeObject();
 
 	if (form.find("[name=new_name]").val() == "") {
-		alert($.i18n.prop("TIMERNAMEBLANK"));
+		sweetAlert($.i18n.prop("TIMERNAMEBLANK"));
 		return false;
 	}
 
@@ -1844,6 +1849,8 @@ function readOnly(manualChange) {
 	readOnlyPhSensors();
 	$("[id=edit-page]").text($.i18n.prop("EDIT"));
 	$("[id=change-scale]").toggleClass("hidden", true);
+	$("[id=shutdown]").toggleClass("hidden", true);
+	$("[id=shutdown-system]").toggleClass("hidden", true);
 	$("[id=CheckUpdates]").toggleClass("hidden", true);
 	$("[id=logo]").toggleClass("hidden", true);
 	window.locked = true;
@@ -1881,6 +1888,8 @@ function readWrite(manualChange) {
 	$("[id=edit-page]").text($.i18n.prop("LOCK"));
 	$("[id=change-scale]").toggleClass("hidden", false);
 	$("[id=CheckUpdates]").toggleClass("hidden", false);
+	$("[id=shutdown]").toggleClass("hidden", false);
+    $("[id=shutdown-system]").toggleClass("hidden", false);
 	$("[id=logo]").toggleClass("hidden", false);
 	displaySystemSettings();
 	
@@ -2626,6 +2635,65 @@ function dismissNotification(event) {
         dataType: 'json',
         success: function(html) {
            return;
+        }
+    });
+}
+
+function shutdownSystem() {
+    sweetAlert({
+      title: "Shutdown!",
+      text: "This will shutdown the whole system. Are you sure?",
+      type: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#DD6B55",
+      confirmButtonText: "Yes, shutdown system",
+      closeOnConfirm: false,
+      html: false,
+      allowEscapeKey: true,
+      allowOutsideClick: true
+    }, function(shutdownSystem){
+        if (!shutdownSystem) {
+        return;
+        }
+        var txtMsg = "Shutting Down System.";
+        reallyShutdown(true);
+        swal("Shutting down!",
+        txtMsg,
+        "success");
+      });
+}
+
+function shutdown() {
+    sweetAlert({
+      title: "Shutdown!",
+      text: "This will shutdown Elsinore. Are you sure?",
+      type: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#DD6B55",
+      confirmButtonText: "Yes, shutdown",
+      closeOnConfirm: false,
+      html: false,
+      allowEscapeKey: true,
+      allowOutsideClick: true
+    }, function(shutdownSystem){
+        if (!shutdownSystem) {
+        return;
+        }
+        var txtMsg = "Shutting Down Elsinore.";
+        reallyShutdown(false);
+        swal("Shutting down!",
+        txtMsg,
+        "success");
+      });
+}
+
+function reallyShutdown(shutdownSystem) {
+$.ajax({
+        url : 'shutdownSystem',
+        type : 'POST',
+        data : "turnoff=" + shutdownSystem,
+        success : function(data) {
+            data = null
         }
     });
 }

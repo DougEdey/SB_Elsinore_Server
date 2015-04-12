@@ -27,7 +27,8 @@ public class Header implements Renderable {
             .macros().stylesheet("/templates/static/bootstrap-3.0.0/css/bootstrap.min.css")
             .write("<!--[if IE]>", HtmlCanvas.NO_ESCAPE)
                 .macros().javascript("templates/static/excanvas.js")
-            .write("<![endif]-->", HtmlCanvas.NO_ESCAPE)            
+            .write("<![endif]-->", HtmlCanvas.NO_ESCAPE)
+            .macros().stylesheet("/templates/static/css/sweet-alert.css")
             .macros().javascript("/templates/static/js/jquery.js")
             .macros().javascript("/templates/static/js/jquery-ui.js")
             .script(language("javascript").type("text/javascript").src("templates/static/js/d3.js").enctype("utf-8"))._script()
@@ -45,6 +46,7 @@ public class Header implements Renderable {
             .macros().javascript("/templates/static/file/jquery.fileupload.js")
             
             .macros().javascript("/templates/static/jquery.i18n.properties.js")
+            .macros().javascript("/templates/static/js/sweet-alert.js")
             .script(type("text/javascript"))
                     .write("var update = 1;"
                             + "var GaugeDisplay = {}; "

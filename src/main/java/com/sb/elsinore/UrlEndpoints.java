@@ -2025,4 +2025,22 @@ public class UrlEndpoints {
         response.setStatus(status);
         return response;
     }
+
+    @UrlEndpoint(url="/shutdownSystem")
+    public Response shutdownSystem() {
+        try {
+            boolean shutdownEverything = Boolean.parseBoolean(parameters.get("turnoff"));
+            if (shutdownEverything) {
+                // Shutdown the system using shutdown now
+                Runtime runtime = Runtime.getRuntime();
+                Process proc = runtime.exec("shutdown -h now");
+            }
+            System.exit(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+            BrewServer.LOG.warning("Failed to shutdown. " + e.getMessage());
+        }
+
+        return new Response("Shutdown called");
+    }
 }
