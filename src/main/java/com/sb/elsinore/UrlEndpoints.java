@@ -463,46 +463,31 @@ public class UrlEndpoints {
             newName = inputUnit;
         }
 
+        if (tPID == null) {
+            // No PID already, create one.
+            tPID = new PID(tProbe, newName);
+        }
         // HEATING GPIO
+        if (heatgpio == null || heatgpio.equals("")) {
+            tPID.delHeatGPIO();
+        }
+        if (coolgpio == null || coolgpio.equals("")) {
+            tPID.delCoolGPIO();
+        }
+
         if (!heatgpio.equals("") || !coolgpio.equals("")) {
-            // The GPIO is Set.
-            if (tPID == null) {
-                // No PID already, create one.
-                tPID = new PID(tProbe, newName);
-                // Setup the heating output
-                if (!heatgpio.equals("")) {
-                    tPID.setHeatGPIO(heatgpio);
-                    tPID.setHeatInverted(heatInvert);
-                }
-                // Setup the cooling output
-                if (!coolgpio.equals("")) {
-                    tPID.setCoolGPIO(coolgpio);
-                    tPID.setCoolInverted(coolInvert);
-                }
-                tPID.setAux(auxpin);
-                LaunchControl.addPID(tPID);
-                BrewServer.LOG.warning("Create PID");
-                return new Response(Status.OK, MIME_TYPES.get("txt"),
-                        "PID Added");
-            } else {
-                if (!heatgpio.equals(tPID.getHeatGPIO())) {
-                    // We have a PID, set it to the new value
-                    tPID.setHeatGPIO(heatgpio);
-                }
-                tPID.setHeatInverted(heatInvert);
-                if (!coolgpio.equals(tPID.getCoolGPIO())) {
-                    // We have a PID, set it to the new value
-                    tPID.setCoolGPIO(coolgpio);
-                }
-                tPID.setCoolInverted(coolInvert);
-                return new Response(Status.OK, MIME_TYPES.get("txt"),
-                        "PID Updated");
+            if (!heatgpio.equals(tPID.getHeatGPIO())) {
+                // We have a PID, set it to the new value
+                tPID.setHeatGPIO(heatgpio);
             }
-        } else {
-            if (tPID != null) {
-                LaunchControl.deletePID(tPID);
-                tPID.setHeatGPIO("");
+            tPID.setHeatInverted(heatInvert);
+            if (!coolgpio.equals(tPID.getCoolGPIO())) {
+                // We have a PID, set it to the new value
+                tPID.setCoolGPIO(coolgpio);
             }
+            tPID.setCoolInverted(coolInvert);
+            return new Response(Status.OK, MIME_TYPES.get("txt"),
+                    "PID Updated");
         }
 
         return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
@@ -558,7 +543,11 @@ public class UrlEndpoints {
             newName = parms.get("new_name");
         }
 
-        if (LaunchControl.addTimer(newName, "")) {
+        String mode = parms.get("mode");
+        String target = parms.get("target");
+
+        if (LaunchControl.addTimer(newName, mode)) {
+            LaunchControl.findTimer(newName).setTarget(target);
             return new Response(Status.OK, MIME_TYPES.get("txt"), "Timer Added");
         }
 
@@ -567,6 +556,7 @@ public class UrlEndpoints {
         usage.put("new_name", "The name of the timer to add");
         usage.put("mode",
                 "The mode for the timer, increment, or decrement (optional)");
+        usage.put("target", "The target time for the timer");
         usage.put("Error", "Invalid parameters passed " + parameters.toString());
 
         return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),

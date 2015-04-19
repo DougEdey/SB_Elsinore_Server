@@ -838,6 +838,19 @@ public final class PID implements Runnable {
         return statusMap;
     }
 
+    public void delHeatGPIO() {
+        if (this.outputControl != null) {
+            this.outputControl.getHeater().disable();
+        }
+        this.heatGPIO = "";
+    }
+
+    public void delCoolGPIO() {
+        if (this.outputControl != null) {
+            this.outputControl.getCooler().disable();
+        }
+        this.coolGPIO = "";
+    }
     /**
      * Set the GPIO to a new pin, shutdown the old one first.
      * @param gpio The new GPIO to use
