@@ -82,7 +82,7 @@ public class OutputDevice {
         // Run if the duty is not null and is between 0 and 100 inclusive.
         if (duty != null
                 && duty.compareTo(BigDecimal.ZERO) > 0
-                && duty.compareTo(HUNDRED) < 1) {
+                && duty.compareTo(HUNDRED) <= 0) {
             initializeSSR();
 
             duty = MathUtil.divide(duty, HUNDRED);
