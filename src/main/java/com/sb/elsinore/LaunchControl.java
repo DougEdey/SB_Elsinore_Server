@@ -2390,7 +2390,7 @@ public final class LaunchControl {
                     coolDelay = new BigDecimal(tElement.getTextContent());
                 }
 
-                tElement = getFirstElement(coolElement, "inverted");
+                tElement = getFirstElement(coolElement, "invert");
                 if (tElement != null) {
                     coolInvert = Boolean.parseBoolean(tElement.getTextContent());
                 }
