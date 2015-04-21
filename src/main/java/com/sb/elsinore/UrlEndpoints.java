@@ -486,12 +486,10 @@ public class UrlEndpoints {
                 tPID.setCoolGPIO(coolgpio);
             }
             tPID.setCoolInverted(coolInvert);
-            return new Response(Status.OK, MIME_TYPES.get("txt"),
-                    "PID Updated");
         }
-
-        return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
-                usage.toJSONString());
+        LaunchControl.saveConfigFile();
+        return new Response(Status.OK, MIME_TYPES.get("txt"),
+                "PID Updated");
     }
 
     /**
