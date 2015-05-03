@@ -148,6 +148,18 @@ public final class BrewDay {
             if (startTime > 0) {
                 startDate = new Date(startDate.getTime() + (1000 * startTime));
             }
+
+            Timer timer = LaunchControl.findTimer(name);
+            if (timer != null) {
+                if (timer.getTarget() != -1) {
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime(new Date());
+                    cal.add(Calendar.MINUTE, timer.getTarget());
+                    Date targetDate = cal.getTime();
+                    Entry<String, Date> targetEntry = new AbstractMap.SimpleEntry<>("target", targetDate);
+                    setTimer(name, targetEntry);
+                }
+            }
         } catch (NumberFormatException nfe) {
             startDate = parseDateString(startIn);
         }
@@ -183,6 +195,7 @@ public final class BrewDay {
             Entry<String, Date> stopEntry = new AbstractMap.SimpleEntry<>(
                     "end", stopIn);
             setTimer(name, stopEntry);
+            valueEntry.remove("target");
         }
     }
 
@@ -205,6 +218,19 @@ public final class BrewDay {
         Entry<String, Date> startEntry = new AbstractMap.SimpleEntry<>(
                 "start", startDate);
         setTimer(name, startEntry);
+
+        Timer timer = LaunchControl.findTimer(name);
+        if (timer != null) {
+            if (timer.getTarget() != -1) {
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(new Date());
+                cal.add(Calendar.MINUTE, timer.getTarget());
+                cal.add(Calendar.MILLISECOND, (int)(0L-current));
+                Date targetDate = cal.getTime();
+                Entry<String, Date> targetEntry = new AbstractMap.SimpleEntry<>("target", targetDate);
+                setTimer(name, targetEntry);
+            }
+        }
     }
     
     public void resetTimer(String name) {
@@ -298,6 +324,7 @@ public final class BrewDay {
 
                 Date startDate = valueEntry.get("start");
                 Date endDate = valueEntry.get("end");
+                Date targetDate = valueEntry.get("target");
                 String mode = "none";
                 Long seconds = 0L;
 
@@ -315,7 +342,16 @@ public final class BrewDay {
                 } else if (startDate != null && endDate != null) {
                     // Timer has stopped.
                     seconds = (endDate.getTime() - startDate.getTime()) / 1000;
+                    Timer timer = LaunchControl.findTimer(e.getKey());
+                    if (timer != null && timer.getTarget() > -1) {
+                        seconds = (timer.getTarget() * 60) - seconds;
+                    }
                     mode = "stopped";
+                }
+
+                if (targetDate != null) {
+                    mode = "down";
+                    timerJSON.put("target", targetDate.getTime());
                 }
 
                 timerJSON.put(mode, seconds);

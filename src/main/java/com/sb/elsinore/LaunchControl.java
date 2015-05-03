@@ -919,6 +919,14 @@ public final class LaunchControl {
                     // Couldn't parse. Move on.
                 }
             }
+            String target = tElement.getAttribute("target");
+            if (target != null && !target.equals("")) {
+                try {
+                    temp.setTarget(target);
+                } catch (NumberFormatException nfe) {
+                    nfe.printStackTrace();
+                }
+            }
             timerList.add(temp);
         }
     }
@@ -1022,17 +1030,17 @@ public final class LaunchControl {
      * 
      * @param name
      *            The name of the timer.
-     * @param mode
-     *            The mode of the timer.
+     * @param target
+     *            The target timer of the timer.
      * @return True if it was added OK.
      */
-    public static boolean addTimer(final String name, final String mode) {
+    public static boolean addTimer(String name, String target) {
         // Mode is a placeholder for now
         if (LaunchControl.findTimer(name) != null) {
             return false;
         }
         Timer tTimer = new Timer(name);
-        tTimer.setMode(mode);
+        tTimer.setTarget(target);
         CollectionsUtil.addInOrder(timerList, tTimer);
 
         return true;
@@ -1763,6 +1771,7 @@ public final class LaunchControl {
                             addNewElement(timersElement, "timer");
                     newTimer.setAttribute("id", t.getName());
                     newTimer.setAttribute("position", "" + t.getPosition());
+                    newTimer.setAttribute("target", "" + t.getTarget());
                 }
             }
         }

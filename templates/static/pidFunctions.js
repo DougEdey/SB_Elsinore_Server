@@ -1198,6 +1198,9 @@ function addTimer() {
                 + "<input type='text' name='new_name' id='new_name' value='' placeholder='"
                 + $.i18n.prop("NAME")
                 + "' /><br/>"
+                + "<input type='text' name='target' id='target' value='' placeholder='"
+                + $.i18n.prop("TARGETTIME")
+                + "' /><br/>"
                 + "<span id='add-timer' class='btn btn-info modeclass' "
                 + "onclick='submitNewTimer(this); return false;'>"
                 + $.i18n.prop("ADD")
@@ -1501,7 +1504,19 @@ function checkTimer(val, stage) {
 	stage = stage.replace(" ", "_");
 
 	// If We're counting UP
-	if ("up" in val) {
+	if ("target" in val) {
+		var targetTime = moment(val.target);
+		$("#" + stage).toggleClass("hidden", true);
+		$("#" + stage + "Timer").toggleClass("hidden", false);
+		var tt = $("#" + stage + "Timer").data('tinyTimer');
+		if (tt == undefined) {
+			$("#" + stage + "Timer").tinyTimer({
+				to: targetTime.toString()
+			});
+		} else {
+			tt.resetFrom(targetTime);
+		}
+	} else if ("up" in val) {
 		var startTime = moment().subtract(val.up, 'seconds');
 		$("#" + stage).toggleClass("hidden", true);
 		$("#" + stage + "Timer").toggleClass("hidden", false);

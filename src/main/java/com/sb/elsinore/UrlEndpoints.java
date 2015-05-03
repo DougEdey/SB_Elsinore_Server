@@ -548,11 +548,9 @@ public class UrlEndpoints {
             newName = parms.get("new_name");
         }
 
-        String mode = parms.get("mode");
         String target = parms.get("target");
 
-        if (LaunchControl.addTimer(newName, mode)) {
-            LaunchControl.findTimer(newName).setTarget(target);
+        if (LaunchControl.addTimer(newName, target)) {
             return new Response(Status.OK, MIME_TYPES.get("txt"), "Timer Added");
         }
 

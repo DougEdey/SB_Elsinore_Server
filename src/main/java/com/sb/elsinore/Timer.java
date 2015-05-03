@@ -1,12 +1,11 @@
 package com.sb.elsinore;
 
-import java.util.Comparator;
-
 public class Timer implements Comparable<Timer> {
 
     private String name = "";
     private int position = -1;
     private String mode;
+    private int target_mins = -1;
 
     public Timer(String newName) {
         this.name = newName;
@@ -24,10 +23,6 @@ public class Timer implements Comparable<Timer> {
         return this.name;
     }
     
-    public String getSafeName() {
-        return this.name.replaceAll(" ", "_");
-    }
-
     /**
      * Set the new position of this timer.
      * @param newPos The new position to use.
@@ -51,5 +46,13 @@ public class Timer implements Comparable<Timer> {
 
     public String getMode() {
         return mode;
+    }
+
+    public void setTarget(String target) {
+        this.target_mins = Integer.parseInt(target.replace(",", "."));
+    }
+
+    public int getTarget() {
+        return this.target_mins;
     }
 }
