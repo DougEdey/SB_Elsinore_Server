@@ -857,7 +857,7 @@ public final class LaunchControl {
 
         for (int i = 0; i < switches.getLength(); i++) {
             Element curSwitch = (Element) switches.item(i);
-            String switchName = curSwitch.getNodeName().replace("_", " ");
+            String switchName = curSwitch.getAttribute("name").replace("_", " ");
             String gpio;
             if (curSwitch.hasAttribute("gpio")) {
                 gpio = curSwitch.getAttribute("gpio");
@@ -1706,7 +1706,6 @@ public final class LaunchControl {
 
         // go through the list of Temps and save each one
         for (Temp fTemp : tempList) {
-            fTemp.save();
 
             PID n = LaunchControl.findPID(fTemp.getName());
             if (n == null || n.getName().equals("")) {
@@ -1716,6 +1715,7 @@ public final class LaunchControl {
                 BrewServer.LOG.info("Saving PID " + n.getName());
                 savePID(n);
             }
+            fTemp.save();
 
             if (fTemp.getVolumeBase() != null) {
                 if (!fTemp.getVolumeAIN().equals("")) {
@@ -1787,7 +1787,8 @@ public final class LaunchControl {
                 if (newSwitch == null) {
                     // No timer by this name
                     newSwitch = addNewElement(switchElement,
-                            tSwitch.getNodeName());
+                            "switch");
+                    newSwitch.setAttribute("name", tSwitch.getNodeName());
                 }
                 newSwitch.setAttribute("gpio", tSwitch.getGPIO());
                 newSwitch.setAttribute("position", "" + tSwitch.getPosition());

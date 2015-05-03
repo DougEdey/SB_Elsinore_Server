@@ -240,11 +240,11 @@ function waitForMsg() {
 								if (switchStatus) {
 									$('span[id^="' + switchName + '"]')[0].style.background = "red";
 									$('span[id^="'+ switchName + '"]')[0].innerHTML =
-									    switchName.replace("_", " ")+ " " + $.i18n.prop("SWITCH_ON");
+									    unescape(switchName.replace("_", " ")) + " " + $.i18n.prop("SWITCH_ON");
 								} else {
 									$('span[id^="' + switchName + '"]')[0].style.background = "#666666";
 									$('span[id^="' + switchName + '"]')[0].innerHTML =
-									    switchName.replace("_", " ") + " " + $.i18n.prop("SWITCH_OFF");
+									    unescape(switchName.replace("_", " ")) + " " + $.i18n.prop("SWITCH_OFF");
 								}
 							});
 					}
@@ -1068,7 +1068,9 @@ function submitForm(form) {
 	} else if (form.id.lastIndexOf("-editPhSensor") != -1) {
 		var sensorName = form.id.substring(0, form.id.lastIndexOf("-editPhSensor"));
 		var formdata = {}
-		formdata[sensorName] = JSON.stringify(jQuery(form).serializeObject());
+		var serialized = $(form).serializeObject();
+		serialized.new_name = escape(serialized.name)
+		formdata[sensorName] = JSON.stringify(serialized);
 		$.ajax({
 			url : 'addphsensor',
 			type : 'POST',
@@ -1083,7 +1085,7 @@ function submitForm(form) {
 		var vessel = form.id.substring(0, form.id.lastIndexOf("-edit"));
 		var formdata = {}
 		var serialized = $(form).serializeObject();
-		serialized.new_name = encodeURIComponent(serialized.new_name)
+		serialized.new_name = escape(serialized.new_name)
 		formdata[vessel] = JSON.stringify(serialized);
 		$.ajax({
 			url : 'editdevice',
@@ -1158,7 +1160,7 @@ function cancelAddSwitch() {
 function submitNewSwitch(element) {
 	form = $(element).closest("form");
     var data = form.serializeObject();
-
+	data.new_name = escape(data.new_name)
     if (form.find("[name=new_name]").val() == "") {
 		sweetAlert($.i18n.prop("SWITCHNAMEBLANK"));
 		return false;
