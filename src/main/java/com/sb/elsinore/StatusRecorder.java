@@ -406,6 +406,11 @@ public class StatusRecorder implements Runnable {
         if (params.containsKey("vessel")) {
             vessel = params.get("vessel");
         }
+        String vesselName = vessel;
+        Temp temp = LaunchControl.findTemp(vessel);
+        if (temp != null) {
+            vesselName = temp.getName();
+        }
 
         File[] contents = new File(getCurrentDir()).listFiles();
         JSONObject xsData = new JSONObject();
@@ -434,9 +439,10 @@ public class StatusRecorder implements Runnable {
 
             for (File content : contents) {
                 try {
+
                     if (content.getName().endsWith(".csv")
                             && content.getName().toLowerCase()
-                            .startsWith(vessel.toLowerCase())) {
+                            .startsWith(vesselName.toLowerCase())) {
                         zipFile.addToZipFile(content.getAbsolutePath());
                     }
                 } catch (IOException ioe) {
@@ -462,7 +468,7 @@ public class StatusRecorder implements Runnable {
         for (File content : contents) {
             if (content.getName().endsWith(".csv")
                     && content.getName().toLowerCase()
-                    .startsWith(vessel.toLowerCase())) {
+                    .startsWith(vesselName.toLowerCase())) {
                 String name = content.getName();
 
                 // Strip off .csv
@@ -601,7 +607,7 @@ public class StatusRecorder implements Runnable {
         finalJSON.put("axis", axisContent);
 
         if (params.containsKey("bindto")) {
-            finalJSON.put("bindto", "#" + params.get("bindto"));
+            finalJSON.put("bindto", "[id='" + params.get("bindto") + "']");
         } else {
             finalJSON.put("bindto", "#chart");
         }
