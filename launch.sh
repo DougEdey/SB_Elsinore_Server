@@ -92,7 +92,7 @@ RUNTIME_OPTS="$PORT $GPIO $DEBUG $THRESHOLD $THEME --baseUser $ORIGINAL_USER $OT
 RC=128
 while [ $RC -eq 128 ] 
 do
-	sudo $JAVA $JAVA_OPTS -jar $DIR/Elsinore.jar --config $CONFIG $RUNTIME_OPTS | tee $LOG_FILE
+	sudo $JAVA $JAVA_OPTS -jar $DIR/Elsinore.jar --config $CONFIG $RUNTIME_OPTS 2>&1 | tee $LOG_FILE
 	RC=$?
 done
 
