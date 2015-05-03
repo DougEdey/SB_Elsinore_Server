@@ -90,7 +90,15 @@ function setup() {
 		    $('[data-original-title]').popover('hide');
 		  }
 	});
-   	
+
+   	$(document).on("keypress", 'form', function (e) {
+        var code = e.keyCode || e.which;
+        if (code == 13) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
 	waitForMsg();
 };
 
@@ -481,7 +489,7 @@ function updateVolumeStatus(vessel, status) {
 						" value='" + status.gravity + "' step='any'/>"
 				+ "<button id='updategravity-" + vessel + "'" +
 						" class='btn' "
-				+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>"
+				+ "onclick='submitForm(this.form);'>"
 				+ $.i18n.prop("UPDATE_GRAVITY")
 				+ "</button>"
 			+ "</div>");
@@ -636,7 +644,7 @@ function editDevice(element) {
 							+ "<button id='update-"
 							+ vessel
 							+ "' class='btn modeclass' "
-							+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>"
+							+ "onclick='submitForm(this.form);'>"
 							+ $.i18n.prop("UPDATE")
 							+ "</button>"
 							+ "<button id='cancel-" + vessel + "' class='btn modeclass' "
@@ -668,11 +676,11 @@ function validate_gpio(gpio_input) {
 		return true;
 	}
 
-	if (gpio_string.match(/(gpio)([\d]+)(_[\d]+)$/)) {
+	if (gpio_string.match(/^(gpio)([\d]+)(_[\d]+)$/)) {
 		return true;
 	}
 
-	if (gpio_string.match(/(gpio)([\d]+)$/)) {
+	if (gpio_string.match(/^(gpio)([\d]+)$/)) {
 		return true;
 	}
 
@@ -1039,6 +1047,8 @@ function submitForm(form) {
 				data = null
 			}
 		});
+		sleep(2000);
+		location.reload();
 	} else if (form.id.lastIndexOf("-editVol") != -1) {
 		var vessel = form.id.substring(0, form.id.lastIndexOf("-editVol"));
 		var formdata = {}
@@ -1052,6 +1062,8 @@ function submitForm(form) {
 				data = null
 			}
 		});
+		sleep(2000);
+		location.reload();
 	} else if (form.id.lastIndexOf("-gravity-edit") != -1) {
 		var vessel = form.id.substring(0, form.id.lastIndexOf("-gravity-edit"));
 		var formdata = {}
@@ -1065,6 +1077,8 @@ function submitForm(form) {
 				data = null
 			}
 		});
+		sleep(2000);
+		location.reload();
 	} else if (form.id.lastIndexOf("-editPhSensor") != -1) {
 		var sensorName = form.id.substring(0, form.id.lastIndexOf("-editPhSensor"));
 		var formdata = {}
@@ -1080,12 +1094,21 @@ function submitForm(form) {
 				data = null
 			}
 		});
+		sleep(2000);
+		location.reload();
 	} else if (form.id.lastIndexOf("-edit") != -1) {
 		// We're editing
 		var vessel = form.id.substring(0, form.id.lastIndexOf("-edit"));
 		var formdata = {}
 		var serialized = $(form).serializeObject();
 		serialized.new_name = escape(serialized.new_name)
+		if (serialized.new_cool_gpio != "" && !validate_gpio(serialized.new_cool_gpio)) {
+			return false;
+		}
+
+		if (serialized.new_heat_gpio != "" && !validate_gpio(serialized.new_heat_gpio)) {
+			return false;
+		}
 		formdata[vessel] = JSON.stringify(serialized);
 		$.ajax({
 			url : 'editdevice',
@@ -1096,6 +1119,8 @@ function submitForm(form) {
 				data = null
 			}
 		});
+		sleep(2000);
+		location.reload();
 	} else {
 		// Another form..
 		console.log("Unrecognised form: " + form.id);
