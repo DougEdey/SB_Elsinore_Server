@@ -474,6 +474,7 @@ public class UrlEndpoints {
         if (coolgpio == null || coolgpio.equals("")) {
             tPID.delCoolGPIO();
         }
+        tPID.setAux(auxpin);
 
         if (!heatgpio.equals("") || !coolgpio.equals("")) {
             if (!heatgpio.equals(tPID.getHeatGPIO())) {
@@ -486,7 +487,13 @@ public class UrlEndpoints {
                 tPID.setCoolGPIO(coolgpio);
             }
             tPID.setCoolInverted(coolInvert);
+            LaunchControl.addPID(tPID);
         }
+        if (heatgpio.equals("") && coolgpio.equals("")) {
+            LaunchControl.deletePID(tPID);
+        }
+
+
         LaunchControl.saveConfigFile();
         return new Response(Status.OK, MIME_TYPES.get("txt"),
                 "PID Updated");
@@ -1163,9 +1170,7 @@ public class UrlEndpoints {
                         "Couldn't parse " + entry.getValue()
                         + " as an integer");
             }
-            synchronized (LaunchControl.switchList) {
-                Collections.sort(LaunchControl.switchList);
-            }
+            Collections.sort(LaunchControl.switchList);
             status = Response.Status.OK;
         }
         return new Response(status,

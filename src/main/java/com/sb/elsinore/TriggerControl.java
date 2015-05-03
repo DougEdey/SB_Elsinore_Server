@@ -366,10 +366,8 @@ public class TriggerControl implements Runnable {
     @SuppressWarnings("unchecked")
     public final JSONArray getJSONData() {
         JSONArray masterArray = new JSONArray();
-        synchronized (triggerList) {
-            for (TriggerInterface e : triggerList) {
-                masterArray.add(e.getJSONStatus());
-            }
+        for (TriggerInterface e : triggerList) {
+            masterArray.add(e.getJSONStatus());
         }
         return masterArray;
     }

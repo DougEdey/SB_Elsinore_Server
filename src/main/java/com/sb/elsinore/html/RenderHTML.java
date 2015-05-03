@@ -57,7 +57,7 @@ public class RenderHTML implements Renderable {
                     }
 
                     html.span(id("NewSwitch").class_("btn btn-info switch")
-                        .onClick("addSwitch()"))
+                            .onClick("addSwitch()"))
                         .write(Messages.NEW_SWITCH)
                     ._span()
                 ._div()
@@ -72,12 +72,12 @@ public class RenderHTML implements Renderable {
                 ._div()
                 .div(id("timers-body").class_("panel-body"));
 
-                    for (Timer timer: LaunchControl.timerList) {
+                    for (Timer timer : LaunchControl.timerList) {
                         html.render(new TimerComponent(timer.getName()));
                     }
 
                     html.span(id("NewTimer").class_("btn btn-info timer")
-                        .onClick("addTimer()"))
+                            .onClick("addTimer()"))
                         .write(Messages.NEW_TIMER)
                     ._span()
                 ._div()
@@ -91,7 +91,7 @@ public class RenderHTML implements Renderable {
                     .write(Messages.PH_SENSORS)
                 ._div()
                 .div(id("phSensors-body").class_("panel-body"));
-                    for (PhSensor sensor: LaunchControl.phSensorList) {
+                    for (PhSensor sensor : LaunchControl.phSensorList) {
                         html.render(new PhSensorComponent(sensor));
                     }
                 html.span(id("NewPhSensor").class_("btn btn-info sensor")
