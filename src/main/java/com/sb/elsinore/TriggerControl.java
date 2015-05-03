@@ -410,7 +410,7 @@ public class TriggerControl implements Runnable {
      */
     public final void delTriggerStep(final int position) {
         sortTriggerSteps();
-        for (int i = 0; i < triggerList.size(); i++) {
+        for (int i = triggerList.size(); i > 0; i--) {
             if (triggerList.get(i).getPosition() == position) {
                 this.triggerList.remove(i);
             }

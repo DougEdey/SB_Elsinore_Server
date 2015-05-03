@@ -1228,16 +1228,8 @@ public final class LaunchControl {
      */
     public static void deleteSwitch(final String name) {
         // search based on the input name
-        Iterator<Switch> iterator = switchList.iterator();
-        Switch tSwitch;
-
-        while (iterator.hasNext()) {
-            tSwitch = iterator.next();
-            if (tSwitch.getName().equalsIgnoreCase(name) || tSwitch.getNodeName().equalsIgnoreCase(name)) {
-                iterator.remove();
-                return;
-            }
-        }
+        Switch tSwitch = LaunchControl.findSwitch(name);
+        LaunchControl.switchList.remove(tSwitch);
     }
 
     /**************
@@ -1268,14 +1260,8 @@ public final class LaunchControl {
      */
     public static void deleteTimer(final String name) {
         // search based on the input name
-        Iterator<Timer> iterator = timerList.iterator();
-        Timer tTimer;
-        while (iterator.hasNext()) {
-            tTimer = iterator.next();
-            if (tTimer.getName().equalsIgnoreCase(name)) {
-                timerList.remove(tTimer);
-            }
-        }
+        Timer tTimer = LaunchControl.findTimer(name);
+        timerList.remove(tTimer);
     }
 
     /********
@@ -1700,7 +1686,7 @@ public final class LaunchControl {
     /*****
      * Save the configuration to the Config.
      */
-    public void saveSettings() {
+    public static void saveSettings() {
         if (configDoc == null) {
             setupConfigDoc();
         }
@@ -2039,7 +2025,7 @@ public final class LaunchControl {
      * @param concurrentHashMap
      *            Hashmap of the volume ranges and readings
      */
-    public void saveVolume(final String name, final String address,
+    public static void saveVolume(final String name, final String address,
             final String offset, final String volumeUnit,
             final ConcurrentHashMap<BigDecimal, BigDecimal> concurrentHashMap) {
 
@@ -2077,7 +2063,7 @@ public final class LaunchControl {
      * @param concurrentHashMap
      *            Hashmap of the volume ranges and readings
      */
-    public void saveVolume(final String name, final String volumeAIN,
+    public static void saveVolume(final String name, final String volumeAIN,
             final String volumeUnit,
             final ConcurrentHashMap<BigDecimal, BigDecimal> concurrentHashMap) {
 
@@ -2107,7 +2093,7 @@ public final class LaunchControl {
      *            The units for the volume.
      * @return The element that was created
      */
-    public Element saveVolumeMeasurements(final String name,
+    public static Element saveVolumeMeasurements(final String name,
             final ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase,
             final String volumeUnit) {
         Element device = getFirstElementByXpath(null, "/elsinore/device[@id='"

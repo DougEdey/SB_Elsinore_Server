@@ -626,6 +626,7 @@ public class UrlEndpoints {
 
         if (LaunchControl.addSwitch(newName, gpio)) {
             LaunchControl.findSwitch(newName).setInverted(invert);
+            LaunchControl.saveSettings();
             return new Response(Status.OK, MIME_TYPES.get("txt"), "Switch Added");
         } else {
             LaunchControl.setMessage(
@@ -2021,6 +2022,8 @@ public class UrlEndpoints {
     public Response shutdownSystem() {
         try {
             boolean shutdownEverything = Boolean.parseBoolean(parameters.get("turnoff"));
+            LaunchControl.saveSettings();
+            LaunchControl.saveConfigFile();
             if (shutdownEverything) {
                 // Shutdown the system using shutdown now
                 Runtime runtime = Runtime.getRuntime();
