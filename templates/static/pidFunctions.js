@@ -1110,7 +1110,7 @@ function submitSwitch(switchStatus) {
 	$.ajax({
 		url : 'updateswitch',
 		type : 'POST',
-		data : "toggle=" + switchStatus.id,
+		data : "toggle=" + escape(switchStatus.id),
 		success : function(data) {
 			data = null
 		}
@@ -1952,7 +1952,7 @@ function readWriteSwitches() {
                    if (!id.startsWith("div-")) {
                     continue;
                    }
-                   var oldid = id.replace("div-", "");
+                   var oldid = escape(id.replace("div-", ""));
                    newData[oldid] = i;
                }
                $.ajax({
@@ -1990,7 +1990,7 @@ function readWriteSwitches() {
                    $.ajax({
                        url : 'deleteswitch',
                        type : 'POST',
-                       data : "name=" + id.replace("div-", ""),
+                       data : "name=" + escape(id.replace("div-", "")),
                        success : function(data) {
                            data = null
                        }
