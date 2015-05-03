@@ -49,6 +49,10 @@ public class Timer implements Comparable<Timer> {
     }
 
     public void setTarget(String target) {
+        if (target == null || target.equals("")) {
+            this.target_mins = -1;
+            return;
+        }
         this.target_mins = Integer.parseInt(target.replace(",", "."));
     }
 

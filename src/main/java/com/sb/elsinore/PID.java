@@ -839,14 +839,14 @@ public final class PID implements Runnable {
     }
 
     public void delHeatGPIO() {
-        if (this.outputControl != null) {
+        if (this.hasValidHeater()) {
             this.outputControl.getHeater().disable();
         }
         this.heatGPIO = "";
     }
 
     public void delCoolGPIO() {
-        if (this.outputControl != null) {
+        if (this.hasValidCooler()) {
             this.outputControl.getCooler().disable();
         }
         this.coolGPIO = "";
