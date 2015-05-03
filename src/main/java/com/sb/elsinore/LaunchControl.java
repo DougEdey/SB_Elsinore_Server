@@ -705,6 +705,7 @@ public final class LaunchControl {
             // get user input
             createConfig();
         }
+        updateDeviceList();
         LaunchControl.loadCompleted = true;
     }
 
