@@ -942,7 +942,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
 
     public void setCalibration(String calibration) {
         // Lock the calibration temp
-        calibration.replace(",", ".");
+        calibration = calibration.replace(",", ".");
         Matcher tempMatcher = tempRegexp.matcher(calibration);
 
         if (tempMatcher.find()) {
