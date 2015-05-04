@@ -978,8 +978,7 @@ public final class PID implements Runnable {
                     this.outputControl.getHeater().setCycleTime(
                             this.minTime.multiply(new BigDecimal(60)));
                 }
-            }
-            if (this.hasValidCooler()) {
+            } else if (this.hasValidCooler()) {
                 if (this.duty_cycle.compareTo(new BigDecimal(0)) != 0
                         &&  this.minTimePassed()) {
                     BrewServer.LOG.info("Slept for long enough, turning off");
@@ -1005,8 +1004,7 @@ public final class PID implements Runnable {
                     this.outputControl.getCooler().setCycleTime(
                             this.minTime.multiply(new BigDecimal(60)));
                 }
-            }
-            if(this.hasValidHeater()) {
+            } else if(this.hasValidHeater()) {
                BrewServer.LOG.info("Current temp is more than the max temp");
                // We're over the maximum temp, but should we wake up the thread?
                if (this.duty_cycle.compareTo(new BigDecimal(0)) != 0

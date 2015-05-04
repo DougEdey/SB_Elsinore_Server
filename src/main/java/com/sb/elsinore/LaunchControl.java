@@ -2456,36 +2456,29 @@ public final class LaunchControl {
             System.exit(-1);
         }
         newTemp.setPosition(position);
+        PID tPID = LaunchControl.findPID(newTemp.getName());
         try {
-            if (heatGPIO != null && GPIO.getPinNumber(heatGPIO) >= 0) {
-                PID tPID = LaunchControl.findPID(newTemp.getName());
-                try {
-                    tPID.setHysteria(min, max, time);
-                } catch (NumberFormatException nfe) {
-                    System.out
-                        .println("Invalid options when setting up Hysteria: "
-                                + nfe.getMessage());
-                }
+            tPID.setHysteria(min, max, time);
+        } catch (NumberFormatException nfe) {
+            System.out
+                .println("Invalid options when setting up Hysteria: "
+                        + nfe.getMessage());
+        }
 
-                tPID.updateValues("off", duty, heatCycle, setpoint, heatP,
-                        heatI, heatD);
-                tPID.setCoolDelay(coolDelay);
-                tPID.setCoolCycle(coolCycle);
-                tPID.setCoolP(coolP);
-                tPID.setCoolI(coolI);
-                tPID.setCoolD(coolD);
-                tPID.setCoolGPIO(coolGPIO);
-                tPID.setCoolInverted(coolInvert);
-                tPID.setHeatInverted(heatInvert);
-                tPID.setManualTime(cycle);
-                tPID.setManualDuty(duty);
-                if (auxPin != null && !auxPin.equals("")) {
-                    tPID.setAux(auxPin);
-                }
-            }
-        } catch (InvalidGPIOException e) {
-            BrewServer.LOG.info("Invalid GPIO provided");
-            e.printStackTrace();
+        tPID.updateValues("off", duty, heatCycle, setpoint, heatP,
+                heatI, heatD);
+        tPID.setCoolDelay(coolDelay);
+        tPID.setCoolCycle(coolCycle);
+        tPID.setCoolP(coolP);
+        tPID.setCoolI(coolI);
+        tPID.setCoolD(coolD);
+        tPID.setCoolGPIO(coolGPIO);
+        tPID.setCoolInverted(coolInvert);
+        tPID.setHeatInverted(heatInvert);
+        tPID.setManualTime(cycle);
+        tPID.setManualDuty(duty);
+        if (auxPin != null && !auxPin.equals("")) {
+            tPID.setAux(auxPin);
         }
 
         if (cutoffTemp != null) {
