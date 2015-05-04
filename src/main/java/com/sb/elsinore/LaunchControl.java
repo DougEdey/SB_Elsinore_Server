@@ -1054,11 +1054,13 @@ public final class LaunchControl {
      *            The name of the PID.
      * @param probe
      *            The One-Wire probe address
-     * @param gpio
-     *            The GPIO to use, null doesn't start the device.
+     * @param heatgpio
+     *            The heat GPIO to use.
+     * @param coolgpio
+     *            The Cool GPIO to use.
      * @return The new Temp probe. Use it to look up the PID if applicable.
      */
-    public Temp startDevice(String input, String probe, String gpio) {
+    public Temp startDevice(String input, String probe, String heatgpio, String coolgpio) {
 
         // Startup the thread
         if (probe == null || probe.equals("0")) {
@@ -1074,7 +1076,9 @@ public final class LaunchControl {
         // input is the name we'll use from here on out
         Temp tTemp = new Temp(input, probe);
         tempList.add(tTemp);
-        BrewServer.LOG.info("Adding " + tTemp.getName() + " GPIO is (" + gpio
+        BrewServer.LOG.info("Adding " + tTemp.getName() + " Heat GPIO is (" + heatgpio
+                + ")");
+        BrewServer.LOG.info("Adding " + tTemp.getName() + " Cool GPIO is (" + coolgpio
                 + ")");
 
         // setup the scale for each temp probe
@@ -1086,10 +1090,10 @@ public final class LaunchControl {
         tempThreads.add(tThread);
         tThread.start();
 
-        if (gpio != null && !gpio.equals("")) {
-            BrewServer.LOG.info("Adding PID with GPIO: " + gpio);
-            PID tPID = new PID(tTemp, input, gpio);
+        if ((heatgpio != null && !heatgpio.equals("")) || (coolgpio != null && !coolgpio.equals(""))) {
 
+            PID tPID = new PID(tTemp, input, heatgpio);
+            tPID.setCoolGPIO(coolgpio);
             pidList.add(tPID);
             Thread pThread = new Thread(tPID);
             pThread.setName("PID_" + tTemp.getName());
@@ -2450,35 +2454,42 @@ public final class LaunchControl {
             e.printStackTrace();
         }
 
-        Temp newTemp = startDevice(deviceName, probe, heatGPIO);
+        Temp newTemp = startDevice(deviceName, probe, heatGPIO, coolGPIO);
         if (newTemp == null) {
             System.out.println("Problems parsing device " + deviceName);
             System.exit(-1);
         }
         newTemp.setPosition(position);
-        PID tPID = LaunchControl.findPID(newTemp.getName());
         try {
-            tPID.setHysteria(min, max, time);
-        } catch (NumberFormatException nfe) {
-            System.out
-                .println("Invalid options when setting up Hysteria: "
-                        + nfe.getMessage());
-        }
+            if (heatGPIO != null && !heatGPIO.equals("") && GPIO.getPinNumber(heatGPIO) >= 0) {
+                PID tPID = LaunchControl.findPID(newTemp.getName());
+                try {
+                    tPID.setHysteria(min, max, time);
+                } catch (NumberFormatException nfe) {
+                    System.out
+                        .println("Invalid options when setting up Hysteria: "
+                                + nfe.getMessage());
+                }
 
-        tPID.updateValues("off", duty, heatCycle, setpoint, heatP,
-                heatI, heatD);
-        tPID.setCoolDelay(coolDelay);
-        tPID.setCoolCycle(coolCycle);
-        tPID.setCoolP(coolP);
-        tPID.setCoolI(coolI);
-        tPID.setCoolD(coolD);
-        tPID.setCoolGPIO(coolGPIO);
-        tPID.setCoolInverted(coolInvert);
-        tPID.setHeatInverted(heatInvert);
-        tPID.setManualTime(cycle);
-        tPID.setManualDuty(duty);
-        if (auxPin != null && !auxPin.equals("")) {
-            tPID.setAux(auxPin);
+                tPID.updateValues("off", duty, heatCycle, setpoint, heatP,
+                        heatI, heatD);
+                tPID.setCoolDelay(coolDelay);
+                tPID.setCoolCycle(coolCycle);
+                tPID.setCoolP(coolP);
+                tPID.setCoolI(coolI);
+                tPID.setCoolD(coolD);
+                tPID.setCoolGPIO(coolGPIO);
+                tPID.setCoolInverted(coolInvert);
+                tPID.setHeatInverted(heatInvert);
+                tPID.setManualTime(cycle);
+                tPID.setManualDuty(duty);
+                if (auxPin != null && !auxPin.equals("")) {
+                    tPID.setAux(auxPin);
+                }
+            }
+        } catch (InvalidGPIOException e) {
+            BrewServer.LOG.info("Invalid GPIO provided");
+            e.printStackTrace();
         }
 
         if (cutoffTemp != null) {
