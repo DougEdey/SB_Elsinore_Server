@@ -98,7 +98,7 @@ function setup() {
             return false;
         }
     });
-    
+
 	waitForMsg();
 };
 

@@ -152,7 +152,9 @@ public class StatusRecorder implements Runnable {
             JSONObject vessel = (JSONObject) vessel1;
             if (vessel.containsKey("name")) {
                 String name = vessel.get("name").toString();
-
+                if (LaunchControl.findTemp(name) != null) {
+                    name = LaunchControl.findTemp(name).getProbe();
+                }
                 if (vessel.containsKey("tempprobe")) {
                     String temp = ((JSONObject) vessel.get("tempprobe"))
                             .get("temp").toString();
@@ -409,7 +411,7 @@ public class StatusRecorder implements Runnable {
         String vesselName = vessel;
         Temp temp = LaunchControl.findTemp(vessel);
         if (temp != null) {
-            vesselName = temp.getName();
+            vesselName = temp.getProbe();
         }
 
         File[] contents = new File(getCurrentDir()).listFiles();
@@ -470,31 +472,41 @@ public class StatusRecorder implements Runnable {
                     && content.getName().toLowerCase()
                     .startsWith(vesselName.toLowerCase())) {
                 String name = content.getName();
+                String localName = null;
 
                 // Strip off .csv
                 name = name.substring(0, name.length() - 4);
-                name = name.replace('-', ' ');
+                localName = name.substring(0, name.lastIndexOf("-"));
+                String type = name.substring(name.lastIndexOf("-") + 1);
+                Temp localTemp = LaunchControl.findTemp(localName);
+                if (localTemp != null) {
+                    localName = localTemp.getName();
+                } else {
+                    localName = name;
+                }
 
                 if (params.containsKey("bindto")
                         && (params.get("bindto"))
                         .endsWith("-graph_body")) {
-                    name = name.substring(name.lastIndexOf(" ") + 1);
+                    localName = type;
                 }
 
-                xsData.put(name, "x" + name);
 
-                if (name.endsWith("duty")) {
-                    axes.put(name, "y2");
+                xsData.put(localName, "x" + localName + " " + type);
+
+
+                if (type.equalsIgnoreCase("duty")) {
+                    axes.put(localName, "y2");
                     dutyVisible = true;
                 } else {
-                    axes.put(name, "y");
+                    axes.put(localName, "y");
                 }
 
                 JSONArray xArray = new JSONArray();
                 JSONArray dataArray = new JSONArray();
 
-                xArray.add("x" + name);
-                dataArray.add(name);
+                xArray.add("x" + localName + " " + type);
+                dataArray.add(localName);
 
                 BufferedReader reader = null;
                 try {
