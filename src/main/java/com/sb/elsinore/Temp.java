@@ -235,7 +235,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
     /**
      * Hold the current error string.
      */
-    private String currentError = null;
+    public String currentError = null;
 
     /**
      * The current temp.

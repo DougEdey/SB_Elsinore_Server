@@ -50,9 +50,9 @@ import java.util.regex.Pattern;
  * determining whether to run setup or not It launches the threads for the PIDs,
  * Temperature, and Mash It write the config file on shutdown. It sets up the
  * OWFS connection
- * 
+ *
  * @author doug
- * 
+ *
  */
 @SuppressWarnings("unused")
 public final class LaunchControl {
@@ -208,7 +208,7 @@ public final class LaunchControl {
 
     /*****
      * Main method to launch the brewery.
-     * 
+     *
      * @param arguments
      *            List of arguments from the command line
      */
@@ -354,7 +354,7 @@ public final class LaunchControl {
 
     /**
      * Constructor for launch control.
-     * 
+     *
      * @param port
      *            The port to start the server on.
      */
@@ -367,7 +367,7 @@ public final class LaunchControl {
                 BrewServer.LOG.warning("Shutting down. Saving configuration");
                 saveSettings();
                 BrewServer.LOG.warning("Configuration saved.");
-                
+
                 BrewServer.LOG.warning("Shutting down temperature probe threads.");
                 for (Temp t : tempList) {
                     if (t != null) {
@@ -446,7 +446,7 @@ public final class LaunchControl {
 
     /************
      * Start the COSM Connection.
-     * 
+     *
      * @param apiKey
      *            User API Key from COSM
      * @param feedID
@@ -471,7 +471,7 @@ public final class LaunchControl {
 
     /*****
      * Create an image from a COSM Feed.
-     * 
+     *
      * @param startDate
      *            The start date to get the image from
      * @param endDate
@@ -504,7 +504,7 @@ public final class LaunchControl {
 
     /*********
      * Get the XML from a COSM feed.
-     * 
+     *
      * @param startDate
      *            The startdate to get data from
      * @param endDate
@@ -538,7 +538,7 @@ public final class LaunchControl {
     /******
      * Get the JSON Output String. This is the current Status of the PIDs,
      * Temps, Switches, etc...
-     * 
+     *
      * @return The JSON String of the current status.
      */
     @SuppressWarnings("unchecked")
@@ -711,7 +711,7 @@ public final class LaunchControl {
 
     /**
      * Parse the general section of the XML Configuration.
-     * 
+     *
      * @param config
      *            The General element to be parsed.
      */
@@ -844,7 +844,7 @@ public final class LaunchControl {
 
     /**
      * Parse the switches in the specified element.
-     * 
+     *
      * @param config
      *            The element that contains the switches information
      */
@@ -898,7 +898,7 @@ public final class LaunchControl {
 
     /**
      * Parse the list of timers in an XML Element.
-     * 
+     *
      * @param config
      *            the Element containing the timers
      */
@@ -1012,7 +1012,7 @@ public final class LaunchControl {
 
     /**
      * Check to see if a switch with the given name exists.
-     * 
+     *
      * @param name
      *            The name of the switch to check
      * @return True if the switch exists.
@@ -1028,7 +1028,7 @@ public final class LaunchControl {
 
     /**
      * Add a new timer to the list.
-     * 
+     *
      * @param name
      *            The name of the timer.
      * @param target
@@ -1049,7 +1049,7 @@ public final class LaunchControl {
 
     /**
      * Startup a PID device.
-     * 
+     *
      * @param input
      *            The name of the PID.
      * @param probe
@@ -1106,7 +1106,7 @@ public final class LaunchControl {
 
     /******
      * Search for a Datastream in cosm based on a tag.
-     * 
+     *
      * @param tag
      *            The tag to search for
      * @return The found Datastream, or null if it doesn't find anything
@@ -1153,7 +1153,7 @@ public final class LaunchControl {
 
     /******
      * Find the Temp Probe in the current list.
-     * 
+     *
      * @param name
      *            The Temp to find
      * @return The Temp object
@@ -1173,7 +1173,7 @@ public final class LaunchControl {
 
     /******
      * Find the PID in the current list.
-     * 
+     *
      * @param name
      *            The PID to find
      * @return The PID object
@@ -1193,7 +1193,7 @@ public final class LaunchControl {
 
     /**
      * Add a PID to the list.
-     * 
+     *
      * @param newPID
      *            PID to add.
      */
@@ -1206,7 +1206,7 @@ public final class LaunchControl {
 
     /**************
      * Find the Switch in the server..
-     * 
+     *
      * @param name
      *            The switch to find
      * @return return the Switch object
@@ -1258,7 +1258,7 @@ public final class LaunchControl {
 
     /**************
      * Delete the Timer in the current list.
-     * 
+     *
      * @param name
      *            The timer to delete
      */
@@ -1270,7 +1270,7 @@ public final class LaunchControl {
 
     /********
      * Get the BrewDay object. Create one if there is no brewday object.
-     * 
+     *
      * @return The current brewday object.
      */
     public static BrewDay getBrewDay() {
@@ -2350,6 +2350,7 @@ public final class LaunchControl {
             }
 
             tElement = getFirstElement(config, "min");
+            BrewServer.LOG.info("min: " + tElement);
             if (tElement != null) {
                 min = new BigDecimal(tElement.getTextContent());
             }
@@ -2461,7 +2462,8 @@ public final class LaunchControl {
         }
         newTemp.setPosition(position);
         try {
-            if (heatGPIO != null && !heatGPIO.equals("") && GPIO.getPinNumber(heatGPIO) >= 0) {
+            if ((heatGPIO != null && !heatGPIO.equals("") && GPIO.getPinNumber(heatGPIO) >= 0)
+            || (coolGPIO != null && !coolGPIO.equals("") && GPIO.getPinNumber(coolGPIO) >= 0)) {
                 PID tPID = LaunchControl.findPID(newTemp.getName());
                 try {
                     tPID.setHysteria(min, max, time);
@@ -2523,7 +2525,7 @@ public final class LaunchControl {
 
     /**
      * Copy a file helper, used for backing data the config file.
-     * 
+     *
      * @param sourceFile
      *            The file to copy from
      * @param destFile
@@ -2643,7 +2645,7 @@ public final class LaunchControl {
         }
 
         // See if this element exists.
-        /*if (baseNode != null) {
+        if (baseNode != null) {
             NodeList nl = baseNode.getChildNodes();
 
             if (nl.getLength() > 0) {
@@ -2654,7 +2656,7 @@ public final class LaunchControl {
                     }
                 }
             }
-        }*/
+        }
 
         Element newElement = configDoc.createElement(nodeName);
         Element trueBase = baseNode;
@@ -2759,7 +2761,7 @@ public final class LaunchControl {
 
     /**
      * Delete the named element from the baseNode.
-     * 
+     *
      * @param baseNode
      *            The Node to delete a child from
      * @param elementName
@@ -3068,7 +3070,7 @@ public final class LaunchControl {
 
     /**
      * Set the brewery name.
-     * 
+     *
      * @param newName
      *            New brewery name.
      */
@@ -3080,7 +3082,7 @@ public final class LaunchControl {
 
     /**
      * Delete the PID from the list.
-     * 
+     *
      * @param tPID
      *            The PID object to delete.
      */
@@ -3095,7 +3097,7 @@ public final class LaunchControl {
     }
     /**
      * Get the system temperature scale.
-     * 
+     *
      * @return The system temperature scale.
      */
     public static String getScale() {
@@ -3104,7 +3106,7 @@ public final class LaunchControl {
 
     /**
      * Change the file owner.
-     * 
+     *
      * @param targetFile
      *            File to change the owner for.
      */
