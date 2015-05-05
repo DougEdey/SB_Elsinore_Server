@@ -492,21 +492,21 @@ public class StatusRecorder implements Runnable {
                 }
 
 
-                xsData.put(localName, "x" + localName + " " + type);
+                xsData.put(localName + " " + type, "x" + localName + " " + type);
 
 
                 if (type.equalsIgnoreCase("duty")) {
-                    axes.put(localName, "y2");
+                    axes.put(localName + " " + type, "y2");
                     dutyVisible = true;
                 } else {
-                    axes.put(localName, "y");
+                    axes.put(localName + " " + type, "y");
                 }
 
                 JSONArray xArray = new JSONArray();
                 JSONArray dataArray = new JSONArray();
 
                 xArray.add("x" + localName + " " + type);
-                dataArray.add(localName);
+                dataArray.add(localName + " " + type);
 
                 BufferedReader reader = null;
                 try {
