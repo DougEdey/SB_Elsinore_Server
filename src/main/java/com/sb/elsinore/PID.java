@@ -208,8 +208,6 @@ public final class PID implements Runnable {
         if (this.heatGPIO != null && !this.heatGPIO.equals("")) {
             this.outputControl =
                     new OutputControl(fName, heatGPIO, heatSetting.cycle_time);
-
-            this.outputThread.start();
         }
         if (this.coolGPIO != null ) {
             if (this.outputControl == null) {
