@@ -10,7 +10,7 @@
  * March 16, 2014.
  * -----------------------------
      * fix - https://github.com/toorshia/justgage/issues/112
- * 
+ *
  * -----------------------------
  * February 16, 2014.
  * -----------------------------
@@ -857,9 +857,9 @@ JustGage.prototype.refreshBoth = function(val, min, max) {
 		    }
 		    obj.txtMin.attr({"text" : obj.txtMinimum});
 		    setDy(obj.txtMin, obj.params.minFontSize, obj.params.minY);
-		  
+
 	  }
-	  
+
 	  // set new max
 	  if(max !== null) {
 	    obj.config.max = max;
@@ -873,7 +873,7 @@ JustGage.prototype.refreshBoth = function(val, min, max) {
 	    obj.txtMax.attr({"text" : obj.txtMaximum});
 	    setDy(obj.txtMax, obj.params.maxFontSize, obj.params.maxY);
 	  }
-	  
+
 
 	  // overflow values
 	  displayVal = val;

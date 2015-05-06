@@ -334,27 +334,36 @@ function waitForMsg() {
 									if ("actualduty" in vesselStatus.pidstatus) {
 										duty = vesselStatus.pidstatus.actualduty;
 									}
-
+									var gauge = Gauges[vesselProbe]
 									if (duty < 0) {
 										if (Gauges[vesselProbe].config.textMax != "0") {
 											Gauges[vesselProbe].config.levelColors = [
-													"#0033CC",
+													"#a9d70b",
 													"#CC00CC",
-													"#a9d70b" ];
+													"#0033CC" ];
+											Gauges[vesselProbe].config.title = "Cooling"
+											gauge.txtTitle[0].textContent = "Cooling"
 										}
+
 										Gauges[vesselProbe]
 												.refreshBoth(
-														duty,
-														-100,
-														"0");
-									} else {
+														Math.abs(duty),
+														"0",
+														"100");
+									} else if (duty > 0) {
 										if (Gauges[vesselProbe].config.textMax != "0") {
 											Gauges[vesselProbe].config.levelColors = [
 													"#a9d70b",
 													"#f9c802",
 													"#ff0000" ];
+											Gauges[vesselProbe].config.title = "Heating"
+											gauge.txtTitle[0].textContent = "Heating"
 										}
+
 										Gauges[vesselProbe].refreshBoth(duty, "0", 100);
+									} else {
+										Gauges[vesselProbe].config.title = "Off";
+										gauge.txtTitle[0].textContent = "Off"
 									}
 
 								}
