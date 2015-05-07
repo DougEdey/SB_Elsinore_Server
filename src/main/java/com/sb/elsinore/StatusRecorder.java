@@ -1,9 +1,11 @@
 package com.sb.elsinore;
 
 import com.sb.common.SBStringUtils;
+import org.apache.commons.codec.binary.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.rendersnake.internal.StringEscapeUtils;
 
 import java.io.*;
 import java.util.Date;
@@ -484,7 +486,7 @@ public class StatusRecorder implements Runnable {
                 } else {
                     localName = name;
                 }
-
+                localName = org.apache.commons.lang3.StringEscapeUtils.unescapeJson(localName);
                 if (params.containsKey("bindto")
                         && (params.get("bindto"))
                         .endsWith("-graph_body")) {

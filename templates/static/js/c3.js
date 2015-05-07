@@ -3989,7 +3989,7 @@
                 }
             });
         l.append('text')
-            .text(function (id) { return isDefined(config.data_names[id]) ? config.data_names[id] : id; })
+            .text(function (id) { return isDefined(config.data_names[id]) ? unescape(config.data_names[id]) : unescape(id); })
             .each(function (id, i) { updatePositions(this, id, i); })
             .style("pointer-events", "none")
             .attr('x', $$.isLegendRight || $$.isLegendInset ? xForLegendText : -200)
@@ -4018,7 +4018,7 @@
 
         texts = $$.legend.selectAll('text')
             .data(targetIds)
-            .text(function (id) { return isDefined(config.data_names[id]) ? config.data_names[id] : id; }) // MEMO: needed for update
+            .text(function (id) { return isDefined(config.data_names[id]) ? unescape(config.data_names[id]) : unescape(id); }) // MEMO: needed for update
             .each(function (id, i) { updatePositions(this, id, i); });
         (withTransition ? texts.transition() : texts)
             .attr('x', xForLegendText)
@@ -4772,7 +4772,7 @@
         $$.arcs.append('text')
             .attr('class', CLASS.chartArcsTitle)
             .style("text-anchor", "middle")
-            .text($$.getArcTitle());
+            .text(unescape($$.getArcTitle()));
     };
 
     c3_chart_internal_fn.redrawArc = function (duration, durationForExit, withTransform) {
@@ -4871,7 +4871,7 @@
         main.selectAll('.' + CLASS.chartArc).select('text')
             .style("opacity", 0)
             .attr('class', function (d) { return $$.isGaugeType(d.data) ? CLASS.gaugeValue : ''; })
-            .text($$.textForArcLabel.bind($$))
+            .text(unescape($$.textForArcLabel.bind($$)))
             .attr("transform", $$.transformForArcLabel.bind($$))
             .style('font-size', function (d) { return $$.isGaugeType(d.data) ? Math.round($$.radius / 5) + 'px' : ''; })
           .transition().duration(duration)
@@ -6654,7 +6654,7 @@
             return newScale;
         }
         function textFormatted(v) {
-            return tickFormat ? tickFormat(v) : v;
+            return tickFormat ? tickFormat(v) : unescape(v);
         }
         function getSizeFor1Char(tick) {
             if (tickTextCharSize) {
