@@ -344,7 +344,7 @@ public final class PID implements Runnable {
         if (temp.doubleValue() < 0) {
             temp = BigDecimal.ZERO;
         }
-        this.set_point = temp;
+        this.set_point = temp.setScale(2, BigDecimal.ROUND_CEILING);
     }
 
     /*******

@@ -615,7 +615,7 @@ public final class LaunchControl {
 
             if (t.getTriggerControl() != null
                     && t.getTriggerControl().triggerCount() > 0) {
-                triggerJSON.put(t.getName(),
+                triggerJSON.put(t.getProbe(),
                         t.getTriggerControl().getJSONData());
             }
         }
