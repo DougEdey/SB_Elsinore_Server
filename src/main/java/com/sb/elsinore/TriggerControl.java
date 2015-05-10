@@ -366,10 +366,8 @@ public class TriggerControl implements Runnable {
     @SuppressWarnings("unchecked")
     public final JSONArray getJSONData() {
         JSONArray masterArray = new JSONArray();
-        synchronized (triggerList) {
-            for (TriggerInterface e : triggerList) {
-                masterArray.add(e.getJSONStatus());
-            }
+        for (TriggerInterface e : triggerList) {
+            masterArray.add(e.getJSONStatus());
         }
         return masterArray;
     }
@@ -412,7 +410,7 @@ public class TriggerControl implements Runnable {
      */
     public final void delTriggerStep(final int position) {
         sortTriggerSteps();
-        for (int i = 0; i < triggerList.size(); i++) {
+        for (int i = triggerList.size(); i > 0; i--) {
             if (triggerList.get(i).getPosition() == position) {
                 this.triggerList.remove(i);
             }

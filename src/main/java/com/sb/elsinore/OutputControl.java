@@ -95,7 +95,7 @@ public final class OutputControl implements Runnable {
                              getHeater().turnOff();
                          }
                          if (getCooler() != null) {
-                             getCooler().runCycle(fDuty.negate());
+                             getCooler().runCycle(fDuty.abs());
                          }
                      } else {
                          status = "heating";

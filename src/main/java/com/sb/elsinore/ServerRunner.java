@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -19,7 +20,7 @@ public class ServerRunner implements Runnable {
      * The port to run on.
      */
     private int port;
-
+    public static boolean running = true;
     /**
      * The main constructor.
      * @param inClass The class to run
@@ -46,16 +47,13 @@ public class ServerRunner implements Runnable {
         BrewServer.LOG.info("Server started, kill to stop.\n");
 
 
-        boolean keepRunning = true;
-        while (keepRunning) {
-            try {
-                if (-1 == System.in.read()) {
-                    keepRunning = false;
-                }
-            } catch (Throwable ignored) {
-                BrewServer.LOG.warning(ignored.getLocalizedMessage());
-                keepRunning = false;
+        try {
+            while (ServerRunner.running) {
+                Thread.sleep(1000);
             }
+        } catch (Throwable ignored)
+        {
+            BrewServer.LOG.warning(ignored.getLocalizedMessage());
         }
 
 

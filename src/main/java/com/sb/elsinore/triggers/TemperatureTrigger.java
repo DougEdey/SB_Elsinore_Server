@@ -119,19 +119,20 @@ public class TemperatureTrigger implements TriggerInterface {
     public TemperatureTrigger(final int inPosition,
             final JSONObject parameters) {
         this.position = inPosition;
-        BigDecimal tTemp = new BigDecimal(
-              parameters.get("targetTemperature").toString().replace(",", "."));
 
         String inMethod = parameters.get("method").toString();
         String inType = parameters.get("stepType").toString();
         String inTempProbe = parameters.get("tempprobe").toString();
         String inMode = parameters.get("mode").toString();
 
-        this.targetTemp = tTemp;
         this.temperatureProbe = LaunchControl.findTemp(inTempProbe);
         this.method = inMethod;
         this.type = inType;
         this.mode = inMode;
+
+        BigDecimal tTemp = new BigDecimal(
+                parameters.get("targetTemperature").toString().replace(",", "."), this.temperatureProbe.context);
+        this.targetTemp = tTemp;
     }
 
     /**
@@ -179,18 +180,13 @@ public class TemperatureTrigger implements TriggerInterface {
             return;
         }
 
-        if (mode == null) {
-            BrewServer.LOG.warning("No Mode Set");
-            return;
-        }
-
         setTargetTemperature();
         setStart(new Date());
         if (this.mode == null) {
             // Just get to within 2F of the target Temp.
-            BrewServer.LOG.warning("Waiting to be within 2F of " + targetTemp);
+            BrewServer.LOG.warning(String.format("Waiting to be within 2F of %.2f", targetTemp));
             while(temperatureProbe.convertF(temperatureProbe.getTemp().subtract(targetTemp).abs())
-                    .compareTo(new BigDecimal(2.0)) <= 0) {
+                    .compareTo(new BigDecimal(2.0)) >= 0) {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {

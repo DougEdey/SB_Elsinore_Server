@@ -77,11 +77,12 @@ public final class Temp implements Runnable, Comparable<Temp> {
      *  Use "system" to create a system temperature probe
      * @param inProbe The address of this temperature probe.
      */
-    public Temp(final String name, final String inProbe) {
+    public Temp(String name, String inProbe) {
 
         String aName = inProbe;
         BrewServer.LOG.info("Adding" + aName);
         if (name.equalsIgnoreCase("system")) {
+            aName = "System";
             File tempFile = new File(rpiSystemTemp);
             if (tempFile.exists()) {
                 fProbe = rpiSystemTemp;
@@ -127,7 +128,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
         }
 
         this.probeName = aName;
-        this.name = name.replace(".", "-");
+        this.name = name;
         BrewServer.LOG.info(this.probeName + " added.");
     }
 
@@ -234,7 +235,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
     /**
      * Hold the current error string.
      */
-    private String currentError = null;
+    public String currentError = null;
 
     /**
      * The current temp.
@@ -941,6 +942,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
 
     public void setCalibration(String calibration) {
         // Lock the calibration temp
+        calibration = calibration.replace(",", ".");
         Matcher tempMatcher = tempRegexp.matcher(calibration);
 
         if (tempMatcher.find()) {
@@ -1072,4 +1074,5 @@ public final class Temp implements Runnable, Comparable<Temp> {
 
         return temp;
     }
+
 }

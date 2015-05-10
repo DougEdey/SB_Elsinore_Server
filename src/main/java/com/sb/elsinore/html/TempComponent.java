@@ -5,8 +5,6 @@ import java.io.IOException;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.Renderable;
 
-import com.sb.elsinore.Temp;
-
 public class TempComponent implements Renderable {
     public static String lineSep = System.getProperty("line.separator");
 

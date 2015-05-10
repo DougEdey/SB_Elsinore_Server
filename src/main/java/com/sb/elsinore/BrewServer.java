@@ -56,6 +56,7 @@ public class BrewServer extends NanoHTTPD {
             put("htm", "text/html");
             put("html", "text/html");
             put("xml", "text/xml");
+            put("log", "text/plain");
             put("txt", "text/plain");
             put("asc", "text/plain");
             put("gif", "image/gif");

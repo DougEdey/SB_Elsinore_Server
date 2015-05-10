@@ -1,9 +1,11 @@
 package com.sb.elsinore;
 
 import com.sb.common.SBStringUtils;
+import org.apache.commons.codec.binary.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.rendersnake.internal.StringEscapeUtils;
 
 import java.io.*;
 import java.util.Date;
@@ -152,7 +154,9 @@ public class StatusRecorder implements Runnable {
             JSONObject vessel = (JSONObject) vessel1;
             if (vessel.containsKey("name")) {
                 String name = vessel.get("name").toString();
-
+                if (LaunchControl.findTemp(name) != null) {
+                    name = LaunchControl.findTemp(name).getProbe();
+                }
                 if (vessel.containsKey("tempprobe")) {
                     String temp = ((JSONObject) vessel.get("tempprobe"))
                             .get("temp").toString();
@@ -406,6 +410,11 @@ public class StatusRecorder implements Runnable {
         if (params.containsKey("vessel")) {
             vessel = params.get("vessel");
         }
+        String vesselName = vessel;
+        Temp temp = LaunchControl.findTemp(vessel);
+        if (temp != null) {
+            vesselName = temp.getProbe();
+        }
 
         File[] contents = new File(getCurrentDir()).listFiles();
         JSONObject xsData = new JSONObject();
@@ -434,9 +443,10 @@ public class StatusRecorder implements Runnable {
 
             for (File content : contents) {
                 try {
+
                     if (content.getName().endsWith(".csv")
                             && content.getName().toLowerCase()
-                            .startsWith(vessel.toLowerCase())) {
+                            .startsWith(vesselName.toLowerCase())) {
                         zipFile.addToZipFile(content.getAbsolutePath());
                     }
                 } catch (IOException ioe) {
@@ -462,33 +472,43 @@ public class StatusRecorder implements Runnable {
         for (File content : contents) {
             if (content.getName().endsWith(".csv")
                     && content.getName().toLowerCase()
-                    .startsWith(vessel.toLowerCase())) {
+                    .startsWith(vesselName.toLowerCase())) {
                 String name = content.getName();
+                String localName = null;
 
                 // Strip off .csv
                 name = name.substring(0, name.length() - 4);
-                name = name.replace('-', ' ');
-
+                localName = name.substring(0, name.lastIndexOf("-"));
+                String type = name.substring(name.lastIndexOf("-") + 1);
+                Temp localTemp = LaunchControl.findTemp(localName);
+                if (localTemp != null) {
+                    localName = localTemp.getName();
+                } else {
+                    localName = name;
+                }
+                localName = org.apache.commons.lang3.StringEscapeUtils.unescapeJson(localName);
                 if (params.containsKey("bindto")
                         && (params.get("bindto"))
                         .endsWith("-graph_body")) {
-                    name = name.substring(name.lastIndexOf(" ") + 1);
+                    localName = type;
                 }
 
-                xsData.put(name, "x" + name);
 
-                if (name.endsWith("duty")) {
-                    axes.put(name, "y2");
+                xsData.put(localName + " " + type, "x" + localName + " " + type);
+
+
+                if (type.equalsIgnoreCase("duty")) {
+                    axes.put(localName + " " + type, "y2");
                     dutyVisible = true;
                 } else {
-                    axes.put(name, "y");
+                    axes.put(localName + " " + type, "y");
                 }
 
                 JSONArray xArray = new JSONArray();
                 JSONArray dataArray = new JSONArray();
 
-                xArray.add("x" + name);
-                dataArray.add(name);
+                xArray.add("x" + localName + " " + type);
+                dataArray.add(localName + " " + type);
 
                 BufferedReader reader = null;
                 try {
@@ -601,7 +621,7 @@ public class StatusRecorder implements Runnable {
         finalJSON.put("axis", axisContent);
 
         if (params.containsKey("bindto")) {
-            finalJSON.put("bindto", "#" + params.get("bindto"));
+            finalJSON.put("bindto", "[id='" + params.get("bindto") + "']");
         } else {
             finalJSON.put("bindto", "#chart");
         }

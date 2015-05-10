@@ -463,50 +463,40 @@ public class UrlEndpoints {
             newName = inputUnit;
         }
 
+        if (tPID == null) {
+            // No PID already, create one.
+            tPID = new PID(tProbe, newName);
+        }
         // HEATING GPIO
+        if (heatgpio == null || heatgpio.equals("")) {
+            tPID.delHeatGPIO();
+        }
+        if (coolgpio == null || coolgpio.equals("")) {
+            tPID.delCoolGPIO();
+        }
+        tPID.setAux(auxpin);
+
         if (!heatgpio.equals("") || !coolgpio.equals("")) {
-            // The GPIO is Set.
-            if (tPID == null) {
-                // No PID already, create one.
-                tPID = new PID(tProbe, newName);
-                // Setup the heating output
-                if (!heatgpio.equals("")) {
-                    tPID.setHeatGPIO(heatgpio);
-                    tPID.setHeatInverted(heatInvert);
-                }
-                // Setup the cooling output
-                if (!coolgpio.equals("")) {
-                    tPID.setCoolGPIO(coolgpio);
-                    tPID.setCoolInverted(coolInvert);
-                }
-                tPID.setAux(auxpin);
-                LaunchControl.addPID(tPID);
-                BrewServer.LOG.warning("Create PID");
-                return new Response(Status.OK, MIME_TYPES.get("txt"),
-                        "PID Added");
-            } else {
-                if (!heatgpio.equals(tPID.getHeatGPIO())) {
-                    // We have a PID, set it to the new value
-                    tPID.setHeatGPIO(heatgpio);
-                }
-                tPID.setHeatInverted(heatInvert);
-                if (!coolgpio.equals(tPID.getCoolGPIO())) {
-                    // We have a PID, set it to the new value
-                    tPID.setCoolGPIO(coolgpio);
-                }
-                tPID.setCoolInverted(coolInvert);
-                return new Response(Status.OK, MIME_TYPES.get("txt"),
-                        "PID Updated");
+            if (!heatgpio.equals(tPID.getHeatGPIO())) {
+                // We have a PID, set it to the new value
+                tPID.setHeatGPIO(heatgpio);
             }
-        } else {
-            if (tPID != null) {
-                LaunchControl.deletePID(tPID);
-                tPID.setHeatGPIO("");
+            tPID.setHeatInverted(heatInvert);
+            if (!coolgpio.equals(tPID.getCoolGPIO())) {
+                // We have a PID, set it to the new value
+                tPID.setCoolGPIO(coolgpio);
             }
+            tPID.setCoolInverted(coolInvert);
+            LaunchControl.addPID(tPID);
+        }
+        if (heatgpio.equals("") && coolgpio.equals("")) {
+            LaunchControl.deletePID(tPID);
         }
 
-        return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
-                usage.toJSONString());
+
+        LaunchControl.saveConfigFile();
+        return new Response(Status.OK, MIME_TYPES.get("txt"),
+                "PID Updated");
     }
 
     /**
@@ -558,7 +548,9 @@ public class UrlEndpoints {
             newName = parms.get("new_name");
         }
 
-        if (LaunchControl.addTimer(newName, "")) {
+        String target = parms.get("target");
+
+        if (LaunchControl.addTimer(newName, target)) {
             return new Response(Status.OK, MIME_TYPES.get("txt"), "Timer Added");
         }
 
@@ -567,6 +559,7 @@ public class UrlEndpoints {
         usage.put("new_name", "The name of the timer to add");
         usage.put("mode",
                 "The mode for the timer, increment, or decrement (optional)");
+        usage.put("target", "The target time for the timer");
         usage.put("Error", "Invalid parameters passed " + parameters.toString());
 
         return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
@@ -633,6 +626,7 @@ public class UrlEndpoints {
 
         if (LaunchControl.addSwitch(newName, gpio)) {
             LaunchControl.findSwitch(newName).setInverted(invert);
+            LaunchControl.saveSettings();
             return new Response(Status.OK, MIME_TYPES.get("txt"), "Switch Added");
         } else {
             LaunchControl.setMessage(
@@ -1034,7 +1028,7 @@ public class UrlEndpoints {
             BigDecimal actualVol = new BigDecimal(volume.replace(",", "."));
             if (t.addVolumeMeasurement(actualVol)) {
                 return new Response(Response.Status.OK, MIME_TYPES.get("json"),
-                        "{'Result': 'OK'}");
+                        "{'Result':\"OK\"}");
             }
         } catch (NumberFormatException nfe) {
             error_msg = "Could not setup volumes for " + volume + " Units: "
@@ -1175,9 +1169,7 @@ public class UrlEndpoints {
                         "Couldn't parse " + entry.getValue()
                         + " as an integer");
             }
-            synchronized (LaunchControl.switchList) {
-                Collections.sort(LaunchControl.switchList);
-            }
+            Collections.sort(LaunchControl.switchList);
             status = Response.Status.OK;
         }
         return new Response(status,
@@ -1424,7 +1416,7 @@ public class UrlEndpoints {
         LaunchControl.pageLock = true;
         return new NanoHTTPD.Response(Status.OK,
                 BrewServer.MIME_TYPES.get("json"),
-                "{status: 'locked'}");
+                "{status: \"locked\"}");
     }
 
     @UrlEndpoint(url = "/unlockpage")
@@ -1433,7 +1425,7 @@ public class UrlEndpoints {
         LaunchControl.pageLock = false;
         return new NanoHTTPD.Response(Status.OK,
                 BrewServer.MIME_TYPES.get("json"),
-                "{status: 'unlocked'}");
+                "{status: \"unlocked\"");
     }
     
     @UrlEndpoint(url = "/brewerImage.gif")
@@ -1456,7 +1448,7 @@ public class UrlEndpoints {
 
         return new NanoHTTPD.Response(Status.BAD_REQUEST,
                 BrewServer.MIME_TYPES.get("json"),
-                "{image: 'unavailable'}");
+                "{image: \"unavailable\"}");
     }
 
     @UrlEndpoint(url = "/updateswitch")
@@ -1995,5 +1987,54 @@ public class UrlEndpoints {
             return response;
         }
         return new Response("Recorder not enabled");
+    }
+
+    @UrlEndpoint(url="/deleteprobe")
+    public Response deleteTempProbe() {
+        String probeName = parameters.get("probe");
+        Status status = Status.OK;
+        JSONObject result = new JSONObject();
+        if (probeName == null) {
+            status = Status.BAD_REQUEST;
+            result.put("failed", "No temp probe provided.");
+        } else {
+            Temp tempProbe = LaunchControl.findTemp(probeName);
+            if (tempProbe == null) {
+                status = Status.BAD_REQUEST;
+                result.put("failed", "Could not find temp probe: " + tempProbe);
+            } else {
+                PID pid = LaunchControl.findPID(probeName);
+                if (pid != null)
+                {
+                    LaunchControl.deletePID(pid);
+                    result.put("PID", "Deleted");
+                }
+                LaunchControl.deleteTemp(tempProbe);
+                result.put("Temp", "Deleted");
+            }
+        }
+        Response response = new Response(result.toJSONString());
+        response.setStatus(status);
+        return response;
+    }
+
+    @UrlEndpoint(url="/shutdownSystem")
+    public Response shutdownSystem() {
+        try {
+            LaunchControl.saveSettings();
+            LaunchControl.saveConfigFile();
+            boolean shutdownEverything = Boolean.parseBoolean(parameters.get("turnoff"));
+            if (shutdownEverything) {
+                // Shutdown the system using shutdown now
+                Runtime runtime = Runtime.getRuntime();
+                Process proc = runtime.exec("shutdown -h now");
+            }
+            System.exit(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+            BrewServer.LOG.warning("Failed to shutdown. " + e.getMessage());
+        }
+
+        return new Response("Shutdown called");
     }
 }

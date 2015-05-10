@@ -60,10 +60,15 @@ function setup() {
 	temp.append(
 			"<button id='edit-page' class='col-md-4 btn' onclick='toggleEdit(true); return false;'>"
 							+ $.i18n.prop("EDIT") + "</button>");
-
 	temp.append(
 			"<button id='change-scale' class='col-md-6 btn' onclick='changeScale(); return false;'>"
-					+ $.i18n.prop("CHANGE_SCALE") + "</button>")
+					+ $.i18n.prop("CHANGE_SCALE") + "</button>");
+    temp.append(
+            "<button id='shutdown' class='col-md-4 btn' onclick='shutdown(); return false;'>"
+                    + $.i18n.prop("SHUTDOWN") + "</button>");
+    temp.append(
+                "<button id='shutdown-system' class='col-md-4 btn' onclick='shutdownSystem(); return false;'>"
+                        + $.i18n.prop("SHUTDOWN_SYSTEM") + "</button>");
 
 	$('div[id$=-graph_body]').each(function(index) {
 		$(this).slideToggle();
@@ -85,7 +90,15 @@ function setup() {
 		    $('[data-original-title]').popover('hide');
 		  }
 	});
-   	
+
+   	$(document).on("keypress", 'form', function (e) {
+        var code = e.keyCode || e.which;
+        if (code == 13) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
 	waitForMsg();
 };
 
@@ -235,11 +248,11 @@ function waitForMsg() {
 								if (switchStatus) {
 									$('span[id^="' + switchName + '"]')[0].style.background = "red";
 									$('span[id^="'+ switchName + '"]')[0].innerHTML =
-									    switchName.replace("_", " ")+ " " + $.i18n.prop("SWITCH_ON");
+									    unescape(switchName.replace("_", " ")) + " " + $.i18n.prop("SWITCH_ON");
 								} else {
 									$('span[id^="' + switchName + '"]')[0].style.background = "#666666";
 									$('span[id^="' + switchName + '"]')[0].innerHTML =
-									    switchName.replace("_", " ") + " " + $.i18n.prop("SWITCH_OFF");
+									    unescape(switchName.replace("_", " ")) + " " + $.i18n.prop("SWITCH_OFF");
 								}
 							});
 					}
@@ -270,7 +283,7 @@ function waitForMsg() {
 						if (!("system" in data.vessels)
 								&& !("System" in data.vessels)) {
 							// No System temperature, add a header to add it in.
-							var sysTemp = $("[id=Probes] > [id=System]");
+							var sysTemp = $("[id=System]");
 							if (sysTemp.length == 0 && !data.locked) {
 								var sysHtml = '<div id="System" class="holo-content controller panel panel-primary Temp">'
 										+ '<div id="System-title" class="title panel-heading "'
@@ -279,14 +292,14 @@ function waitForMsg() {
 										+ '</div>'
 										+ '</div>';
 
-								$("[id=Probes]").append(sysHtml)
+								$("[id=Probes]").last().append(sysHtml)
 							}
-							if ($("[id=Probes] > [id=System] > div").length == 1
+							if ($("[id=System] > div").length == 1
 									&& data.locked) {
 								sysTemp.remove();
 							}
 						}
-						$.each(val, function(vesselName, vesselStatus) {
+						$.each(val, function(vesselProbe, vesselStatus) {
 
 							// This should always be there
 							if ("name" in vesselStatus) {
@@ -296,60 +309,73 @@ function waitForMsg() {
 									return;
 								}
 							}
-							addTriggerTable(vesselName);
+
+							if ("deviceaddr" in vesselStatus) {
+							    vesselProbe = vesselStatus.deviceaddr;
+							}
+							addTriggerTable(vesselProbe);
 							if ("tempprobe" in vesselStatus) {
-								updateTempProbe(vesselName,
+								updateTempProbe(vesselProbe,
 										vesselStatus.tempprobe);
 							}
 
 							if ("pidstatus" in vesselStatus) {
-								updatePIDStatus(vesselName,
+								updatePIDStatus(vesselProbe,
 										vesselStatus.pidstatus);
 
 								// Hide the gauge if needs be
 								if (vesselStatus.pidstatus.mode == "off") {
-									$('div[id^="' + vesselName + '-gage"]')
+									$('div[id^="' + vesselProbe + '-gage"]')
 											.toggleClass("hidden", true);
 								} else {
-									$('div[id^="' + vesselName + '-gage"]')
+									$('div[id^="' + vesselProbe + '-gage"]')
 											.toggleClass("hidden", false);
 									var duty = vesselStatus.pidstatus.duty;
 									if ("actualduty" in vesselStatus.pidstatus) {
 										duty = vesselStatus.pidstatus.actualduty;
 									}
-
+									var gauge = Gauges[vesselProbe]
 									if (duty < 0) {
-										if (Gauges[vesselName].config.textMax != "0") {
-											Gauges[vesselName].config.levelColors = [
-													"#0033CC",
+										if (Gauges[vesselProbe].config.textMax != "0") {
+											Gauges[vesselProbe].config.levelColors = [
+													"#a9d70b",
 													"#CC00CC",
-													"#a9d70b" ];
+													"#0033CC" ];
+											Gauges[vesselProbe].config.title = "Cooling"
+											gauge.txtTitle[0].textContent = "Cooling"
 										}
-										Gauges[vesselName]
+
+										Gauges[vesselProbe]
 												.refreshBoth(
-														duty,
-														-100,
-														"0");
-									} else {
-										if (Gauges[vesselName].config.textMax != "0") {
-											Gauges[vesselName].config.levelColors = [
+														Math.abs(duty),
+														"0",
+														"100");
+									} else if (duty > 0) {
+										if (Gauges[vesselProbe].config.textMax != "0") {
+											Gauges[vesselProbe].config.levelColors = [
 													"#a9d70b",
 													"#f9c802",
 													"#ff0000" ];
+											Gauges[vesselProbe].config.title = "Heating"
+											gauge.txtTitle[0].textContent = "Heating"
 										}
-										Gauges[vesselName].refreshBoth(duty, "0", 100);
+
+										Gauges[vesselProbe].refreshBoth(duty, "0", 100);
+									} else {
+										Gauges[vesselProbe].config.title = "Off";
+										gauge.txtTitle[0].textContent = "Off"
 									}
 
 								}
 							} else {
-								hidePIDForm(vesselName);
+								hidePIDForm(vesselProbe);
 							}
 
 							if ("volume" in vesselStatus) {
-								updateVolumeStatus(vesselName,
+								updateVolumeStatus(vesselProbe,
 										vesselStatus.volume);
 							} else {
-								jQuery("#" + vesselName+ "-volumeAmount")
+								jQuery("#" + vesselProbe+ "-volumeAmount")
 									.text($.i18n.prop("NO_VOLUME"));
 							}
 						});
@@ -372,9 +398,9 @@ function waitForMsg() {
 
 }
 
-function addTriggerTable(vesselName) {
-	if ($("#triggerTable" + vesselName).length == 0) {
-		table = "<table id='triggerTable" + vesselName
+function addTriggerTable(vesselProbe) {
+	if ($("#triggerTable" + vesselProbe).length == 0) {
+		table = "<table id='triggerTable" + vesselProbe
 				+ "' class='table table-bordered col-md-8'>";
 		table += "<thead><tr>";
 		table += "<th>" + $.i18n.prop("START") + "</th>";
@@ -384,17 +410,17 @@ function addTriggerTable(vesselName) {
 		table += "<tbody class='tbody'></tbody>"
 
 		table += "<tfoot><tr><td colspan='1'>"
-				+ "<button class='btn btn-success' id='addTrigger-" + vesselName
+				+ "<button class='btn btn-success' id='addTrigger-" + vesselProbe
 				+ "' type='button' onclick='addNewTrigger(this)'>"
 				+ $.i18n.prop("ADD") + "</button></td>";
 		table += "<td colspan='2'><button class='btn btn-success' id='triggerButton-"
-				+ vesselName
+				+ vesselProbe
 				+ "' type='button' onclick='triggerToggle(this)'>"
 				+ $.i18n.prop("ACTIVATE") + "</button></td></tr></tfoot>";
 		+"</tbody></table>";
-		table += "<br id='triggerTable" + vesselName + "footer'/>";
+		table += "<br id='triggerTable" + vesselProbe + "footer'/>";
 
-		$("#" + vesselName + "-volume").before(table);
+		$("#" + vesselProbe + "-volume").before(table);
 	}
 }
 
@@ -472,7 +498,7 @@ function updateVolumeStatus(vessel, status) {
 						" value='" + status.gravity + "' step='any'/>"
 				+ "<button id='updategravity-" + vessel + "'" +
 						" class='btn' "
-				+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>"
+				+ "onclick='submitForm(this.form);'>"
 				+ $.i18n.prop("UPDATE_GRAVITY")
 				+ "</button>"
 			+ "</div>");
@@ -586,7 +612,7 @@ function editDevice(element) {
 							+ vessel
 							+ "-edit'>"
 							+ "<input type='text' class='form-control' name='new_name' id='new_name' value='"
-							+ vessel
+							+ element.textContent.trim()
 							+ "' /><br/>"
 							+ "<input type='text' class='form-control' name='new_heat_gpio' id='new_heat_gpio' onblur='validate_gpio(this)' "
 							+ "value='"
@@ -627,24 +653,16 @@ function editDevice(element) {
 							+ "<button id='update-"
 							+ vessel
 							+ "' class='btn modeclass' "
-							+ "onclick='submitForm(this.form); sleep(2000); location.reload();'>"
+							+ "onclick='submitForm(this.form);'>"
 							+ $.i18n.prop("UPDATE")
 							+ "</button>"
-							+ "<button id='cancel-"
-							+ vessel
-							+ "' class='btn modeclass' "
-							+ "onclick='cancelEdit("
-							+ vessel
-							+ "); waitForMsg(); return false;'>"
+							+ "<button id='cancel-" + vessel + "' class='btn modeclass' "
+							+ "onclick='cancelEdit("+ vessel + "); waitForMsg(); return false;'>"
 							+ $.i18n.prop("CANCEL")
 							+ "</button>"
 							+ "</form>"
-							+ "<button id='hide-"
-							+ vessel
-							+ "' class='btn modeclass' "
-							+ "onclick='toggleDevice(\""
-							+ vessel
-							+ "\"); waitForMsg(); sleep(1000); location.reload();'>"
+							+ "<button id='hide-" + "' class='btn modeclass' "
+							+ "onclick='toggleDevice(\"" + vessel + "\"); waitForMsg(); sleep(1000); location.reload();'>"
 							+ $.i18n.prop(toggle) + "</button>" + "</form>"
 							+ "</div>");
 	
@@ -667,15 +685,15 @@ function validate_gpio(gpio_input) {
 		return true;
 	}
 
-	if (gpio_string.match(/(gpio)([\d]+)(_[\d]+)$/)) {
+	if (gpio_string.match(/^(gpio)([\d]+)(_[\d]+)$/)) {
 		return true;
 	}
 
-	if (gpio_string.match(/(gpio)([\d]+)$/)) {
+	if (gpio_string.match(/^(gpio)([\d]+)$/)) {
 		return true;
 	}
 
-	alert($.i18n.prop("INVALID_GPIO"))
+	sweetAlert($.i18n.prop("INVALID_GPIO"))
 	return false;
 }
 
@@ -1018,7 +1036,7 @@ function submitForm(form) {
 		}
 		
 		if (!validData) {
-			alert("Invalid data provided. Check your inputs: " + badInputs);
+			sweetAlert("Invalid data provided. Check your inputs: " + badInputs);
 			return false;
 		}
 		
@@ -1038,6 +1056,8 @@ function submitForm(form) {
 				data = null
 			}
 		});
+		sleep(2000);
+		location.reload();
 	} else if (form.id.lastIndexOf("-editVol") != -1) {
 		var vessel = form.id.substring(0, form.id.lastIndexOf("-editVol"));
 		var formdata = {}
@@ -1051,6 +1071,8 @@ function submitForm(form) {
 				data = null
 			}
 		});
+		sleep(2000);
+		location.reload();
 	} else if (form.id.lastIndexOf("-gravity-edit") != -1) {
 		var vessel = form.id.substring(0, form.id.lastIndexOf("-gravity-edit"));
 		var formdata = {}
@@ -1064,10 +1086,14 @@ function submitForm(form) {
 				data = null
 			}
 		});
+		sleep(2000);
+		location.reload();
 	} else if (form.id.lastIndexOf("-editPhSensor") != -1) {
 		var sensorName = form.id.substring(0, form.id.lastIndexOf("-editPhSensor"));
 		var formdata = {}
-		formdata[sensorName] = JSON.stringify(jQuery(form).serializeObject());
+		var serialized = $(form).serializeObject();
+		serialized.new_name = escape(serialized.name)
+		formdata[sensorName] = JSON.stringify(serialized);
 		$.ajax({
 			url : 'addphsensor',
 			type : 'POST',
@@ -1077,11 +1103,22 @@ function submitForm(form) {
 				data = null
 			}
 		});
+		sleep(2000);
+		location.reload();
 	} else if (form.id.lastIndexOf("-edit") != -1) {
 		// We're editing
 		var vessel = form.id.substring(0, form.id.lastIndexOf("-edit"));
 		var formdata = {}
-		formdata[vessel] = JSON.stringify(jQuery(form).serializeObject());
+		var serialized = $(form).serializeObject();
+		serialized.new_name = escape(serialized.new_name)
+		if (serialized.new_cool_gpio != "" && !validate_gpio(serialized.new_cool_gpio)) {
+			return false;
+		}
+
+		if (serialized.new_heat_gpio != "" && !validate_gpio(serialized.new_heat_gpio)) {
+			return false;
+		}
+		formdata[vessel] = JSON.stringify(serialized);
 		$.ajax({
 			url : 'editdevice',
 			type : 'POST',
@@ -1091,6 +1128,8 @@ function submitForm(form) {
 				data = null
 			}
 		});
+		sleep(2000);
+		location.reload();
 	} else {
 		// Another form..
 		console.log("Unrecognised form: " + form.id);
@@ -1105,7 +1144,7 @@ function submitSwitch(switchStatus) {
 	$.ajax({
 		url : 'updateswitch',
 		type : 'POST',
-		data : "toggle=" + switchStatus.id,
+		data : "toggle=" + escape(switchStatus.id),
 		success : function(data) {
 			data = null
 		}
@@ -1155,14 +1194,14 @@ function cancelAddSwitch() {
 function submitNewSwitch(element) {
 	form = $(element).closest("form");
     var data = form.serializeObject();
-
+	data.new_name = escape(data.new_name)
     if (form.find("[name=new_name]").val() == "") {
-		alert($.i18n.prop("SWITCHNAMEBLANK"));
+		sweetAlert($.i18n.prop("SWITCHNAMEBLANK"));
 		return false;
 	}
 
 	if (form.find("[name=new_gpio]").val() == "") {
-		alert($.i18n.prop("GPIO_BLANK"));
+		sweetAlert($.i18n.prop("GPIO_BLANK"));
 		return false;
 	}
 
@@ -1195,6 +1234,9 @@ function addTimer() {
                 + "<input type='text' name='new_name' id='new_name' value='' placeholder='"
                 + $.i18n.prop("NAME")
                 + "' /><br/>"
+                + "<input type='text' name='target' id='target' value='' placeholder='"
+                + $.i18n.prop("TARGETTIME")
+                + "' /><br/>"
                 + "<span id='add-timer' class='btn btn-info modeclass' "
                 + "onclick='submitNewTimer(this); return false;'>"
                 + $.i18n.prop("ADD")
@@ -1217,7 +1259,7 @@ function submitNewTimer(element) {
 	var data = form.serializeObject();
 
 	if (form.find("[name=new_name]").val() == "") {
-		alert($.i18n.prop("TIMERNAMEBLANK"));
+		sweetAlert($.i18n.prop("TIMERNAMEBLANK"));
 		return false;
 	}
 
@@ -1498,7 +1540,19 @@ function checkTimer(val, stage) {
 	stage = stage.replace(" ", "_");
 
 	// If We're counting UP
-	if ("up" in val) {
+	if ("target" in val) {
+		var targetTime = moment(val.target);
+		$("#" + stage).toggleClass("hidden", true);
+		$("#" + stage + "Timer").toggleClass("hidden", false);
+		var tt = $("#" + stage + "Timer").data('tinyTimer');
+		if (tt == undefined) {
+			$("#" + stage + "Timer").tinyTimer({
+				to: targetTime.toString()
+			});
+		} else {
+			tt.resetFrom(targetTime);
+		}
+	} else if ("up" in val) {
 		var startTime = moment().subtract(val.up, 'seconds');
 		$("#" + stage).toggleClass("hidden", true);
 		$("#" + stage + "Timer").toggleClass("hidden", false);
@@ -1824,15 +1878,20 @@ function readOnly(manualChange) {
 		});
 		
 		$.ajax({
-			url : 'lockPage',
-			type : 'POST',
-			success : function(data) {
-				data = null
-			}
-		});
+            url : 'lockPage',
+            type : 'POST',
+            async: false,
+            success : function(data) {
+                data = null
+            }
+        }).done(function() { console.log('SUCCESS :)');
+         sleep(500);
+                location.reload();})
+           .fail(function(vara, varb) {
+           console.log('FAIL :( ' + varb);
+           })
+           .always(function() { console.log('Doh, I\'m fired anyway'); });
 
-		sleep(2000);
-		location.reload();
 	}
 	
 	readOnlySwitches();
@@ -1841,6 +1900,8 @@ function readOnly(manualChange) {
 	readOnlyPhSensors();
 	$("[id=edit-page]").text($.i18n.prop("EDIT"));
 	$("[id=change-scale]").toggleClass("hidden", true);
+	$("[id=shutdown]").toggleClass("hidden", true);
+	$("[id=shutdown-system]").toggleClass("hidden", true);
 	$("[id=CheckUpdates]").toggleClass("hidden", true);
 	$("[id=logo]").toggleClass("hidden", true);
 	window.locked = true;
@@ -1858,13 +1919,17 @@ function readWrite(manualChange) {
 		$.ajax({
 			url : 'unlockPage',
 			type : 'POST',
+			async: false,
 			success : function(data) {
 				data = null
 			}
-		});
-
-		sleep(2000);
-		location.reload();
+		}).done(function() { console.log('SUCCESS :)');
+		 sleep(500);
+         		location.reload();})
+           .fail(function(vara, varb) {
+           console.log('FAIL :( ' + varb);
+           })
+           .always(function() { console.log('Doh, I\'m fired anyway'); });
 	}
 	
 	readWriteSwitches();
@@ -1874,6 +1939,8 @@ function readWrite(manualChange) {
 	$("[id=edit-page]").text($.i18n.prop("LOCK"));
 	$("[id=change-scale]").toggleClass("hidden", false);
 	$("[id=CheckUpdates]").toggleClass("hidden", false);
+	$("[id=shutdown]").toggleClass("hidden", false);
+    $("[id=shutdown-system]").toggleClass("hidden", false);
 	$("[id=logo]").toggleClass("hidden", false);
 	displaySystemSettings();
 	
@@ -1919,7 +1986,7 @@ function readWriteSwitches() {
                    if (!id.startsWith("div-")) {
                     continue;
                    }
-                   var oldid = id.replace("div-", "");
+                   var oldid = escape(id.replace("div-", ""));
                    newData[oldid] = i;
                }
                $.ajax({
@@ -1957,7 +2024,7 @@ function readWriteSwitches() {
                    $.ajax({
                        url : 'deleteswitch',
                        type : 'POST',
-                       data : "name=" + id.replace("div-", ""),
+                       data : "name=" + escape(id.replace("div-", "")),
                        success : function(data) {
                            data = null
                        }
@@ -2139,7 +2206,44 @@ function readWriteDevices() {
                     data = null
                 }
             });
-        }
+        },
+        out: function(e, ui) {
+           if (!("startHtml" in ui.item) && replaceContent) {
+               ui.item.startHtml = ui.item.html();
+               ui.item.html('<span class="btn btn-warning">' + $.i18n.prop("DELETE") + '</span>')
+           }
+           triggerSortableIn = 0;
+       },
+       receive: function(e, ui) {
+           triggerSortableIn = 1;
+           if ("startHtml" in ui.item) {
+               ui.item.html(ui.item.startHtml);
+           }
+       },
+       over: function(e, ui) {
+           triggerSortableIn = 1;
+           if ("startHtml" in ui.item) {
+               ui.item.html(ui.item.startHtml);
+           }
+       },
+       beforeStop: function(e, ui) {
+           if (triggerSortableIn == 0) {
+               var id = ui.item.attr("id");
+
+               $.ajax({
+                   url : 'deleteprobe',
+                   type : 'POST',
+                   data : "probe=" + id.replace("div-", ""),
+                   success : function(data) {
+                       data = null
+                   }
+               });
+               window.disableUpdates = 0;
+               sleep(2000);
+               location.reload();
+               return false;
+           }
+       }
     });
     $("[id='Probes']").disableSelection();
 	$("[id$='-title']").each(
@@ -2582,6 +2686,65 @@ function dismissNotification(event) {
         dataType: 'json',
         success: function(html) {
            return;
+        }
+    });
+}
+
+function shutdownSystem() {
+    sweetAlert({
+      title: "Shutdown!",
+      text: "This will shutdown the whole system. Are you sure?",
+      type: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#DD6B55",
+      confirmButtonText: "Yes, shutdown system",
+      closeOnConfirm: false,
+      html: false,
+      allowEscapeKey: true,
+      allowOutsideClick: true
+    }, function(shutdownSystem){
+        if (!shutdownSystem) {
+        return;
+        }
+        var txtMsg = "Shutting Down System.";
+        reallyShutdown(true);
+        swal("Shutting down!",
+        txtMsg,
+        "success");
+      });
+}
+
+function shutdown() {
+    sweetAlert({
+      title: "Shutdown!",
+      text: "This will shutdown Elsinore. Are you sure?",
+      type: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#DD6B55",
+      confirmButtonText: "Yes, shutdown",
+      closeOnConfirm: false,
+      html: false,
+      allowEscapeKey: true,
+      allowOutsideClick: true
+    }, function(shutdownSystem){
+        if (!shutdownSystem) {
+        return;
+        }
+        var txtMsg = "Shutting Down Elsinore.";
+        reallyShutdown(false);
+        swal("Shutting down!",
+        txtMsg,
+        "success");
+      });
+}
+
+function reallyShutdown(shutdownSystem) {
+$.ajax({
+        url : 'shutdownSystem',
+        type : 'POST',
+        data : "turnoff=" + shutdownSystem,
+        success : function(data) {
+            data = null
         }
     });
 }
