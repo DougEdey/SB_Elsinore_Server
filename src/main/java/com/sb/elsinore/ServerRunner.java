@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -19,7 +20,7 @@ public class ServerRunner implements Runnable {
      * The port to run on.
      */
     private int port;
-
+    public static boolean running = true;
     /**
      * The main constructor.
      * @param inClass The class to run
@@ -47,8 +48,8 @@ public class ServerRunner implements Runnable {
 
 
         try {
-            while (true) {
-                System.in.read();
+            while (ServerRunner.running) {
+                Thread.sleep(1000);
             }
         } catch (Throwable ignored)
         {

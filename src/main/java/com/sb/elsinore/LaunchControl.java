@@ -402,6 +402,7 @@ public final class LaunchControl {
                     BrewServer.LOG.warning("Shutting down recorder threads.");
                     recorder.stop();
                 }
+                ServerRunner.running = false;
                 BrewServer.LOG.warning("Goodbye!");
             }
         });
