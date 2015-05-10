@@ -198,7 +198,7 @@ public final class LaunchControl {
     public static XPathExpression expr = null;
     public static String message = "";
     public static double recorderDiff = .15d;
-    public static boolean recorderEnabled = true;
+    public static boolean recorderEnabled = false;
     public static String recorderDirectory = StatusRecorder.defaultDirectory;
     public static String breweryName = null;
     public static String theme = "default";
@@ -741,10 +741,8 @@ public final class LaunchControl {
             tElement = getFirstElement(config, "recorder");
             if (tElement != null) {
                 if (Boolean.parseBoolean(tElement.getTextContent())) {
-                    LaunchControl.recorderEnabled = true;
                     LaunchControl.enableRecorder();
                 } else {
-                    LaunchControl.recorderEnabled = false;
                     LaunchControl.disableRecorder();
                 }
             } else if (LaunchControl.recorderEnabled) {
