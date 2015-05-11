@@ -102,7 +102,7 @@ public class ProfileTrigger implements TriggerInterface {
     }
 
     @Override
-    public void deactivate() {
+    public void deactivate(boolean fromUI) {
         this.active = true;
     }
 

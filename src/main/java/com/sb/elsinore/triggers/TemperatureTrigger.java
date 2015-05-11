@@ -2,10 +2,8 @@ package com.sb.elsinore.triggers;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Date;
 
-import com.sb.common.SBStringUtils;
 import com.sb.elsinore.notificiations.Notifications;
 import com.sb.elsinore.notificiations.WebNotification;
 import org.json.simple.JSONObject;
@@ -187,9 +185,11 @@ public class TemperatureTrigger implements TriggerInterface {
         if (this.mode == null) {
             // Just get to within 2F of the target Temp.
             BrewServer.LOG.warning(String.format("Waiting to be within 2F of %.2f", targetTemp));
+            BrewServer.LOG.warning("Temp: " + temperatureProbe.convertF(temperatureProbe.getTemp().subtract(targetTemp).abs()));
             while(temperatureProbe.convertF(temperatureProbe.getTemp().subtract(targetTemp).abs())
                     .compareTo(new BigDecimal(2.0)) >= 0) {
                 try {
+                    BrewServer.LOG.warning("" + temperatureProbe.convertF(temperatureProbe.getTemp().subtract(targetTemp).abs()));
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
                     BrewServer.LOG.warning("Temperature Trigger interrupted.");
@@ -219,7 +219,7 @@ public class TemperatureTrigger implements TriggerInterface {
             // Just get to within 2F of the target Temp.
             BrewServer.LOG.warning("Waiting to be within 2F of " + targetTemp);
             while(temperatureProbe.convertF(temperatureProbe.getTemp().subtract(targetTemp).abs())
-                    .compareTo(new BigDecimal(2.0)) <= 0) {
+                    .compareTo(new BigDecimal(2.0)) >= 0) {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
@@ -228,7 +228,7 @@ public class TemperatureTrigger implements TriggerInterface {
             }
         }
 
-        if (exitTemp.compareTo(targetTemp) != 0) {
+        if (exitTemp != null && exitTemp.compareTo(targetTemp) != 0) {
             setExitTemperature();
         }
     }
@@ -271,10 +271,21 @@ public class TemperatureTrigger implements TriggerInterface {
 
     /**
      * Deactivate this TemperatureTrigger step.
+     * @param fromUI
      */
     @Override
-    public final void deactivate() {
+    public final void deactivate(boolean fromUI) {
         this.active = false;
+        if (fromUI) {
+            PID pid = LaunchControl.findPID(this.temperatureProbe.getName());
+            if (pid == null) {
+                LaunchControl.setMessage(temperatureProbe.getName()
+                        + " is not associated with a PID. "
+                        + "Cannot deactivate the PID");
+            } else {
+                pid.setMode("off");
+            }
+        }
         clearNotifications();
     }
 

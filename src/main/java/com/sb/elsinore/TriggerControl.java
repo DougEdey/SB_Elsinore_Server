@@ -271,7 +271,7 @@ public class TriggerControl implements Runnable {
             if (currentTrigger != null) {
                 // Do stuff with the active step
                 currentTrigger.waitForTrigger();
-                currentTrigger.deactivate();
+                currentTrigger.deactivate(false);
                 currentTriggerPosition += 1;
                 if (currentTriggerPosition >= this.triggerCount()) {
                     return;
@@ -318,33 +318,6 @@ public class TriggerControl implements Runnable {
     }
 
     /**
-     * Deactivate the step at the position specified.
-     * @param position The step to deactivate. If < 0 deactivate all.
-     * @return True if deactivated OK, false if not.
-     */
-    public final boolean deactivateTrigger(final Integer position) {
-        // deactivate all the steps first
-
-        if (position >= 0) {
-            TriggerInterface triggerEntry = getTrigger(position);
-
-            // Do we have a value
-            if (triggerEntry == null) {
-                BrewServer.LOG.warning("Index out of bounds");
-                return false;
-            }
-            triggerEntry.deactivate();
-        } else {
-            // Otherwise deactivate all the steps
-            for (TriggerInterface mEntry : triggerList) {
-                mEntry.deactivate();
-            }
-        }
-
-        return true;
-    }
-
-    /**
      * Return the current state of this MashControl as a JSON string.
      * @return The String representing the current state.
      */
@@ -357,6 +330,43 @@ public class TriggerControl implements Runnable {
         }
 
         return out.toString();
+    }
+
+    /**
+     * Deactivate the step at the position specified.
+     * @param position The step to deactivate. If < 0 deactivate all.
+     * @return True if deactivated OK, false if not.
+     */
+    public boolean deactivateTrigger(int position) {
+        return deactivateTrigger(position, false);
+    }
+
+    /**
+     * Deactivate the step at the position specified.
+     * @param position The step to deactivate. If < 0 deactivate all.
+     * @param fromUI True if the trigger is deactivated from the UI.
+     * @return True if deactivated OK, false if not.
+     */
+    public boolean deactivateTrigger(int position, boolean fromUI) {
+        // deactivate all the steps first
+
+        if (position >= 0) {
+            TriggerInterface triggerEntry = getTrigger(position);
+
+            // Do we have a value
+            if (triggerEntry == null) {
+                BrewServer.LOG.warning("Index out of bounds");
+                return false;
+            }
+            triggerEntry.deactivate(fromUI);
+        } else {
+            // Otherwise deactivate all the steps
+            for (TriggerInterface mEntry : triggerList) {
+                mEntry.deactivate(fromUI);
+            }
+        }
+
+        return true;
     }
 
     /**
