@@ -2,6 +2,7 @@ package com.sb.elsinore.triggers;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 
 import com.sb.common.SBStringUtils;
@@ -81,6 +82,7 @@ public class TemperatureTrigger implements TriggerInterface {
                 + "Trigger will wait for it to hit the target temperature.");
         } else {
             pid.setTemp(this.targetTemp);
+            pid.setMode("auto");
         }
     }
 

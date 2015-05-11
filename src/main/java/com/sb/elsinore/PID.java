@@ -96,6 +96,29 @@ public final class PID implements Runnable {
     }
 
     /**
+     * Set the mode
+     * @param mode Must be "off", "auto", "manual", "hysteria"
+     */
+    public void setMode(String mode) {
+        if (mode.equalsIgnoreCase("off")) {
+            this.mode = "off";
+            return;
+        }
+        if (mode.equalsIgnoreCase("manual")) {
+            this.mode = "manual";
+            return;
+        }
+        if (mode.equalsIgnoreCase("auto")) {
+            this.mode = "auto";
+            return;
+        }
+        if (mode.equalsIgnoreCase("hysteria")) {
+            this.mode = "hysteria";
+            return;
+        }
+    }
+
+    /**
      * Determine if the GPIO is valid and return it if it is.
      * @param gpio The GPIO String to check.
      * @return The GPIO pin if it's valid, or blank if it's not.
