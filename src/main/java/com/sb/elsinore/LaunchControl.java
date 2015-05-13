@@ -1067,7 +1067,7 @@ public final class LaunchControl {
             probe = input;
         }
 
-        if ((!probe.startsWith("28") || !probe.startsWith("10")) && !input.equals("System")) {
+        if (!probe.startsWith("28") && !probe.startsWith("10") && !input.equals("System")) {
             BrewServer.LOG.warning(probe + " is not a temperature probe");
             return null;
         }
