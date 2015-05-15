@@ -1318,7 +1318,7 @@ public final class LaunchControl {
                     && !currentFile.getName().startsWith("w1_bus_master")) {
 
                 // Check to see if theres a non temp probe (DS18x20)
-                if (!currentFile.getName().startsWith("28") || !currentFile.getName().startsWith("10")) {
+                if (!currentFile.getName().startsWith("28") && !currentFile.getName().startsWith("10")) {
                     if (!useOWFS && prompt) {
                         System.out.println("Detected a non temp probe."
                                 + currentFile.getName() + "\n"
