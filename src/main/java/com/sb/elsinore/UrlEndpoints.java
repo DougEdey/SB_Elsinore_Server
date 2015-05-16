@@ -318,7 +318,7 @@ public class UrlEndpoints {
             BrewServer.LOG.warning(
                     "Activated " + tempProbe + " step at " + stepToUse);
         } else {
-            mObj.deactivateTrigger(stepToUse);
+            mObj.deactivateTrigger(stepToUse, true);
             BrewServer.LOG.warning("Deactivated " + tempProbe + " step at "
                     + stepToUse);
         }

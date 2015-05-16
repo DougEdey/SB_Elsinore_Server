@@ -28,7 +28,7 @@ public interface TriggerInterface extends Comparable<TriggerInterface> {
      */
     boolean isActive();
     void setActive();
-    void deactivate();
+    void deactivate(boolean fromUI);
     /**
      * Returns the position of this trigger step.
      * @return The trigger position.

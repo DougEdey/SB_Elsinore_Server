@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 import com.sb.common.SBStringUtils;
-import com.sb.elsinore.notificiations.Notification;
 import com.sb.elsinore.notificiations.Notifications;
 import com.sb.elsinore.notificiations.WebNotification;
 import org.json.simple.JSONObject;
@@ -192,7 +191,7 @@ public class WaitTrigger implements TriggerInterface {
     }
 
     @Override
-    public void deactivate() {
+    public void deactivate(boolean fromUI) {
         this.active = false;
     }
 
