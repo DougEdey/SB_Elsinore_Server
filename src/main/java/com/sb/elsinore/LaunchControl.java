@@ -1576,7 +1576,12 @@ public final class LaunchControl {
 
         line = readInput();
         if (!line.trim().equals("")) {
-            owfsPort = Integer.parseInt(line.trim());
+            try {
+                owfsPort = Integer.parseInt(line.trim());
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.warning("You entered: \"" + line.trim() + "\". Setting OWFS to default.");
+                owfsPort = DEFAULT_OWFS_PORT;
+            }
         }
 
         if (configDoc == null) {
