@@ -214,6 +214,7 @@ public final class LaunchControl {
      */
     public static void main(final String... arguments) {
         BrewServer.LOG.info("Running Brewery Controller.");
+        BrewServer.LOG.info("Currently at: " + getShaFor("HEAD"));
         int port = DEFAULT_PORT;
 
         // Allow for the root directory to be overridden by environment variable
@@ -1320,7 +1321,7 @@ public final class LaunchControl {
                 // Check to see if theres a non temp probe (DS18x20)
                 if (!currentFile.getName().startsWith("28") && !currentFile.getName().startsWith("10")) {
                     if (!useOWFS && prompt) {
-                        System.out.println("Detected a non temp probe."
+                        System.out.println("Detected a non temp probe: "
                                 + currentFile.getName() + "\n"
                                 + "Do you want to setup OWFS? [y/N]");
                         String t = readInput();
@@ -2854,9 +2855,7 @@ public final class LaunchControl {
             return;
         }
         // Build command
-        File jarLocation;
-
-        jarLocation = new File(LaunchControl.class.getProtectionDomain()
+        File jarLocation = new File(LaunchControl.class.getProtectionDomain()
                 .getCodeSource().getLocation().getPath()).getParentFile();
 
         List<String> commands = new ArrayList<>();
@@ -2876,15 +2875,33 @@ public final class LaunchControl {
             return;
         }
 
-        commands = new ArrayList<>();
+        String currentSha = getShaFor("HEAD");
+        String headSha = getShaFor("origin");
+
+        if (!headSha.equals(currentSha)) {
+            LaunchControl.setMessage("Update Available. "
+                    + "<span class='btn' id=\"UpdatesFromGit\""
+                    + " type=\"submit\"" + " onClick='updateElsinore();'>"
+                    + "Click here to update</span>");
+        } else {
+            LaunchControl.setMessage("No updates available!");
+        }
+        pb = null;
+    }
+
+    public static String getShaFor(String target) {
+        File jarLocation = new File(LaunchControl.class.getProtectionDomain()
+                .getCodeSource().getLocation().getPath()).getParentFile();
+
+        ArrayList<String> commands = new ArrayList<>();
         commands.add("git");
         // Add arguments
         commands.add("rev-parse");
         commands.add("HEAD");
-        LaunchControl.setMessage("Checking for updates from git...");
-        BrewServer.LOG.info("Checking for updates from the head repo");
+        BrewServer.LOG.info("Checking for sha for " + target);
 
         // Run macro on target
+        Process process;
         pb = new ProcessBuilder(commands);
         pb.directory(jarLocation);
         pb.redirectErrorStream(true);
@@ -2894,7 +2911,7 @@ public final class LaunchControl {
         } catch (IOException | InterruptedException e3) {
             BrewServer.LOG.info("Couldn't check remote git SHA");
             e3.printStackTrace();
-            return;
+            return null;
         }
 
         // Read output
@@ -2916,77 +2933,18 @@ public final class LaunchControl {
                 }
             }
         } catch (IOException e2) {
-            BrewServer.LOG.info("Couldn't read a line when checking local SHA");
+            BrewServer.LOG.info("Couldn't read a line when checking SHA");
             e2.printStackTrace();
-            return;
+            return null;
         }
 
         if (currentSha == null) {
-            BrewServer.LOG.info("Couldn't check Head revision");
-            LaunchControl.setMessage("Couldn't check head revision");
-            return;
+            BrewServer.LOG.info("Couldn't check " + target + " revision");
+            LaunchControl.setMessage("Couldn't check " + target + " revision");
+            return null;
         }
-
-        // Build command for head check
-
-        commands = new ArrayList<>();
-        commands.add("git");
-        // Add arguments
-        commands.add("rev-parse");
-        commands.add("origin");
-        // Run macro on target
-        pb = new ProcessBuilder(commands);
-        pb.directory(jarLocation);
-        pb.redirectErrorStream(true);
-        try {
-            process = pb.start();
-            process.waitFor();
-        } catch (IOException | InterruptedException e1) {
-            BrewServer.LOG.warning("Couldn't check remote SHA");
-            e1.printStackTrace();
-            return;
-        }
-
-        // Read output
-        out = new StringBuilder();
-        br = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        previous = null;
-        String headSha = null;
-
-        try {
-            while ((line = br.readLine()) != null) {
-                if (!line.equals(previous)) {
-                    previous = line;
-                    if (Pattern.matches("[0-9a-f]{5,40}", line)) {
-                        headSha = line;
-                    }
-                    out.append(line).append('\n');
-                    BrewServer.LOG.info(line);
-                }
-            }
-        } catch (IOException e) {
-            BrewServer.LOG.warning("Couldn't read remote head revision output");
-            e.printStackTrace();
-            return;
-        }
-
-        if (headSha == null) {
-            BrewServer.LOG.warning("Couldn't check ORIGIN revision");
-            LaunchControl.setMessage("Couldn't check ORIGIN revision");
-            return;
-        }
-
-        if (!headSha.equals(currentSha)) {
-            LaunchControl.setMessage("Update Available. "
-                    + "<span class='btn' id=\"UpdatesFromGit\""
-                    + " type=\"submit\"" + " onClick='updateElsinore();'>"
-                    + "Click here to update</span>");
-        } else {
-            LaunchControl.setMessage("No updates available!");
-        }
-        pb = null;
+        return currentSha;
     }
-
     /**
      * Update from GIT and restart.
      */
