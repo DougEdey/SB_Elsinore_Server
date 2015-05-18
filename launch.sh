@@ -41,6 +41,13 @@ GPIO=
 DEBUG=
 OTHER_OPTS=
 
+if [ "$1" = "update" ]; then
+    echo "Updating Elsinore. Please wait...."
+    git fetch
+    git pull
+    exit
+fi
+
 while getopts ":hjp:c:g:dt:l:ir:s:f:" OPTION
 do
 case $OPTION in
