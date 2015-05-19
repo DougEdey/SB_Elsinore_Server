@@ -365,46 +365,8 @@ public final class LaunchControl {
         // to make sure we close off the GPIO connections
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
-                BrewServer.LOG.warning("Shutting down. Saving configuration");
-                saveSettings();
-                BrewServer.LOG.warning("Configuration saved.");
-
-                BrewServer.LOG.warning("Shutting down temperature probe threads.");
-                for (Temp t : tempList) {
-                    if (t != null) {
-                        t.save();
-                    }
-                }
-
-                BrewServer.LOG.warning("Shutting down PID threads.");
-                for (PID n : pidList) {
-                    if (n != null) {
-                        n.shutdown();
-                    }
-                }
-
-                if (triggerControlList.size() > 0) {
-                    BrewServer.LOG.warning("Shutting down MashControl threads.");
-                    for (TriggerControl m : triggerControlList) {
-                        m.setShutdownFlag(true);
-                    }
-                }
+                saveEverything();
                 // Close off all the Switch GPIOs properly.
-                if (switchList.size() > 0) {
-                    BrewServer.LOG.warning("Shutting down switchess.");
-                    for (Switch p : switchList) {
-                        p.shutdown();
-                    }
-                }
-
-                saveConfigFile();
-
-                if (recorder != null) {
-                    BrewServer.LOG.warning("Shutting down recorder threads.");
-                    recorder.stop();
-                }
-                ServerRunner.running = false;
-                BrewServer.LOG.warning("Goodbye!");
             }
         });
 
@@ -1759,6 +1721,7 @@ public final class LaunchControl {
             }
 
             for (Timer t : timerList) {
+                BrewServer.LOG.warning("Saving Timer: " + t.getName());
                 Element timerElement = getFirstElementByXpath(null,
                         "/elsinore/timers/timer[@id='" + t + "']");
                 if (timerElement == null) {
@@ -2642,26 +2605,26 @@ public final class LaunchControl {
      *            The new node name to add.
      * @return The newly created element.
      */
-    public static Element addNewElement(final Element baseNode,
-            final String nodeName) {
+    public static Element addNewElement(Element baseNode,
+            String nodeName) {
 
         if (configDoc == null) {
             setupConfigDoc();
         }
 
-        // See if this element exists.
-        if (baseNode != null) {
-            NodeList nl = baseNode.getChildNodes();
-
-            if (nl.getLength() > 0) {
-                for (int i = 0; i < nl.getLength(); i++) {
-                    Node item = nl.item(i);
-                    if (item != null && item.getNodeName().equals(nodeName)) {
-                        return (Element) item;
-                    }
-                }
-            }
-        }
+//        // See if this element exists.
+//        if (baseNode != null) {
+//            NodeList nl = baseNode.getChildNodes();
+//
+//            if (nl.getLength() > 0) {
+//                for (int i = 0; i < nl.getLength(); i++) {
+//                    Node item = nl.item(i);
+//                    if (item != null && item.getNodeName().equals(nodeName)) {
+//                        return (Element) item;
+//                    }
+//                }
+//            }
+//        }
 
         Element newElement = configDoc.createElement(nodeName);
         Element trueBase = baseNode;
@@ -3235,5 +3198,47 @@ public final class LaunchControl {
 
     public static void sortDevices() {
         Collections.sort(LaunchControl.tempList);
+    }
+
+    public static void saveEverything() {
+        BrewServer.LOG.warning("Shutting down. Saving configuration");
+        saveSettings();
+        BrewServer.LOG.warning("Configuration saved.");
+
+        BrewServer.LOG.warning("Shutting down temperature probe threads.");
+        for (Temp t : tempList) {
+            if (t != null) {
+                t.save();
+            }
+        }
+
+        BrewServer.LOG.warning("Shutting down PID threads.");
+        for (PID n : pidList) {
+            if (n != null) {
+                n.shutdown();
+            }
+        }
+
+        if (triggerControlList.size() > 0) {
+            BrewServer.LOG.warning("Shutting down MashControl threads.");
+            for (TriggerControl m : triggerControlList) {
+                m.setShutdownFlag(true);
+            }
+        }
+        if (switchList.size() > 0) {
+            BrewServer.LOG.warning("Shutting down switchess.");
+            for (Switch p : switchList) {
+                p.shutdown();
+            }
+        }
+
+        saveConfigFile();
+
+        if (recorder != null) {
+            BrewServer.LOG.warning("Shutting down recorder threads.");
+            recorder.stop();
+        }
+        ServerRunner.running = false;
+        BrewServer.LOG.warning("Goodbye!");
     }
 }

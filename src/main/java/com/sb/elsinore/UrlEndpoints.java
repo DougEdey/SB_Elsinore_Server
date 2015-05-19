@@ -2021,8 +2021,7 @@ public class UrlEndpoints {
     @UrlEndpoint(url="/shutdownSystem")
     public Response shutdownSystem() {
         try {
-            LaunchControl.saveSettings();
-            LaunchControl.saveConfigFile();
+            LaunchControl.saveEverything();
             boolean shutdownEverything = Boolean.parseBoolean(parameters.get("turnoff"));
             if (shutdownEverything) {
                 // Shutdown the system using shutdown now
