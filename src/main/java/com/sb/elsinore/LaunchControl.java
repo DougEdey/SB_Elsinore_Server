@@ -1179,7 +1179,9 @@ public final class LaunchControl {
         Switch tSwitch;
         while (iterator.hasNext()) {
             tSwitch = iterator.next();
-            if (tSwitch.getName().equalsIgnoreCase(name) || tSwitch.getNodeName().equalsIgnoreCase(name)) {
+            if (tSwitch.getName().equalsIgnoreCase(name)
+                    || tSwitch.getNodeName().equalsIgnoreCase(name)
+                    || tSwitch.getName().equalsIgnoreCase(name.replace("_", " "))) {
                 return tSwitch;
             }
         }
@@ -1211,7 +1213,8 @@ public final class LaunchControl {
         Timer tTimer;
         while (iterator.hasNext()) {
             tTimer = iterator.next();
-            if (tTimer.getName().equalsIgnoreCase(name)) {
+            if (tTimer.getName().equalsIgnoreCase(name)
+                    || tTimer.getName().equalsIgnoreCase(name.replace("_", " "))) {
                 return tTimer;
             }
         }
