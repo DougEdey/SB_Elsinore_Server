@@ -1,6 +1,7 @@
 package com.sb.elsinore;
 
 import ca.strangebrew.recipe.Recipe;
+import com.sb.common.CollectionsUtil;
 import com.sb.common.SBStringUtils;
 import com.sb.elsinore.html.*;
 import com.sb.elsinore.notificiations.Notifications;
@@ -1163,13 +1164,14 @@ public class UrlEndpoints {
             }
 
             try {
+                LaunchControl.switchList.remove(tSwitch);
                 tSwitch.setPosition(Integer.parseInt(entry.getValue()));
+                CollectionsUtil.addInOrder(LaunchControl.switchList, tSwitch);
             } catch (NumberFormatException nfe) {
                 LaunchControl.setMessage(
                         "Couldn't parse " + entry.getValue()
                         + " as an integer");
             }
-            Collections.sort(LaunchControl.switchList);
             status = Response.Status.OK;
         }
         return new Response(status,

@@ -1986,11 +1986,11 @@ function readWriteSwitches() {
                    if (!id.startsWith("div-")) {
                     continue;
                    }
-                   var oldid = escape(id.replace("div-", ""));
+                   var oldid = id.replace("div-", "");
                    newData[oldid] = i;
                }
                $.ajax({
-                url : 'updateSwitchOrder',
+                url : 'updateswitchorder',
                 type : 'POST',
                	data : newData,
             	success : function(data) {
