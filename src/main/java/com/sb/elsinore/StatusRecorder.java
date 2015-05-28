@@ -510,9 +510,9 @@ public class StatusRecorder implements Runnable {
                 xArray.add("x" + localName + " " + type);
                 dataArray.add(localName + " " + type);
 
-                BufferedReader reader = null;
+                ReverseLineReader reader = null;
                 try {
-                    reader = new BufferedReader(new FileReader(content));
+                    reader = new ReverseLineReader(content, "UTF-8");
                     String line;
                     String[] lArray = null;
 
