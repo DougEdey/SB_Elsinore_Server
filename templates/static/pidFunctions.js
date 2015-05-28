@@ -2068,7 +2068,7 @@ function readWriteTimers() {
                var sorted = $(e.target).sortable("toArray");
                var newData = {};
                replaceContent = false;
-               $('#NewTimer')[0].innerHTML = $.i18n.prop("NEW_SWITCH");
+               $('#NewTimer')[0].innerHTML = $.i18n.prop("NEW_TIMER");
                for (i = 0; i < sorted.length; i++) {
                    var id = sorted[i];
                    if (!id.startsWith("div-")) {
