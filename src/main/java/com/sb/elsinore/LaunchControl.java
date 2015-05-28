@@ -2838,6 +2838,7 @@ public final class LaunchControl {
         } catch (IOException | InterruptedException e3) {
             BrewServer.LOG.info("Couldn't check remote git SHA");
             e3.printStackTrace();
+            pb = null;
             return;
         }
 
@@ -2867,7 +2868,7 @@ public final class LaunchControl {
         BrewServer.LOG.info("Checking for sha for " + target);
 
         // Run macro on target
-        Process process;
+        Process process = null;
         pb = new ProcessBuilder(commands);
         pb.directory(jarLocation);
         pb.redirectErrorStream(true);
@@ -2877,6 +2878,10 @@ public final class LaunchControl {
         } catch (IOException | InterruptedException e3) {
             BrewServer.LOG.info("Couldn't check remote git SHA");
             e3.printStackTrace();
+            if (process != null) {
+                process.destroy();
+            }
+            pb = null;
             return null;
         }
 
@@ -2901,12 +2906,20 @@ public final class LaunchControl {
         } catch (IOException e2) {
             BrewServer.LOG.info("Couldn't read a line when checking SHA");
             e2.printStackTrace();
+            if (process != null) {
+                process.destroy();
+            }
+            pb = null;
             return null;
         }
 
         if (currentSha == null) {
             BrewServer.LOG.info("Couldn't check " + target + " revision");
             LaunchControl.setMessage("Couldn't check " + target + " revision");
+            if (process != null) {
+                process.destroy();
+            }
+            pb = null;
             return null;
         }
         return currentSha;
