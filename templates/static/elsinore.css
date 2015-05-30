@@ -328,3 +328,18 @@ div[id='timers'] > .panel > .panel-body > div {
 .todelete {
 
 }
+
+.size-2 {
+    width: 20em;
+    height: 10em;
+}
+
+.size-1 {
+    width: 12em;
+    height: 7em;
+}
+
+.size-0 {
+    width: 8em;
+    height: 4em;
+}

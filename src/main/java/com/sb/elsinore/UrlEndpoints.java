@@ -342,6 +342,7 @@ public class UrlEndpoints {
         String inputUnit = "", cutoff = "", coolgpio = "";
         String calibration = null;
         boolean heatInvert = false, coolInvert = false;
+        int size = -1;
 
         Set<Entry<String, String>> incomingParams = params.entrySet();
         Map<String, String> parms;
@@ -422,6 +423,13 @@ public class UrlEndpoints {
             calibration = parms.get("calibration");
         }
 
+        if (parms.containsKey("size")) {
+            try {
+                size = Integer.parseInt(parms.get("size"));
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.warning("Couldn't parse: " + parms.get("size") + " as an int.");
+            }
+        }
         if (inputUnit.equals("")) {
             BrewServer.LOG.warning("No Valid input unit");
         }
@@ -454,6 +462,7 @@ public class UrlEndpoints {
         if (calibration != null) {
             tProbe.setCalibration(calibration);
         }
+        tProbe.setSize(size);
 
         if (tPID != null && !newName.equals("")) {
             tPID.getTemp().setName(newName);
