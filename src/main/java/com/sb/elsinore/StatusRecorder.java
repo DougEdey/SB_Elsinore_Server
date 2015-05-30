@@ -520,6 +520,9 @@ public class StatusRecorder implements Runnable {
                     while ((line = reader.readLine()) != null && count < size) {
                         // Each line contains the timestamp and the value
                         lArray = line.split(",");
+                        if (lArray.length != 2) {
+                            continue;
+                        }
                         xArray.add(BrewDay.mFormat
                                         .format(new Date(Long.parseLong(lArray[0])))
                         );
@@ -536,7 +539,7 @@ public class StatusRecorder implements Runnable {
                     dataBuffer.add(xArray);
                     dataBuffer.add(dataArray);
                 } catch (Exception e) {
-                    // Do nothing
+                    e.printStackTrace();
                 } finally {
                     if (reader != null) {
                         try {
