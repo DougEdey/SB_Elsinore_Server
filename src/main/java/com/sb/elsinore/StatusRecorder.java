@@ -537,10 +537,10 @@ public class StatusRecorder implements Runnable {
                         BrewServer.LOG.info("Error when reading for temperature: " + content.getAbsolutePath());
                     }
 
-                    if (lArray != null && Long.parseLong(lArray[0]) != currentTime) {
+                    if (xArray.get(0) != currentTime) {
                         xArray.add(BrewDay.mFormat
                                 .format(new Date(currentTime)));
-                        dataArray.add(lArray[1].trim());
+                        dataArray.add(dataArray.get(0));
                     }
 
                     dataBuffer.add(xArray);
