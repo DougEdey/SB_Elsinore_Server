@@ -24,6 +24,9 @@
 		<srcroot url="file:///jGPIO"/>
 	</lib>
 	<lib name="Maven: junit:junit:4.8.2" scope="TEST"/>
+	<lib name="commons-io-2.4.jar" scope="COMPILE">
+		<srcroot url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.4/commons-io-2.4-sources.jar!/"/>
+	</lib>
 	<levels>
 		<level name="Maven: commons-logging:commons-logging:1.1.1" value="project"/>
 		<level name="Maven: org.apache.httpcomponents:httpclient:4.2" value="project"/>

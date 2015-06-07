@@ -1,6 +1,7 @@
 package com.sb.elsinore;
 
 import ca.strangebrew.recipe.Recipe;
+import com.sb.common.CollectionsUtil;
 import com.sb.common.SBStringUtils;
 import com.sb.elsinore.html.*;
 import com.sb.elsinore.notificiations.Notifications;
@@ -341,6 +342,7 @@ public class UrlEndpoints {
         String inputUnit = "", cutoff = "", coolgpio = "";
         String calibration = null;
         boolean heatInvert = false, coolInvert = false;
+        int size = -1;
 
         Set<Entry<String, String>> incomingParams = params.entrySet();
         Map<String, String> parms;
@@ -421,6 +423,13 @@ public class UrlEndpoints {
             calibration = parms.get("calibration");
         }
 
+        if (parms.containsKey("size")) {
+            try {
+                size = Integer.parseInt(parms.get("size"));
+            } catch (NumberFormatException nfe) {
+                BrewServer.LOG.warning("Couldn't parse: " + parms.get("size") + " as an int.");
+            }
+        }
         if (inputUnit.equals("")) {
             BrewServer.LOG.warning("No Valid input unit");
         }
@@ -453,6 +462,7 @@ public class UrlEndpoints {
         if (calibration != null) {
             tProbe.setCalibration(calibration);
         }
+        tProbe.setSize(size);
 
         if (tPID != null && !newName.equals("")) {
             tPID.getTemp().setName(newName);
@@ -1163,13 +1173,14 @@ public class UrlEndpoints {
             }
 
             try {
+                LaunchControl.switchList.remove(tSwitch);
                 tSwitch.setPosition(Integer.parseInt(entry.getValue()));
+                CollectionsUtil.addInOrder(LaunchControl.switchList, tSwitch);
             } catch (NumberFormatException nfe) {
                 LaunchControl.setMessage(
                         "Couldn't parse " + entry.getValue()
                         + " as an integer");
             }
-            Collections.sort(LaunchControl.switchList);
             status = Response.Status.OK;
         }
         return new Response(status,
@@ -2021,8 +2032,7 @@ public class UrlEndpoints {
     @UrlEndpoint(url="/shutdownSystem")
     public Response shutdownSystem() {
         try {
-            LaunchControl.saveSettings();
-            LaunchControl.saveConfigFile();
+            LaunchControl.saveEverything();
             boolean shutdownEverything = Boolean.parseBoolean(parameters.get("turnoff"));
             if (shutdownEverything) {
                 // Shutdown the system using shutdown now

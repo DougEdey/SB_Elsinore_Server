@@ -2,6 +2,7 @@ package com.sb.elsinore;
 
 import com.sb.common.SBStringUtils;
 import org.apache.commons.codec.binary.StringUtils;
+import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -510,33 +511,43 @@ public class StatusRecorder implements Runnable {
                 xArray.add("x" + localName + " " + type);
                 dataArray.add(localName + " " + type);
 
-                BufferedReader reader = null;
+                ReversedLinesFileReader reader = null;
                 try {
-                    reader = new BufferedReader(new FileReader(content));
+                    reader = new ReversedLinesFileReader(content);
                     String line;
                     String[] lArray = null;
 
                     int count = 0;
-                    while ((line = reader.readLine()) != null && count < size) {
-                        // Each line contains the timestamp and the value
-                        lArray = line.split(",");
-                        xArray.add(BrewDay.mFormat
-                                        .format(new Date(Long.parseLong(lArray[0])))
-                        );
-                        dataArray.add(lArray[1].trim());
-                        count++;
+                    try {
+                        while ((line = reader.readLine()) != null && count < size) {
+                            // Each line contains the timestamp and the value
+                            lArray = line.split(",");
+                            BrewServer.LOG.info("Line: " + line + ". Split: " + lArray.length);
+                            if (lArray.length != 2) {
+                                continue;
+                            }
+                            xArray.add(BrewDay.mFormat
+                                            .format(new Date(Long.parseLong(lArray[0])))
+                            );
+                            dataArray.add(lArray[1].trim());
+                            count++;
+                        }
+                    } catch (Exception e) {
+                        // Do nothing. File doesn't have any data.
+                        BrewServer.LOG.info("Error when reading for temperature: " + content.getAbsolutePath());
                     }
 
-                    if (lArray != null && Long.parseLong(lArray[0]) != currentTime) {
+                    if (xArray.get(0) != currentTime) {
                         xArray.add(BrewDay.mFormat
                                 .format(new Date(currentTime)));
-                        dataArray.add(lArray[1].trim());
+                        dataArray.add(dataArray.get(0));
                     }
 
                     dataBuffer.add(xArray);
                     dataBuffer.add(dataArray);
+                    BrewServer.LOG.info("Read: " + count);
                 } catch (Exception e) {
-                    // Do nothing
+                    e.printStackTrace();
                 } finally {
                     if (reader != null) {
                         try {

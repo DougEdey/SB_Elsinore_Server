@@ -482,6 +482,12 @@ function updateTempProbe(vessel, val) {
     } else {
         $("#" + vessel + "-error").toggleClass("hidden", true);
     }
+
+    // Check for a Size.
+    if ("size" in val) {
+        $("[id=" + vessel + "-tempGauge]").removeClass("size-0 size-1 size-2");
+        $("[id=" + vessel + "-tempGauge]").addClass("size-" + val.size);
+    }
 }
 
 function updateVolumeStatus(vessel, status) {
@@ -602,69 +608,44 @@ function editDevice(element) {
 	}
 	// Insert a couple of new form elements
 	$('#' + vesselDiv)
-			.append(
-					"<div id='"
-							+ vessel
-							+ "-edit'>"
-							+ "<form id='"
-							+ vessel
-							+ "-edit' name='"
-							+ vessel
-							+ "-edit'>"
-							+ "<input type='text' class='form-control' name='new_name' id='new_name' value='"
-							+ element.textContent.trim()
-							+ "' /><br/>"
-							+ "<input type='text' class='form-control' name='new_heat_gpio' id='new_heat_gpio' onblur='validate_gpio(this)' "
-							+ "value='"
-							+ heatgpio
-							+ "' placeholder='"
-							+ $.i18n.prop("HEAT")
-							+ " GPIO_X(_Y)'/><br/>"
-							+ "<label>"
-							+ "<input type='checkbox' name='heat_invert' />" + $.i18n.prop("INVERT_HEAT")
-							+ "</label>"
-							+ "<br />"
-							+ "<input type='text' class='form-control' name='new_cool_gpio' id='new_cool_gpio' onblur='validate_gpio(this)' "
-							+ "value='"
-							+ coolgpio
-							+ "' placeholder='"
-							+ $.i18n.prop("COOL")
-							+ " GPIO_X(_Y)'/><br/>"
-							+ "<label>"
-							+ "<input type='checkbox' name='cool_invert' />" + $.i18n.prop("INVERT_COOL")
-							+ "</label>"
-							+ "<br />"
-							+ "<input type='text' class='form-control' name='aux_gpio' id='aux_gpio' onblur='validate_gpio(this)' "
-							+ "value='"
-							+ auxgpio
-							+ "' placeholder='Aux GPIO_X(_Y)' /><br/>"
-							+ "<input type='text' class='form-control' name='cutoff' id='cutoff' "
-							+ "value='"
-							+ cutoff
-							+ "' placeholder='"
-							+ $.i18n.prop("CUTOFF_TEMP")
-							+ "' /><br/>"
-							+ "<input type='text' class='form-control' name='calibration' id='calibration' "
-							+ "value='"
-							+ calibration
-							+ "' placeholder='"
-							+ $.i18n.prop("CALIBRATION")
-							+ "' /><br/>"
-							+ "<button id='update-"
-							+ vessel
-							+ "' class='btn modeclass' "
-							+ "onclick='submitForm(this.form);'>"
-							+ $.i18n.prop("UPDATE")
-							+ "</button>"
-							+ "<button id='cancel-" + vessel + "' class='btn modeclass' "
-							+ "onclick='cancelEdit("+ vessel + "); waitForMsg(); return false;'>"
-							+ $.i18n.prop("CANCEL")
-							+ "</button>"
-							+ "</form>"
-							+ "<button id='hide-" + "' class='btn modeclass' "
-							+ "onclick='toggleDevice(\"" + vessel + "\"); waitForMsg(); sleep(1000); location.reload();'>"
-							+ $.i18n.prop(toggle) + "</button>" + "</form>"
-							+ "</div>");
+        .append(
+            "<div id='" + vessel + "-edit'>"
+                + "<form id='" + vessel + "-edit' name='" + vessel + "-edit'>"
+                + "<input type='text' class='form-control' name='new_name' id='new_name' value='" + element.textContent.trim() + "' />"
+                + "<br/>"
+                + "<input type='text' class='form-control' name='new_heat_gpio' id='new_heat_gpio' onblur='validate_gpio(this)' "
+                + "value='" + heatgpio + "' placeholder='" + $.i18n.prop("HEAT") + " GPIO_X(_Y)'/><br/>"
+                + "<label>"
+                + "<input type='checkbox' name='heat_invert' />" + $.i18n.prop("INVERT_HEAT")
+                + "</label>"
+                + "<br />"
+                + "<input type='text' class='form-control' name='new_cool_gpio' id='new_cool_gpio' onblur='validate_gpio(this)' "
+                + "value='" + coolgpio + "' placeholder='" + $.i18n.prop("COOL") + " GPIO_X(_Y)'/><br/>"
+                + "<label>"
+                + "<input type='checkbox' name='cool_invert' />" + $.i18n.prop("INVERT_COOL")
+                + "</label>"
+                + "<br />"
+                + "<input type='text' class='form-control' name='aux_gpio' id='aux_gpio' onblur='validate_gpio(this)' "
+                + "value='" + auxgpio + "' placeholder='Aux GPIO_X(_Y)' /><br/>"
+                + "<input type='text' class='form-control' name='cutoff' id='cutoff' "
+                + "value='" + cutoff + "' placeholder='" + $.i18n.prop("CUTOFF_TEMP") + "' /><br/>"
+                + "<input type='text' class='form-control' name='calibration' id='calibration' "
+                + "value='" + calibration + "' placeholder='" + $.i18n.prop("CALIBRATION") + "' /><br/>"
+                + "<input type='radio' name='size' value='0'>" + $.i18n.prop("SMALL") + "</input>"
+                + "<input type='radio' name='size' value='1'>" + $.i18n.prop("MEDIUM") + "</input>"
+                + "<input type='radio' name='size' value='2'>" + $.i18n.prop("LARGE") + "</input>"
+                + "<button id='update-" + vessel + "' class='btn modeclass' " + "onclick='submitForm(this.form);'>"
+                    + $.i18n.prop("UPDATE")
+                + "</button>"
+                + "<button id='cancel-" + vessel + "' class='btn modeclass' "
+                + "onclick='cancelEdit("+ vessel + "); waitForMsg(); return false;'>"
+                    + $.i18n.prop("CANCEL")
+                + "</button>"
+                + "</form>"
+                + "<button id='hide-" + "' class='btn modeclass' "
+                + "onclick='toggleDevice(\"" + vessel + "\"); waitForMsg(); sleep(1000); location.reload();'>"
+                + $.i18n.prop(toggle) + "</button>" + "</form>"
+                + "</div>");
 	
 	var checked = (heatinvert == "true");
 	$('form[id="' +vessel + '-edit"] input[name="heat_invert"]').prop("checked", checked);
@@ -1986,11 +1967,11 @@ function readWriteSwitches() {
                    if (!id.startsWith("div-")) {
                     continue;
                    }
-                   var oldid = escape(id.replace("div-", ""));
+                   var oldid = id.replace("div-", "");
                    newData[oldid] = i;
                }
                $.ajax({
-                url : 'updateSwitchOrder',
+                url : 'updateswitchorder',
                 type : 'POST',
                	data : newData,
             	success : function(data) {
@@ -2068,7 +2049,7 @@ function readWriteTimers() {
                var sorted = $(e.target).sortable("toArray");
                var newData = {};
                replaceContent = false;
-               $('#NewTimer')[0].innerHTML = $.i18n.prop("NEW_SWITCH");
+               $('#NewTimer')[0].innerHTML = $.i18n.prop("NEW_TIMER");
                for (i = 0; i < sorted.length; i++) {
                    var id = sorted[i];
                    if (!id.startsWith("div-")) {

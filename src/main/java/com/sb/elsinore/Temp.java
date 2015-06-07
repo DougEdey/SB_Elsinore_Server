@@ -35,6 +35,10 @@ import org.owfs.jowfsclient.OwfsException;
  */
 public final class Temp implements Runnable, Comparable<Temp> {
 
+    public static int SIZE_SMALL = 0;
+    public static int SIZE_MEDIUM = 1;
+    public static int SIZE_LARGE = 2;
+
     /**
      * Magic numbers.
      * F_TO_C_MULT: Multiplier to convert F to C.
@@ -61,6 +65,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * Match the temperature regexp.
      */
     private final Pattern tempRegexp = Pattern.compile("^(-?)([0-9]+)(.[0-9]{1,2})?(C|F)?$");
+    private int size = SIZE_LARGE;
 
     /**
      * Save the current object to the configuration using LaunchControl.
@@ -362,7 +367,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * @return Temperature in Fahrenheit
      */
     public static BigDecimal cToF(final BigDecimal currentTemp) {
-        BigDecimal t = MathUtil.divide(MathUtil.multiply(currentTemp, 9),5);
+        BigDecimal t = MathUtil.divide(MathUtil.multiply(currentTemp, 9), 5);
         t = t.add(FREEZING);
         return t;
     }
@@ -558,7 +563,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
             return false;
         } catch (OwfsException e) {
             BrewServer.LOG.log(Level.SEVERE,
-                "OWFSException when access the ADC over 1wire", e);
+                    "OWFSException when access the ADC over 1wire", e);
             return false;
         }
 
@@ -925,6 +930,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
         statusMap.put("calibration", getCalibration());
         statusMap.put("gravity", gravity);
         statusMap.put("position", this.position);
+        statusMap.put("size", this.size);
 
         if (currentError != null) {
             statusMap.put("error", currentError);
@@ -1075,4 +1081,22 @@ public final class Temp implements Runnable, Comparable<Temp> {
         return temp;
     }
 
+    /**
+     * Get the current Size.
+     * @return {@value #SIZE_SMALL} {@value #SIZE_MEDIUM} or {@value #SIZE_LARGE}
+     */
+    public int getSize() {
+        return size;
+    }
+
+    /**
+     * Set the new size of this render.
+     * @param newSize {@value #SIZE_SMALL} {@value #SIZE_MEDIUM} or {@value #SIZE_LARGE}
+     */
+    public void setSize(int newSize) {
+        if (size == -1) {
+            return;
+        }
+        size = newSize;
+    }
 }
