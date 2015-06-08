@@ -1057,6 +1057,11 @@ public class UrlEndpoints {
      * Get the graph data.
      * @return the JSON Response data
      */
+    @UrlEndpoint(url = "/graph-data.zip")
+    public NanoHTTPD.Response getGraphDataZipWrapper() {
+        return getGraphData();
+    }
+
     @UrlEndpoint(url = "/graph-data")
     public NanoHTTPD.Response getGraphDataWrapper() {
         return getGraphData();
