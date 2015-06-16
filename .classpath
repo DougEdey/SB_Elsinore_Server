@@ -43,7 +43,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: junit:junit:4.8.2"/>
 	<classpathentry kind="var" path="MAVEN_REPOSITORY/commons-io/commons-io/2.4/commons-io-2.4.jar" sourcepath="/MAVEN_REPOSITORY/commons-io/commons-io/2.4/commons-io-2.4-sources.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:file://home/doug/.m2/repository/commons-io/commons-io/2.4/commons-io-2.4-javadoc.jar!/"/>
+			<attribute name="javadoc_location" value="jar:file:////home/doug/.m2/repository/commons-io/commons-io/2.4/commons-io-2.4-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="output" path="target/classes"/>
