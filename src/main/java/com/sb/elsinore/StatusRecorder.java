@@ -526,8 +526,15 @@ public class StatusRecorder implements Runnable {
                             if (lArray.length != 2) {
                                 continue;
                             }
+                            long timestamp = Long.parseLong(lArray[0]);
+                            // If this is the first element, add an extra one on.
+                            if (count == 0 && timestamp != currentTime) {
+                                xArray.add(BrewDay.mFormat
+                                        .format(new Date(currentTime)));
+                                dataArray.add(lArray[1].trim());
+                            }
                             xArray.add(BrewDay.mFormat
-                                            .format(new Date(Long.parseLong(lArray[0])))
+                                            .format(new Date(timestamp))
                             );
                             dataArray.add(lArray[1].trim());
                             count++;
@@ -537,11 +544,7 @@ public class StatusRecorder implements Runnable {
                         BrewServer.LOG.info("Error when reading for temperature: " + content.getAbsolutePath());
                     }
 
-                    if (xArray.get(0) != currentTime) {
-                        xArray.add(BrewDay.mFormat
-                                .format(new Date(currentTime)));
-                        dataArray.add(dataArray.get(0));
-                    }
+
 
                     dataBuffer.add(xArray);
                     dataBuffer.add(dataArray);
@@ -609,9 +612,8 @@ public class StatusRecorder implements Runnable {
 
         JSONObject formatJSON = new JSONObject();
         formatJSON.put("format", "%H:%M:%S");
-        formatJSON.put("culling", true);
+        formatJSON.put("culling", "{max: 4}");
         formatJSON.put("rotate", 90);
-        formatJSON.put("count", 4);
         JSONObject xContent = new JSONObject();
         xContent.put("type", "timeseries");
         xContent.put("tick", formatJSON);
