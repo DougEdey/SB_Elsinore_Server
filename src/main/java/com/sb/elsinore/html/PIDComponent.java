@@ -85,7 +85,7 @@ public class PIDComponent implements Renderable {
                 .input(type("hidden").name("vol_add").id("vol_add"))
                 .input(type("hidden").name("vol_off").id("vol_off"))
                 .input(type("hidden").name("vol_units").id("vol_units"))
-                .div(class_("holo-buttons").style("display: table"))
+                .div(class_("holo-buttons").class_("controlPanelForm").style("display: table"))
                 .div(style("display: table-row"))
                     .render(new ModeButton(probe, "Auto", Messages.AUTO))
                     .render(new ModeButton(probe, "Hysteria", Messages.HYSTERIA))
@@ -326,7 +326,7 @@ public class PIDComponent implements Renderable {
                 .write(Messages.AUX_ON)
                 ._button()
                 .br()
-                .button(id("sendcommand")
+                .button(id("sendcommand").class_("btn switch")
                         .type("submit")
                         .value("SubmitCommand")
                         .onClick(
