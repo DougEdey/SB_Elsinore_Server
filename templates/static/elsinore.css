@@ -35,7 +35,6 @@ div.controlPanel {
 
 button#sendcommand {
 	position: relative;
-	margin-left: 25px;
 }
 
 div.ControlResponse {
@@ -342,4 +341,12 @@ div[id='timers'] > .panel > .panel-body > div {
 .size-0 {
     width: 8em;
     height: 4em;
+}
+
+.controlPanelForm
+{
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
 }

@@ -494,22 +494,26 @@ public class StatusRecorder implements Runnable {
                     localName = type;
                 }
 
+                // Work out the real axis name and reuse it.
+                String axisName = type.toUpperCase();
+                if (!localName.equals(type)) {
+                    axisName = localName + " " + type;
+                }
 
-                xsData.put(localName + " " + type, "x" + localName + " " + type);
-
-
+                xsData.put(axisName, "x" + axisName);
                 if (type.equalsIgnoreCase("duty")) {
-                    axes.put(localName + " " + type, "y2");
+
+                    axes.put(axisName, "y");
                     dutyVisible = true;
                 } else {
-                    axes.put(localName + " " + type, "y");
+                    axes.put(axisName, "y2");
                 }
 
                 JSONArray xArray = new JSONArray();
                 JSONArray dataArray = new JSONArray();
 
-                xArray.add("x" + localName + " " + type);
-                dataArray.add(localName + " " + type);
+                xArray.add("x" + axisName);
+                dataArray.add(axisName);
 
                 ReversedLinesFileReader reader = null;
                 try {
@@ -526,8 +530,15 @@ public class StatusRecorder implements Runnable {
                             if (lArray.length != 2) {
                                 continue;
                             }
+                            long timestamp = Long.parseLong(lArray[0]);
+                            // If this is the first element, add an extra one on.
+                            if (count == 0 && timestamp != currentTime) {
+                                xArray.add(BrewDay.mFormat
+                                        .format(new Date(currentTime)));
+                                dataArray.add(lArray[1].trim());
+                            }
                             xArray.add(BrewDay.mFormat
-                                            .format(new Date(Long.parseLong(lArray[0])))
+                                            .format(new Date(timestamp))
                             );
                             dataArray.add(lArray[1].trim());
                             count++;
@@ -537,11 +548,7 @@ public class StatusRecorder implements Runnable {
                         BrewServer.LOG.info("Error when reading for temperature: " + content.getAbsolutePath());
                     }
 
-                    if (xArray.get(0) != currentTime) {
-                        xArray.add(BrewDay.mFormat
-                                .format(new Date(currentTime)));
-                        dataArray.add(dataArray.get(0));
-                    }
+
 
                     dataBuffer.add(xArray);
                     dataBuffer.add(dataArray);
@@ -609,14 +616,13 @@ public class StatusRecorder implements Runnable {
 
         JSONObject formatJSON = new JSONObject();
         formatJSON.put("format", "%H:%M:%S");
-        formatJSON.put("culling", true);
+        formatJSON.put("culling", "{max: 4}");
         formatJSON.put("rotate", 90);
-        formatJSON.put("count", 4);
         JSONObject xContent = new JSONObject();
         xContent.put("type", "timeseries");
         xContent.put("tick", formatJSON);
         axisContent.put("x", xContent);
-        axisContent.put("y", y1);
+        axisContent.put("y2", y1);
         if (dutyVisible) {
             JSONObject y2Label = new JSONObject();
             y2Label.put("text", "Duty Cycle %");
@@ -624,7 +630,7 @@ public class StatusRecorder implements Runnable {
             JSONObject y2 = new JSONObject();
             y2.put("show", "true");
             y2.put("label", y2Label);
-            axisContent.put("y2", y2);
+            axisContent.put("y", y2);
         }
 
         JSONObject finalJSON = new JSONObject();
