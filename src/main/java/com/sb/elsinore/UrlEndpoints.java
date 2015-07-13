@@ -811,7 +811,7 @@ public class UrlEndpoints {
                 cooldelay = dTemp;
                 BrewServer.LOG.info("Delay time: " + cooldelay);
             } catch (NumberFormatException nfe) {
-                if (tPID.hasValidHeater()) {
+                if (tPID.hasValidCooler()) {
                     BrewServer.LOG.warning("Bad Cool delay");
                     errorValue = true;
                 }
