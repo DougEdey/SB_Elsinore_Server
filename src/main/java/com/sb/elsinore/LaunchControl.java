@@ -5,6 +5,7 @@ import com.sb.common.CollectionsUtil;
 import com.sb.elsinore.devices.I2CDevice;
 import com.sb.elsinore.inputs.PhSensor;
 import com.sb.elsinore.notificiations.Notifications;
+import com.sun.org.apache.bcel.internal.generic.I2C;
 import jGPIO.GPIO;
 import jGPIO.InvalidGPIOException;
 import org.apache.commons.cli.*;
@@ -2001,6 +2002,15 @@ public final class LaunchControl {
                 setElementText(device, "volume-offset", temp.getVolumeOffset());
             }
 
+            if (temp.i2cDevice != null)
+            {
+                Element i2cDevice = addNewElement(device, I2CDevice.I2C_NODE);
+                addNewElement(i2cDevice, I2CDevice.DEV_ADDRESS).setTextContent(Integer.toString(temp.i2cDevice.getAddress()));
+                addNewElement(i2cDevice, I2CDevice.DEV_NUMBER).setTextContent(Integer.toString(temp.i2cDevice.getDevNumber()));
+                addNewElement(i2cDevice, I2CDevice.DEV_TYPE).setTextContent(temp.i2cDevice.getDevName());
+                addNewElement(i2cDevice, I2CDevice.DEV_CHANNEL).setTextContent(Integer.toString(temp.i2cChannel));
+            }
+
             ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase = temp
                     .getVolumeBase();
 
@@ -2243,6 +2253,7 @@ public final class LaunchControl {
         String volumeUnits = "Litres";
         String dsAddress = null, dsOffset = null;
         String cutoffTemp = null, auxPin = null, calibration = "";
+        int probeSize = Temp.SIZE_LARGE;
         ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray =
                 new ConcurrentHashMap<>();
         BigDecimal duty = new BigDecimal(0), heatCycle = new BigDecimal(0.0),
@@ -2255,6 +2266,7 @@ public final class LaunchControl {
                 coolDelay = new BigDecimal(0.0);
         boolean coolInvert = false, heatInvert = false, hidden = false;
         int analoguePin = -1, position = -1;
+        Element i2cElement = null;
 
         String deviceName = config.getAttribute("id");
 
@@ -2439,6 +2451,14 @@ public final class LaunchControl {
                 dsOffset = tElement.getTextContent();
             }
 
+            tElement = getFirstElement(config, Temp.PROBE_SIZE);
+            if (tElement != null)
+            {
+                probeSize = Integer.parseInt(tElement.getTextContent());
+            }
+
+            i2cElement = getFirstElement(config, I2CDevice.I2C_NODE);
+
             if (volumeUnits == null) {
                 BrewServer.LOG.warning("Couldn't find a volume unit for "
                         + deviceName);
@@ -2509,6 +2529,9 @@ public final class LaunchControl {
         if (cutoffTemp != null) {
             newTemp.setCutoffTemp(cutoffTemp);
         }
+
+        newTemp.setSize(probeSize);
+
         if (analoguePin != -1) {
             try {
                 newTemp.setupVolumes(analoguePin, volumeUnits);
@@ -2517,6 +2540,12 @@ public final class LaunchControl {
             }
         } else if (dsAddress != null && dsOffset != null) {
             newTemp.setupVolumes(dsAddress, dsOffset, volumeUnits);
+        }
+
+        if (i2cElement != null)
+        {
+            String channel = getFirstElement(i2cElement, I2CDevice.DEV_CHANNEL).getTextContent();
+            newTemp.setupVolumeI2C(getI2CDevice(i2cElement), channel, volumeUnits);
         }
 
         if (volumeArray != null && volumeArray.size() >= MIN_VOLUME_SIZE) {

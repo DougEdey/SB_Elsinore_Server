@@ -36,6 +36,14 @@ import org.owfs.jowfsclient.OwfsException;
  */
 public final class Temp implements Runnable, Comparable<Temp> {
 
+    /**
+     * Strings for the Nodes.
+     */
+    public static final String PROBE_SIZE = "ProbeSize";
+
+    /**
+     * Valid sizes for the probes
+     */
     public static int SIZE_SMALL = 0;
     public static int SIZE_MEDIUM = 1;
     public static int SIZE_LARGE = 2;
@@ -1136,9 +1144,13 @@ public final class Temp implements Runnable, Comparable<Temp> {
     }
 
     public boolean setupVolumeI2C(String i2c_device, String i2c_address, String i2c_channel, String i2c_type, String units) {
-        i2cDevice = LaunchControl.getI2CDevice(i2c_device, i2c_address, i2c_type);
+        return setupVolumeI2C(LaunchControl.getI2CDevice(i2c_device, i2c_address, i2c_type), i2c_channel, units);
+    }
+
+    public boolean setupVolumeI2C(I2CDevice i2c_device, String i2c_channel, String volumeUnits) {
+        this.i2cDevice = i2c_device;
         this.i2cChannel = Integer.parseInt(i2c_channel);
-        this.setVolumeUnit(units);
+        this.setVolumeUnit(volumeUnits);
         return (i2cDevice != null);
     }
 }

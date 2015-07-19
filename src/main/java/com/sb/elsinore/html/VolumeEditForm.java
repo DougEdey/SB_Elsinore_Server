@@ -137,11 +137,11 @@ public class VolumeEditForm implements Renderable {
 
         html._select();
         html._div();
-                html.input(type("number").class_("form-control").add("step", "any")
+
+                html.br().input(type("number").class_("form-control").add("step", "any")
                         .name("volume")
                         .id("volume").value("")
-                        .add("placeholder", Messages.NEW_VOLUME))
-                .br();
+                        .add("placeholder", Messages.NEW_VOLUME));
                 html.select(class_("holo-spinner").name("units").id("units"))
                     .option(value(Messages.LITRES)
                             .selected_if(Messages.LITRES
