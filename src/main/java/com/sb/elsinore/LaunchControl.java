@@ -1937,7 +1937,11 @@ public final class LaunchControl {
             setElementText(coolElement, "invert",
                     Boolean.toString(pid.getCoolInverted()));
         }
-
+        
+        if( pid.getTemp() != null && pid.getTemp().getProbe() != null) {
+            setElementText(device, "probe", pid.getTemp().getProbe() );
+        }
+        
         setElementText(device, "min", pid.getMin().toString());
         setElementText(device, "max", pid.getMax().toString());
         setElementText(device, "time", pid.getTime().toString());

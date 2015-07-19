@@ -731,13 +731,13 @@ function updatePIDStatus(vessel, val) {
 	jQuery(vesselDiv + ' input[name="setpoint"]').val(val.setpoint);
 	jQuery(vesselDiv + ' input[name="cycletime"]').val(val.manualtime);
 	if ("heat" in val && val.heat.gpio != "") {
-		jQuery(vesselDiv + ' div[id="heat"] input[name="heatcycletime"]').val(
+		jQuery(vesselDiv + ' input[name="heatcycletime"]').val(
 				val.heat.cycle);
-		jQuery(vesselDiv + ' div[id="heat"] input[name="heatp"]').val(
+		jQuery(vesselDiv + ' input[name="heatp"]').val(
 				val.heat.p);
-		jQuery(vesselDiv + ' div[id="heat"] input[name="heati"]').val(
+		jQuery(vesselDiv + ' input[name="heati"]').val(
 				val.heat.i);
-		jQuery(vesselDiv + ' div[id="heat"] input[name="heatd"]').val(
+		jQuery(vesselDiv + ' input[name="heatd"]').val(
 				val.heat.d);
 		jQuery(vesselDiv + ' input[name="heatgpio"]').val(val.heat.gpio);
 		jQuery(vesselDiv + ' input[name="heatinvert"]').val(val.heat.inverted);
@@ -746,15 +746,15 @@ function updatePIDStatus(vessel, val) {
 	}
 
 	if ("cool" in val && val.cool.gpio != "") {
-		jQuery(vesselDiv + ' div[id="cool"] input[name="coolcycletime"]').val(
+		jQuery(vesselDiv + ' input[name="coolcycletime"]').val(
 				val.cool.cycle);
-		jQuery(vesselDiv + ' div[id="cool"] input[name="coolp"]').val(
+		jQuery(vesselDiv + ' input[name="coolp"]').val(
 				val.cool.p);
-		jQuery(vesselDiv + ' div[id="cool"] input[name="cooli"]').val(
+		jQuery(vesselDiv + ' input[name="cooli"]').val(
 				val.cool.i);
-		jQuery(vesselDiv + ' div[id="cool"] input[name="coold"]').val(
+		jQuery(vesselDiv + ' input[name="coold"]').val(
 				val.cool.d);
-		jQuery(vesselDiv + ' div[id="cool"] input[name="cooldelay"]').val(
+		jQuery(vesselDiv + ' input[name="cooldelay"]').val(
 				val.cool.delay);
 		jQuery(vesselDiv + ' input[name="coolgpio"]').val(val.cool.gpio);
 		jQuery(vesselDiv + ' input[name="coolinvert"]').val(val.cool.inverted);
