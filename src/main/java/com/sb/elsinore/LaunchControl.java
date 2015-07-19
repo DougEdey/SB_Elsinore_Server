@@ -1992,6 +1992,7 @@ public final class LaunchControl {
         setElementText(device, "cutoff", cutoff);
         setElementText(device, "calibration", temp.getCalibration());
         setElementText(device, "hidden", Boolean.toString(temp.isHidden()));
+        addNewElement(device, Temp.PROBE_SIZE).setTextContent(Integer.toString(temp.getSize()));
 
         BrewServer.LOG.info("Checking for volume");
         if (temp.hasVolume()) {
@@ -2017,7 +2018,6 @@ public final class LaunchControl {
 
             ConcurrentHashMap<BigDecimal, BigDecimal> volumeBase = temp
                     .getVolumeBase();
-
             // Iterate over the entries
 
             if (volumeBase != null) {
