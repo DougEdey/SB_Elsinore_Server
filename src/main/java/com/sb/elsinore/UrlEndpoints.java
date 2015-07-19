@@ -3,6 +3,7 @@ package com.sb.elsinore;
 import ca.strangebrew.recipe.Recipe;
 import com.sb.common.CollectionsUtil;
 import com.sb.common.SBStringUtils;
+import com.sb.elsinore.devices.I2CDevice;
 import com.sb.elsinore.html.*;
 import com.sb.elsinore.notificiations.Notifications;
 import jGPIO.InvalidGPIOException;
@@ -967,7 +968,10 @@ public class UrlEndpoints {
         String onewire_add = parms.get("onewire_address");
         String onewire_offset = parms.get("onewire_offset");
         String adc_pin = parms.get("adc_pin");
-
+        String i2c_address = parms.get("i2c_address");
+        String i2c_device = parms.get("i2c_device");
+        String i2c_channel = parms.get("i2c_channel");
+        String i2c_type = parms.get("i2c_type");
         String error_msg;
 
         if (name == null || volume == null) {
@@ -1026,6 +1030,18 @@ public class UrlEndpoints {
                 if (!t.setupVolumes(onewire_add, onewire_offset, units)) {
                     error_msg = "Could not setup volumes for " + onewire_add
                             + " offset: " + onewire_offset + " Units: " + units;
+                    usage.put("Error", "Invalid parameters: " + error_msg);
+                    return new Response(Response.Status.BAD_REQUEST,
+                            MIME_TYPES.get("json"), usage.toJSONString());
+                }
+            }
+            else if (i2c_address != null && i2c_channel != null && i2c_device != null
+                    && i2c_address.length() > 0 && i2c_channel.length() > 0 && i2c_device.length() > 0 )
+            {
+                if (t.setupVolumeI2C(i2c_device, i2c_address, i2c_channel, i2c_type, units))
+                {
+                    error_msg = "Could not setup volumes for " + i2c_device
+                            + " address: " + i2c_address + " Units: " + units;
                     usage.put("Error", "Invalid parameters: " + error_msg);
                     return new Response(Response.Status.BAD_REQUEST,
                             MIME_TYPES.get("json"), usage.toJSONString());
@@ -1657,6 +1673,19 @@ public class UrlEndpoints {
             }
             phSensor.setAinPin(newPin);
         }
+
+        temp = localParams.get("i2c_model");
+        if (temp != null && temp.length() > 0)
+        {
+            String devType = temp;
+            String devNumber = localParams.get("i2c_device");
+            String devAddress = localParams.get("i2c_address");
+            String devChannel = localParams.get("i2c_channel");
+
+            phSensor.i2cDevice = LaunchControl.getI2CDevice(devNumber, devAddress, devType);
+            phSensor.i2cChannel = Integer.parseInt(devChannel);
+        }
+
         temp = localParams.get("ph_model");
         if (temp != null) {
             phSensor.setModel(temp);

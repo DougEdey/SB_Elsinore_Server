@@ -1,5 +1,6 @@
 package com.sb.elsinore.inputs;
 
+import com.sb.elsinore.devices.I2CDevice;
 import jGPIO.GPIO.Direction;
 import jGPIO.InPin;
 import jGPIO.InvalidGPIOException;
@@ -21,6 +22,7 @@ import com.sb.util.MathUtil;
 
 public class PhSensor {
 
+    private static final java.math.BigDecimal BIGDEC_THOUSAND = new BigDecimal(1000);
     private int ainPin = -1;
     private String dsAddress = "";
     private String dsOffset = "";
@@ -30,6 +32,8 @@ public class PhSensor {
     private BigDecimal offset = new BigDecimal(0);
     private InPin ainGPIO = null;
     private boolean stopLogging = false;
+    public I2CDevice i2cDevice = null;
+    public int i2cChannel = -1;
 
     /**
      * Create a blank pH Sensor.
@@ -191,7 +195,13 @@ public class PhSensor {
                 LaunchControl.setupOWFS();
             }
         }
+        else if (i2cDevice != null && i2cChannel > -1)
+        {
+            BrewServer.LOG.warning(String.format("Reading from %s channel %s", getI2CDevAddressString(), i2cChannel));
+            pinValue = new BigDecimal(i2cDevice.readValue(i2cChannel)).divide(BIGDEC_THOUSAND);
+        }
 
+        BrewServer.LOG.warning("Read: " + pinValue);
         return pinValue;
     }
 
@@ -246,7 +256,6 @@ public class PhSensor {
     }
     /**
      * Calculate the current PH Value based off the current pH Sensor type.
-     * @param reading The current Analog read value.
      * @return The value of the pH Probe.
      */
     public final BigDecimal calcPhValue() {
@@ -307,17 +316,17 @@ public class PhSensor {
      */
     public final BigDecimal getAverage(final int maxRead) {
         BigDecimal readValue = new BigDecimal(0);
-        BigDecimal t = null;
-        for (int i = 0; i <= maxRead; i++) {
+        BigDecimal t;
+        int i = 0;
+        for ( i = 0; i < maxRead;) {
             t = this.updateReading();
-            if (t.compareTo(BigDecimal.ZERO) == 0) {
-                i--;
-            } else {
+            if (t.compareTo(BigDecimal.ZERO) > 0) {
                 readValue = readValue.add(t);
+                i++;
             }
         }
 
-        return MathUtil.divide(readValue, new BigDecimal(maxRead));
+        return MathUtil.divide(readValue, new BigDecimal(i));
     }
 
     /**
@@ -342,5 +351,37 @@ public class PhSensor {
      */
     public final void setOffset(final BigDecimal attribute) {
         this.offset = attribute;
+    }
+
+    public String getI2CDevNumberString() {
+        if (i2cDevice == null)
+        {
+            return "";
+        }
+        return i2cDevice.getDevNumberString();
+    }
+
+    public String getI2CDevAddressString() {
+        if (i2cDevice == null)
+        {
+            return "";
+        }
+        return Integer.toString(i2cDevice.getAddress());
+    }
+
+    public String geti2cChannel() {
+        if (i2cChannel == -1)
+        {
+            return "";
+        }
+        return Integer.toString(i2cChannel);
+    }
+
+    public String getI2CDevType() {
+        if (i2cDevice == null)
+        {
+            return "";
+        }
+        return i2cDevice.getDevName();
     }
 }

@@ -85,6 +85,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>net.java.dev.jna</groupId>
+			<artifactId>jna</artifactId>
+			<version>4.1.0</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.owfs</groupId>
 			<artifactId>jowfsclient</artifactId>
 			<version>1.2.6</version>

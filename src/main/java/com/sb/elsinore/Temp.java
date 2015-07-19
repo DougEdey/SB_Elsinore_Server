@@ -1,4 +1,5 @@
 package com.sb.elsinore;
+import com.sb.elsinore.devices.I2CDevice;
 import com.sb.util.MathUtil;
 import javax.annotation.Nonnull;
 import jGPIO.GPIO.Direction;
@@ -66,6 +67,8 @@ public final class Temp implements Runnable, Comparable<Temp> {
      */
     private final Pattern tempRegexp = Pattern.compile("^(-?)([0-9]+)(.[0-9]{1,2})?(C|F)?$");
     private int size = SIZE_LARGE;
+    public I2CDevice i2cDevice = null;
+    public int i2cChannel = -1;
 
     /**
      * Save the current object to the configuration using LaunchControl.
@@ -259,8 +262,8 @@ public final class Temp implements Runnable, Comparable<Temp> {
     /**
      * Other strings, obviously named.
      */
-    private String scale = "C", volumeAddress = null, volumeOffset = null,
-            volumeUnit = null;
+    private String scale = "C", volumeAddress = "", volumeOffset = "",
+            volumeUnit = "";
 
     /**
      * Are we measuring volume?
@@ -1098,5 +1101,44 @@ public final class Temp implements Runnable, Comparable<Temp> {
             return;
         }
         size = newSize;
+    }
+
+    public String getI2CDevNumberString() {
+        if (i2cDevice == null)
+        {
+            return "";
+        }
+        return i2cDevice.getDevNumberString();
+    }
+
+    public String getI2CDevAddressString() {
+        if (i2cDevice == null)
+        {
+            return "";
+        }
+        return Integer.toString(i2cDevice.getAddress());
+    }
+
+    public String geti2cChannel() {
+        if (i2cChannel == -1)
+        {
+            return "";
+        }
+        return Integer.toString(i2cChannel);
+    }
+
+    public String getI2CDevType() {
+        if (i2cDevice == null)
+        {
+            return "";
+        }
+        return i2cDevice.getDevName();
+    }
+
+    public boolean setupVolumeI2C(String i2c_device, String i2c_address, String i2c_channel, String i2c_type, String units) {
+        i2cDevice = LaunchControl.getI2CDevice(i2c_device, i2c_address, i2c_type);
+        this.i2cChannel = Integer.parseInt(i2c_channel);
+        this.setVolumeUnit(units);
+        return (i2cDevice != null);
     }
 }

@@ -4,6 +4,10 @@ import org.eclipse.osgi.util.NLS;
 
 public class Messages extends NLS {
     private static final String BUNDLE_NAME = "com.sb.elsinore.nls.messages"; // $NON-NLS-1$
+    public static String I2C_MODEL;
+    public static String I2C_DEVICE_CHANNEL;
+    public static String I2C_DEVICE_ADDRESS;
+    public static String I2C_DEVICE_NUMBER;
     public static String HOLD_STEP;
     public static String PH_MODEL;
 

@@ -2,6 +2,7 @@ package com.sb.elsinore;
 
 import Cosm.*;
 import com.sb.common.CollectionsUtil;
+import com.sb.elsinore.devices.I2CDevice;
 import com.sb.elsinore.inputs.PhSensor;
 import com.sb.elsinore.notificiations.Notifications;
 import jGPIO.GPIO;
@@ -100,6 +101,7 @@ public final class LaunchControl {
      * List of pH Sensors.
      */
     public static final CopyOnWriteArrayList<PhSensor> phSensorList = new CopyOnWriteArrayList<>();
+    public static final HashMap<String, I2CDevice> i2cDeviceList = new HashMap<>();
     /**
      * Temperature Thread list.
      */
@@ -307,7 +309,7 @@ public final class LaunchControl {
             if (root.exists() && root.isDirectory()) {
                 System.setProperty("root_override", rootDir);
             } else {
-                BrewServer.LOG.warning("Invalid root directory proviced: "
+                BrewServer.LOG.warning("Invalid root directory provided: "
                         + rootDir);
                 System.exit(-1);
             }
@@ -561,18 +563,20 @@ public final class LaunchControl {
             // update COSM
             if (cosmFeed != null) {
                 Datastream tData = findDatastream(t.getName());
-                tData.setCurrentValue(t.getTemp().toString());
-                Unit tUnit = new Unit();
-                tUnit.setType("temp");
-                tUnit.setSymbol(t.getScale());
-                tUnit.setLabel("temperature");
-                tData.setUnit(tUnit);
-                try {
-                    cosm.updateDatastream(cosmFeed.getId(), t.getName(),
-                            tData);
-                } catch (CosmException e) {
-                    BrewServer.LOG.info("Failed to update datastream: "
-                            + e.getMessage());
+                if (tData != null) {
+                    tData.setCurrentValue(t.getTemp().toString());
+                    Unit tUnit = new Unit();
+                    tUnit.setType("temp");
+                    tUnit.setSymbol(t.getScale());
+                    tUnit.setLabel("temperature");
+                    tData.setUnit(tUnit);
+                    try {
+                        cosm.updateDatastream(cosmFeed.getId(), t.getName(),
+                                tData);
+                    } catch (CosmException e) {
+                        BrewServer.LOG.info("Failed to update datastream: "
+                                + e.getMessage());
+                    }
                 }
 
             }
@@ -915,8 +919,37 @@ public final class LaunchControl {
             temp.setAinPin(tElement.getAttribute("ainPin"));
             temp.setOffset(tElement.getAttribute("offset"));
             temp.setModel(tElement.getAttribute("model"));
+
+            BrewServer.LOG.info("Checking for an I2CDevice");
+            Element i2cElement = getFirstElement(tElement, I2CDevice.I2C_NODE);
+            if (i2cElement != null)
+            {
+                temp.i2cDevice = getI2CDevice(i2cElement);
+                String channel = getFirstElement(tElement, I2CDevice.DEV_CHANNEL).getTextContent();
+                temp.i2cChannel = Integer.parseInt(channel);
+            }
+
             phSensorList.add(temp);
         }
+    }
+
+    public static I2CDevice getI2CDevice(Element i2cElement) {
+        String devNumber = getFirstElement(i2cElement, I2CDevice.DEV_NUMBER).getTextContent();
+        String devAddress = getFirstElement(i2cElement, I2CDevice.DEV_ADDRESS).getTextContent();
+        String devType = getFirstElement(i2cElement, I2CDevice.DEV_TYPE).getTextContent();
+        return getI2CDevice(devNumber, devAddress, devType);
+    }
+
+    public static I2CDevice getI2CDevice(String devNumber, String devAddress, String devType)
+    {
+        String devKey = String.format("%s_%s", devNumber, devAddress);
+        I2CDevice i2CDevice = i2cDeviceList.get(devKey);
+        if (i2CDevice == null)
+        {
+            i2CDevice = I2CDevice.create(devNumber, devAddress, devType);
+        }
+
+        return  i2CDevice;
     }
 
     /**
@@ -1805,6 +1838,14 @@ public final class LaunchControl {
                 newSensor.setAttribute("dsAddress", tSensor.getDsAddress());
                 newSensor.setAttribute("dsOffset", tSensor.getDsOffset());
                 newSensor.setAttribute("offset", "" + tSensor.getOffset());
+                if (tSensor.i2cDevice != null)
+                {
+                    Element i2cDevice = addNewElement(newSensor, I2CDevice.I2C_NODE);
+                    addNewElement(i2cDevice, I2CDevice.DEV_ADDRESS).setTextContent(Integer.toString(tSensor.i2cDevice.getAddress()));
+                    addNewElement(i2cDevice, I2CDevice.DEV_NUMBER).setTextContent(Integer.toString(tSensor.i2cDevice.getDevNumber()));
+                    addNewElement(i2cDevice, I2CDevice.DEV_TYPE).setTextContent(tSensor.i2cDevice.getDevName());
+                    addNewElement(i2cDevice, I2CDevice.DEV_CHANNEL).setTextContent(Integer.toString(tSensor.i2cChannel));
+                }
             }
         }
     }
@@ -3194,18 +3235,9 @@ public final class LaunchControl {
     public static boolean deletePhSensor(final String name) {
         // search based on the input name
         String realName = name.replace(" ", "_");
-        Iterator<PhSensor> iterator = phSensorList.iterator();
-        PhSensor tSensor;
+        PhSensor tSensor = findPhSensor(realName);
+        return tSensor != null && phSensorList.remove(tSensor);
 
-        while (iterator.hasNext()) {
-            tSensor = iterator.next();
-            if (tSensor.getName().equalsIgnoreCase(realName)) {
-                iterator.remove();
-                return true;
-            }
-        }
-
-        return false;
     }
 
     public static void sortTimers() {

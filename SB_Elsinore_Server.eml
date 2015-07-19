@@ -21,13 +21,16 @@
 		<relative-module-cls project-related="jar://$PROJECT_DIR$/libs/json-simple-1.1.1.jar!/"/>
 	</lib>
 	<lib name="jGPIO.jar" scope="COMPILE">
-		<srcroot url="file:///jGPIO"/>
+		<srcroot url="file://$USER_HOME$/git/jGPIO"/>
+		<relative-module-src project-related="file://$USER_HOME$/git/jGPIO"/>
 	</lib>
-	<lib name="Maven: junit:junit:4.8.2" scope="TEST"/>
 	<lib name="commons-io-2.4.jar" scope="COMPILE">
 		<srcroot url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.4/commons-io-2.4-sources.jar!/"/>
 	</lib>
+	<lib name="Maven: junit:junit:4.8.2" scope="TEST"/>
 	<levels>
+		<level name="jGPIO" value="project"/>
+		<level name="linux-arm" value="project"/>
 		<level name="Maven: commons-logging:commons-logging:1.1.1" value="project"/>
 		<level name="Maven: org.apache.httpcomponents:httpclient:4.2" value="project"/>
 		<level name="Maven: org.apache.httpcomponents:httpcore:4.2" value="project"/>
@@ -35,6 +38,7 @@
 		<level name="Maven: org.ini4j:ini4j:0.5.2" value="project"/>
 		<level name="Maven: joda-time:joda-time:2.2" value="project"/>
 		<level name="Maven: com.googlecode.json-simple:json-simple:1.1.1" value="project"/>
+		<level name="Maven: net.java.dev.jna:jna:4.1.0" value="project"/>
 		<level name="Maven: org.owfs:jowfsclient:1.2.6" value="project"/>
 		<level name="Maven: commons-pool:commons-pool:1.6" value="project"/>
 		<level name="Maven: org.slf4j:slf4j-api:1.7.2" value="project"/>
@@ -50,5 +54,6 @@
 		<level name="Maven: dom4j:dom4j:1.6.1" value="project"/>
 		<level name="Maven: xml-apis:xml-apis:1.0.b2" value="project"/>
 		<level name="Maven: junit:junit:4.8.2" value="project"/>
+		<level name="Maven: commons-io:commons-io:2.4" value="project"/>
 	</levels>
 </component>

@@ -2165,6 +2165,7 @@ function readWritePhSensors() {
            }
        }
    });
+   $('[id=NewPhSensor]').css('display', 'block');
    $("[id=phSensors]").disableSelection();
 }
 
@@ -2728,4 +2729,26 @@ $.ajax({
             data = null
         }
     });
+}
+
+function selectedInput(input)
+{
+    if (input.selectedOptions[0].value == "ds2450")
+    {
+        $(input.parentElement).find("div[id=ds_div]").css("display", "block");
+        $(input.parentElement).find("div[id=ain_div]").css("display", "none");
+        $(input.parentElement).find("div[id=i2c_div]").css("display", "none");
+    }
+    else if (input.selectedOptions[0].value == "ain")
+    {
+        $(input.parentElement).find("div[id=ds_div]").css("display", "none");
+        $(input.parentElement).find("div[id=ain_div]").css("display", "block");
+        $(input.parentElement).find("div[id=i2c_div]").css("display", "none");
+    }
+    else if (input.selectedOptions[0].value == "i2c")
+    {
+        $(input.parentElement).find("div[id=ds_div]").css("display", "none");
+        $(input.parentElement).find("div[id=ain_div]").css("display", "none");
+        $(input.parentElement).find("div[id=i2c_div]").css("display", "block");
+    }
 }
