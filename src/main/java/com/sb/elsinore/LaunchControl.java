@@ -5,7 +5,6 @@ import com.sb.common.CollectionsUtil;
 import com.sb.elsinore.devices.I2CDevice;
 import com.sb.elsinore.inputs.PhSensor;
 import com.sb.elsinore.notificiations.Notifications;
-import com.sun.org.apache.bcel.internal.generic.I2C;
 import jGPIO.GPIO;
 import jGPIO.InvalidGPIOException;
 import org.apache.commons.cli.*;
@@ -58,6 +57,17 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("unused")
 public final class LaunchControl {
+    private static final String BREWERY_NAME = "brewery_name";
+    private static final String PAGE_LOCK = "pagelock";
+    private static final String SCALE = "scale";
+    private static final String COSM_API_KEY = "cosm";
+    private static final String COSM_FEED_ID = "cosm_feed";
+    private static final String PACHUBE = "pachube";
+    private static final String PACHUBE_FEED_ID = "pachube_feed";
+    private static final String OWFS_SERVER = "owfs_server";
+    private static final String OWFS_PORT = "owfs_port";
+    private static final String RESTORE = "restore";
+
     /* MAGIC NUMBERS! */
     public static int EXIT_UPDATE = 128;
     public static boolean loadCompleted = false;
@@ -208,6 +218,7 @@ public final class LaunchControl {
     public static boolean pageLock = false;
     private static boolean initialized = false;
     private static ProcessBuilder pb = null;
+    private boolean m_restore = false;
 
     /*****
      * Main method to launch the brewery.
@@ -633,9 +644,9 @@ public final class LaunchControl {
      */
     public static String getSystemStatus() {
         JSONObject retVal = new JSONObject();
-        retVal.put("recorder", LaunchControl.recorder != null);
-        retVal.put("recorderTime", StatusRecorder.SLEEP);
-        retVal.put("recorderDiff", StatusRecorder.THRESHOLD);
+        retVal.put(StatusRecorder.RECORDER, LaunchControl.recorder != null);
+        retVal.put(StatusRecorder.RECORDER_TIME, StatusRecorder.SLEEP);
+        retVal.put(StatusRecorder.RECORDER_DIFF, StatusRecorder.THRESHOLD);
         return retVal.toJSONString();
     }
 
@@ -691,85 +702,37 @@ public final class LaunchControl {
 
         try {
 
-            Element tElement = getFirstElement(config, "brewery_name");
+            breweryName = getTextForElement(config, LaunchControl.BREWERY_NAME, null);
+            pageLock = Boolean.parseBoolean(getTextForElement(config, LaunchControl.PAGE_LOCK, "false"));
 
-            if (tElement != null) {
-                breweryName = tElement.getTextContent();
-            }
+            scale = getTextForElement(config, LaunchControl.SCALE, "F");
 
-            tElement = getFirstElement(config, "pagelock");
-            if (tElement != null) {
-                pageLock = Boolean.parseBoolean(tElement.getTextContent());
-            }
-
-            tElement = getFirstElement(config, "scale");
-            if (tElement != null) {
-                scale = tElement.getTextContent();
-            }
-
-            tElement = getFirstElement(config, "recorder");
-            if (tElement != null) {
-                if (Boolean.parseBoolean(tElement.getTextContent())) {
-                    LaunchControl.enableRecorder();
-                } else {
-                    LaunchControl.disableRecorder();
-                }
-            } else if (LaunchControl.recorderEnabled) {
+            if (Boolean.parseBoolean(getTextForElement(config, StatusRecorder.RECORDER, "false"))) {
                 LaunchControl.enableRecorder();
+            } else {
+                LaunchControl.disableRecorder();
             }
 
-            tElement = getFirstElement(config, "recorderDiff");
-            if (tElement != null) {
-                try {
-                    StatusRecorder.THRESHOLD = Double.parseDouble(tElement
-                            .getTextContent());
-                } catch (Exception e) {
-                    LaunchControl.setMessage(LaunchControl.getMessage()
-                            + "\n Failed to parse recorder diff as a double.\n"
-                            + e.getMessage());
-                }
-            }
+            StatusRecorder.THRESHOLD = Double.parseDouble(getTextForElement(config, StatusRecorder.RECORDER_DIFF, "0.15"));
+            StatusRecorder.SLEEP = Long.parseLong(getTextForElement(config, StatusRecorder.RECORDER_TIME, "5000"));
 
-            tElement = getFirstElement(config, "recorderTime");
-            if (tElement != null) {
-                try {
-                    StatusRecorder.SLEEP = Long.parseLong(tElement
-                            .getTextContent());
-                } catch (Exception e) {
-                    LaunchControl.setMessage(LaunchControl.getMessage()
-                            + "\n Failed to parse recorder sleep as a long.\n"
-                            + e.getMessage());
-                }
-            }
             String cosmAPIKey = null;
             Integer cosmFeedID;
 
             // Check for the COSM Feed details
-            tElement = getFirstElement(config, "cosm");
-            if (tElement != null) {
-                cosmAPIKey = tElement.getTextContent();
-            }
-            try {
-                cosmFeedID = Integer.parseInt(getFirstElement(config,
-                        "cosm_feed").getTextContent());
-            } catch (NumberFormatException | NullPointerException e) {
-                cosmFeedID = null;
-            }
+            cosmAPIKey = getTextForElement(config, LaunchControl.COSM_API_KEY, null);
 
+            cosmFeedID = Integer.parseInt(getTextForElement(config, LaunchControl.COSM_FEED_ID, "0"));
+            
             // Try PACHube if the Cosm fields don't exist
-            if (cosmAPIKey == null) {
-                try {
-                    cosmAPIKey = getFirstElement(config, "pachube")
-                            .getTextContent();
-                } catch (NullPointerException e) {
-                    cosmAPIKey = null;
-                }
+            if (cosmAPIKey == null)
+            {
+                cosmAPIKey = getTextForElement(config, LaunchControl.PACHUBE, null);
             }
 
-            if (cosmFeedID == null) {
+            if (cosmFeedID == 0) {
                 try {
-                    cosmFeedID = Integer.parseInt(getFirstElement(config,
-                            "pachube_feed").getTextContent());
+                    cosmFeedID = Integer.parseInt(getTextForElement(config, LaunchControl.PACHUBE_FEED_ID, "0"));
                 } catch (NumberFormatException | NullPointerException e) {
                     cosmFeedID = null;
                 }
@@ -782,12 +745,9 @@ public final class LaunchControl {
 
             // Check for an OWFS configuration
             try {
-                owfsServer = getFirstElement(config, "owfs_server")
-                        .getTextContent();
-                owfsPort = Integer
-                        .parseInt(getFirstElement(config, "owfs_port")
-                                .getTextContent());
-            } catch (NullPointerException e) {
+                owfsServer = getTextForElement(config, LaunchControl.OWFS_SERVER, null);
+                owfsPort = Integer.parseInt(getTextForElement(config, LaunchControl.OWFS_PORT, null));
+            } catch (NullPointerException | NumberFormatException e) {
                 owfsServer = null;
                 owfsPort = null;
             }
@@ -803,6 +763,9 @@ public final class LaunchControl {
             if (getFirstElement(config, "System") != null) {
                 addSystemTemp();
             }
+
+            m_restore = Boolean.parseBoolean(getTextForElement(config, LaunchControl.RESTORE, null));
+
         } catch (NumberFormatException nfe) {
             System.out.print("Number format problem!");
             nfe.printStackTrace();
@@ -826,14 +789,14 @@ public final class LaunchControl {
             Element curSwitch = (Element) switches.item(i);
             String switchName = curSwitch.getAttribute("name").replace("_", " ");
             String gpio;
-            if (curSwitch.hasAttribute("gpio")) {
-                gpio = curSwitch.getAttribute("gpio");
+            if (curSwitch.hasAttribute(Switch.GPIO)) {
+                gpio = curSwitch.getAttribute(Switch.GPIO);
             } else {
                 gpio = curSwitch.getTextContent();
             }
             int position = -1;
 
-            String tempString = curSwitch.getAttribute("position");
+            String tempString = curSwitch.getAttribute(Switch.POSITION);
             if (tempString != null) {
                 try {
                     position = Integer.parseInt(tempString);
@@ -878,16 +841,16 @@ public final class LaunchControl {
 
         for (int i = 0; i < timers.getLength(); i++) {
             Element tElement = (Element) timers.item(i);
-            Timer temp = new Timer(tElement.getAttribute("id"));
-            if (tElement.getAttribute("position") != null) {
+            Timer temp = new Timer(tElement.getAttribute(Timer.ID));
+            if (tElement.getAttribute(Timer.POSITION) != null) {
                 try {
                     temp.setPosition(Integer.parseInt(tElement
-                            .getAttribute("position")));
+                            .getAttribute(Timer.POSITION)));
                 } catch (NumberFormatException nfe) {
                     // Couldn't parse. Move on.
                 }
             }
-            String target = tElement.getAttribute("target");
+            String target = tElement.getAttribute(Timer.TARGET);
             if (target != null && !target.equals("")) {
                 try {
                     temp.setTarget(target);
@@ -915,18 +878,18 @@ public final class LaunchControl {
             Element tElement = (Element) sensors.item(i);
             PhSensor temp = new PhSensor();
             temp.setName(tElement.getNodeName().replace("_", " "));
-            temp.setDsAddress(tElement.getAttribute("dsAddress"));
-            temp.setDsOffset(tElement.getAttribute("dsOffset"));
-            temp.setAinPin(tElement.getAttribute("ainPin"));
-            temp.setOffset(tElement.getAttribute("offset"));
-            temp.setModel(tElement.getAttribute("model"));
+            temp.setDsAddress(tElement.getAttribute(PhSensor.DS_ADDRESS));
+            temp.setDsOffset(tElement.getAttribute(PhSensor.DS_OFFSET));
+            temp.setAinPin(tElement.getAttribute(PhSensor.AIN_PIN));
+            temp.setOffset(tElement.getAttribute(PhSensor.OFFSET));
+            temp.setModel(tElement.getAttribute(PhSensor.MODEL));
 
             BrewServer.LOG.info("Checking for an I2CDevice");
             Element i2cElement = getFirstElement(tElement, I2CDevice.I2C_NODE);
             if (i2cElement != null)
             {
                 temp.i2cDevice = getI2CDevice(i2cElement);
-                String channel = getFirstElement(tElement, I2CDevice.DEV_CHANNEL).getTextContent();
+                String channel = getTextForElement(tElement, I2CDevice.DEV_CHANNEL, null);
                 temp.i2cChannel = Integer.parseInt(channel);
             }
 
@@ -935,9 +898,9 @@ public final class LaunchControl {
     }
 
     public static I2CDevice getI2CDevice(Element i2cElement) {
-        String devNumber = getFirstElement(i2cElement, I2CDevice.DEV_NUMBER).getTextContent();
-        String devAddress = getFirstElement(i2cElement, I2CDevice.DEV_ADDRESS).getTextContent();
-        String devType = getFirstElement(i2cElement, I2CDevice.DEV_TYPE).getTextContent();
+        String devNumber = getTextForElement(i2cElement, I2CDevice.DEV_NUMBER, null);
+        String devAddress = getTextForElement(i2cElement, I2CDevice.DEV_ADDRESS, null);
+        String devType = getTextForElement(i2cElement, I2CDevice.DEV_TYPE, null);
         return getI2CDevice(devNumber, devAddress, devType);
     }
 
@@ -1593,10 +1556,10 @@ public final class LaunchControl {
             generalElement = addNewElement(null, "general");
         }
 
-        Element tempElement = addNewElement(generalElement, "owfs_server");
+        Element tempElement = addNewElement(generalElement, LaunchControl.OWFS_SERVER);
         tempElement.setTextContent(owfsServer);
 
-        tempElement = addNewElement(generalElement, "owfs_port");
+        tempElement = addNewElement(generalElement, LaunchControl.OWFS_PORT);
         tempElement.setTextContent(Integer.toString(owfsPort));
 
         // Create the connection
@@ -1899,55 +1862,50 @@ public final class LaunchControl {
         if (device == null) {
             BrewServer.LOG.info("Creating new Element");
             device = addNewElement(null, "device");
-            device.setAttribute("id", pid.getName());
+            device.setAttribute(PID.ID, pid.getName());
         }
 
         BrewServer.LOG.info("Using base node " + device.getNodeName()
-                + " with ID " + device.getAttribute("id"));
+                + " with ID " + device.getAttribute(PID.ID));
 
-        setElementText(device, "duty_cycle", pid.getManualCycle().toString());
-        setElementText(device, "duty_time", pid.getManualTime().toString());
-        setElementText(device, "set_point", pid.getSetPoint().toString());
+        setElementText(device, PID.DUTY_CYCLE, pid.getManualCycle().toString());
+        setElementText(device, PID.DUTY_TIME, pid.getManualTime().toString());
+        setElementText(device, PID.SET_POINT, pid.getSetPoint().toString());
+        setElementText(device, PID.MODE, pid.getMode());
 
         if (pid.getHeatSetting() != null) {
-            Element heatElement = addNewElement(device, "heat");
-            setElementText(heatElement, "cycle_time", pid.getHeatCycle()
-                    .toString());
-            setElementText(heatElement, "proportional", pid.getHeatP()
-                    .toString());
-            setElementText(heatElement, "integral", pid.getHeatI().toString());
-            setElementText(heatElement, "derivative",
-                    pid.getHeatD().toString());
-            setElementText(heatElement, "gpio", pid.getHeatGPIO());
-            setElementText(heatElement, "invert",
-                    Boolean.toString(pid.getHeatInverted()));
+            Element heatElement = addNewElement(device, PID.HEAT);
+            setElementText(heatElement, PID.CYCLE_TIME, pid.getHeatCycle().toString());
+            setElementText(heatElement, PID.PROPORTIONAL, pid.getHeatP().toString());
+            setElementText(heatElement, PID.INTEGRAL, pid.getHeatI().toString());
+            setElementText(heatElement, PID.DERIVATIVE, pid.getHeatD().toString());
+            setElementText(heatElement, PID.GPIO, pid.getHeatGPIO());
+            setElementText(heatElement, PID.DELAY, pid.getHeatDelay().toString());
+            setElementText(heatElement, PID.INVERT, Boolean.toString(pid.getHeatInverted()));
+
         }
 
         if (pid.getCoolSetting() != null) {
-            Element coolElement = addNewElement(device, "cool");
-            setElementText(coolElement, "cycle_time", pid.getCoolCycle()
-                    .toString());
-            setElementText(coolElement, "delay", pid.getCoolDelay().toString());
-            setElementText(coolElement, "proportional", pid.getCoolP()
-                    .toString());
-            setElementText(coolElement, "integral", pid.getCoolI().toString());
-            setElementText(coolElement, "derivative",
-                    pid.getCoolD().toString());
-            setElementText(coolElement, "gpio", pid.getCoolGPIO());
-            setElementText(coolElement, "invert",
-                    Boolean.toString(pid.getCoolInverted()));
+            Element coolElement = addNewElement(device, PID.COOL);
+            setElementText(coolElement, PID.CYCLE_TIME, pid.getCoolCycle().toString());
+            setElementText(coolElement, PID.DELAY, pid.getCoolDelay().toString());
+            setElementText(coolElement, PID.PROPORTIONAL, pid.getCoolP().toString());
+            setElementText(coolElement, PID.INTEGRAL, pid.getCoolI().toString());
+            setElementText(coolElement, PID.DERIVATIVE, pid.getCoolD().toString());
+            setElementText(coolElement, PID.GPIO, pid.getCoolGPIO());
+            setElementText(coolElement, PID.INVERT, Boolean.toString(pid.getCoolInverted()));
         }
         
         if( pid.getTemp() != null && pid.getTemp().getProbe() != null) {
-            setElementText(device, "probe", pid.getTemp().getProbe() );
+            setElementText(device, Temp.PROBE_ELEMENT, pid.getTemp().getProbe() );
         }
         
-        setElementText(device, "min", pid.getMin().toString());
-        setElementText(device, "max", pid.getMax().toString());
-        setElementText(device, "time", pid.getTime().toString());
+        setElementText(device, PID.MIN, pid.getMin().toString());
+        setElementText(device, PID.MAX, pid.getMax().toString());
+        setElementText(device, PID.TIME, pid.getTime().toString());
 
         if (pid.getAuxGPIO() != null) {
-            setElementText(device, "aux", pid.getAuxGPIO());
+            setElementText(device, PID.AUX, pid.getAuxGPIO());
         }
 
         saveConfigFile();
@@ -1987,24 +1945,22 @@ public final class LaunchControl {
             device = addNewElement(null, "device");
             device.setAttribute("id", name);
         }
-        setElementText(device, "probe", probe);
-        setElementText(device, "position", "" + temp.getPosition());
-        setElementText(device, "cutoff", cutoff);
-        setElementText(device, "calibration", temp.getCalibration());
-        setElementText(device, "hidden", Boolean.toString(temp.isHidden()));
+        setElementText(device, Temp.PROBE_ELEMENT, probe);
+        setElementText(device, Temp.POSITION, "" + temp.getPosition());
+        setElementText(device, PID.CUTOFF, cutoff);
+        setElementText(device, PID.CALIBRATION, temp.getCalibration());
+        setElementText(device, PID.HIDDEN, Boolean.toString(temp.isHidden()));
         addNewElement(device, Temp.PROBE_SIZE).setTextContent(Integer.toString(temp.getSize()));
 
         BrewServer.LOG.info("Checking for volume");
         if (temp.hasVolume()) {
             System.out.println("Saving volume");
-            setElementText(device, "volume-units", temp.getVolumeUnit());
+            setElementText(device, VolumeUnits.VOLUME_UNITS, temp.getVolumeUnit());
             if (!temp.getVolumeAIN().equals("")) {
-                setElementText(device, "volume-ain",
-                        temp.getVolumeAIN());
+                setElementText(device, VolumeUnits.VOLUME_PIN, temp.getVolumeAIN());
             } else {
-                setElementText(device, "volume-address",
-                        temp.getVolumeAddress());
-                setElementText(device, "volume-offset", temp.getVolumeOffset());
+                setElementText(device, VolumeUnits.VOLUME_ADDRESS, temp.getVolumeAddress());
+                setElementText(device, VolumeUnits.VOLUME_OFFSET, temp.getVolumeOffset());
             }
 
             if (temp.i2cDevice != null)
@@ -2256,13 +2212,15 @@ public final class LaunchControl {
         String coolGPIO = null;
         String volumeUnits = "Litres";
         String dsAddress = null, dsOffset = null;
-        String cutoffTemp = null, auxPin = null, calibration = "";
+        String auxPin = null, cutoffTemp = null, calibration = null;
+        String mode = "off";
         int probeSize = Temp.SIZE_LARGE;
         ConcurrentHashMap<BigDecimal, BigDecimal> volumeArray =
                 new ConcurrentHashMap<>();
         BigDecimal duty = new BigDecimal(0), heatCycle = new BigDecimal(0.0),
                 setpoint = new BigDecimal(0.0), heatP = new BigDecimal(0.0),
                 heatI = new BigDecimal(0.0), heatD = new BigDecimal(0.0),
+                heatDelay = new BigDecimal(0),
                 min = new BigDecimal(0.0), max = new BigDecimal(0.0),
                 time = new BigDecimal(0.0), coolP = new BigDecimal(0.0),
                 coolI = new BigDecimal(0.0), coolD = new BigDecimal(0.0),
@@ -2276,30 +2234,11 @@ public final class LaunchControl {
 
         BrewServer.LOG.info("Parsing XML Device: " + deviceName);
         try {
-            Element tElement = getFirstElement(config, "probe");
-            if (tElement != null) {
-                probe = tElement.getTextContent();
-            }
-
-            tElement = getFirstElement(config, "position");
-            if (tElement != null) {
-                position = Integer.parseInt(tElement.getTextContent());
-            }
-
-            tElement = getFirstElement(config, "duty_cycle");
-            if (tElement != null) {
-                duty = new BigDecimal(tElement.getTextContent());
-            }
-
-            tElement = getFirstElement(config, "duty_time");
-            if (tElement != null) {
-                cycle = new BigDecimal(tElement.getTextContent());
-            }
-
-            tElement = getFirstElement(config, "set_point");
-            if (tElement != null) {
-                setpoint = new BigDecimal(tElement.getTextContent());
-            }
+            probe = getTextForElement(config, Temp.PROBE_ELEMENT, null);
+            position = Integer.parseInt(getTextForElement(config, Temp.POSITION, "-1"));
+            duty = new BigDecimal(getTextForElement(config, PID.DUTY_CYCLE, "0.0"));
+            cycle = new BigDecimal(getTextForElement(config, PID.DUTY_TIME, "0.0"));
+            setpoint = new BigDecimal(getTextForElement(config, PID.SET_POINT, "0.0"));
 
             Element heatElement = getFirstElement(config, "heat");
 
@@ -2307,111 +2246,41 @@ public final class LaunchControl {
                 heatElement = config;
             }
 
-            tElement = getFirstElement(heatElement, "gpio");
-            if (tElement != null) {
-                heatGPIO = tElement.getTextContent();
+            heatGPIO = getTextForElement(heatElement, PID.GPIO, null);
+            if (m_restore) {
+                mode = getTextForElement(heatElement, PID.MODE, "off");
             }
 
-            tElement = getFirstElement(heatElement, "cycle_time");
-            if (tElement != null) {
-                heatCycle = new BigDecimal(tElement.getTextContent());
-            }
 
-            tElement = getFirstElement(heatElement, "proportional");
-            if (tElement != null) {
-                heatP = new BigDecimal(tElement.getTextContent());
-            }
-
-            tElement = getFirstElement(heatElement, "integral");
-            if (tElement != null) {
-                heatI = new BigDecimal(tElement.getTextContent());
-            }
-
-            tElement = getFirstElement(heatElement, "derivative");
-            if (tElement != null) {
-                heatD = new BigDecimal(tElement.getTextContent());
-            }
-
-            tElement = getFirstElement(config, "invert");
-            if (tElement != null) {
-                heatInvert = Boolean.parseBoolean(tElement.getTextContent());
-            }
+            heatCycle = new BigDecimal(getTextForElement(heatElement, PID.CYCLE_TIME, "0.0"));
+            heatP = new BigDecimal(getTextForElement(heatElement, PID.PROPORTIONAL, "0.0"));
+            heatI = new BigDecimal(getTextForElement(heatElement, PID.INTEGRAL, "0.0"));
+            heatD = new BigDecimal(getTextForElement(heatElement, PID.DERIVATIVE, "0.0"));
+            heatDelay = new BigDecimal(getTextForElement(heatElement, PID.DELAY, "0.0"));
+            heatInvert = Boolean.parseBoolean(getTextForElement(heatElement, PID.INVERT, "false"));
 
             Element coolElement = getFirstElement(config, "cool");
 
-            if (coolElement != null) {
-
-                tElement = getFirstElement(coolElement, "cycle_time");
-                if (tElement != null) {
-                    coolCycle = new BigDecimal(tElement.getTextContent());
-                }
-
-                tElement = getFirstElement(coolElement, "proportional");
-                if (tElement != null) {
-                    coolP = new BigDecimal(tElement.getTextContent());
-                }
-
-                tElement = getFirstElement(coolElement, "integral");
-                if (tElement != null) {
-                    coolI = new BigDecimal(tElement.getTextContent());
-                }
-
-                tElement = getFirstElement(coolElement, "derivative");
-                if (tElement != null) {
-                    coolD = new BigDecimal(tElement.getTextContent());
-                }
-
-                tElement = getFirstElement(coolElement, "gpio");
-                if (tElement != null) {
-                    coolGPIO = tElement.getTextContent();
-                }
-
-                tElement = getFirstElement(coolElement, "delay");
-                if (tElement != null) {
-                    coolDelay = new BigDecimal(tElement.getTextContent());
-                }
-
-                tElement = getFirstElement(coolElement, "invert");
-                if (tElement != null) {
-                    coolInvert = Boolean.parseBoolean(tElement.getTextContent());
-                }
+            if (coolElement != null)
+            {
+                coolCycle = new BigDecimal(getTextForElement(coolElement, PID.CYCLE_TIME, "0.0"));
+                coolP = new BigDecimal(getTextForElement(coolElement, PID.PROPORTIONAL, "0.0"));
+                coolI = new BigDecimal(getTextForElement(coolElement, PID.INTEGRAL, "0.0"));
+                coolD = new BigDecimal(getTextForElement(coolElement, PID.DERIVATIVE, "0.0"));
+                coolDelay = new BigDecimal(getTextForElement(coolElement, PID.DELAY, "0.0"));
+                coolInvert = Boolean.parseBoolean(getTextForElement(coolElement, PID.INVERT, "false"));
+                coolGPIO = getTextForElement(coolElement, PID.GPIO, null);
             }
 
-            tElement = getFirstElement(config, "min");
-            BrewServer.LOG.info("min: " + tElement);
-            if (tElement != null) {
-                min = new BigDecimal(tElement.getTextContent());
-            }
 
-            tElement = getFirstElement(config, "max");
-            if (tElement != null) {
-                max = new BigDecimal(tElement.getTextContent());
-            }
+            min = new BigDecimal(getTextForElement(config, PID.MIN, "0.0"));
+            max = new BigDecimal(getTextForElement(config, PID.MAX, "0.0"));
+            time = new BigDecimal(getTextForElement(config, PID.TIME, "0.0"));
+            cutoffTemp = getTextForElement(config, PID.CUTOFF, "0.0");
+            calibration = getTextForElement(config, PID.CALIBRATION, "0.0");
+            auxPin = getTextForElement(config, PID.AUX, null);
 
-            tElement = getFirstElement(config, "time");
-            if (tElement != null) {
-                time = new BigDecimal(tElement.getTextContent());
-            }
-
-            tElement = getFirstElement(config, "cutoff");
-            if (tElement != null) {
-                cutoffTemp = tElement.getTextContent();
-            }
-
-            tElement = getFirstElement(config, "calibration");
-            if (tElement != null) {
-                calibration = tElement.getTextContent();
-            }
-
-            tElement = getFirstElement(config, "aux");
-            if (tElement != null) {
-                auxPin = tElement.getTextContent();
-            }
-
-            tElement = getFirstElement(config, "hidden");
-            if (tElement != null) {
-                hidden = Boolean.parseBoolean(tElement.getTextContent());
-            }
+            hidden = Boolean.parseBoolean(getTextForElement(config, PID.HIDDEN, "false"));
 
             NodeList tList = config.getElementsByTagName("volume");
 
@@ -2421,10 +2290,8 @@ public final class LaunchControl {
 
                     // Append the volume to the array
                     try {
-                        BigDecimal volValue = new BigDecimal(
-                                curOption.getAttribute("vol"));
-                        BigDecimal volReading = new BigDecimal(
-                                curOption.getTextContent());
+                        BigDecimal volValue = new BigDecimal(curOption.getAttribute("vol"));
+                        BigDecimal volReading = new BigDecimal(curOption.getTextContent());
 
                         volumeArray.put(volValue, volReading);
                         // we can parse this as an integer
@@ -2435,31 +2302,12 @@ public final class LaunchControl {
                 }
             }
 
-            tElement = getFirstElement(config, "volume-unit");
-            if (tElement != null) {
-                volumeUnits = tElement.getTextContent();
-            }
+            volumeUnits = getTextForElement(config, VolumeUnits.VOLUME_UNITS, null);
+            analoguePin = Integer.parseInt(getTextForElement(config, VolumeUnits.VOLUME_PIN, "-1"));
+            dsAddress = getTextForElement(config, VolumeUnits.VOLUME_ADDRESS, null);
+            dsOffset = getTextForElement(config, VolumeUnits.VOLUME_OFFSET, null);
 
-            tElement = getFirstElement(config, "volume-pin");
-            if (tElement != null) {
-                analoguePin = Integer.parseInt(tElement.getTextContent());
-            }
-
-            tElement = getFirstElement(config, "volume-address");
-            if (tElement != null) {
-                dsAddress = tElement.getTextContent();
-            }
-
-            tElement = getFirstElement(config, "volume-offset");
-            if (tElement != null) {
-                dsOffset = tElement.getTextContent();
-            }
-
-            tElement = getFirstElement(config, Temp.PROBE_SIZE);
-            if (tElement != null)
-            {
-                probeSize = Integer.parseInt(tElement.getTextContent());
-            }
+            probeSize = Integer.parseInt(getTextForElement(config, Temp.PROBE_SIZE, Integer.toString(Temp.SIZE_LARGE)));
 
             i2cElement = getFirstElement(config, I2CDevice.I2C_NODE);
 
@@ -2509,8 +2357,9 @@ public final class LaunchControl {
                                 + nfe.getMessage());
                 }
 
-                tPID.updateValues("off", duty, heatCycle, setpoint, heatP,
+                tPID.updateValues(mode, duty, heatCycle, setpoint, heatP,
                         heatI, heatD);
+                tPID.setHeatDelay(heatDelay);
                 tPID.setCoolDelay(coolDelay);
                 tPID.setCoolCycle(coolCycle);
                 tPID.setCoolP(coolP);
@@ -2548,7 +2397,7 @@ public final class LaunchControl {
 
         if (i2cElement != null)
         {
-            String channel = getFirstElement(i2cElement, I2CDevice.DEV_CHANNEL).getTextContent();
+            String channel = getTextForElement(i2cElement, I2CDevice.DEV_CHANNEL, null);
             newTemp.setupVolumeI2C(getI2CDevice(i2cElement), channel, volumeUnits);
         }
 
@@ -2566,6 +2415,14 @@ public final class LaunchControl {
                 newTemp.hide();
             }
         }
+    }
+
+    public static String getTextForElement(Element config, String name, String defaultValue) {
+        Element tElement = getFirstElement(config, name);
+        if (tElement != null) {
+            return tElement.getTextContent();
+        }
+        return defaultValue;
     }
 
     /**
@@ -2767,7 +2624,7 @@ public final class LaunchControl {
 
         NodeList tList = getElementsByXpath(baseNode, xpathIn);
 
-        if (tList.getLength() > 0) {
+        if (tList != null && tList.getLength() > 0) {
             tElement = (Element) tList.item(0);
         }
 
@@ -2865,7 +2722,12 @@ public final class LaunchControl {
      * @return The MashControl for the PID.
      */
     public static TriggerControl findTriggerControl(final String pid) {
-        return LaunchControl.findTemp(pid).getTriggerControl();
+        Temp tTemp = LaunchControl.findTemp(pid);
+        if (tTemp != null)
+        {
+            return tTemp.getTriggerControl();
+        }
+        return  null;
     }
 
     /**
@@ -2919,7 +2781,7 @@ public final class LaunchControl {
         String currentSha = getShaFor("HEAD");
         String headSha = getShaFor("origin");
 
-        if (!headSha.equals(currentSha)) {
+        if (headSha != null && !headSha.equals(currentSha)) {
             LaunchControl.setMessage("Update Available. "
                     + "<span class='btn' id=\"UpdatesFromGit\""
                     + " type=\"submit\"" + " onClick='updateElsinore();'>"

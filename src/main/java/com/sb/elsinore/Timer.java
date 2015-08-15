@@ -2,6 +2,9 @@ package com.sb.elsinore;
 
 public class Timer implements Comparable<Timer> {
 
+    public static final String ID = "id";
+    public static final String POSITION = "position";
+    public static final String TARGET = "target";
     private String name = "";
     private int position = -1;
     private String mode;

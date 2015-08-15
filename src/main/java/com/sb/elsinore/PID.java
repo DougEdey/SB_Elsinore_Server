@@ -20,6 +20,28 @@ import java.util.regex.Pattern;
  */
 public final class PID implements Runnable {
 
+    public static final String DUTY_CYCLE = "duty_cycle";
+    public static final String DUTY_TIME = "duty_time";
+    public static final String SET_POINT = "set_point";
+    public static final String GPIO = "gpio";
+    public static final String MODE = "mode";
+    public static final String CYCLE_TIME = "cycle_time";
+    public static final String PROPORTIONAL = "proportional";
+    public static final String INTEGRAL = "integral";
+    public static final String DERIVATIVE = "derivative";
+    public static final String INVERT = "invert";
+    public static final String DELAY = "delay";
+    public static final String MIN = "min";
+    public static final String MAX = "max";
+    public static final String TIME = "time";
+    public static final String CUTOFF = "cutoff";
+    public static final String CALIBRATION = "calibration";
+    public static final String AUX = "aux";
+    public static final String HIDDEN = "hidden";
+    public static final String ID = "id";
+    public static final String HEAT = "heat";
+    public static final String COOL = "cool";
+
     /**
      * Thousand BigDecimal multiplier.
      */
@@ -42,6 +64,12 @@ public final class PID implements Runnable {
     private BigDecimal minTime = new BigDecimal(0);
 
     private boolean running = true;
+    private BigDecimal heatDelay;
+
+    public void setHeatDelay(BigDecimal heatDelay) {
+        this.heatSetting.delay = heatDelay;
+    }
+
     /**
      * Inner class to hold the current settings.
      * @author Doug Edey
@@ -541,6 +569,10 @@ public final class PID implements Runnable {
         return heatSetting.derivative;
     }
 
+    public BigDecimal getHeatDelay() {
+        return heatSetting.delay;
+    }
+
     /**
      * @return true if the heating output is inverted.
      */
@@ -836,6 +868,7 @@ public final class PID implements Runnable {
         heatMap.put("p", getHeatP());
         heatMap.put("i", getHeatI());
         heatMap.put("d", getHeatD());
+        heatMap.put("delay", getHeatDelay());
         heatMap.put("gpio", getHeatGPIO());
         heatMap.put("inverted", getHeatInverted());
         statusMap.put("heat", heatMap);

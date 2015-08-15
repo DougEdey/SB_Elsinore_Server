@@ -12,6 +12,8 @@ import jGPIO.OutPin;
  */
 public class Switch implements Comparable<Switch> {
 
+    public static final String GPIO = "gpio";
+    public static final String POSITION = "position";
     /**
      * Current switch name.
      */

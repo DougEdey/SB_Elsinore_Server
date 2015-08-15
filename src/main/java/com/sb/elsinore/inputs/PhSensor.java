@@ -23,6 +23,11 @@ import com.sb.util.MathUtil;
 public class PhSensor {
 
     private static final java.math.BigDecimal BIGDEC_THOUSAND = new BigDecimal(1000);
+    public static final String DS_ADDRESS = "dsAddress";
+    public static final String DS_OFFSET = "dsOffset";
+    public static final String AIN_PIN = "ainPin";
+    public static final String OFFSET = "offset";
+    public static final String MODEL = "model";
     private int ainPin = -1;
     private String dsAddress = "";
     private String dsOffset = "";

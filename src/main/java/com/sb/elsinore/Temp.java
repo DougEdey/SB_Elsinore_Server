@@ -40,6 +40,8 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * Strings for the Nodes.
      */
     public static final String PROBE_SIZE = "ProbeSize";
+    public static final String PROBE_ELEMENT = "probe";
+    public static final String POSITION = "position";
 
     /**
      * Valid sizes for the probes

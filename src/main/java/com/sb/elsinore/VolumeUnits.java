@@ -16,6 +16,10 @@ final class VolumeUnits {
      * The Litres, SI standard, 1000ml.
      */
     public static final String LITRES = "Litres";
+    public static final String VOLUME_UNITS = "volume-unit";
+    public static final String VOLUME_PIN = "volume-ain";
+    public static final String VOLUME_ADDRESS = "volume-address";
+    public static final String VOLUME_OFFSET = "volume-offset";
 
     /**
      * Constructor.

@@ -19,6 +19,10 @@ import java.util.Map;
  */
 public class StatusRecorder implements Runnable {
 
+    public static final String RECORDER = "recorder";
+    public static final String RECORDER_TIME = "recorderTime";
+    public static final String RECORDER_DIFF = "recorderDiff";
+
     public static double THRESHOLD = .15d;
     public static long SLEEP = 1000 * 5; // 5 seconds - is this too fast?
     private JSONObject lastStatus = null;
