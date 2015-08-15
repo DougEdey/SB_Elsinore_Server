@@ -2514,13 +2514,25 @@ function displaySystemSettings() {
 					$('form[id="settings-form"]')
 					.append(
 						'<div class="col-md-4 form-group" id="recorder_time">' +
-							'<label for="recorderTime">Recorder Sample Time</label>' +
+							'<label for="recorderTime">Recorder Sample Time (ms)</label>' +
 							'<input name="recorderTime" class="form-control" type="text">' +
 						'</div>');
 				}
 				
 				$('form[id="settings-form"] div[id="recorder_time"] input').val(data.recorderTime);
 			}
+			if ("restore" in data) {
+                if ($('form[id="settings-form"] div[id="restore"]').length == 0) {
+                    $('form[id="settings-form"]')
+                    .append(
+                        '<div class="col-md-4 checkbox" id="restore">' +
+                            '<label>' +
+                                '<input type="checkbox" name="restore">Restore Status On Startup' +
+                            '</label>' +
+                        '</div>');
+                }
+                $('form[id="settings-form"] div[id="restore"] input').prop("checked", data.restore);
+            }
 			return;
 		}
 	});

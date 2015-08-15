@@ -203,7 +203,7 @@ public final class PID implements Runnable {
         this.heatSetting.proportional = p;
         this.heatSetting.integral = i;
         this.heatSetting.derivative = d;
-        BrewServer.LOG.info(this.heatSetting.proportional + ": "
+        BrewServer.LOG.info("Mode " + this.mode + " " + this.heatSetting.proportional + ": "
             + heatSetting.integral + ": " + this.heatSetting.derivative);
         LaunchControl.savePID(this);
     }

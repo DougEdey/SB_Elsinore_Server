@@ -66,7 +66,7 @@ public final class LaunchControl {
     private static final String PACHUBE_FEED_ID = "pachube_feed";
     private static final String OWFS_SERVER = "owfs_server";
     private static final String OWFS_PORT = "owfs_port";
-    private static final String RESTORE = "restore";
+    public static final String RESTORE = "restore";
 
     /* MAGIC NUMBERS! */
     public static int EXIT_UPDATE = 128;
@@ -218,7 +218,7 @@ public final class LaunchControl {
     public static boolean pageLock = false;
     private static boolean initialized = false;
     private static ProcessBuilder pb = null;
-    private boolean m_restore = false;
+    private static boolean m_restore = false;
 
     /*****
      * Main method to launch the brewery.
@@ -420,6 +420,10 @@ public final class LaunchControl {
 
     public static void setInitialized(boolean initialized) {
         LaunchControl.initialized = initialized;
+    }
+
+    public static void setRestore(boolean restore) {
+        LaunchControl.m_restore = restore;
     }
 
     /************
@@ -647,6 +651,7 @@ public final class LaunchControl {
         retVal.put(StatusRecorder.RECORDER, LaunchControl.recorder != null);
         retVal.put(StatusRecorder.RECORDER_TIME, StatusRecorder.SLEEP);
         retVal.put(StatusRecorder.RECORDER_DIFF, StatusRecorder.THRESHOLD);
+        retVal.put(LaunchControl.RESTORE, LaunchControl.m_restore);
         return retVal.toJSONString();
     }
 
@@ -764,8 +769,7 @@ public final class LaunchControl {
                 addSystemTemp();
             }
 
-            m_restore = Boolean.parseBoolean(getTextForElement(config, LaunchControl.RESTORE, null));
-
+            m_restore = Boolean.parseBoolean(getTextForElement(config, LaunchControl.RESTORE, "false"));
         } catch (NumberFormatException nfe) {
             System.out.print("Number format problem!");
             nfe.printStackTrace();
@@ -1397,44 +1401,43 @@ public final class LaunchControl {
 
         tempElement.setTextContent(Boolean.toString(pageLock));
 
-        tempElement = getFirstElement(generalElement, "scale");
+        tempElement = getFirstElement(generalElement, LaunchControl.SCALE);
 
         if (tempElement == null) {
-            tempElement = addNewElement(generalElement, "scale");
+            tempElement = addNewElement(generalElement, LaunchControl.SCALE);
         }
 
         tempElement.setTextContent(scale);
 
-        tempElement = getFirstElement(generalElement, "recorder");
+        tempElement = getFirstElement(generalElement, StatusRecorder.RECORDER);
 
         if (tempElement == null) {
-            tempElement = addNewElement(generalElement, "recorder");
+            tempElement = addNewElement(generalElement, StatusRecorder.RECORDER);
         }
 
-        tempElement.setTextContent(Boolean
-                .toString(LaunchControl.recorder != null));
+        tempElement.setTextContent(Boolean.toString(LaunchControl.recorder != null));
 
-        tempElement = getFirstElement(generalElement, "recorderDiff");
+        tempElement = getFirstElement(generalElement, StatusRecorder.RECORDER_DIFF);
 
         if (tempElement == null) {
-            tempElement = addNewElement(generalElement, "recorderDiff");
+            tempElement = addNewElement(generalElement, StatusRecorder.RECORDER_DIFF);
         }
 
         tempElement.setTextContent(Double.toString(StatusRecorder.THRESHOLD));
 
-        tempElement = getFirstElement(generalElement, "recorderTime");
+        tempElement = getFirstElement(generalElement, StatusRecorder.RECORDER_TIME);
 
         if (tempElement == null) {
-            tempElement = addNewElement(generalElement, "recorderTime");
+            tempElement = addNewElement(generalElement, StatusRecorder.RECORDER_TIME);
         }
 
         tempElement.setTextContent(Long.toString(StatusRecorder.SLEEP));
 
         if (breweryName != null && !breweryName.equals("")) {
-            tempElement = getFirstElement(generalElement, "brewery_name");
+            tempElement = getFirstElement(generalElement, LaunchControl.BREWERY_NAME);
 
             if (tempElement == null) {
-                tempElement = addNewElement(generalElement, "brewery_name");
+                tempElement = addNewElement(generalElement, LaunchControl.BREWERY_NAME);
             }
 
             tempElement.setTextContent(breweryName);
@@ -1442,25 +1445,33 @@ public final class LaunchControl {
 
         if (useOWFS) {
             if (owfsServer != null) {
-                tempElement = getFirstElement(generalElement, "owfs_server");
+                tempElement = getFirstElement(generalElement, LaunchControl.OWFS_SERVER);
 
                 if (tempElement == null) {
-                    tempElement = addNewElement(generalElement, "owfs_server");
+                    tempElement = addNewElement(generalElement, LaunchControl.OWFS_SERVER);
                 }
 
                 tempElement.setTextContent(owfsServer);
             }
 
             if (owfsPort != null) {
-                tempElement = getFirstElement(generalElement, "owfs_port");
+                tempElement = getFirstElement(generalElement, LaunchControl.OWFS_PORT);
 
                 if (tempElement == null) {
-                    tempElement = addNewElement(generalElement, "owfs_port");
+                    tempElement = addNewElement(generalElement, LaunchControl.OWFS_PORT);
                 }
 
                 tempElement.setTextContent(Integer.toString(owfsPort));
             }
         }
+
+        tempElement = getFirstElement(generalElement, LaunchControl.RESTORE);
+
+        if (tempElement == null) {
+            tempElement = addNewElement(generalElement, LaunchControl.RESTORE);
+        }
+
+        tempElement.setTextContent(Boolean.toString(LaunchControl.m_restore));
 
         try {
             TransformerFactory transformerFactory = TransformerFactory
@@ -1874,7 +1885,12 @@ public final class LaunchControl {
         setElementText(device, PID.MODE, pid.getMode());
 
         if (pid.getHeatSetting() != null) {
-            Element heatElement = addNewElement(device, PID.HEAT);
+
+            Element heatElement = getFirstElement(device, PID.HEAT);
+            if (heatElement == null)
+            {
+                heatElement = addNewElement(device, PID.HEAT);
+            }
             setElementText(heatElement, PID.CYCLE_TIME, pid.getHeatCycle().toString());
             setElementText(heatElement, PID.PROPORTIONAL, pid.getHeatP().toString());
             setElementText(heatElement, PID.INTEGRAL, pid.getHeatI().toString());
@@ -1886,7 +1902,12 @@ public final class LaunchControl {
         }
 
         if (pid.getCoolSetting() != null) {
-            Element coolElement = addNewElement(device, PID.COOL);
+            Element coolElement = getFirstElement(device, PID.COOL);
+            if (coolElement == null)
+            {
+                coolElement = addNewElement(device, PID.COOL);
+            }
+
             setElementText(coolElement, PID.CYCLE_TIME, pid.getCoolCycle().toString());
             setElementText(coolElement, PID.DELAY, pid.getCoolDelay().toString());
             setElementText(coolElement, PID.PROPORTIONAL, pid.getCoolP().toString());
@@ -2246,10 +2267,11 @@ public final class LaunchControl {
                 heatElement = config;
             }
 
-            heatGPIO = getTextForElement(heatElement, PID.GPIO, null);
             if (m_restore) {
-                mode = getTextForElement(heatElement, PID.MODE, "off");
+                mode = getTextForElement(config, PID.MODE, "off");
             }
+
+            heatGPIO = getTextForElement(heatElement, PID.GPIO, null);
 
 
             heatCycle = new BigDecimal(getTextForElement(heatElement, PID.CYCLE_TIME, "0.0"));

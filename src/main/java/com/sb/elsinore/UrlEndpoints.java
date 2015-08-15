@@ -1376,6 +1376,12 @@ public class UrlEndpoints {
                             + LaunchControl.getMessage());
             }
         }
+
+        if (params.containsKey(LaunchControl.RESTORE))
+        {
+            LaunchControl.setRestore(params.get(LaunchControl.RESTORE).equals("on"));
+
+        }
         return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
                 usage.toString());
     }
