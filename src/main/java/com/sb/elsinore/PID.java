@@ -1033,19 +1033,22 @@ public final class PID implements Runnable {
             maxTempF = Temp.cToF(this.max);
         }
         
-        if (this.getTempF().compareTo(minTempF) < 0) {
-            if (this.hasValidHeater() && this.duty_cycle.compareTo(new BigDecimal(100)) != 0
-                        && this.minTimePassed()) {
+        if (this.minTimePassed() && this.getTempF().compareTo(minTempF) < 0) {
+
+            if (this.hasValidHeater()
+                    && this.duty_cycle.compareTo(new BigDecimal(100)) != 0
+                    && this.minTimePassed()) {
                 BrewServer.LOG.info("Current temp is less than the minimum temp, turning on 100");
                 this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                 this.duty_cycle = new BigDecimal(100);
                 this.outputControl.setDuty(this.duty_cycle);
-                this.outputControl.getHeater().setCycleTime(
-                        this.minTime.multiply(new BigDecimal(60)));
-            } else if (this.hasValidCooler() && this.duty_cycle.compareTo(new BigDecimal(0)) != 0
-                        &&  this.minTimePassed()) {
+                this.outputControl.getHeater().setCycleTime(this.minTime.multiply(new BigDecimal(60)));
+            } else if (this.hasValidCooler()
+                    && this.duty_cycle.compareTo(new BigDecimal(0)) != 0
+                    &&  this.minTimePassed()) {
                 BrewServer.LOG.info("Slept for long enough, turning off");
                 // Make sure the thread wakes up for the new settings
+                this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                 this.duty_cycle = new BigDecimal(0);
                 this.outputControl.setDuty(this.duty_cycle);
                 this.outputThread.interrupt();
@@ -1053,25 +1056,27 @@ public final class PID implements Runnable {
 
             // Make sure the thread wakes up for the new settings
             this.outputThread.interrupt();
-        } else if (this.getTempF().compareTo(maxTempF) >= 0) {
+        } else if (this.minTimePassed() && this.getTempF().compareTo(maxTempF) >= 0) {
             // TimeDiff is now in minutes
             // Is the cooling output on?
-            if (this.hasValidCooler() && this.duty_cycle.compareTo(new BigDecimal(-100)) != 0
-                        && this.minTimePassed()) {
+            if (this.hasValidCooler()
+                    && this.duty_cycle.compareTo(new BigDecimal(-100)) != 0) {
                 BrewServer.LOG.info("Current temp is greater than the max temp, turning on -100");
                 this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                 this.duty_cycle = new BigDecimal(-100);
                 this.outputControl.setDuty(this.duty_cycle);
-                this.outputControl.getCooler().setCycleTime(
-                        this.minTime.multiply(new BigDecimal(60)));
-            } else if(this.hasValidHeater() && this.duty_cycle.compareTo(new BigDecimal(0)) != 0
-                       && this.minTimePassed()) {
+                this.outputControl.getCooler().setCycleTime(this.minTime.multiply(new BigDecimal(60)));
+                this.outputThread.interrupt();
+
+            } else if(this.hasValidHeater()
+                    && this.duty_cycle.compareTo(new BigDecimal(0)) != 0) {
                 BrewServer.LOG.info("Current temp is more than the max temp");
-                BrewServer.LOG.info("Slep for long enough, turning off");
-               // Make sure the thread wakes up for the new settings
-               this.duty_cycle = BigDecimal.ZERO;
-               this.outputControl.setDuty(this.duty_cycle);
-               this.outputThread.interrupt();
+                BrewServer.LOG.info("Slept for long enough, turning off");
+                // Make sure the thread wakes up for the new settings
+                this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
+                this.duty_cycle = BigDecimal.ZERO;
+                this.outputControl.setDuty(this.duty_cycle);
+                this.outputThread.interrupt();
             }
         } else {
             BrewServer.LOG.info("Min: " + minTempF + " (" + getTempF() + ") " + maxTempF);

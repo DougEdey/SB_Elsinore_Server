@@ -96,7 +96,7 @@ public class OutputDevice {
                 Thread.sleep(onTime.intValue());
             }
 
-            if (duty.compareTo(HUNDRED) < 0 && offTime.intValue() > 0) {
+            if (duty.abs().compareTo(HUNDRED) < 0 && offTime.intValue() > 0) {
                 setValue(false);
                 Thread.sleep(offTime.intValue());
             }
