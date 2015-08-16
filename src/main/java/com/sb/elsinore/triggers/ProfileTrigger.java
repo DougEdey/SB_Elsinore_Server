@@ -7,7 +7,10 @@ import static org.rendersnake.HtmlAttributesFactory.value;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 
@@ -17,8 +20,13 @@ import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Messages;
 import com.sb.elsinore.Temp;
 import com.sb.elsinore.TriggerControl;
+import org.w3c.dom.Element;
 
 public class ProfileTrigger implements TriggerInterface {
+
+    private static final String TARGET_NAME = "targetname";
+    private static final String ACTIVATE = "activate";
+    private static final String DISABLE = "disable";
 
     private int position = -1;
     private boolean activate = false;
@@ -123,8 +131,8 @@ public class ProfileTrigger implements TriggerInterface {
             html.input(id("type").name("type")
                         .hidden("true").value("Profile"));
             // Add the probe as a drop down list.
-            html.select(class_("holo-spinner").name("targetname")
-                    .id("targetname"));
+            html.select(class_("holo-spinner").name(TARGET_NAME)
+                    .id(TARGET_NAME));
                 html.option(value(""))
                         .write("Target Probe")
                 ._option();
@@ -137,15 +145,15 @@ public class ProfileTrigger implements TriggerInterface {
             html._select();
 
             // Add the on/off values
-            html.select(class_("holo-spinner").name("activate")
-                    .id("activate"));
+            html.select(class_("holo-spinner").name(ACTIVATE)
+                    .id(ACTIVATE));
                 html.option(value(""))
                         .write("")
                 ._option();
-                html.option(value("activate"))
+                html.option(value(ACTIVATE))
                     .write(Messages.ACTIVATE)
                 ._option();
-                html.option(value("disable"))
+                html.option(value(DISABLE))
                     .write(Messages.DISABLE)
                 ._option();
             html._select();
@@ -170,13 +178,13 @@ public class ProfileTrigger implements TriggerInterface {
         HtmlCanvas html = new HtmlCanvas();
         html.div(id("NewTriggerTrigger").class_(""));
         html.form(id("newTriggersForm"));
-            html.input(id("type").name("type")
+            html.input(id(TYPE).name(TYPE)
                         .hidden("true").value("Profile"));
-            html.input(id("type").name("position")
-                    .hidden("position").value(this.position));
+            html.input(id("type").name(POSITION)
+                    .hidden(POSITION).value(this.position));
             // Add the triggers as a drop down list.
-            html.select(class_("holo-spinner").name("targetname")
-                    .id("targetname"));
+            html.select(class_("holo-spinner").name(TARGET_NAME)
+                    .id(TARGET_NAME));
                 html.option(value(""))
                         .write("Target Probe")
                 ._option();
@@ -189,16 +197,16 @@ public class ProfileTrigger implements TriggerInterface {
             html._select();
 
             // Add the on/off values
-            html.select(class_("holo-spinner").name("activate")
-                    .id("activate"));
+            html.select(class_("holo-spinner").name(ACTIVATE)
+                    .id(ACTIVATE));
                 html.option(value(""))
                         .write("")
                 ._option();
-                html.option(value("activate")
+                html.option(value(ACTIVATE)
                         .selected_if(this.activate))
                     .write(Messages.ACTIVATE)
                 ._option();
-                html.option(value("disable")
+                html.option(value(DISABLE)
                         .selected_if(!this.activate))
                     .write(Messages.DISABLE)
                 ._option();
@@ -249,22 +257,71 @@ public class ProfileTrigger implements TriggerInterface {
 
     @Override
     public void updateTrigger(JSONObject params) {
-        String temp = (String) params.get("position");
-        if (temp != null) {
-            int newPos = Integer.parseInt(temp);
-            this.position = newPos;
+        String temp = (String) params.get(POSITION);
+        if (temp != null)
+        {
+            this.position = Integer.parseInt(temp);
         }
-        String target = (String) params.get("targetname");
-        String newAct = (String)params.get("activate");
+
+        String target = (String) params.get(TARGET_NAME);
+        String newAct = (String)params.get(ACTIVATE);
+
         if (target != null && LaunchControl.findTemp(target) != null) {
             this.targetName = target;
         }
 
-        if (newAct != null && newAct.equals("activate")) {
-            this.activate = true;
-        } else {
-            this.activate = false;
+        this.activate = newAct != null && newAct.equals(ACTIVATE);
+    }
+
+    @Override
+    public boolean readTrigger(Element rootElement) {
+        if (!rootElement.getAttribute(TYPE).equals(getName()))
+        {
+            return false;
         }
+
+        this.position = Integer.parseInt(rootElement.getAttribute(POSITION));
+        String target = LaunchControl.getTextForElement(rootElement, TARGET_NAME, null);
+        if (target != null && LaunchControl.findTemp(target) != null) {
+            this.targetName = target;
+        }
+        this.activate = Boolean.parseBoolean(LaunchControl.getTextForElement(rootElement, ACTIVATE, "false"));
+        return true;
+    }
+
+    @Override
+    public void updateElement(Element rootElement) {
+        Element triggerElement;
+        if (rootElement.getNodeName().equals(TriggerControl.NAME))
+        {
+            triggerElement = LaunchControl.addNewElement(rootElement, TriggerInterface.NAME);
+        }
+        else if (rootElement.getNodeName().equals(TriggerInterface.NAME))
+        {
+            triggerElement = rootElement;
+        }
+        else
+        {
+            return;
+        }
+
+        triggerElement.setAttribute(TriggerInterface.POSITION, Integer.toString(this.position));
+        triggerElement.setAttribute(TriggerInterface.TYPE, getName());
+
+        if (triggerElement.hasChildNodes()) {
+            Set<Element> delElements = new HashSet<>();
+            // Can't delete directly from the nodelist, concurrency issues.
+            for (int i = 0; i < triggerElement.getChildNodes().getLength(); i++) {
+                delElements.add((Element) triggerElement.getChildNodes().item(i));
+            }
+            // now we can delete them.
+            for (Element e : delElements) {
+                e.getParentNode().removeChild(e);
+            }
+        }
+
+        LaunchControl.addNewElement(triggerElement, ACTIVATE).setTextContent(Boolean.toString(activate));
+        LaunchControl.addNewElement(triggerElement, TARGET_NAME).setTextContent(targetName);
     }
 
 }

@@ -1675,15 +1675,16 @@ public final class LaunchControl {
 
         // Delete the existing PIDs and Temps.
         NodeList devList = getElementsByXpath(null, "/elsinore/device");
-
-        Set<Element> delElements = new HashSet<>();
-        // Can't delete directly from the nodelist, concurrency issues.
-        for (int i = 0; i < devList.getLength(); i++) {
-            delElements.add((Element) devList.item(i));
-        }
-        // now we can delete them.
-        for (Element e : delElements) {
-            e.getParentNode().removeChild(e);
+        if (devList != null) {
+            Set<Element> delElements = new HashSet<>();
+            // Can't delete directly from the nodelist, concurrency issues.
+            for (int i = 0; i < devList.getLength(); i++) {
+                delElements.add((Element) devList.item(i));
+            }
+            // now we can delete them.
+            for (Element e : delElements) {
+                e.getParentNode().removeChild(e);
+            }
         }
 
         // go through the list of Temps and save each one
@@ -1808,11 +1809,11 @@ public final class LaunchControl {
                     newSensor = addNewElement(phSensorsElement,
                             tSensor.getName());
                 }
-                newSensor.setAttribute("model", tSensor.getModel());
-                newSensor.setAttribute("ainPin", tSensor.getAIN());
-                newSensor.setAttribute("dsAddress", tSensor.getDsAddress());
-                newSensor.setAttribute("dsOffset", tSensor.getDsOffset());
-                newSensor.setAttribute("offset", "" + tSensor.getOffset());
+                newSensor.setAttribute(PhSensor.MODEL, tSensor.getModel());
+                newSensor.setAttribute(PhSensor.AIN_PIN, tSensor.getAIN());
+                newSensor.setAttribute(PhSensor.DS_ADDRESS, tSensor.getDsAddress());
+                newSensor.setAttribute(PhSensor.DS_OFFSET, tSensor.getDsOffset());
+                newSensor.setAttribute(PhSensor.OFFSET, tSensor.getOffset().toString());
                 if (tSensor.i2cDevice != null)
                 {
                     Element i2cDevice = addNewElement(newSensor, I2CDevice.I2C_NODE);
@@ -1822,6 +1823,33 @@ public final class LaunchControl {
                     addNewElement(i2cDevice, I2CDevice.DEV_CHANNEL).setTextContent(Integer.toString(tSensor.i2cChannel));
                 }
             }
+        }
+
+        // Delete all the switches first
+        Element triggerControlsElement = getFirstElement(null, TriggerControl.NAME);
+
+        if (triggerControlsElement != null) {
+            childSwitches = triggerControlsElement.getFirstChild();
+            while (childSwitches != null) {
+                triggerControlsElement.removeChild(childSwitches);
+                childSwitches = triggerControlsElement.getFirstChild();
+            }
+        }
+
+        for (Temp temp: tempList)
+        {
+            TriggerControl triggerControl = temp.getTriggerControl();
+            if (triggerControl == null || triggerControl.getTriggersSize() == 0)
+            {
+                continue;
+            }
+            Element triggerElement = getFirstElementByXpath(null,
+                    "/elsinore/" + TriggerControl.NAME + "[@name='" + temp.getName() + "']");
+            if (triggerElement == null) {
+                triggerElement = addNewElement(null, TriggerControl.NAME);
+                triggerElement.setAttribute("name", temp.getName());
+            }
+            triggerControl.saveTriggers(triggerElement);
         }
     }
 
@@ -2436,8 +2464,19 @@ public final class LaunchControl {
             if (hidden) {
                 newTemp.hide();
             }
+            Element triggerElement = getFirstElementByXpath(null,
+                    "/elsinore/" + TriggerControl.NAME + "[@name='" + newTemp.getName() + "']");
+            if (triggerElement != null) {
+                TriggerControl triggerControl = newTemp.getTriggerControl();
+                if (triggerControl == null)
+                {
+                    triggerControl = new TriggerControl();
+                }
+                triggerControl.readTriggers(triggerElement);
+            }
         }
     }
+
 
     public static String getTextForElement(Element config, String name, String defaultValue) {
         Element tElement = getFirstElement(config, name);

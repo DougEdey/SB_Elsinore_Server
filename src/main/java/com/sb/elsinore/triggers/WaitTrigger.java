@@ -7,17 +7,18 @@ import static org.rendersnake.HtmlAttributesFactory.name;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.sb.common.SBStringUtils;
+import com.sb.elsinore.*;
 import com.sb.elsinore.notificiations.Notifications;
 import com.sb.elsinore.notificiations.WebNotification;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 
-import com.sb.elsinore.BrewDay;
-import com.sb.elsinore.BrewServer;
-import com.sb.elsinore.Messages;
 import com.sb.util.MathUtil;
+import org.w3c.dom.Element;
 
 import javax.annotation.Nonnull;
 
@@ -28,6 +29,9 @@ import javax.annotation.Nonnull;
 @SuppressWarnings("unused")
 public class WaitTrigger implements TriggerInterface {
 
+    private static final String WAITTIMEMINS = "waitTimeMins";
+    private static final String WAITTIMESECS = "waitTimeSecs";
+    private static final String NOTES = "notes";
     final Object lck = new Object();
     volatile boolean waitStatus = true;
     private int position = -1;
@@ -69,16 +73,16 @@ public class WaitTrigger implements TriggerInterface {
      */
     private void updateParams(final JSONObject parameters) {
         String waitTimeMins = "0";
-        if (parameters.get("waitTimeMins") != "") {
-                waitTimeMins = (String) parameters.get("waitTimeMins");
+        if (parameters.get(WAITTIMEMINS) != "") {
+                waitTimeMins = (String) parameters.get(WAITTIMEMINS);
                 if (waitTimeMins.length() == 0) {
                     waitTimeMins = "0";
                 }
         }
         this.minutes = Double.parseDouble(waitTimeMins);
         String waitTimeSecs = "0";
-        if (parameters.get("waitTimeSecs") != "") {
-                waitTimeSecs = (String) parameters.get("waitTimeSecs");
+        if (parameters.get(WAITTIMESECS) != "") {
+                waitTimeSecs = (String) parameters.get(WAITTIMESECS);
                 if (waitTimeSecs.length() == 0) {
                     waitTimeSecs = "0";
                 }
@@ -143,7 +147,7 @@ public class WaitTrigger implements TriggerInterface {
     @Override
     public void waitForTrigger() {
         // Time is in seconds, multiply by 1000 and wait.
-        cooldown(MathUtil.multiply(this.waitTime , 1000).longValue());
+        cooldown(MathUtil.multiply(this.waitTime, 1000).longValue());
     }
 
     @Override
@@ -210,13 +214,13 @@ public class WaitTrigger implements TriggerInterface {
                 html.input(class_("inputBox temperature form-control")
                         .type("number").add("step", "any")
                         .add("placeholder", Messages.MINUTES)
-                        .name("waitTimeMins").value(""));
+                        .name(WAITTIMEMINS).value(""));
                 html.input(class_("inputBox temperature form-control")
                         .type("number").add("step", "any")
                         .add("placeholder", Messages.SECS)
-                        .name("waitTimeSecs").value(""));
+                        .name(WAITTIMESECS).value(""));
                 html.input(class_("inputBox form-control")
-                    .name("notes").value("")
+                    .name(NOTES).value("")
                     .add("placeholder", Messages.NOTES)
                     .value(this.note));
                 html.button(name("submitWait")
@@ -247,15 +251,15 @@ public class WaitTrigger implements TriggerInterface {
                 html.input(class_("inputBox temperature form-control")
                         .type("number").add("step", "any")
                         .add("placeholder", Messages.MINUTES)
-                        .name("waitTimeMins")
+                        .name(WAITTIMEMINS)
                         .value(Double.toString(this.minutes)));
                 html.input(class_("inputBox temperature form-control")
                         .type("number").add("step", "any")
                         .add("placeholder", Messages.SECS)
-                        .name("waitTimeSecs")
+                        .name(WAITTIMESECS)
                         .value(Double.toString(this.seconds)));
                 html.input(class_("inputBox form-control")
-                    .name("notes").value("")
+                    .name(NOTES).value("")
                     .add("placeholder", Messages.NOTES)
                     .value(this.note));
                 html.button(name("submitWait")
@@ -276,6 +280,55 @@ public class WaitTrigger implements TriggerInterface {
     @Override
     public final void updateTrigger(final JSONObject params) {
         updateParams(params);
+    }
+
+    @Override
+    public boolean readTrigger(Element rootElement) {
+        if (!getName().equals(rootElement.getAttribute(TYPE)))
+        {
+            BrewServer.LOG.warning(rootElement.getAttribute(TYPE) + " is not a "  + getName());
+            return false;
+        }
+        this.position = Integer.parseInt(rootElement.getAttribute(POSITION));
+        this.minutes = Double.parseDouble(LaunchControl.getTextForElement(rootElement, WAITTIMEMINS, "0"));
+        this.seconds = Double.parseDouble(LaunchControl.getTextForElement(rootElement, WAITTIMESECS, "0"));
+        this.note = LaunchControl.getTextForElement(rootElement, NOTES, "");
+        return true;
+    }
+
+    @Override
+    public void updateElement(Element rootElement) {
+        Element triggerElement;
+        if (rootElement.getNodeName().equals(TriggerControl.NAME))
+        {
+            triggerElement = LaunchControl.addNewElement(rootElement, TriggerInterface.NAME);
+        }
+        else if (rootElement.getNodeName().equals(TriggerInterface.NAME))
+        {
+            triggerElement = rootElement;
+        }
+        else
+        {
+            return;
+        }
+
+        triggerElement.setAttribute(TriggerInterface.POSITION, Integer.toString(this.position));
+        triggerElement.setAttribute(TriggerInterface.TYPE, getName());
+
+        if (triggerElement.hasChildNodes()) {
+            Set<Element> delElements = new HashSet<>();
+            // Can't delete directly from the nodelist, concurrency issues.
+            for (int i = 0; i < triggerElement.getChildNodes().getLength(); i++) {
+                delElements.add((Element) triggerElement.getChildNodes().item(i));
+            }
+            // now we can delete them.
+            for (Element e : delElements) {
+                e.getParentNode().removeChild(e);
+            }
+        }
+        LaunchControl.addNewElement(triggerElement, WAITTIMEMINS).setTextContent(Double.toString(this.minutes));
+        LaunchControl.addNewElement(triggerElement, WAITTIMESECS).setTextContent(Double.toString(this.seconds));
+        LaunchControl.addNewElement(triggerElement, NOTES).setTextContent(this.note);
     }
 
     public void setNote(String note) {

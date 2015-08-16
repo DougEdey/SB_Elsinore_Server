@@ -1890,10 +1890,17 @@ public class UrlEndpoints {
                         BeerXMLReader.getInstance().readFile(uploadedFile);
                         ArrayList<String> recipeList = BeerXMLReader.getInstance().getListOfRecipes();
                         BrewServer.setRecipeList(recipeList);
-                        if (recipeList.size() == 1) {
+                        if (recipeList == null)
+                        {
+                            LaunchControl.setMessage("Couldn't read recipe file.");
+                        }
+                        else if (recipeList.size() == 1)
+                        {
                             BrewServer.setCurrentRecipe(BeerXMLReader.getInstance().readRecipe(recipeList.get(0)));
                             LaunchControl.setMessage("A single recipe has been read in and set: " + BrewServer.getCurrentRecipe().getName());
-                        } else {
+                        }
+                        else
+                        {
                             LaunchControl.setMessage(recipeList.size() + " recipes read in.");
                         }
                     }

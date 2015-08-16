@@ -6,6 +6,8 @@ import org.json.simple.JSONObject;
 import org.reflections.Reflections;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.tools.PrettyWriter;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -13,6 +15,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.rendersnake.HtmlAttributesFactory.*;
 
@@ -26,6 +29,7 @@ import static org.rendersnake.HtmlAttributesFactory.*;
 
 public class TriggerControl implements Runnable {
 
+    public static final String NAME = "triggers";
     /**
      * The output PID to be controlled & read from.
      */
@@ -39,8 +43,8 @@ public class TriggerControl implements Runnable {
     /**
      * The list of mash steps, position -> Step.
      */
-    private final ArrayList<TriggerInterface> triggerList =
-            new ArrayList<>();
+    private final List<TriggerInterface> triggerList =
+            new CopyOnWriteArrayList<>();
 
     /**
      * Add a mashstep at a position, overriding the old one.
@@ -64,11 +68,8 @@ public class TriggerControl implements Runnable {
 
         // Find the constructor.
         try {
-            Constructor<? extends TriggerInterface> triggerConstructor
-                = triggerClass.getConstructor(
-                        int.class, JSONObject.class);
-            triggerStep = triggerConstructor.newInstance(
-                    position, parameters);
+            Constructor<? extends TriggerInterface> triggerConstructor = triggerClass.getConstructor(int.class, JSONObject.class);
+            triggerStep = triggerConstructor.newInstance(position, parameters);
             triggerList.add(triggerStep);
         } catch (InstantiationException | IllegalAccessException
                 | IllegalArgumentException | InvocationTargetException
@@ -492,5 +493,51 @@ public class TriggerControl implements Runnable {
 
     public void addTrigger(TriggerInterface newTrigger) {
         this.triggerList.add(newTrigger);
+    }
+
+    public void saveTriggers(Element rootElement)
+    {
+        Element triggersRoot = rootElement;
+        if (!rootElement.getNodeName().equals(NAME))
+        {
+            triggersRoot = LaunchControl.addNewElement(rootElement, NAME);
+        }
+
+        for (TriggerInterface triggerInterface: triggerList) {
+            triggerInterface.updateElement(triggersRoot);
+        }
+    }
+
+    public void readTriggers(Element rootElement)
+    {
+        Element triggersElement = rootElement;
+        if (!NAME.equals(rootElement.getNodeName()))
+        {
+            triggersElement = LaunchControl.addNewElement(rootElement, NAME);
+        }
+        NodeList triggers = triggersElement.getElementsByTagName(TriggerInterface.NAME);
+        for(int i = 0; i < triggers.getLength(); i++)
+        {
+            Element trigger = (Element) triggers.item(i);
+            String type = trigger.getAttribute(TriggerInterface.TYPE);
+            Class<? extends TriggerInterface> triggerInterface = TriggerControl.getTriggerOfName(type);
+            if (triggerInterface != null)
+            {
+                try {
+                    TriggerInterface triggerStep = triggerInterface.newInstance();
+                    if (!triggerStep.readTrigger(trigger))
+                    {
+                        BrewServer.LOG.warning("Couldn't read trigger: " + trigger.toString());
+                    }
+                    else
+                    {
+                        this.triggerList.add(triggerStep);
+                    }
+                } catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }

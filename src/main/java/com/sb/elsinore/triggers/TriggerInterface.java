@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
+import org.w3c.dom.Element;
 
 /**
  * This is the base Trigger interface, a trigger should cause an action.
@@ -11,6 +12,11 @@ import org.rendersnake.HtmlCanvas;
  *
  */
 public interface TriggerInterface extends Comparable<TriggerInterface> {
+
+    String NAME = "trigger";
+    String POSITION = "position";
+    String TYPE = "type";
+    String ACTIVE = "active";
 
     /**
      * Get the name of this Trigger.
@@ -75,4 +81,8 @@ public interface TriggerInterface extends Comparable<TriggerInterface> {
      * @param params The Parameters to update with.
      */
     void updateTrigger(JSONObject params);
+
+    boolean readTrigger(Element rootElement);
+
+    void updateElement(Element rootElement);
 }
