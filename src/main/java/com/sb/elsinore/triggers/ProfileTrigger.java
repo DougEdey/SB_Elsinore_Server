@@ -285,7 +285,9 @@ public class ProfileTrigger implements TriggerInterface {
         if (target != null && LaunchControl.findTemp(target) != null) {
             this.targetName = target;
         }
-        this.activate = Boolean.parseBoolean(LaunchControl.getTextForElement(rootElement, ACTIVATE, "false"));
+        if (LaunchControl.shouldRestore()) {
+            this.activate = Boolean.parseBoolean(LaunchControl.getTextForElement(rootElement, ACTIVATE, "false"));
+        }
         return true;
     }
 

@@ -3245,4 +3245,8 @@ public final class LaunchControl {
         ServerRunner.running = false;
         BrewServer.LOG.warning("Goodbye!");
     }
+
+    public static boolean shouldRestore() {
+        return m_restore;
+    }
 }

@@ -289,6 +289,9 @@ public class WaitTrigger implements TriggerInterface {
             BrewServer.LOG.warning(rootElement.getAttribute(TYPE) + " is not a "  + getName());
             return false;
         }
+        if (LaunchControl.shouldRestore()) {
+            this.active = Boolean.parseBoolean(LaunchControl.getTextForElement(rootElement, ACTIVE, "false"));
+        }
         this.position = Integer.parseInt(rootElement.getAttribute(POSITION));
         this.minutes = Double.parseDouble(LaunchControl.getTextForElement(rootElement, WAITTIMEMINS, "0"));
         this.seconds = Double.parseDouble(LaunchControl.getTextForElement(rootElement, WAITTIMESECS, "0"));

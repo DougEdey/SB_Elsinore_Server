@@ -225,7 +225,9 @@ public class TemperatureTrigger implements TriggerInterface {
         method = LaunchControl.getTextForElement(rootElement, METHOD, "");
         mode = LaunchControl.getTextForElement(rootElement, MODE, "");
         type = LaunchControl.getTextForElement(rootElement, STEPTYPE, "");
-        active = Boolean.parseBoolean(LaunchControl.getTextForElement(rootElement, ACTIVE, "false"));
+        if (LaunchControl.shouldRestore()) {
+            active = Boolean.parseBoolean(LaunchControl.getTextForElement(rootElement, ACTIVE, "false"));
+        }
         targetTemp = new BigDecimal(LaunchControl.getTextForElement(rootElement, TARGET_TEMP, "0"));
         exitTemp = new BigDecimal(LaunchControl.getTextForElement(rootElement, EXIT_TEMP, "0"));
         String probe = LaunchControl.getTextForElement(rootElement, TEMPPROBE, null);

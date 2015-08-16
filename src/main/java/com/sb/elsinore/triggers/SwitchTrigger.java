@@ -265,7 +265,9 @@ public class SwitchTrigger implements TriggerInterface {
             return false;
         }
         this.position = Integer.parseInt(rootElement.getAttribute(POSITION));
-        this.activate = LaunchControl.getTextForElement(rootElement, ACTIVATE, ACTIVATE);
+        if (LaunchControl.shouldRestore()) {
+            this.activate = LaunchControl.getTextForElement(rootElement, ACTIVATE, ACTIVATE);
+        }
         this.switchName = LaunchControl.getTextForElement(rootElement, SWITCHNAME, "");
         return true;
     }
