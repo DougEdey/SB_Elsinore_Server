@@ -2,9 +2,7 @@ package com.sb.elsinore;
 
 import ca.strangebrew.recipe.Recipe;
 import com.sb.common.CollectionsUtil;
-import com.sb.common.SBStringUtils;
 import com.sb.elsinore.annotations.Parameter;
-import com.sb.elsinore.devices.I2CDevice;
 import com.sb.elsinore.html.*;
 import com.sb.elsinore.notificiations.Notifications;
 import jGPIO.InvalidGPIOException;
@@ -292,6 +290,10 @@ public class UrlEndpoints {
         params.remove("tempprobe");
         // Do we have a mash control for the PID?
         TriggerControl mControl = LaunchControl.findTriggerControl(tempProbe);
+        if (mControl == null)
+        {
+            return null;
+        }
         // Should be good to go, iterate and update!
         for (Map.Entry<String, String> mEntry: params.entrySet()) {
             if (mEntry.getKey().equals("NanoHttpd.QUERY_STRING")) {
@@ -340,13 +342,17 @@ public class UrlEndpoints {
                 BrewServer.LOG.warning("No tempprobe parameter supplied to delete trigger.");
             }
             int position = Integer.parseInt(params.get("position"));
-            TriggerControl mControl = LaunchControl
-                    .findTemp(tempProbe).getTriggerControl();
+            Temp temp = LaunchControl.findTemp(tempProbe);
+            if (temp == null)
+            {
+                return null;
+            }
+            TriggerControl mControl = temp.getTriggerControl();
 
             if (mControl != null) {
                 mControl.delTriggerStep(position);
             } else {
-                status = Status.BAD_REQUEST;
+                return null;
             }
         } catch (NumberFormatException nfe) {
             nfe.printStackTrace();
@@ -410,9 +416,12 @@ public class UrlEndpoints {
             }
         }
 
-        TriggerControl mObj = LaunchControl
-                .findTemp(tempProbe).getTriggerControl();
-
+        Temp temp = LaunchControl.findTemp(tempProbe);
+        if (temp == null)
+        {
+            return null;
+        }
+        TriggerControl mObj = temp.getTriggerControl();
 
         TriggerInterface triggerEntry = mObj.getCurrentTrigger();
 
@@ -611,7 +620,7 @@ public class UrlEndpoints {
     parameters = {@Parameter(name = "new_name", value = "The Name of the timer to create"),
     @Parameter(name = "target", value = "The Target to count up or down the timer to")})
     public final Response addTimer() {
-        String newName = "";
+        String newName;
         String inputUnit = "";
 
         Set<Entry<String, String>> incomingParams = parameters.entrySet();
@@ -730,7 +739,12 @@ public class UrlEndpoints {
         }
 
         if (LaunchControl.addSwitch(newName, gpio)) {
-            LaunchControl.findSwitch(newName).setInverted(invert);
+            Switch newSwitch = LaunchControl.findSwitch(newName);
+            if (newSwitch == null)
+            {
+                return null;
+            }
+            newSwitch.setInverted(invert);
             LaunchControl.saveSettings();
             return new Response(Status.OK, MIME_TYPES.get("txt"), "Switch Added");
         } else {
@@ -1290,7 +1304,7 @@ public class UrlEndpoints {
     parameters = {@Parameter(name = "<name of the switch>", value = "New integer position of the switch")})
     public Response updateSwitchOrder() {
         Map<String, String> params = ParseParams(this.parameters);
-        Status status = Response.Status.BAD_REQUEST;
+        Status status;
 
         for (Map.Entry<String, String> entry: params.entrySet()) {
             if (entry.getKey().equals("NanoHttpd.QUERY_STRING")) {
@@ -1820,15 +1834,14 @@ public class UrlEndpoints {
             phSensor.setAinPin(newPin);
         }
 
-        temp = localParams.get("i2c_model");
+        String i2cModel = localParams.get("i2c_model");
         if (temp != null && temp.length() > 0)
         {
-            String devType = temp;
             String devNumber = localParams.get("i2c_device");
             String devAddress = localParams.get("i2c_address");
             String devChannel = localParams.get("i2c_channel");
 
-            phSensor.i2cDevice = LaunchControl.getI2CDevice(devNumber, devAddress, devType);
+            phSensor.i2cDevice = LaunchControl.getI2CDevice(devNumber, devAddress, i2cModel);
             phSensor.i2cChannel = Integer.parseInt(devChannel);
         }
 
@@ -1903,6 +1916,10 @@ public class UrlEndpoints {
         int position = Integer.parseInt(parameters.get("position"));
         String type = parameters.get("type");
         HtmlCanvas result = TriggerControl.getNewTriggerForm(position, type);
+        if (result == null)
+        {
+            return null;
+        }
         return new Response(Status.OK, MIME_HTML, result.toHtml());
     }
 
@@ -1946,6 +1963,10 @@ public class UrlEndpoints {
         int position = Integer.parseInt(parameters.get("position"));
         String tempProbeName = parameters.get("tempprobe");
         Temp tempProbe = LaunchControl.findTemp(tempProbeName);
+        if (tempProbe == null)
+        {
+            return null;
+        }
         TriggerControl triggerControl = tempProbe.getTriggerControl();
         HtmlCanvas canvas = triggerControl.getEditTriggerForm(
                 position, new JSONObject(parameters));
@@ -2276,7 +2297,7 @@ public class UrlEndpoints {
             if (shutdownEverything) {
                 // Shutdown the system using shutdown now
                 Runtime runtime = Runtime.getRuntime();
-                Process proc = runtime.exec("shutdown -h now");
+                runtime.exec("shutdown -h now");
             }
             System.exit(0);
         } catch (Exception e) {
