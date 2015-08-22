@@ -12,11 +12,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -33,7 +31,7 @@ import java.util.logging.Logger;
 public class BrewServer extends NanoHTTPD {
 
     private static Recipe currentRecipe;
-    private final HashMap<String, java.lang.reflect.Method> m_endpoints = new HashMap<>();
+    private final TreeMap<String, java.lang.reflect.Method> m_endpoints = new TreeMap<>();
     /**
      * The Root Directory of the files to be served.
      */
@@ -223,15 +221,14 @@ public class BrewServer extends NanoHTTPD {
             System.exit(128);
         }
 
-        if (uri.equals("/help"))
-        {
+        if (uri.equals("/help")) {
             JSONObject helpJSON = new JSONObject();
-            for (java.lang.reflect.Method urlMethod: m_endpoints.values())
+            for (Map.Entry<String, java.lang.reflect.Method> entry: m_endpoints.entrySet())
             {
-                UrlEndpoint urlEndpoint = urlMethod.getAnnotation(UrlEndpoint.class);
+                UrlEndpoint urlEndpoint = entry.getValue().getAnnotation(UrlEndpoint.class);
                 helpJSON.put(urlEndpoint.url(), urlEndpoint.help());
-
             }
+
             return new Response(Status.OK, MIME_TYPES.get("json"), helpJSON.toJSONString());
         }
 
@@ -266,13 +263,19 @@ public class BrewServer extends NanoHTTPD {
 
             helpJSON.put(urlEndpoint.url(), urlEndpoint.help());
             JSONArray paramsJSON = new JSONArray();
-            JSONObject paramObj = new JSONObject();
+
             for (Parameter parameter: urlEndpoint.parameters())
             {
-                paramObj.clear();
+                JSONObject paramObj = new JSONObject();
                 paramObj.put(parameter.name(), parameter.value());
                 paramsJSON.add(paramObj);
             }
+            Collections.sort(paramsJSON, new Comparator() {
+                @Override
+                public int compare(Object o, Object t1) {
+                    return o.toString().compareTo(t1.toString());
+                }
+            });
             helpJSON.put("parameters", paramsJSON);
             return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"), helpJSON.toJSONString());
         }
