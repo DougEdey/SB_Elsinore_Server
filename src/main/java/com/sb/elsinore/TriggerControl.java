@@ -143,10 +143,10 @@ public class TriggerControl implements Runnable {
      * @param position The position to update the new trigger at.
      * @param params The new parameters
      */
-    public final void updateTrigger(final int position,
+    public final boolean updateTrigger(final int position,
             final JSONObject params) {
         TriggerInterface trigger = this.triggerList.get(position);
-        trigger.updateTrigger(params);
+        return trigger.updateTrigger(params);
     }
 
 

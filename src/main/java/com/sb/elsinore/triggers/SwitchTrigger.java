@@ -242,7 +242,7 @@ public class SwitchTrigger implements TriggerInterface {
      * @param params The parameters to update with.
      */
     @Override
-    public final void updateTrigger(final JSONObject params) {
+    public final boolean updateTrigger(final JSONObject params) {
         String tName = (String) params.get(SWITCHNAME);
         String tActivate = (String) params.get(ACTIVATE);
 
@@ -254,8 +254,10 @@ public class SwitchTrigger implements TriggerInterface {
             this.switchName = tName;
             if (this.active) {
                 triggerSwitch();
+                return true;
             }
         }
+        return false;
     }
 
     @Override

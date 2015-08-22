@@ -71,7 +71,7 @@ public class WaitTrigger implements TriggerInterface {
      * Set the values of this trigger.
      * @param parameters The updated parameters.
      */
-    private void updateParams(final JSONObject parameters) {
+    private boolean updateParams(final JSONObject parameters) {
         String waitTimeMins = "0";
         if (parameters.get(WAITTIMEMINS) != "") {
                 waitTimeMins = (String) parameters.get(WAITTIMEMINS);
@@ -93,6 +93,7 @@ public class WaitTrigger implements TriggerInterface {
         totalTime = totalTime.add(new BigDecimal(
                 this.seconds));
         this.waitTime = totalTime;
+        return true;
     }
 
     /**
@@ -278,8 +279,8 @@ public class WaitTrigger implements TriggerInterface {
      * @param params The new parameters.
      */
     @Override
-    public final void updateTrigger(final JSONObject params) {
-        updateParams(params);
+    public final boolean updateTrigger(final JSONObject params) {
+        return updateParams(params);
     }
 
     @Override

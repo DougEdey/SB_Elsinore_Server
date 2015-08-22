@@ -148,7 +148,7 @@ public class TemperatureTrigger implements TriggerInterface {
      * Update the current trigger.
      */
     @Override
-    public void updateTrigger(final JSONObject parameters) {
+    public boolean updateTrigger(final JSONObject parameters) {
         BigDecimal tTemp = new BigDecimal(
             parameters.get(TemperatureTrigger.TARGET_TEMP).toString().replace(",", "."));
 
@@ -171,7 +171,9 @@ public class TemperatureTrigger implements TriggerInterface {
 
         if (this.active) {
             setTargetTemperature();
+            return true;
         }
+        return false;
     }
 
     @Override
