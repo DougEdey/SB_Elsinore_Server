@@ -788,14 +788,10 @@ public class UrlEndpoints {
             @Parameter(name = "time", value = "The minimum amount of time to turn the cooling/heating output on or off for")})
     public Response updatePID() {
         String temp, mode = "off";
-        BigDecimal dTemp, duty = new BigDecimal(0),
-                heatcycle = new BigDecimal(0), setpoint = new BigDecimal(0),
-                heatp = new BigDecimal(0), heati = new BigDecimal(0),
-                heatd = new BigDecimal(0), min = new BigDecimal(0),
-                max = new BigDecimal(0), time = new BigDecimal(0),
-                coolcycle = new BigDecimal(0), coolp= new BigDecimal(0),
-                cooli = new BigDecimal(0), coold = new BigDecimal(0),
-                cooldelay = new BigDecimal(0), cycle = new BigDecimal(0);
+        BigDecimal dTemp, duty = null, heatcycle = null, setpoint = null,
+                heatp = null, heati = null, heatd = null, min = null,
+                max = null, time = null, coolcycle = null, coolp = null,
+                cooli = null, coold = null,cooldelay = null, cycle = null;
 
         JSONObject sub_usage = new JSONObject();
         Map<String, String> parms = ParseParams(parameters);
