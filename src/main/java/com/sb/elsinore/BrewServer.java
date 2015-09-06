@@ -280,6 +280,11 @@ public class BrewServer extends NanoHTTPD {
             return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"), helpJSON.toJSONString());
         }
 
+        if (uri.equals("/"))
+        {
+            return serveFile("templates/index.html", header, rootDir);
+        }
+
         if (!uri.equals("") && new File(rootDir, uri).exists()) {
             return serveFile(uri, header, rootDir);
         }
