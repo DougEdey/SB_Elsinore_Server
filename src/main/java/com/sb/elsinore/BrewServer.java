@@ -282,7 +282,7 @@ public class BrewServer extends NanoHTTPD {
 
         if (uri.equals("/"))
         {
-            return serveFile("templates/index.html", header, rootDir);
+            return serveFile("html/index.html", header, rootDir);
         }
 
         if (!uri.equals("") && new File(rootDir, uri).exists()) {
