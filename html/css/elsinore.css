@@ -1,0 +1,28 @@
+p > .temperature {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+p > #value {
+    font-size: 3rem;
+    font-family: "Helvetica Neue", "Helvetica", "Arial";
+    font-weight: 100;
+    vertical-align: middle;
+}
+
+p > #units {
+    font-size: 3rem;
+    vertical-align: middle;
+    letter-spacing: .35rem;
+}
+
+div > #mode {
+    padding:1.5rem;
+    border-width: 0.2rem;
+}
