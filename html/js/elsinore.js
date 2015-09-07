@@ -101,17 +101,33 @@ function loadPIDData(card, pid)
 {
     card.data("pid", pid);
 
+    // Setup the progress bar first
     var pidstatus = card.find("#status");
     if (pidstatus.size() == 0)
     {
-        card.append("<progress id='status' class='progress' max='100' value='0'><progress>");
+        card.append("<progress id='status' class='progress' min='0' max='100' value='0'></progress>");
         pidstatus = card.find("#status");
     }
 
-    pidstatus.html(pid.duty);
-    pidstatus.val(pid.duty);
+    var duty = pid.duty;
+    if ("actualduty" in pid)
+    {
+        duty = pid.actualduty;
+    }
+    pidstatus.html(duty);
+    pidstatus.val(duty);
+    if (duty > 0)
+    {
+        pidstatus.removeClass("progress-info");
+        pidstatus.addClass("progress-danger");
+    }
+    else
+    {
+        pidstatus.addClass("progress-info");
+        pidstatus.removeClass("progress-danger");
+    }
 
-
+    // Mode buttons
     var pidmode = card.find("#mode");
     if (pidmode.size() == 0)
     {
