@@ -100,6 +100,18 @@ function loadTempProbeData(card, tempprobe)
 function loadPIDData(card, pid)
 {
     card.data("pid", pid);
+
+    var pidstatus = card.find("#status");
+    if (pidstatus.size() == 0)
+    {
+        card.append("<progress id='status' class='progress' max='100' value='0'><progress>");
+        pidstatus = card.find("#status");
+    }
+
+    pidstatus.html(pid.duty);
+    pidstatus.val(pid.duty);
+
+
     var pidmode = card.find("#mode");
     if (pidmode.size() == 0)
     {
@@ -120,6 +132,14 @@ function loadPIDData(card, pid)
     if (!selected.hasClass("btn-danger active"))
     {
         selected.addClass("btn-danger active");
+    }
+    if (pid.mode == "off")
+    {
+        pidstatus.hide();
+    }
+    else
+    {
+        pidstatus.show();
     }
 
 }
