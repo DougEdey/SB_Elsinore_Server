@@ -105,7 +105,7 @@ function loadPIDData(card, pid)
     var pidstatus = card.find("#status");
     if (pidstatus.size() == 0)
     {
-        card.append("<progress id='status' class='progress' min='0' max='100' value='0'></progress>");
+        card.append("<div id='status-wrapper'><progress id='status' class='progress' min='0' max='100' value='0'></progress><div id='status-text'></div></div>");
         pidstatus = card.find("#status");
     }
 
@@ -114,8 +114,9 @@ function loadPIDData(card, pid)
     {
         duty = pid.actualduty;
     }
-    pidstatus.html(duty);
-    pidstatus.val(duty);
+    pidstatus.html(Math.abs(duty));
+    pidstatus.val(Math.abs(duty));
+    card.find("#status-text").text(duty + "%")
     if (duty > 0)
     {
         pidstatus.removeClass("progress-info");
@@ -151,11 +152,11 @@ function loadPIDData(card, pid)
     }
     if (pid.mode == "off")
     {
-        pidstatus.hide();
+        pidstatus.parent().hide();
     }
     else
     {
-        pidstatus.show();
+        pidstatus.parent().show();
     }
 
 }
