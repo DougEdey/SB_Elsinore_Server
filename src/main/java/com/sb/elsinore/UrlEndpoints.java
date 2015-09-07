@@ -1557,18 +1557,7 @@ public class UrlEndpoints {
     @UrlEndpoint(url="/controller", help = "Get the main controller page HTML",
     parameters = {})
     public Response renderController() {
-        RenderHTML renderController = new RenderHTML();
-        HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
-        String result;
-        try {
-            renderController.renderOn(html);
-            result = html.toHtml();
-        } catch (IOException e) {
-            e.printStackTrace();
-            result = e.getMessage();
-        }
-        return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                result);
+        return BrewServer.serveFile("html/index.html", header, rootDir);
     }
 
     @UrlEndpoint(url = "/lockpage", help = "Disable editing of the main controller page",
