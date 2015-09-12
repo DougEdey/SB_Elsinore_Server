@@ -2,6 +2,8 @@ String.prototype.capitalizeFirstLetter = function() {
     return this.charAt(0).toUpperCase() + this.slice(1);
 }
 
+var triggerDragSrc = null;
+
 function parseVessels(vessels)
 {
     $.each(vessels, function (vesselProbe, vesselStatus)
@@ -21,11 +23,69 @@ function parseVessels(vessels)
     });
 }
 
+function parseTriggers(triggers)
+{
+    $.each(triggers, function (vesselProbe, triggerList)
+    {
+        var triggerTable = $("#probes #" + vesselProbe + " #triggers");
+        if (triggerTable.eq(0).size() == 0)
+        {
+            $("#probes #" + vesselProbe).append("<ul class='list-group' id='triggers'></ul>");
+            triggerTable = $("#probes #" + vesselProbe + " #triggers");
+        }
+
+        $.each(triggerList, function(index, trigger)
+        {
+            var triggerLi = triggerTable.find("#" + index);
+            var content = trigger.description + ": " + trigger.target;
+            if (triggerLi.size() == 0)
+            {
+                triggerTable.append("<li class='list-group-item trigger-row' draggable='true'" +
+                    "id='"+index+"'>" + content + "</li>");
+                triggerLi = triggerTable.find("#" + index)[0];
+                triggerLi.addEventListener('dragstart', handleTriggerDragStart, false);
+                triggerLi.addEventListener('dragenter', handleTriggerDragEnter, false)
+                triggerLi.addEventListener('dragover', handleTriggerDragOver, false);
+                triggerLi.addEventListener('dragleave', handleTriggerDragLeave, false);
+                triggerLi.addEventListener('drop', handleTriggerDrop, false);
+                triggerLi.addEventListener('dragend', handleTriggerDragEnd, false);
+            }
+            else
+            {
+                triggerLi = triggerLi[0];
+                if (triggerLi.text != content)
+                {
+                    triggerLi.text = content;
+                }
+            }
+            if (trigger.active == "true")
+            {
+                if (!triggerLi.classList.contains("active"))
+                {
+                    triggerLi.classList.add("active");
+                }
+            }
+            else
+            {
+                if (triggerLi.classList.contains("active"))
+                {
+                    triggerLi.classList.remove("active");
+                }
+            }
+        });
+
+    });
+}
+
 function parseData(data)
 {
     if ("vessels" in data)
     {
         parseVessels(data.vessels);
+    }
+    if ("triggers" in data)
+    {
+        parseTriggers(data.triggers);
     }
 }
 
@@ -54,17 +114,98 @@ function addProbeCard(vesselProbe, position)
 
 function setCardName(card, name)
 {
-    var title = card.find(".card-header");
+    var addr = card[0].id;
+    var title = card.find("#card-header");
     if (title.size() == 0)
     {
-        card.prepend("<div class='card-header'></div>");
-        title = card.find(".card-header");
+        card.prepend("<div class='card-header' id='card-header' data-toggle='modal' data-target='#deviceModal' data-device='"+addr+"'></div>"+
+        '<div class="modal fade" id="deviceModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">' +
+            '<div class="modal-dialog" role="document">' +
+              '<div class="modal-content">'+
+                '<div class="modal-header">'+
+                  '<button type="button" class="close" data-dismiss="modal" aria-label="Close">'+
+                    '<span aria-hidden="true">&times;</span>'+
+                    '<span class="sr-only">Close</span>'+
+                  '</button>'+
+                  '<h4 class="modal-title" id="exampleModalLabel">Edit '+name+'</h4>'+
+                '</div>'+
+                '<div class="modal-body">'+
+                  '<form>'+
+                  '<input type="hidden" id="device-address" value="' + addr + '">' +
+                    '<div class="form-group form-inline row">'+
+                      '<label for="device-name" class="control-label">Name:</label>' +
+                      '<input type="text" class="form-control" id="device-name" value="'+name+'">' +
+                    '</div>' +
+                    '<div class="form-group form-inline row">' +
+                      '<label for="heat-gpio" class="control-label">Heat GPIO:</label>' +
+                      '<input type="text" class="form-control" id="heat-gpio">' +
+                      '<div class="checkbox">'+
+                      '<label>' +
+                        '<input type="checkbox" id="invert-heat" value="invert">' +
+                        'Invert' +
+                      '</label>' +
+                      '</div>' +
+                    '</div>' +
+                    '<div class="form-group form-inline row">' +
+                      '<label for="cool-gpio" class="control-label">Cool GPIO:</label>' +
+                      '<input type="text" class="form-control" id="cool-gpio">' +
+                      '<label>' +
+                          '<input type="checkbox" id="invert-cool" value="invert">' +
+                          'Invert' +
+                      '</label>' +
+                    '</div>' +
+                    '<div class="form-group form-inline row">' +
+                      '<label for="aux-gpio" class="control-label">Aux GPIO:</label>' +
+                      '<input type="text" class="form-control" id="aux-gpio">' +
+                      '<div class="checkbox">'+
+                      '<label>' +
+                        '<input type="checkbox" id="invert-aux" value="invert">' +
+                        'Invert' +
+                      '</label>' +
+                      '</div>' +
+                    '</div>' +
+                    '<div class="form-group form-inline row">' +
+                      '<label for="calibration" class="control-label">Calibration:</label>' +
+                      '<input type="number" class="form-control" id="calibration">' +
+                    '</div>' +
+                    '<div class="form-group form-inline row">' +
+                      '<label for="shutoff" class="control-label">Shutdown Temp:</label>' +
+                      '<input type="number" class="form-control" id="shutoff">' +
+                    '</div>' +
+                  '</form>' +
+                '</div>' +
+
+                '<div class="modal-footer">' +
+                  '<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>' +
+                  '<button type="button" class="btn btn-primary" onclick="saveDevice(this);">Save Changes</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>');
+        title = card.find("#card-header");
     }
 
     if (title.text() != name)
     {
         title.text(name);
     }
+
+    title.parent().find('#deviceModal').on('show.bs.modal', function (event) {
+      var button = $(event.relatedTarget) // Button that triggered the modal
+      var recipient = button.data('device') // Extract info from data-* attributes
+      // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
+      // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+      var modal = $(this)
+      var card = $(getCard(button));
+      var piddata = card.data("pid");
+      var tempprobe = card.data("temp");
+      modal.find('#cool-gpio').val(piddata.cool.gpio);
+      modal.find('#heat-gpio').val(piddata.heat.gpio);
+      modal.find('#invert-cool')[0].checked = piddata.cool.inverted;
+      modal.find('#invert-heat')[0].checked = piddata.heat.inverted;
+      modal.find('#calibration').val(tempprobe.calibration);
+      modal.find('#shutoff').val(tempprobe.cutoff);
+    })
 }
 
 function loadTempProbeData(card, tempprobe)
@@ -469,3 +610,116 @@ $(document).ready(function() {
     requestData();
     setInterval("requestData()",10000);
 });
+
+
+function handleTriggerDragStart(e)
+{
+    this.style.opacity = '0.4';
+    triggerDragSrc = e;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData("text", e.id);
+}
+
+function handleTriggerDragOver(e) {
+  if (e.preventDefault) {
+    e.preventDefault(); // Necessary. Allows us to drop.
+  }
+
+  e.dataTransfer.dropEffect = 'move';  // See the section on the DataTransfer object.
+
+  return false;
+}
+
+function handleTriggerDragEnter(e) {
+  // this / e.target is the current hover target.
+  this.classList.add('over');
+}
+
+function handleTriggerDragLeave(e) {
+  this.classList.remove('over');  // this / e.target is previous target element.
+}
+
+function handleTriggerDrop(e) {
+    if (e.stopPropagation) {
+        e.stopPropagation(); // stops the browser from redirecting.
+    }
+
+    // Don't do anything if dropping the same column we're dragging.
+    if (triggerDragSrc != e) {
+        // Set the source column's HTML to the HTML of the column we dropped on.
+        originalId = triggerDragSrc.target.id;
+        originalHtml = triggerDragSrc.target.innerHTML;
+        triggerDragSrc.target.innerHTML = this.innerHTML;
+        triggerDragSrc.target.id = this.id;
+        this.innerHTML = originalHtml;
+        this.id = originalId;
+        // TODO: Update the server here
+        var originalProbe = $(triggerDragSrc.target).closest(".card")[0].id;
+        var targetProbe = $(this).closest(".card")[0].id;
+        if (originalProbe != targetProbe)
+        {
+            return false;
+        }
+        var data = {};
+        data["tempprobe"] = originalProbe;
+        $.each($(".trigger-row"), function (index, row)
+        {
+            data[row.id] = index;
+        });
+
+         $.ajax({
+            url : '/reordertriggers',
+            type : 'POST',
+            data : data,
+            dataType : 'text',
+            success : function(data) {
+                data = null
+                $("#"+originalProbe + " .trigger-row").each(function(index, row) {
+                    row.style.opacity = 1.0;
+                });
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                alert("Status: " + textStatus); alert("Error: " + errorThrown);
+            }
+
+        });
+    }
+    return false;
+}
+
+function handleTriggerDragEnd(e) {
+    $.each($(".trigger-row"), function (index, row)
+    {
+        row.classList.remove('over');
+    });
+}
+
+function saveDevice(submitButton)
+{
+    var form = $(submitButton).parent().parent().find("form");
+    var data = {};
+    data['address'] = form.find('#device-address').val();
+    data['new_name'] = form.find('#device-name').val();
+    data['new_cool_gpio'] = form.find('#cool-gpio').val();
+    data['new_heat_gpio'] = form.find('#heat-gpio').val();
+    data['aux_gpio'] = form.find('#aux-gpio').val();
+    data['cool_invert'] = form.find('#invert-cool').val();
+    data['heat_invert'] = form.find('#invert-heat').val();
+    data['aux_invert'] = form.find('#invert-aux').val();
+    data['cutoff'] = form.find('#shutoff').val();
+    data['calibration'] = form.find('#calibration').val();
+
+    $.ajax({
+        url : 'editdevice',
+        type : 'POST',
+        data : data,
+        data : data,
+        dataType : 'json',
+        success : function(data) {
+             data = null
+         },
+         error: function(XMLHttpRequest, textStatus, errorThrown) {
+             alert("Status: " + textStatus); alert("Error: " + errorThrown);
+         }
+    });
+}

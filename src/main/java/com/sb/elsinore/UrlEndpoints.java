@@ -534,7 +534,11 @@ public class UrlEndpoints {
         }
 
         if (inputUnit == null || inputUnit.equals("")) {
-            BrewServer.LOG.warning("No Valid input unit");
+            inputUnit = parms.get("address");
+            if (inputUnit == null)
+            {
+                BrewServer.LOG.warning("No Valid input unit");
+            }
         }
 
         Temp tProbe = LaunchControl.findTemp(inputUnit);
