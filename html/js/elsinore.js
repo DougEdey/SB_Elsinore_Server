@@ -2,6 +2,22 @@ String.prototype.capitalizeFirstLetter = function() {
     return this.charAt(0).toUpperCase() + this.slice(1);
 }
 
+$.fn.serializeObject = function() {
+	var o = {};
+	var a = this.serializeArray();
+	$.each(a, function() {
+		if (o[this.name] !== undefined) {
+			if (!o[this.name].push) {
+				o[this.name] = [ o[this.name] ];
+			}
+			o[this.name].push(this.value || '');
+		} else {
+			o[this.name] = this.value || '';
+		}
+	});
+	return o;
+};
+
 var triggerDragSrc = null;
 
 function parseVessels(vessels)
@@ -49,6 +65,7 @@ function parseTriggers(triggers)
                 triggerLi.addEventListener('dragleave', handleTriggerDragLeave, false);
                 triggerLi.addEventListener('drop', handleTriggerDrop, false);
                 triggerLi.addEventListener('dragend', handleTriggerDragEnd, false);
+                triggerLi.addEventListener('dblclick', handleTriggerEdit, false);
             }
             else
             {
@@ -722,4 +739,42 @@ function saveDevice(submitButton)
              alert("Status: " + textStatus); alert("Error: " + errorThrown);
          }
     });
+}
+
+function handleTriggerEdit(e)
+{
+    var target = getCard($(e.target));
+    var triggerIndex = e.target.id;
+    var device = target.id;
+
+    $("#edit-modal").modal('toggle');
+    $("#edit-modal").data('device', device);
+    $.ajax({
+        url: '/gettriggeredit',
+        data: {tempprobe: device, position: triggerIndex},
+        dataType: 'html',
+        success: function(html) {
+            $("#edit-modal .modal-body").html(html);
+        }
+    });
+}
+
+function updateTriggerStep(element) {
+	var data = $(element).closest("#editTriggersForm").serializeObject();
+    data['tempprobe'] = $("#edit-modal").data('device');
+
+	$.ajax({
+		url : 'updatetrigger',
+		type : 'POST',
+		data : data,
+		success : function(data) {
+			data = null
+		},
+		error: function(XMLHttpRequest, textStatus, errorThrown) {
+            alert("Status: " + textStatus); alert("Error: " + errorThrown);
+        }
+	});
+
+	window.disableUpdates = 0;
+	return true;
 }
