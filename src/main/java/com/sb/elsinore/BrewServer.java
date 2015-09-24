@@ -129,7 +129,7 @@ public class BrewServer extends NanoHTTPD {
                 : UrlEndpoints.class.getDeclaredMethods()) {
             UrlEndpoint urlMethod = m.getAnnotation(UrlEndpoint.class);
             if (urlMethod != null) {
-                m_endpoints.put(urlMethod.url(), m);
+                m_endpoints.put(urlMethod.url().toLowerCase(), m);
             }
         }
     }
@@ -240,7 +240,7 @@ public class BrewServer extends NanoHTTPD {
             endpointName = uri.substring(0, uri.indexOf("/help"));
             help = true;
         }
-        java.lang.reflect.Method urlMethod = m_endpoints.get(endpointName);
+        java.lang.reflect.Method urlMethod = m_endpoints.get(endpointName.toLowerCase());
         if (urlMethod != null)
         {
             if (!help)

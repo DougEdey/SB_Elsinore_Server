@@ -2,6 +2,13 @@ String.prototype.capitalizeFirstLetter = function() {
     return this.charAt(0).toUpperCase() + this.slice(1);
 }
 
+function jsonConcat(o1, o2) {
+ for (var key in o2) {
+  o1[key] = o2[key];
+ }
+ return o1;
+}
+
 $.fn.serializeObject = function() {
 	var o = {};
 	var a = this.serializeArray();
@@ -193,6 +200,7 @@ function setCardName(card, name)
                 '</div>' +
 
                 '<div class="modal-footer">' +
+                  '<button type="button" class="btn btn-secondary" data-dismiss="modal" onClick="handleTriggerAdd(this);">Add New Trigger</button>' +
                   '<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>' +
                   '<button type="button" class="btn btn-primary" onclick="saveDevice(this);">Save Changes</button>' +
                 '</div>' +
@@ -741,6 +749,25 @@ function saveDevice(submitButton)
     });
 }
 
+function handleTriggerAdd(e)
+{
+    var target = getCard($(e.target));
+    var pid = getCard(e).id;
+
+    $("#edit-modal").modal('toggle');
+    $("#edit-modal").data('device', pid);
+    $("#edit-modal .modal-body").empty();
+    $.ajax({
+        url: '/getNewTriggers',
+        data: {temp: pid},
+        dataType: 'html',
+        success: function(html) {
+            $("#edit-modal .modal-body").html(html);
+        }
+    });
+
+}
+
 function handleTriggerEdit(e)
 {
     var target = getCard($(e.target));
@@ -777,4 +804,53 @@ function updateTriggerStep(element) {
 
 	window.disableUpdates = 0;
 	return true;
+}
+
+
+function newTrigger(button, probe) {
+	// Do we need to disable the input form?
+	var childInput = $(button).closest(".modal-body").find("#childInput");
+	if ($(button).closest("#newTriggersForm").find("[name=type] option:selected").val() == "") {
+		childInput.html("");
+		return false;
+	}
+	childInput.html("Loading...");
+	$.ajax({
+        url: '/getTriggerForm',
+        data: $(button.parentElement).serializeObject(),
+        dataType: 'html',
+        success: function(html) {
+        	childInput.html(html)
+        }
+    });
+	return false;
+}
+
+
+function submitNewTriggerStep(button) {
+	var data1 = $(button).closest("#newTriggersForm").serializeObject();
+	var data2 = $("#newTriggersForm form").serializeObject();
+
+    var data = {};
+	data = jsonConcat(data, data1);
+	data = jsonConcat(data, data2);
+	if (!("tempprobe" in data)) {
+		data['tempprobe'] = data['temp']
+	}
+
+	if (!("position" in data)) {
+	    $("#" + data['tempprobe'] + ".trigger-row").length;
+	}
+
+	$.ajax({
+		url : 'addtriggertotemp',
+		type : 'POST',
+		data : data,
+		success : function(data) {
+			data = null
+		}
+	});
+
+	window.disableUpdates = 0;
+	return false;
 }
