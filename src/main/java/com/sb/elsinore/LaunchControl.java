@@ -56,7 +56,7 @@ import java.util.regex.Pattern;
  *
  */
 @SuppressWarnings("unused")
-public final class LaunchControl {
+public class LaunchControl {
     private static final String BREWERY_NAME = "brewery_name";
     private static final String PAGE_LOCK = "pagelock";
     private static final String SCALE = "scale";

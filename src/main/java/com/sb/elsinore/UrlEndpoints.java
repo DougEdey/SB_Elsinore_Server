@@ -254,7 +254,6 @@ public class UrlEndpoints {
         }
         TriggerControl triggerControl = tProbe.getTriggerControl();
         if (triggerControl.triggerCount() > 0) {
-            triggerControl.sortTriggerSteps();
             triggerControl.activateTrigger(0);
         }
 
@@ -313,7 +312,6 @@ public class UrlEndpoints {
                         "Invalid trigger position, things may get weird");
             }
         }
-        mControl.sortTriggerSteps();
         LaunchControl.saveSettings();
         return new Response(Status.OK, MIME_TYPES.get("json"),
                 usage.toJSONString());

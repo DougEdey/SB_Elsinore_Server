@@ -29,9 +29,9 @@ import javax.annotation.Nonnull;
 @SuppressWarnings("unused")
 public class WaitTrigger implements TriggerInterface {
 
-    private static final String WAITTIMEMINS = "waitTimeMins";
-    private static final String WAITTIMESECS = "waitTimeSecs";
-    private static final String NOTES = "notes";
+    public static final String WAITTIMEMINS = "waitTimeMins";
+    public static final String WAITTIMESECS = "waitTimeSecs";
+    public static final String NOTES = "notes";
     final Object lck = new Object();
     volatile boolean waitStatus = true;
     private int position = -1;
