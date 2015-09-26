@@ -147,9 +147,9 @@ public class TriggerControl implements Runnable {
     public final boolean updateTrigger(final int position,
             final JSONObject params) {
         TriggerInterface trigger = this.triggerList.get(position);
+        LaunchControl.saveSettings();
         return trigger.updateTrigger(params);
     }
-
 
     /**
      * Get the Trigger Class that matches the incoming name.
@@ -315,6 +315,7 @@ public class TriggerControl implements Runnable {
         }
 
         triggerEntry.setActive();
+        LaunchControl.saveSettings();
         return true;
     }
 
@@ -366,7 +367,7 @@ public class TriggerControl implements Runnable {
                 mEntry.deactivate(fromUI);
             }
         }
-
+        LaunchControl.saveSettings();
         return true;
     }
 
@@ -490,10 +491,12 @@ public class TriggerControl implements Runnable {
 
     public void clear() {
         this.triggerList.clear();
+        LaunchControl.saveSettings();
     }
 
     public void addTrigger(TriggerInterface newTrigger) {
         this.triggerList.add(newTrigger);
+        LaunchControl.saveSettings();
     }
 
     public void saveTriggers(Element rootElement)
@@ -542,7 +545,4 @@ public class TriggerControl implements Runnable {
         }
     }
 
-    public void sortList() {
-
-    }
 }
