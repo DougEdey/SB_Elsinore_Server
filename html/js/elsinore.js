@@ -57,15 +57,22 @@ function parseTriggers(triggers)
             triggerTable = $("#probes #" + vesselProbe + " #triggers");
         }
 
+        // Something has been removed, so clear the table.
+        if (triggerTable.chidren().size() > triggerList.length)
+        {
+            triggerTable.empty();
+        }
+
         $.each(triggerList, function(index, trigger)
         {
-            var triggerLi = triggerTable.find("#" + index);
+            var triggerLi = triggerTable.find("#" + trigger.position);
             var content = trigger.description + ": " + trigger.target;
             if (triggerLi.size() == 0)
             {
                 triggerTable.append("<li class='list-group-item trigger-row' draggable='true'" +
-                    "id='"+index+"'>" + content + "</li>");
-                triggerLi = triggerTable.find("#" + index)[0];
+                    "id='"+trigger.position+"'>" + content +
+                    "</li>");
+                triggerLi = triggerTable.find("#" + trigger.position)[0];
                 triggerLi.addEventListener('dragstart', handleTriggerDragStart, false);
                 triggerLi.addEventListener('dragenter', handleTriggerDragEnter, false)
                 triggerLi.addEventListener('dragover', handleTriggerDragOver, false);
@@ -713,9 +720,28 @@ function handleTriggerDrop(e) {
 }
 
 function handleTriggerDragEnd(e) {
-    $.each($(".trigger-row"), function (index, row)
+    if (e.dataTransfer.dropEffect == 'none')
+    {
+        var position = e.target.id;
+        var device = $(e.target).closest(".card")[0].id;
+        // Remove the trigger
+        $.ajax({
+            url : 'delTriggerStep',
+            type : 'POST',
+            data : "device=" + device + "&position=" + position,
+            success : function(data) {
+                data = null
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                alert("Status: " + textStatus); alert("Error: " + errorThrown);
+            }
+        });
+        $(e.target).remove();
+    }
+    $(".trigger-row").each(function (index, row)
     {
         row.classList.remove('over');
+        row.style.opacity = 1.0;
     });
 }
 

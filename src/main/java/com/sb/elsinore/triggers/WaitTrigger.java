@@ -73,7 +73,7 @@ public class WaitTrigger implements TriggerInterface {
      */
     private boolean updateParams(final JSONObject parameters) {
         String waitTimeMins = "0";
-        if (parameters.get(WAITTIMEMINS) != "") {
+        if (parameters.get(WAITTIMEMINS) != null) {
                 waitTimeMins = (String) parameters.get(WAITTIMEMINS);
                 if (waitTimeMins.length() == 0) {
                     waitTimeMins = "0";
@@ -81,13 +81,15 @@ public class WaitTrigger implements TriggerInterface {
         }
         this.minutes = Double.parseDouble(waitTimeMins);
         String waitTimeSecs = "0";
-        if (parameters.get(WAITTIMESECS) != "") {
+        if (parameters.get(WAITTIMESECS) != null) {
                 waitTimeSecs = (String) parameters.get(WAITTIMESECS);
                 if (waitTimeSecs.length() == 0) {
                     waitTimeSecs = "0";
                 }
         }
         this.seconds = Double.parseDouble(waitTimeSecs);
+
+        this.note = (String) parameters.get(NOTES);
         BigDecimal totalTime = new BigDecimal(
                 this.minutes * 60);
         totalTime = totalTime.add(new BigDecimal(

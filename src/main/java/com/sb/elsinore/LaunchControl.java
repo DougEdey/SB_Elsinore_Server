@@ -1825,7 +1825,7 @@ public final class LaunchControl {
             }
         }
 
-        // Delete all the switches first
+        // Delete all the triggers first
         Element triggerControlsElement = getFirstElement(null, TriggerControl.NAME);
 
         if (triggerControlsElement != null) {
@@ -1851,6 +1851,8 @@ public final class LaunchControl {
             }
             triggerControl.saveTriggers(triggerElement);
         }
+
+        saveConfigFile();
     }
 
     public static void deletePIDConfig(String name) {
@@ -3235,8 +3237,6 @@ public final class LaunchControl {
                 p.shutdown();
             }
         }
-
-        saveConfigFile();
 
         if (recorder != null) {
             BrewServer.LOG.warning("Shutting down recorder threads.");

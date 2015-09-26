@@ -76,7 +76,8 @@ public class TriggerControl implements Runnable {
                 | NoSuchMethodException | SecurityException e) {
             e.printStackTrace();
         }
-
+        sortTriggerSteps();
+        LaunchControl.saveSettings();
         return triggerStep;
     }
 
@@ -412,22 +413,28 @@ public class TriggerControl implements Runnable {
     }
 
     public void sortTriggerSteps() {
-       Collections.sort(this.triggerList);
+        Collections.sort(this.triggerList);
     }
 
     /**
      * Delete the specified trigger step.
      * @param position The step position to delete
      */
-    public final void delTriggerStep(final int position) {
+    public final void  delTriggerStep(final int position) {
         sortTriggerSteps();
-        for (int i = triggerList.size(); i > 0; i--) {
+        for (int i = triggerList.size() - 1; i >= 0; i--) {
             if (triggerList.get(i).getPosition() == position) {
                 this.triggerList.remove(i);
-            }
-            // Drop the rest of the positions down by one.
-            if (i > position) {
-                triggerList.get(i).setPosition(i - 1);
+                // Drop the rest of the positions down by one.
+                TriggerInterface ti;
+                for (;i < triggerList.size(); i++)
+                {
+                    ti = triggerList.get(i);
+                    if (triggerList.get(i) != null) {
+                        ti.setPosition(ti.getPosition() - 1);
+                    }
+                }
+                break;
             }
         }
         sortTriggerSteps();
@@ -437,6 +444,7 @@ public class TriggerControl implements Runnable {
             setShutdownFlag(true);
             Thread.currentThread().interrupt();
         }
+        LaunchControl.saveSettings();
     }
 
     /**

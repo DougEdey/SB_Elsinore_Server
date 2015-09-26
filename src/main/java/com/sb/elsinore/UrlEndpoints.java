@@ -314,6 +314,7 @@ public class UrlEndpoints {
             }
         }
         mControl.sortTriggerSteps();
+        LaunchControl.saveSettings();
         return new Response(Status.OK, MIME_TYPES.get("json"),
                 usage.toJSONString());
     }
@@ -323,7 +324,7 @@ public class UrlEndpoints {
      * @return The Response.
      */
     @UrlEndpoint(url = "/deltriggerstep", help = "Delete the trigger step at a specific position",
-    parameters = {@Parameter(name = "tempprobe", value = "The name of the temperature probe to delete the trigger step from"),
+    parameters = {@Parameter(name = "device", value = "The name of the temperature probe to delete the trigger step from"),
     @Parameter(name = "position", value = "The integer position of the trigger to delete from the profile")})
     public Response delTriggerStep() {
         Map<String, String> params = this.parameters;
@@ -332,14 +333,14 @@ public class UrlEndpoints {
         // Default to the existing temperature scale
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Add a new mashstep to the specified PID");
-        usage.put("tempprobe", "The PID to delete the mash step from");
+        usage.put("device", "The PID to delete the mash step from");
         usage.put("position", "The mash step to delete");
         Status status = Status.OK;
 
         try {
-            String tempProbe = params.get("tempprobe");
+            String tempProbe = params.get("device");
             if (tempProbe == null) {
-                BrewServer.LOG.warning("No tempprobe parameter supplied to delete trigger.");
+                BrewServer.LOG.warning("No device parameter supplied to delete trigger.");
             }
             int position = Integer.parseInt(params.get("position"));
             Temp temp = LaunchControl.findTemp(tempProbe);
