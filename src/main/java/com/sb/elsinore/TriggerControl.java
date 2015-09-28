@@ -417,20 +417,28 @@ public class TriggerControl implements Runnable {
      * @param position The step position to delete
      */
     public final void  delTriggerStep(final int position) {
-        for (int i = triggerList.size() - 1; i >= 0; i--) {
-            if (triggerList.get(i).getPosition() == position) {
-                this.triggerList.remove(i);
-                // Drop the rest of the positions down by one.
-                TriggerInterface ti;
-                for (;i < triggerList.size(); i++)
-                {
-                    ti = triggerList.get(i);
-                    if (triggerList.get(i) != null) {
-                        ti.setPosition(ti.getPosition() - 1);
-                    }
-                }
+
+        TriggerInterface triggerInterface = null;
+        int i = -1;
+        for (TriggerInterface ti: triggerList)
+        {
+            if (ti.getPosition() == position) {
+                i = triggerList.indexOf(ti);
                 break;
             }
+        }
+        if (i != -1) {
+            this.triggerList.remove(i);
+            // Drop the rest of the positions down by one.
+            TriggerInterface ti;
+            for (;i < triggerList.size(); i++)
+            {
+                ti = triggerList.get(i);
+                if (triggerList.get(i) != null) {
+                    ti.setPosition(ti.getPosition() - 1);
+                }
+            }
+
         }
 
         // No more steps, turn off the MashControl
