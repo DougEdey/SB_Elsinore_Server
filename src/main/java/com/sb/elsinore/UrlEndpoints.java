@@ -686,8 +686,8 @@ public class UrlEndpoints {
      * @return True if added ok
      */
     @UrlEndpoint(url = "/addswitch", help = "Add a new switch to the brewery",
-    parameters = {@Parameter(name = "new_name", value = "The name of the switch to add"),
-    @Parameter(name = "new_gpio", value = "The GPIO to control with this switch"),
+    parameters = {@Parameter(name = "name", value = "The name of the switch to add"),
+    @Parameter(name = "gpio", value = "The GPIO to control with this switch"),
             @Parameter(name = "invert", value = "\"on\" to enable inversion of the outputs, anything else for normal output.")})
     public Response addSwitch() {
         String newName = "", gpio = "";
@@ -729,24 +729,20 @@ public class UrlEndpoints {
         }
 
         // Fall back to the old style
-        if (parms.containsKey("new_name")) {
-            newName = parms.get("new_name");
+        if (parms.containsKey("name")) {
+            newName = parms.get("name");
         }
 
-        if (parms.containsKey("new_gpio")) {
-            gpio = parms.get("new_gpio");
+        if (parms.containsKey("gpio")) {
+            gpio = parms.get("gpio");
         }
 
         if (parms.containsKey("invert")) {
             invert = parms.get("invert").equals("on");
         }
 
-        if (LaunchControl.addSwitch(newName, gpio)) {
-            Switch newSwitch = LaunchControl.findSwitch(newName);
-            if (newSwitch == null)
-            {
-                return null;
-            }
+        Switch newSwitch = LaunchControl.addSwitch(newName, gpio);
+        if (newSwitch != null) {
             newSwitch.setInverted(invert);
             LaunchControl.saveSettings();
             return new Response(Status.OK, MIME_TYPES.get("txt"), "Switch Added");
@@ -1635,6 +1631,27 @@ public class UrlEndpoints {
         return new Response(Status.BAD_REQUEST,
                 MIME_TYPES.get("txt"), "Invalid data"
                         + " provided.");
+    }
+
+    @UrlEndpoint(url = "/getswitchsettings", help = "Get the settings for a switch",
+            parameters = {@Parameter(name = "name", value = "The name of the switch to get the details for")})
+    public Response switchSettings() {
+        Status status = Status.BAD_REQUEST;
+        String data = "";
+        if (parameters.containsKey("name")) {
+            String switchname = parameters.get("name");
+            Switch tempSwitch =
+                    LaunchControl.findSwitch(switchname.replaceAll("_", " "));
+            if (tempSwitch != null) {
+                JSONObject values = new JSONObject();
+                values.put("name", tempSwitch.getName());
+                values.put("gpio", tempSwitch.getGPIO());
+                values.put("inverted", tempSwitch.getInverted());
+                data = values.toJSONString();
+                status = Status.OK;
+            }
+        }
+        return new Response(status, MIME_TYPES.get("json"), data);
     }
 
     @UrlEndpoint(url = "/toggleaux", help = "Toggle the aux pin for a PID",

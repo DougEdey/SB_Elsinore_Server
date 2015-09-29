@@ -42,7 +42,42 @@
             <div class="row">
                 <div class="col-md-3">
                     <div id="switches">
-                        <h4 class="card-title">Switches</h4>
+                        <div class="modal fade" id="switches-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                            <span class="sr-only">Close</span>
+                                        </button>
+                                        <h4 class="modal-title" id="switches-modal-heading">Add Switch</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="addSwitch">
+                                            <fieldset>
+                                                <label id="name-label" for="name">Name</label>
+                                                <input type="text" class="input" name="name" id="name" />
+                                            </fieldset>
+                                            <fieldset>
+                                                <label id="gpio-label" for="gpio">GPIO</label>
+                                                <input type="text" class="input" name="gpio" id="gpio" />
+                                            </fieldset>
+                                            <fieldset>
+                                                <label id="invert-label" for="invert">Invert</label>
+                                                <input type="checkbox" class="input" name="invert" id="invert" />
+                                            </fieldset>
+                                        </form>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" onclick="saveSwitch(this);">Save Changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <h4 class="card-title" ondblclick="$('#switches-modal').modal('toggle');">Switches</h4>
+                        <div class="card-body"></div>
                     </div>
                 </div>
                 <div class="col-md-3">

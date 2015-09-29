@@ -118,6 +118,10 @@ function parseData(data)
     {
         parseTriggers(data.triggers);
     }
+    if ("switches" in data)
+    {
+        parseSwitches(data.switches);
+    }
 }
 
 function requestData()
@@ -879,4 +883,74 @@ function submitNewTriggerStep(button) {
 
 	window.disableUpdates = 0;
 	return false;
+}
+
+function parseSwitches(switches)
+{
+    $.each(switches, function(name, status){
+        var switchEle = $("#switches #" + name);
+        if (switchEle.length == 0)
+        {
+            $("#switches .card-body").append("<button id='"+name+"' class='btn' type='button' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'>" + name + "</button>");
+            switchEle = $("#switches #" + name);
+        }
+
+        if (status == 0)
+        {
+            switchEle.removeClass('btn-warning');
+            switchEle.addClass('btn-secondary');
+        }
+        else
+        {
+            switchEle.removeClass('btn-secondary');
+            switchEle.addClass('btn-warning');
+        }
+    });
+}
+
+function saveSwitch(element)
+{
+    var data = $("#addSwitch").serializeObject();
+    $.ajax({
+        url : 'addswitch',
+        type : 'POST',
+        data : data,
+        success : function(data) {
+            data = null
+        }
+    });
+}
+
+function toggleSwitch(element)
+{
+    var data = {};
+    data["toggle"] = $(element).text();
+    $.ajax({
+        url : 'updateswitch',
+        type : 'POST',
+        data : data,
+        success : function(data) {
+            data = null
+        }
+    });
+}
+
+function editSwitch(element)
+{
+    var data = {};
+    data["name"] = $(element).text();
+    $.ajax({
+        url : 'getswitchsettings',
+        type : 'POST',
+        data : data,
+        dataType: 'json',
+        success: function(switchSettings) {
+            $("#switches-modal").modal();
+            $("#switches-modal #name").val(switchSettings.name);
+            $("#switches-modal #gpio").val(switchSettings.gpio);
+            $("#switches-modal #invert").attr('checked', switchSettings.inverted);
+        }
+    });
+
+    $
 }

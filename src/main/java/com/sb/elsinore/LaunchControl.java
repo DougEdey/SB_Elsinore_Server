@@ -929,25 +929,32 @@ public class LaunchControl {
      *            The GPIO to add
      * @return True if added OK
      */
-    public static boolean addSwitch(final String name, final String gpio) {
-        if (name.equals("") || gpio.equals("") || switchExists(name)) {
-            return false;
+    public static Switch addSwitch(final String name, final String gpio) {
+        if (name.equals("") || gpio.equals("")) {
+            return null;
         }
-        if (LaunchControl.findSwitch(name) != null) {
-            return false;
+        Switch p = LaunchControl.findSwitch(name);
+        if (p == null) {
+            try {
+                p = new Switch(name, gpio);
+                switchList.add(p);
+            } catch (Exception g) {
+                BrewServer.LOG.warning("Could not add switch: " + g.getMessage());
+                g.printStackTrace();
+            }
         }
-
-        try {
-            Switch p = new Switch(name, gpio);
-            switchList.add(p);
-        } catch (Exception g) {
-            BrewServer.LOG.warning("Could not add switch: " + g.getMessage());
-            g.printStackTrace();
-            return false;
+        else
+        {
+            try {
+                p.setGPIO(gpio);
+            }
+            catch (InvalidGPIOException g)
+            {
+                BrewServer.LOG.warning("Could not add switch: " + g.getMessage());
+                g.printStackTrace();
+            }
         }
-
-        return true;
-
+        return p;
     }
 
     // Add the system temperature

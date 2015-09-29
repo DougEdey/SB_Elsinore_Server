@@ -416,25 +416,26 @@ public class TriggerControl implements Runnable {
      * Delete the specified trigger step.
      * @param position The step position to delete
      */
-    public final void  delTriggerStep(final int position) {
-
-        TriggerInterface triggerInterface = null;
+    public final void  delTriggerStep(final int position)
+    {
         int i = -1;
         for (TriggerInterface ti: triggerList)
         {
-            if (ti.getPosition() == position) {
+            if (ti.getPosition() == position)
+            {
                 i = triggerList.indexOf(ti);
                 break;
             }
         }
-        if (i != -1) {
+        if (i != -1)
+        {
             this.triggerList.remove(i);
             // Drop the rest of the positions down by one.
             TriggerInterface ti;
             for (;i < triggerList.size(); i++)
             {
                 ti = triggerList.get(i);
-                if (triggerList.get(i) != null) {
+                if (ti != null) {
                     ti.setPosition(ti.getPosition() - 1);
                 }
             }
