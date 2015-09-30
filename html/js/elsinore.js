@@ -235,12 +235,18 @@ function setCardName(card, name)
       var card = $(getCard(button));
       var piddata = card.data("pid");
       var tempprobe = card.data("temp");
-      modal.find('#cool-gpio').val(piddata.cool.gpio);
-      modal.find('#heat-gpio').val(piddata.heat.gpio);
-      modal.find('#invert-cool')[0].checked = piddata.cool.inverted;
-      modal.find('#invert-heat')[0].checked = piddata.heat.inverted;
-      modal.find('#calibration').val(tempprobe.calibration);
-      modal.find('#shutoff').val(tempprobe.cutoff);
+      if (piddata != undefined)
+      {
+          modal.find('#cool-gpio').val(piddata.cool.gpio);
+          modal.find('#heat-gpio').val(piddata.heat.gpio);
+          modal.find('#invert-cool')[0].checked = piddata.cool.inverted;
+          modal.find('#invert-heat')[0].checked = piddata.heat.inverted;
+      }
+      if (tempprobe != undefined)
+      {
+          modal.find('#calibration').val(tempprobe.calibration);
+          modal.find('#shutoff').val(tempprobe.cutoff);
+      }
     })
 }
 
