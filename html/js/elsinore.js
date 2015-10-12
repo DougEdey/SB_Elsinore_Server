@@ -952,11 +952,19 @@ function editSwitch(element)
         dataType: 'json',
         success: function(switchSettings) {
             $("#switches-modal").modal();
+            $("#switches-modal-heading").text("Edit Switch");
             $("#switches-modal #name").val(switchSettings.name);
             $("#switches-modal #gpio").val(switchSettings.gpio);
             $("#switches-modal #invert").attr('checked', switchSettings.inverted);
         }
     });
 
-    $
+}
+
+function dismissSwitch()
+{
+    $("#switches-modal-heading").text("Add Switch");
+    $("#switches-modal #name").val("");
+    $("#switches-modal #gpio").val("");
+    $("#switches-modal #invert").attr('checked', false);
 }
