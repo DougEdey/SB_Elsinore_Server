@@ -167,10 +167,6 @@ public class LaunchControl {
     public static String scale = "F";
 
     /**
-     * The BrewDay object to manage timers.
-     */
-    public static BrewDay brewDay = null;
-    /**
      * One Wire File System Connection.
      */
     public static OwfsConnection owfsConnection = null;
@@ -606,8 +602,14 @@ public class LaunchControl {
         rObj.put("vessels", vesselJSON);
         rObj.put("triggers", triggerJSON);
 
-        if (brewDay != null) {
-            rObj.put("brewday", brewDay.brewDayStatus());
+        if (timerList.size() > 0)
+        {
+            JSONObject timers = new JSONObject();
+            for (Timer timer: timerList)
+            {
+                timers.put(timer.getName(), timer.getStatus());
+            }
+            rObj.put("timers", timers);
         }
 
         // generate the list of switchess
@@ -1239,19 +1241,6 @@ public class LaunchControl {
         // search based on the input name
         Timer tTimer = LaunchControl.findTimer(name);
         timerList.remove(tTimer);
-    }
-
-    /********
-     * Get the BrewDay object. Create one if there is no brewday object.
-     *
-     * @return The current brewday object.
-     */
-    public static BrewDay getBrewDay() {
-        if (brewDay == null) {
-            brewDay = new BrewDay();
-        }
-
-        return brewDay;
     }
 
     /******

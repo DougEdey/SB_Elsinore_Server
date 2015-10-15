@@ -108,6 +108,36 @@ function parseTriggers(triggers)
     });
 }
 
+function parseTimers(timers)
+{
+    $.each(timers, function(name, data) {
+        if (name == "")
+        {
+            return;
+        }
+        originalName = name;
+        name = name.replace(" ", "_");
+        var timerCard = $("#timers #"+name);
+        if (timerCard.eq(0).size() == 0)
+        {
+            $("#timers").append("<div class='timer-row' id='"+name+"'>"+
+                    "<div class='row'>" +
+                        "<div class='col-md-3'>" +
+                            "<label for='timer' id='title'>"+originalName+"</div>" +
+                            "<input type='text' id='timer' name='timer' class='form-control timer' placeholder='0 sec' />" +
+                        "</div>" +
+                        "<div class='col-md-9'>" +
+                            "<button class='btn btn-success start-timer-btn' onClick='startTimer(this);'>Start</button>" +
+                            "<button class='btn btn-success resume-timer-btn hidden' onClick='startTimer(this);'>Resume</button>" +
+                            "<button class='btn pause-timer-btn hidden' onClick='startTimer(this);'>Pause</button>" +
+                            "<button class='btn reset-timer-btn hidden' onClick='resetTimer(this);'>Reset</button>" +
+                        "</div>" +
+                    "</div>" +
+                "</div>");
+        }
+    });
+}
+
 function parseData(data)
 {
     if ("vessels" in data)
@@ -121,6 +151,10 @@ function parseData(data)
     if ("switches" in data)
     {
         parseSwitches(data.switches);
+    }
+    if ("timers" in data)
+    {
+        parseTimers(data.timers);
     }
 }
 
@@ -145,6 +179,15 @@ function addProbeCard(vesselProbe, position)
         + "</div>";
     $("#probes > #card-deck").append(div);
     return $("#probes #" + vesselProbe);
+}
+
+function addTimerCard(name, position)
+{
+    var div = "<div id='" + name
+    + "' class='col-sm-12 col-md-6 col-lg-5 col-xl-3 card card-block text-center'>"
+        + "</div>";
+    $("#timers > #card-body").append(div);
+    return $("#timers #" + name);
 }
 
 function setCardName(card, name)
@@ -897,19 +940,17 @@ function parseSwitches(switches)
         var switchEle = $("#switches #" + name);
         if (switchEle.length == 0)
         {
-            $("#switches .card-body").append("<button id='"+name+"' class='btn' type='button' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'>" + name + "</button>");
+            $("#switches .card-body").append("<label id='label_"+name+"' for='"+name+"'>"+name+"</label><input type='checkbox' id='"+name+"' data-toggle='toggle' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'/>");
             switchEle = $("#switches #" + name);
         }
 
         if (status == 0)
         {
-            switchEle.removeClass('btn-warning');
-            switchEle.addClass('btn-secondary');
+            switchEle.bootstrapToggle('on');
         }
         else
         {
-            switchEle.removeClass('btn-secondary');
-            switchEle.addClass('btn-warning');
+            switchEle.bootstrapToggle('off');
         }
     });
 }
@@ -967,4 +1008,85 @@ function dismissSwitch()
     $("#switches-modal #name").val("");
     $("#switches-modal #gpio").val("");
     $("#switches-modal #invert").attr('checked', false);
+}
+
+function editTimer(element)
+{
+    var data = {};
+    data["name"] = $(element).text();
+    $.ajax({
+        url : 'gettimersettings',
+        type : 'POST',
+        data : data,
+        dataType: 'json',
+        success: function(timerSettings) {
+            $("#timers-modal-heading").text("Edit Timer")
+            $("#timers-modal #name").val(timerSettings.name);
+            $("#timers-modal #duration").val(timerSettings.duration);
+            $("#timers-modal #invert").attr('checked', timerSettings.inverted);
+        }
+    });
+}
+
+function dismissTimer()
+{
+    $("#timers-modal-heading").text("Add Timer");
+    $("#timers-modal #name").val("");
+    $("#timers-modal #duration").val("");
+    $("#timers-modal #invert").attr('checked', false);
+}
+
+function saveTimer(element)
+{
+    var data = $("#addTimer").serializeObject();
+    $.ajax({
+        url : 'addtimer',
+        type : 'POST',
+        data : data,
+        success : function(data) {
+            data = null
+        }
+    });
+}
+
+function startTimer(element)
+{
+    var timer = $(element).closest(".timer_row").find("#timer");
+    var name = $(element).closest(".timer-row").find("#title");
+    timer.timer();
+    toggleTimer(name);
+}
+
+function toggleTimer(element)
+{
+    var data = {};
+    data["toggle"] = $(element).text();
+    $.ajax({
+        url : 'toggletimer',
+        type : 'POST',
+        data : data,
+        success : function(data) {
+            data = null
+        },
+         error: function(XMLHttpRequest, textStatus, errorThrown) {
+             alert("Status: " + textStatus); alert("Error: " + errorThrown);
+         }
+    });
+}
+
+function resetTimer(element)
+{
+    var data = {};
+    data["reset"] = $(element).closest(".timer-row").find("#title").text();
+    $.ajax({
+        url : 'toggletimer',
+        type : 'POST',
+        data : data,
+        success : function(data) {
+            data = null
+        },
+        error: function(XMLHttpRequest, textStatus, errorThrown) {
+            alert("Status: " + textStatus); alert("Error: " + errorThrown);
+        }
+    });
 }

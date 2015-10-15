@@ -1,5 +1,9 @@
 package com.sb.elsinore;
 
+import org.json.simple.JSONObject;
+
+import java.util.Date;
+
 public class Timer implements Comparable<Timer> {
 
     public static final String ID = "id";
@@ -9,6 +13,9 @@ public class Timer implements Comparable<Timer> {
     private int position = -1;
     private String mode;
     private int target_mins = -1;
+    private boolean inverted;
+    private long currentValue = 0;
+    private Date startTime = null;
 
     public Timer(String newName) {
         this.name = newName;
@@ -61,5 +68,62 @@ public class Timer implements Comparable<Timer> {
 
     public int getTarget() {
         return this.target_mins;
+    }
+
+    public void setInverted(boolean inverted) {
+        this.inverted = inverted;
+    }
+
+    public void startTimer() {
+        if (this.startTime == null && this.currentValue == 0)
+        {
+            // Start the timer
+            startTime = new Date();
+            this.currentValue = 0;
+        }
+        else if (this.startTime != null && this.currentValue != 0)
+        {
+            // Resume the timer
+            this.startTime = new Date(new Date().getTime() - this.currentValue);
+            this.currentValue = 0;
+        }
+        else {
+            // pause the timer
+            this.currentValue = new Date().getTime() - startTime.getTime();
+        }
+    }
+
+    public void resetTimer()
+    {
+        this.startTime = null;
+        this.currentValue = 0;
+    }
+
+    public JSONObject getStatus() {
+        JSONObject status = new JSONObject();
+        status.put("invert", Boolean.toString(this.inverted));
+        long elapsedms = currentValue;
+        if (this.currentValue == 0 && startTime != null) {
+            elapsedms = new Date().getTime() - startTime.getTime();
+        }
+        status.put("elapsedms", elapsedms);
+        status.put("durationms", this.target_mins*1000*60);
+        status.put("position", position);
+        String active = "off";
+        if (this.currentValue == 0 && this.startTime == null)
+        {
+            active = "off";
+        }
+        else if (this.currentValue == 0 && this.startTime != null)
+        {
+            active = "running";
+        }
+        else
+        {
+            active = "paused";
+        }
+
+        status.put("mode", active);
+        return status;
     }
 }

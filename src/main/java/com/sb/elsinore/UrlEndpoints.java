@@ -620,8 +620,9 @@ public class UrlEndpoints {
      * @return True if added ok
      */
     @UrlEndpoint(url = "/addtimer", help = "Add a new timer to the system",
-    parameters = {@Parameter(name = "new_name", value = "The Name of the timer to create"),
-    @Parameter(name = "target", value = "The Target to count up or down the timer to")})
+    parameters = {@Parameter(name = "name", value = "The Name of the timer to create"),
+    @Parameter(name = "duration", value = "The duration of the timer"),
+    @Parameter(name="invert", value="True to invert the timer (count down), false to count up")})
     public final Response addTimer() {
         String newName;
         String inputUnit = "";
@@ -661,23 +662,35 @@ public class UrlEndpoints {
         }
 
         // Fall back to the old style
-        newName = parms.get("new_name");
-        String target = parms.get("target");
+        newName = parms.get("name");
+        if (newName == null || newName.trim().length() == 0)
+        {
+            return new Response(Status.BAD_REQUEST, MIME_TYPES.get("txt"), "No name provided for the timer");
+        }
+        String duration = parms.get("duration");
+        boolean inverted = Boolean.parseBoolean(parms.get("invert"));
 
-        if (LaunchControl.addTimer(newName, target)) {
-            return new Response(Status.OK, MIME_TYPES.get("txt"), "Timer Added");
+        Timer timer = LaunchControl.findTimer(newName);
+        if (timer == null)
+        {
+            if (!LaunchControl.addTimer(newName, duration)) {
+                return new Response(Status.BAD_REQUEST, MIME_TYPES.get("txt"), "Failed to create timer");
+            }
+            timer = LaunchControl.findTimer(newName);
+            if (timer == null)
+            {
+                return new Response(Status.BAD_REQUEST, MIME_TYPES.get("txt"), "Failed to find timer");
+            }
+            timer.setInverted(inverted);
+            return new Response(Status.OK, MIME_TYPES.get("txt"), "Timer created");
+        }
+        else
+        {
+            timer.setInverted(inverted);
+            timer.setTarget(duration);
+            return new Response(Status.OK, MIME_TYPES.get("txt"), "Timer Updated");
         }
 
-        JSONObject usage = new JSONObject();
-        usage.put("Usage", "Add a new switch to the system.");
-        usage.put("new_name", "The name of the timer to add");
-        usage.put("mode",
-                "The mode for the timer, increment, or decrement (optional)");
-        usage.put("target", "The target time for the timer");
-        usage.put("Error", "Invalid parameters passed " + parameters.toString());
-
-        return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
-                usage.toJSONString());
     }
 
     /**
@@ -1676,56 +1689,6 @@ public class UrlEndpoints {
         return new Response(usage.toJSONString());
     }
 
-    @UrlEndpoint(url = "/updateday", help = "Update the brew day information for various timers",
-    parameters = {
-            @Parameter(name = "<name>Start", value = "Set the start time for the time named <name> to the date stamp provided as a value"),
-            @Parameter(name = "<name>End", value = "Set the start time for the time named <name> to the date stamp provided as a value"),
-            @Parameter(name = "<name>Reset", value = "Reset the timer for <name>")
-    })
-    public Response updateDay() {
-        // we're storing the data for the brew day
-        String tempDateStamp;
-        BrewDay brewDay = LaunchControl.getBrewDay();
-
-        // updated date
-        if (parameters.containsKey("updated")) {
-            tempDateStamp = parameters.get("updated");
-            brewDay.setUpdated(tempDateStamp);
-        } else {
-            // we don't have an updated datestamp
-            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                    "No update datestamp, not updating a thang! YA HOSER!");
-        }
-
-        Iterator<Entry<String, String>> it = parameters.entrySet().iterator();
-        Entry<String, String> e;
-
-        while (it.hasNext()) {
-            e = it.next();
-
-            if (e.getKey().endsWith("Start")) {
-                int trimEnd = e.getKey().length() - "Start".length();
-                String name = e.getKey().substring(0, trimEnd);
-                brewDay.startTimer(name, e.getValue());
-            } else if (e.getKey().endsWith("End")) {
-                int trimEnd = e.getKey().length() - "End".length();
-                String name = e.getKey().substring(0, trimEnd);
-                if (e.getValue().equals("null")) {
-                    brewDay.stopTimer(name, new Date());
-                } else {
-                    brewDay.stopTimer(name, e.getValue());
-                }
-            } else if (e.getKey().endsWith("Reset")) {
-                int trimEnd = e.getKey().length() - "Reset".length();
-                String name = e.getKey().substring(0, trimEnd);
-                brewDay.resetTimer(name);
-            }
-        }
-
-        return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                "Updated Brewday");
-    }
-
     @UrlEndpoint(url = "/getvolumeform", help = "Get the volume update form for the specified vessel",
     parameters = {
             @Parameter(name = "vessel", value = "The name of the vessel to get the Volume form for")
@@ -2311,5 +2274,48 @@ public class UrlEndpoints {
         }
 
         return new Response("Shutdown called");
+    }
+
+    @UrlEndpoint(url="/toggletimer", help="Start, stop or reset a timer",
+            parameters = {@Parameter(name="start", value="name of the timer to start/pause"),
+            @Parameter(name="reset", value = "name of the timer to reset")})
+    public Response toggleTimer()
+    {
+        Status status = Status.BAD_REQUEST;
+        String message = "Bad request";
+        if (parameters.containsKey("toggle"))
+        {
+            String name = parameters.get("toggle");
+            Timer timer = LaunchControl.findTimer(name);
+            if (timer != null)
+            {
+                timer.startTimer();
+                status = Status.OK;
+                message = "Timer started/paused";
+            }
+            else
+            {
+                status = Status.BAD_REQUEST;
+                message = "Couldn't find the timer " + name;
+            }
+
+        }
+        if (parameters.containsKey("reset"))
+        {
+            String name = parameters.get("reset");
+            Timer timer = LaunchControl.findTimer(name);
+            if (timer != null)
+            {
+                timer.resetTimer();
+                status = Status.OK;
+                message = "Timer reset";
+            }
+            else
+            {
+                status = Status.BAD_REQUEST;
+                message = "Couldn't find the timer " + name;
+            }
+        }
+        return new Response(status, MIME_TYPES.get("txt"), message);
     }
 }

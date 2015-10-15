@@ -1,8 +1,12 @@
 <html>
     <link rel="stylesheet" href="/bootstrap-v4/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/html/css/elsinore.css"/>
+    <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.0/css/bootstrap-toggle.min.css" rel="stylesheet">
+
     <script type="text/javascript" src="/bootstrap-v4/js/jquery.js" ></script>
     <script type="text/javascript" src="/bootstrap-v4/js/bootstrap.min.js" ></script>
+    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.0/js/bootstrap-toggle.min.js"></script>
+    <script type="text/javascript" src="/html/js/timer.jquery.js"></script>
     <script type="text/javascript" src="/html/js/elsinore.js"></script>
     <head>
         <title>New Elsinore Control page</title>
@@ -71,7 +75,7 @@
 
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" onclick='dismissSwitch();' data-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary" onclick="saveSwitch(this);">Save Changes</button>
+                                        <button type="button" class="btn btn-primary" onclick="saveSwitch(this);" data-dismiss="modal">Save Changes</button>
                                     </div>
                                 </div>
                             </div>
@@ -82,7 +86,42 @@
                 </div>
                 <div class="col-md-3">
                     <div id="timers">
-                        <h4 class="card-title">Timers</h4>
+                        <div class="modal fade" id="timers-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                            <span class="sr-only">Close</span>
+                                        </button>
+                                        <h4 class="modal-title" id="timers-modal-heading">Add Timer</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="addTimer">
+                                            <fieldset>
+                                                <label id="name-label" for="name">Name</label>
+                                                <input type="text" class="input" name="name" id="name" />
+                                            </fieldset>
+                                            <fieldset>
+                                                <label id="duration-label" for="duration">Duration</label>
+                                                <input type="text" class="input" name="duration" id="duration" />
+                                            </fieldset>
+                                            <fieldset>
+                                                <label id="invert-label" for="invert">Invert</label>
+                                                <input type="checkbox" class="input" name="invert" id="invert" />
+                                            </fieldset>
+                                        </form>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" onclick='dismissTimer();' data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" onclick="saveTimer(this);" data-dismiss="modal">Save Changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <h4 class="card-title" ondblclick="$('#timers-modal').modal('toggle');">Timers</h4>
+                        <div class="card-body"></div>
                     </div>
                 </div>
             </div>
