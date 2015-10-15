@@ -122,11 +122,9 @@ function parseTimers(timers)
         {
             $("#timers").append("<div class='timer-row' id='"+name+"'>"+
                     "<div class='row'>" +
-                        "<div class='col-md-3'>" +
-                            "<label for='timer' id='title'>"+originalName+"</div>" +
+                        "<div class='form-group form-inline row'>" +
+                            "<label for='timer' id='title' class='control-label'>"+originalName+"</label>" +
                             "<input type='text' id='timer' name='timer' class='form-control timer' placeholder='0 sec' />" +
-                        "</div>" +
-                        "<div class='col-md-9'>" +
                             "<button class='btn btn-success start-timer-btn' onClick='startTimer(this);'>Start</button>" +
                             "<button class='btn btn-success resume-timer-btn hidden' onClick='startTimer(this);'>Resume</button>" +
                             "<button class='btn pause-timer-btn hidden' onClick='startTimer(this);'>Pause</button>" +
@@ -134,6 +132,30 @@ function parseTimers(timers)
                         "</div>" +
                     "</div>" +
                 "</div>");
+            timerCard = $("#timers #"+name);
+        }
+
+        timerCard.find("#timer").val(msToString(data.elapsedms));
+        if (data.mode == "off")
+        {
+            timerCard.find(".start-timer-btn").show();
+            timerCard.find(".resume-timer-btn").hide();
+            timerCard.find(".pause-timer-btn").hide();
+            timerCard.find(".reset-timer-btn").show();
+        }
+        else if (data.mode == "running")
+        {
+            timerCard.find(".start-timer-btn").hide();
+            timerCard.find(".resume-timer-btn").hide();
+            timerCard.find(".pause-timer-btn").show();
+            timerCard.find(".reset-timer-btn").hide();
+        }
+        else if (data.mode == "paused")
+        {
+            timerCard.find(".start-timer-btn").hide();
+            timerCard.find(".resume-timer-btn").show();
+            timerCard.find(".pause-timer-btn").hide();
+            timerCard.find(".reset-timer-btn").show();
         }
     });
 }
@@ -1089,4 +1111,16 @@ function resetTimer(element)
             alert("Status: " + textStatus); alert("Error: " + errorThrown);
         }
     });
+}
+
+function msToString(ms)
+{
+     var min = (ms/1000/60) << 0,
+       sec = ((ms/1000) % 60) << 0;
+       if (sec < 10)
+       {
+            sec = "0" + sec;
+       }
+     return min + ":" + sec;
+
 }
