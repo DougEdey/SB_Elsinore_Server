@@ -12,38 +12,64 @@
         <title>New Elsinore Control page</title>
     </head>
     <body>
-        <div class="modal fade" id="edit-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                            <span class="sr-only">Close</span>
-                            </button>
-                        <h4 class="modal-title" id="edit-modal-heading">Edit Something</h4>
-                    </div>
-                    <div class="modal-body">
-                    </div>
+    <!-- top navbar -->
+    <div class="page-container">
 
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="saveDevice(this);">Save Changes</button>
-                    </div>
+        <div class="navbar navbar-light" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggler" data-toggle="offcanvas" data-target=".sidebar-nav">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">StrangeBrew Elsinore</a>
                 </div>
             </div>
         </div>
         <div class="container-fluid">
-            <div id="header" class="row">StrangeBrew Elsinore</div>
+        <div class="row row-offcanvas row-offcanvas-left">
 
-            <div class="row">
-                <div class="">
-                    <div id="probes">
-                        <h4 class="card-title">Probes</h4>
-                        <div id="card-deck"></div>
+            <!-- sidebar -->
+            <div class="col-xs-4 col-sm-2 sidebar-offcanvas" id="sidebar" role="navigation">
+                <ul class="nav">
+                    <li id="loadRecipe"><a href="#" onclick="loadRecipe();">Load Recipe</a></li>
+                    <li id="settings"><a href="#" onclick="showsettings();">Settings</a></li>
+                    <li id="hopAdditions"><a href="#" onclick="shopHopAdditions();">Hop Additions</a></li>
+                </ul>
+            </div>
+
+            <!-- main area -->
+            <div class="col-xs-12 col-sm-9">
+                <div class="modal fade" id="edit-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                    <span class="sr-only">Close</span>
+                                </button>
+                                <h4 class="modal-title" id="edit-modal-heading">Edit Something</h4>
+                            </div>
+                            <div class="modal-body">
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="saveDevice(this);">Save Changes</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
+                <div class="row">
+                    <div class="">
+                        <div id="probes">
+                            <h4 class="card-title">Probes</h4>
+                            <div id="card-deck"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
                 <div class="col-md-3">
                     <div id="switches">
                         <div class="modal fade" id="switches-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -125,6 +151,9 @@
                     </div>
                 </div>
             </div>
+          </div>
+        </div>
+        </div>
         </div>
     </body>
 </html>

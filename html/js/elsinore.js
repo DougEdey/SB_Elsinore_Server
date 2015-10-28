@@ -714,6 +714,9 @@ function clearPIDSettings(device)
 }
 
 $(document).ready(function() {
+    $('[data-toggle=offcanvas]').click(function() {
+        $('.row-offcanvas').toggleClass('active');
+      });
     requestData();
     setInterval("requestData()",10000);
 });
