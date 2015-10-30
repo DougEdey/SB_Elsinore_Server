@@ -178,6 +178,16 @@ function parseData(data)
     {
         parseTimers(data.timers);
     }
+
+    if ("recipeCount" in data)
+    {
+        var recipeName = null;
+        if ("recipe" in data)
+        {
+            recipeName = data.recipe;
+        }
+        showRecipes(data.recipeCount, recipeName);
+    }
 }
 
 function requestData()
@@ -715,8 +725,17 @@ function clearPIDSettings(device)
 
 $(document).ready(function() {
     $('[data-toggle=offcanvas]').click(function() {
-        $('.row-offcanvas').toggleClass('active');
-      });
+       $('.row-offcanvas').toggleClass('active');
+    });
+    $("#recipeFile").fileupload({
+       dataType : 'json',
+       url: '/uploadbeerxml',
+       done: function (e, data) {
+            $.each(data.result.files, function (index, file) {
+                        $('<p/>').text(file.name).appendTo(document.body);
+                });
+       }
+    });
     requestData();
     setInterval("requestData()",10000);
 });
@@ -866,10 +885,10 @@ function handleTriggerAdd(e)
         data: {temp: pid},
         dataType: 'html',
         success: function(html) {
+            $("#edit-modal-heading").html("Add New Trigger");
             $("#edit-modal .modal-body").html(html);
         }
     });
-
 }
 
 function handleTriggerEdit(e)
@@ -885,6 +904,7 @@ function handleTriggerEdit(e)
         data: {tempprobe: device, position: triggerIndex},
         dataType: 'html',
         success: function(html) {
+            $("#edit-modal-heading").html("Edit " + device + " trigger at " + triggerIndex);
             $("#edit-modal .modal-body").html(html);
         }
     });
@@ -1125,5 +1145,64 @@ function msToString(ms)
             sec = "0" + sec;
        }
      return min + ":" + sec;
+
+}
+
+function loadRecipe()
+{
+    document.getElementById("recipeFile").click();
+}
+
+function clearStatus() {
+	$.ajax({
+		url : 'clearStatus',
+		type : 'POST',
+		success : function(data) {
+			data = null
+		}
+	});
+}
+
+function showRecipes(count, name)
+{
+    if (name != null && false)
+    {
+        $("#currentRecipe").html(name);
+    }
+    else
+    {
+       $.ajax({
+       		url : 'getrecipelist',
+       		type : 'GET',
+       		success : function(data) {
+       			$("#currentRecipe").html(data);
+       		}
+       	});
+    }
+}
+
+function setRecipe(element)
+{
+    var recipeName;
+    if ($(element).is("select"))
+    {
+        recipeName = $(element).find(":selected").val();
+    }
+
+    if (recipeName != undefined)
+    {
+        $("#edit-modal").modal('toggle');
+        $("#edit-modal").data('recipe', recipeName);
+        $("#edit-modal-heading").html("Recipe Settings");
+        $.ajax({
+            url: '/showrecipe',
+            data: {recipeName: recipeName},
+            dataType: 'html',
+            success: function(html) {
+                $("#edit-modal-heading").html(recipeName);
+                $("#edit-modal .modal-body").html(html);
+            }
+        });
+    }
 
 }

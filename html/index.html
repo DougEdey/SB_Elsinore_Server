@@ -7,6 +7,9 @@
     <script type="text/javascript" src="/bootstrap-v4/js/bootstrap.min.js" ></script>
     <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.0/js/bootstrap-toggle.min.js"></script>
     <script type="text/javascript" src="/html/js/timer.jquery.js"></script>
+    <script type="text/javascript" src="/html/js/jquery.ui.widget.js"></script>
+    <script type="text/javascript" src="/html/js/jquery.iframe-transport.js"></script>
+    <script type="text/javascript" src="/html/js/jquery.fileupload.js"></script>
     <script type="text/javascript" src="/html/js/elsinore.js"></script>
     <head>
         <title>New Elsinore Control page</title>
@@ -33,7 +36,8 @@
             <!-- sidebar -->
             <div class="col-xs-4 col-sm-2 sidebar-offcanvas" id="sidebar" role="navigation">
                 <ul class="nav">
-                    <li id="loadRecipe"><a href="#" onclick="loadRecipe();">Load Recipe</a></li>
+                    <li id="loadRecipe"><span onclick="loadRecipe();">Load Recipe <input type="file" id="recipeFile" style="position: fixed; top: -100em" data-url="uploadbeerxml"></span></li>
+                    <li id="currentRecipe"></li>
                     <li id="settings"><a href="#" onclick="showsettings();">Settings</a></li>
                     <li id="hopAdditions"><a href="#" onclick="shopHopAdditions();">Hop Additions</a></li>
                 </ul>
