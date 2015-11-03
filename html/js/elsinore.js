@@ -58,13 +58,18 @@ function parseTriggers(triggers)
         }
 
         // Something has been removed, so clear the table.
-        if (triggerTable.chidren().size() > triggerList.length)
+        if ((triggerTable.children().size() - 1) > triggerList.length)
         {
             triggerTable.empty();
         }
-
+        var enabled = false;
         $.each(triggerList, function(index, trigger)
         {
+            if (trigger.active == "true")
+            {
+                enabled = true;
+            }
+
             var triggerLi = triggerTable.find("#" + trigger.position);
             var content = trigger.description + ": " + trigger.target;
             if (triggerLi.size() == 0)
@@ -104,7 +109,21 @@ function parseTriggers(triggers)
                 }
             }
         });
-
+        var triggerLi = triggerTable.find("#footer");
+        if (triggerLi.size() == 0)
+        {
+            triggerTable.append("<li class='list-group-item trigger-row' draggable='true'" +
+                "id='footer' onClick='toggleTriggers(this);'>Toggle</li>");
+            triggerLi = triggerTable.find("#footer");
+        }
+        if (enabled)
+        {
+            triggerLi.html("Disable");
+        }
+        else
+        {
+            triggerLi.html("Enable");
+        }
     });
 }
 
@@ -1205,4 +1224,39 @@ function setRecipe(element)
         });
     }
 
+}
+
+function setMashProfile(element) {
+    setProfile(element, "mash");
+}
+
+function setBoilHopProfile(element) {
+    setProfile(element, "boil");
+}
+
+function setFermProfile(element) {
+    setProfile(element, "ferm");
+}
+
+function setDryHopProfile(element) {
+    setProfile(element, "dry");
+}
+
+function setProfile(element, profile) {
+    var tempProbe = $(element).parent().find("[name=tempprobe] > :selected").val();
+    $.ajax({
+        url: '/setprofile',
+        data: {profile: profile, tempprobe: tempProbe},
+        dataType: "html"
+    })
+}
+
+function toggleTriggers(element)
+{
+    var originalProbe = $(element).closest(".card")[0].id;
+    $.ajax({
+        url: '/triggerprofile',
+        data: {tempprobe: originalProbe},
+        dataType: "html"
+    })
 }
