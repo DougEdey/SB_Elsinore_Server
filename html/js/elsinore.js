@@ -1260,3 +1260,50 @@ function toggleTriggers(element)
         dataType: "html"
     })
 }
+
+function showConfig()
+{
+    $("#edit-modal").modal('toggle');
+    $("#edit-modal-heading").html("General Settings");
+    $.ajax({
+        url: '/getsystemsettings',
+        dataType: 'json',
+        success: function(json) {
+        var settingsHTML = "<form id='settings-form'>"
+                + "<div class='checkbox'><label for='restore'>Restore State On Startup</label>"
+                + '<input type="checkbox" name="restore" id="restore">'
+                + "</div>"
+                +"<div class='checkbox'><label for='recorderEnabled'>Recorder Enabled</label>"
+                +'<input type="checkbox" name="recorder" id="recorder">'
+                + "</div>"
+                + "<div class='checkbox'><label for='recorderDiff'>Recording Tolerance</label>"
+                + '<input type="number" step="0.01" min="0" id="recorderDiff" name="recorderDiff">'
+                + "</div>"
+                + "<div class='checkbox'><label for='recorderTime'>Recorder Time (ms)</label>"
+                + '<input type="number" id="recorderTime" min="1000" name="recorderTime">'
+                + "</div>"
+                + "<button class='btn btn-success' onclick='saveSystem(this);'>Save</button>"
+                + "</form>"
+            $("#edit-modal .modal-body").html(settingsHTML);
+            $("#edit-modal .modal-body #recorderDiff").val(json.recorderDiff);
+            $("#edit-modal .modal-body #recorderTime").val(json.recorderTime);
+            $("#edit-modal .modal-body #recorder").prop("checked", json.recorder);
+            $("#edit-modal .modal-body #restore").prop("checked", json.restore);
+        }
+    });
+
+}
+
+function saveSystem(element)
+{
+    var formdata = $('form[id=settings-form]').serializeObject();
+    $.ajax({
+        url : 'updateSystemSettings',
+        type : 'POST',
+        data: formdata,
+        dataType: "json",
+        success : function(data) {
+            data = null
+        }
+    });
+}
