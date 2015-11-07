@@ -1,0 +1,113 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Live Data Graph</title>
+    <script type="text/javascript" src="/html/js/d3.js"></script>
+    <script type="text/javascript" src="/html/js/c3.js"></script>
+    <script type="text/javascript" src="/bootstrap-v4/js/jquery.js"></script>
+    <link href="/html/css/c3.css" rel="stylesheet" type="text/css">
+    <link href="/bootstrap-v4/css/bootstrap.css" rel="stylesheet" type="text/css">
+    <script type="text/javascript">
+
+	function getParams() {
+
+		var params = window.location.search.substring(1).split('&'),
+		i = 0,
+		pair = null,
+		result = {};
+
+		while (pair = params[i++]) {
+			pair = pair.split('=');
+			result[pair[0]] = decodeURIComponent(pair[1]);
+		}
+		result["bindto"] = "temperatureChart";
+		result["updates"] = window.updateOnly;
+		return result;
+	}
+
+	$(function() {
+		$("#view_all_points").attr('href', window.location.href + '&size=0');
+
+		var data = [];
+
+		// Fetch one series, adding to what we already have
+
+		var alreadyFetched = {};
+		window.updateOnly = false;
+		var chart = null;
+		function fetchData() {
+
+			function onDataReceived(series) {
+				if (chart == null) {
+                    series["zoom"] = {};
+                    series["zoom"]["enabled"] = true;
+                    series["axis"]["y"]["tick"] = {}
+                    series["axis"]["y"]["tick"]["format"] = function(d) { return parseFloat(d).toFixed(2);}
+					chart = c3.generate(series)
+				} else {
+					chart.load(series);
+				}
+			}
+
+			// Normally we call the same URL - a script connected to a
+			// database - but in this case we only have static example
+			// files, so we need to modify the URL.
+			$.ajax({
+				url: "/graph-data/",
+				type: "GET",
+				dataType: "json",
+				data: getParams(),
+				success: onDataReceived
+			});
+			window.updateOnly = true;
+			setTimeout(fetchData, 5000);
+
+		}
+
+		fetchData();
+	});
+
+	function resetRecorder() {
+	    $.ajax({
+            url : '/resetrecorder',
+            type : 'POST',
+            success : function(data) {
+                data = null
+            }
+        });
+	}
+
+	function clearData() {
+	    $.ajax({
+            url : '/deletegraphdata',
+            type : 'POST',
+            success : function(data) {
+                data = null
+            }
+        });
+	}
+
+	</script>
+</head>
+<body>
+
+<div id="header">
+    <h2>Live Data vs Time</h2>
+</div>
+
+<div id="content">
+
+    <div class="demo-container">
+        <div id="temperatureChart"></div>
+        <span id="view_all_points" onclick="window.location.assign('');" class="btn btn-default">View all history</span>
+        <span id="view_all_inputs" onclick="window.location.assign('/graph?&size=0');" class="btn btn-default">View all inputs</span>
+        <span id="download_data" onclick="window.location.assign('/graph-data.zip?&size=0&download=true')" class="btn btn-default">Download all data</span>
+        <span id="reset_recorder" onclick="resetRecorder();" class="btn btn-default">Reset Data</span>
+        <span id="clear_data" onclick="clearData();" class="btn btn-default">Clear all data</span>
+    </div>
+</div>
+
+
+</body>
+</html>
