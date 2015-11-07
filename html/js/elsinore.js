@@ -1004,18 +1004,20 @@ function parseSwitches(switches)
         var switchEle = $("#switches #" + name);
         if (switchEle.length == 0)
         {
-            $("#switches .card-body").append("<label id='label_"+name+"' for='"+name+"'>"+name+"</label><input type='checkbox' id='"+name+"' data-toggle='toggle' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'/>");
+            $("#switches .card-body").append("<button id='"+name+"' class='btn' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'>"+name+"</button>");
             switchEle = $("#switches #" + name);
         }
 
-        if (status == 0)
+        if (status)
         {
-            switchEle.bootstrapToggle('on');
+            switchEle.addClass("btn-danger");
         }
         else
         {
-            switchEle.bootstrapToggle('off');
+
+            switchEle.removeClass("btn-danger");
         }
+
     });
 }
 
