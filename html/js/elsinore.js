@@ -112,8 +112,8 @@ function parseTriggers(triggers)
         var triggerLi = triggerTable.find("#footer");
         if (triggerLi.size() == 0)
         {
-            triggerTable.append("<li class='list-group-item trigger-row' draggable='true'" +
-                "id='footer' onClick='toggleTriggers(this);'>Toggle</li>");
+            triggerTable.append("<a href='#' class='list-group-item trigger-row' draggable='true'" +
+                "id='footer' onClick='toggleTriggers(this);'>Toggle</a>");
             triggerLi = triggerTable.find("#footer");
         }
         if (enabled)
