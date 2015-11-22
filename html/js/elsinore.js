@@ -1255,10 +1255,11 @@ function setProfile(element, profile) {
 
 function toggleTriggers(element)
 {
+    var status = $(element).text();
     var originalProbe = $(element).closest(".card")[0].id;
     $.ajax({
-        url: '/triggerprofile',
-        data: {tempprobe: originalProbe},
+        url: '/toggleTrigger',
+        data: {tempprobe: originalProbe, status:status, position:-1},
         dataType: "html"
     })
 }
@@ -1308,4 +1309,9 @@ function saveSystem(element)
             data = null
         }
     });
+}
+
+function changeName()
+{
+
 }

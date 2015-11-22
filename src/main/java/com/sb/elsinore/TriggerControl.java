@@ -554,4 +554,24 @@ public class TriggerControl implements Runnable {
         }
     }
 
+    public boolean isActive() {
+        for (TriggerInterface triggerInterface: triggerList)
+        {
+            if (triggerInterface.isActive())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void deactivate() {
+        for (TriggerInterface triggerInterface: triggerList)
+        {
+            if (triggerInterface.isActive())
+            {
+                triggerInterface.deactivate(false);
+            }
+        }
+    }
 }

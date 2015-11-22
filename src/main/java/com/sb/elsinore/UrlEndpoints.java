@@ -255,6 +255,10 @@ public class UrlEndpoints {
         TriggerControl triggerControl = tProbe.getTriggerControl();
         if (triggerControl.triggerCount() > 0) {
             triggerControl.activateTrigger(0);
+            if (triggerControl.isActive())
+            {
+                triggerControl.deactivate();
+            }
         }
 
         return new NanoHTTPD.Response(Status.OK, MIME_HTML,
