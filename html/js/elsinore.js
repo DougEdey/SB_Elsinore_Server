@@ -118,11 +118,11 @@ function parseTriggers(triggers)
         }
         if (enabled)
         {
-            triggerLi.html("Disable");
+            triggerLi.html("Deactivate");
         }
         else
         {
-            triggerLi.html("Enable");
+            triggerLi.html("Activate");
         }
     });
 }
