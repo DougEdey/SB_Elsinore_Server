@@ -261,7 +261,7 @@ function setCardName(card, name)
                   '<h4 class="modal-title" id="exampleModalLabel">Edit '+name+'</h4>'+
                 '</div>'+
                 '<div class="modal-body">'+
-                  '<form class="form-horizontal">'+
+                  '<form>'+
                   '<input type="hidden" id="device-address" value="' + addr + '">' +
                     '<div class="form-group">'+
                       '<label for="device-name" class="form-control-label col-sm-3">Name</label>' +
@@ -989,6 +989,7 @@ function handleTriggerAdd(e)
         success: function(html) {
             $("#edit-modal-heading").html("Add New Trigger");
             $("#edit-modal .modal-body").html(html);
+            $("#edit-modal .modal-body").attr("height","100%");
         }
     });
 }
@@ -999,7 +1000,6 @@ function handleTriggerEdit(e)
     var triggerIndex = e.target.id;
     var device = target.id;
 
-    $("#edit-modal").modal('toggle');
     $("#edit-modal").data('device', device);
     $.ajax({
         url: '/gettriggeredit',
@@ -1008,6 +1008,8 @@ function handleTriggerEdit(e)
         success: function(html) {
             $("#edit-modal-heading").html("Edit " + device + " trigger at " + triggerIndex);
             $("#edit-modal .modal-body").html(html);
+            $("#edit-modal .modal-body").attr("height","100%");
+            $("#edit-modal").modal('toggle');
         }
     });
 }
