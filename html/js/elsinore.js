@@ -118,10 +118,12 @@ function parseTriggers(triggers)
         }
         if (enabled)
         {
+            triggerLi.attr("name", "deactivate");
             triggerLi.html("Deactivate");
         }
         else
         {
+            triggerLi.attr("name", "activate");
             triggerLi.html("Activate");
         }
     });
@@ -143,7 +145,7 @@ function parseTimers(timers)
                     "<div class='row'>" +
                         "<div class='form-group form-inline row'>" +
                             "<label for='timer' id='title' class='control-label'>"+originalName+"</label>" +
-                            "<input type='text' id='timer' name='timer' class='form-control timer' placeholder='0 sec' />" +
+                            "<input type='text' id='timer' name='timer' class='timer-body form-control timer' placeholder='0 sec' />" +
                             "<button class='btn btn-success start-timer-btn' onClick='startTimer(this);'>Start</button>" +
                             "<button class='btn btn-success resume-timer-btn hidden' onClick='startTimer(this);'>Resume</button>" +
                             "<button class='btn pause-timer-btn hidden' onClick='startTimer(this);'>Pause</button>" +
@@ -160,7 +162,7 @@ function parseTimers(timers)
             timerCard.find(".start-timer-btn").show();
             timerCard.find(".resume-timer-btn").hide();
             timerCard.find(".pause-timer-btn").hide();
-            timerCard.find(".reset-timer-btn").show();
+            timerCard.find(".reset-timer-btn").hide();
         }
         else if (data.mode == "running")
         {
@@ -1255,7 +1257,7 @@ function setProfile(element, profile) {
 
 function toggleTriggers(element)
 {
-    var status = $(element).text();
+    var status = $(element).attr("name");
     var originalProbe = $(element).closest(".card")[0].id;
     $.ajax({
         url: '/toggleTrigger',
