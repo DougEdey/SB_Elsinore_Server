@@ -519,7 +519,14 @@ function showAuto(card)
     pidsettings.empty();
     pidsettings.append("<form></form>");
     var form = pidsettings.find("form");
-    form.append("<div class='form-group form-inline row'><label for='setpoint_input' class='form-control-label col-sm-4'>Set Point</label><div class='col-sm-6'><input type='number' class='form-control' id='setpoint_input' placeholder='Set Point'/></div><label class='form-control-label col-sm-2' for='setpoint_input'>&#176" + tempdata.scale + "</label></div>");
+    form.append("<div class='form-group'>"
+                + "<label class='sr-only' for='setpoint_input'>Setpoint</label>"
+                + "<div class='input-group'>"
+                    + "<div class='input-group-addon input-group-addon-label'>Setpoint</div>"
+                    + "<input type='number' class='form-control' id='setpoint_input' placeholder='Setpoint' >"
+                    + "<div class='input-group-addon input-group-addon-unit'>&#176" + tempdata.scale + "</div>"
+                + "</div>"
+            + "</div>");
     if ("heat" in piddata && piddata.heat.gpio != "")
     {
         appendSettings(form, "heat", piddata, tempdata.scale);
@@ -558,11 +565,38 @@ function appendSettings(pidsettings, type, piddata, scale)
         heatDiv = tabcontent.find("#" + type);
     }
 
-    heatDiv.append("<div class='form-group form-inline row'><label for='cycletime_input' class='form-control-label col-sm-4'>Cycle Time</label><div class='col-sm-6'><input type='number' class='form-control' id='cycletime_input' placeholder='Cycle Time'/></div><label class='form-control-label col-sm-2' for='cycletime_input'>secs</label></div>");
-    heatDiv.append("<div class='form-group form-inline row'><label for='p_input' class='form-control-label col-sm-4'>P</label><div class='col-sm-6'><input type='number' class='form-control' id='p_input' placeholder='Proportional'/></div><label class='form-control-label col-sm-2' for='p_input'>secs/&#176" + scale + "</label></div>");
-    heatDiv.append("<div class='form-group form-inline row'><label class='form-control-label col-sm-4' for='i_input'>I</label><div class='col-sm-6'><input type='number' class='form-control' id='i_input' placeholder='Integral'/></div><label class='form-control-label col-sm-2' for='i_input'>&#176" + scale + "/sec</label></div>");
-    heatDiv.append("<div class='form-group form-inline row'><label class='form-control-label col-sm-4' for='d_input'>D</label><div class='col-sm-6'><input type='number' class='form-control' id='d_input' placeholder='Integral'/></div><label class='form-control-label col-sm-2' for='i_input'>secs</label></div>");
-
+    heatDiv.append("<div class='form-group'>"
+            + "<label class='sr-only' for='cycletime_input'>Cycle Time</label>"
+            + "<div class='input-group'>"
+                + "<div class='input-group-addon input-group-addon-label'>Cycle Time</div>"
+                + "<input type='number' class='form-control' id='cycletime_input' placeholder='Cycle Time' >"
+                + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
+            + "</div>"
+        + "</div>"
+        + "<div class='form-group'>"
+            + "<label class='sr-only' for='p_input'>Proportional</label>"
+            + "<div class='input-group'>"
+                + "<div class='input-group-addon input-group-addon-label'>Proportional</div>"
+                + "<input type='number' class='form-control' id='p_input' placeholder='Proportional' >"
+                + "<div class='input-group-addon input-group-addon-unit'>secs/&#176" + scale + "</div>"
+            + "</div>"
+        + "</div>"
+        + "<div class='form-group'>"
+            + "<label class='sr-only' for='i_input'>Integral</label>"
+            + "<div class='input-group'>"
+                + "<div class='input-group-addon input-group-addon-label'>Integral</div>"
+                + "<input type='number' class='form-control' id='i_input' placeholder='Integral' >"
+                + "<div class='input-group-addon input-group-addon-unit'>&#176" + scale + "/sec</div>"
+            + "</div>"
+        + "</div>"
+        + "<div class='form-group'>"
+            + "<label class='sr-only' for='i_input'>Differential</label>"
+            + "<div class='input-group'>"
+                + "<div class='input-group-addon input-group-addon-label'>Differential</div>"
+                + "<input type='number' class='form-control' id='d_input' placeholder='Differential' >"
+                + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
+            + "</div>"
+        + "</div>");
     heatDiv.find("#cycletime_input").val(piddata[type].cycle);
     heatDiv.find("#p_input").val(piddata[type].p);
     heatDiv.find("#i_input").val(piddata[type].i);
@@ -584,8 +618,22 @@ function showManual(card)
     pidsettings.empty();
     pidsettings.append("<form></form>");
     var form = pidsettings.find("form");
-    form.append("<div class='form-group form-inline row'><label for='cycletime_input' class='form-control-label col-sm-4'>Cycle Time</label><div class='col-sm-6'><input type='number' class='form-control' id='cycletime_input' placeholder='Cycle Time' /></div><label class='form-control-label col-sm-2' for='cycletime_input'>secs</label></div>");
-    form.append("<div class='form-group form-inline row'><label for='dutycycle_input' class='form-control-label col-sm-4'>Duty Cycle</label><div class='col-sm-6'><input type='number' class='form-control' id='dutycycle_input' placeholder='Duty Cycle' /></div><label class='form-control-label col-sm-2' for='dutycycle_input'>%</label></div>");
+    form.append("<div class='form-group'>"
+            + "<label class='sr-only' for='cycletime_input'>Cycle Time</label>"
+            + "<div class='input-group'>"
+                + "<div class='input-group-addon input-group-addon-label'>Cycle Time</div>"
+                + "<input type='number' class='form-control' id='cycletime_input' placeholder='Cycle Time' >"
+                + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
+            + "</div>"
+        + "</div>");
+    form.append("<div class='form-group'>"
+            + "<label class='sr-only' for='dutycycle_input'>Cycle Time</label>"
+            + "<div class='input-group'>"
+                + "<div class='input-group-addon input-group-addon-label'>Duty Cycle</div>"
+                + "<input type='number' class='form-control' id='dutycycle_input' placeholder='Duty Cycle' >"
+                + "<div class='input-group-addon input-group-addon-unit'>%</div>"
+            + "</div>"
+        + "</div>");
 
     form.find("#dutycycle_input").val(piddata.manualduty);
     form.find("#cycletime_input").val(piddata.manualtime);
@@ -609,9 +657,30 @@ function showHysteria(card)
     pidsettings.append("<form></form>");
     var form = pidsettings.find("form");
 
-    form.append("<div class='form-group form-inline row'><label for='min_input' class='form-control-label col-sm-4'>Min</label><div class='col-sm-6'><input type='number' class='form-control' id='min_input' placeholder='Minimum' /></div><label class='form-control-label col-sm-2' for='min_input'>&#176" + tempdata.scale + "</label></div>");
-    form.append("<div class='form-group form-inline row'><label for='max_input' class='form-control-label col-sm-4'>Max</label><div class='col-sm-6'><input type='number' class='form-control' id='max_input' placeholder='Maximum' /></div><label class='form-control-label col-sm-2' for='max_input'>&#176" + tempdata.scale + "</label></div>");
-    form.append("<div class='form-group form-inline row'><label for='time_input' class='form-control-label col-sm-4'>Time</label><div class='col-sm-6'><input type='number' class='form-control' id='time_input' placeholder='Time' /></div><label class='form-control-label col-sm-2' for='max_input'>minutes</label></div>");
+    form.append("<div class='form-group'>"
+            + "<label class='sr-only' for='min_input'>Min</label>"
+            + "<div class='input-group'>"
+                + "<div class='input-group-addon input-group-addon-label'>Min</div>"
+                + "<input type='number' class='form-control' id='min_input' placeholder='Min'>"
+                + "<div class='input-group-addon input-group-addon-unit'>&#176" + tempdata.scale + "</div>"
+            + "</div>"
+        + "</div>");
+    form.append("<div class='form-group'>"
+            + "<label class='sr-only' for='max_input'>Max</label>"
+            + "<div class='input-group'>"
+                + "<div class='input-group-addon input-group-addon-label'>Max</div>"
+                + "<input type='number' class='form-control' id='max_input' placeholder='Max'>"
+                + "<div class='input-group-addon input-group-addon-unit'>&#176" + tempdata.scale + "</div>"
+            + "</div>"
+        + "</div>");
+    form.append("<div class='form-group'>"
+        + "<label class='sr-only' for='time_input'>Time</label>"
+        + "<div class='input-group'>"
+            + "<div class='input-group-addon input-group-addon-label'>Time</div>"
+            + "<input type='number' class='form-control' id='time_input' placeholder='Time'>"
+            + "<div class='input-group-addon input-group-addon-unit'>Minutes</div>"
+        + "</div>"
+    + "</div>");
     form.find("#min_input").val(piddata.min);
     form.find("#max_input").val(piddata.max);
     form.find("#time_input").val(piddata.time);
