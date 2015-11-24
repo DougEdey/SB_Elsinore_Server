@@ -89,19 +89,20 @@
                                         <h4 class="modal-title" id="switches-modal-heading">Add Switch</h4>
                                     </div>
                                     <div class="modal-body">
-                                        <form id="addSwitch">
-                                            <fieldset>
-                                                <label id="name-label" for="name">Name</label>
-                                                <input type="text" class="input" name="name" id="name" />
-                                            </fieldset>
-                                            <fieldset>
-                                                <label id="gpio-label" for="gpio">GPIO</label>
-                                                <input type="text" class="input" name="gpio" id="gpio" />
-                                            </fieldset>
-                                            <fieldset>
-                                                <label id="invert-label" for="invert">Invert</label>
-                                                <input type="checkbox" class="input" name="invert" id="invert" />
-                                            </fieldset>
+                                        <form id="addSwitch" class="form-horizontal">
+                                            <div class="form-group">
+                                                <label id="name-label" class="form-control-label" for="name">Name</label>
+                                                <input type="text" class="input form-control" name="name" id="name" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label id="gpio-label" class="form-control-label" for="gpio">GPIO</label>
+                                                <input type="text" class="input form-control" name="gpio" id="gpio" />
+                                            </div>
+
+                                            <div class="checkbox form-group">
+                                                <label id="invert-label" class="form-control-label" for="invert">Invert</label>
+                                                <input type="checkbox" class="input form-control" name="invert" id="invert" />
+                                            </div>
                                         </form>
                                     </div>
 
@@ -129,19 +130,19 @@
                                         <h4 class="modal-title" id="timers-modal-heading">Add Timer</h4>
                                     </div>
                                     <div class="modal-body">
-                                        <form id="addTimer">
-                                            <fieldset>
-                                                <label id="name-label" for="name">Name</label>
-                                                <input type="text" class="input" name="name" id="name" />
-                                            </fieldset>
-                                            <fieldset>
-                                                <label id="duration-label" for="duration">Duration</label>
-                                                <input type="text" class="input" name="duration" id="duration" />
-                                            </fieldset>
-                                            <fieldset>
-                                                <label id="invert-label" for="invert">Invert</label>
-                                                <input type="checkbox" class="input" name="invert" id="invert" />
-                                            </fieldset>
+                                        <form id="addTimer" class="form-horizontal">
+                                            <div class="form-group">
+                                                <label id="name-label" class="form-control-label" for="name">Name</label>
+                                                <input type="text" class="form-control input" name="name" id="name" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label id="duration-label" class="form-control-label" for="duration">Duration</label>
+                                                <input type="text" class="form-control input" name="duration" id="duration" />
+                                            </div>
+                                            <div class="form-group">
+                                                <label id="invert-label" class="form-control-label" for="invert">Invert</label>
+                                                <input type="checkbox" class="form-control input" name="invert" id="invert" />
+                                            </div>
                                         </form>
                                     </div>
 

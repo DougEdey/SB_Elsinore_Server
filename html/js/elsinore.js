@@ -261,15 +261,19 @@ function setCardName(card, name)
                   '<h4 class="modal-title" id="exampleModalLabel">Edit '+name+'</h4>'+
                 '</div>'+
                 '<div class="modal-body">'+
-                  '<form>'+
+                  '<form class="form-horizontal">'+
                   '<input type="hidden" id="device-address" value="' + addr + '">' +
-                    '<div class="form-group form-inline row">'+
-                      '<label for="device-name" class="control-label">Name:</label>' +
-                      '<input type="text" class="form-control" id="device-name" value="'+name+'">' +
+                    '<div class="form-group">'+
+                      '<label for="device-name" class="form-control-label col-sm-3">Name</label>' +
+                      '<div class="col-sm-9">'+
+                        '<input type="text" class="form-control" id="device-name" value="'+name+'">' +
+                      '</div>' +
                     '</div>' +
-                    '<div class="form-group form-inline row">' +
-                      '<label for="heat-gpio" class="control-label">Heat GPIO:</label>' +
-                      '<input type="text" class="form-control" id="heat-gpio">' +
+                    '<div class="form-group">' +
+                      '<label for="heat-gpio" class="form-control-label col-sm-3">Heat GPIO</label>' +
+                      '<div class="col-sm-9">' +
+                        '<input type="text" class="form-control" id="heat-gpio">' +
+                      '</div>' +
                       '<div class="checkbox">'+
                       '<label>' +
                         '<input type="checkbox" id="invert-heat" value="invert">' +
@@ -277,17 +281,21 @@ function setCardName(card, name)
                       '</label>' +
                       '</div>' +
                     '</div>' +
-                    '<div class="form-group form-inline row">' +
-                      '<label for="cool-gpio" class="control-label">Cool GPIO:</label>' +
-                      '<input type="text" class="form-control" id="cool-gpio">' +
+                    '<div class="form-group">' +
+                      '<label for="device-name" class="form-control-label col-sm-3">Cool GPIO</label>' +
+                      '<div class="col-sm-9">' +
+                        '<input type="text" class="form-control" id="cool-gpio">' +
+                      '</div>' +
                       '<label>' +
                           '<input type="checkbox" id="invert-cool" value="invert">' +
                           'Invert' +
                       '</label>' +
                     '</div>' +
-                    '<div class="form-group form-inline row">' +
-                      '<label for="aux-gpio" class="control-label">Aux GPIO:</label>' +
-                      '<input type="text" class="form-control" id="aux-gpio">' +
+                    '<div class="form-group">' +
+                      '<label for="aux-gpio" class="form-control-label col-sm-3">Aux GPIO</label>' +
+                      '<div class="col-sm-9">' +
+                          '<input type="text" class="form-control" id="aux-gpio">' +
+                      '</div>' +
                       '<div class="checkbox">'+
                       '<label>' +
                         '<input type="checkbox" id="invert-aux" value="invert">' +
@@ -295,13 +303,17 @@ function setCardName(card, name)
                       '</label>' +
                       '</div>' +
                     '</div>' +
-                    '<div class="form-group form-inline row">' +
-                      '<label for="calibration" class="control-label">Calibration:</label>' +
-                      '<input type="number" class="form-control" id="calibration">' +
+                    '<div class="form-group">' +
+                      '<label for="calibration" class="form-control-label col-sm-3">Calibration</label>' +
+                      '<div class="col-sm-9">' +
+                        '<input type="number" class="form-control" id="calibration">' +
+                      '</div>' +
                     '</div>' +
-                    '<div class="form-group form-inline row">' +
-                      '<label for="shutoff" class="control-label">Shutdown Temp:</label>' +
-                      '<input type="number" class="form-control" id="shutoff">' +
+                    '<div class="form-group">' +
+                      '<label class="form-control-label col-sm-3" for="shutoff">Shutdown Temp</label>' +
+                      '<div class="col-sm-9">' +
+                        '<input type="number" class="form-control" id="shutoff">' +
+                    '</div>' +
                     '</div>' +
                   '</form>' +
                 '</div>' +
@@ -1343,18 +1355,30 @@ function showConfig()
         url: '/getsystemsettings',
         dataType: 'json',
         success: function(json) {
-        var settingsHTML = "<form id='settings-form'>"
-                + "<div class='checkbox'><label for='restore'>Restore State On Startup</label>"
-                + '<input type="checkbox" name="restore" id="restore">'
+        var settingsHTML = "<form id='settings-form form-horizontal'>"
+                + "<div class='form-group'>"
+                + "<div class='checkbox'><label class='form-control-label' >"
+                + '<input type="checkbox" name="restore" id="restore">Restore State On Startup</label>'
                 + "</div>"
-                +"<div class='checkbox'><label for='recorderEnabled'>Recorder Enabled</label>"
-                +'<input type="checkbox" name="recorder" id="recorder">'
                 + "</div>"
-                + "<div class='checkbox'><label for='recorderDiff'>Recording Tolerance</label>"
-                + '<input type="number" step="0.01" min="0" id="recorderDiff" name="recorderDiff">'
+                + "<div class='form-group'>"
+                + "<div class='checkbox'><label>"
+                +'<input type="checkbox" class="form-control-label" name="recorder" id="recorder">Recorder Enabled</label>'
                 + "</div>"
-                + "<div class='checkbox'><label for='recorderTime'>Recorder Time (ms)</label>"
-                + '<input type="number" id="recorderTime" min="1000" name="recorderTime">'
+                + "</div>"
+                + "<div class='form-group'>"
+                + "<div class='checkbox'><label for='recorderDiff' class='form-control-label'>Recording Tolerance</label>"
+                + "<div class='input-group'>"
+                    + "<input type='number' step='0.01' min='0' name='recorderDiff' class='form-control' id='recorderDiff' placeholder='tolerance' >"
+                    + "<div class='input-group-addon input-group-addon-unit'>&#176</div>"
+                + "</div>"
+                + "</div>"
+                + "<div class='form-group'>"
+                + "<div class='checkbox'><label for='recorderTime'>Recorder Time</label>"
+                + "<div class='input-group'>"
+                    + "<input type='number' step='1' min='5000' name='recorderTime' class='form-control' id='recorderTime' placeholder='time' >"
+                    + "<div class='input-group-addon input-group-addon-unit'>ms</div>"
+                + "</div>"
                 + "</div>"
                 + "<button class='btn btn-success' onclick='saveSystem(this);'>Save</button>"
                 + "</form>"
