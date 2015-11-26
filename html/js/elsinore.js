@@ -208,7 +208,35 @@ function parseData(data)
             recipeName = data.recipe;
         }
         showRecipes(data.recipeCount, recipeName);
+        $("#hopAdditions").show();
     }
+    else
+    {
+        $("#hopAdditions").hide();
+    }
+
+    if ("message" in data )
+    {
+        var messageElement = $("#message");
+        if (data.message == "")
+        {
+            messageElement.text("");
+            messageElement.hide();
+        }
+        else
+        {
+            messageElement.text(data.message);
+            messageElement.show();
+        }
+    }
+}
+
+function clearMessage()
+{
+    $.ajax({
+        type: 'GET',
+        url: '/clearstatus'
+    });
 }
 
 function requestData()
