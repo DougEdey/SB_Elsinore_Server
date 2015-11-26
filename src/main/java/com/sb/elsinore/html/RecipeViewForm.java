@@ -34,7 +34,7 @@ public class RecipeViewForm implements Renderable {
             return;
         }
 
-        html.macros().stylesheet("/templates/static/bootstrap-3.0.0/css/bootstrap.min.css");
+        html.macros().stylesheet("/bootstrap-v4/css/bootstrap.min.css");
 
         html.div(id("recipeView").class_("text-center"));
         // Do we have mash steps?
