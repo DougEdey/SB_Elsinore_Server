@@ -183,6 +183,11 @@ function parseTimers(timers)
 
 function parseData(data)
 {
+    if ("breweryName" in data && $("#brewery_name").text() !== data.breweryName)
+    {
+        $("#brewery_name").text(data.breweryName);
+    }
+
     if ("vessels" in data)
     {
         parseVessels(data.vessels);
@@ -208,10 +213,13 @@ function parseData(data)
             recipeName = data.recipe;
         }
         showRecipes(data.recipeCount, recipeName);
+        $("#recipeName").text(recipeName);
+        $("#recipeName").show();
         $("#hopAdditions").show();
     }
     else
     {
+        $("#recipeName").hide();
         $("#hopAdditions").hide();
     }
 
@@ -1299,9 +1307,9 @@ function clearStatus() {
 
 function showRecipes(count, name)
 {
-    if (name != null && false)
+    if (name != null && count == 1)
     {
-        $("#currentRecipe").html(name);
+        $("#currentRecipe").hide();
     }
     else
     {
@@ -1310,6 +1318,7 @@ function showRecipes(count, name)
        		type : 'GET',
        		success : function(data) {
        			$("#currentRecipe").html(data);
+       			$("#currentRecipe").show();
        		}
        	});
     }
@@ -1438,5 +1447,30 @@ function saveSystem(element)
 
 function changeName()
 {
-
-}
+    swal({
+        title: "An input!",
+        text: "Write something interesting:",
+        type: "input",
+        showCancelButton: true,
+        closeOnConfirm: false,
+        animation: "slide-from-top",
+        inputPlaceholder: "Enter a new name for your brewery" },
+        function(inputValue){
+            if (inputValue === false) return false;
+            if (inputValue === "") {
+                swal.showInputError("You need to write something!");
+                return false;
+            }
+            $.ajax({
+                url : 'setBreweryName',
+                type : 'POST',
+                data: {name: inputValue},
+                dataType: "text",
+                success : function(data) {
+                    data = null;
+                    swal({title: "Completed", text:"Brewery name updated"});
+                }
+            });
+        }
+    );
+};
