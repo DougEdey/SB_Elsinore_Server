@@ -32,7 +32,7 @@ public class PhSensorForm implements Renderable {
                 .input(type("text").class_("form-control")
                         .name("name").id("name")
                         .value(phSensor.getName()));
-        html.select(class_("holo-spinner").name("select_input")
+        html.select(class_("form-control").name("select_input")
                 .id("select_input").onChange("selectedInput(this);").onLoad("selectedInput(this);"));
 
         html.option(value("ain")
@@ -78,7 +78,7 @@ public class PhSensorForm implements Renderable {
         }
         html.div(id("ds_div").name("ds_div").style(styleString));
 
-                html.select(class_("holo-spinner").name("dsAddress")
+                html.select(class_("form-control").name("dsAddress")
                         .id("dsAddress").onClick("selectPhAddress(this);"));
                 html.option(value("").selected_if(
                         "".equals(phSensor.getDsAddress())))
@@ -124,7 +124,7 @@ public class PhSensorForm implements Renderable {
                                 .value(phSensor.geti2cChannel())
                                 .add("placeholder", Messages.I2C_DEVICE_CHANNEL)
                 );
-                html.select(class_("holo-spinner").name("i2c_model")
+                html.select(class_("form-control").name("i2c_model")
                         .id("i2c_model"));
                 html.option(value("").selected_if(
                         "".equals(phSensor.getI2CDevType())))
@@ -139,7 +139,7 @@ public class PhSensorForm implements Renderable {
 
                 html._select();
         html._div();
-                html.select(class_("holo-spinner").name("ph_model")
+                html.select(class_("form-control").name("ph_model")
                         .id("ph_model"));
                 html.option(value("").selected_if(
                         "".equals(phSensor.getDsAddress())))
