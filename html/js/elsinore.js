@@ -737,6 +737,24 @@ function showHysteria(card)
 
 function submitForm(element)
 {
+    if (element.id.lastIndexOf("-editPhSensor") != -1) {
+    		var sensorName = element.id.substring(0, element.id.lastIndexOf("-editPhSensor"));
+    		var formdata = {}
+    		var serialized = $(element).serializeObject();
+    		serialized.new_name = escape(serialized.name)
+    		formdata[sensorName] = JSON.stringify(serialized);
+    		$.ajax({
+    			url : 'addphsensor',
+    			type : 'POST',
+    			data : formdata,
+    			dataType : 'json',
+    			success : function(data) {
+    				data = null
+    			}
+    		});
+    		location.reload();
+    		return;
+    }
     var settings = $(element).closest("#pidsettings");
     var device = $(element).closest(".card-block")[0].id;
     var mButton = $(element).closest(".card-block").find("#mode").find(".btn-success")[0];
@@ -875,6 +893,18 @@ $(document).ready(function() {
        }
     });
     requestData();
+    // When the Analog box is shown grab the analog data and render it
+    $('#analog-modal').on('show.bs.modal', function (event) {
+          var button = $(event.relatedTarget) // Button that triggered the modal
+          var modal = $(this);
+          $.ajax({
+            url : '/getphsensorform',
+            type : 'GET',
+            success : function(data) {
+                $("#analog-modal .modal-body").html(data);
+            }
+          })
+    });
     setInterval("requestData()",10000);
 });
 
@@ -1474,3 +1504,25 @@ function changeName()
         }
     );
 };
+
+function selectedInput(input)
+{
+    if (input.selectedOptions[0].value == "ds2450")
+    {
+        $(input.parentElement).find("div[id=ds_div]").css("display", "block");
+        $(input.parentElement).find("div[id=ain_div]").css("display", "none");
+        $(input.parentElement).find("div[id=i2c_div]").css("display", "none");
+    }
+    else if (input.selectedOptions[0].value == "ain")
+    {
+        $(input.parentElement).find("div[id=ds_div]").css("display", "none");
+        $(input.parentElement).find("div[id=ain_div]").css("display", "block");
+        $(input.parentElement).find("div[id=i2c_div]").css("display", "none");
+    }
+    else if (input.selectedOptions[0].value == "i2c")
+    {
+        $(input.parentElement).find("div[id=ds_div]").css("display", "none");
+        $(input.parentElement).find("div[id=ain_div]").css("display", "none");
+        $(input.parentElement).find("div[id=i2c_div]").css("display", "block");
+    }
+}
