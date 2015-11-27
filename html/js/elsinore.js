@@ -1087,6 +1087,7 @@ function submitNewTriggerStep(button) {
 function parseSwitches(switches)
 {
     $.each(switches, function(name, status){
+        name = decodeURI(name);
         var switchEle = $("#switches #" + name);
         if (switchEle.length == 0)
         {
