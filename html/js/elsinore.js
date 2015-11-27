@@ -34,6 +34,11 @@ function parseVessels(vessels)
         if (vesselStatus.tempprobe.hidden)
         {
             $("#hiddenProbes").show();
+            var probeCard = $("#probes  #" + vesselStatus.deviceaddr);
+            if (probeCard.eq(0).size() != 0)
+            {
+                probeCard.remove();
+            }
             var vOption = $("#hiddenProbes #probeList option[value='"+vesselStatus.deviceaddr+"']");
             if (vOption.size() == 0)
             {
@@ -49,6 +54,11 @@ function parseVessels(vessels)
                 vOption.data("pid", vesselStatus.piddata);
             }
             return;
+        }
+        var vOption = $("#hiddenProbes #probeList option[value='"+vesselStatus.deviceaddr+"']");
+        if (vOption.size() != 0)
+        {
+            vOption.remove();
         }
         var probeCard = $("#probes  #" + vesselStatus.deviceaddr);
         if (probeCard.eq(0).size() == 0)
@@ -925,7 +935,7 @@ function handleTriggerDragEnd(e) {
 
 function saveDevice(submitButton)
 {
-    var form = $(submitButton).parent().parent().find("form");
+    var form = $(submitButton).closest("form");
     var data = {};
     data['address'] = form.find('#device-address').val();
     data['new_name'] = form.find('#device-name').val();
@@ -943,7 +953,7 @@ function saveDevice(submitButton)
         type : 'POST',
         data : data,
         data : data,
-        dataType : 'json',
+        dataType : 'text',
         success : function(data) {
              data = null
          },
@@ -951,6 +961,7 @@ function saveDevice(submitButton)
              alert("Status: " + textStatus); alert("Error: " + errorThrown);
          }
     });
+    swal({title:"Updated!"});
 }
 
 function handleTriggerAdd(e)
@@ -968,6 +979,7 @@ function handleTriggerAdd(e)
             $("#edit-modal-heading").html("Add New Trigger");
             $("#edit-modal .modal-body").html(html);
             $("#edit-modal .modal-body").attr("height","100%");
+            swal({title:"Updated!"});
         }
     });
 }
@@ -980,6 +992,7 @@ function toggleVisibility(e)
         data: {device: pid},
         dataType: 'text'
     });
+    swal({title:"Updated!"});
 }
 
 function handleTriggerEdit(e)
