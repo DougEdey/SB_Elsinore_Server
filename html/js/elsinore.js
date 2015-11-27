@@ -1413,17 +1413,18 @@ function saveSystem(element)
 
 function changeName()
 {
+
     swal({
         title: "Brewery Name",
-        type: "input",
+        html:'<p><input id="input-field">',
         showCancelButton: true,
-        closeOnConfirm: false,
-        animation: "slide-from-top",
-        inputPlaceholder: "Enter a new name for your brewery" },
-        function(inputValue){
+        closeOnConfirm: false},
+        function(){
+
+            var inputValue = $('#input-field').val();
             if (inputValue === false) return false;
             if (inputValue === "") {
-                swal.showInputError("Please provide a name, or press cancel!");
+                //swal.showInputError("Please provide a name, or press cancel!");
                 return false;
             }
             $.ajax({
