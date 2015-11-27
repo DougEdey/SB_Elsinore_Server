@@ -955,8 +955,7 @@ function saveDevice(submitButton)
 
 function handleTriggerAdd(e)
 {
-    var target = getCard($(e.target));
-    var pid = getCard(e).id;
+    var pid = $(e).closest("form").find("#device-address").val();
 
     $("#edit-modal").modal('toggle');
     $("#edit-modal").data('device', pid);
