@@ -34,10 +34,20 @@ function parseVessels(vessels)
         if (vesselStatus.tempprobe.hidden)
         {
             $("#hiddenProbes").show();
-            $("#hiddenProbes #probeList").append($("<option>", {
-                value:vesselStatus.deviceAddr,
-                text:vesselStatus.name
-            }));
+            var vOption = $("#hiddenProbes #probeList option[value='"+vesselStatus.deviceaddr+"']");
+            if (vOption.size() == 0)
+            {
+                $("#hiddenProbes #probeList").append($("<option>", {
+                         value:vesselStatus.deviceaddr,
+                         text:vesselStatus.name
+                     }));
+                vOption = $("#hiddenProbes #probeList option[value='"+vesselStatus.deviceaddr+"']");
+            }
+            vOption.data("temp", vesselStatus.tempprobe);
+            if ("piddata" in vesselStatus)
+            {
+                vOption.data("pid", vesselStatus.piddata);
+            }
             return;
         }
         var probeCard = $("#probes  #" + vesselStatus.deviceaddr);
@@ -53,6 +63,10 @@ function parseVessels(vessels)
             loadPIDData(probeCard, vesselStatus.pidstatus);
         }
     });
+    if ($("#hiddenProbes #probeList option").length == 0)
+    {
+        $("#hiddenProbes").hide();
+    }
 }
 
 function parseTriggers(triggers)
@@ -299,72 +313,7 @@ function setCardName(card, name)
     var title = card.find("#card-header");
     if (title.size() == 0)
     {
-        card.prepend("<div class='card-header' id='card-header' data-toggle='modal' data-target='#deviceModal' data-device='"+addr+"'></div>"+
-        '<div class="modal fade" id="deviceModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">' +
-            '<div class="modal-dialog" role="document">' +
-              '<div class="modal-content">'+
-                '<div class="modal-header">'+
-                  '<button type="button" class="close" data-dismiss="modal" aria-label="Close">'+
-                    '<span aria-hidden="true">&times;</span>'+
-                    '<span class="sr-only">Close</span>'+
-                  '</button>'+
-                  '<h4 class="modal-title" id="exampleModalLabel">Edit '+name+'</h4>'+
-                '</div>'+
-                '<div class="modal-body">'+
-                  '<form>'+
-                  '<input type="hidden" id="device-address" value="' + addr + '">' +
-                    '<div class="input-group">'+
-                        '<div class="input-group-addon input-group-addon-label">Name</div>' +
-                        '<input type="text" class="form-control" id="device-name" value="'+name+'">' +
-                    '</div>' +
-                    '<div class="input-group">' +
-                        '<div class="input-group-addon input-group-addon-label">Heat GPIO</div>' +
-                        '<input type="text" class="form-control" id="heat-gpio">' +
-                      '<div class="checkbox">'+
-                      '<label>' +
-                        '<input type="checkbox" id="invert-heat" value="invert">' +
-                        'Invert' +
-                      '</label>' +
-                      '</div>' +
-                    '</div>' +
-                    '<div class="input-group">' +
-                        '<div class="input-group-addon input-group-addon-label">Cool GPIO</div>' +
-                        '<input type="text" class="form-control" id="cool-gpio">' +
-                        '<label>' +
-                          '<input type="checkbox" id="invert-cool" value="invert">' +
-                          'Invert' +
-                      '</label>' +
-                    '</div>' +
-                    '<div class="input-group">' +
-                      '<div class="input-group-addon input-group-addon-label">Aux GPIO</div>' +
-                      '<input type="text" class="form-control" id="aux-gpio">' +
-                      '<div class="checkbox">'+
-                      '<label>' +
-                        '<input type="checkbox" id="invert-aux" value="invert">' +
-                        'Invert' +
-                      '</label>' +
-                      '</div>' +
-                    '</div>' +
-                    '<div class="input-group">' +
-                        '<div class="input-group-addon input-group-addon-label">Calibration</div>' +
-                        '<input type="number" class="form-control" id="calibration">' +
-                    '</div>' +
-                    '<div class="input-group">' +
-                        '<div class="input-group-addon input-group-addon-label">Shutdown Temp</div>' +
-                        '<input type="number" class="form-control" id="shutoff">' +
-                    '</div>' +
-                  '</form>' +
-                '</div>' +
-
-                '<div class="modal-footer">' +
-                  '<button type="button" id="visibility" class="btn btn-secondary" data-dismiss="modal" onClick="toggleVisibility(this);">Show</button>' +
-                  '<button type="button" class="btn btn-secondary" data-dismiss="modal" onClick="handleTriggerAdd(this);">Add New Trigger</button>' +
-                  '<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>' +
-                  '<button type="button" class="btn btn-primary" onclick="saveDevice(this);">Save Changes</button>' +
-                '</div>' +
-              '</div>' +
-            '</div>' +
-          '</div>');
+        card.prepend("<div class='card-header' id='card-header' onDblClick='editDevice(this);' data-device='"+addr+"'></div>");
         title = card.find("#card-header");
     }
 
@@ -372,44 +321,11 @@ function setCardName(card, name)
     {
         title.text(name);
     }
-
-    title.parent().find('#deviceModal').on('show.bs.modal', function (event) {
-      var button = $(event.relatedTarget) // Button that triggered the modal
-      var recipient = button.data('device') // Extract info from data-* attributes
-      // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
-      // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
-      var modal = $(this)
-      var card = $(getCard(button));
-      var piddata = card.data("pid");
-      var tempprobe = card.data("temp");
-
-      if (tempprobe.hidden)
-      {
-        modal.find("#visibility").text("Show");
-      }
-      else
-      {
-        modal.find("#visibility").text("Hide");
-      }
-
-      if (piddata != undefined)
-      {
-          modal.find('#cool-gpio').val(piddata.cool.gpio);
-          modal.find('#heat-gpio').val(piddata.heat.gpio);
-          modal.find('#invert-cool')[0].checked = piddata.cool.inverted;
-          modal.find('#invert-heat')[0].checked = piddata.heat.inverted;
-      }
-      if (tempprobe != undefined)
-      {
-          modal.find('#calibration').val(tempprobe.calibration);
-          modal.find('#shutoff').val(tempprobe.cutoff);
-      }
-    })
 }
 
 function loadTempProbeData(card, tempprobe)
 {
-    card.data("temp", tempprobe);
+    card.find('.card-header').data("temp", tempprobe);
     var value = card.find("#value");
     if (value.size() == 0)
     {
@@ -419,27 +335,11 @@ function loadTempProbeData(card, tempprobe)
     units = card.find("#units");
     value.html(tempprobe.temp.toFixed(2));
     units.html("&#176" + tempprobe.scale);
-
-    if (tempprobe.hidden) 
-    {
-        if (card.is(":visible"))
-        {
-            card.hide();
-        }
-    }
-    else 
-    {
-        if (card.is(":hidden"))
-        {
-            card.show();
-        }
-    }
-
 }
 
 function loadPIDData(card, pid)
 {
-    card.data("pid", pid);
+    card.find('.card-header').data("pid", pid);
 
     // Setup the progress bar first
     var pidstatus = card.find("#status");
@@ -1075,8 +975,7 @@ function handleTriggerAdd(e)
 
 function toggleVisibility(e)
 {
-    var target = getCard($(e.target));
-    var pid = getCard(e).id;
+    var pid = $(e).closest("form").find("#device-address").val();
     $.ajax({
         url: '/toggleDevice',
         data: {device: pid},
@@ -1548,4 +1447,94 @@ function selectedInput(input)
         $(input.parentElement).find("div[id=ain_div]").css("display", "none");
         $(input.parentElement).find("div[id=i2c_div]").css("display", "block");
     }
+}
+
+function editHidden(element)
+{
+    var option = $(element).find("option:selected");
+    showDeviceEdit(option, option.val(), option.text());
+}
+function editDevice(element)
+{
+    showDeviceEdit(element, $(element).data("device"), $(element).text());
+}
+
+function showDeviceEdit(element, addr, name)
+{
+    var piddata = $(element).data("pid");
+    var temp = $(element).data("temp");
+
+    swal({title:"Edit Device",
+    html:'<form class="form-horizontal" id="editDevice">'+
+          '<input type="hidden" id="device-address" value="' + addr + '">' +
+            '<div class="input-group">'+
+                '<div class="input-group-addon input-group-addon-label">Name</div>' +
+                '<input type="text" class="form-control" id="device-name" value="'+name+'">' +
+            '</div>' +
+            '<div class="input-group">' +
+                '<div class="input-group-addon input-group-addon-label">Heat GPIO</div>' +
+                '<input type="text" class="form-control" id="heat-gpio">' +
+              '<div class="checkbox">'+
+              '<label>' +
+                '<input type="checkbox" id="invert-heat" value="invert">' +
+                'Invert' +
+              '</label>' +
+              '</div>' +
+            '</div>' +
+            '<div class="input-group">' +
+                '<div class="input-group-addon input-group-addon-label">Cool GPIO</div>' +
+                '<input type="text" class="form-control" id="cool-gpio">' +
+                '<label>' +
+                  '<input type="checkbox" id="invert-cool" value="invert">' +
+                  'Invert' +
+              '</label>' +
+            '</div>' +
+            '<div class="input-group">' +
+              '<div class="input-group-addon input-group-addon-label">Aux GPIO</div>' +
+              '<input type="text" class="form-control" id="aux-gpio">' +
+              '<div class="checkbox">'+
+              '<label>' +
+                '<input type="checkbox" id="invert-aux" value="invert">' +
+                'Invert' +
+              '</label>' +
+              '</div>' +
+            '</div>' +
+            '<div class="input-group">' +
+                '<div class="input-group-addon input-group-addon-label">Calibration</div>' +
+                '<input type="number" class="form-control" id="calibration">' +
+            '</div>' +
+            '<div class="input-group">' +
+                '<div class="input-group-addon input-group-addon-label">Shutdown Temp</div>' +
+                '<input type="number" class="form-control" id="shutoff">' +
+            '</div>' +
+            '<div class="input-group">' +
+             '<div id="visibility" class="btn btn-primary" onClick="toggleVisibility(this);">Show</div>' +
+              '<div class="btn btn-primary" onClick="handleTriggerAdd(this);">Add New Trigger</div>' +
+              '<div class="btn btn-primary" onclick="saveDevice(this);">Save Changes</div>' +
+              '</div>'+
+          '</form>'
+       });
+        var modal = $("#editDevice");
+         if (temp.hidden)
+         {
+           modal.find("#visibility").text("Show");
+         }
+         else
+         {
+           modal.find("#visibility").text("Hide");
+         }
+
+         if (piddata != undefined)
+         {
+             modal.find('#cool-gpio').val(piddata.cool.gpio);
+             modal.find('#heat-gpio').val(piddata.heat.gpio);
+             modal.find('#invert-cool')[0].checked = piddata.cool.inverted;
+             modal.find('#invert-heat')[0].checked = piddata.heat.inverted;
+         }
+         if (temp != undefined)
+         {
+             modal.find('#calibration').val(temp.calibration);
+             modal.find('#shutoff').val(temp.cutoff);
+         }
+
 }
