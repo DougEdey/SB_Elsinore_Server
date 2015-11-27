@@ -533,9 +533,6 @@ public class LaunchControl {
         // use the temp list to determine if we have a PID to go with
         JSONArray vesselJSON = new JSONArray();
         for (Temp t : tempList) {
-            if (LaunchControl.pageLock && t.isHidden()) {
-                continue;
-            }
 
             /* Check for a PID */
             PID tPid = findPID(t.getName());

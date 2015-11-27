@@ -31,6 +31,15 @@ function parseVessels(vessels)
 {
     $.each(vessels, function (vesselProbe, vesselStatus)
     {
+        if (vesselStatus.tempprobe.hidden)
+        {
+            $("#hiddenProbes").show();
+            $("#hiddenProbes #probeList").append($("<option>", {
+                value:vesselStatus.deviceAddr,
+                text:vesselStatus.name
+            }));
+            return;
+        }
         var probeCard = $("#probes  #" + vesselStatus.deviceaddr);
         if (probeCard.eq(0).size() == 0)
         {
@@ -50,7 +59,12 @@ function parseTriggers(triggers)
 {
     $.each(triggers, function (vesselProbe, triggerList)
     {
+        if ($("#probes #" + vesselProbe).size() == 0)
+        {
+            return;
+        }
         var triggerTable = $("#probes #" + vesselProbe + " #triggers");
+
         if (triggerTable.eq(0).size() == 0)
         {
             $("#probes #" + vesselProbe).append("<ul class='list-group' id='triggers'></ul>");
@@ -299,17 +313,13 @@ function setCardName(card, name)
                 '<div class="modal-body">'+
                   '<form>'+
                   '<input type="hidden" id="device-address" value="' + addr + '">' +
-                    '<div class="form-group">'+
-                      '<label for="device-name" class="form-control-label col-sm-3">Name</label>' +
-                      '<div class="col-sm-9">'+
+                    '<div class="input-group">'+
+                        '<div class="input-group-addon input-group-addon-label">Name</div>' +
                         '<input type="text" class="form-control" id="device-name" value="'+name+'">' +
-                      '</div>' +
                     '</div>' +
-                    '<div class="form-group">' +
-                      '<label for="heat-gpio" class="form-control-label col-sm-3">Heat GPIO</label>' +
-                      '<div class="col-sm-9">' +
+                    '<div class="input-group">' +
+                        '<div class="input-group-addon input-group-addon-label">Heat GPIO</div>' +
                         '<input type="text" class="form-control" id="heat-gpio">' +
-                      '</div>' +
                       '<div class="checkbox">'+
                       '<label>' +
                         '<input type="checkbox" id="invert-heat" value="invert">' +
@@ -317,21 +327,17 @@ function setCardName(card, name)
                       '</label>' +
                       '</div>' +
                     '</div>' +
-                    '<div class="form-group">' +
-                      '<label for="device-name" class="form-control-label col-sm-3">Cool GPIO</label>' +
-                      '<div class="col-sm-9">' +
+                    '<div class="input-group">' +
+                        '<div class="input-group-addon input-group-addon-label">Cool GPIO</div>' +
                         '<input type="text" class="form-control" id="cool-gpio">' +
-                      '</div>' +
-                      '<label>' +
+                        '<label>' +
                           '<input type="checkbox" id="invert-cool" value="invert">' +
                           'Invert' +
                       '</label>' +
                     '</div>' +
-                    '<div class="form-group">' +
-                      '<label for="aux-gpio" class="form-control-label col-sm-3">Aux GPIO</label>' +
-                      '<div class="col-sm-9">' +
-                          '<input type="text" class="form-control" id="aux-gpio">' +
-                      '</div>' +
+                    '<div class="input-group">' +
+                      '<div class="input-group-addon input-group-addon-label">Aux GPIO</div>' +
+                      '<input type="text" class="form-control" id="aux-gpio">' +
                       '<div class="checkbox">'+
                       '<label>' +
                         '<input type="checkbox" id="invert-aux" value="invert">' +
@@ -339,22 +345,19 @@ function setCardName(card, name)
                       '</label>' +
                       '</div>' +
                     '</div>' +
-                    '<div class="form-group">' +
-                      '<label for="calibration" class="form-control-label col-sm-3">Calibration</label>' +
-                      '<div class="col-sm-9">' +
+                    '<div class="input-group">' +
+                        '<div class="input-group-addon input-group-addon-label">Calibration</div>' +
                         '<input type="number" class="form-control" id="calibration">' +
-                      '</div>' +
                     '</div>' +
-                    '<div class="form-group">' +
-                      '<label class="form-control-label col-sm-3" for="shutoff">Shutdown Temp</label>' +
-                      '<div class="col-sm-9">' +
+                    '<div class="input-group">' +
+                        '<div class="input-group-addon input-group-addon-label">Shutdown Temp</div>' +
                         '<input type="number" class="form-control" id="shutoff">' +
-                    '</div>' +
                     '</div>' +
                   '</form>' +
                 '</div>' +
 
                 '<div class="modal-footer">' +
+                  '<button type="button" id="visibility" class="btn btn-secondary" data-dismiss="modal" onClick="toggleVisibility(this);">Show</button>' +
                   '<button type="button" class="btn btn-secondary" data-dismiss="modal" onClick="handleTriggerAdd(this);">Add New Trigger</button>' +
                   '<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>' +
                   '<button type="button" class="btn btn-primary" onclick="saveDevice(this);">Save Changes</button>' +
@@ -379,6 +382,16 @@ function setCardName(card, name)
       var card = $(getCard(button));
       var piddata = card.data("pid");
       var tempprobe = card.data("temp");
+
+      if (tempprobe.hidden)
+      {
+        modal.find("#visibility").text("Show");
+      }
+      else
+      {
+        modal.find("#visibility").text("Hide");
+      }
+
       if (piddata != undefined)
       {
           modal.find('#cool-gpio').val(piddata.cool.gpio);
@@ -1057,6 +1070,17 @@ function handleTriggerAdd(e)
             $("#edit-modal .modal-body").html(html);
             $("#edit-modal .modal-body").attr("height","100%");
         }
+    });
+}
+
+function toggleVisibility(e)
+{
+    var target = getCard($(e.target));
+    var pid = getCard(e).id;
+    $.ajax({
+        url: '/toggleDevice',
+        data: {device: pid},
+        dataType: 'text'
     });
 }
 

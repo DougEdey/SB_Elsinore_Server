@@ -413,6 +413,7 @@ public final class PID implements Runnable {
      * @param gpio The GPIO to use as an aux
      */
     public void setAux(final String gpio) {
+        if (gpio == null || gpio.length() == 0) return;
         this.auxGPIO = detectGPIO(gpio);
 
         if (this.auxGPIO == null || auxGPIO.equals("")) {

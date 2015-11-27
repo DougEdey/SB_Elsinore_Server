@@ -45,6 +45,7 @@
                     <li id="graph" class="nav-item"><a class="nav-link" href="/html/graph.html" target="_blank">Data Graph</a></li>
                     <li id="recipeName" class="nav-item"></li>
                     <li id="hopAdditions" class="nav-item"><a class="nav-link" href="#" onclick="showHopAdditions();">Hop Additions</a></li>
+                    <li id="hiddenProbes" class="nav-item"><select id="probeList" onSelect="editHidden(this)"></select></li>
                 </ul>
                 <div id="message"  onClick="clearMessage();" class="alert alert-info"></div>
             </div>
@@ -94,18 +95,18 @@
                                     </div>
                                     <div class="modal-body">
                                         <form id="addSwitch" class="form-horizontal">
-                                            <div class="form-group">
-                                                <label id="name-label" class="form-control-label" for="name">Name</label>
+                                            <div class="input-group">
+                                                <div class='input-group-addon input-group-addon-label'>Name</div>
                                                 <input type="text" class="input form-control" name="name" id="name" />
                                             </div>
-                                            <div class="form-group">
-                                                <label id="gpio-label" class="form-control-label" for="gpio">GPIO</label>
+                                            <div class="input-group">
+                                                <div class='input-group-addon input-group-addon-label'>GPIO</div>
                                                 <input type="text" class="input form-control" name="gpio" id="gpio" />
                                             </div>
 
-                                            <div class="checkbox form-group">
-                                                <label id="invert-label" class="form-control-label" for="invert">Invert</label>
-                                                <input type="checkbox" class="input form-control" name="invert" id="invert" />
+                                            <div class="checkbox">
+                                                <label id="invert-label" for="invert">Invert</label>
+                                                <input type="checkbox" name="invert" id="invert" />
                                             </div>
                                         </form>
                                     </div>
