@@ -1088,7 +1088,7 @@ function parseSwitches(switches)
 {
     $.each(switches, function(name, status){
         name = decodeURI(name);
-        var switchEle = $("#switches #" + name);
+        var switchEle = $("#switches [id='" + name +"']");
         if (switchEle.length == 0)
         {
             $("#switches .card-body").append("<button id='"+name+"' class='btn' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'>"+name+"</button>");
