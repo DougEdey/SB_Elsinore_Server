@@ -44,7 +44,7 @@ function parseVessels(vessels)
             {
                 $("#hiddenProbes #probeList").append($("<option>", {
                          value:vesselStatus.deviceaddr,
-                         text:vesselStatus.name
+                         text:decodeURI(vesselStatus.name)
                      }));
                 vOption = $("#hiddenProbes #probeList option[value='"+vesselStatus.deviceaddr+"']");
             }
@@ -66,7 +66,7 @@ function parseVessels(vessels)
             probeCard = addProbeCard(vesselStatus.deviceaddr, vesselStatus.tempprobe.position);
         }
         // Set card name
-        setCardName(probeCard, vesselStatus.name);
+        setCardName(probeCard, decodeURI(vesselStatus.name));
         loadTempProbeData(probeCard, vesselStatus.tempprobe);
         if ("pidstatus" in vesselStatus)
         {
@@ -182,7 +182,7 @@ function parseTimers(timers)
             $("#timers").append("<div class='timer-row' id='"+name+"'>"+
                     "<div class='row'>" +
                         "<div class='form-group form-inline row'>" +
-                            "<label for='timer' id='title' class='control-label'>"+originalName+"</label>" +
+                            "<label for='timer' onclick='editTimer(this);' id='title' class='control-label'>"+originalName+"</label>" +
                             "<input type='text' id='timer' name='timer' class='timer-body form-control timer' placeholder='0 sec' />" +
                             "<button class='btn btn-success start-timer-btn' onClick='startTimer(this);'>Start</button>" +
                             "<button class='btn btn-success resume-timer-btn hidden' onClick='startTimer(this);'>Resume</button>" +
@@ -664,7 +664,7 @@ function submitForm(element)
     		var sensorName = element.id.substring(0, element.id.lastIndexOf("-editPhSensor"));
     		var formdata = {}
     		var serialized = $(element).serializeObject();
-    		serialized.new_name = escape(serialized.name)
+    		serialized.new_name = encodeURI(serialized.name)
     		formdata[sensorName] = JSON.stringify(serialized);
     		$.ajax({
     			url : 'addphsensor',
@@ -938,7 +938,7 @@ function saveDevice(submitButton)
     var form = $(submitButton).closest("form");
     var data = {};
     data['address'] = form.find('#device-address').val();
-    data['new_name'] = form.find('#device-name').val();
+    data['new_name'] = encodeURI(form.find('#device-name').val());
     data['new_cool_gpio'] = form.find('#cool-gpio').val();
     data['new_heat_gpio'] = form.find('#heat-gpio').val();
     data['aux_gpio'] = form.find('#aux-gpio').val();
@@ -1146,7 +1146,7 @@ function editSwitch(element)
         success: function(switchSettings) {
             $("#switches-modal").modal();
             $("#switches-modal-heading").text("Edit Switch");
-            $("#switches-modal #name").val(switchSettings.name);
+            $("#switches-modal #name").val(decodeURI(switchSettings.name));
             $("#switches-modal #gpio").val(switchSettings.gpio);
             $("#switches-modal #invert").attr('checked', switchSettings.inverted);
         }
@@ -1173,7 +1173,7 @@ function editTimer(element)
         dataType: 'json',
         success: function(timerSettings) {
             $("#timers-modal-heading").text("Edit Timer")
-            $("#timers-modal #name").val(timerSettings.name);
+            $("#timers-modal #name").val(decodeURI(timerSettings.name));
             $("#timers-modal #duration").val(timerSettings.duration);
             $("#timers-modal #invert").attr('checked', timerSettings.inverted);
         }
