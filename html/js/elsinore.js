@@ -1478,8 +1478,7 @@ function saveSystem(element)
 function changeName()
 {
     swal({
-        title: "An input!",
-        text: "Write something interesting:",
+        title: "Brewery Name",
         type: "input",
         showCancelButton: true,
         closeOnConfirm: false,
@@ -1488,7 +1487,7 @@ function changeName()
         function(inputValue){
             if (inputValue === false) return false;
             if (inputValue === "") {
-                swal.showInputError("You need to write something!");
+                swal.showInputError("Please provide a name, or press cancel!");
                 return false;
             }
             $.ajax({
