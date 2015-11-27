@@ -102,7 +102,7 @@ br { display:none; }
 
 .input-group-addon-label
 {
-min-width:115px;
+width:115px;
 text-align:left;
 }
 
@@ -110,4 +110,9 @@ text-align:left;
 {
 min-width:80px;
 text-align:left;
+}
+
+.form-control-minwidth
+{
+    min-width:80px;
 }

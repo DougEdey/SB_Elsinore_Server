@@ -478,8 +478,8 @@ function showAuto(card)
 {
     card = $(card);
     var pidsettings = card.find('#pidsettings');
-    var piddata = card.data("pid");
-    var tempdata = card.data("temp");
+    var piddata = card.find(".card-header").data("pid");
+    var tempdata = card.find(".card-header").data("temp");
     if (pidsettings.size() == 0)
     {
         card.append("<div id='pidsettings'></div>");
@@ -540,7 +540,7 @@ function appendSettings(pidsettings, type, piddata, scale)
             + "<label class='sr-only' for='cycletime_input'>Cycle Time</label>"
             + "<div class='input-group'>"
                 + "<div class='input-group-addon input-group-addon-label'>Cycle Time</div>"
-                + "<input type='number' class='form-control' id='cycletime_input' placeholder='Cycle Time' >"
+                + "<input type='number' class='form-control form-control-minwidth' id='cycletime_input' placeholder='Cycle Time' >"
                 + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
             + "</div>"
         + "</div>"
@@ -548,7 +548,7 @@ function appendSettings(pidsettings, type, piddata, scale)
             + "<label class='sr-only' for='p_input'>Proportional</label>"
             + "<div class='input-group'>"
                 + "<div class='input-group-addon input-group-addon-label'>Proportional</div>"
-                + "<input type='number' class='form-control' id='p_input' placeholder='Proportional' >"
+                + "<input type='number' class='form-control form-control-minwidth' id='p_input' placeholder='Proportional' >"
                 + "<div class='input-group-addon input-group-addon-unit'>secs/&#176" + scale + "</div>"
             + "</div>"
         + "</div>"
@@ -556,7 +556,7 @@ function appendSettings(pidsettings, type, piddata, scale)
             + "<label class='sr-only' for='i_input'>Integral</label>"
             + "<div class='input-group'>"
                 + "<div class='input-group-addon input-group-addon-label'>Integral</div>"
-                + "<input type='number' class='form-control' id='i_input' placeholder='Integral' >"
+                + "<input type='number' class='form-control form-control-minwidth' id='i_input' placeholder='Integral' >"
                 + "<div class='input-group-addon input-group-addon-unit'>&#176" + scale + "/sec</div>"
             + "</div>"
         + "</div>"
@@ -564,7 +564,7 @@ function appendSettings(pidsettings, type, piddata, scale)
             + "<label class='sr-only' for='i_input'>Differential</label>"
             + "<div class='input-group'>"
                 + "<div class='input-group-addon input-group-addon-label'>Differential</div>"
-                + "<input type='number' class='form-control' id='d_input' placeholder='Differential' >"
+                + "<input type='number' class='form-control form-control-minwidth' id='d_input' placeholder='Differential' >"
                 + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
             + "</div>"
         + "</div>");
@@ -578,7 +578,7 @@ function showManual(card)
 {
     card = $(card);
     var pidsettings = card.find('#pidsettings');
-    var piddata = card.data("pid");
+    var piddata = card.find(".card-header").data("pid");
     if (pidsettings.size() == 0)
     {
         card.append("<div id='pidsettings'></div>");
@@ -593,7 +593,7 @@ function showManual(card)
             + "<label class='sr-only' for='cycletime_input'>Cycle Time</label>"
             + "<div class='input-group'>"
                 + "<div class='input-group-addon input-group-addon-label'>Cycle Time</div>"
-                + "<input type='number' class='form-control' id='cycletime_input' placeholder='Cycle Time' >"
+                + "<input type='number' class='form-control form-control-minwidth' id='cycletime_input' placeholder='Cycle Time' >"
                 + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
             + "</div>"
         + "</div>");
@@ -601,7 +601,7 @@ function showManual(card)
             + "<label class='sr-only' for='dutycycle_input'>Cycle Time</label>"
             + "<div class='input-group'>"
                 + "<div class='input-group-addon input-group-addon-label'>Duty Cycle</div>"
-                + "<input type='number' class='form-control' id='dutycycle_input' placeholder='Duty Cycle' >"
+                + "<input type='number' class='form-control form-control-minwidth' id='dutycycle_input' placeholder='Duty Cycle' >"
                 + "<div class='input-group-addon input-group-addon-unit'>%</div>"
             + "</div>"
         + "</div>");
@@ -615,8 +615,8 @@ function showHysteria(card)
 {
     card = $(card);
     var pidsettings = card.find('#pidsettings');
-    var piddata = card.data("pid");
-    var tempdata = card.data("temp");
+    var piddata = card.find(".card-header").data("pid");
+    var tempdata = card.find(".card-header").data("temp");
     if (pidsettings.size() == 0)
     {
         card.append("<div id='pidsettings'></div>");
@@ -632,7 +632,7 @@ function showHysteria(card)
             + "<label class='sr-only' for='min_input'>Min</label>"
             + "<div class='input-group'>"
                 + "<div class='input-group-addon input-group-addon-label'>Min</div>"
-                + "<input type='number' class='form-control' id='min_input' placeholder='Min'>"
+                + "<input type='number' class='form-control form-control-minwidth' id='min_input' placeholder='Min'>"
                 + "<div class='input-group-addon input-group-addon-unit'>&#176" + tempdata.scale + "</div>"
             + "</div>"
         + "</div>");
@@ -640,7 +640,7 @@ function showHysteria(card)
             + "<label class='sr-only' for='max_input'>Max</label>"
             + "<div class='input-group'>"
                 + "<div class='input-group-addon input-group-addon-label'>Max</div>"
-                + "<input type='number' class='form-control' id='max_input' placeholder='Max'>"
+                + "<input type='number' class='form-control form-control-minwidth' id='max_input' placeholder='Max'>"
                 + "<div class='input-group-addon input-group-addon-unit'>&#176" + tempdata.scale + "</div>"
             + "</div>"
         + "</div>");
@@ -648,7 +648,7 @@ function showHysteria(card)
         + "<label class='sr-only' for='time_input'>Time</label>"
         + "<div class='input-group'>"
             + "<div class='input-group-addon input-group-addon-label'>Time</div>"
-            + "<input type='number' class='form-control' id='time_input' placeholder='Time'>"
+            + "<input type='number' class='form-control form-control-minwidth' id='time_input' placeholder='Time'>"
             + "<div class='input-group-addon input-group-addon-unit'>Minutes</div>"
         + "</div>"
     + "</div>");
