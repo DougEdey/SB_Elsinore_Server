@@ -2322,4 +2322,22 @@ public class UrlEndpoints {
         }
         return new Response(status, MIME_TYPES.get("txt"), message);
     }
+
+    @UrlEndpoint(url="/getTimerSettings", help="Get the settings for the current timer.",
+            parameters = {@Parameter(name="timer", value="The name of the timer to get the settings for")})
+    public Response getTimerSettings()
+    {
+        String timerName = this.parameters.get("timer");
+        if (timerName == null || timerName.length() == 0)
+        {
+            return new Response(Status.BAD_REQUEST, MIME_TYPES.get("txt"), "No timer name provided.");
+        }
+
+        Timer timer = LaunchControl.findTimer(timerName);
+        JSONObject timerSettings = new JSONObject();
+        timerSettings.put("name", timer.getName());
+        timerSettings.put("duration", timer.getTarget());
+        timerSettings.put("inverted", timer.getInverted());
+        return  new Response(Status.OK, MIME_TYPES.get("json"), timerSettings.toJSONString());
+    }
 }

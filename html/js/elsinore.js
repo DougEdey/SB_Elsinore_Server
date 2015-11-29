@@ -1166,7 +1166,7 @@ function dismissSwitch()
 function editTimer(element)
 {
     var data = {};
-    data["name"] = $(element).text();
+    data["timer"] = $(element).text();
     $.ajax({
         url : 'gettimersettings',
         type : 'POST',
@@ -1177,6 +1177,7 @@ function editTimer(element)
             $("#timers-modal #name").val(decodeURI(timerSettings.name));
             $("#timers-modal #duration").val(timerSettings.duration);
             $("#timers-modal #invert").attr('checked', timerSettings.inverted);
+            $('#timers-modal').modal('toggle');
         }
     });
 }

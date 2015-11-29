@@ -73,6 +73,7 @@ public class Timer implements Comparable<Timer> {
     public void setInverted(boolean inverted) {
         this.inverted = inverted;
     }
+    public boolean getInverted() { return this.inverted; }
 
     public void startTimer() {
         if (this.startTime == null && this.currentValue == 0)
