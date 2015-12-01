@@ -978,6 +978,7 @@ function handleTriggerAdd(e)
         success: function(html) {
             $("#edit-modal-heading").html("Add New Trigger");
             $("#edit-modal .modal-body").html(html);
+            $("#edit-modal .btn-primary").show();
             $("#edit-modal .modal-body").attr("height","100%");
             swal({title:"Updated!"});
         }
@@ -1010,6 +1011,7 @@ function handleTriggerEdit(e)
             $("#edit-modal-heading").html("Edit " + device + " trigger at " + triggerIndex);
             $("#edit-modal .modal-body").html(html);
             $("#edit-modal .modal-body").attr("height","100%");
+            $("#edit-modal .btn-primary").show();
             $("#edit-modal").modal('toggle');
         }
     });
@@ -1344,7 +1346,6 @@ function setRecipe(element)
             }
         });
     }
-
 }
 
 function setMashProfile(element) {
@@ -1386,6 +1387,7 @@ function toggleTriggers(element)
 function showConfig()
 {
     $("#edit-modal").modal('toggle');
+    $("#edit-modal .btn-primary").show();
     $("#edit-modal-heading").html("General Settings");
     $.ajax({
         url: '/getsystemsettings',
@@ -1612,4 +1614,48 @@ function checkForUpdate()
 
     });
     return false;
+}
+
+function showHopAdditions()
+{
+    showRecipeDetails("hops");
+}
+
+function showMashProfile()
+{
+    showRecipeDetails("mash");
+}
+
+function showFermentationProfile()
+{
+    showRecipeDetails("fermentation");
+}
+
+function showRecipeDetails(recipeSubset)
+{
+    var recipeName = $("#recipeName").text();
+
+    if (recipeName != undefined && recipeName != "")
+    {
+        $("#edit-modal").modal('toggle');
+        $("#edit-modal").data('recipe', recipeName);
+        $("#edit-modal-heading").html("Recipe Settings");
+        $.ajax({
+            url: '/showrecipe',
+            data: {recipeName: recipeName,
+                subset: recipeSubset},
+            dataType: 'html',
+            success: function(html) {
+                $("#edit-modal-heading").html(recipeName);
+                $("#edit-modal .modal-body").html(html);
+                $("#edit-modal .btn-primary").hide();
+            }
+        });
+    }
+    else
+    {
+        $("#edit-modal").modal('toggle');
+        $("#edit-modal-heading").html(recipeSubset);
+        $("#edit-modal .modal-body").html("<h1>Not implemented yet, sorry</h1>");
+    }
 }

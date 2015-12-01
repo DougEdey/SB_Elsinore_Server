@@ -28,6 +28,8 @@ import com.sb.elsinore.triggers.TriggerInterface;
 
 import javax.xml.xpath.XPathException;
 
+import static org.rendersnake.HtmlAttributesFactory.id;
+
 @SuppressWarnings("unchecked")
 public class UrlEndpoints {
 
@@ -2107,6 +2109,7 @@ public class UrlEndpoints {
     parameters = {@Parameter(name = "recipeName", value = "The name of the recipe to show")})
     public Response showRecipe(){
         String recipeName = this.parameters.get("recipeName");
+        String renderSection = this.parameters.get("subset");
         if (recipeName == null && BrewServer.getCurrentRecipe() == null) {
             return new Response(Status.BAD_REQUEST, MIME_HTML, "No recipe name provided");
         }
@@ -2127,7 +2130,31 @@ public class UrlEndpoints {
         }
         HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
         try {
-            new RecipeViewForm(recipe).renderOn(html);
+            RecipeViewForm recipeForm = new RecipeViewForm(recipe);
+            if (renderSection != null)
+            {
+                html.macros().stylesheet("/bootstrap-v4/css/bootstrap.min.css");
+                html.div(id("recipeView").class_("text-center"));
+                switch (renderSection) {
+                    case "mash":
+                        recipeForm.renderMash(html);
+                        break;
+                    case "hops":
+                        recipeForm.renderHops(html);
+                        break;
+                    case "fermentation":
+                        recipeForm.renderFermentation(html);
+                        break;
+                    case "dry":
+                        recipeForm.renderDryHops(html);
+                        break;
+                }
+                html._div();
+            }
+            else
+            {
+                recipeForm.renderOn(html);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
