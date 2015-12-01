@@ -1108,6 +1108,19 @@ function parseSwitches(switches)
     });
 }
 
+function deleteSwitch(element)
+{
+    var data = $("#addSwitch").serializeObject();
+    $.ajax({
+        url : 'deleteswitch',
+        type : 'POST',
+        data : data,
+        success : function(data) {
+            data = null
+        }
+    });
+}
+
 function saveSwitch(element)
 {
     var data = $("#addSwitch").serializeObject();
