@@ -2340,4 +2340,12 @@ public class UrlEndpoints {
         timerSettings.put("inverted", timer.getInverted());
         return  new Response(Status.OK, MIME_TYPES.get("json"), timerSettings.toJSONString());
     }
+
+    @UrlEndpoint(url="/clearbeerxml", help="Clear the currently loaded BeerXML", parameters = {})
+    public Response clearBeerXML()
+    {
+        BrewServer.getRecipeList().clear();
+        BrewServer.setCurrentRecipe(null);
+        return new Response(Status.OK, MIME_TYPES.get("txt"), "Cleared BeerXML");
+    }
 }
