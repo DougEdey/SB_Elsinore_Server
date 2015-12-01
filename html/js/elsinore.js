@@ -1087,12 +1087,12 @@ function submitNewTriggerStep(button) {
 function parseSwitches(switches)
 {
     $.each(switches, function(name, status){
-        name = decodeURI(name);
+        var textname = decodeURI(name);
         var switchEle = $("#switches [id='" + name +"']");
         if (switchEle.length == 0)
         {
-            $("#switches .card-body").append("<button id='"+name+"' class='btn' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'>"+name+"</button>");
-            switchEle = $("#switches #" + name);
+            $("#switches .card-body").append("<button id='"+name+"' class='btn' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'>"+textname+"</button>");
+            switchEle = $("#switches [id='" + name +"']");
         }
 
         if (status)
@@ -1111,12 +1111,14 @@ function parseSwitches(switches)
 function deleteSwitch(element)
 {
     var data = $("#addSwitch").serializeObject();
+    data['name'] = encodeURI(data['name']);
     $.ajax({
         url : 'deleteswitch',
         type : 'POST',
         data : data,
         success : function(data) {
-            data = null
+            data = null;
+            location.reload();
         }
     });
 }
@@ -1124,6 +1126,7 @@ function deleteSwitch(element)
 function saveSwitch(element)
 {
     var data = $("#addSwitch").serializeObject();
+    data['name'] = encodeURI(data['name']);
     $.ajax({
         url : 'addswitch',
         type : 'POST',
@@ -1137,7 +1140,7 @@ function saveSwitch(element)
 function toggleSwitch(element)
 {
     var data = {};
-    data["toggle"] = $(element).text();
+    data["toggle"] = element.id;
     $.ajax({
         url : 'updateswitch',
         type : 'POST',
@@ -1151,7 +1154,7 @@ function toggleSwitch(element)
 function editSwitch(element)
 {
     var data = {};
-    data["name"] = $(element).text();
+    data["name"] = element.id;
     $.ajax({
         url : 'getswitchsettings',
         type : 'POST',
@@ -1211,7 +1214,8 @@ function deleteTimer(element)
         type : 'POST',
         data : data,
         success : function(data) {
-            data = null
+            data = null;
+            location.reload();
         }
     });
 }

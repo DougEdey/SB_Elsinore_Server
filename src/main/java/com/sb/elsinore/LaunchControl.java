@@ -1187,8 +1187,7 @@ public class LaunchControl {
         while (iterator.hasNext()) {
             tSwitch = iterator.next();
             if (tSwitch.getName().equalsIgnoreCase(name)
-                    || tSwitch.getNodeName().equalsIgnoreCase(name)
-                    || tSwitch.getName().equalsIgnoreCase(name.replace("_", " "))) {
+                    || tSwitch.getNodeName().equalsIgnoreCase(name)) {
                 return tSwitch;
             }
         }

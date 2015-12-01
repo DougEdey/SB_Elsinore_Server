@@ -1626,7 +1626,7 @@ public class UrlEndpoints {
         if (parameters.containsKey("toggle")) {
             String switchname = parameters.get("toggle");
             Switch tempSwitch =
-                    LaunchControl.findSwitch(switchname.replaceAll("_", " "));
+                    LaunchControl.findSwitch(switchname);
             if (tempSwitch != null) {
                 if (tempSwitch.getStatus()) {
                     tempSwitch.turnOff();
