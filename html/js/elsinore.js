@@ -1190,6 +1190,19 @@ function dismissTimer()
     $("#timers-modal #invert").attr('checked', false);
 }
 
+function deleteTimer(element)
+{
+    var data = $("#addTimer").serializeObject();
+    $.ajax({
+        url : 'deletetimer',
+        type : 'POST',
+        data : data,
+        success : function(data) {
+            data = null
+        }
+    });
+}
+
 function saveTimer(element)
 {
     var data = $("#addTimer").serializeObject();
