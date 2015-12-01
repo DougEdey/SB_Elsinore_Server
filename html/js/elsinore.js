@@ -444,7 +444,7 @@ function toggleMode(button)
             console.log("Manual");
             showManual(card);
             break;
-        case "hysteria":
+        case "hysteresis":
             console.log("Hysteria");
             showHysteria(card);
             break;
