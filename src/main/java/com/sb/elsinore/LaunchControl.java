@@ -2832,7 +2832,7 @@ public class LaunchControl {
             pb = null;
             return;
         }
-
+        pb = null;
         String currentSha = getShaFor("HEAD");
         String headSha = getShaFor("origin");
 
@@ -2913,6 +2913,7 @@ public class LaunchControl {
             pb = null;
             return null;
         }
+        pb = null;
         return currentSha;
     }
     /**
@@ -2962,7 +2963,7 @@ public class LaunchControl {
         }
         LaunchControl.setMessage(out.toString());
         BrewServer.LOG.warning(out.toString());
-
+        pb = null;
         System.exit(EXIT_UPDATE);
     }
 
