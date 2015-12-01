@@ -28,7 +28,6 @@
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="#">StrangeBrew Elsinore</a>
                     <h2 id="brewery_name" onclick="changeName();">Your Brewery</h2>
                 </div>
             </div>
@@ -38,14 +37,32 @@
 
             <!-- sidebar -->
             <div class="col-xs-4 col-sm-2 sidebar-offcanvas" id="sidebar" role="navigation">
-                <ul class="nav">
-                    <li id="loadRecipe" class="nav-item"><a class="nav-link" onclick="loadRecipe();">Load Recipe <input type="file" id="recipeFile" style="position: fixed; top: -100em" data-url="uploadbeerxml"></a></li>
-                    <li id="currentRecipe" class="nav-item"></li>
-                    <li id="settings" class="nav-item"><a class="nav-link" href="#" onclick="showConfig();">Settings</a></li>
-                    <li id="graph" class="nav-item"><a class="nav-link" href="/html/graph.html" target="_blank">Data Graph</a></li>
+                <ul  class="nav">
+                    <li><a class="navbar-brand" href="#">StrangeBrew Elsinore</a></li>
+                    <li role="dropdown-separator" class="divider"></li>
+                    <li id="update" class="nav-item"><a class="nav-link" href="#" onclick="checkForUpdate();">Check For Updates</a></li>
+                    <li id="settings" class="nav-item"><a class="nav-link" href="#" onclick="showConfig();">System Configuration</a></li>
+                    <li id="hiddenProbes" class="nav-item">
+                        <select class="form-control" onclick="editHidden(this);" id="probeList">
+                            <option>Hidden Probes</option>
+                        </select>
+                    </li>
+                    <li role="separator" class="dropdown-divider"></li>
+                    <li id="graph" class="nav-item"><a class="nav-link" href="/html/graph.html" target="_blank">Temperature Data</a></li>
+
+                    <li role="separator" class="dropdown-divider"></li>
                     <li id="recipeName" class="nav-item"></li>
+                    <li id="recipeDetails" class="nav-item">Recipe Details</li>
+                    <li id="mashProfile" class="nav-item"><a class="nav-link" href="#" onclick="showMashProfile();">Mash Profile</a></li>
                     <li id="hopAdditions" class="nav-item"><a class="nav-link" href="#" onclick="showHopAdditions();">Hop Additions</a></li>
-                    <li id="hiddenProbes" class="nav-item"><select onclick="editHidden(this);" id="probeList"></select></li>
+                    <li id="fermentationProfile" class="nav-item"><a class="nav-link" href="#" onclick="showFermentationProfile();">Fermentation Profile</a></li>
+                    <li id="loadRecipe" class="nav-item"><a class="nav-link" onclick="loadRecipe();">Load BeerXML<input type="file" id="recipeFile" style="position: fixed; top: -100em" data-url="uploadbeerxml"></a></li>
+                    <li id="clearRecipe" class="nav-item"><a class="nav-link" onclick="clearRecipe();">Clear BeerXML</a></li>
+                    <li role="separator" class="dropdown-divider"></li>
+                    <li id="Github"><a href="https://github.com/DougEdey/SB_Elsinore_Server" target="_blank">Github</a></li>
+                    <li id="Wiki"><a href="https://www.reddit.com/r/strangebrew/wiki/index" target="_blank">Wiki</a></li>
+                    <li id="Reddit"><a href="https://www.reddit.com/r/strangebrew" target="_blank">Reddit</a></li>
+                    <li role="separator" class="dropdown-divider"></li>
                 </ul>
                 <div id="message"  onClick="clearMessage();" class="alert alert-info"></div>
             </div>
