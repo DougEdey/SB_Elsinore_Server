@@ -253,12 +253,12 @@ function parseData(data)
         showRecipes(data.recipeCount, recipeName);
         $("#recipeName").text(recipeName);
         $("#recipeName").show();
-        $("#hopAdditions").show();
+        $("#clearRecipe").show();
     }
     else
     {
         $("#recipeName").hide();
-        $("#hopAdditions").hide();
+        $("#clearRecipe").hide();
     }
 
     if ("message" in data )
@@ -1581,5 +1581,35 @@ function showDeviceEdit(element, addr, name)
              modal.find('#calibration').val(temp.calibration);
              modal.find('#shutoff').val(temp.cutoff);
          }
+}
 
+function clearRecipe()
+{
+    $.ajax({
+        url : '/clearbeerxml',
+        type : 'get',
+        dataType: "text",
+        success : function(data) {
+            data = null;
+            swal({title: "Completed", text:"Cleared BeerXML"});
+        }
+    });
+}
+
+function checkForUpdate()
+{
+    $.ajax({
+        url : '/checkgit',
+        dataType: "text",
+        success : function(data) {
+            data = null;
+            swal({title: "Checking", text:"Checking git for updates..."});
+        },
+        error: function (data)
+        {
+            swal({title:"Update", text:"Already checking for updates"});
+        }
+
+    });
+    return false;
 }
