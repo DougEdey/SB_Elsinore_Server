@@ -391,7 +391,7 @@ function loadPIDData(card, pid)
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='off'>Off</button>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='auto'>Auto</button>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='manual'>Manual</button>"
-            + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='hysteresis'>Hysteresis</button>"
+            + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='hysteria'>Hysteresis</button>"
             + "</div>");
         pidmode = card.find("#mode");
     }
@@ -451,7 +451,7 @@ function toggleMode(button)
             console.log("Manual");
             showManual(card);
             break;
-        case "hysteresis":
+        case "hysteria":
             console.log("Hysteria");
             showHysteria(card);
             break;
@@ -701,7 +701,7 @@ function submitForm(element)
     {
         switchAuto(device, settings);
     }
-    else if (mode == "hysteresis")
+    else if (mode == "hysteria")
     {
         switchHysteria(device, settings);
     }
