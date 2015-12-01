@@ -369,8 +369,8 @@ function loadPIDData(card, pid)
     {
         duty = pid.actualduty;
     }
-    pidstatus.html(Math.abs(duty));
-    pidstatus.val(Math.abs(duty));
+    pidstatus.html(Math.round(Math.abs(duty)));
+    pidstatus.val(Math.round(Math.abs(duty)));
     card.find("#status-text").text(duty + "%")
     if (duty > 0)
     {
@@ -611,7 +611,7 @@ function showManual(card)
             + "</div>"
         + "</div>");
 
-    form.find("#dutycycle_input").val(piddata.manualduty);
+    form.find("#dutycycle_input").val(Math.abs(piddata.manualduty));
     form.find("#cycletime_input").val(piddata.manualtime);
     form.append("<div class='form-group form-inline row'><button type='button' class='btn btn-danger' id='submit' onclick='submitForm(this);'>Submit</button></div>");
 }
