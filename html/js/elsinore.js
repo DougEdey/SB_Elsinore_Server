@@ -186,8 +186,8 @@ function parseTimers(timers)
                             "<input type='text' id='timer' name='timer' class='timer-body form-control timer' placeholder='0 sec' />" +
                             "<button class='btn btn-success start-timer-btn' onClick='startTimer(this);'>Start</button>" +
                             "<button class='btn btn-success resume-timer-btn hidden' onClick='startTimer(this);'>Resume</button>" +
-                            "<button class='btn pause-timer-btn hidden' onClick='startTimer(this);'>Pause</button>" +
-                            "<button class='btn reset-timer-btn hidden' onClick='resetTimer(this);'>Reset</button>" +
+                            "<button class='btn btn-secondary pause-timer-btn hidden' onClick='startTimer(this);'>Pause</button>" +
+                            "<button class='btn btn-secondary reset-timer-btn hidden' onClick='resetTimer(this);'>Reset</button>" +
                         "</div>" +
                     "</div>" +
                 "</div>");
@@ -388,10 +388,10 @@ function loadPIDData(card, pid)
     if (pidmode.size() == 0)
     {
         card.append("<div id='mode' class='btn-group'>"
-            + "<button type='button' onclick='toggleMode(this)' class='btn' id='off'>Off</button>"
-            + "<button type='button' onclick='toggleMode(this)' class='btn' id='auto'>Auto</button>"
-            + "<button type='button' onclick='toggleMode(this)' class='btn' id='manual'>Manual</button>"
-            + "<button type='button' onclick='toggleMode(this)' class='btn' id='hysteresis'>Hysteresis</button>"
+            + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='off'>Off</button>"
+            + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='auto'>Auto</button>"
+            + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='manual'>Manual</button>"
+            + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='hysteresis'>Hysteresis</button>"
             + "</div>");
         pidmode = card.find("#mode");
     }
@@ -399,10 +399,12 @@ function loadPIDData(card, pid)
     if (selected.size() == 1 && selected.id != pid.mode)
     {
        selected.removeClass("btn-danger");
+       selected.addClass("btn-secondary")
     }
     selected = pidmode.find("#" + pid.mode);
     if (!selected.hasClass("btn-danger active"))
     {
+        selected.removeClass("btn-secondary");
         selected.addClass("btn-danger active");
     }
     if (pid.mode == "off")
