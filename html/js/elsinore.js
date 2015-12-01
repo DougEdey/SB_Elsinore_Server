@@ -1098,7 +1098,7 @@ function parseSwitches(switches)
         var switchEle = $("#switches [id='" + name +"']");
         if (switchEle.length == 0)
         {
-            $("#switches .card-body").append("<button id='"+name+"' class='btn' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'>"+textname+"</button>");
+            $("#switches .card-body").append("<button id='"+name+"' class='btn btn-primary col-xs-10 col-xs-offset-1' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'>"+textname+"</button>");
             switchEle = $("#switches [id='" + name +"']");
         }
 
