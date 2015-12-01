@@ -128,4 +128,5 @@ text-align:left;
 .footer .text-muted {
     margin: 20px 0;
     display: inline;
+    font-size: 90%;
 }
