@@ -275,6 +275,11 @@ function parseData(data)
             messageElement.show();
         }
     }
+    if ("version" in data)
+    {
+        $(".footer #elsinore_sha").html(data.version.sha);
+        $(".footer #date").html(data.version.date);
+    }
 }
 
 function clearMessage()

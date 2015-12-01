@@ -224,7 +224,9 @@ public class LaunchControl {
      */
     public static void main(final String... arguments) {
         BrewServer.LOG.info("Running Brewery Controller.");
-        BrewServer.LOG.info("Currently at: " + getShaFor("HEAD"));
+        BrewServer.SHA = getShaFor("HEAD");
+        BrewServer.SHA_DATE = getLastLogDate();
+        BrewServer.LOG.info("Currently at: " + BrewServer.SHA);
         int port = DEFAULT_PORT;
 
         // Allow for the root directory to be overridden by environment variable
@@ -637,6 +639,7 @@ public class LaunchControl {
 
         // Add the notifications information
         rObj.put("notifications", Notifications.getInstance().getNotificationStatus());
+        rObj.put("version", BrewServer.getVersionStatus());
         return rObj.toString();
     }
 
@@ -2847,6 +2850,67 @@ public class LaunchControl {
         pb = null;
     }
 
+    public static String getLastLogDate()
+    {
+        File jarLocation = new File(LaunchControl.class.getProtectionDomain()
+                .getCodeSource().getLocation().getPath()).getParentFile();
+
+        ArrayList<String> commands = new ArrayList<>();
+        commands.add("git");
+        // Add arguments
+        commands.add("log");
+        commands.add("-1");
+        BrewServer.LOG.info("Checking for last log date");
+
+        // Run macro on target
+        Process process = null;
+        pb = new ProcessBuilder(commands);
+        pb.directory(jarLocation);
+        pb.redirectErrorStream(true);
+        try {
+            process = pb.start();
+            process.waitFor();
+        } catch (IOException | InterruptedException e3) {
+            BrewServer.LOG.info("Couldn't check remote git SHA");
+            e3.printStackTrace();
+            if (process != null) {
+                process.destroy();
+            }
+            pb = null;
+            return null;
+        }
+
+        // Read output
+        StringBuilder out = new StringBuilder();
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+                process.getInputStream()));
+        String line, previous = null;
+        String currentSha = null;
+
+        try {
+            while ((line = br.readLine()) != null) {
+                if (!line.equals(previous)) {
+                    previous = line;
+                    if (line.startsWith("Date:"))
+                    {
+                        line = line.substring(5).trim();
+                        out.append(line).append('\n');
+                    }
+
+                    BrewServer.LOG.info(line);
+                }
+            }
+        } catch (IOException e2) {
+            BrewServer.LOG.info("Couldn't read a line when checking SHA");
+            e2.printStackTrace();
+            if (process != null) {
+                process.destroy();
+            }
+            pb = null;
+            return null;
+        }
+        return out.toString();
+    }
     public static String getShaFor(String target) {
         File jarLocation = new File(LaunchControl.class.getProtectionDomain()
                 .getCodeSource().getLocation().getPath()).getParentFile();

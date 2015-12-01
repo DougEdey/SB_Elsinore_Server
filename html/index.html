@@ -42,6 +42,7 @@
                     <li role="dropdown-separator" class="divider"></li>
                     <li id="update" class="nav-item"><a class="nav-link" href="#" onclick="checkForUpdate();">Check For Updates</a></li>
                     <li id="settings" class="nav-item"><a class="nav-link" href="#" onclick="showConfig();">System Configuration</a></li>
+                    <li id="log" class="nav-item"><a class="nav-link" href="elsinore.log" target="_blank">Logfile</a></li>
                     <li id="hiddenProbes" class="nav-item">
                         <select class="form-control" onclick="editHidden(this);" id="probeList">
                             <option>Hidden Probes</option>
@@ -61,7 +62,7 @@
                     <li role="separator" class="dropdown-divider"></li>
                     <li id="Github"><a href="https://github.com/DougEdey/SB_Elsinore_Server" target="_blank">Github</a></li>
                     <li id="Wiki"><a href="https://www.reddit.com/r/strangebrew/wiki/index" target="_blank">Wiki</a></li>
-                    <li id="Reddit"><a href="https://www.reddit.com/r/strangebrew" target="_blank">Reddit</a></li>
+                    <li id="Reddit"><a href="https://www.reddit.com/r/strangebrew" target="_blank">/r/strangebrew</a></li>
                     <li role="separator" class="dropdown-divider"></li>
                 </ul>
                 <div id="message"  onClick="clearMessage();" class="alert alert-info"></div>
@@ -216,6 +217,10 @@
           </div>
         </div>
         </div>
+
         </div>
+    <div class="footer">
+        <div style="display:block" class="text-muted">Elsinore Version: <div class="text-muted" id="elsinore_sha"></div>, Committed: <div class="text-muted" id="date"></div></div>
+    </div>
     </body>
 </html>

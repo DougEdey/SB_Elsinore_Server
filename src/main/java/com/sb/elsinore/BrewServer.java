@@ -30,6 +30,8 @@ import java.util.logging.Logger;
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class BrewServer extends NanoHTTPD {
 
+    public static String SHA = "";
+    public static String SHA_DATE = "";
     private static Recipe currentRecipe;
     private final TreeMap<String, java.lang.reflect.Method> m_endpoints = new TreeMap<>();
     /**
@@ -148,6 +150,13 @@ public class BrewServer extends NanoHTTPD {
 
     public static Recipe getCurrentRecipe() {
         return BrewServer.currentRecipe;
+    }
+
+    public static JSONObject getVersionStatus() {
+        JSONObject verStatus = new JSONObject();
+        verStatus.put("sha", BrewServer.SHA);
+        verStatus.put("date", BrewServer.SHA_DATE);
+        return verStatus;
     }
 
     /**
