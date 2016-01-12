@@ -1400,7 +1400,7 @@ function showConfig()
         url: '/getsystemsettings',
         dataType: 'json',
         success: function(json) {
-        var settingsHTML = "<form id='settings-form form-horizontal'>"
+        var settingsHTML = "<form id='settings-form' class='form-horizontal'>"
                 + "<div class='form-group'>"
                 + "<div class='checkbox'><label class='form-control-label' >"
                 + '<input type="checkbox" name="restore" id="restore">Restore State On Startup</label>'
@@ -1425,9 +1425,12 @@ function showConfig()
                     + "<div class='input-group-addon input-group-addon-unit'>ms</div>"
                 + "</div>"
                 + "</div>"
-                + "<button class='btn btn-success' onclick='saveSystem(this);'>Save</button>"
-                + "</form>"
+                + "<button class='btn btn-success' onclick='saveSystem();'>Save</button>"
+                + "</form>";
+            var footerHTML = 
+                "<button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>";
             $("#edit-modal .modal-body").html(settingsHTML);
+            $("#edit-modal .modal-footer").html(footerHTML);
             $("#edit-modal .modal-body #recorderDiff").val(json.recorderDiff);
             $("#edit-modal .modal-body #recorderTime").val(json.recorderTime);
             $("#edit-modal .modal-body #recorder").prop("checked", json.recorder);
@@ -1437,7 +1440,7 @@ function showConfig()
 
 }
 
-function saveSystem(element)
+function saveSystem()
 {
     var formdata = $('form[id=settings-form]').serializeObject();
     $.ajax({
@@ -1538,10 +1541,12 @@ function showDeviceEdit(element, addr, name)
             '<div class="input-group">' +
                 '<div class="input-group-addon input-group-addon-label">Cool GPIO</div>' +
                 '<input type="text" class="form-control" id="cool-gpio">' +
+              '<div class="checkbox">'+
                 '<label>' +
                   '<input type="checkbox" id="invert-cool" value="invert">' +
                   'Invert' +
               '</label>' +
+              '</div>' +
             '</div>' +
             '<div class="input-group">' +
               '<div class="input-group-addon input-group-addon-label">Aux GPIO</div>' +

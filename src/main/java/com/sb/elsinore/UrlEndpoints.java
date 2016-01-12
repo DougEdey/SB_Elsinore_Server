@@ -1469,7 +1469,7 @@ public class UrlEndpoints {
 
     @UrlEndpoint(url = "/updatesystemsettings", help = "Update the system settings",
     parameters = {
-            @Parameter(name = "recorder", value = "\"true\" to enable the data recorder, \"false\" to disable it"),
+            @Parameter(name = "recorder", value = "\"on\" to enable the data recorder, \"off\" to disable it"),
             @Parameter(name = "recorderDiff", value = "Decimal that represents the tolerance to use when recording data, when the temperature varies by this amount from the previous point, record it"),
             @Parameter(name = "recorderTime", value = "The sample rate in milliseconds"),
             @Parameter(name = LaunchControl.RESTORE, value = "\"on\" to restore the previous state of Elsinore on startup.")
@@ -1489,10 +1489,10 @@ public class UrlEndpoints {
             LaunchControl.disableRecorder();
         }
 
-        if (params.containsKey("recorderTolerence")) {
+        if (params.containsKey("recorderDiff")) {
             try {
                 StatusRecorder.THRESHOLD =
-                    Double.parseDouble(params.get("recorderTolerence"));
+                    Double.parseDouble(params.get("recorderDiff"));
             } catch (Exception e) {
                 LaunchControl.setMessage(
                     "Failed to parse Recorder diff as a double\n"
