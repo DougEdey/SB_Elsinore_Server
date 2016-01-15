@@ -307,7 +307,7 @@ function requestData()
 function addProbeCard(vesselProbe, position)
 {
     var div = "<div id='" + vesselProbe 
-    + "' class='col-sm-12 col-md-6 col-lg-5 col-xl-3 card card-block text-center'>"
+    + "' class='col-sm-12 col-md-6 col-lg-5 col-xl-4 card card-block text-center'>"
         + "</div>";
     $("#probes > #card-deck").append(div);
     return $("#probes #" + vesselProbe);
@@ -436,7 +436,6 @@ function toggleMode(button)
     }
     $(button).removeClass('btn-success btn-danger');
     $(button).addClass('btn-success');
-    var device = card.id;
     var mode = button.id;
     switch(mode) {
         case "off":
