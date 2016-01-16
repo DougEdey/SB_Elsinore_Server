@@ -62,6 +62,14 @@ public class Switch implements Comparable<Switch> {
         }
     }
 
+    public void setGPIO(String gpio) throws InvalidGPIOException {
+        if (!this.output.getGPIOName().equalsIgnoreCase(gpio))
+        {
+            this.output.close();
+            this.output = new OutPin(gpio);
+        }
+    }
+
     /**
      * @return The current state of the switch, true for on. False for off.
      */

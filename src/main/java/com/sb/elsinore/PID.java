@@ -196,13 +196,23 @@ public final class PID implements Runnable {
         if (this.mode.equals("manual")) {
             this.duty_cycle = duty;
         }
-        this.heatSetting.cycle_time = cycle;
-        this.set_point = setpoint;
+        if (cycle != null) {
+            this.heatSetting.cycle_time = cycle;
+        }
+        if (setpoint != null) {
+            this.set_point = setpoint;
+        }
         BrewServer.LOG.info(heatSetting.proportional + ": "
             + heatSetting.integral + ": " + heatSetting.derivative);
-        this.heatSetting.proportional = p;
-        this.heatSetting.integral = i;
-        this.heatSetting.derivative = d;
+        if (p != null) {
+            this.heatSetting.proportional = p;
+        }
+        if (i != null) {
+            this.heatSetting.integral = i;
+        }
+        if (d != null) {
+            this.heatSetting.derivative = d;
+        }
         BrewServer.LOG.info("Mode " + this.mode + " " + this.heatSetting.proportional + ": "
             + heatSetting.integral + ": " + this.heatSetting.derivative);
         LaunchControl.savePID(this);
@@ -403,11 +413,12 @@ public final class PID implements Runnable {
      * @param gpio The GPIO to use as an aux
      */
     public void setAux(final String gpio) {
+        if (gpio == null || gpio.length() == 0) return;
         this.auxGPIO = detectGPIO(gpio);
 
         if (this.auxGPIO == null || auxGPIO.equals("")) {
             BrewServer.LOG.log(Level.INFO,
-                "Could not detect GPIO as valid: " + gpio);
+                    "Could not detect GPIO as valid: " + gpio);
         }
     }
 
@@ -444,7 +455,9 @@ public final class PID implements Runnable {
      * @param p the new proportional value
      */
     public void setCoolP(final BigDecimal p) {
-        coolSetting.proportional = p;
+        if (p != null) {
+            coolSetting.proportional = p;
+        }
     }
 
     /******
@@ -452,7 +465,10 @@ public final class PID implements Runnable {
      * @param i The new Integral.
      */
     public void setCoolI(final BigDecimal i) {
-        coolSetting.integral = i;
+        if (i != null)
+        {
+            coolSetting.integral = i;
+        }
     }
 
     /******
@@ -460,7 +476,10 @@ public final class PID implements Runnable {
      * @param d The new differential
      */
     public void setCoolD(final BigDecimal d) {
-        coolSetting.derivative = d;
+        if (d != null)
+        {
+            coolSetting.derivative = d;
+        }
     }
 
     /******
@@ -468,7 +487,10 @@ public final class PID implements Runnable {
      * @param p the new proportional value
      */
     public void setHeatP(final BigDecimal p) {
-        heatSetting.proportional = p;
+        if (p != null)
+        {
+            heatSetting.proportional = p;
+        }
     }
 
     /******
@@ -476,7 +498,10 @@ public final class PID implements Runnable {
      * @param i The new Integral.
      */
     public void setHeatI(final BigDecimal i) {
-        heatSetting.integral = i;
+        if (i != null)
+        {
+            heatSetting.integral = i;
+        }
     }
 
     /******
@@ -484,7 +509,10 @@ public final class PID implements Runnable {
      * @param d The new differential
      */
     public void setHeatD(final BigDecimal d) {
-        heatSetting.derivative = d;
+        if (d != null)
+        {
+            heatSetting.derivative = d;
+        }
     }
 
     /*******
@@ -933,7 +961,7 @@ public final class PID implements Runnable {
 
         if (this.heatGPIO != null) {
             this.outputControl.setHeater(new OutputDevice(
-                this.getName(), heatGPIO, this.heatSetting.cycle_time));
+                    this.getName(), heatGPIO, this.heatSetting.cycle_time));
         } else {
             this.outputControl.setHeater(null);
         }
@@ -984,23 +1012,36 @@ public final class PID implements Runnable {
     }
 
     public void setCoolDelay(BigDecimal coolDelay) {
-        this.coolSetting.delay = coolDelay;
+        if (coolDelay != null) {
+            this.coolSetting.delay = coolDelay;
+        }
     }
     
     public void setCoolCycle(BigDecimal coolCycle) {
-        this.coolSetting.cycle_time= coolCycle;
+        if (coolCycle != null)
+        {
+            this.coolSetting.cycle_time = coolCycle;
+        }
     }
     
     public void setHeatCycle(BigDecimal heatCycle) {
-        this.heatSetting.cycle_time = heatCycle;
+        if (heatCycle != null)
+        {
+            this.heatSetting.cycle_time = heatCycle;
+        }
     }
     
     public void setManualDuty(BigDecimal duty) {
-        this.manual_duty = duty;
+        if (duty != null) {
+            this.manual_duty = duty;
+        }
     }
     
     public void setManualTime(BigDecimal time) {
-        this.manual_time = time;
+        if (time != null)
+        {
+            this.manual_time = time;
+        }
     }
     
     private void setHysteria() {
@@ -1076,6 +1117,11 @@ public final class PID implements Runnable {
                 this.outputControl.setDuty(this.duty_cycle);
                 this.outputThread.interrupt();
             }
+        } else if (this.minTimePassed() && this.getTempF().compareTo(minTempF) >= 0 && this.getTempF().compareTo(maxTempF) <= 0) {
+            this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
+            this.duty_cycle = BigDecimal.ZERO;
+            this.outputControl.setDuty(this.duty_cycle);
+            this.outputThread.interrupt();
         } else {
             BrewServer.LOG.info("Min: " + minTempF + " (" + getTempF() + ") " + maxTempF);
         }

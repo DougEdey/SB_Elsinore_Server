@@ -29,9 +29,9 @@ import javax.annotation.Nonnull;
 @SuppressWarnings("unused")
 public class WaitTrigger implements TriggerInterface {
 
-    private static final String WAITTIMEMINS = "waitTimeMins";
-    private static final String WAITTIMESECS = "waitTimeSecs";
-    private static final String NOTES = "notes";
+    public static final String WAITTIMEMINS = "waitTimeMins";
+    public static final String WAITTIMESECS = "waitTimeSecs";
+    public static final String NOTES = "notes";
     final Object lck = new Object();
     volatile boolean waitStatus = true;
     private int position = -1;
@@ -71,9 +71,9 @@ public class WaitTrigger implements TriggerInterface {
      * Set the values of this trigger.
      * @param parameters The updated parameters.
      */
-    private void updateParams(final JSONObject parameters) {
+    private boolean updateParams(final JSONObject parameters) {
         String waitTimeMins = "0";
-        if (parameters.get(WAITTIMEMINS) != "") {
+        if (parameters.get(WAITTIMEMINS) != null) {
                 waitTimeMins = (String) parameters.get(WAITTIMEMINS);
                 if (waitTimeMins.length() == 0) {
                     waitTimeMins = "0";
@@ -81,18 +81,21 @@ public class WaitTrigger implements TriggerInterface {
         }
         this.minutes = Double.parseDouble(waitTimeMins);
         String waitTimeSecs = "0";
-        if (parameters.get(WAITTIMESECS) != "") {
+        if (parameters.get(WAITTIMESECS) != null) {
                 waitTimeSecs = (String) parameters.get(WAITTIMESECS);
                 if (waitTimeSecs.length() == 0) {
                     waitTimeSecs = "0";
                 }
         }
         this.seconds = Double.parseDouble(waitTimeSecs);
+
+        this.note = (String) parameters.get(NOTES);
         BigDecimal totalTime = new BigDecimal(
                 this.minutes * 60);
         totalTime = totalTime.add(new BigDecimal(
                 this.seconds));
         this.waitTime = totalTime;
+        return true;
     }
 
     /**
@@ -278,8 +281,8 @@ public class WaitTrigger implements TriggerInterface {
      * @param params The new parameters.
      */
     @Override
-    public final void updateTrigger(final JSONObject params) {
-        updateParams(params);
+    public final boolean updateTrigger(final JSONObject params) {
+        return updateParams(params);
     }
 
     @Override

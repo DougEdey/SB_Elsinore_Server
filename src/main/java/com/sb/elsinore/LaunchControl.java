@@ -56,7 +56,7 @@ import java.util.regex.Pattern;
  *
  */
 @SuppressWarnings("unused")
-public final class LaunchControl {
+public class LaunchControl {
     private static final String BREWERY_NAME = "brewery_name";
     private static final String PAGE_LOCK = "pagelock";
     private static final String SCALE = "scale";
@@ -167,10 +167,6 @@ public final class LaunchControl {
     public static String scale = "F";
 
     /**
-     * The BrewDay object to manage timers.
-     */
-    public static BrewDay brewDay = null;
-    /**
      * One Wire File System Connection.
      */
     public static OwfsConnection owfsConnection = null;
@@ -228,7 +224,9 @@ public final class LaunchControl {
      */
     public static void main(final String... arguments) {
         BrewServer.LOG.info("Running Brewery Controller.");
-        BrewServer.LOG.info("Currently at: " + getShaFor("HEAD"));
+        BrewServer.SHA = getShaFor("HEAD");
+        BrewServer.SHA_DATE = getLastLogDate();
+        BrewServer.LOG.info("Currently at: " + BrewServer.SHA);
         int port = DEFAULT_PORT;
 
         // Allow for the root directory to be overridden by environment variable
@@ -537,9 +535,6 @@ public final class LaunchControl {
         // use the temp list to determine if we have a PID to go with
         JSONArray vesselJSON = new JSONArray();
         for (Temp t : tempList) {
-            if (LaunchControl.pageLock && t.isHidden()) {
-                continue;
-            }
 
             /* Check for a PID */
             PID tPid = findPID(t.getName());
@@ -606,8 +601,14 @@ public final class LaunchControl {
         rObj.put("vessels", vesselJSON);
         rObj.put("triggers", triggerJSON);
 
-        if (brewDay != null) {
-            rObj.put("brewday", brewDay.brewDayStatus());
+        if (timerList.size() > 0)
+        {
+            JSONObject timers = new JSONObject();
+            for (Timer timer: timerList)
+            {
+                timers.put(timer.getName(), timer.getStatus());
+            }
+            rObj.put("timers", timers);
         }
 
         // generate the list of switchess
@@ -638,6 +639,7 @@ public final class LaunchControl {
 
         // Add the notifications information
         rObj.put("notifications", Notifications.getInstance().getNotificationStatus());
+        rObj.put("version", BrewServer.getVersionStatus());
         return rObj.toString();
     }
 
@@ -929,25 +931,32 @@ public final class LaunchControl {
      *            The GPIO to add
      * @return True if added OK
      */
-    public static boolean addSwitch(final String name, final String gpio) {
-        if (name.equals("") || gpio.equals("") || switchExists(name)) {
-            return false;
+    public static Switch addSwitch(final String name, final String gpio) {
+        if (name.equals("") || gpio.equals("")) {
+            return null;
         }
-        if (LaunchControl.findSwitch(name) != null) {
-            return false;
+        Switch p = LaunchControl.findSwitch(name);
+        if (p == null) {
+            try {
+                p = new Switch(name, gpio);
+                switchList.add(p);
+            } catch (Exception g) {
+                BrewServer.LOG.warning("Could not add switch: " + g.getMessage());
+                g.printStackTrace();
+            }
         }
-
-        try {
-            Switch p = new Switch(name, gpio);
-            switchList.add(p);
-        } catch (Exception g) {
-            BrewServer.LOG.warning("Could not add switch: " + g.getMessage());
-            g.printStackTrace();
-            return false;
+        else
+        {
+            try {
+                p.setGPIO(gpio);
+            }
+            catch (InvalidGPIOException g)
+            {
+                BrewServer.LOG.warning("Could not add switch: " + g.getMessage());
+                g.printStackTrace();
+            }
         }
-
-        return true;
-
+        return p;
     }
 
     // Add the system temperature
@@ -1181,8 +1190,7 @@ public final class LaunchControl {
         while (iterator.hasNext()) {
             tSwitch = iterator.next();
             if (tSwitch.getName().equalsIgnoreCase(name)
-                    || tSwitch.getNodeName().equalsIgnoreCase(name)
-                    || tSwitch.getName().equalsIgnoreCase(name.replace("_", " "))) {
+                    || tSwitch.getNodeName().equalsIgnoreCase(name)) {
                 return tSwitch;
             }
         }
@@ -1232,19 +1240,6 @@ public final class LaunchControl {
         // search based on the input name
         Timer tTimer = LaunchControl.findTimer(name);
         timerList.remove(tTimer);
-    }
-
-    /********
-     * Get the BrewDay object. Create one if there is no brewday object.
-     *
-     * @return The current brewday object.
-     */
-    public static BrewDay getBrewDay() {
-        if (brewDay == null) {
-            brewDay = new BrewDay();
-        }
-
-        return brewDay;
     }
 
     /******
@@ -1825,7 +1820,7 @@ public final class LaunchControl {
             }
         }
 
-        // Delete all the switches first
+        // Delete all the triggers first
         Element triggerControlsElement = getFirstElement(null, TriggerControl.NAME);
 
         if (triggerControlsElement != null) {
@@ -1851,6 +1846,8 @@ public final class LaunchControl {
             }
             triggerControl.saveTriggers(triggerElement);
         }
+
+        saveConfigFile();
     }
 
     public static void deletePIDConfig(String name) {
@@ -2838,7 +2835,7 @@ public final class LaunchControl {
             pb = null;
             return;
         }
-
+        pb = null;
         String currentSha = getShaFor("HEAD");
         String headSha = getShaFor("origin");
 
@@ -2853,6 +2850,67 @@ public final class LaunchControl {
         pb = null;
     }
 
+    public static String getLastLogDate()
+    {
+        File jarLocation = new File(LaunchControl.class.getProtectionDomain()
+                .getCodeSource().getLocation().getPath()).getParentFile();
+
+        ArrayList<String> commands = new ArrayList<>();
+        commands.add("git");
+        // Add arguments
+        commands.add("log");
+        commands.add("-1");
+        BrewServer.LOG.info("Checking for last log date");
+
+        // Run macro on target
+        Process process = null;
+        pb = new ProcessBuilder(commands);
+        pb.directory(jarLocation);
+        pb.redirectErrorStream(true);
+        try {
+            process = pb.start();
+            process.waitFor();
+        } catch (IOException | InterruptedException e3) {
+            BrewServer.LOG.info("Couldn't check remote git SHA");
+            e3.printStackTrace();
+            if (process != null) {
+                process.destroy();
+            }
+            pb = null;
+            return null;
+        }
+
+        // Read output
+        StringBuilder out = new StringBuilder();
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+                process.getInputStream()));
+        String line, previous = null;
+        String currentSha = null;
+
+        try {
+            while ((line = br.readLine()) != null) {
+                if (!line.equals(previous)) {
+                    previous = line;
+                    if (line.startsWith("Date:"))
+                    {
+                        line = line.substring(5).trim();
+                        out.append(line).append('\n');
+                    }
+
+                    BrewServer.LOG.info(line);
+                }
+            }
+        } catch (IOException e2) {
+            BrewServer.LOG.info("Couldn't read a line when checking SHA");
+            e2.printStackTrace();
+            if (process != null) {
+                process.destroy();
+            }
+            pb = null;
+            return null;
+        }
+        return out.toString();
+    }
     public static String getShaFor(String target) {
         File jarLocation = new File(LaunchControl.class.getProtectionDomain()
                 .getCodeSource().getLocation().getPath()).getParentFile();
@@ -2919,6 +2977,7 @@ public final class LaunchControl {
             pb = null;
             return null;
         }
+        pb = null;
         return currentSha;
     }
     /**
@@ -2968,7 +3027,7 @@ public final class LaunchControl {
         }
         LaunchControl.setMessage(out.toString());
         BrewServer.LOG.warning(out.toString());
-
+        pb = null;
         System.exit(EXIT_UPDATE);
     }
 
@@ -3235,8 +3294,6 @@ public final class LaunchControl {
                 p.shutdown();
             }
         }
-
-        saveConfigFile();
 
         if (recorder != null) {
             BrewServer.LOG.warning("Shutting down recorder threads.");

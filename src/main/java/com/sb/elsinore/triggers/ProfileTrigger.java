@@ -10,7 +10,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 
@@ -256,7 +255,7 @@ public class ProfileTrigger implements TriggerInterface {
     }
 
     @Override
-    public void updateTrigger(JSONObject params) {
+    public boolean updateTrigger(JSONObject params) {
         String temp = (String) params.get(POSITION);
         if (temp != null)
         {
@@ -269,8 +268,13 @@ public class ProfileTrigger implements TriggerInterface {
         if (target != null && LaunchControl.findTemp(target) != null) {
             this.targetName = target;
         }
+        else
+        {
+            return false;
+        }
 
         this.activate = newAct != null && newAct.equals(ACTIVATE);
+        return true;
     }
 
     @Override

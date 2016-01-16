@@ -1,0 +1,226 @@
+<html>
+    <link rel="stylesheet" href="/bootstrap-v4/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/html/css/elsinore.css"/>
+    <link rel="stylesheet" href="/html/css/sweetalert2.css"/>
+    <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.0/css/bootstrap-toggle.min.css" rel="stylesheet">
+
+    <script type="text/javascript" src="/bootstrap-v4/js/jquery.js" ></script>
+    <script type="text/javascript" src="/bootstrap-v4/js/bootstrap.min.js" ></script>
+    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.0/js/bootstrap-toggle.min.js"></script>
+    <script type="text/javascript" src="/html/js/timer.jquery.js"></script>
+    <script type="text/javascript" src="/html/js/jquery.ui.widget.js"></script>
+    <script type="text/javascript" src="/html/js/jquery.iframe-transport.js"></script>
+    <script type="text/javascript" src="/html/js/jquery.fileupload.js"></script>
+    <script type="text/javascript" src="/html/js/sweetalert2.min.js"></script>
+    <script type="text/javascript" src="/html/js/elsinore.js"></script>
+    <head>
+        <title>New Elsinore Control page</title>
+    </head>
+    <body>
+    <!-- top navbar -->
+    <div class="page-container">
+
+        <div class="navbar navbar-light" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggler" data-toggle="offcanvas" data-target=".sidebar-nav">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <h2 id="brewery_name" onclick="changeName();">Your Brewery</h2>
+                </div>
+            </div>
+        </div>
+        <div class="container-fluid">
+        <div class="row row-offcanvas row-offcanvas-left">
+
+            <!-- sidebar -->
+            <div class="col-xs-4 col-sm-2 sidebar-offcanvas" id="sidebar" role="navigation">
+                <ul  class="nav">
+                    <li><a class="navbar-brand" href="#">StrangeBrew Elsinore</a></li>
+                    <li role="dropdown-separator" class="divider"></li>
+                    <li id="update" class="nav-item"><a class="nav-link" href="#" onclick="checkForUpdate();">Check For Updates</a></li>
+                    <li id="settings" class="nav-item"><a class="nav-link" href="#" onclick="showConfig();">System Configuration</a></li>
+                    <li id="log" class="nav-item"><a class="nav-link" href="elsinore.log" target="_blank">Logfile</a></li>
+                    <li id="hiddenProbes" class="nav-item">
+                        <select class="form-control" onclick="editHidden(this);" id="probeList">
+                            <option>Hidden Probes</option>
+                        </select>
+                    </li>
+                    <li role="separator" class="dropdown-divider"></li>
+                    <li id="graph" class="nav-item"><a class="nav-link" href="/html/graph.html" target="_blank">Temperature Data</a></li>
+
+                    <li role="separator" class="dropdown-divider"></li>
+                    <li id="recipeName" class="nav-item"></li>
+                    <li id="recipeDetails" class="nav-item">Recipe Details</li>
+                    <li id="mashProfile" class="nav-item"><a class="nav-link" href="#" onclick="showMashProfile();">Mash Profile</a></li>
+                    <li id="hopAdditions" class="nav-item"><a class="nav-link" href="#" onclick="showHopAdditions();">Hop Additions</a></li>
+                    <li id="fermentationProfile" class="nav-item"><a class="nav-link" href="#" onclick="showFermentationProfile();">Fermentation Profile</a></li>
+                    <li id="loadRecipe" class="nav-item"><a class="nav-link" onclick="loadRecipe();">Load BeerXML<input type="file" id="recipeFile" style="position: fixed; top: -100em" data-url="uploadbeerxml"></a></li>
+                    <li id="clearRecipe" class="nav-item"><a class="nav-link" onclick="clearRecipe();">Clear BeerXML</a></li>
+                    <li role="separator" class="dropdown-divider"></li>
+                    <li id="Github"><a href="https://github.com/DougEdey/SB_Elsinore_Server" target="_blank">Github</a></li>
+                    <li id="Wiki"><a href="https://www.reddit.com/r/strangebrew/wiki/index" target="_blank">Wiki</a></li>
+                    <li id="Reddit"><a href="https://www.reddit.com/r/strangebrew" target="_blank">/r/strangebrew</a></li>
+                    <li role="separator" class="dropdown-divider"></li>
+                </ul>
+                <div id="message"  onClick="clearMessage();" class="alert alert-info"></div>
+            </div>
+
+            <!-- main area -->
+            <div class="col-xs-12 col-sm-9">
+                <div class="modal fade" id="edit-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                    <span class="sr-only">Close</span>
+                                </button>
+                                <h4 class="modal-title" id="edit-modal-heading">Edit Something</h4>
+                            </div>
+                            <div class="modal-body">
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-primary" onclick="saveDevice(this);">Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="">
+                        <div id="probes">
+                            <h4 class="card-title">Probes</h4>
+                            <div id="card-deck"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                <div class="col-md-3">
+                    <div id="switches">
+                        <div class="modal fade" id="switches-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                            <span class="sr-only">Close</span>
+                                        </button>
+                                        <h4 class="modal-title" id="switches-modal-heading">Add Switch</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="addSwitch" class="form-horizontal">
+                                            <div class="input-group">
+                                                <div class='input-group-addon input-group-addon-label'>Name</div>
+                                                <input type="text" class="input form-control" name="name" id="name" />
+                                            </div>
+                                            <div class="input-group">
+                                                <div class='input-group-addon input-group-addon-label'>GPIO</div>
+                                                <input type="text" class="input form-control" name="gpio" id="gpio" />
+                                            </div>
+
+                                            <div class="checkbox">
+                                                <label id="invert-label" for="invert">
+                                                    <input type="checkbox" name="invert" id="invert" />
+                                                    Invert
+                                                </label>
+                                            </div>
+                                        </form>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" onclick='deleteSwitch();' data-dismiss="modal">Delete</button>
+                                        <button type="button" class="btn btn-secondary" onclick='dismissSwitch();' data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" onclick="saveSwitch(this);" data-dismiss="modal">Save Changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <h4 class="card-title" ondblclick="$('#switches-modal').modal('toggle');">Switches</h4>
+                        <div class="card-body"></div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div id="timers">
+                        <div class="modal fade" id="timers-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                            <span class="sr-only">Close</span>
+                                        </button>
+                                        <h4 class="modal-title" id="timers-modal-heading">Add Timer</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="addTimer" class="form-horizontal">
+                                            <div class="input-group">
+                                                <div class='input-group-addon input-group-addon-label'>Name</div>
+                                                <input type="text" class="form-control input" name="name" id="name" />
+                                            </div>
+                                            <div class="input-group">
+                                                <div class='input-group-addon input-group-addon-label'>Duration</div>
+                                                <input type="number" min="0" step="1" class="form-control input" name="duration" id="duration" />
+                                                <div class='input-group-addon input-group-addon-unit'>Minutes</div>
+                                            </div>
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox" name="invert" id="invert" />
+                                                    Countdown?
+                                                </label>
+                                            </div>
+                                        </form>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" onclick='deleteTimer();' data-dismiss="modal">Delete</button>
+                                        <button type="button" class="btn btn-secondary" onclick='dismissTimer();' data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" onclick="saveTimer(this);" data-dismiss="modal">Save Changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <h4 class="card-title" ondblclick="$('#timers-modal').modal('toggle');">Timers</h4>
+                        <div class="card-body"></div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div id="analog">
+                        <div class="modal fade" id="analog-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                            <span class="sr-only">Close</span>
+                                        </button>
+                                        <h4 class="modal-title" id="analog-modal-heading">Add Analog Input</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" onclick='dismissAnalog();' data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary" onclick="saveAnalog(this);" data-dismiss="modal">Save Changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <h4 class="card-title" ondblclick="$('#analog-modal').modal('toggle');">Analog Inputs</h4>
+                        <div class="card-body"></div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        </div>
+    <footer class="footer">
+        <div style="display:block" class="text-muted">Elsinore Version: <div class="text-muted" id="elsinore_sha"></div>, Committed: <div class="text-muted" id="date"></div></div>
+    </footer>
+    </body>
+</html>

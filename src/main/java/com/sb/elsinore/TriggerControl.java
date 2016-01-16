@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 
+import com.sb.common.CollectionsUtil;
 import com.sb.elsinore.triggers.TriggerInterface;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -70,13 +71,13 @@ public class TriggerControl implements Runnable {
         try {
             Constructor<? extends TriggerInterface> triggerConstructor = triggerClass.getConstructor(int.class, JSONObject.class);
             triggerStep = triggerConstructor.newInstance(position, parameters);
-            triggerList.add(triggerStep);
+            CollectionsUtil.addInOrder(triggerList, triggerStep);
         } catch (InstantiationException | IllegalAccessException
                 | IllegalArgumentException | InvocationTargetException
                 | NoSuchMethodException | SecurityException e) {
             e.printStackTrace();
         }
-
+        LaunchControl.saveSettings();
         return triggerStep;
     }
 
@@ -143,12 +144,12 @@ public class TriggerControl implements Runnable {
      * @param position The position to update the new trigger at.
      * @param params The new parameters
      */
-    public final void updateTrigger(final int position,
+    public final boolean updateTrigger(final int position,
             final JSONObject params) {
         TriggerInterface trigger = this.triggerList.get(position);
-        trigger.updateTrigger(params);
+        LaunchControl.saveSettings();
+        return trigger.updateTrigger(params);
     }
-
 
     /**
      * Get the Trigger Class that matches the incoming name.
@@ -221,7 +222,6 @@ public class TriggerControl implements Runnable {
      * @return The mash step at the specified position.
      */
     public final TriggerInterface getTrigger(final Integer position) {
-        this.sortTriggerSteps();
         return this.triggerList.get(position);
     }
 
@@ -315,6 +315,7 @@ public class TriggerControl implements Runnable {
         }
 
         triggerEntry.setActive();
+        LaunchControl.saveSettings();
         return true;
     }
 
@@ -366,7 +367,7 @@ public class TriggerControl implements Runnable {
                 mEntry.deactivate(fromUI);
             }
         }
-
+        LaunchControl.saveSettings();
         return true;
     }
 
@@ -411,32 +412,42 @@ public class TriggerControl implements Runnable {
         this.outputControl = newControl;
     }
 
-    public void sortTriggerSteps() {
-       Collections.sort(this.triggerList);
-    }
-
     /**
      * Delete the specified trigger step.
      * @param position The step position to delete
      */
-    public final void delTriggerStep(final int position) {
-        sortTriggerSteps();
-        for (int i = triggerList.size(); i > 0; i--) {
-            if (triggerList.get(i).getPosition() == position) {
-                this.triggerList.remove(i);
-            }
-            // Drop the rest of the positions down by one.
-            if (i > position) {
-                triggerList.get(i).setPosition(i - 1);
+    public final void  delTriggerStep(final int position)
+    {
+        int i = -1;
+        for (TriggerInterface ti: triggerList)
+        {
+            if (ti.getPosition() == position)
+            {
+                i = triggerList.indexOf(ti);
+                break;
             }
         }
-        sortTriggerSteps();
+        if (i != -1)
+        {
+            this.triggerList.remove(i);
+            // Drop the rest of the positions down by one.
+            TriggerInterface ti;
+            for (;i < triggerList.size(); i++)
+            {
+                ti = triggerList.get(i);
+                if (ti != null) {
+                    ti.setPosition(ti.getPosition() - 1);
+                }
+            }
+
+        }
 
         // No more steps, turn off the MashControl
         if (triggerList.size() == 0) {
             setShutdownFlag(true);
             Thread.currentThread().interrupt();
         }
+        LaunchControl.saveSettings();
     }
 
     /**
@@ -489,10 +500,12 @@ public class TriggerControl implements Runnable {
 
     public void clear() {
         this.triggerList.clear();
+        LaunchControl.saveSettings();
     }
 
     public void addTrigger(TriggerInterface newTrigger) {
         this.triggerList.add(newTrigger);
+        LaunchControl.saveSettings();
     }
 
     public void saveTriggers(Element rootElement)
@@ -537,6 +550,27 @@ public class TriggerControl implements Runnable {
                 {
                     e.printStackTrace();
                 }
+            }
+        }
+    }
+
+    public boolean isActive() {
+        for (TriggerInterface triggerInterface: triggerList)
+        {
+            if (triggerInterface.isActive())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void deactivate() {
+        for (TriggerInterface triggerInterface: triggerList)
+        {
+            if (triggerInterface.isActive())
+            {
+                triggerInterface.deactivate(false);
             }
         }
     }
