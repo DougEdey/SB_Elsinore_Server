@@ -110,10 +110,14 @@ public final class Temp implements Runnable, Comparable<Temp> {
                     fProbe = bbbSystemTemp;
                 } else {
                     BrewServer.LOG.warning(
-                        "Couldn't find a valid system temperature probe");
+                            "Couldn't find a valid system temperature probe");
                     return;
                 }
             }
+        }
+        else if (name.equalsIgnoreCase("Blank")){
+            // This is a special case for no temp probe.
+            fProbe = null;
         } else {
 
             File probePath =
@@ -449,6 +453,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      */
     public BigDecimal updateTempFromOWFS() {
         // Use the OWFS connection
+        if (probeName.equals("Blank")) { return new BigDecimal(0.0);}
         BigDecimal temp = ERROR_TEMP;
         String rawTemp = "";
         try {

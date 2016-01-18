@@ -391,7 +391,7 @@ public class LaunchControl {
             BrewServer.LOG.info("Did you set up One Wire?");
             System.out
                     .println("http://dougedey.github.io/2014/11/12/Setting_Up_One_Wire/");
-            System.exit(-1);
+            //System.exit(-1);
         }
 
         // See if we have an active configuration file
@@ -959,6 +959,20 @@ public class LaunchControl {
         return p;
     }
 
+    public static void addBlankTemp()
+    {
+        Temp tTemp = new Temp("Blank", "Blank");
+        tempList.add(tTemp);
+        BrewServer.LOG.info("Adding " + tTemp.getName());
+        // setup the scale for each temp probe
+        tTemp.setScale(scale);
+        // setup the threads
+        Thread tThread = new Thread(tTemp);
+        tThread.setName("Temp_blank");
+        tempThreads.add(tThread);
+        tThread.start();
+    }
+
     // Add the system temperature
     public static void addSystemTemp() {
         Temp tTemp = new Temp("System", "System");
@@ -1040,7 +1054,7 @@ public class LaunchControl {
             probe = input;
         }
 
-        if (!probe.startsWith("28") && !probe.startsWith("10") && !input.equals("System")) {
+        if (!probe.startsWith("28") && !probe.startsWith("10") && !input.equals("Blank") && !input.equals("System")) {
             BrewServer.LOG.warning(probe + " is not a temperature probe");
             return null;
         }
@@ -1351,7 +1365,8 @@ public class LaunchControl {
             BrewServer.LOG.warning("Could not find any one wire devices\n"
                     + "Please check you have the correct modules setup");
             BrewServer.LOG.warning("http://dougedey.github.io/2014/11/24/Why_Cant_I_Use_Elsinore_Without_Temperature_Probes/");
-            System.exit(0);
+            //System.exit(0);
+            tempList.add(new Temp("Blank", "Blank"));
         }
 
         if (configDoc == null) {
