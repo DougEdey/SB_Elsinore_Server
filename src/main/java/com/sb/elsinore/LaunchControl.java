@@ -637,6 +637,15 @@ public class LaunchControl {
             rObj.put("recipeCount", BrewServer.getRecipeList().size());
         }
 
+        if (phSensorList.size() > 0)
+        {
+            JSONObject object = new JSONObject();
+            for(PhSensor p: phSensorList)
+            {
+                object.put(p.getName(), p.getJsonStatus());
+            }
+            rObj.put("phSensors", object);
+        }
         // Add the notifications information
         rObj.put("notifications", Notifications.getInstance().getNotificationStatus());
         rObj.put("version", BrewServer.getVersionStatus());

@@ -1809,7 +1809,7 @@ public class UrlEndpoints {
         }
 
         String i2cModel = localParams.get("i2c_model");
-        if (temp != null && temp.length() > 0)
+        if (i2cModel != null && i2cModel.length() > 0)
         {
             String devNumber = localParams.get("i2c_device");
             String devAddress = localParams.get("i2c_address");

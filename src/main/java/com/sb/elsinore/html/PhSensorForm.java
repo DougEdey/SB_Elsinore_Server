@@ -109,11 +109,20 @@ public class PhSensorForm implements Renderable {
             styleString = "display: none";
         }
         html.div(id("i2c_div").name("i2c_div").style(styleString));
-                html.input(type("text").class_("form-control")
-                                .name("i2c_device").id("i2c_device")
-                                .value(phSensor.getI2CDevNumberString())
-                                .add("placeholder", Messages.I2C_DEVICE_NUMBER)
-                );
+                html.select(class_("form-control")
+                                .name("i2c_device").id("i2c_device"));
+
+                html.option(value("").selected_if(phSensor.getI2CDevicePath().equals("")))
+                        .write(Messages.I2C_DEVICE_NUMBER)._option();
+
+                for (String device: I2CDevice.getAvailableDevices())
+                {
+                    html.option(value(device)
+                            .selected_if(device.equals(phSensor.getI2CDevicePath())))
+                            .write(device)
+                            ._option();
+                }
+                html._select();
                 html.input(type("text").class_("form-control")
                                 .name("i2c_address").id("i2c_address")
                                 .value(phSensor.getI2CDevAddressString())

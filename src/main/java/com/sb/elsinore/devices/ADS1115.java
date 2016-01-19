@@ -113,7 +113,8 @@ public class ADS1115 extends ADS1015 {
         }
 
         // Read configuration
-        float value = (ina219Read16(ADS1115_REG_CONVERSION)*4096/32767);
+        int v = ina219Read16(ADS1115_REG_CONVERSION);
+        float value = (((float)v)*4096/32767);
         BrewServer.LOG.warning("Read value: " + value);
 
         return value;

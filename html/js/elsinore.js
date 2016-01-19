@@ -242,6 +242,10 @@ function parseData(data)
     {
         parseTimers(data.timers);
     }
+    if ("phSensors" in data)
+    {
+        parsePhSensors(data.phSensors);
+    }
 
     if ("recipeCount" in data)
     {
@@ -1092,6 +1096,36 @@ function submitNewTriggerStep(button) {
 	return false;
 }
 
+function parsePhSensors(sensors)
+{
+    $.each(sensors, function(name, status){
+        var textname = decodeURI(name) + "(" + status.phReading + ")";
+        var sensorEle = $("#analog [id='" + name + "']");
+        if (sensorEle.length == 0)
+        {
+            $("#analog .card-body").append("<button id='"+name+"' class='btn btn-primary col-xs-10 col-xs-offset-1' onClick='updateAnalog(this);' onDblClick='editAnalog(this);'>"+textname+"</button>");
+            sensorEle = $("#analog [id='" + name +"']");
+        }
+
+        if (sensorEle.text() != textname)
+        {
+            sensorEle.text(textname);
+        }
+    });
+}
+
+function updateAnalog(element) {
+	$.ajax({
+		url : "/readPhSensor",
+		type : "GET",
+		data : {name: element.id},
+		dataType : "json",
+		success : function(html) {
+			// We got the data from the sensor
+			$(element).html(html);
+		}
+	});
+}
 function parseSwitches(switches)
 {
     $.each(switches, function(name, status){
