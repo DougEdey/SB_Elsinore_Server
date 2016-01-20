@@ -273,8 +273,10 @@ public abstract class I2CDevice {
         I2CWriteLength = 3;
         I2CReadLength = 0;
         I2CMasterBuffer[0] = (byte) reg;                   // Register
-        I2CMasterBuffer[1] = (byte) 0xC3;//(value >> 8);            // Upper 8-bits
-        I2CMasterBuffer[2] = (byte) 0x03;//(value & 0xFF);          // Lower 8-bits
+        System.out.println(String.format("value: 0x%02x", (byte) (value >> 8)));
+        System.out.println(String.format("value: 0x%02x", (byte) (value & 0xFF)));
+        I2CMasterBuffer[1] = (byte) (value >> 8); //0xC3;            // Upper 8-bits
+        I2CMasterBuffer[2] = (byte) (value & 0xFF); //0x03;          // Lower 8-bits
 
         int ret = libC.write(fd, I2CMasterBuffer, I2CWriteLength);
         if (ret != I2CWriteLength)
