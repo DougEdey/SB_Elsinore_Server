@@ -508,14 +508,6 @@ function showAuto(card)
                     + "<div class='input-group-addon input-group-addon-unit'>&#176" + tempdata.scale + "</div>"
                 + "</div>"
             + "</div>");
-    if ("heat" in piddata && piddata.heat.gpio != "")
-    {
-        appendSettings(form, "heat", piddata, tempdata.scale);
-    }
-    if ("cool" in piddata && piddata.cool.gpio != "")
-    {
-        appendSettings(form, "cool", piddata, tempdata.scale);
-    }
 
     form.find("#setpoint_input").val(piddata.setpoint);
     // Set the first tab to active
@@ -945,7 +937,7 @@ function handleTriggerDragEnd(e) {
 
 function saveDevice(submitButton)
 {
-    var form = $(submitButton).closest("form");
+    var form = $(submitButton).parent().parent().find("form");
     var data = {};
     data['address'] = form.find('#device-address').val();
     data['new_name'] = encodeURI(form.find('#device-name').val());
@@ -957,6 +949,24 @@ function saveDevice(submitButton)
     data['aux_invert'] = form.find('#invert-aux').val();
     data['cutoff'] = form.find('#shutoff').val();
     data['calibration'] = form.find('#calibration').val();
+
+    var heatdiv = form.find("#heat");
+    if (heatdiv.length == 1)
+    {
+        data["heat_p"] = heatdiv.find("#p_input").val();
+        data["heat_i"] = heatdiv.find("#i_input").val();
+        data["heat_d"] = heatdiv.find("#d_input").val();
+        data["heat_cycletime"] = heatdiv.find("#cycletime_input").val();
+    }
+
+    var cooldiv = form.find("#cool");
+    if (cooldiv.length == 1)
+    {
+        data["cool_p"] = cooldiv.find("#p_input").val();
+        data["cool_i"] = cooldiv.find("#i_input").val();
+        data["cool_d"] = cooldiv.find("#d_input").val();
+        data["cool_cycletime"] = cooldiv.find("#cycletime_input").val();
+    }
 
     $.ajax({
         url : 'editdevice',
@@ -1599,12 +1609,12 @@ function showDeviceEdit(element, addr, name)
                 '<div class="input-group-addon input-group-addon-label">Shutdown Temp</div>' +
                 '<input type="number" class="form-control" id="shutoff">' +
             '</div>' +
-            '<div class="input-group">' +
-             '<div id="visibility" class="btn btn-primary" onClick="toggleVisibility(this);">Show</div>' +
+          '</form>' +
+          '<div class="input-group">' +
+              '<div id="visibility" class="btn btn-primary" onClick="toggleVisibility(this);">Show</div>' +
               '<div class="btn btn-primary" onClick="handleTriggerAdd(this);">Add New Trigger</div>' +
               '<div class="btn btn-primary" onclick="saveDevice(this);">Save Changes</div>' +
-              '</div>'+
-          '</form>'
+          '</div>'
        });
         var modal = $("#editDevice");
          if (temp.hidden)
@@ -1622,6 +1632,14 @@ function showDeviceEdit(element, addr, name)
              modal.find('#heat-gpio').val(piddata.heat.gpio);
              modal.find('#invert-cool')[0].checked = piddata.cool.inverted;
              modal.find('#invert-heat')[0].checked = piddata.heat.inverted;
+             if ("heat" in piddata && piddata.heat.gpio != "")
+             {
+                 appendSettings(modal, "heat", piddata, temp.scale);
+             }
+             if ("cool" in piddata && piddata.cool.gpio != "")
+             {
+                 appendSettings(modal, "cool", piddata, temp.scale);
+             }
          }
          if (temp != undefined)
          {

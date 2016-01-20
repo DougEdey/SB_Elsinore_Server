@@ -614,6 +614,47 @@ public class UrlEndpoints {
             LaunchControl.deletePID(tPID);
         }
 
+        // Update the heat settings
+        if (params.containsKey("heat_p"))
+        {
+            tPID.setHeatP(new BigDecimal(params.get("heat_p")));
+        }
+
+        if (params.containsKey("heat_i"))
+        {
+            tPID.setHeatI(new BigDecimal(params.get("heat_i")));
+        }
+
+        if (params.containsKey("heat_d"))
+        {
+            tPID.setHeatD(new BigDecimal(params.get("heat_d")));
+        }
+
+        if (params.containsKey("heat_cycletime"))
+        {
+            tPID.setHeatCycle(new BigDecimal(params.get("heat_cycletime")));
+        }
+
+        // update the cool settings
+        if (params.containsKey("cool_p"))
+        {
+            tPID.setCoolP(new BigDecimal(params.get("cool_p")));
+        }
+
+        if (params.containsKey("cool_i"))
+        {
+            tPID.setCoolI(new BigDecimal(params.get("cool_i")));
+        }
+
+        if (params.containsKey("cool_d"))
+        {
+            tPID.setCoolD(new BigDecimal(params.get("cool_d")));
+        }
+
+        if (params.containsKey("cool_cycletime"))
+        {
+            tPID.setCoolCycle(new BigDecimal(params.get("cool_cycletime")));
+        }
 
         LaunchControl.saveConfigFile();
         return new Response(Status.OK, MIME_TYPES.get("txt"),
