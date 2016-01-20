@@ -311,7 +311,7 @@ function requestData()
 function addProbeCard(vesselProbe, position)
 {
     var div = "<div id='" + vesselProbe 
-    + "' class='col-sm-12 col-md-6 col-lg-5 col-xl-4 card card-block text-center'>"
+    + "' class='col-sm-12 col-md-6 col-lg-5 col-xl-4 card card-block text-center m-x'>"
         + "</div>";
     $("#probes > #card-deck").append(div);
     return $("#probes #" + vesselProbe);
@@ -391,7 +391,7 @@ function loadPIDData(card, pid)
     var pidmode = card.find("#mode");
     if (pidmode.size() == 0)
     {
-        card.append("<div id='mode' class='btn-group'>"
+        card.append("<div id='mode' class='btn-toolbar'>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='off'>Off</button>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='auto'>Auto</button>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='manual'>Manual</button>"
@@ -477,11 +477,16 @@ function showOff(card)
     pidsettings = card.find("#pidsettings");
     if (pidsettings.size() == 0)
     {
-        card.append("<div id='pidsettings'></div>");
-        pidsettings = card.find('#pidsettings');
+        pidsettings = addPIDSettings(card);
     }
     pidsettings.empty();
     pidsettings.append("<div class='form-group form-inline row'><button type='button' class='btn btn-danger' id='submit' onclick='submitForm(this);'>Submit</button></div>");
+}
+
+function addPIDSettings(card)
+{
+    card.append("<div id='pidsettings' class='m-t'></div>");
+    return card.find("#pidsettings");
 }
 
 function showAuto(card)
@@ -492,8 +497,8 @@ function showAuto(card)
     var tempdata = card.find(".card-header").data("temp");
     if (pidsettings.size() == 0)
     {
-        card.append("<div id='pidsettings'></div>");
-        pidsettings = card.find('#pidsettings');
+
+        pidsettings = addPIDSettings(card);
     }
 
     // Make sure we clear out the settings form
@@ -583,8 +588,7 @@ function showManual(card)
     var piddata = card.find(".card-header").data("pid");
     if (pidsettings.size() == 0)
     {
-        card.append("<div id='pidsettings'></div>");
-        pidsettings = card.find('#pidsettings');
+        pidsettings = addPIDSettings(card);
     }
 
     // Make sure we clear out the settings form
@@ -621,8 +625,7 @@ function showHysteria(card)
     var tempdata = card.find(".card-header").data("temp");
     if (pidsettings.size() == 0)
     {
-        card.append("<div id='pidsettings'></div>");
-        pidsettings = card.find('#pidsettings');
+        pidsettings = addPIDSettings(card);
     }
 
     // Make sure we clear out the settings form
