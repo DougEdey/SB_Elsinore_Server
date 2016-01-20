@@ -79,7 +79,7 @@ public class StatusRecorder implements Runnable {
      */
     public void saveReading(String name, BigDecimal value)
     {
-        File tempFile = new File(currentDirectory + name + "-temp.csv");
+        File tempFile = new File(currentDirectory + name + "-manual.csv");
         appendToLog(tempFile, new Date().getTime() + "," + value.toPlainString() + "\r\n");
     }
 
