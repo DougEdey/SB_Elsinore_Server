@@ -1565,6 +1565,7 @@ function showDeviceEdit(element, addr, name)
     var temp = $(element).data("temp");
 
     swal({title:"Edit Device",
+    showConfirmButton: false,
     html:'<form class="form-horizontal" id="editDevice">'+
           '<input type="hidden" id="device-address" value="' + addr + '">' +
             '<div class="input-group">'+
