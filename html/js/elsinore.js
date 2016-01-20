@@ -520,30 +520,16 @@ function showAuto(card)
     form.append("<div class='form-group form-inline row'><button type='button' class='btn btn-danger' id='submit' onclick='submitForm(this);'>Submit</button></div>");
 }
 
-function appendSettings(pidsettings, type, piddata, scale)
+function appendSettings(pidsettings, type, piddata, scale, active)
 {
-    var navtabs = pidsettings.find(".nav-tabs");
-    if (navtabs.size() == 0)
+    var classActive = "";
+    if (active)
     {
-        pidsettings.append("<ul class='nav nav-tabs' role='tablist'></ul>");
-        navtabs = pidsettings.find(".nav-tabs");
+        classActive="fade active in";
     }
-    navtabs.append("<li class='nav-item'><a class='nav-link' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>");
+    pidsettings += "<div id='" + type + "' role='tabpanel' class='tab-pane "+classActive+"'>";
 
-    var tabcontent = pidsettings.find(".tab-content");
-    if (tabcontent.size() == 0)
-    {
-        pidsettings.append("<div class='tab-content'></div>");
-        tabcontent = pidsettings.find(".tab-content");
-    }
-    var heatDiv = tabcontent.find("#" + type);
-    if (heatDiv.size() == 0)
-    {
-        tabcontent.append("<div id='" + type + "' role='tabpanel' class='tab-pane'></div>")
-        heatDiv = tabcontent.find("#" + type);
-    }
-
-    heatDiv.append("<div class='form-group'>"
+    pidsettings += "<div class='form-group'>"
             + "<label class='sr-only' for='cycletime_input'>Cycle Time</label>"
             + "<div class='input-group'>"
                 + "<div class='input-group-addon input-group-addon-label'>Cycle Time</div>"
@@ -574,11 +560,9 @@ function appendSettings(pidsettings, type, piddata, scale)
                 + "<input type='number' class='form-control form-control-minwidth' id='d_input' placeholder='Differential' >"
                 + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
             + "</div>"
-        + "</div>");
-    heatDiv.find("#cycletime_input").val(piddata[type].cycle);
-    heatDiv.find("#p_input").val(piddata[type].p);
-    heatDiv.find("#i_input").val(piddata[type].i);
-    heatDiv.find("#d_input").val(piddata[type].d);
+        + "</div>"
+    + "</div>";
+    return pidsettings;
 }
 
 function showManual(card)
@@ -1566,60 +1550,89 @@ function showDeviceEdit(element, addr, name)
 {
     var piddata = $(element).data("pid");
     var temp = $(element).data("temp");
+    var htmlContent = '<form id="editDevice">'+
+                                '<input type="hidden" id="device-address" value="' + addr + '">' +
+                                  '<div class="input-group m-t">'+
+                                      '<div class="input-group-addon input-group-addon-label">Name</div>' +
+                                      '<input type="text" class="form-control" id="device-name" value="'+name+'">' +
+                                  '</div>' +
+                                  '<div class="input-group m-t">' +
+                                      '<div class="input-group-addon input-group-addon-label">Heat GPIO</div>' +
+                                      '<input type="text" class="form-control" id="heat-gpio">' +
+                                    '<div class="checkbox">'+
+                                    '<label>' +
+                                      '<input type="checkbox" id="invert-heat" value="invert">' +
+                                      'Invert' +
+                                    '</label>' +
+                                    '</div>' +
+                                  '</div>' +
+                                  '<div class="input-group m-t">' +
+                                      '<div class="input-group-addon input-group-addon-label">Cool GPIO</div>' +
+                                      '<input type="text" class="form-control" id="cool-gpio">' +
+                                    '<div class="checkbox">'+
+                                      '<label>' +
+                                        '<input type="checkbox" id="invert-cool" value="invert">' +
+                                        'Invert' +
+                                    '</label>' +
+                                    '</div>' +
+                                  '</div>' +
+                                  '<div class="input-group m-t">' +
+                                    '<div class="input-group-addon input-group-addon-label">Aux GPIO</div>' +
+                                    '<input type="text" class="form-control" id="aux-gpio">' +
+                                    '<div class="checkbox">'+
+                                    '<label>' +
+                                      '<input type="checkbox" id="invert-aux" value="invert">' +
+                                      'Invert' +
+                                    '</label>' +
+                                    '</div>' +
+                                  '</div>' +
+                                  '<div class="input-group m-t">' +
+                                      '<div class="input-group-addon input-group-addon-label">Calibration</div>' +
+                                      '<input type="number" class="form-control" id="calibration">' +
+                                  '</div>' +
+                                  '<div class="input-group m-t">' +
+                                      '<div class="input-group-addon input-group-addon-label">Shutdown Temp</div>' +
+                                      '<input type="number" class="form-control" id="shutoff">' +
+                                  '</div>';
+    if (piddata != undefined && (piddata.heat.gpio != "" || piddata.cool.gpio != ""))
+    {
+        htmlContent += "<ul class='nav nav-tabs' role='tablist'>";
+        if ("heat" in piddata && piddata.heat.gpio != "")
+        {
+            type = "heat";
+            htmlContent += "<li class='nav-item'><a class='nav-link active' aria-controls='heat' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
+        }
+        if ("cool" in piddata && piddata.cool.gpio != "")
+        {
+            type = "cool";
+            htmlContent += "<li class='nav-item'><a class='nav-link' aria-controls='cool' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
+        }
+        htmlContent += "</ul>";
+        htmlContent += "<div class='tab-content'>";
+        if ("heat" in piddata && piddata.heat.gpio != "")
+        {
+            htmlContent = appendSettings(htmlContent, "heat", piddata, temp.scale, true);
+        }
+        if ("cool" in piddata && piddata.cool.gpio != "")
+        {
+            htmlContent = appendSettings(htmlContent, "cool", piddata, temp.scale, false);
+        }
+        htmlContent += "</div>";
+    }
 
-    swal({title:"Edit Device",
-    showConfirmButton: false,
-    html:'<form class="form-horizontal" id="editDevice">'+
-          '<input type="hidden" id="device-address" value="' + addr + '">' +
-            '<div class="input-group">'+
-                '<div class="input-group-addon input-group-addon-label">Name</div>' +
-                '<input type="text" class="form-control" id="device-name" value="'+name+'">' +
-            '</div>' +
-            '<div class="input-group">' +
-                '<div class="input-group-addon input-group-addon-label">Heat GPIO</div>' +
-                '<input type="text" class="form-control" id="heat-gpio">' +
-              '<div class="checkbox">'+
-              '<label>' +
-                '<input type="checkbox" id="invert-heat" value="invert">' +
-                'Invert' +
-              '</label>' +
-              '</div>' +
-            '</div>' +
-            '<div class="input-group">' +
-                '<div class="input-group-addon input-group-addon-label">Cool GPIO</div>' +
-                '<input type="text" class="form-control" id="cool-gpio">' +
-              '<div class="checkbox">'+
-                '<label>' +
-                  '<input type="checkbox" id="invert-cool" value="invert">' +
-                  'Invert' +
-              '</label>' +
-              '</div>' +
-            '</div>' +
-            '<div class="input-group">' +
-              '<div class="input-group-addon input-group-addon-label">Aux GPIO</div>' +
-              '<input type="text" class="form-control" id="aux-gpio">' +
-              '<div class="checkbox">'+
-              '<label>' +
-                '<input type="checkbox" id="invert-aux" value="invert">' +
-                'Invert' +
-              '</label>' +
-              '</div>' +
-            '</div>' +
-            '<div class="input-group">' +
-                '<div class="input-group-addon input-group-addon-label">Calibration</div>' +
-                '<input type="number" class="form-control" id="calibration">' +
-            '</div>' +
-            '<div class="input-group">' +
-                '<div class="input-group-addon input-group-addon-label">Shutdown Temp</div>' +
-                '<input type="number" class="form-control" id="shutoff">' +
-            '</div>' +
-          '</form>' +
-          '<div class="input-group">' +
-              '<div id="visibility" class="btn btn-primary" onClick="toggleVisibility(this);">Show</div>' +
-              '<div class="btn btn-primary" onClick="handleTriggerAdd(this);">Add New Trigger</div>' +
-              '<div class="btn btn-primary" onclick="saveDevice(this);">Save Changes</div>' +
-          '</div>'
-       });
+    htmlContent += '</form>' +
+                             '<div class="input-group m-t">' +
+                                 '<div id="visibility" class="btn btn-primary" onClick="toggleVisibility(this);">Show</div>' +
+                                 '<div class="btn btn-primary" onClick="handleTriggerAdd(this);">Add New Trigger</div>' +
+                                 '<div class="btn btn-primary" onclick="saveDevice(this);">Save Changes</div>' +
+                             '</div>';
+    swal({
+        title:"Edit Device",
+        showConfirmButton: false,
+        autoResize:true,
+        html: htmlContent
+    });
+
         var modal = $("#editDevice");
          if (temp.hidden)
          {
@@ -1636,13 +1649,24 @@ function showDeviceEdit(element, addr, name)
              modal.find('#heat-gpio').val(piddata.heat.gpio);
              modal.find('#invert-cool')[0].checked = piddata.cool.inverted;
              modal.find('#invert-heat')[0].checked = piddata.heat.inverted;
-             if ("heat" in piddata && piddata.heat.gpio != "")
+
+             if ("heat" in piddata)
              {
-                 appendSettings(modal, "heat", piddata, temp.scale);
+                type = "heat";
+                var heatDiv = modal.find("#" + type);
+                 heatDiv.find("#cycletime_input").val(piddata[type].cycle);
+                 heatDiv.find("#p_input").val(piddata[type].p);
+                 heatDiv.find("#i_input").val(piddata[type].i);
+                 heatDiv.find("#d_input").val(piddata[type].d);
              }
-             if ("cool" in piddata && piddata.cool.gpio != "")
+             if ("cool" in piddata)
              {
-                 appendSettings(modal, "cool", piddata, temp.scale);
+                 type = "cool";
+                 var heatDiv = modal.find("#" + type);
+                  heatDiv.find("#cycletime_input").val(piddata[type].cycle);
+                  heatDiv.find("#p_input").val(piddata[type].p);
+                  heatDiv.find("#i_input").val(piddata[type].i);
+                  heatDiv.find("#d_input").val(piddata[type].d);
              }
          }
          if (temp != undefined)
