@@ -276,6 +276,10 @@ public class PhSensor {
                        if (value.compareTo(BigDecimal.ZERO) > 0)
                        {
                            phReading = value;
+                           if (LaunchControl.recorder != null)
+                           {
+                               LaunchControl.recorder.saveReading(name, phReading);
+                           }
                        }
                    } catch (IllegalAccessException e) {
                        e.printStackTrace();
