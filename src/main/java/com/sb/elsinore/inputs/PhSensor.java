@@ -272,6 +272,11 @@ public class PhSensor {
                if (calcMethod.model().equalsIgnoreCase(this.model)) {
                    try {
                        value = (BigDecimal) m.invoke(this);
+                       value = value.setScale(2, BigDecimal.ROUND_CEILING);
+                       if (value.compareTo(BigDecimal.ZERO) > 0)
+                       {
+                           phReading = value;
+                       }
                    } catch (IllegalAccessException e) {
                        e.printStackTrace();
                    } catch (InvocationTargetException o) {
