@@ -520,14 +520,9 @@ function showAuto(card)
     form.append("<div class='form-group form-inline row'><button type='button' class='btn btn-danger' id='submit' onclick='submitForm(this);'>Submit</button></div>");
 }
 
-function appendSettings(pidsettings, type, piddata, scale, active)
+function appendSettings(pidsettings, type, piddata, scale)
 {
-    var classActive = "";
-    if (active)
-    {
-        classActive="fade active in";
-    }
-    pidsettings += "<div id='" + type + "' role='tabpanel' class='tab-pane "+classActive+"'>";
+    pidsettings += "<div id='" + type + "' role='tabpanel' class='tab-pane'>";
 
     pidsettings += "<div class='form-group'>"
             + "<label class='sr-only' for='cycletime_input'>Cycle Time</label>"
@@ -1550,7 +1545,25 @@ function showDeviceEdit(element, addr, name)
 {
     var piddata = $(element).data("pid");
     var temp = $(element).data("temp");
-    var htmlContent = '<form id="editDevice">'+
+    var htmlContent = "<ul class='nav nav-tabs' role='tablist'>";
+    type = "general";
+    htmlContent += "<li class='nav-item'><a class='nav-link active' aria-controls='"+type+"' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
+    if (piddata != null) {
+        if ("heat" in piddata && piddata.heat.gpio != "")
+        {
+            type = "heat";
+            htmlContent += "<li class='nav-item'><a class='nav-link' aria-controls='"+type+"' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
+        }
+        if ("cool" in piddata && piddata.cool.gpio != "")
+        {
+            type = "cool";
+            htmlContent += "<li class='nav-item'><a class='nav-link' aria-controls='"+type+"' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
+        }
+    }
+    htmlContent += "</ul>";
+    htmlContent += "<div class='tab-content'>";
+    htmlContent += "<div id='general' role='tabpanel' class='tab-pane active'>";
+    htmlContent += '<form id="editDevice">'+
                                 '<input type="hidden" id="device-address" value="' + addr + '">' +
                                   '<div class="input-group m-t">'+
                                       '<div class="input-group-addon input-group-addon-label">Name</div>' +
@@ -1594,38 +1607,27 @@ function showDeviceEdit(element, addr, name)
                                       '<div class="input-group-addon input-group-addon-label">Shutdown Temp</div>' +
                                       '<input type="number" class="form-control" id="shutoff">' +
                                   '</div>';
+    htmlContent += "</div>";
+
     if (piddata != undefined && (piddata.heat.gpio != "" || piddata.cool.gpio != ""))
     {
-        htmlContent += "<ul class='nav nav-tabs' role='tablist'>";
         if ("heat" in piddata && piddata.heat.gpio != "")
         {
-            type = "heat";
-            htmlContent += "<li class='nav-item'><a class='nav-link active' aria-controls='heat' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
+            htmlContent = appendSettings(htmlContent, "heat", piddata, temp.scale);
         }
         if ("cool" in piddata && piddata.cool.gpio != "")
         {
-            type = "cool";
-            htmlContent += "<li class='nav-item'><a class='nav-link' aria-controls='cool' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
-        }
-        htmlContent += "</ul>";
-        htmlContent += "<div class='tab-content'>";
-        if ("heat" in piddata && piddata.heat.gpio != "")
-        {
-            htmlContent = appendSettings(htmlContent, "heat", piddata, temp.scale, true);
-        }
-        if ("cool" in piddata && piddata.cool.gpio != "")
-        {
-            htmlContent = appendSettings(htmlContent, "cool", piddata, temp.scale, false);
+            htmlContent = appendSettings(htmlContent, "cool", piddata, temp.scale);
         }
         htmlContent += "</div>";
     }
 
     htmlContent += '</form>' +
-                             '<div class="input-group m-t">' +
-                                 '<div id="visibility" class="btn btn-primary" onClick="toggleVisibility(this);">Show</div>' +
-                                 '<div class="btn btn-primary" onClick="handleTriggerAdd(this);">Add New Trigger</div>' +
-                                 '<div class="btn btn-primary" onclick="saveDevice(this);">Save Changes</div>' +
-                             '</div>';
+         '<div class="input-group m-t">' +
+             '<div id="visibility" class="btn btn-primary" onClick="toggleVisibility(this);">Show</div>' +
+             '<div class="btn btn-primary" onClick="handleTriggerAdd(this);">Add New Trigger</div>' +
+             '<div class="btn btn-primary" onclick="saveDevice(this);">Save Changes</div>' +
+         '</div>';
     swal({
         title:"Edit Device",
         showConfirmButton: false,
