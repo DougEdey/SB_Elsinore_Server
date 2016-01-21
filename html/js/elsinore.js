@@ -1625,7 +1625,7 @@ function showDeviceEdit(element, addr, name)
                                       '<input type="number" class="form-control" id="calibration">' +
                                   '</div>' +
                                   '<div class="input-group m-t">' +
-                                      '<div class="input-group-addon input-group-addon-label">Shutdown Temp</div>' +
+                                      '<div class="input-group-addon input-group-addon-label">Safety</div>' +
                                       '<input type="number" class="form-control" id="shutoff">' +
                                   '</div>';
     htmlContent += "</div>";
