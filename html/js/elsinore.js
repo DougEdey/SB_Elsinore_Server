@@ -802,11 +802,13 @@ $(document).ready(function() {
     requestData();
     // When the Analog box is shown grab the analog data and render it
     $('#analog-modal').on('show.bs.modal', function (event) {
-          var button = $(event.relatedTarget) // Button that triggered the modal
+
           var modal = $(this);
+
           $.ajax({
             url : '/getphsensorform',
             type : 'GET',
+            data: {sensor: modal.data().name},
             success : function(data) {
                 $("#analog-modal .modal-body").html(data);
             }
@@ -1088,6 +1090,12 @@ function submitNewTriggerStep(button) {
 	return false;
 }
 
+function editAnalog(button)
+{
+    $("#analog-modal").data("name", button.id);
+    $("#analog-modal").modal("toggle");
+}
+
 function parsePhSensors(sensors)
 {
     $.each(sensors, function(name, status){
@@ -1095,7 +1103,9 @@ function parsePhSensors(sensors)
         var sensorEle = $("#analog [id='" + name + "']");
         if (sensorEle.length == 0)
         {
-            $("#analog .card-body").append("<button id='"+name+"' class='btn btn-primary col-xs-10 col-xs-offset-1' onClick='updateAnalog(this);' onDblClick='editAnalog(this);'>"+textname+"</button>");
+            $("#analog .card-body").append("<button id='"+name
+            +"' class='btn btn-primary col-xs-10 col-xs-offset-1' onClick='updateAnalog(this);' onDblClick='editAnalog(this);'>"
+            +textname+"</button>");
             sensorEle = $("#analog [id='" + name +"']");
         }
 

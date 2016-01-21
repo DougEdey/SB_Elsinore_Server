@@ -29,10 +29,10 @@ public class PhSensorForm implements Renderable {
         html.div(id(phSensor.getName() + "-editPhSensor").class_("col-md-12"))
             .form(id(phSensor.getName() + "-editPhSensor")
                     .name(phSensor.getName() + "-edit"))
-                .input(type("text").class_("form-control")
+                .input(type("text").class_("form-control m-t")
                         .name("name").id("name")
                         .value(phSensor.getName()));
-        html.select(class_("form-control").name("select_input")
+        html.select(class_("form-control m-t").name("select_input")
                 .id("select_input").onChange("selectedInput(this);").onLoad("selectedInput(this);"));
 
         html.option(value("ain")
@@ -60,7 +60,7 @@ public class PhSensorForm implements Renderable {
         }
         html.div(id("ain_div").name("ain_div").style(styleString));
 
-                html.input(type("text").class_("form-control")
+                html.input(type("text").class_("form-control m-t")
                         .name("adc_pin").onInput("phAINChange(this);")
                         .add("pattern", "[0-7]{1}")
                         .title("Only 0-7 are accepted pins.")
@@ -78,7 +78,7 @@ public class PhSensorForm implements Renderable {
         }
         html.div(id("ds_div").name("ds_div").style(styleString));
 
-                html.select(class_("form-control").name("dsAddress")
+                html.select(class_("form-control m-t").name("dsAddress")
                         .id("dsAddress").onClick("selectPhAddress(this);"));
                 html.option(value("").selected_if(
                         "".equals(phSensor.getDsAddress())))
@@ -93,7 +93,7 @@ public class PhSensorForm implements Renderable {
                 }
 
                 html._select();
-                html.input(type("text").class_("form-control")
+                html.input(type("text").class_("form-control m-t")
                         .name("dsOffset")
                         .id("dsOffset").value(phSensor.getDsOffset())
                         .add("pattern", "[ABCD]{1}")
@@ -109,7 +109,7 @@ public class PhSensorForm implements Renderable {
             styleString = "display: none";
         }
         html.div(id("i2c_div").name("i2c_div").style(styleString));
-                html.select(class_("form-control")
+                html.select(class_("form-control m-t")
                                 .name("i2c_device").id("i2c_device"));
 
                 html.option(value("").selected_if(phSensor.getI2CDevicePath().equals("")))
@@ -118,22 +118,22 @@ public class PhSensorForm implements Renderable {
                 for (String device: I2CDevice.getAvailableDevices())
                 {
                     html.option(value(device)
-                            .selected_if(device.equals(phSensor.getI2CDevicePath())))
+                            .selected_if(phSensor.getI2CDevicePath().endsWith(device)))
                             .write(device)
                             ._option();
                 }
                 html._select();
-                html.input(type("text").class_("form-control")
+                html.input(type("text").class_("form-control m-t")
                                 .name("i2c_address").id("i2c_address")
                                 .value(phSensor.getI2CDevAddressString())
                                 .add("placeholder", Messages.I2C_DEVICE_ADDRESS)
                 );
-                html.input(type("text").class_("form-control")
+                html.input(type("text").class_("form-control m-t")
                                 .name("i2c_channel").id("i2c_channel")
                                 .value(phSensor.geti2cChannel())
                                 .add("placeholder", Messages.I2C_DEVICE_CHANNEL)
                 );
-                html.select(class_("form-control").name("i2c_model")
+                html.select(class_("form-control m-t").name("i2c_model")
                         .id("i2c_model"));
                 html.option(value("").selected_if(
                         "".equals(phSensor.getI2CDevType())))
@@ -148,7 +148,7 @@ public class PhSensorForm implements Renderable {
 
                 html._select();
         html._div();
-                html.select(class_("form-control").name("ph_model")
+                html.select(class_("form-control m-t").name("ph_model")
                         .id("ph_model"));
                 html.option(value("").selected_if(
                         "".equals(phSensor.getDsAddress())))
@@ -162,7 +162,7 @@ public class PhSensorForm implements Renderable {
                 }
 
                 html._select();
-                html.input(type("number").class_("form-control")
+                html.input(type("number").class_("form-control  m-t")
                         .add("step", "any")
                         .name("calibration")
                         .id("calibration").value("")
