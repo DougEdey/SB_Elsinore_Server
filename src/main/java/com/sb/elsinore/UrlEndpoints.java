@@ -526,8 +526,8 @@ public class UrlEndpoints {
         newName = parms.get("new_name");
         heatgpio = parms.get("new_heat_gpio");
         coolgpio = parms.get("new_cool_gpio");
-        heatInvert = parms.get("heat_invert") != null && params.get("heat_invert").equals("on");
-        coolInvert = parms.get("cool_invert") != null && params.get("cool_invert").equals("on");
+        heatInvert = parms.get("heat_invert") != null && Boolean.parseBoolean(params.get("heat_invert"));
+        coolInvert = parms.get("cool_invert") != null && Boolean.parseBoolean(params.get("cool_invert"));
         auxpin = parms.get("auxpin");
         cutoff = parms.get("cutoff");
         calibration = parms.get("calibration");
@@ -798,7 +798,7 @@ public class UrlEndpoints {
         }
 
         if (parms.containsKey("invert")) {
-            invert = parms.get("invert").equals("on");
+            invert = Boolean.parseBoolean(parms.get("invert"));
         }
 
         Switch newSwitch = LaunchControl.addSwitch(newName, gpio);

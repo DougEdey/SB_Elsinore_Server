@@ -928,9 +928,9 @@ function saveDevice(submitButton)
     data['new_cool_gpio'] = form.find('#cool-gpio').val();
     data['new_heat_gpio'] = form.find('#heat-gpio').val();
     data['aux_gpio'] = form.find('#aux-gpio').val();
-    data['cool_invert'] = form.find('#invert-cool').val();
-    data['heat_invert'] = form.find('#invert-heat').val();
-    data['aux_invert'] = form.find('#invert-aux').val();
+    data['cool_invert'] = form.find('#invert-cool').parent().hasClass("active");
+    data['heat_invert'] = form.find('#invert-heat').parent().hasClass("active");
+    data['aux_invert'] = form.find('#invert-aux').parent().hasClass("active");
     data['cutoff'] = form.find('#shutoff').val();
     data['calibration'] = form.find('#calibration').val();
 
@@ -1209,7 +1209,10 @@ function editSwitch(element)
             $("#switches-modal-heading").text("Edit Switch");
             $("#switches-modal #name").val(decodeURI(switchSettings.name));
             $("#switches-modal #gpio").val(switchSettings.gpio);
-            $("#switches-modal #invert").attr('checked', switchSettings.inverted);
+            if (switchSettings.inverted)
+            {
+                $("#switches-modal #invert").button("toggle");
+            }
         }
     });
 
@@ -1220,7 +1223,6 @@ function dismissSwitch()
     $("#switches-modal-heading").text("Add Switch");
     $("#switches-modal #name").val("");
     $("#switches-modal #gpio").val("");
-    $("#switches-modal #invert").attr('checked', false);
 }
 
 function editTimer(element)
@@ -1236,7 +1238,10 @@ function editTimer(element)
             $("#timers-modal-heading").text("Edit Timer")
             $("#timers-modal #name").val(decodeURI(timerSettings.name));
             $("#timers-modal #duration").val(timerSettings.duration);
-            $("#timers-modal #invert").attr('checked', timerSettings.inverted);
+            if (timerSettings.inverted)
+            {
+                $("#timers-modal #invert").button("toggle");
+            }
             $('#timers-modal').modal('toggle');
         }
     });
@@ -1247,7 +1252,6 @@ function dismissTimer()
     $("#timers-modal-heading").text("Add Timer");
     $("#timers-modal #name").val("");
     $("#timers-modal #duration").val("");
-    $("#timers-modal #invert").attr('checked', false);
 }
 
 function deleteTimer(element)
@@ -1437,24 +1441,24 @@ function showConfig()
         success: function(json) {
         var settingsHTML = "<form id='settings-form' class='form-horizontal'>"
                 + "<div class='form-group'>"
-                + "<div class='checkbox'><label class='form-control-label' >"
-                + '<input type="checkbox" name="restore" id="restore">Restore State On Startup</label>'
+                + "<div class='btn-group' data-toggle='buttons'><label class='btn btn-primary-outline' >"
+                + '<input type="checkbox" name="restore" autocomplete="off" id="restore">Restore State On Startup</label>'
                 + "</div>"
                 + "</div>"
                 + "<div class='form-group'>"
-                + "<div class='checkbox'><label>"
-                +'<input type="checkbox" class="form-control-label" name="recorder" id="recorder">Recorder Enabled</label>'
+                + "<div class='btn-group' data-toggle='buttons'><label class='btn btn-primary-outline' >"
+                +'<input type="checkbox" name="recorder" autocomplete="off" id="recorder">Recorder Enabled</label>'
                 + "</div>"
                 + "</div>"
                 + "<div class='form-group'>"
-                + "<div class='checkbox'><label for='recorderDiff' class='form-control-label'>Recording Tolerance</label>"
+                + "<div><label for='recorderDiff' class='form-control-label'>Recording Tolerance</label>"
                 + "<div class='input-group'>"
                     + "<input type='number' step='0.01' min='0' name='recorderDiff' class='form-control' id='recorderDiff' placeholder='tolerance' >"
                     + "<div class='input-group-addon input-group-addon-unit'>&#176</div>"
                 + "</div>"
                 + "</div>"
                 + "<div class='form-group'>"
-                + "<div class='checkbox'><label for='recorderTime'>Recorder Time</label>"
+                + "<div><label for='recorderTime'>Recorder Time</label>"
                 + "<div class='input-group'>"
                     + "<input type='number' step='1' min='5000' name='recorderTime' class='form-control' id='recorderTime' placeholder='time' >"
                     + "<div class='input-group-addon input-group-addon-unit'>ms</div>"
@@ -1468,8 +1472,15 @@ function showConfig()
             $("#edit-modal .modal-footer").html(footerHTML);
             $("#edit-modal .modal-body #recorderDiff").val(json.recorderDiff);
             $("#edit-modal .modal-body #recorderTime").val(json.recorderTime);
-            $("#edit-modal .modal-body #recorder").prop("checked", json.recorder);
-            $("#edit-modal .modal-body #restore").prop("checked", json.restore);
+            if (json.recorder)
+            {
+                $("#edit-modal .modal-body #recorder").parent().click();
+            }
+
+            if (json.restore)
+            {
+                $("#edit-modal .modal-body #restore").parent().click();
+            }
         }
     });
 
@@ -1582,9 +1593,9 @@ function showDeviceEdit(element, addr, name)
                                   '<div class="input-group m-t">' +
                                       '<div class="input-group-addon input-group-addon-label">Heat GPIO</div>' +
                                       '<input type="text" class="form-control" id="heat-gpio">' +
-                                    '<div class="checkbox">'+
-                                    '<label>' +
-                                      '<input type="checkbox" id="invert-heat" value="invert">' +
+                                    '<div "btn-group" data-toggle="buttons">'+
+                                    '<label class="btn btn-primary-outline">' +
+                                      '<input type="checkbox" id="invert-heat" autocomplete="off" value="invert">' +
                                       'Invert' +
                                     '</label>' +
                                     '</div>' +
@@ -1592,9 +1603,9 @@ function showDeviceEdit(element, addr, name)
                                   '<div class="input-group m-t">' +
                                       '<div class="input-group-addon input-group-addon-label">Cool GPIO</div>' +
                                       '<input type="text" class="form-control" id="cool-gpio">' +
-                                    '<div class="checkbox">'+
-                                      '<label>' +
-                                        '<input type="checkbox" id="invert-cool" value="invert">' +
+                                    '<div "btn-group" data-toggle="buttons">'+
+                                        '<label class="btn btn-primary-outline">' +
+                                        '<input type="checkbox" id="invert-cool" value="invert" autocomplete="off">' +
                                         'Invert' +
                                     '</label>' +
                                     '</div>' +
@@ -1602,9 +1613,9 @@ function showDeviceEdit(element, addr, name)
                                   '<div class="input-group m-t">' +
                                     '<div class="input-group-addon input-group-addon-label">Aux GPIO</div>' +
                                     '<input type="text" class="form-control" id="aux-gpio">' +
-                                    '<div class="checkbox">'+
-                                    '<label>' +
-                                      '<input type="checkbox" id="invert-aux" value="invert">' +
+                                    '<div "btn-group" data-toggle="buttons">'+
+                                    '<label class="btn btn-primary-outline">' +
+                                      '<input type="checkbox" id="invert-aux" value="invert" autocomplete="off">' +
                                       'Invert' +
                                     '</label>' +
                                     '</div>' +
@@ -1655,12 +1666,19 @@ function showDeviceEdit(element, addr, name)
            modal.find("#visibility").text("Hide");
          }
 
+
          if (piddata != undefined)
          {
              modal.find('#cool-gpio').val(piddata.cool.gpio);
              modal.find('#heat-gpio').val(piddata.heat.gpio);
-             modal.find('#invert-cool')[0].checked = piddata.cool.inverted;
-             modal.find('#invert-heat')[0].checked = piddata.heat.inverted;
+             if (piddata.cool.inverted)
+             {
+                modal.find('#invert-cool').parent().click();
+             }
+             if (piddata.heat.inverted)
+             {
+                modal.find('#invert-heat').parent().click();
+             }
 
              if ("heat" in piddata)
              {
