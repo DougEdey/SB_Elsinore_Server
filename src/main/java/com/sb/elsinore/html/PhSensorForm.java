@@ -39,10 +39,12 @@ public class PhSensorForm implements Renderable {
                     .selected_if(phSensor.getAIN().length() > 0))
                     .write("Onboard AIN")
                     ._option();
+        if (LaunchControl.useOWFS) {
             html.option(value("ds2450")
                     .selected_if(phSensor.getDsAddress().length() > 0))
                     .write("DS2450")
                     ._option();
+        }
             html.option(value("i2c")
                     .selected_if(phSensor.getI2CDevAddressString().length() > 0))
                     .write("I2C Input")
@@ -76,30 +78,32 @@ public class PhSensorForm implements Renderable {
         {
             styleString = "display: none";
         }
-        html.div(id("ds_div").name("ds_div").style(styleString));
+        if (LaunchControl.useOWFS) {
+            html.div(id("ds_div").name("ds_div").style(styleString));
 
-                html.select(class_("form-control m-t").name("dsAddress")
-                        .id("dsAddress").onClick("selectPhAddress(this);"));
-                html.option(value("").selected_if(
-                        "".equals(phSensor.getDsAddress())))
-                        .write(Messages.DS2450_ADDRESS)
-                ._option();
-                for (String addr: LaunchControl.getOneWireDevices("/20")) {
-                    String address = addr.substring(1);
-                    html.option(value(address)
+            html.select(class_("form-control m-t").name("dsAddress")
+                    .id("dsAddress").onClick("selectPhAddress(this);"));
+            html.option(value("").selected_if(
+                    "".equals(phSensor.getDsAddress())))
+                    .write(Messages.DS2450_ADDRESS)
+                    ._option();
+            for (String addr : LaunchControl.getOneWireDevices("/20")) {
+                String address = addr.substring(1);
+                html.option(value(address)
                         .selected_if(address.equals(phSensor.getDsAddress())))
                         .write(address)
-                    ._option();
-                }
+                        ._option();
+            }
 
-                html._select();
-                html.input(type("text").class_("form-control m-t")
-                        .name("dsOffset")
-                        .id("dsOffset").value(phSensor.getDsOffset())
-                        .add("pattern", "[ABCD]{1}")
-                        .title("Only A, B, C, or D are accepted offsets")
-                        .add("placeholder", Messages.DS2450_OFFSET));
-        html._div();
+            html._select();
+            html.input(type("text").class_("form-control m-t")
+                    .name("dsOffset")
+                    .id("dsOffset").value(phSensor.getDsOffset())
+                    .add("pattern", "[ABCD]{1}")
+                    .title("Only A, B, C, or D are accepted offsets")
+                    .add("placeholder", Messages.DS2450_OFFSET));
+            html._div();
+        }
         // I2C Stuff
         if (phSensor.getI2CDevAddressString().length() > 0) {
             styleString = "display: block";
