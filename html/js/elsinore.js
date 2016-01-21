@@ -1593,7 +1593,7 @@ function showDeviceEdit(element, addr, name)
                                   '<div class="input-group m-t">' +
                                       '<div class="input-group-addon input-group-addon-label">Heat GPIO</div>' +
                                       '<input type="text" class="form-control" id="heat-gpio">' +
-                                    '<div "btn-group" data-toggle="buttons">'+
+                                    '<div class="input-group-btn btn-group" data-toggle="buttons">'+
                                     '<label class="btn btn-primary-outline">' +
                                       '<input type="checkbox" id="invert-heat" autocomplete="off" value="invert">' +
                                       'Invert' +
@@ -1603,7 +1603,7 @@ function showDeviceEdit(element, addr, name)
                                   '<div class="input-group m-t">' +
                                       '<div class="input-group-addon input-group-addon-label">Cool GPIO</div>' +
                                       '<input type="text" class="form-control" id="cool-gpio">' +
-                                    '<div "btn-group" data-toggle="buttons">'+
+                                    '<div class="input-group-btn btn-group" data-toggle="buttons">'+
                                         '<label class="btn btn-primary-outline">' +
                                         '<input type="checkbox" id="invert-cool" value="invert" autocomplete="off">' +
                                         'Invert' +
@@ -1613,7 +1613,7 @@ function showDeviceEdit(element, addr, name)
                                   '<div class="input-group m-t">' +
                                     '<div class="input-group-addon input-group-addon-label">Aux GPIO</div>' +
                                     '<input type="text" class="form-control" id="aux-gpio">' +
-                                    '<div "btn-group" data-toggle="buttons">'+
+                                    '<div class="input-group-btn btn-group" data-toggle="buttons">'+
                                     '<label class="btn btn-primary-outline">' +
                                       '<input type="checkbox" id="invert-aux" value="invert" autocomplete="off">' +
                                       'Invert' +
@@ -1644,7 +1644,7 @@ function showDeviceEdit(element, addr, name)
     }
 
     htmlContent += '</form>' +
-         '<div class="input-group m-t">' +
+         '<div class="btn-toolbar m-t">' +
              '<div id="visibility" class="btn btn-primary" onClick="toggleVisibility(this);">Show</div>' +
              '<div class="btn btn-primary" onClick="handleTriggerAdd(this);">Add New Trigger</div>' +
              '<div class="btn btn-primary" onclick="saveDevice(this);">Save Changes</div>' +
