@@ -191,12 +191,12 @@ public class SwitchTrigger implements TriggerInterface {
         HtmlCanvas html = new HtmlCanvas();
         html.div(id("EditSwitchTrigger").class_(""));
         html.form(id("editTriggersForm"));
-            html.input(id("type").name("type")
+            html.input(id("type").name("type").class_("form-control m-t")
                         .hidden("true").value("switch"));
-            html.input(id("type").name("position")
+            html.input(id("type").name("position").class_("form-control m-t")
                     .hidden("position").value("" + this.position));
             // Add the Switches as a drop down list.
-            html.select(class_("holo-spinner").name(SWITCHNAME)
+            html.select(class_("form-control m-t").name(SWITCHNAME)
                     .id("switchName"));
                 html.option(value(""))
                         .write(Messages.SWITCHES)
@@ -211,7 +211,7 @@ public class SwitchTrigger implements TriggerInterface {
             html._select();
 
             // Add the on/off values
-            html.select(class_("holo-spinner").name("activate")
+            html.select(class_("form-control m-t").name("activate")
                     .id("activate"));
                 html.option(value(""))
                         .write("")
@@ -227,7 +227,7 @@ public class SwitchTrigger implements TriggerInterface {
             html._select();
 
             html.button(name("submitSwitchTrigger")
-                    .class_("btn col-md-12")
+                    .class_("btn btn-primary col-md-12")
                     .add("data-toggle", "clickover")
                     .onClick("updateTriggerStep(this);"))
                 .write(Messages.EDIT)

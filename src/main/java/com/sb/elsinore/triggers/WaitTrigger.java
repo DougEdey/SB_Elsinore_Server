@@ -212,22 +212,22 @@ public class WaitTrigger implements TriggerInterface {
         HtmlCanvas html = new HtmlCanvas();
         html.div(id("NewWaitTrigger").class_(""));
             html.form(id("newTriggersForm"));
-                html.input(id("type").name("type")
+                html.input(id("type").name("type").class_("form-control m-t")
                             .hidden("true").value("Wait"));
-                html.input(class_("inputBox temperature form-control")
+                html.input(class_("inputBox temperature form-control m-t")
                         .type("number").add("step", "any")
                         .add("placeholder", Messages.MINUTES)
                         .name(WAITTIMEMINS).value(""));
-                html.input(class_("inputBox temperature form-control")
+                html.input(class_("inputBox temperature form-control m-t")
                         .type("number").add("step", "any")
                         .add("placeholder", Messages.SECS)
                         .name(WAITTIMESECS).value(""));
-                html.input(class_("inputBox form-control")
+                html.input(class_("inputBox form-control m-t")
                     .name(NOTES).value("")
                     .add("placeholder", Messages.NOTES)
                     .value(this.note));
                 html.button(name("submitWait")
-                        .class_("btn col-md-12")
+                        .class_("btn btn-primary col-md-12")
                         .add("data-toggle", "clickover")
                         .onClick("submitNewTriggerStep(this);"))
                     .write(Messages.ADD_TRIGGER)

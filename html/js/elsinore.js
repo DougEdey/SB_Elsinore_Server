@@ -972,19 +972,20 @@ function handleTriggerAdd(e)
 {
     var pid = $(e).closest("form").find("#device-address").val();
 
-    $("#edit-modal").modal('toggle');
+    //$("#edit-modal").modal('toggle');
     $("#edit-modal").data('device', pid);
     $("#edit-modal .modal-body").empty();
     $.ajax({
         url: '/getNewTriggers',
         data: {temp: pid},
         dataType: 'html',
+        showConfirmButton: false,
+        showCancelButton: false,
         success: function(html) {
             $("#edit-modal-heading").html("Add New Trigger");
             $("#edit-modal .modal-body").html(html);
             $("#edit-modal .btn-primary").show();
             $("#edit-modal .modal-body").attr("height","100%");
-            swal({title:"Updated!"});
         }
     });
 }
@@ -1016,6 +1017,7 @@ function handleTriggerEdit(e)
             $("#edit-modal .modal-body").html(html);
             $("#edit-modal .modal-body").attr("height","100%");
             $("#edit-modal .btn-primary").show();
+            $("#edit-modal .modal-footer").hide();
             $("#edit-modal").modal('toggle');
         }
     });
@@ -1566,7 +1568,8 @@ function showDeviceEdit(element, addr, name)
 {
     var piddata = $(element).data("pid");
     var temp = $(element).data("temp");
-    var htmlContent = "<ul class='nav nav-tabs' role='tablist'>";
+    var htmlContent = "<div class='text-center'>" +
+    "<ul class='nav nav-tabs' role='tablist'>";
     type = "general";
     htmlContent += "<li class='nav-item'><a class='nav-link active' aria-controls='"+type+"' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
     if (piddata != null) {
@@ -1645,18 +1648,17 @@ function showDeviceEdit(element, addr, name)
 
     htmlContent += '</form>' +
          '<div class="btn-toolbar m-t">' +
-             '<div id="visibility" class="btn btn-primary" onClick="toggleVisibility(this);">Show</div>' +
-             '<div class="btn btn-primary" onClick="handleTriggerAdd(this);">Add New Trigger</div>' +
-             '<div class="btn btn-primary" onclick="saveDevice(this);">Save Changes</div>' +
-         '</div>';
-    swal({
-        title:"Edit Device",
-        showConfirmButton: false,
-        autoResize:true,
-        html: htmlContent
-    });
+             '<button type="button" id="visibility" class="btn btn-primary" onClick="toggleVisibility(this);">Show</button>' +
+             '<button type="button" class="btn btn-primary" onClick="handleTriggerAdd(this);">Add New Trigger</button>' +
+             '<button type="button" class="btn btn-primary" onclick="saveDevice(this);">Save Changes</button>' +
+         '</div>'
+         +'</div>';
+    $("#edit-modal").modal("toggle");
+    $("#edit-modal .modal-body").empty();
+    $("#edit-modal .modal-footer").hide();
+    $("#edit-modal .modal-body").html(htmlContent);
 
-        var modal = $("#editDevice");
+        var modal = $("#edit-modal .modal-body");
          if (temp.hidden)
          {
            modal.find("#visibility").text("Show");
