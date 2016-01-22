@@ -1442,12 +1442,11 @@ function showConfig()
         dataType: 'json',
         success: function(json) {
         var settingsHTML = "<form id='settings-form' class='form-horizontal'>"
-                + "<div class='form-group'>"
+        + "<div class='btn-toolbar text-center'>"
+
                 + "<div class='btn-group' data-toggle='buttons'><label class='btn btn-primary-outline' >"
                 + '<input type="checkbox" name="restore" autocomplete="off" id="restore">Restore State On Startup</label>'
                 + "</div>"
-                + "</div>"
-                + "<div class='form-group'>"
                 + "<div class='btn-group' data-toggle='buttons'><label class='btn btn-primary-outline' >"
                 +'<input type="checkbox" name="recorder" autocomplete="off" id="recorder">Recorder Enabled</label>'
                 + "</div>"
@@ -1466,12 +1465,12 @@ function showConfig()
                     + "<div class='input-group-addon input-group-addon-unit'>ms</div>"
                 + "</div>"
                 + "</div>"
+                + "<div class='btn-toolbar text-center'>"
                 + "<button class='btn btn-success' onclick='saveSystem();'>Save</button>"
+                + "</div>"
                 + "</form>";
-            var footerHTML = 
-                "<button type='button' class='btn btn-secondary' data-dismiss='modal'>Close</button>";
             $("#edit-modal .modal-body").html(settingsHTML);
-            $("#edit-modal .modal-footer").html(footerHTML);
+            $("#edit-modal .modal-footer").hide();
             $("#edit-modal .modal-body #recorderDiff").val(json.recorderDiff);
             $("#edit-modal .modal-body #recorderTime").val(json.recorderTime);
             if (json.recorder)
