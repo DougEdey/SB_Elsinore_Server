@@ -1193,6 +1193,11 @@ public class LaunchControl {
      *            PID to add.
      */
     public static void addPID(final PID newPID) {
+
+        if (pidList.contains(newPID))
+        {
+            return;
+        }
         pidList.add(newPID);
         Thread pThread = new Thread(newPID);
         pThread.start();
