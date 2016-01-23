@@ -934,7 +934,7 @@ function saveDevice(submitButton)
     data['cutoff'] = form.find('#shutoff').val();
     data['calibration'] = form.find('#calibration').val();
 
-    var heatdiv = form.find("#heat");
+    var heatdiv = form.parent().parent().find("#heat");
     if (heatdiv.length == 1)
     {
         data["heat_p"] = heatdiv.find("#p_input").val();
@@ -943,7 +943,7 @@ function saveDevice(submitButton)
         data["heat_cycletime"] = heatdiv.find("#cycletime_input").val();
     }
 
-    var cooldiv = form.find("#cool");
+    var cooldiv = form.parent().parent().find("#cool");
     if (cooldiv.length == 1)
     {
         data["cool_p"] = cooldiv.find("#p_input").val();
