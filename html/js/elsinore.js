@@ -992,7 +992,7 @@ function handleTriggerAdd(e)
 
 function toggleVisibility(e)
 {
-    var pid = $(e).closest("form").find("#device-address").val();
+    var pid = $(e).closest(".modal-body").find("#device-address").val();
     $.ajax({
         url: '/toggleDevice',
         data: {device: pid},
