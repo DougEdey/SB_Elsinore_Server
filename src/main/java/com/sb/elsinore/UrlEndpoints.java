@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
 
+import org.apache.tika.Tika;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -2113,8 +2114,8 @@ public class UrlEndpoints {
 
                 try {
                     File uploadedFile = new File(entry.getValue());
-                    String fileType = Files.probeContentType(
-                            uploadedFile.toPath());
+                    String fileType = new Tika().detect(
+                            uploadedFile);
 
                     if (fileType.endsWith("/xml"))
                     {

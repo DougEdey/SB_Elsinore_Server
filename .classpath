@@ -59,5 +59,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.powermock:powermock-api-mockito:1.6.2"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.mockito:mockito-all:1.10.19"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.powermock:powermock-api-support:1.6.2"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.apache.tika:tika-core:1.11"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
