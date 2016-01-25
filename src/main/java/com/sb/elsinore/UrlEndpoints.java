@@ -798,7 +798,19 @@ public class UrlEndpoints {
         }
 
         if (parms.containsKey("invert")) {
-            invert = Boolean.parseBoolean(parms.get("invert"));
+            String i = parms.get("invert");
+            if (i.equalsIgnoreCase("on"))
+            {
+                invert = true;
+            }
+            else if (i.equalsIgnoreCase("off"))
+            {
+                invert = false;
+            }
+            else
+            {
+                invert = Boolean.parseBoolean(parms.get("invert"));
+            }
         }
 
         Switch newSwitch = LaunchControl.addSwitch(newName, gpio);

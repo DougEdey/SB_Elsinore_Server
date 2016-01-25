@@ -113,20 +113,20 @@
                                     </div>
                                     <div class="modal-body">
                                         <form id="addSwitch" class="form-horizontal">
-                                            <div class="input-group">
+                                            <div class="input-group m-t">
                                                 <div class='input-group-addon input-group-addon-label'>Name</div>
                                                 <input type="text" class="input form-control" name="name" id="name" />
                                             </div>
-                                            <div class="input-group">
+                                            <div class="input-group m-t">
                                                 <div class='input-group-addon input-group-addon-label'>GPIO</div>
                                                 <input type="text" class="input form-control" name="gpio" id="gpio" />
-                                            </div>
 
-                                            <div class="checkbox">
-                                                <label id="invert-label" for="invert">
-                                                    <input type="checkbox" name="invert" id="invert" />
-                                                    Invert
-                                                </label>
+                                                <div class="input-group-btn btn-group" data-toggle="buttons">'+
+                                                    <label class="btn btn-primary-outline">
+                                                        <input type="checkbox" name="invert" id="invert" />
+                                                        Invert
+                                                    </label>
+                                                </div>
                                             </div>
                                         </form>
                                     </div>
@@ -160,17 +160,17 @@
                                             <div class="input-group">
                                                 <div class='input-group-addon input-group-addon-label'>Name</div>
                                                 <input type="text" class="form-control input" name="name" id="name" />
+                                                <div class="input-group-btn btn-group" data-toggle="buttons">
+                                                    <label class="btn btn-primary-outline">
+                                                        <input type="checkbox" name="invert" id="invert" />
+                                                        Countdown?
+                                                    </label>
+                                                </div>
                                             </div>
-                                            <div class="input-group">
+                                            <div class="input-group m-t">
                                                 <div class='input-group-addon input-group-addon-label'>Duration</div>
                                                 <input type="number" min="0" step="1" class="form-control input" name="duration" id="duration" />
                                                 <div class='input-group-addon input-group-addon-unit'>Minutes</div>
-                                            </div>
-                                            <div class="checkbox">
-                                                <label>
-                                                    <input type="checkbox" name="invert" id="invert" />
-                                                    Countdown?
-                                                </label>
                                             </div>
                                         </form>
                                     </div>
