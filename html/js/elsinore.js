@@ -1802,3 +1802,63 @@ function phAINChange(element) {
 		form.find("[id=dsOffset]").hide();
 	}
 }
+
+
+function shutdownSystem() {
+    sweetAlert({
+      title: "Shutdown!",
+      text: "This will shutdown the whole system. Are you sure?",
+      type: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#DD6B55",
+      confirmButtonText: "Yes, shutdown system",
+      closeOnConfirm: false,
+      html: false,
+      allowEscapeKey: true,
+      allowOutsideClick: true
+    }, function(shutdownSystem){
+        if (!shutdownSystem) {
+        return;
+        }
+        var txtMsg = "Shutting Down System.";
+        reallyShutdown(true);
+        swal("Shutting down!",
+        txtMsg,
+        "success");
+      });
+}
+
+function shutdown() {
+    sweetAlert({
+      title: "Shutdown!",
+      text: "This will shutdown Elsinore. Are you sure?",
+      type: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#DD6B55",
+      confirmButtonText: "Yes, shutdown",
+      closeOnConfirm: false,
+      html: false,
+      allowEscapeKey: true,
+      allowOutsideClick: true
+    }, function(shutdownSystem){
+        if (!shutdownSystem) {
+        return;
+        }
+        var txtMsg = "Shutting Down Elsinore.";
+        reallyShutdown(false);
+        swal("Shutting down!",
+        txtMsg,
+        "success");
+      });
+}
+
+function reallyShutdown(shutdownSystem) {
+$.ajax({
+        url : 'shutdownSystem',
+        type : 'POST',
+        data : "turnoff=" + shutdownSystem,
+        success : function(data) {
+            data = null
+        }
+    });
+}
