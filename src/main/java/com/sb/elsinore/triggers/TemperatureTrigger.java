@@ -148,7 +148,7 @@ public class TemperatureTrigger implements TriggerInterface {
      * Update the current trigger.
      */
     @Override
-    public void updateTrigger(final JSONObject parameters) {
+    public boolean updateTrigger(final JSONObject parameters) {
         BigDecimal tTemp = new BigDecimal(
             parameters.get(TemperatureTrigger.TARGET_TEMP).toString().replace(",", "."));
 
@@ -171,7 +171,9 @@ public class TemperatureTrigger implements TriggerInterface {
 
         if (this.active) {
             setTargetTemperature();
+            return true;
         }
+        return false;
     }
 
     @Override
@@ -373,26 +375,26 @@ public class TemperatureTrigger implements TriggerInterface {
         HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
         html.div(id("NewTempTrigger").class_(""));
             html.form(id("newTriggersForm"));
-                html.input(id("type").name("type")
+                html.input(id("type").name("type").class_("form-control m-t")
                         .hidden("true").value("Temperature"));
-                html.input(id("type").name("position")
+                html.input(id("type").name("position").class_("form-control m-t")
                         .hidden("position").value("" + this.position));
-                html.input(class_("inputBox temperature form-control")
+                html.input(class_("inputBox temperature form-control m-t")
                         .type("number").add("step", "any")
                         .add("placeholder", Messages.SET_POINT)
                         .name("targetTemperature").value(""));
-                html.input(class_("inputBox temperature form-control")
+                html.input(class_("inputBox temperature form-control m-t")
                     .type("number").add("step", "any")
                     .add("placeholder", Messages.END_TEMP)
                     .name("exitTemperature").value(""));
-                html.input(class_("inputBox form-control")
+                html.input(class_("inputBox form-control m-t")
                         .name("method").value("")
                         .add("placeholder", Messages.METHOD));
-                html.input(class_("inputBox form-control")
+                html.input(class_("inputBox form-control m-t")
                         .name("stepType").value("")
                         .add("placeholder", Messages.TYPE));
              // Add the on/off values
-                html.select(class_("holo-spinner").name("mode")
+                html.select(class_("form-control m-t").name("mode")
                         .id("mode"));
                     html.option(value(""))
                             .write("")
@@ -405,7 +407,7 @@ public class TemperatureTrigger implements TriggerInterface {
                     ._option();
                 html._select();
                 html.button(name("submitTemperature")
-                        .class_("btn col-md-12")
+                        .class_("btn btn-primary m-t col-md-12")
                         .add("data-toggle", "clickover")
                         .onClick("submitNewTriggerStep(this);"))
                     .write(Messages.ADD_TRIGGER)

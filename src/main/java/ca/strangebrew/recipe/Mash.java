@@ -358,12 +358,35 @@ public class Mash {
 
         public void setMashRatio(String mashRatio) {
             try {
-                this.mashRatio = Double.parseDouble(mashRatio);
+                mashRatio = mashRatio.trim();
+
+                this.mashRatio = readDouble(mashRatio);
             } catch (NumberFormatException nfe) {
                 nfe.printStackTrace();
             }
         }
+        public double readDouble(String s)
+        {
+            s = s.trim();
+            StringBuilder sb = new StringBuilder(s);
+            int i = sb.indexOf(",");
+            while (i > 0)
+            {
+                // if we're at the decimal point, change it to a .
+                if (i == (sb.length() - 2))
+                {
+                    sb.replace(i, i+1, ",");
+                }
+                // otherwise remove it
+                else
+                {
+                    sb.replace(i, i+1, "");
+                }
+                i = sb.indexOf(",");
+            }
 
+            return Double.parseDouble(sb.toString());
+        }
         public double getMashRatio() {
             return mashRatio;
         }

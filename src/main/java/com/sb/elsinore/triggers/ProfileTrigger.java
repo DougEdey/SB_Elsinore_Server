@@ -10,7 +10,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 
@@ -128,10 +127,10 @@ public class ProfileTrigger implements TriggerInterface {
         HtmlCanvas html = new HtmlCanvas();
         html.div(id("NewTriggerTrigger").class_(""));
         html.form(id("newTriggersForm"));
-            html.input(id("type").name("type")
+            html.input(id("type").name("type").class_("form-control m-t")
                         .hidden("true").value("Profile"));
             // Add the probe as a drop down list.
-            html.select(class_("holo-spinner").name(TARGET_NAME)
+            html.select(class_("form-control m-t").name(TARGET_NAME)
                     .id(TARGET_NAME));
                 html.option(value(""))
                         .write("Target Probe")
@@ -145,7 +144,7 @@ public class ProfileTrigger implements TriggerInterface {
             html._select();
 
             // Add the on/off values
-            html.select(class_("holo-spinner").name(ACTIVATE)
+            html.select(class_("form-control m-t").name(ACTIVATE)
                     .id(ACTIVATE));
                 html.option(value(""))
                         .write("")
@@ -159,7 +158,7 @@ public class ProfileTrigger implements TriggerInterface {
             html._select();
 
             html.button(name("submitTriggerTrigger")
-                    .class_("btn col-md-12")
+                    .class_("btn btn-primary col-md-12")
                     .add("data-toggle", "clickover")
                     .onClick("submitNewTriggerStep(this);"))
                 .write(Messages.ADD_TRIGGER)
@@ -256,7 +255,7 @@ public class ProfileTrigger implements TriggerInterface {
     }
 
     @Override
-    public void updateTrigger(JSONObject params) {
+    public boolean updateTrigger(JSONObject params) {
         String temp = (String) params.get(POSITION);
         if (temp != null)
         {
@@ -269,8 +268,13 @@ public class ProfileTrigger implements TriggerInterface {
         if (target != null && LaunchControl.findTemp(target) != null) {
             this.targetName = target;
         }
+        else
+        {
+            return false;
+        }
 
         this.activate = newAct != null && newAct.equals(ACTIVATE);
+        return true;
     }
 
     @Override

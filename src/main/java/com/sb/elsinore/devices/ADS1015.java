@@ -27,10 +27,10 @@ public class ADS1015 extends I2CDevice {
     POINTER REGISTER
     -----------------------------------------------------------------------*/
 public int ADS1015_REG_POINTER_MASK        = (0x03);
-    public int ADS1015_REG_POINTER_CONVERT     = (0x00);
-    public int ADS1015_REG_POINTER_CONFIG      = (0x10);
-    public int ADS1015_REG_POINTER_LOWTHRESH   = (0x02);
-    public int ADS1015_REG_POINTER_HITHRESH    = (0x03);
+    public int ADS1015_REG_POINTER_CONVERT     = 0;
+    public int ADS1015_REG_POINTER_CONFIG      = 1;
+    public int ADS1015_REG_POINTER_LOWTHRESH   = 2;
+    public int ADS1015_REG_POINTER_HITHRESH    = 3;
 /*=========================================================================*/
 
 /*=========================================================================

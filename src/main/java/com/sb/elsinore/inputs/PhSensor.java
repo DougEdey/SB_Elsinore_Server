@@ -15,9 +15,7 @@ import org.json.simple.JSONObject;
 
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
-import com.sb.elsinore.NanoHTTPD.Response;
 import com.sb.elsinore.annotations.PhSensorType;
-import com.sb.elsinore.annotations.UrlEndpoint;
 import com.sb.util.MathUtil;
 
 public class PhSensor {
@@ -269,11 +267,20 @@ public class PhSensor {
         for (java.lang.reflect.Method m
                 : PhSensor.class.getDeclaredMethods()) {
            PhSensorType calcMethod =
-                   (PhSensorType) m.getAnnotation(PhSensorType.class);
+                   m.getAnnotation(PhSensorType.class);
            if (calcMethod != null) {
                if (calcMethod.model().equalsIgnoreCase(this.model)) {
                    try {
                        value = (BigDecimal) m.invoke(this);
+                       value = value.setScale(2, BigDecimal.ROUND_CEILING);
+                       if (value.compareTo(BigDecimal.ZERO) > 0)
+                       {
+                           phReading = value;
+                           if (LaunchControl.recorder != null)
+                           {
+                               LaunchControl.recorder.saveReading(name, phReading);
+                           }
+                       }
                    } catch (IllegalAccessException e) {
                        e.printStackTrace();
                    } catch (InvocationTargetException o) {
@@ -295,7 +302,7 @@ public class PhSensor {
         for (java.lang.reflect.Method m
                 : PhSensor.class.getDeclaredMethods()) {
            PhSensorType calcMethod =
-                   (PhSensorType) m.getAnnotation(PhSensorType.class);
+                   m.getAnnotation(PhSensorType.class);
            if (calcMethod != null) {
                typeList.add(calcMethod.model());
            }
@@ -311,6 +318,10 @@ public class PhSensor {
     @PhSensorType(model = "SEN0161")
     public final BigDecimal calcSEN0161() {
         BigDecimal readValue = this.getAverage(3);
+        if (readValue.compareTo(BigDecimal.ZERO) <= 0)
+        {
+            return readValue;
+        }
         return MathUtil.multiply(readValue, 3.5).add(offset);
     }
 
@@ -322,12 +333,22 @@ public class PhSensor {
     public final BigDecimal getAverage(final int maxRead) {
         BigDecimal readValue = new BigDecimal(0);
         BigDecimal t;
-        int i = 0;
+        int i;
+        int badRead = 0;
         for ( i = 0; i < maxRead;) {
             t = this.updateReading();
             if (t.compareTo(BigDecimal.ZERO) > 0) {
                 readValue = readValue.add(t);
+
                 i++;
+            }
+            else
+            {
+                badRead++;
+            }
+            if (badRead > 5)
+            {
+                return new BigDecimal(-1);
             }
         }
 
@@ -372,6 +393,15 @@ public class PhSensor {
             return "";
         }
         return Integer.toString(i2cDevice.getAddress());
+    }
+
+    public String getI2CDevicePath()
+    {
+        if (i2cDevice == null)
+        {
+            return "";
+        }
+        return i2cDevice.getDevicePath();
     }
 
     public String geti2cChannel() {

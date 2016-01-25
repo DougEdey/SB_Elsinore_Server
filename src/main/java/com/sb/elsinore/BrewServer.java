@@ -2,7 +2,9 @@ package com.sb.elsinore;
 
 import ca.strangebrew.recipe.Recipe;
 import com.sb.elsinore.NanoHTTPD.Response.Status;
+import com.sb.elsinore.annotations.Parameter;
 import com.sb.elsinore.annotations.UrlEndpoint;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.io.File;
@@ -10,11 +12,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -30,7 +30,10 @@ import java.util.logging.Logger;
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class BrewServer extends NanoHTTPD {
 
+    public static String SHA = "";
+    public static String SHA_DATE = "";
     private static Recipe currentRecipe;
+    private final TreeMap<String, java.lang.reflect.Method> m_endpoints = new TreeMap<>();
     /**
      * The Root Directory of the files to be served.
      */
@@ -122,6 +125,15 @@ public class BrewServer extends NanoHTTPD {
         if (rootDir.exists() && rootDir.isDirectory()) {
             LOG.info("Root directory: " + rootDir.toString());
         }
+
+        // Load the ANnotations
+        for (java.lang.reflect.Method m
+                : UrlEndpoints.class.getDeclaredMethods()) {
+            UrlEndpoint urlMethod = m.getAnnotation(UrlEndpoint.class);
+            if (urlMethod != null) {
+                m_endpoints.put(urlMethod.url().toLowerCase(), m);
+            }
+        }
     }
 
     public static void setRecipeList(ArrayList<String> recipeList) {
@@ -138,6 +150,13 @@ public class BrewServer extends NanoHTTPD {
 
     public static Recipe getCurrentRecipe() {
         return BrewServer.currentRecipe;
+    }
+
+    public static JSONObject getVersionStatus() {
+        JSONObject verStatus = new JSONObject();
+        verStatus.put("sha", BrewServer.SHA);
+        verStatus.put("date", BrewServer.SHA_DATE);
+        return verStatus;
     }
 
     /**
@@ -183,88 +202,6 @@ public class BrewServer extends NanoHTTPD {
 
         BrewServer.LOG.info("URL : " + uri + " method: " + method);
 
-        if (uri.equalsIgnoreCase("/clearStatus")) {
-            LaunchControl.setMessage("");
-            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                    "Status Cleared");
-        }
-
-        if (uri.equalsIgnoreCase("/addsystem")) {
-            LaunchControl.addSystemTemp();
-            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                    "Added system temperature");
-        }
-
-        if (uri.equalsIgnoreCase("/delsystem")) {
-            LaunchControl.delSystemTemp();
-            return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                    "Deleted system temperature");
-        }
-        
-        if (uri.equalsIgnoreCase("/getstatus")) {
-            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                    LaunchControl.getJSONStatus());
-        }
-
-        if (uri.equalsIgnoreCase("/getsystemsettings")) {
-            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                    LaunchControl.getSystemStatus());
-        }
-
-        if (uri.equalsIgnoreCase("/graph")) {
-            return serveFile("/templates/static/graph/graph.html", header,
-                    rootDir);
-        }
-
-        if (uri.equalsIgnoreCase("/checkgit")) {
-            LaunchControl.checkForUpdates();
-            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                    "{Status:'OK'}");
-        }
-
-        if (uri.equalsIgnoreCase("/restartupdate")) {
-            LaunchControl.updateFromGit();
-            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                    "{Status:'OK'}");
-        }
-
-        if (uri.equalsIgnoreCase("/settheme")) {
-            String newTheme = parms.get("name");
-
-            if (newTheme == null) {
-                return new NanoHTTPD.Response(Status.BAD_REQUEST,
-                        MIME_TYPES.get("json"),
-                        "{Status:'No name provided'}");
-            }
-
-            String fileName = "/logos/" + newTheme + ".ico";
-            if (!(new File(rootDir, fileName).exists())) {
-                // It doesn't exist
-                LaunchControl.setMessage("Favicon for the new theme: "
-                        + newTheme + ", doesn't exist."
-                        + " Please add: " + fileName + " and try again");
-                return new NanoHTTPD.Response(Status.BAD_REQUEST,
-                        MIME_TYPES.get("json"),
-                        "{Status:'Favicon doesn\'t exist'}");
-            }
-
-            fileName = "/logos/" + newTheme + ".gif";
-            if (!(new File(rootDir, fileName).exists())) {
-                // It doesn't exist
-                LaunchControl.setMessage("Brewry image for the new theme: "
-                        + newTheme + ", doesn't exist."
-                        + " Please add: " + fileName + " and try again");
-                return new NanoHTTPD.Response(Status.BAD_REQUEST,
-                        MIME_TYPES.get("json"),
-                        "{Status:'Brewery Image doesn\'t exist'}");
-            }
-
-            LaunchControl.theme = newTheme;
-            return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
-                    "{Status:'OK'}");
-
-        }
-
         if (uri.equalsIgnoreCase("/favicon.ico")) {
             // Has the favicon been overridden?
             // Check to see if there's a theme set.
@@ -293,24 +230,68 @@ public class BrewServer extends NanoHTTPD {
             System.exit(128);
         }
 
-        for (java.lang.reflect.Method m
-                : UrlEndpoints.class.getDeclaredMethods()) {
-           UrlEndpoint urlMethod = m.getAnnotation(UrlEndpoint.class);
-           if (urlMethod != null) {
-               if (urlMethod.url().equalsIgnoreCase(uri)) {
-                   try {
-                       UrlEndpoints urlEndpoints = new UrlEndpoints();
-                       urlEndpoints.parameters = parms;
-                       urlEndpoints.files = files;
-                       urlEndpoints.header = header;
-                       urlEndpoints.rootDir = rootDir;
-                       return (Response) m.invoke(urlEndpoints);
-                   } catch (Exception e) {
-                       LOG.warning("Couldn't access URL: " + uri);
-                       e.printStackTrace();
-                   }
-               }
-           }
+        if (uri.equals("/help")) {
+            JSONObject helpJSON = new JSONObject();
+            for (Map.Entry<String, java.lang.reflect.Method> entry: m_endpoints.entrySet())
+            {
+                UrlEndpoint urlEndpoint = entry.getValue().getAnnotation(UrlEndpoint.class);
+                helpJSON.put(urlEndpoint.url(), urlEndpoint.help());
+            }
+
+            return new Response(Status.OK, MIME_TYPES.get("json"), helpJSON.toJSONString());
+        }
+
+
+        String endpointName = uri;
+        boolean help = false;
+        if (uri.endsWith("/help"))
+        {
+            endpointName = uri.substring(0, uri.indexOf("/help"));
+            help = true;
+        }
+        java.lang.reflect.Method urlMethod = m_endpoints.get(endpointName.toLowerCase());
+        if (urlMethod != null)
+        {
+            if (!help)
+            {
+                try {
+                    UrlEndpoints urlEndpoints = new UrlEndpoints();
+                    urlEndpoints.parameters = parms;
+                    urlEndpoints.files = files;
+                    urlEndpoints.header = header;
+                    urlEndpoints.rootDir = rootDir;
+                    return (Response) urlMethod.invoke(urlEndpoints);
+                } catch (Exception e) {
+                    LOG.warning("Couldn't access URL: " + uri);
+                    e.printStackTrace();
+                }
+            }
+
+            UrlEndpoint urlEndpoint= urlMethod.getAnnotation(UrlEndpoint.class);
+            JSONObject helpJSON = new JSONObject();
+
+            helpJSON.put(urlEndpoint.url(), urlEndpoint.help());
+            JSONArray paramsJSON = new JSONArray();
+
+            for (Parameter parameter: urlEndpoint.parameters())
+            {
+                JSONObject paramObj = new JSONObject();
+                paramObj.put(parameter.name(), parameter.value());
+                paramsJSON.add(paramObj);
+            }
+            Collections.sort(paramsJSON, new Comparator() {
+                @Override
+                public int compare(Object o, Object t1) {
+                    return o.toString().compareTo(t1.toString());
+                }
+            });
+            helpJSON.put("parameters", paramsJSON);
+            return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"), helpJSON.toJSONString());
+        }
+
+        if (uri.equals("/"))
+        {
+            return serveFile("html/index.html", header, rootDir);
         }
 
         if (!uri.equals("") && new File(rootDir, uri).exists()) {

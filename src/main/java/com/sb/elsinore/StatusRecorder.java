@@ -9,6 +9,7 @@ import org.json.simple.JSONValue;
 import org.rendersnake.internal.StringEscapeUtils;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,6 +70,17 @@ public class StatusRecorder implements Runnable {
             }
             thread = null;
         }
+    }
+
+    /**
+     * Save a specific value to the status recorder data files.
+     * @param name The name to save to.
+     * @param value The value to store
+     */
+    public void saveReading(String name, BigDecimal value)
+    {
+        File tempFile = new File(currentDirectory + name + "-manual.csv");
+        appendToLog(tempFile, new Date().getTime() + "," + value.toPlainString() + "\r\n");
     }
 
     /**

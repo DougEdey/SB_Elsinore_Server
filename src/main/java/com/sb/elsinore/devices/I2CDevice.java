@@ -6,6 +6,9 @@ import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;
 import org.w3c.dom.Element;
 
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -50,11 +53,12 @@ public abstract class I2CDevice {
     public static int I2C_SMBUS  = 0x0720;  /* SMBus transfer */
 
     protected int device_number = -1;
+    protected String device_path = "";
+    private static String[] available_devices = null;
     protected int address = 0x00;
 
     protected Linux_C_lib libC = new Linux_C_lib_DirectMapping();
-    private String devNumberString;
-    private static String[] availableTypes;
+
 
     public static I2CDevice create(String devNumber, String devAddress, String devType) {
         I2CDevice i2cDevice = null;
@@ -68,6 +72,10 @@ public abstract class I2CDevice {
             iDevAddress = Integer.valueOf(devAddress);
         }
 
+        if (devNumber.startsWith("i2c-"))
+        {
+            devNumber = devNumber.replace("i2c-", "");
+        }
         if (devType.equals(ADS1015.DEV_NAME))
         {
             i2cDevice = new ADS1015(Integer.parseInt(devNumber), iDevAddress);
@@ -84,6 +92,26 @@ public abstract class I2CDevice {
         types[0] = ADS1015.DEV_NAME;
         types[1] = ADS1115.DEV_NAME;
         return types;
+    }
+
+    public static String[] getAvailableDevices() {
+        if (available_devices == null)
+        {
+            ArrayList<String> list = new ArrayList<>();
+            File devFile = new File("/dev/");
+            for(File f: devFile.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File file, String name) {
+                    return name.startsWith("i2c-");
+                }
+            }))
+            {
+                list.add(f.getName());
+            }
+            available_devices = new String[list.size()];
+            available_devices = list.toArray(available_devices);
+        }
+        return available_devices;
     }
 
     public abstract String getDevName();
@@ -200,6 +228,17 @@ public abstract class I2CDevice {
     {
         this.device_number = deviceNo;
         this.address = address;
+        device_path = String.format(I2CDevice.BASE_PATH, device_number);
+    }
+
+    public void setDevice(String dev)
+    {
+        device_path = dev;
+    }
+
+    public String getDevicePath()
+    {
+        return device_path;
     }
 
     protected boolean _adsInitialised = false;
@@ -234,8 +273,10 @@ public abstract class I2CDevice {
         I2CWriteLength = 3;
         I2CReadLength = 0;
         I2CMasterBuffer[0] = (byte) reg;                   // Register
-        I2CMasterBuffer[1] = (byte) 0xf3;//(value >> 8);            // Upper 8-bits
-        I2CMasterBuffer[2] = (byte) 0x03;//(value & 0xFF);          // Lower 8-bits
+        System.out.println(String.format("value: 0x%02x", (byte) (value >> 8)));
+        System.out.println(String.format("value: 0x%02x", (byte) (value & 0xFF)));
+        I2CMasterBuffer[1] = (byte) (value >> 8); //0xC3;            // Upper 8-bits
+        I2CMasterBuffer[2] = (byte) (value & 0xFF); //0x03;          // Lower 8-bits
 
         int ret = libC.write(fd, I2CMasterBuffer, I2CWriteLength);
         if (ret != I2CWriteLength)
@@ -287,17 +328,22 @@ public abstract class I2CDevice {
             BrewServer.LOG.warning(String.format("Error reading %s", Native.getLastError()));
         }
 
+        int msb = I2CMasterBuffer[0];
+        int lsb = I2CMasterBuffer[1];
+        if (lsb < 0)
+            lsb = 256 + lsb;
+
+        return ((msb << 8) + lsb);
         // Shift values to create properly formed integer
-        return ((I2CMasterBuffer[0] << 8) | I2CMasterBuffer[1]);
+        //return (short) ((I2CMasterBuffer[0] << 8) | I2CMasterBuffer[1]);
     }
 
     public boolean i2cInit()
     {
-        String devpath = String.format(I2CDevice.BASE_PATH, device_number);
-        fd = libC.open(devpath, O_RDWR);
+        fd = libC.open(device_path, O_RDWR);
         if (fd < 0)
         {
-            BrewServer.LOG.warning(String.format("Failed to read from %s. Error %s", devpath, Native.getLastError()));
+            BrewServer.LOG.warning(String.format("Failed to read from %s. Error %s", device_path, Native.getLastError()));
             return false;
         }
         else {

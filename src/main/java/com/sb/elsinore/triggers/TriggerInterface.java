@@ -80,7 +80,7 @@ public interface TriggerInterface extends Comparable<TriggerInterface> {
      * Method to update this trigger.
      * @param params The Parameters to update with.
      */
-    void updateTrigger(JSONObject params);
+    boolean updateTrigger(JSONObject params);
 
     boolean readTrigger(Element rootElement);
 
