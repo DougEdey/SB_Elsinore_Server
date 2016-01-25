@@ -1781,3 +1781,24 @@ function showRecipeDetails(recipeSubset)
         $("#edit-modal .modal-body").html("<h1>Not implemented yet, sorry</h1>");
     }
 }
+
+function selectPhAddress(element) {
+    var form = element.closest("form");
+	if (element.value == "") {
+
+		form.find("[id=adc_pin]").show();
+	} else {
+		form.find("[id=adc_pin]").hide();
+	}
+}
+
+function phAINChange(element) {
+    var form = element.closest("form");
+	if (element.value == "") {
+		form.find("[id=dsAddress]").show();
+		form.find("[id=dsOffset]").show();
+	} else {
+		form.find("[id=dsAddress]").hide();
+		form.find("[id=dsOffset]").hide();
+	}
+}
