@@ -64,8 +64,8 @@ public class LaunchControl {
     private static final String COSM_FEED_ID = "cosm_feed";
     private static final String PACHUBE = "pachube";
     private static final String PACHUBE_FEED_ID = "pachube_feed";
-    private static final String OWFS_SERVER = "owfs_server";
-    private static final String OWFS_PORT = "owfs_port";
+    public static final String OWFS_SERVER = "owfs_server";
+    public static final String OWFS_PORT = "owfs_port";
     public static final String RESTORE = "restore";
 
     /* MAGIC NUMBERS! */
@@ -663,6 +663,9 @@ public class LaunchControl {
         retVal.put(StatusRecorder.RECORDER_TIME, StatusRecorder.SLEEP);
         retVal.put(StatusRecorder.RECORDER_DIFF, StatusRecorder.THRESHOLD);
         retVal.put(LaunchControl.RESTORE, LaunchControl.m_restore);
+        retVal.put("OWFS", LaunchControl.useOWFS);
+        retVal.put(LaunchControl.OWFS_SERVER, LaunchControl.owfsServer);
+        retVal.put(LaunchControl.OWFS_PORT, LaunchControl.owfsPort);
         return retVal.toJSONString();
     }
 
@@ -1537,11 +1540,16 @@ public class LaunchControl {
         if (owfsConnection != null) {
             try {
                 owfsConnection.disconnect();
+                owfsConnection = null;
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
+        if (!useOWFS)
+        {
+            return;
+        }
         // Use the thread safe mechanism
         BrewServer.LOG.info("Connecting to " + owfsServer + ":" + owfsPort);
         try {

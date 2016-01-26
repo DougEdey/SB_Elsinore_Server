@@ -9,9 +9,11 @@ import jGPIO.InvalidGPIOException;
 
 import java.io.*;
 import java.math.BigDecimal;
+import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 
 import org.apache.tika.Tika;
 import org.json.simple.JSONArray;
@@ -1526,7 +1528,10 @@ public class UrlEndpoints {
             @Parameter(name = "recorder", value = "\"on\" to enable the data recorder, \"off\" to disable it"),
             @Parameter(name = "recorderDiff", value = "Decimal that represents the tolerance to use when recording data, when the temperature varies by this amount from the previous point, record it"),
             @Parameter(name = "recorderTime", value = "The sample rate in milliseconds"),
-            @Parameter(name = LaunchControl.RESTORE, value = "\"on\" to restore the previous state of Elsinore on startup.")
+            @Parameter(name = LaunchControl.RESTORE, value = "\"on\" to restore the previous state of Elsinore on startup."),
+            @Parameter(name = "use_owfs", value="Enable or disable OWFS"),
+            @Parameter(name = LaunchControl.OWFS_SERVER, value="OWFS server IP"),
+            @Parameter(name = LaunchControl.OWFS_PORT, value="OWFS port"),
     })
     public final Response updateSystemSettings() {
         Map<String, String> params = ParseParams(parameters);
@@ -1569,8 +1574,30 @@ public class UrlEndpoints {
         if (params.containsKey(LaunchControl.RESTORE))
         {
             LaunchControl.setRestore(params.get(LaunchControl.RESTORE).equals("on"));
-
         }
+
+        if (params.containsKey("use_owfs"))
+        {
+            LaunchControl.useOWFS = params.get("use_owfs").equals("on");
+        }
+
+        if (params.containsKey(LaunchControl.OWFS_SERVER))
+        {
+            LaunchControl.owfsServer = params.get(LaunchControl.OWFS_SERVER);
+        }
+        if (params.containsKey(LaunchControl.OWFS_PORT))
+        {
+            try {
+                LaunchControl.owfsPort = Integer.parseInt(params.get(LaunchControl.OWFS_PORT));
+            }
+            catch (NumberFormatException nfe)
+            {
+                BrewServer.LOG.log(Level.WARNING, "Failed to parse " + params.get(LaunchControl.OWFS_PORT), nfe);
+            }
+        }
+
+        LaunchControl.setupOWFS();
+
         return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("text"),
                 "Updated system");
     }

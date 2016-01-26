@@ -1442,30 +1442,46 @@ function showConfig()
         dataType: 'json',
         success: function(json) {
         var settingsHTML = "<form id='settings-form' class='form-horizontal'>"
-        + "<div class='btn-toolbar text-center'>"
-
+                + "<div class='form-group'>"
                 + "<div class='btn-group' data-toggle='buttons'><label class='btn btn-primary-outline' >"
                 + '<input type="checkbox" name="restore" autocomplete="off" id="restore">Restore State On Startup</label>'
                 + "</div>"
+                + "</div>"
+
+                + "<div class='form-group'>"
                 + "<div class='btn-group' data-toggle='buttons'><label class='btn btn-primary-outline' >"
                 +'<input type="checkbox" name="recorder" autocomplete="off" id="recorder">Recorder Enabled</label>'
                 + "</div>"
                 + "</div>"
                 + "<div class='form-group'>"
-                + "<div><label for='recorderDiff' class='form-control-label'>Recording Tolerance</label>"
                 + "<div class='input-group'>"
+                    + "<div class='input-group-addon input-group-addon-label'>Tolerance</div>"
                     + "<input type='number' step='0.01' min='0' name='recorderDiff' class='form-control' id='recorderDiff' placeholder='tolerance' >"
                     + "<div class='input-group-addon input-group-addon-unit'>&#176</div>"
                 + "</div>"
-                + "</div>"
                 + "<div class='form-group'>"
-                + "<div><label for='recorderTime'>Recorder Time</label>"
-                + "<div class='input-group'>"
+                + "<div class='input-group m-t'>"
+                    + "<div class='input-group-addon input-group-addon-label'>Time</div>"
                     + "<input type='number' step='1' min='5000' name='recorderTime' class='form-control' id='recorderTime' placeholder='time' >"
                     + "<div class='input-group-addon input-group-addon-unit'>ms</div>"
                 + "</div>"
+                + "<div class='form-group m-t'>"
+                    + '<div class="btn-group " data-toggle="buttons">'
+                        + '<label class="btn btn-primary-outline">'
+                        + '<input type="checkbox" id="use_owfs" name="use_owfs" autocomplete="off" value="on">'
+                        + 'Use OWFS'
+                        + '</label>'
+                    + '</div>'
+                + '</div>'
+                + "<div class='input-group m-t'>"
+                    + "<div class='input-group-addon input-group-addon-label'>Server</div>"
+                    + "<input name='owfs_server' class='form-control' id='owfs_server' placeholder='Host' >"
                 + "</div>"
-                + "<div class='btn-toolbar text-center'>"
+                + "<div class='input-group m-t'>"
+                    + "<div class='input-group-addon input-group-addon-label'>Port</div>"
+                    + "<input name='owfs_port' type='number' step='1' min='1' max='65535' class='form-control' id='owfs_port' placeholder='Port' >"
+                + "</div>"
+                + "<div class='btn-toolbar text-center m-t'>"
                 + "<button class='btn btn-success' onclick='saveSystem();'>Save</button>"
                 + "</div>"
                 + "</form>";
@@ -1473,6 +1489,13 @@ function showConfig()
             $("#edit-modal .modal-footer").hide();
             $("#edit-modal .modal-body #recorderDiff").val(json.recorderDiff);
             $("#edit-modal .modal-body #recorderTime").val(json.recorderTime);
+            $("#edit-modal .modal-body #owfs_server").val(json.owfs_server);
+            $("#edit-modal .modal-body #owfs_port").val(json.owfs_port);
+            if (json.OWFS)
+            {
+                $("#edit-modal .modal-body #use_owfs").parent().click();
+            }
+
             if (json.recorder)
             {
                 $("#edit-modal .modal-body #recorder").parent().click();
