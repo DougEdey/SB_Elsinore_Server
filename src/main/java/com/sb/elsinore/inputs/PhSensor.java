@@ -213,6 +213,10 @@ public class PhSensor {
      * @return The name of this Sensor
      */
     public final String getName() {
+        if (this.name == null)
+        {
+            this.name = "<unknown>";
+        }
         return this.name.replaceAll(" ", "_");
     }
 

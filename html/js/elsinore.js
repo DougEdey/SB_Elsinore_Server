@@ -1244,6 +1244,7 @@ function editTimer(element)
             {
                 $("#timers-modal #invert").button("toggle");
             }
+
             $('#timers-modal').modal('toggle');
         }
     });
