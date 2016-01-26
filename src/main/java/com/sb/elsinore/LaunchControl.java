@@ -5,6 +5,7 @@ import com.sb.common.CollectionsUtil;
 import com.sb.elsinore.devices.I2CDevice;
 import com.sb.elsinore.inputs.PhSensor;
 import com.sb.elsinore.notificiations.Notifications;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import jGPIO.GPIO;
 import jGPIO.InvalidGPIOException;
 import org.apache.commons.cli.*;
@@ -2032,6 +2033,7 @@ public class LaunchControl {
         setElementText(device, Temp.PROBE_ELEMENT, probe);
         setElementText(device, Temp.POSITION, "" + temp.getPosition());
         setElementText(device, PID.CUTOFF, cutoff);
+        setElementText(device, PID.CUTOFF_ENABLED, Boolean.toString(temp.cutoffEnabled));
         setElementText(device, PID.CALIBRATION, temp.getCalibration());
         setElementText(device, PID.HIDDEN, Boolean.toString(temp.isHidden()));
         addNewElement(device, Temp.PROBE_SIZE).setTextContent(Integer.toString(temp.getSize()));
@@ -2310,7 +2312,7 @@ public class LaunchControl {
                 coolI = new BigDecimal(0.0), coolD = new BigDecimal(0.0),
                 coolCycle = new BigDecimal(0.0), cycle = new BigDecimal(0.0),
                 coolDelay = new BigDecimal(0.0);
-        boolean coolInvert = false, heatInvert = false, hidden = false;
+        boolean coolInvert = false, heatInvert = false, hidden = false, cutoffEnabled = false;
         int analoguePin = -1, position = -1;
         Element i2cElement = null;
 
@@ -2362,6 +2364,7 @@ public class LaunchControl {
             max = new BigDecimal(getTextForElement(config, PID.MAX, "0.0"));
             time = new BigDecimal(getTextForElement(config, PID.TIME, "0.0"));
             cutoffTemp = getTextForElement(config, PID.CUTOFF, "0.0");
+            cutoffEnabled = Boolean.parseBoolean(getTextForElement(config, PID.CUTOFF_ENABLED, "false"));
             calibration = getTextForElement(config, PID.CALIBRATION, "0.0");
             auxPin = getTextForElement(config, PID.AUX, null);
 
@@ -2467,6 +2470,7 @@ public class LaunchControl {
         if (cutoffTemp != null) {
             newTemp.setCutoffTemp(cutoffTemp);
         }
+        newTemp.cutoffEnabled = cutoffEnabled;
 
         newTemp.setSize(probeSize);
 

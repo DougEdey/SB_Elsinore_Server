@@ -35,6 +35,7 @@ public final class PID implements Runnable {
     public static final String MAX = "max";
     public static final String TIME = "time";
     public static final String CUTOFF = "cutoff";
+    public static final String CUTOFF_ENABLED = "cutoff_enabled";
     public static final String CALIBRATION = "calibration";
     public static final String AUX = "aux";
     public static final String HIDDEN = "hidden";

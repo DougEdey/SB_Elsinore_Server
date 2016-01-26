@@ -62,6 +62,8 @@ public final class Temp implements Runnable, Comparable<Temp> {
     private boolean badTemp = false;
     private boolean keepalive = true;
     private boolean hidden = false;
+    public boolean cutoffEnabled = false;
+
     /**
      * Base path for BBB System Temp.
      */
@@ -245,6 +247,15 @@ public final class Temp implements Runnable, Comparable<Temp> {
         }
     }
 
+    public void enableCutoff()
+    {
+        this.cutoffEnabled = true;
+    }
+
+    public void disableCutoff()
+    {
+        this.cutoffEnabled = false;
+    }
     // PRIVATE ////
     /**
      * Setup strings for the probe.
@@ -438,7 +449,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
         currentTime = System.currentTimeMillis();
         currentError = null;
 
-        if (!cutoffTemp.equals(ERROR_TEMP)
+        if (cutoffEnabled
                 && currentTemp.compareTo(cutoffTemp) >= 0) {
             BrewServer.LOG.log(Level.SEVERE,
                 currentTemp + ": ****** CUT OFF TEMPERATURE ("
@@ -945,6 +956,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
         statusMap.put("elapsed", getTime());
         statusMap.put("scale", getScale());
         statusMap.put("cutoff", getCutoff());
+        statusMap.put("cutoffEnabled", cutoffEnabled);
         statusMap.put("calibration", getCalibration());
         statusMap.put("gravity", gravity);
         statusMap.put("position", this.position);

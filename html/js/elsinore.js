@@ -703,22 +703,6 @@ function switchAuto(device, settings)
     data["mode"] = "auto";
 
     data["setpoint"] = settings.find("#setpoint_input").val();
-    var heatData = settings.find("#heat");
-    if (heatData.size() == 1)
-    {
-        data["heatp"] = heatData.find("#p_input").val();
-        data["heati"] = heatData.find("#i_input").val();
-        data["heatd"] = heatData.find("#d_input").val();
-        data["heatcycletime"] = heatData.find("#cycletime_input").val();
-    }
-    var coolData = settings.find("#cool");
-    if (coolData.size() == 1);
-    {
-        data["coolp"] = coolData.find("#p_input").val();
-        data["cooli"] = coolData.find("#i_input").val();
-        data["coold"] = coolData.find("#d_input").val();
-        data["coolcycletime"] = coolData.find("#cycletime_input").val();
-    }
 
     updatePID(device, data);
 }
@@ -932,6 +916,7 @@ function saveDevice(submitButton)
     data['heat_invert'] = form.find('#invert-heat').parent().hasClass("active");
     data['aux_invert'] = form.find('#invert-aux').parent().hasClass("active");
     data['cutoff'] = form.find('#shutoff').val();
+    data['cutoff_enabled'] = form.find("#cutoff-enabled").parent().hasClass("active");
     data['calibration'] = form.find('#calibration').val();
 
     var heatdiv = form.parent().parent().find("#heat");
@@ -1651,6 +1636,14 @@ function showDeviceEdit(element, addr, name)
                                       '<input type="number" class="form-control" id="calibration">' +
                                   '</div>' +
                                   '<div class="input-group m-t">' +
+                                      '<div class="input-group-btn btn-group" data-toggle="buttons">'+
+                                      '<label class="btn btn-primary-outline">' +
+                                        '<input type="checkbox" name="cutoff-enabled" id="cutoff-enabled" value="true" autocomplete="off">' +
+                                        'Cutoff Enabled' +
+                                      '</label>' +
+                                      '</div>' +
+                                  '</div>' +
+                                  '<div class="input-group m-t">' +
                                       '<div class="input-group-addon input-group-addon-label">Safety</div>' +
                                       '<input type="number" class="form-control" id="shutoff">' +
                                   '</div>';
@@ -1728,6 +1721,10 @@ function showDeviceEdit(element, addr, name)
          {
              modal.find('#calibration').val(temp.calibration);
              modal.find('#shutoff').val(temp.cutoff);
+             if (temp.cutoffEnabled)
+             {
+                modal.find("#cutoff-enabled").parent().click();
+             }
          }
 }
 

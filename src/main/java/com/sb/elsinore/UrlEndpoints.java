@@ -481,7 +481,8 @@ public class UrlEndpoints {
             @Parameter(name = "cool_invert", value="\"on\" to enable inverted outputs for the cooling pin"),
             @Parameter(name = "auxpin", value="A pin to use for auxilliary output"),
             @Parameter(name = "cutoff", value="A temperature value at which to shutdown Elsinore as a safety measure"),
-            @Parameter(name = "calibrarion", value="An offset for calibration")})
+            @Parameter(name = "cutoff_enabled", value="On to use the cutoff temperature"),
+            @Parameter(name = "calibration", value="An offset for calibration")})
     public Response editVessel() {
         final Map<String, String> params = this.parameters;
         String auxpin, newName, heatgpio;
@@ -533,6 +534,7 @@ public class UrlEndpoints {
         coolInvert = parms.get("cool_invert") != null && Boolean.parseBoolean(params.get("cool_invert"));
         auxpin = parms.get("auxpin");
         cutoff = parms.get("cutoff");
+        boolean cutoffEnabled = parms.get("cutoff_enabled") != null && Boolean.parseBoolean(parms.get("cutoff_enabled"));
         calibration = parms.get("calibration");
 
         try {
@@ -560,7 +562,6 @@ public class UrlEndpoints {
 
         if (tProbe == null) {
             LaunchControl.setMessage("Couldn't find PID: " + inputUnit);
-
             return null;
         }
 
@@ -568,6 +569,8 @@ public class UrlEndpoints {
             tProbe.setName(newName);
             BrewServer.LOG.warning("Updated temp name " + newName);
         }
+
+        tProbe.cutoffEnabled = cutoffEnabled;
 
         if (!cutoff.equals("")) {
             tProbe.setCutoffTemp(cutoff);
