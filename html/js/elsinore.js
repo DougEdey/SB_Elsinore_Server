@@ -903,6 +903,28 @@ function handleTriggerDragEnd(e) {
     });
 }
 
+function deleteDevice(submitButton)
+{
+    var form = $(submitButton).parent().parent().find("form");
+    var data = {};
+    data['probe'] = form.find('#device-address').val();
+    $.ajax({
+        url : 'deleteprobe',
+        type : 'POST',
+        data : data,
+        data : data,
+        dataType : 'text',
+        success : function(data) {
+             data = null;
+             $("#edit-modal").modal('toggle');
+             swal({title:"Deleted!"});
+         },
+         error: function(XMLHttpRequest, textStatus, errorThrown) {
+             alert("Status: " + textStatus); alert("Error: " + errorThrown);
+         }
+    });
+
+}
 function saveDevice(submitButton)
 {
     var form = $(submitButton).parent().parent().find("form");
@@ -944,13 +966,15 @@ function saveDevice(submitButton)
         data : data,
         dataType : 'text',
         success : function(data) {
-             data = null
+             data = null;
+             $("#edit-modal").modal('toggle');
+             swal({title:"Updated!"});
          },
          error: function(XMLHttpRequest, textStatus, errorThrown) {
              alert("Status: " + textStatus); alert("Error: " + errorThrown);
          }
     });
-    swal({title:"Updated!"});
+
 }
 
 function handleTriggerAdd(e)
@@ -981,9 +1005,10 @@ function toggleVisibility(e)
     $.ajax({
         url: '/toggleDevice',
         data: {device: pid},
-        dataType: 'text'
+        dataType: 'text',
+        success: function(data) { swal({title:"Updated!"});}
     });
-    swal({title:"Updated!"});
+
 }
 
 function handleTriggerEdit(e)
@@ -1667,6 +1692,7 @@ function showDeviceEdit(element, addr, name)
              '<button type="button" id="visibility" class="btn btn-primary" onClick="toggleVisibility(this);">Show</button>' +
              '<button type="button" class="btn btn-primary" onClick="handleTriggerAdd(this);">Add New Trigger</button>' +
              '<button type="button" class="btn btn-primary" onclick="saveDevice(this);">Save Changes</button>' +
+             '<button type="button" class="btn btn-primary" onclick="deleteDevice(this);">Delete</button>' +
          '</div>'
          +'</div>';
     $("#edit-modal").modal("toggle");
