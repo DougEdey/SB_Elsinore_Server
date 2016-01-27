@@ -2945,6 +2945,7 @@ public class LaunchControl {
             pb = null;
             return null;
         }
+        pb = null;
         return out.toString();
     }
     public static String getShaFor(String target) {
@@ -2955,7 +2956,7 @@ public class LaunchControl {
         commands.add("git");
         // Add arguments
         commands.add("rev-parse");
-        commands.add("HEAD");
+        commands.add(target);
         BrewServer.LOG.info("Checking for sha for " + target);
 
         // Run macro on target

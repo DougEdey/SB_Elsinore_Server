@@ -275,7 +275,7 @@ function parseData(data)
         }
         else
         {
-            messageElement.text(data.message);
+            messageElement.html(data.message);
             messageElement.show();
         }
     }
@@ -1909,4 +1909,16 @@ $.ajax({
             data = null
         }
     });
+}
+
+function updateElsinore() {
+	$.ajax({
+		url : 'restartUpdate',
+		type : 'POST',
+		success : function(data) {
+			data = null
+		}
+	});
+	window.disableUpdates = 0;
+	return false;
 }
