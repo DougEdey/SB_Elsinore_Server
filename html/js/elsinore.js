@@ -1528,9 +1528,10 @@ function saveSystem()
         url : 'updateSystemSettings',
         type : 'POST',
         data: formdata,
-        dataType: "json",
         success : function(data) {
-            data = null
+            data = null;
+            $("#edit-modal").modal('toggle');
+            swal({title:"Updated!"});
         }
     });
 }

@@ -768,6 +768,7 @@ public class LaunchControl {
             try {
                 owfsServer = getTextForElement(config, LaunchControl.OWFS_SERVER, null);
                 owfsPort = Integer.parseInt(getTextForElement(config, LaunchControl.OWFS_PORT, null));
+                useOWFS = Boolean.parseBoolean(getTextForElement(config, "use_owfs", "false"));
             } catch (NullPointerException | NumberFormatException e) {
                 owfsServer = null;
                 owfsPort = null;
@@ -1304,7 +1305,6 @@ public class LaunchControl {
         if (listOfFiles.length == 0) {
             BrewServer.LOG.warning("No 1Wire probes found! Please check your system!");
             BrewServer.LOG.warning("http://dougedey.github.io/2014/11/24/Why_Cant_I_Use_Elsinore_Without_Temperature_Probes/");
-            System.exit(-1);
         }
 
         // Display what we found
@@ -1312,27 +1312,8 @@ public class LaunchControl {
             if (currentFile.isDirectory()
                     && !currentFile.getName().startsWith("w1_bus_master")) {
 
-                // Check to see if theres a non temp probe (DS18x20)
-                if (!currentFile.getName().startsWith("28") && !currentFile.getName().startsWith("10")) {
-                    if (!useOWFS && prompt) {
-                        System.out.println("Detected a non temp probe: "
-                                + currentFile.getName() + "\n"
-                                + "Do you want to setup OWFS? [y/N]");
-                        String t = readInput();
-                        if (t.toLowerCase().startsWith("y")) {
-                            if (owfsConnection == null) {
-                                createOWFS();
-                            }
-
-                            useOWFS = true;
-                        }
-                    }
-                    // Skip this iteration
-                    continue;
-                }
-
                 // Check to see if this probe exists
-                if (probeExists(currentFile.getName())) {
+                if (probeExists(currentFile.getName()) || !currentFile.getName().startsWith("28")) {
                     continue;
                 }
 
@@ -1472,26 +1453,36 @@ public class LaunchControl {
             tempElement.setTextContent(breweryName);
         }
 
-        if (useOWFS) {
-            if (owfsServer != null) {
-                tempElement = getFirstElement(generalElement, LaunchControl.OWFS_SERVER);
 
-                if (tempElement == null) {
-                    tempElement = addNewElement(generalElement, LaunchControl.OWFS_SERVER);
-                }
+        if (owfsServer != null) {
+            tempElement = getFirstElement(generalElement, LaunchControl.OWFS_SERVER);
 
-                tempElement.setTextContent(owfsServer);
+            if (tempElement == null) {
+                tempElement = addNewElement(generalElement, LaunchControl.OWFS_SERVER);
             }
 
-            if (owfsPort != null) {
-                tempElement = getFirstElement(generalElement, LaunchControl.OWFS_PORT);
+            tempElement.setTextContent(owfsServer);
+        }
 
-                if (tempElement == null) {
-                    tempElement = addNewElement(generalElement, LaunchControl.OWFS_PORT);
-                }
+        if (owfsPort != null) {
+            tempElement = getFirstElement(generalElement, LaunchControl.OWFS_PORT);
 
-                tempElement.setTextContent(Integer.toString(owfsPort));
+            if (tempElement == null) {
+                tempElement = addNewElement(generalElement, LaunchControl.OWFS_PORT);
             }
+
+            tempElement.setTextContent(Integer.toString(owfsPort));
+        }
+
+        if (useOWFS)
+        {
+            tempElement = getFirstElement(generalElement, "use_owfs");
+
+            if (tempElement == null) {
+                tempElement = addNewElement(generalElement, "use_owfs");
+            }
+
+            tempElement.setTextContent(Boolean.toString(useOWFS));
         }
 
         tempElement = getFirstElement(generalElement, LaunchControl.RESTORE);
@@ -1601,7 +1592,10 @@ public class LaunchControl {
             generalElement = addNewElement(null, "general");
         }
 
-        Element tempElement = addNewElement(generalElement, LaunchControl.OWFS_SERVER);
+        Element tempElement = addNewElement(generalElement, "use_owfs");
+        tempElement.setTextContent(Boolean.toString(useOWFS));
+
+        tempElement = addNewElement(generalElement, LaunchControl.OWFS_SERVER);
         tempElement.setTextContent(owfsServer);
 
         tempElement = addNewElement(generalElement, LaunchControl.OWFS_PORT);
