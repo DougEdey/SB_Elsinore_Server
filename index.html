@@ -1,1 +1,463 @@
-Elsinore Readme
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>StrangeBrew Elsinore by DougEdey</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-dark.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/DougEdey/SB_Elsinore_Server">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/DougEdey/SB_Elsinore_Server/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/DougEdey/SB_Elsinore_Server/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>StrangeBrew Elsinore</h1>
+          <p>Java Brewery &amp; Fermentation Controller</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/DougEdey">DougEdey</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+        </div>
+
+        <h1>
+<a id="welcome-to-strangebrew-elsinore" class="anchor" href="#welcome-to-strangebrew-elsinore" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Welcome To StrangeBrew Elsinore</h1>
+
+<p>When I started this project in 2013 (well, really in 2012, but the first commit was March 2013), I had a simple idea of just have a PID controller written in Java serving a lightweight web page that could be accessed on any device for a RaspberryPi to be used as a lightweight server. </p>
+
+<p>This light idea, quickly ballooned, resulting in a slow performing system, used by a lot of people, with <a href="http://brewtronix.com/Hosehead">products</a> being made on top of it (no, I do not get any money from this).</p>
+
+<p>I originally wanted it to be a tech playground for me outside of my day job. So sometimes changes can come thick and fast, but sometimes can be exceptionally slow, especially if I've had a bad week.</p>
+
+<h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Features</h2>
+
+<ul>
+<li>Proportional Integral Differential Temperature Control</li>
+<li>Manual Duty Output Control</li>
+<li>Hysteresis Output Control (think fridges, gas controllers, etc...)</li>
+<li>Live Data Graphing (with downloadable content for analysis)</li>
+<li>Manual Switch Controls</li>
+<li>Timers</li>
+<li>Volume Sensing</li>
+<li>pH Sensors (SEN0161)</li>
+<li>Trigger Controls</li>
+<li>Load Mash Steps from BeerXML</li>
+<li>One Wire Temperature Probes (through kernel w1 module, and OWFS)</li>
+<li>Various Analogue Inputs (DS2450, ADS1015, ADS1115, Beaglebone onboard)</li>
+<li>Web UI Updates</li>
+<li>Responsive Bootstrap Web Interface</li>
+</ul>
+
+<h2>
+<a id="setting-up-the-hardware" class="anchor" href="#setting-up-the-hardware" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Setting Up The Hardware</h2>
+
+<p>This may vary slightly depending on your hardware, but the general steps are</p>
+
+<ol>
+<li> Setup a OneWire host (normally this just needs a 4k7 ohm resistor)</li>
+<li> Connect any SSRs to GPIOs on the host board</li>
+<li> Clone this repository</li>
+<li> Launch Elsinore</li>
+<li> Setup temperature probes</li>
+<li> Setup PIDs</li>
+<li> Setup Switches, Timers, pH Sensors, etc...</li>
+<li> Get Brewing!</li>
+</ol>
+
+<h2>
+<a id="detailed-raspberrypi-setup" class="anchor" href="#detailed-raspberrypi-setup" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Detailed RaspberryPi Setup</h2>
+
+<p><a href="https://www.cl.cam.ac.uk/projects/raspberrypi/tutorials/temperature/">Set up your DS18 probes</a></p>
+
+<p>Then run this code in the LXTerminal to automatically load the One-Wire modules on start up</p>
+
+<p>Open /etc/modules to edit</p>
+
+<pre><code>sudo nano /etc/modules
+</code></pre>
+
+<p>Add these lines to the bottom of the file /etc/modules</p>
+
+<pre><code>w1-gpio
+w1-therm
+</code></pre>
+
+<p>If you're on a newer kernel you may need to edit your /boot/config.txt</p>
+
+<pre><code>sudo nano /boot/config.txt
+</code></pre>
+
+<p>Add this line</p>
+
+<pre><code>dtoverlay=w1-gpio,gpiopin=4
+</code></pre>
+
+<p>Then reboot</p>
+
+<pre><code>sudo reboot
+</code></pre>
+
+<h3>
+<a id="download-elsinore" class="anchor" href="#download-elsinore" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Download Elsinore</h3>
+
+<p>Download the SB_Elsinore_Server from git</p>
+
+<pre><code>git clone https://github.com/DougEdey/SB_Elsinore_Server.git ~/SB_Elsinore_Server
+</code></pre>
+
+<p>Switch directories</p>
+
+<pre><code>cd ~/SB_Elsinore_Server
+</code></pre>
+
+<p>Run Elsinore</p>
+
+<pre><code>./launch.sh
+</code></pre>
+
+<h3>
+<a id="choosing-the-gpio-pins" class="anchor" href="#choosing-the-gpio-pins" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Choosing the GPIO Pins</h3>
+
+<p>See this <a href="http://www.homebrewtalk.com/f170/raspberry-pi-strangebrew-elsinore-basic-setup-463590/index3.html#post5986888">post</a> to make sure you use the correct GPIO pins for output and you don't choose one that is in the default HIGH state when the Pi boots up!!!</p>
+
+<p><strong>It is highly recommended you setup a KILL SWITCH that will terminate the negative and/or the positive to the SSRs. This is a safety feature and allows you to kill the SSRs without going through the UI</strong></p>
+
+<h2>
+<a id="beaglebone-black-setup" class="anchor" href="#beaglebone-black-setup" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>BeagleBone Black Setup</h2>
+
+<p><strong>It is highly recommended you setup a KILL SWITCH that will terminate the negative and/or the positive to the SSRs. This is a safety feature and allows you to kill the SSRs without going through the UI</strong></p>
+
+<p>Do not use a kernel above 3.8 at the moment, you may need to install the 3.8 kernel on a newer image: <code>sudo apt-get install linux-image-3.8.13-bone67</code></p>
+
+<h3>
+<a id="launching" class="anchor" href="#launching" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Launching</h3>
+
+<p>You <em>must</em> set the "Gpio_definitions" property on launch </p>
+
+<p><code>java -Dgpio_definitions=extras/beaglebone.json -jar Elsinore.jar</code></p>
+
+<p>Otherwise the system will error</p>
+
+<h3>
+<a id="gpio-naming" class="anchor" href="#gpio-naming" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>GPIO Naming</h3>
+
+<p>The Pinout number is different between RaspberryPi and Beaglebone.</p>
+
+<p>For Beagleboard Black Pinout: <a href="http://elinux.org/BeagleBone#P9_and_P8_-_Each_2x23_pins">http://elinux.org/BeagleBone#P9_and_P8_-_Each_2x23_pins</a></p>
+
+<p>BeagleboardBlack has multiple banks, for example GPIO2_2, this translates to physical pin 66, banks are separated by 32 outputs per bank. </p>
+
+<h3>
+<a id="overlays" class="anchor" href="#overlays" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Overlays</h3>
+
+<p>For beagleboard to get OneWire support, and GPIO control, you need to install a Device Tree Overlay file. I have added these under the 'extras' directory.</p>
+
+<p>The dts file will show you the pin, but it's <code>P8.11</code></p>
+
+<p>To compile the overlay: </p>
+
+<p><code>sudo dtc -O dtb -o /lib/firmware/w1-00A0.dtbo -b 0 -@ w1.dts</code></p>
+
+<p>Or copy the w1-00A0.dtbo in the support directory to /lib/firmware (as root), the above command copies the file for you.</p>
+
+<p>Login as root (such as "sudo su") and run </p>
+
+<p><code>echo w1 &gt; /sys/devices/bone_capemgr.8/slots</code></p>
+
+<p>Note: bone_capemgr.8 may be bone.capemgr.9 depending on your setup</p>
+
+<p>I have also provided a sample jGPIO created overlay for GPIO0_7 as a pinout (jgpio-00A0.dtbo) which can be used in the same was as above</p>
+
+<p><code>sudo cp extras/jgpio-00A0.dtbo /lib/firmware/</code></p>
+
+<p><code>echo jgpio &gt; /sys/devices/bone_capemgr.8/slots</code></p>
+
+<p>You can run <code>sudo extras/bbb_setup.sh</code> to automatically initialize these two files.</p>
+
+<h4>
+<a id="jgpio" class="anchor" href="#jgpio" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>jGPIO</h4>
+
+<p><a href="http://dougedey.github.io/jGPIO/">jGPIO</a> is a Java application I made to generate the Device Tree Overlays based on a JSON configuration file. At the time of writing this affects Linux Kernel 3.8 and above. The raspberry Pi doesn't support Kernel 3.8 yet.</p>
+
+<h3>
+<a id="creating-a-custom-overlay" class="anchor" href="#creating-a-custom-overlay" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Creating a custom Overlay</h3>
+
+<p>If you want to create a DTC file for custom GPIO pinout, you can read the instructions in the <a href="https://github.com/DougEdey/jGPIO">jGPIO</a> repository</p>
+
+<p>But the synopsis is</p>
+
+<p><code>java -cp Elsinore.jar -Dgpio_definition=extras/beaglebone.json jGPIO.DTOTest &lt;List of GPIO pins&gt;</code></p>
+
+<p>For example</p>
+
+<p><code>java -cp Elsinore.jar -Dgpio_definition=extras/beaglebone.json jGPIO.DTOTest GPIO0_7</code> </p>
+
+<p>Will recreate the default GPIO0_7 file as jgpio-00A0.dto.</p>
+
+<p><code>java -cp Elsinore.jar -Dgpio_definition=extras/beaglebone.json jGPIO.DTOTest GPIO0_7 GPIO0_8 GPIO1_12</code> </p>
+
+<p>Will create a Device Tree Overlay with GPIO0_7, GPIO0_8 and GPIO1_12 for export.</p>
+
+<p>You will then need to compile this as the same as above but for jgpio:</p>
+
+<p><code>sudo dtc -O dtb -o /lib/firmware/jgpio-00A0.dtbo -b 0 -@ jgpio-00A0.dto</code></p>
+
+<p>This places the compiled file in the /lib/firmware directory.</p>
+
+<p>Using <code>extra/bbb_setup.sh</code> will always export the jgpio overlay to the cape manager, if there is a firmware file for it.</p>
+
+<h3>
+<a id="analogue-inputs" class="anchor" href="#analogue-inputs" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Analogue inputs</h3>
+
+<p>There is already a precompiled AIN DTO for the Beaglebone Black, BB-ADC, as above:</p>
+
+<p><code>echo BB-ADC &gt; /sys/devices/bone_capemgr.8/slots</code></p>
+
+<p>To Activate them.</p>
+
+<h2>
+<a id="web-interface" class="anchor" href="#web-interface" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Web Interface</h2>
+
+<p>This is all the technical stuff for setting up Elsinore, you'll only need to do these on initial setup.</p>
+
+<p>Now, you can get started with the web interface.</p>
+
+<h3>
+<a id="overview" class="anchor" href="#overview" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Overview</h3>
+
+<p><img src="http://i.imgur.com/y8CqUur.png" alt="Overview"></p>
+
+<p>This is an overview with a few items that I have setup already, I'll work around them</p>
+
+<h3>
+<a id="navigation-bar" class="anchor" href="#navigation-bar" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Navigation Bar</h3>
+
+<ol>
+<li> Link to this repository</li>
+<li> Check for Updates -&gt; Query the Git Server for updates, if there's an update, you'll see a message at the bottom of this navigation bar.</li>
+<li> System Configuration -&gt; See Below</li>
+<li> Hidden Probes -&gt; When you've hidden a temperature probe/PID from the UI, it'll appear here, you can click it to unhide it.</li>
+<li> Temperature (and duty, and pH) data. This is a live graph since you last cleared the data or started Elsinore, over time this can cause issues in the browser, so download the data to parse it locally.</li>
+<li> Recipe Details -&gt; Upload BeerXML to be able to set the Mash Profile (Hop additions, and fermentation profile to come in the future)</li>
+<li> Github -&gt; Link here</li>
+<li> /r/StrangeBrew -&gt; <a href="https://www.reddit.com/r/strangebrew">https://www.reddit.com/r/strangebrew</a> Go here for better updates and talking to your fellow homebrewers</li>
+<li> Homebrew Talk -&gt; The Elsinore Thread (bloated)</li>
+</ol>
+
+<h4>
+<a id="system-configuration" class="anchor" href="#system-configuration" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>System Configuration</h4>
+
+<p><img src="http://i.imgur.com/mUmQrmQ.png" alt="System Configuration"></p>
+
+<ul>
+<li>Restore State On Startup -&gt; If Elsinore has triggers setup and it crashes &amp; reboots during a run, this will resume from where it was when Elsinore starts up again</li>
+<li>Recorder Enabled -&gt; Record Temperature, Duty, and pH Data</li>
+<li>Tolerance -&gt; The difference between temperatures to record (defaults to 0.15 degrees)</li>
+<li>Time -&gt; The time in milliseconds to check data any data points to be recorded.</li>
+<li>Use OWFS -&gt; Use the OWFS server (for DS2450 probes)</li>
+<li>Server -&gt; OWFS Server (normally localhost)</li>
+<li>Port -&gt; OWFS Port (normally 4304)</li>
+</ul>
+
+<h3>
+<a id="devices" class="anchor" href="#devices" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Devices</h3>
+
+<p>To edit a device, double click on the header.</p>
+
+<h4>
+<a id="device-setup" class="anchor" href="#device-setup" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Device Setup</h4>
+
+<p>Temperature probes are referred to as devices. A temperature probe becomes a PID when it has a GPIO setup for heating or cooling output.</p>
+
+<p><img src="http://i.imgur.com/z2TxHTx.png" alt="Edit Device"></p>
+
+<p><strong>General Settings</strong>
+This is the overview for the Temperature probe</p>
+
+<ul>
+<li>Name -&gt; The name of this probe, this can be left blank, and will default to the address of the probe.</li>
+<li>Heat GPIO -&gt; The GPIO used to turn on the heating output, if the "Inverted" button is clicked, then the GPIO will drive low to turn on the output (for instance, if it's used as a current sink).</li>
+<li>Cool GPIO -&gt; The GPIO used to turn on the cooling output, if the "Inverted" button is clicked, then the GPIO will drive low to turn on the output (for instance, if it's used as a current sink).</li>
+<li>Aux GPIO -&gt; This is a manual element control, if the "Inverted" button is clicked, then the GPIO will drive low to turn on the output (for instance, if it's used as a current sink).</li>
+<li>Calibration -&gt; Any Temperature offset for this probe. If it's reading 1C too high, add -1 here, if it's 1C too low, add 1 here.</li>
+<li><p>Cutoff Enabled -&gt; If selected, and the Safety value is not -999, then when the temperature is read as higher than this number, Elsinore will shutdown</p></li>
+<li><p>Hide -&gt; Hide this temperature probe from the UI, it will appear in the dropdown list on the Navigation bar</p></li>
+<li>Add New Trigger -&gt; Show the new trigger modal dialog</li>
+<li>Save Changes -&gt; Save the current values</li>
+<li>Delete -&gt; Delete this temperature probe from Elsinore, to restore it, you will need to restart Elsinore.</li>
+</ul>
+
+<p><strong>Heat/Cool Settings</strong></p>
+
+<p><img src="http://i.imgur.com/l2BoE0X.png" alt="PID Settings"></p>
+
+<p>These settings used to appear when you pressed the auto button, but now they have been moved here. They will only show if you have a Heat and/or Cool GPIO setup.</p>
+
+<ul>
+<li>Cycle Time -&gt; Time in seconds for a full cycle</li>
+<li>Proportional </li>
+<li>Integral</li>
+<li>Differential</li>
+</ul>
+
+<p>For detailed instructions on how to set this up, please refer to <a href="http://onbrewing.com/a-shiny-new-way-of-calculating-pid-parameters/">Justin's Website</a></p>
+
+<h4>
+<a id="adding-a-new-trigger" class="anchor" href="#adding-a-new-trigger" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Adding a New Trigger</h4>
+
+<p>Note: These will be rewritten in the future.</p>
+
+<p>Triggers are ways to automatically control PID set points, timers, switches, other trigger profiles and so on.</p>
+
+<p>A trigger profile is a sequence of triggers that are assigned to a temperature probe.</p>
+
+<p><img src="http://i.imgur.com/WYbgJsO.png" alt="Add Trigger"></p>
+
+<p>This is what you get when you press "Add New Trigger", all you need to do is select the trigger you want</p>
+
+<p><img src="http://i.imgur.com/u6sdDKd.png" alt="Temperature"></p>
+
+<ul>
+<li>Set Point -&gt; The Set point that to set the PID to in auto mode.</li>
+<li>End Temp -&gt; Once the set point has been hit, aim for this temperature before moving to the next trigger.</li>
+<li>Step Method/Type -&gt; Free form text inputs</li>
+</ul>
+
+<p><img src="http://i.imgur.com/R0q8YLu.png" alt="Profile"></p>
+
+<p>The Trigger Profile to activate</p>
+
+<p><img src="http://i.imgur.com/R0q8YLu.png" alt="Wait"></p>
+
+<p>Wait for the specified minutes &amp; seconds before moving to the next step.</p>
+
+<p>The normal flow for this would be to add a temperature trigger, then a wait trigger, then a temperature trigger, then a wait trigger.</p>
+
+<p>For example -&gt; Temp = 154F -&gt; Wait (60 minutes) -&gt; Temp = 165F -&gt; Wait (30 minutes) -&gt; Temp = 170F.</p>
+
+<h3>
+<a id="switches" class="anchor" href="#switches" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Switches</h3>
+
+<p>Switches are basic on/off manually controlled outputs.</p>
+
+<h4>
+<a id="addedit-switch" class="anchor" href="#addedit-switch" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Add/Edit Switch</h4>
+
+<p><img src="http://i.imgur.com/zUEK4BZ.png" alt="Add Switch"></p>
+
+<p>This is the view you get when you add a switch by double clicking on the "Switches" header (this won't work on mobile). </p>
+
+<ul>
+<li>Name =&gt; The name of the switch</li>
+<li>GPIO =&gt; The GPIO to use for the switch</li>
+<li>Invert =&gt; If the switch should be low for on, high for off.</li>
+</ul>
+
+<p>If you double click a switch, this will be presented with the current switch settings in it.</p>
+
+<h3>
+<a id="timers" class="anchor" href="#timers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Timers</h3>
+
+<h4>
+<a id="addedit-timer" class="anchor" href="#addedit-timer" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Add/Edit Timer</h4>
+
+<p><img src="http://i.imgur.com/jDSLVBZ.png" alt="Timer"></p>
+
+<p>This is the view you get when you add a timer by double clicking the "Timers" header (this won't work on mobile).</p>
+
+<ul>
+<li>Name =&gt; The name of the timer</li>
+<li>Countdown? =&gt; Doesn't do anything at this point, future feature</li>
+<li>Duration  =&gt; The amount to count up/down to (future feature)</li>
+</ul>
+
+<p>If you edit a timer, by double clicking it, you will be shown this dialog with the settings for the switch.</p>
+
+<h4>
+<a id="ph-sensors" class="anchor" href="#ph-sensors" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>pH Sensors</h4>
+
+<p>Currently only the SEN0161 is supported, if you find a new pH Sensor you want support for, please let me know.</p>
+
+<p>When you double click the pH Sensors header, you will get a dialog to select the input you would like to use.</p>
+
+<ul>
+<li>pH Sensor =&gt; The Name to use</li>
+<li>Analogue Input type (DS2450, Onboard AIN, or I2C)</li>
+<li>Sensor Model =&gt; The pH Sensor model, only SEN0161 is supported at the moment.</li>
+<li>Calibrate =&gt; A value to add to the pH reading if it's not correct and consistently off.</li>
+</ul>
+
+<p><img src="http://i.imgur.com/N5AcDPY.png" alt="Onboard AIN"></p>
+
+<p>Onboard AIN uses the onboard Beaglebone Analogue inputs, these are 1.7V  so be careful.</p>
+
+<ul>
+<li>Analogue pin =&gt; The Raw Pin number to use.</li>
+</ul>
+
+<p><img src="http://i.imgur.com/T5qU8mO.png" alt="DS2450"></p>
+
+<ul>
+<li>DS2450 Address =&gt; The drop down shows the detected DS2450 adapters found</li>
+<li>DS2450 Offset =&gt; The pin to use to read (A, B, C, D)</li>
+</ul>
+
+<p><img src="http://i.imgur.com/iUN3uhG.png" alt="I2C Analog"></p>
+
+<ul>
+<li>I2C Bus =&gt; Select the bus that the I2C Device is on, this will contain the detected buses.</li>
+<li>I2C Address =&gt; The I2C Address for the chip on the bus (i.e. 0x49, 0x48)</li>
+<li>I2C Offset =&gt; The Input pin to use (A, B, C, D)</li>
+<li>I2C Chip =&gt; The ADC chip to use (currently supports ADS1015 and ADS1115)</li>
+</ul>
+
+<p>Double clicking a pH Sensor will show this with an edit box.</p>
+
+<p>Single clicking a pH Sensor will update the value. The default button shows the name of the pH Sensor with the last pH Value read.</p>
+
+<h2>
+<a id="how-to-brew" class="anchor" href="#how-to-brew" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>How To Brew</h2>
+
+<p>At the most basic, Elsinore is a series of PIDs.</p>
+
+<p>Each PID has four "modes"</p>
+
+<ul>
+<li>Off =&gt; The GPIOs are all off</li>
+<li>Auto =&gt; The PID settings are used to get to the setpoint set in this mode.</li>
+<li>Manual =&gt; The GPIO output will be on and off for a percentage of the cycle time. A positive number for duty cycle is for the heating GPIO, a negative number is for the Cool GPIO. i.e. 50% duty cycle for a 10s cycle time =&gt; heat GPIO is on for 5s, and off for 5s. -60% duty cycle for a 300s cycle time (5 mins), cool GPIO is on for 3 minutes, and off for two minutes.</li>
+<li>Hysteria =&gt; The cooling GPIO will be on if the temperature is above the maximum temperature for a minimum number of minutes or until the maximum temperature is hit (whichever takes longer), then off for at least the number of minutes specified. The heating GPIO will be on if the temperature is below the minimum temperature for a minimum number of minutes or until the minimum temperature is hit (whichever takes longer).</li>
+</ul>
+
+<p>You must hit "Submit" to apply the settings after pressing the button. The Web UI will update when the next status update occurs to mark the mode as active. The Duty progress will indicate the state.</p>
+
+<h1>
+<a id="thank-you" class="anchor" href="#thank-you" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Thank you</h1>
+
+<p>Thank you for using this piece of software, if you want to help fund future development please donate to me via <a href="doug.edey+paypal@gmail.com">paypal email</a></p>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
