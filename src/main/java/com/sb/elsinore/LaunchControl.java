@@ -618,7 +618,7 @@ public class LaunchControl {
             tJSON = new JSONObject();
 
             for (Switch p : switchList) {
-                tJSON.put(p.getName().replaceAll(" ", "_"), p.getStatus());
+                tJSON.put(p.getName(), p.getStatus());
             }
 
             rObj.put("switches", tJSON);
@@ -808,7 +808,7 @@ public class LaunchControl {
 
         for (int i = 0; i < switches.getLength(); i++) {
             Element curSwitch = (Element) switches.item(i);
-            String switchName = curSwitch.getAttribute("name").replace("_", " ");
+            String switchName = curSwitch.getAttribute("name").replace("_", " ").trim();
             String gpio;
             if (curSwitch.hasAttribute(Switch.GPIO)) {
                 gpio = curSwitch.getAttribute(Switch.GPIO);

@@ -37,7 +37,7 @@ public class Switch implements Comparable<Switch> {
      */
     public Switch(final String newName, final String pinName)
             throws InvalidGPIOException {
-        this.name = newName.replace("_", " ");
+        this.name = newName.replace("_", " ").trim();
 
         String temp = null;
 
@@ -126,7 +126,8 @@ public class Switch implements Comparable<Switch> {
      * @return Return the current name with _ instead of spaces.
      */
     public final String getNodeName() {
-        return name.replace(" ", "_");
+
+        return "_" + name.replace(" ", "_");
     }
 
     /**
