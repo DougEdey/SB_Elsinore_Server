@@ -18,32 +18,16 @@
       <profile default="true" name="Default" enabled="false">
         <processorPath useClasspath="true" />
       </profile>
-      <profile default="false" name="Annotation profile for StrangeBrew" enabled="true">
+      <profile default="false" name="Annotation profile for Elsinore" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
-        <module name="StrangeBrew" />
-      </profile>
-      <profile default="false" name="Annotation profile for jGPIO" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="true" />
-        <module name="jGPIO" />
-      </profile>
-      <profile default="false" name="Annotation profile for SB_Elsinore_Server" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="true" />
-        <module name="SB_Elsinore_Server" />
+        <module name="Elsinore" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="jGPIO" target="1.6" />
-      <module name="SB_Elsinore_Server" target="1.7" />
-      <module name="StrangeBrew" target="1.7" />
+      <module name="Elsinore" target="1.7" />
     </bytecodeTargetLevel>
   </component>
 </project>
