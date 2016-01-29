@@ -1147,21 +1147,35 @@ function parseSwitches(switches)
         var switchEle = $("#switches [id='" + name +"']");
         if (switchEle.length == 0)
         {
-            $("#switches .card-body").append("<button id='"+name+"' class='btn btn-primary col-xs-10 col-xs-offset-1' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'>"+textname+"</button>");
+            $("#switches .card-body").append("<button id='"+name+"' class='btn btn-danger-outline m-t col-xs-10 col-xs-offset-1' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'>"+textname+"</button>");
             switchEle = $("#switches [id='" + name +"']");
         }
 
         if (status)
         {
+            switchEle.removeClass("btn-danger-outline");
             switchEle.addClass("btn-danger");
         }
         else
         {
-
+            switchEle.addClass("btn-danger-outline");
             switchEle.removeClass("btn-danger");
         }
 
     });
+}
+
+function createSwitch()
+{
+    // Clear the modal first
+    var modal = $('#switches-modal');
+    modal.find("#name").val("");
+    modal.find("#gpio").val("");
+    if (modal.find("#invert").hasClass("active"))
+    {
+        modal.find("#invert").toggle();
+    }
+    modal.modal('toggle');
 }
 
 function deleteSwitch(element)
