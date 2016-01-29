@@ -1535,9 +1535,23 @@ public class UrlEndpoints {
             @Parameter(name = "use_owfs", value="Enable or disable OWFS"),
             @Parameter(name = LaunchControl.OWFS_SERVER, value="OWFS server IP"),
             @Parameter(name = LaunchControl.OWFS_PORT, value="OWFS port"),
+            @Parameter(name = LaunchControl.SCALE, value="Scale in Celsius or Fahrenheit"),
     })
     public final Response updateSystemSettings() {
         Map<String, String> params = ParseParams(parameters);
+
+        if (params.containsKey(LaunchControl.SCALE))
+        {
+            String scale = params.get(LaunchControl.SCALE);
+            if (scale.equalsIgnoreCase("Celsius") || scale.equalsIgnoreCase("C"))
+            {
+                LaunchControl.setTempScales("C");
+            }
+            else if (scale.equalsIgnoreCase("Fahrenheit") || scale.equalsIgnoreCase("F"))
+            {
+                LaunchControl.setTempScales("F");
+            }
+        }
 
         if (params.containsKey("recorder")) {
             boolean recorderOn = params.get("recorder").equals("on");

@@ -1453,6 +1453,14 @@ function showConfig()
         dataType: 'json',
         success: function(json) {
         var settingsHTML = "<form id='settings-form' class='form-horizontal'>"
+                + "<div class='form-group'><div class='btn-group' data-toggle='buttons'>"
+                + " <label class='btn btn-primary-outline active'>"
+                       +"<input type='radio' name='scale' id='Celsius' value='C' autocomplete='off'> Celsius"
+                     +"</label>"
+                     +"<label class='btn btn-primary-outline'>"
+                       +"<input type='radio' name='scale' id='Fahrenheit' value='F' autocomplete='off'> Fahrenheit"
+                     +"</label>"
+                + "</div></div>"
                 + "<div class='form-group'>"
                 + "<div class='btn-group' data-toggle='buttons'><label class='btn btn-primary-outline' >"
                 + '<input type="checkbox" name="restore" autocomplete="off" id="restore">Restore State On Startup</label>'
@@ -1516,7 +1524,17 @@ function showConfig()
             {
                 $("#edit-modal .modal-body #restore").parent().click();
             }
+
+            if (json.scale == "F")
+            {
+                $("#edit-modal .modal-body #Fahrenheit").click();
+            }
+            else if (json.scale == "C")
+            {
+                $("#edit-modal .modal-body #Celsius").click();
+            }
         }
+
     });
 
 }

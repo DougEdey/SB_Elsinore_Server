@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
 public class LaunchControl {
     private static final String BREWERY_NAME = "brewery_name";
     private static final String PAGE_LOCK = "pagelock";
-    private static final String SCALE = "scale";
+    public static final String SCALE = "scale";
     private static final String COSM_API_KEY = "cosm";
     private static final String COSM_FEED_ID = "cosm_feed";
     private static final String PACHUBE = "pachube";
@@ -665,6 +665,7 @@ public class LaunchControl {
         retVal.put(StatusRecorder.RECORDER_TIME, StatusRecorder.SLEEP);
         retVal.put(StatusRecorder.RECORDER_DIFF, StatusRecorder.THRESHOLD);
         retVal.put(LaunchControl.RESTORE, LaunchControl.m_restore);
+        retVal.put(LaunchControl.SCALE, LaunchControl.getScale());
         retVal.put("OWFS", LaunchControl.useOWFS);
         retVal.put(LaunchControl.OWFS_SERVER, LaunchControl.owfsServer);
         retVal.put(LaunchControl.OWFS_PORT, LaunchControl.owfsPort);
