@@ -1688,7 +1688,7 @@ public class UrlEndpoints {
     @UrlEndpoint(url = "/unlockpage", help = "Enable editing of the main controller page",
     parameters = {})
     public Response unlockPage() {
-        LaunchControl.listOneWireSys(false);
+        LaunchControl.listOneWireSys();
         LaunchControl.pageLock = false;
         return new NanoHTTPD.Response(Status.OK,
                 BrewServer.MIME_TYPES.get("json"),

@@ -149,6 +149,12 @@ public final class Temp implements Runnable, Comparable<Temp> {
                 }
             }
             this.fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
+            probePath = new File(fProbe);
+            if (!probePath.exists())
+            {
+                // Try OWFS
+                fProbe = null;
+            }
         }
 
         this.probeName = aName;

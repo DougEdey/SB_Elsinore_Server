@@ -975,20 +975,6 @@ public class LaunchControl {
         return p;
     }
 
-    public static void addBlankTemp()
-    {
-        Temp tTemp = new Temp("Blank", "Blank");
-        tempList.add(tTemp);
-        BrewServer.LOG.info("Adding " + tTemp.getName());
-        // setup the scale for each temp probe
-        tTemp.setScale(scale);
-        // setup the threads
-        Thread tThread = new Thread(tTemp);
-        tThread.setName("Temp_blank");
-        tempThreads.add(tThread);
-        tThread.start();
-    }
-
     // Add the system temperature
     public static void addSystemTemp() {
         Temp tTemp = new Temp("System", "System");
@@ -1070,7 +1056,7 @@ public class LaunchControl {
             probe = input;
         }
 
-        if (!probe.startsWith("28") && !probe.startsWith("10") && !input.equals("Blank") && !input.equals("System")) {
+        if (!probe.startsWith("28") && !probe.startsWith("10") && !input.equals("System")) {
             BrewServer.LOG.warning(probe + " is not a temperature probe");
             return null;
         }
@@ -1277,29 +1263,19 @@ public class LaunchControl {
         timerList.remove(tTimer);
     }
 
-    /******
-     * List the One Wire devices from the standard one wire file system. in
-     * /sys/bus/w1/devices, basic access
-     */
-    public static void listOneWireSys() {
-        listOneWireSys(true);
-    }
-
     /**
      * List the one wire devices in /sys/bus/w1/devices.
-     *
-     * @param prompt
-     *            Prompt to select OWFS if needed
-     */
-    public static void listOneWireSys(final boolean prompt) {
+     **/
+    public static void listOneWireSys() {
         // try to access the list of 1-wire devices
         File w1Folder = new File("/sys/bus/w1/devices/");
         if (!w1Folder.exists()) {
             BrewServer.LOG.warning("Couldn't read the one wire devices directory!");
             BrewServer.LOG.warning("Did you set up One Wire?");
             BrewServer.LOG.warning("http://dougedey.github.io/2014/11/12/Setting_Up_One_Wire/");
-            System.exit(-1);
+            return;
         }
+
         File[] listOfFiles = w1Folder.listFiles();
 
         assert listOfFiles != null;
@@ -1334,20 +1310,68 @@ public class LaunchControl {
     }
 
     /**
+     * If the OWFS connection is setup, use this to
+     * read the OWFS server for the temperature probes
+     */
+    public static void listOWFSTemps()
+    {
+        if (owfsConnection == null)
+        {
+            return;
+        }
+
+        List<String> owfsTemps = getOneWireDevices("28");
+        for (String temp : owfsTemps)
+        {
+            if (findTemp(convertAddress(temp)) != null)
+            {
+                // We already have this one read in from the FS.
+                continue;
+            }
+            BrewServer.LOG.info("Checking for " + temp);
+            Temp currentTemp = new Temp(temp,
+                    temp);
+            tempList.add(currentTemp);
+            // setup the scale for each temp probe
+            currentTemp.setScale(scale);
+            // setup the threads
+            Thread tThread = new Thread(currentTemp);
+            tThread.setName("Temp_" + currentTemp.getName());
+            tempThreads.add(tThread);
+            tThread.start();
+        }
+    }
+
+    public static String convertAddress(String oldAddress)
+    {
+        String[] newAddress = oldAddress.split("\\.|-");
+
+        if (newAddress.length == 2) {
+            String devFamily = newAddress[0];
+            String devAddress = "";
+            // Byte swap!
+            devAddress += newAddress[1].subSequence(10, 12);
+            devAddress += newAddress[1].subSequence(8, 10);
+            devAddress += newAddress[1].subSequence(6, 8);
+            devAddress += newAddress[1].subSequence(4, 6);
+            devAddress += newAddress[1].subSequence(2, 4);
+            devAddress += newAddress[1].subSequence(0, 2);
+
+            String fixedAddress = devFamily + "."
+                    + devAddress.toLowerCase();
+
+            BrewServer.LOG.info("Converted address: " + fixedAddress);
+
+            return fixedAddress;
+        }
+        return oldAddress;
+    }
+    /**
      * update the device list.
      */
     public static void updateDeviceList() {
-        updateDeviceList(true);
-    }
-
-    /**
-     * Update the device list.
-     *
-     * @param prompt
-     *            Prompt for OWFS usage.
-     */
-    public static void updateDeviceList(boolean prompt) {
-        listOneWireSys(prompt);
+        listOneWireSys();
+        listOWFSTemps();
     }
 
     /**********
@@ -1366,8 +1390,6 @@ public class LaunchControl {
             BrewServer.LOG.warning("Could not find any one wire devices\n"
                     + "Please check you have the correct modules setup");
             BrewServer.LOG.warning("http://dougedey.github.io/2014/11/24/Why_Cant_I_Use_Elsinore_Without_Temperature_Probes/");
-            //System.exit(0);
-            tempList.add(new Temp("Blank", "Blank"));
         }
 
         if (configDoc == null) {
@@ -1553,6 +1575,7 @@ public class LaunchControl {
             owfsConnection = OwfsConnectionFactory
                     .newOwfsClientThreadSafe(owConfig);
             useOWFS = true;
+            listOneWireSys();
         } catch (NullPointerException npe) {
             BrewServer.LOG.warning("OWFS is not able to be setup. You may need to rerun setup.");
         }
