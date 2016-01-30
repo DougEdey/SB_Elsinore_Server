@@ -34,7 +34,8 @@ function parseVessels(vessels)
         if (vesselStatus.tempprobe.hidden)
         {
             $("#hiddenProbes").show();
-            var probeCard = $("#probes  #" + vesselStatus.deviceaddr);
+
+            var probeCard = $("#probes  #" + vesselStatus.deviceAddr);
             if (probeCard.eq(0).size() != 0)
             {
                 probeCard.remove();

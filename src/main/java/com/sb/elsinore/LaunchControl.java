@@ -546,7 +546,7 @@ public class LaunchControl {
             JSONObject tJSONTemp = new JSONObject();
             tJSONTemp.putAll(t.getMapStatus());
             tJSON.put("name", t.getName().replaceAll(" ", "_"));
-            tJSON.put("deviceaddr", t.getProbe());
+            tJSON.put("deviceaddr", t.getProbe().replaceAll("\\.", "_"));
             tJSON.put("tempprobe", tJSONTemp);
 
             if (t.hasVolume()) {
@@ -1062,8 +1062,13 @@ public class LaunchControl {
         }
 
         // input is the name we'll use from here on out
-        Temp tTemp = new Temp(input, probe);
-        tempList.add(tTemp);
+        Temp tTemp = findTemp(probe);
+
+        if (tTemp == null) {
+            tTemp = new Temp(input, probe);
+            tempList.add(tTemp);
+        }
+
         BrewServer.LOG.info("Adding " + tTemp.getName() + " Heat GPIO is (" + heatgpio
                 + ")");
         BrewServer.LOG.info("Adding " + tTemp.getName() + " Cool GPIO is (" + coolgpio
@@ -1152,7 +1157,8 @@ public class LaunchControl {
         Temp tTemp;
         while (iterator.hasNext()) {
             tTemp = iterator.next();
-            if (tTemp.getName().equalsIgnoreCase(name) || tTemp.getProbe().equalsIgnoreCase(name)) {
+            if (tTemp.getName().equalsIgnoreCase(name)
+                    || tTemp.getProbe().equalsIgnoreCase(name)) {
                 return tTemp;
             }
         }
@@ -1293,7 +1299,6 @@ public class LaunchControl {
                 if (probeExists(currentFile.getName()) || !currentFile.getName().startsWith("28")) {
                     continue;
                 }
-
                 BrewServer.LOG.info("Checking for " + currentFile.getName());
                 Temp currentTemp = new Temp(currentFile.getName(),
                         currentFile.getName());
@@ -1320,10 +1325,15 @@ public class LaunchControl {
             return;
         }
 
-        List<String> owfsTemps = getOneWireDevices("28");
+        List<String> owfsTemps = getOneWireDevices("/28");
         for (String temp : owfsTemps)
         {
-            if (findTemp(convertAddress(temp)) != null)
+            if (temp.startsWith("/"))
+            {
+                temp = temp.replace("/", "");
+            }
+
+            if (probeExists(temp))
             {
                 // We already have this one read in from the FS.
                 continue;
@@ -1345,6 +1355,8 @@ public class LaunchControl {
     public static String convertAddress(String oldAddress)
     {
         String[] newAddress = oldAddress.split("\\.|-");
+        boolean oldIsOwfs = (oldAddress.contains("."));
+        String sep = oldIsOwfs?"-":".";
 
         if (newAddress.length == 2) {
             String devFamily = newAddress[0];
@@ -1357,7 +1369,7 @@ public class LaunchControl {
             devAddress += newAddress[1].subSequence(2, 4);
             devAddress += newAddress[1].subSequence(0, 2);
 
-            String fixedAddress = devFamily + "."
+            String fixedAddress = devFamily + sep
                     + devAddress.toLowerCase();
 
             BrewServer.LOG.info("Converted address: " + fixedAddress);
@@ -1575,7 +1587,6 @@ public class LaunchControl {
             owfsConnection = OwfsConnectionFactory
                     .newOwfsClientThreadSafe(owConfig);
             useOWFS = true;
-            listOneWireSys();
         } catch (NullPointerException npe) {
             BrewServer.LOG.warning("OWFS is not able to be setup. You may need to rerun setup.");
         }
@@ -1637,8 +1648,9 @@ public class LaunchControl {
      * @return true if the probe is setup.
      */
     public static boolean probeExists(final String address) {
+        String owfsAddress = convertAddress(address);
         for (Temp t : tempList) {
-            if (t.getProbe().equals(address)) {
+            if (t.getProbe().equals(address) || t.getProbe().equals(owfsAddress)) {
                 return true;
             }
         }
@@ -2440,12 +2452,12 @@ public class LaunchControl {
                     + deviceName);
             nfe.printStackTrace();
         } catch (Exception e) {
-            BrewServer.LOG.info(e.getMessage() + " Ocurred when reading "
+            BrewServer.LOG.info(e.getMessage() + " Occurred when reading "
                     + deviceName);
             e.printStackTrace();
         }
-
         Temp newTemp = startDevice(deviceName, probe, heatGPIO, coolGPIO);
+
         if (newTemp == null) {
             System.out.println("Problems parsing device " + deviceName);
             System.exit(-1);

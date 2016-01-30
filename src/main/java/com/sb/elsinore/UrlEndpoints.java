@@ -550,7 +550,7 @@ public class UrlEndpoints {
                 BrewServer.LOG.warning("No Valid input unit");
             }
         }
-
+        inputUnit = inputUnit.replaceAll("_","\\.");
         Temp tProbe = LaunchControl.findTemp(inputUnit);
         PID tPID = LaunchControl.findPID(inputUnit);
 
@@ -1614,6 +1614,7 @@ public class UrlEndpoints {
         }
 
         LaunchControl.setupOWFS();
+        LaunchControl.listOWFSTemps();
 
         return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("text"),
                 "Updated system");

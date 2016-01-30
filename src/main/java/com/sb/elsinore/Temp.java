@@ -121,9 +121,9 @@ public final class Temp implements Runnable, Comparable<Temp> {
             // This is a special case for no temp probe.
             fProbe = null;
         } else {
-
+            fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
             File probePath =
-                new File("/sys/bus/w1/devices/" + aName + "/w1_slave");
+                new File(fProbe);
 
             // Lets assume that OWFS has "." separated names
             if (!probePath.exists() && aName.contains(".")) {
@@ -145,16 +145,17 @@ public final class Temp implements Runnable, Comparable<Temp> {
 
                     BrewServer.LOG.info("Converted address: " + fixedAddress);
 
-                    aName = fixedAddress;
+                    this.fProbe = "/sys/bus/w1/devices/" + fixedAddress + "/w1_slave";
+                    probePath = new File(fProbe);
+                    if (!probePath.exists())
+                    {
+                        // Try OWFS
+                        fProbe = null;
+                        aName = fixedAddress;
+                    }
                 }
             }
-            this.fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
-            probePath = new File(fProbe);
-            if (!probePath.exists())
-            {
-                // Try OWFS
-                fProbe = null;
-            }
+
         }
 
         this.probeName = aName;
@@ -426,7 +427,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
     public BigDecimal updateTemp() {
         BigDecimal result;
 
-        if (badTemp && this.currentError.equals("")) {
+        if (badTemp && currentError != null && currentError.equals("")) {
             BrewServer.LOG.warning("Trying to recover " + this.getName());
         }
         if (fProbe == null) {
