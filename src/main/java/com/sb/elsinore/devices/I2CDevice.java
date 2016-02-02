@@ -6,8 +6,7 @@ import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;
 import org.w3c.dom.Element;
 
-import java.io.File;
-import java.io.FilenameFilter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -59,6 +58,83 @@ public abstract class I2CDevice {
 
     protected Linux_C_lib libC = new Linux_C_lib_DirectMapping();
 
+
+    public static ArrayList<String> getAvailableAddresses(String device_path)
+    {
+        int devNo;
+
+        if (device_path.startsWith("/dev/i2c-"))
+        {
+            device_path = device_path.replace("/dev/i2c-", "");
+        }
+        if (device_path.startsWith("i2c-"))
+        {
+            device_path = device_path.replace("i2c-", "");
+        }
+
+        try {
+            devNo = Integer.parseInt(device_path);
+        }
+        catch (NumberFormatException nfe) {
+            BrewServer.LOG.warning(String.format("Failed to get a device number from %s", device_path));
+            return new ArrayList<>();
+        }
+
+        return getAvailableAddresses(devNo);
+    }
+
+    /**
+     * Get a list of the available addresses on the bus
+     * @param device The I2C device to use
+     * @return A list of available addresses on the bus
+     */
+    public static ArrayList<String> getAvailableAddresses(int device) {
+
+        List<String> commands = new ArrayList<>();
+        commands.add("i2cdetect");
+        commands.add("-r");
+        commands.add("-y");
+        commands.add("-a");
+        commands.add(Integer.toString(device));
+        ProcessBuilder pb= new ProcessBuilder(commands);
+
+        pb.redirectErrorStream(true);
+        Process process;
+        try {
+            process = pb.start();
+            process.waitFor();
+            BrewServer.LOG.info(process.getOutputStream().toString());
+        } catch (IOException | InterruptedException e3) {
+            BrewServer.LOG.info("Couldn't check for devices on the I2C bus");
+            e3.printStackTrace();
+            return new ArrayList<>();
+        }
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+                process.getInputStream()));
+        String line;
+        ArrayList<String> devices = new ArrayList<>();
+
+        try {
+            while ((line = br.readLine()) != null) {
+                for (String s : line.split(" "))
+                {
+                    s = s.trim();
+                    if (s.equals("--") || s.endsWith(":") || s.equalsIgnoreCase("UU")
+                            || s.length() <= 1)
+                    {
+                        continue;
+                    }
+                    devices.add(String.format("0x%s", s));
+                }
+            }
+        } catch (IOException e2) {
+            BrewServer.LOG.info("Couldn't read a line when checking SHA");
+            e2.printStackTrace();
+            process.destroy();
+        }
+        return devices;
+    }
 
     public static I2CDevice create(String devNumber, String devAddress, String devType) {
         I2CDevice i2cDevice = null;
@@ -259,6 +335,18 @@ public abstract class I2CDevice {
     public byte[] I2CSlaveBuffer = new byte[I2C_BUFSIZE];
     public int I2CReadLength, I2CWriteLength;
 
+    public void close()
+    {
+        if (fd > -1)
+        {
+            if (libC.close(fd) != 0)
+            {
+                BrewServer.LOG.warning(String.format("Failed to close: %s", Native.getLastError()));
+            }
+        }
+        fd = -1;
+    }
+
     public ads1015error ads1015WriteRegister (int reg, int value)
     {
         ads1015error error = ads1015error.ADS1015_ERROR_OK;
@@ -282,6 +370,7 @@ public abstract class I2CDevice {
         if (ret != I2CWriteLength)
         {
             BrewServer.LOG.warning(String.format("Failed to write to I2C Device %s. Error %s", ret, Native.getLastError()));
+            error = ads1015error.ADS1015_ERROR_I2CBUSY;
         }
         // ToDo: Add in proper I2C error-checking
         return error;

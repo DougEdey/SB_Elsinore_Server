@@ -6,6 +6,7 @@ import static org.rendersnake.HtmlAttributesFactory.type;
 import static org.rendersnake.HtmlAttributesFactory.value;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import com.sb.elsinore.devices.I2CDevice;
 import org.rendersnake.HtmlAttributes;
@@ -114,6 +115,7 @@ public class PhSensorForm implements Renderable {
         }
         html.div(id("i2c_div").name("i2c_div").style(styleString));
                 html.select(class_("form-control m-t")
+                        .onChange("selectedI2C(this);").onLoad("selectedI2C(this);")
                                 .name("i2c_device").id("i2c_device"));
 
                 html.option(value("").selected_if(phSensor.getI2CDevicePath().equals("")))
@@ -127,11 +129,26 @@ public class PhSensorForm implements Renderable {
                             ._option();
                 }
                 html._select();
-                html.input(type("text").class_("form-control m-t")
-                                .name("i2c_address").id("i2c_address")
-                                .value(phSensor.getI2CDevAddressString())
-                                .add("placeholder", Messages.I2C_DEVICE_ADDRESS)
-                );
+
+                for (String device: I2CDevice.getAvailableDevices()) {
+                    html.select(class_("form-control m-t ").name(device).id(device));
+                    html.option(value("").selected_if(phSensor.getI2CDevicePath().equals("")))
+                            .write(Messages.I2C_DEVICE_ADDRESS)._option();
+                    ArrayList<String> devAddrs = I2CDevice.getAvailableAddresses(device);
+                    if (devAddrs.size() == 0)
+                    {
+                        html.option(value(""))
+                                .write("No Devices detected")._option();
+                    }
+                    else {
+                        for (String addr : devAddrs) {
+                            html.option(value(addr).selected_if(phSensor.getI2CDevAddressString().equals(addr)))
+                                    .write(addr)._option();
+                        }
+                    }
+                    html._select();
+                }
+
                 html.input(type("text").class_("form-control m-t")
                                 .name("i2c_channel").id("i2c_channel")
                                 .value(phSensor.geti2cChannel())

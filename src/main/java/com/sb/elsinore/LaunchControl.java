@@ -2975,9 +2975,7 @@ public class LaunchControl {
         } catch (IOException e2) {
             BrewServer.LOG.info("Couldn't read a line when checking SHA");
             e2.printStackTrace();
-            if (process != null) {
-                process.destroy();
-            }
+            process.destroy();
             pb = null;
             return null;
         }

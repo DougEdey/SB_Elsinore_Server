@@ -177,9 +177,7 @@ public class ADS1115 extends ADS1015 {
     @Override
     public float readValue(int devChannel)
     {
-        if (!(_adsInitialised)) {
-            ads1015Init();
-        }
+        ads1015Init();
 
         Integer config = getConfigDefaults();
         // Set configuration
@@ -203,11 +201,14 @@ public class ADS1115 extends ADS1015 {
 
         if (ads1015WriteRegister(ADS1015_REG_POINTER_CONFIG, config) != ads1015error.ADS1015_ERROR_OK)
         {
+            close();
             return 0;
         }
 
         // Read configuration
         int v = ina219Read16(ADS1015_REG_POINTER_CONVERT);
+        close();
+
         float value = (((float)v)*4096/32767);
         BrewServer.LOG.warning("Read value: " + value);
 

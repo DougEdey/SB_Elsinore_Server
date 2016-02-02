@@ -650,6 +650,7 @@ function submitForm(element)
     		var formdata = {}
     		var serialized = $(element).serializeObject();
     		serialized.new_name = encodeURI(serialized.name)
+    		serialized["i2c_address"] = serialized[serialized.i2c_device];
     		formdata[sensorName] = JSON.stringify(serialized);
     		$.ajax({
     			url : 'addphsensor',
@@ -1598,6 +1599,13 @@ function changeName()
         }
     );
 };
+
+function selectedI2C(input)
+{
+    var selectedDevice = input.selectedOptions[0].value;
+    $(input.parentElement).find("select[id^=i2c-]").hide();
+    $(input.parentElement).find("select[id=" + selectedDevice + "]").show();
+}
 
 function selectedInput(input)
 {
