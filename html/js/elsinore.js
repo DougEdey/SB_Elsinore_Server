@@ -1603,8 +1603,8 @@ function changeName()
 function selectedI2C(input)
 {
     var selectedDevice = input.selectedOptions[0].value;
-    $(input.parentElement).find("select[id^=i2c-]").hide();
-    $(input.parentElement).find("select[id=" + selectedDevice + "]").show();
+    $(input.parentElement).find("select[id^=i2c-]").css("display", "none");
+    $(input.parentElement).find("select[id=" + selectedDevice + "]").css("display", "block");
 }
 
 function selectedInput(input)

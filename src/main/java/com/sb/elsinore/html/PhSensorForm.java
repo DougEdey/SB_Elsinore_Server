@@ -131,7 +131,7 @@ public class PhSensorForm implements Renderable {
                 html._select();
 
                 for (String device: I2CDevice.getAvailableDevices()) {
-                    html.select(class_("form-control m-t ").name(device).id(device));
+                    html.select(class_("form-control m-t ").name(device).id(device).style("display:none"));
                     html.option(value("").selected_if(phSensor.getI2CDevicePath().equals("")))
                             .write(Messages.I2C_DEVICE_ADDRESS)._option();
                     ArrayList<String> devAddrs = I2CDevice.getAvailableAddresses(device);
