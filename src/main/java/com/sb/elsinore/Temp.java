@@ -140,7 +140,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
                     devAddress += newAddress[1].subSequence(2, 4);
                     devAddress += newAddress[1].subSequence(0, 2);
 
-                    String fixedAddress = devFamily + "."
+                    String fixedAddress = devFamily + "-"
                         + devAddress.toLowerCase();
 
                     BrewServer.LOG.info("Converted address: " + fixedAddress);
@@ -151,7 +151,6 @@ public final class Temp implements Runnable, Comparable<Temp> {
                     {
                         // Try OWFS
                         fProbe = null;
-                        aName = fixedAddress;
                     }
                 }
             }
