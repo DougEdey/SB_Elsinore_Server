@@ -2021,6 +2021,7 @@ public class LaunchControl {
 
         if (pid.getAuxGPIO() != null) {
             setElementText(device, PID.AUX, pid.getAuxGPIO());
+            getFirstElement(device, PID.AUX).setAttribute("invert", Boolean.toString(pid.isAuxInverted()));
         }
 
         saveConfigFile();
@@ -2342,7 +2343,7 @@ public class LaunchControl {
                 coolI = new BigDecimal(0.0), coolD = new BigDecimal(0.0),
                 coolCycle = new BigDecimal(0.0), cycle = new BigDecimal(0.0),
                 coolDelay = new BigDecimal(0.0);
-        boolean coolInvert = false, heatInvert = false, hidden = false, cutoffEnabled = false;
+        boolean coolInvert = false, heatInvert = false, hidden = false, cutoffEnabled = false, auxInvert = false;
         int analoguePin = -1, position = -1;
         Element i2cElement = null;
 
@@ -2397,6 +2398,9 @@ public class LaunchControl {
             cutoffEnabled = Boolean.parseBoolean(getTextForElement(config, PID.CUTOFF_ENABLED, "false"));
             calibration = getTextForElement(config, PID.CALIBRATION, "0.0");
             auxPin = getTextForElement(config, PID.AUX, null);
+            if (auxPin != null) {
+                auxInvert = Boolean.parseBoolean(getFirstElement(config, PID.AUX).getAttribute("invert"));
+            }
 
             hidden = Boolean.parseBoolean(getTextForElement(config, PID.HIDDEN, "false"));
 
@@ -2489,7 +2493,7 @@ public class LaunchControl {
                 tPID.setManualTime(cycle);
                 tPID.setManualDuty(duty);
                 if (auxPin != null && !auxPin.equals("")) {
-                    tPID.setAux(auxPin);
+                    tPID.setAux(auxPin, auxInvert);
                 }
             }
         } catch (InvalidGPIOException e) {

@@ -3,6 +3,7 @@ import com.sb.elsinore.devices.OutputDevice;
 import com.sb.util.MathUtil;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
+import org.json.simple.JSONObject;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public final class PID implements Runnable {
      * The Output control thread.
      */
     private Thread outputThread = null;
-    private boolean invertOutput = false;
+    private boolean invertAux = false;
     private BigDecimal duty_cycle = new BigDecimal(0);
     private BigDecimal calculatedDuty = new BigDecimal(0);
     private BigDecimal set_point = new BigDecimal(0);
@@ -288,6 +289,7 @@ public final class PID implements Runnable {
         if (this.auxGPIO != null && !this.auxGPIO.equals("")) {
             try {
                 this.auxPin = new OutPin(this.auxGPIO);
+                setAux(false);
             } catch (InvalidGPIOException e) {
                 BrewServer.LOG.log(Level.SEVERE,
                     "Couldn't parse " + this.auxGPIO + " as a valid GPIO");
@@ -413,37 +415,52 @@ public final class PID implements Runnable {
      * set an auxilliary manual GPIO (for dual element systems).
      * @param gpio The GPIO to use as an aux
      */
-    public void setAux(final String gpio) {
+    public void setAux(String gpio, boolean invert) {
         if (gpio == null || gpio.length() == 0) return;
-        this.auxGPIO = detectGPIO(gpio);
 
-        if (this.auxGPIO == null || auxGPIO.equals("")) {
-            BrewServer.LOG.log(Level.INFO,
-                    "Could not detect GPIO as valid: " + gpio);
+        // Only do this is the pin has changed
+        if (!detectGPIO(gpio).equalsIgnoreCase(auxGPIO)) {
+            this.auxGPIO = detectGPIO(gpio);
+            try {
+                auxPin = new OutPin(auxGPIO);
+
+            } catch (InvalidGPIOException i)
+            {
+                if (auxPin != null) {
+                    auxPin.close();
+                }
+                BrewServer.LOG.warning(String.format("Failed to setup GPIO for the aux Pin provided %s", i.getMessage()));
+            }
         }
+
+        this.setAuxInverted(invert);
+        setAux(false);
     }
 
     /**
      * Toggle the aux pin from it's current state.
      */
-    public void toggleAux() {
+    public void  toggleAux() {
         // Flip the aux pin value
         if (auxPin != null) {
             // If the value if "1" we set it to false
             // If the value is not "1" we set it to true
             BrewServer.LOG.info("Aux Pin is being set to: "
                     + !auxPin.getValue().equals("1"));
-
-            if (this.invertOutput) {
-                auxPin.setValue(!auxPin.getValue().equals("0"));
-            } else {
-                auxPin.setValue(!auxPin.getValue().equals("1"));
-            }
+            setAux(!getAuxStatus());
         } else {
             BrewServer.LOG.info("Aux Pin is not set for " + this.fName);
         }
     }
 
+    public void setAux(boolean on)
+    {
+        if (this.invertAux) {
+            auxPin.setValue(!on);
+        } else {
+            auxPin.setValue(on);
+        }
+    }
     /**
      * @return True if there's an aux pin
      */
@@ -926,7 +943,11 @@ public final class PID implements Runnable {
         if (auxPin != null) {
             // This value should be cached
             // but I don't trust someone to hit it with a different application
-            statusMap.put("auxStatus", auxPin.getValue());
+            Map<String, Object> auxStatus = new HashMap<>();
+            auxStatus.put("gpio", auxGPIO);
+            auxStatus.put("inverted", isAuxInverted());
+            auxStatus.put("status", getAuxStatus());
+            statusMap.put("aux", auxStatus);
         }
 
         return statusMap;
@@ -1154,15 +1175,23 @@ public final class PID implements Runnable {
      * Invert the outputs.
      * @param invert True to invert the outputs.
      */
-    public void setInverted(final boolean invert) {
-        this.invertOutput = invert;
+    public void setAuxInverted(final boolean invert) {
+        this.invertAux = invert;
     }
 
     /**
      * @return True if this device has inverted outputs.
      */
-    public boolean isInverted() {
-        return this.invertOutput;
+    public boolean isAuxInverted() {
+        return this.invertAux;
+    }
+
+    public boolean getAuxStatus()
+    {
+        if (this.invertAux) {
+            return auxPin.getValue().equals("0");
+        }
+        return auxPin.getValue().equals("1");
     }
 
     public BigDecimal getManualCycle() {

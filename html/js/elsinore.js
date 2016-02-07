@@ -73,6 +73,7 @@ function parseVessels(vessels)
         {
             loadPIDData(probeCard, vesselStatus.pidstatus);
         }
+
     });
     if ($("#hiddenProbes #probeList option").length == 0)
     {
@@ -400,6 +401,29 @@ function loadPIDData(card, pid)
             + "</div>");
         pidmode = card.find("#mode");
     }
+
+    if ("aux" in pid)
+    {
+        if (card.find("#aux").length == 0)
+        {
+            card.append("<div id='mode' class='btn-toolbar m-t'>"
+                + "<button type='button' onclick='toggleAux(this)' class='btn btn-warning-outline' id='aux'>Aux</button>"
+                + "</div>");
+        }
+        var auxSwitch = card.find("#aux");
+        if (pid.aux.status == "1")
+        {
+
+            auxSwitch.removeClass("btn-warning-outline");
+            auxSwitch.addClass("btn-warning");
+        }
+        else
+        {
+            auxSwitch.addClass("btn-warning-outline");
+            auxSwitch.removeClass("btn-warning");
+        }
+    }
+
     var selected = pidmode.find(".btn-danger");
     if (selected.size() == 1 && selected.id != pid.mode)
     {
@@ -421,6 +445,21 @@ function loadPIDData(card, pid)
         pidstatus.parent().show();
     }
 
+}
+function toggleAux(button) {
+    console.log(button);
+    var card = $(getCard(button));
+
+	$.ajax({
+		url : 'toggleAux',
+		type : 'POST',
+		data : "toggle=" + card.attr("id"),
+		success : function(data) {
+			data = null
+		}
+	});
+	window.disableUpdates = 0;
+	return false;
 }
 
 function toggleMode(button)
@@ -1783,6 +1822,14 @@ function showDeviceEdit(element, addr, name)
                   heatDiv.find("#p_input").val(piddata[type].p);
                   heatDiv.find("#i_input").val(piddata[type].i);
                   heatDiv.find("#d_input").val(piddata[type].d);
+             }
+             if ("aux" in piddata)
+             {
+                modal.find('#aux-gpio').val(piddata.aux.gpio);
+                if (piddata.aux.inverted)
+                {
+                   modal.find('#invert-aux').parent().click();
+                }
              }
          }
          if (temp != undefined)

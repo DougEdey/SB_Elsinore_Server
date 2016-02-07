@@ -479,7 +479,7 @@ public class UrlEndpoints {
             @Parameter(name = "new_cool_gpio", value="The Cool GPIO"),
             @Parameter(name = "heat_invert", value="\"on\" to enable inverted outputs for the heating pin"),
             @Parameter(name = "cool_invert", value="\"on\" to enable inverted outputs for the cooling pin"),
-            @Parameter(name = "auxpin", value="A pin to use for auxilliary output"),
+            @Parameter(name = "aux_gpio", value="A pin to use for auxilliary output"),
             @Parameter(name = "cutoff", value="A temperature value at which to shutdown Elsinore as a safety measure"),
             @Parameter(name = "cutoff_enabled", value="On to use the cutoff temperature"),
             @Parameter(name = "calibration", value="An offset for calibration")})
@@ -488,7 +488,7 @@ public class UrlEndpoints {
         String auxpin, newName, heatgpio;
         String inputUnit = null, cutoff, coolgpio;
         String calibration;
-        boolean heatInvert, coolInvert;
+        boolean heatInvert, coolInvert, auxInvert;
         int size = -1;
 
         Set<Entry<String, String>> incomingParams = params.entrySet();
@@ -532,7 +532,8 @@ public class UrlEndpoints {
         coolgpio = parms.get("new_cool_gpio");
         heatInvert = parms.get("heat_invert") != null && Boolean.parseBoolean(params.get("heat_invert"));
         coolInvert = parms.get("cool_invert") != null && Boolean.parseBoolean(params.get("cool_invert"));
-        auxpin = parms.get("auxpin");
+        auxpin = parms.get("aux_gpio");
+        auxInvert = parms.get("aux_invert") != null && Boolean.parseBoolean(params.get("aux_invert"));
         cutoff = parms.get("cutoff");
         boolean cutoffEnabled = parms.get("cutoff_enabled") != null && Boolean.parseBoolean(parms.get("cutoff_enabled"));
         calibration = parms.get("calibration");
@@ -601,7 +602,9 @@ public class UrlEndpoints {
         if (coolgpio == null || coolgpio.equals("")) {
             tPID.delCoolGPIO();
         }
-        tPID.setAux(auxpin);
+
+        tPID.setAux(auxpin, auxInvert);
+
 
         if (!heatgpio.equals("") || !coolgpio.equals("")) {
             if (!heatgpio.equals(tPID.getHeatGPIO())) {
