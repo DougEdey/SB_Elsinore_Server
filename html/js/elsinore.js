@@ -398,6 +398,7 @@ function loadPIDData(card, pid)
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='auto'>Auto</button>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='manual'>Manual</button>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='hysteria'>Hysteresis</button>"
+            + "<button type='button' onclick='editButton(this)' class='btn btn-secondary' id='edit'>Edit</button>"
             + "</div>");
         pidmode = card.find("#mode");
     }
@@ -446,6 +447,12 @@ function loadPIDData(card, pid)
     }
 
 }
+
+function editButton(button) {
+    var header = button.parentElement.parentElement.children[0];
+    editDevice(header);
+}
+
 function toggleAux(button) {
     console.log(button);
     var card = $(getCard(button));
