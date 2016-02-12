@@ -77,7 +77,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
     /**
      * Match the temperature regexp.
      */
-    private final Pattern tempRegexp = Pattern.compile("^(-?)([0-9]+)(.[0-9]{1,2})?(C|F)?$");
+    private final Pattern tempRegexp = Pattern.compile("^(-?)([0-9]+)(.[0-9]{1,2})?$");
     private int size = SIZE_LARGE;
     public I2CDevice i2cDevice = null;
     public int i2cChannel = -1;
@@ -236,17 +236,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
                 number += tempMatcher.group(3);
             }
             // Create the temp
-            BigDecimal temperature = new BigDecimal(number);
-            String unit = tempMatcher.group(4);
-
-            if (unit == null || unit.equals(this.scale)) {
-                this.cutoffTemp = temperature;
-            } else if (unit.equals("F")) {
-                this.cutoffTemp = fToC(temperature);
-            } else if (unit.equals("C")) {
-                this.cutoffTemp = cToF(temperature);
-            }
-
+            this.cutoffTemp= new BigDecimal(number);
         } else {
             BrewServer.LOG.severe(cutoffTemp + " doesn't match "
                     + tempRegexp.pattern());
@@ -1003,17 +993,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
             }
             // Create the temp
             BigDecimal temperature = new BigDecimal(number);
-            temperature = temperature.setScale(2, BigDecimal.ROUND_DOWN);
-            String unit = tempMatcher.group(4);
-
-            if (unit == null || unit.equals(this.scale)) {
-                this.calibration = temperature;
-            } else if (unit.equals("F")) {
-                this.calibration = temperature.divide(new BigDecimal(1.8), context);
-            } else if (unit.equals("C")) {
-                this.calibration = temperature.multiply(new BigDecimal(1.8));
-            }
-
+            this.calibration = temperature.setScale(2, BigDecimal.ROUND_DOWN);
         } else {
             BrewServer.LOG.severe(calibration + " doesn't match "
                     + tempRegexp.pattern());
@@ -1022,7 +1002,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
 
     public String getCalibration() {
         DecimalFormat df = new DecimalFormat("#.##");
-        return df.format(this.calibration) + this.scale;
+        return df.format(this.calibration);
     }
 
     public boolean isSetup() {
