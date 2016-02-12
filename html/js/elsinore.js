@@ -334,7 +334,7 @@ function setCardName(card, name)
     var title = card.find("#card-header");
     if (title.size() == 0)
     {
-        card.prepend("<div class='card-header' id='card-header' onDblClick='editDevice(this);' data-device='"+addr+"'></div>");
+        card.prepend("<button class='card-header btn bth-secondary' id='card-header' data-device='" + addr + "' type='button' onclick='editDevice(this)'></button>");
         title = card.find("#card-header");
     }
 
@@ -398,7 +398,6 @@ function loadPIDData(card, pid)
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='auto'>Auto</button>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='manual'>Manual</button>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='hysteria'>Hysteresis</button>"
-            + "<button type='button' onclick='editButton(this)' class='btn btn-secondary' id='edit'>Edit</button>"
             + "</div>");
         pidmode = card.find("#mode");
     }
@@ -446,11 +445,6 @@ function loadPIDData(card, pid)
         pidstatus.parent().show();
     }
 
-}
-
-function editButton(button) {
-    var header = button.parentElement.parentElement.children[0];
-    editDevice(header);
 }
 
 function toggleAux(button) {
@@ -1680,6 +1674,7 @@ function editHidden(element)
     var option = $(element).find("option:selected");
     showDeviceEdit(option, option.val(), option.text());
 }
+
 function editDevice(element)
 {
     showDeviceEdit(element, $(element).data("device"), $(element).text());
