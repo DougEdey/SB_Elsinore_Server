@@ -421,7 +421,15 @@ public final class PID implements Runnable {
      * @param gpio The GPIO to use as an aux
      */
     public void setAux(String gpio, boolean invert) {
-        if (gpio == null || gpio.length() == 0) return;
+        if (gpio == null || gpio.length() == 0) {
+            this.auxGPIO = "";
+            if (this.auxPin != null)
+            {
+                this.auxPin.close();
+                this.auxPin = null;
+            }
+            return;
+        }
 
         // Only do this is the pin has changed
         if (!detectGPIO(gpio).equalsIgnoreCase(auxGPIO)) {
@@ -433,6 +441,7 @@ public final class PID implements Runnable {
             {
                 if (auxPin != null) {
                     auxPin.close();
+                    auxPin = null;
                 }
                 BrewServer.LOG.warning(String.format("Failed to setup GPIO for the aux Pin provided %s", i.getMessage()));
             }

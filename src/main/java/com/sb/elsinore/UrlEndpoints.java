@@ -759,7 +759,7 @@ public class UrlEndpoints {
     @Parameter(name = "gpio", value = "The GPIO to control with this switch"),
             @Parameter(name = "invert", value = "\"on\" to enable inversion of the outputs, anything else for normal output.")})
     public Response addSwitch() {
-        String newName = "", gpio = "";
+        String newName = "", gpio = "", originalName = "";
         String inputUnit = "";
         boolean invert = false;
 
@@ -798,6 +798,10 @@ public class UrlEndpoints {
         }
 
         // Fall back to the old style
+        if (parms.containsKey("originalname")) {
+            originalName = parms.get("originalname");
+        }
+
         if (parms.containsKey("name")) {
             newName = parms.get("name");
         }
@@ -821,10 +825,26 @@ public class UrlEndpoints {
                 invert = Boolean.parseBoolean(parms.get("invert"));
             }
         }
+        Switch aSwitch = null;
+        if (originalName != null && originalName.length() > 0) {
+            aSwitch = LaunchControl.findSwitch(originalName);
+            if (aSwitch != null) {
+                aSwitch.setName(newName);
+                try {
+                    aSwitch.setGPIO(gpio);
+                } catch (InvalidGPIOException e) {
+                }
+            }
+            else {
+                aSwitch = LaunchControl.addSwitch(newName, gpio);
+            }
+        }
+        else {
+            aSwitch = LaunchControl.addSwitch(newName, gpio);
+        }
+        if (aSwitch != null) {
 
-        Switch newSwitch = LaunchControl.addSwitch(newName, gpio);
-        if (newSwitch != null) {
-            newSwitch.setInverted(invert);
+            aSwitch.setInverted(invert);
             LaunchControl.saveSettings();
             return new Response(Status.OK, MIME_TYPES.get("txt"), "Switch Added");
         } else {

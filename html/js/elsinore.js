@@ -1197,6 +1197,16 @@ function updateAnalog(element) {
 }
 function parseSwitches(switches)
 {
+    // clear out the existing switches
+    $("#switches .card-body button").each(function(index, switchCard)
+        {
+            if (!(switchCard.id in switches))
+            {
+                switchCard.remove();
+            }
+        }
+    );
+    // Add or update the rest
     $.each(switches, function(name, status){
         var textname = decodeURI(name);
         var switchEle = $("#switches [id='" + name +"']");
@@ -1251,6 +1261,7 @@ function deleteSwitch(element)
 function saveSwitch(element)
 {
     var data = $("#addSwitch").serializeObject();
+    data['originalname'] = encodeURI(data['originalname']);
     data['name'] = encodeURI(data['name']);
     $.ajax({
         url : 'addswitch',
@@ -1288,6 +1299,7 @@ function editSwitch(element)
         success: function(switchSettings) {
             $("#switches-modal").modal();
             $("#switches-modal-heading").text("Edit Switch");
+            $("#switches-modal #originalname").val(decodeURI(switchSettings.name));
             $("#switches-modal #name").val(decodeURI(switchSettings.name));
             $("#switches-modal #gpio").val(switchSettings.gpio);
             if (switchSettings.inverted)
