@@ -334,7 +334,7 @@ function setCardName(card, name)
     var title = card.find("#card-header");
     if (title.size() == 0)
     {
-        card.prepend("<div class='card-header' id='card-header' onDblClick='editDevice(this);' data-device='"+addr+"'></div>");
+        card.prepend("<button class='card-header btn bth-secondary' id='card-header' data-device='" + addr + "' type='button' onclick='editDevice(this)'></button>");
         title = card.find("#card-header");
     }
 
@@ -459,6 +459,7 @@ function loadPIDData(card, pid)
     }
 
 }
+
 function toggleAux(button) {
     console.log(button);
     var card = $(getCard(button));
@@ -1686,6 +1687,7 @@ function editHidden(element)
     var option = $(element).find("option:selected");
     showDeviceEdit(option, option.val(), option.text());
 }
+
 function editDevice(element)
 {
     showDeviceEdit(element, $(element).data("device"), $(element).text());
