@@ -443,7 +443,10 @@ public final class Temp implements Runnable, Comparable<Temp> {
         if (badTemp) {
             badTemp = false;
             BrewServer.LOG.warning("Recovered temperature reading for " + this.getName());
-            this.currentError = "";
+            if (this.currentError.startsWith("Could"))
+            {
+                this.currentError = "";
+            }
         }
 
         // OWFS/One wire always uses Celsius

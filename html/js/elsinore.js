@@ -350,12 +350,25 @@ function loadTempProbeData(card, tempprobe)
     var value = card.find("#value");
     if (value.size() == 0)
     {
-        card.append("<p class='temperature' ><span id='value'></span><span id='units'></span></div>");
+        card.append("<p class='temperature' ><span id='value'></span><span id='units'></span></p>"
+        + "<p><div id='error' class='alert alert-info'></div></p>");
         value = card.find("#value");
     }
     units = card.find("#units");
     value.html(tempprobe.temp.toFixed(2));
     units.html("&#176" + tempprobe.scale);
+    // Parse the error text
+    var errormsg = card.find('#error');
+    if ("error" in tempprobe && tempprobe.error != "")
+    {
+        errormsg.text(tempprobe.error);
+        errormsg.show();
+    }
+    else
+    {
+        errormsg.text("");
+        errormsg.hide();
+    }
 }
 
 function loadPIDData(card, pid)
