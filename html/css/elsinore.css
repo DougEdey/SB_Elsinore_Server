@@ -118,6 +118,7 @@ text-align:left;
 }
 
 .footer {
+    z-index: 99;
     position: fixed;
     bottom: 0;
     width: 100%;
