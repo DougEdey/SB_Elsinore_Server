@@ -1,12 +1,10 @@
 package com.sb.elsinore;
 
 import com.sb.common.SBStringUtils;
-import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.rendersnake.internal.StringEscapeUtils;
 
 import java.io.*;
 import java.math.BigDecimal;
@@ -47,8 +45,8 @@ public class StatusRecorder implements Runnable {
      */
     public final void start() {
         if (thread == null || !thread.isAlive()) {
-            temperatureMap = new HashMap();
-            dutyMap = new HashMap();
+            temperatureMap = new HashMap<>();
+            dutyMap = new HashMap<>();
             thread = new Thread(this);
             thread.setName("Status recorder");
             thread.start();
@@ -137,10 +135,7 @@ public class StatusRecorder implements Runnable {
                         fileExists = true;
                     }
                 } catch (Exception ioe) {
-                    if (ioe instanceof InterruptedException) {
-                        continueRunning = false;
-                    }
-                    continue;
+                    continueRunning = false;
                 }
                 Thread.sleep(SLEEP);
             }
@@ -171,8 +166,9 @@ public class StatusRecorder implements Runnable {
             JSONObject vessel = (JSONObject) vessel1;
             if (vessel.containsKey("name")) {
                 String name = vessel.get("name").toString();
-                if (LaunchControl.findTemp(name) != null) {
-                    name = LaunchControl.findTemp(name).getProbe();
+                Temp currentTemp = LaunchControl.findTemp(name);
+                if (currentTemp != null) {
+                    name = currentTemp.getProbe();
                 }
                 if (vessel.containsKey("tempprobe")) {
                     String temp = ((JSONObject) vessel.get("tempprobe"))
@@ -355,7 +351,6 @@ public class StatusRecorder implements Runnable {
 
         public long timestamp;
         public String value;
-        public int count = 0;
 
         public Status(String value, long timestamp) {
             this.value = value;
@@ -405,6 +400,7 @@ public class StatusRecorder implements Runnable {
         return this.currentDirectory;
     }
 
+    @SuppressWarnings("unchecked")
     public NanoHTTPD.Response getData(Map<String, String> params) {
         String rootPath;
         try {
@@ -491,7 +487,7 @@ public class StatusRecorder implements Runnable {
                     && content.getName().toLowerCase()
                     .startsWith(vesselName.toLowerCase())) {
                 String name = content.getName();
-                String localName = null;
+                String localName;
 
                 // Strip off .csv
                 name = name.substring(0, name.length() - 4);
@@ -535,7 +531,7 @@ public class StatusRecorder implements Runnable {
                 try {
                     reader = new ReversedLinesFileReader(content);
                     String line;
-                    String[] lArray = null;
+                    String[] lArray ;
 
                     int count = 0;
                     try {
@@ -671,9 +667,13 @@ public class StatusRecorder implements Runnable {
 
     public NanoHTTPD.Response deleteAllData() {
         File graphDir = new File(this.recorderDirectory);
-        for (File directory: graphDir.listFiles()) {
-            if (!deleteDir(directory)) {
-                BrewServer.LOG.warning("Failed to delete: " + directory.getAbsolutePath());
+        File[] fileList = graphDir.listFiles();
+
+        if (fileList != null) {
+            for (File directory : fileList) {
+                if (!deleteDir(directory)) {
+                    BrewServer.LOG.warning("Failed to delete: " + directory.getAbsolutePath());
+                }
             }
         }
         return new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, BrewServer.MIME_TYPES.get("json"),
@@ -683,8 +683,8 @@ public class StatusRecorder implements Runnable {
     public boolean deleteDir(File file) {
         if (file.isDirectory()) {
             String[] children = file.list();
-            for (int i = 0; i < children.length; i++) {
-                boolean success = deleteDir(new File(file, children[i]));
+            for (String childDir : children) {
+                boolean success = deleteDir(new File(file, childDir));
                 if (!success) {
                     return false;
                 }

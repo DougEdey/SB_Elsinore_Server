@@ -59,11 +59,8 @@ public class Style implements Comparable<Style> {
 		
 		else {
 			Style tmp = (Style) obj;
-			
-			if (tmp.name.equalsIgnoreCase(this.name)) {
-				return true;
-			} else
-				return false;
+
+			return tmp.name.equalsIgnoreCase(this.name);
 		}
 	}
 

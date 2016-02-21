@@ -1848,18 +1848,20 @@ public class Recipe {
      * @return ALL GRAIN, PARTIAL MASH, or EXTRACT or UNKNOWN.
      */
     public final String getType() {
-        boolean hasMashed = false;
-        boolean notMashed = false;
+        int mashedCount = 0;
 
-        for (int i = 0; i < this.fermentables.size(); i++) {
-            hasMashed = getFermentable(i).getMashed();
+        for (Fermentable f : this.fermentables) {
+            if (f.getMashed())
+			{
+				mashedCount++;
+			}
         }
 
-        if (hasMashed && !notMashed) {
+        if (mashedCount == this.fermentables.size()) {
             return "ALL GRAIN";
-        } else if (hasMashed && notMashed) {
+        } else if (mashedCount > 0) {
             return "PARTIAL MASH";
-        } else if (!hasMashed && notMashed) {
+        } else if (mashedCount == 0) {
             return "EXTRACT";
         }
 

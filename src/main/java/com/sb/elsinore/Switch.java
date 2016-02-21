@@ -52,14 +52,8 @@ public class Switch implements Comparable<Switch> {
             this.invertOutput = true;
         }
 
-        try {
-            this.output = new OutPin(pinName);
-            this.turnOff();
-        } catch (InvalidGPIOException e) {
-            throw e;
-        } catch (RuntimeException e) {
-            throw e;
-        }
+        this.output = new OutPin(pinName);
+        this.turnOff();
     }
 
     public void setName(String name){

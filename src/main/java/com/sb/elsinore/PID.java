@@ -3,7 +3,6 @@ import com.sb.elsinore.devices.OutputDevice;
 import com.sb.util.MathUtil;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
-import org.json.simple.JSONObject;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -144,10 +143,6 @@ public final class PID implements Runnable {
         }
         if (mode.equalsIgnoreCase("hysteria")) {
             this.mode = "hysteria";
-            return;
-        }
-        else {
-//            this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
         }
     }
 

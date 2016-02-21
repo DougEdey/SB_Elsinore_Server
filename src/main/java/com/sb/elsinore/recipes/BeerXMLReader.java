@@ -192,7 +192,7 @@ public class BeerXMLReader {
             primary.setType(FermentStep.PRIMARY);
             primary.setTemp(primaryTemp);
             primary.setTempU("C");
-            if (displayPrimaryTemp.trim().toUpperCase().endsWith("F")) {
+            if (displayPrimaryTemp != null && displayPrimaryTemp.trim().toUpperCase().endsWith("F")) {
                 primary.convertTo("F");
             }
             primary.setTime(primaryAge);
@@ -205,7 +205,7 @@ public class BeerXMLReader {
             secondary.setTemp(secondaryTemp);
             secondary.setTempU("C");
             secondary.setTime(secondaryAge);
-            if (displaySecondaryTemp.trim().toUpperCase().endsWith("F")) {
+            if (displaySecondaryTemp != null && displaySecondaryTemp.trim().toUpperCase().endsWith("F")) {
                 secondary.convertTo("F");
             }
             recipe.addFermentStep(secondary);
@@ -217,7 +217,7 @@ public class BeerXMLReader {
             tertiary.setTemp(tertiaryTemp);
             tertiary.setTempU("C");
             tertiary.setTime(tertiaryAge);
-            if (displayTertiaryTemp.trim().toUpperCase().endsWith("F")) {
+            if (displayTertiaryTemp != null && displayTertiaryTemp.trim().toUpperCase().endsWith("F")) {
                 tertiary.convertTo("F");
             }
             recipe.addFermentStep(tertiary);
@@ -229,7 +229,7 @@ public class BeerXMLReader {
             aging.setTemp(bottleAgeTemp);
             aging.setTempU("C");
             aging.setTime(bottleAge);
-            if (displayAgeTemp.trim().toUpperCase().endsWith("F")) {
+            if (displayAgeTemp != null && displayAgeTemp.trim().toUpperCase().endsWith("F")) {
                 aging.convertTo("F");
             }
             recipe.addFermentStep(aging);
@@ -357,7 +357,10 @@ public class BeerXMLReader {
             }
 
             // Not all of these are used by beerxml 1.0
-            if (use.equalsIgnoreCase("boil") || use.equalsIgnoreCase("aroma")
+            if (use == null) {
+                // Do nothing here
+            }
+            else if (use.equalsIgnoreCase("boil") || use.equalsIgnoreCase("aroma")
                     || use.equalsIgnoreCase("whirlpool")) {
                 hopObject.setAdd(Hop.BOIL);
                 hopObject.setMinutes(time);
@@ -676,7 +679,11 @@ public class BeerXMLReader {
         waterProfile.setMg(magnesium);
         waterProfile.setPh(ph);
         waterProfile.setNotes(notes);
-        waterProfile.setAmount(displayAmount);
+        if (displayAmount != null) {
+            waterProfile.setAmount(displayAmount);
+        } else {
+            waterProfile.setAmount(Double.toString(amount));
+        }
         recipe.setTargetWater(waterProfile);
     }
 
@@ -802,25 +809,29 @@ public class BeerXMLReader {
             newStep.setName(name);
             newStep.setInVol(infuseAmount);
             newStep.setDirections(getString(step, "DESCRIPTION", xp));
-            if (type.equals(Mash.DECOCTION) || type.equals(Mash.DECOCTION_THICK) || type.equals(Mash.DECOCTION_THIN)) {
+            if (type != null &&
+                    (type.equals(Mash.DECOCTION) || type.equals(Mash.DECOCTION_THICK) || type.equals(Mash.DECOCTION_THIN)))
+            {
                 String decoctionAmount = getString(step, "DECOCTION_AMT", xp);
                 newStep.setInVol(new Quantity(decoctionAmount));
             } else {
                 String infuseTemp = getString(step, "INFUSE_TEMP", xp);
                 newStep.setInfuseTemp(infuseTemp);
-                if (infuseTemp.endsWith("F")) {
+                if (infuseTemp != null && infuseTemp.endsWith("F")) {
                     newStep.convertTo("F");
                 }
             }
-            String[] mashRatio = getString(step, "WATER_GRAIN_RATIO", xp).split(" ");
-            newStep.setMashRatio(mashRatio[0]);
-            newStep.setMashRatioU(Mash.QT_PER_LB);
-            if (mashRatio.length == 2) {
-                newStep.setMashRatioU(mashRatio[1]);
+            String waterRatio = getString(step, "WATER_GRAIN_RATIO", xp);
+            if (waterRatio!= null) {
+                String[] mashRatio = waterRatio.split(" ");
+                newStep.setMashRatio(mashRatio[0]);
+                newStep.setMashRatioU(Mash.QT_PER_LB);
+                if (mashRatio.length == 2) {
+                    newStep.setMashRatioU(mashRatio[1]);
+                }
             }
-
             String displayInfuseAmount = getString(step, "DISPLAY_INFUSE_AMT", xp);
-            if (!displayInfuseAmount.equals("")) {
+            if (displayInfuseAmount != null && displayInfuseAmount.length() > 0) {
                 newStep.setInVol(new Quantity(displayInfuseAmount));
             }
 

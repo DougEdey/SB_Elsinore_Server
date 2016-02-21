@@ -3,7 +3,6 @@ package com.sb.elsinore.devices;
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
 import com.sun.jna.*;
-import com.sun.jna.ptr.IntByReference;
 import org.w3c.dom.Element;
 
 import java.io.*;
@@ -202,41 +201,41 @@ public abstract class I2CDevice {
 
     public interface Linux_C_lib extends com.sun.jna.Library {
 
-        public long memcpy(int[] dst, short[] src, long n);
+        long memcpy(int[] dst, short[] src, long n);
 
-        public int memcpy(int[] dst, short[] src, int n);
+        int memcpy(int[] dst, short[] src, int n);
 
-        public int pipe(int[] fds);
+        int pipe(int[] fds);
 
-        public int tcdrain(int fd);
+        int tcdrain(int fd);
 
-        public int fcntl(int fd, int cmd, int arg);
+        int fcntl(int fd, int cmd, int arg);
 
-        public int ioctl(int fd, int cmd, int arg);
+        int ioctl(int fd, int cmd, int arg);
 
-        public int open(String path, int flags);
+        int open(String path, int flags);
 
-        public int close(int fd);
+        int close(int fd);
 
-        public int write(int fd, byte[] buffer, int count);
+        int write(int fd, byte[] buffer, int count);
 
-        public int read(int fd, byte[] buffer, int count);
+        int read(int fd, byte[] buffer, int count);
 
-        public long write(int fd, byte[] buffer, long count);
+        long write(int fd, byte[] buffer, long count);
 
-        public long read(int fd, byte[] buffer, long count);
+        long read(int fd, byte[] buffer, long count);
 
-        public int select(int n, int[] read, int[] write, int[] error, timeval timeout);
+        int select(int n, int[] read, int[] write, int[] error, timeval timeout);
 
-        public int poll(int[] fds, int nfds, int timeout);
+        int poll(int[] fds, int nfds, int timeout);
 
-        public int tcflush(int fd, int qs);
+        int tcflush(int fd, int qs);
 
-        public void perror(String msg);
+        void perror(String msg);
 
-        public int tcsendbreak(int fd, int duration);
+        int tcsendbreak(int fd, int duration);
 
-        static public class timeval extends Structure {
+        class timeval extends Structure {
             public NativeLong tv_sec;
             public NativeLong tv_usec;
 

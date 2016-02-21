@@ -38,9 +38,7 @@ public class BrewCalcs {
 	                   + (coeffic[coefficIndex][2] * TempC * TempC);
 
 	   // changed + to - from original
-	   double CorrectedSG = platoToSG(plato - (deltaSG/100));
-	   return CorrectedSG;
-
+	   return platoToSG(plato - (deltaSG/100));
 	}
 
 	public static double SGToPlato(double SG)
@@ -489,10 +487,8 @@ public class BrewCalcs {
 		double f3c = r1c * r2c / dc;
 
 		// Use these to compute the milliequivalents acid required per liter (mEq/L)
-		double acidMillies = Ct * (  ( f1c - f1o) + (f3o - f3c) ) + 
+		return Ct * (  ( f1c - f1o) + (f3o - f3c) ) +
 					Math.pow(10, -pHTarget) - Math.pow(10, -pHo);
-
-		return acidMillies;
 	}
 	
 	// Determines moles of given acid required to shift to target ph given amount of acid millieuivelants 
@@ -506,9 +502,7 @@ public class BrewCalcs {
 		double f3d = r1d * r2d * dd;
 		double f4d = r1d * r2d * r3d * dd;
 		double frac = f2d + (2 * f3d) + (3 * f4d);
-		double moles = millequivs / frac;
-
-		return moles;
+		return millequivs / frac;
 	}
 	
 	// Determines weight or volume of acid in ml or mg from moles

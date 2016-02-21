@@ -2,18 +2,14 @@ import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.TriggerControl;
 import com.sb.elsinore.triggers.TriggerInterface;
 import com.sb.elsinore.triggers.WaitTrigger;
-import org.easymock.EasyMock;
 import org.json.simple.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
 import static org.powermock.api.mockito.PowerMockito.*;
 
@@ -21,7 +17,6 @@ import static org.powermock.api.mockito.PowerMockito.*;
  * Created by doug on 25/09/15.
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(LaunchControl.class)
 public class TriggerTest {
 
     private TriggerControl mTriggerControl;

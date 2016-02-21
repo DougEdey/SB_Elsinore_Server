@@ -11,8 +11,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.logging.ConsoleHandler;
@@ -152,6 +150,7 @@ public class BrewServer extends NanoHTTPD {
         return BrewServer.currentRecipe;
     }
 
+    @SuppressWarnings("unchecked")
     public static JSONObject getVersionStatus() {
         JSONObject verStatus = new JSONObject();
         verStatus.put("sha", BrewServer.SHA);
@@ -184,6 +183,7 @@ public class BrewServer extends NanoHTTPD {
      * @param session The HTTP Session object.
      * @return A NanoHTTPD Response Object
      */
+    @SuppressWarnings("unchecked")
     public final Response serve(IHTTPSession session) {
         String uri = session.getUri();
         Method method = session.getMethod();

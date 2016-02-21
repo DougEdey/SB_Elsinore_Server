@@ -13,6 +13,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * @author aavis
@@ -156,15 +157,13 @@ public class Quantity {
 		type = t;
 
 		if (isAbrv(s)){
-			String u = getUnitFromAbrv(t, s);
-			unit = u;			
+			unit = getUnitFromAbrv(t, s);;
 			abrv = s;
 		}
 		// it's a unit
 		else {
-			String a = getAbrvFromUnit(t, s);
 			unit = s;			
-			abrv = a;
+			abrv = getAbrvFromUnit(t, s);
 		}
 	}
 
@@ -178,21 +177,25 @@ public class Quantity {
 	public String getAbrv(){ return abrv; }
 
 	public double getValueAs(String to){
-		double fromBase = 0;
-		double toBase = 0;
+		double fromBase ;
+		double toBase;
 		Converter[] u;
 
 		// don't do any work if we're converting to ourselves
-		if (to == unit || type == abrv)
+		if (to.equals(unit) || type.equals(abrv))
 			return value;
 
-		if (type.equals(Quantity.VOLUME))
-			u = volUnits;
-		else if (type.equals(Quantity.PRESSURE))
-			u = pressureUnits;
-		else // assume weight
-			u = weightUnits;
-
+		switch (type) {
+			case Quantity.VOLUME:
+				u = volUnits;
+				break;
+			case Quantity.PRESSURE:
+				u = pressureUnits;
+				break;
+			default:
+				u = weightUnits;
+				break;
+		}
 		fromBase = getBaseValue(u, unit);
 		toBase = getBaseValue(u, to);
 
@@ -209,7 +212,7 @@ public class Quantity {
 	}
 
 	public void convertTo(String to){
-		if(to != this.unit) {
+		if(!Objects.equals(to, this.unit)) {
 			value = Quantity.convertUnit(unit, to, value);
 			setUnits(to);
 		}
@@ -238,9 +241,9 @@ public class Quantity {
 		int i=0;
 		Converter[] u;
 
-		if (t == "vol")
+		if (Objects.equals(t, "vol"))
 			u = volUnits;
-		else if ( t == "pressure")
+		else if (Objects.equals(t, "pressure"))
 			u = pressureUnits;
 		else // assume weight
 			u = weightUnits;
@@ -260,17 +263,16 @@ public class Quantity {
 
 		Converter[] u;
 		String t = getTypeFromUnit(a);
-		if (t == "vol")
+		if (Objects.equals(t, "vol"))
 			u = volUnits;
-		else if ( t == "pressure")
+		else if (Objects.equals(t, "pressure"))
 			u = pressureUnits;
 		else // assume weight
 			u = weightUnits;
 
-		for (int i=0; i<u.length; i++){
-			if (u[i].abrv.equalsIgnoreCase(a))
+		for (Converter unit  : u){
+			if (unit.abrv.equalsIgnoreCase(a))
 				return true;
-
 		}
 		return false;
 
@@ -280,9 +282,9 @@ public class Quantity {
 		int i=0;	
 		Converter[] u;
 
-		if (t == "vol")
+		if (Objects.equals(t, "vol"))
 			u = volUnits;
-		else if (t == "pressure")
+		else if (Objects.equals(t, "pressure"))
 			u = pressureUnits;
 		else // assume weight
 			u = weightUnits;
@@ -299,30 +301,30 @@ public class Quantity {
 
 	public static String getTypeFromUnit(String s){
 		
-		for (int i = 0; i < weightUnits.length; i++) {
-			if (weightUnits[i].unit.equalsIgnoreCase(s) ||
-					weightUnits[i].abrv.equalsIgnoreCase(s)) {
+		for (Converter weight : weightUnits) {
+			if (weight.unit.equalsIgnoreCase(s) ||
+					weight.abrv.equalsIgnoreCase(s)) {
 				return Quantity.WEIGHT;
 			}
 		}
 		
-		for (int i = 0; i < volUnits.length; i++) {
-			if (volUnits[i].unit.equalsIgnoreCase(s) ||
-					volUnits[i].abrv.equalsIgnoreCase(s)) {
+		for (Converter volume : volUnits) {
+			if (volume.unit.equalsIgnoreCase(s) ||
+					volume.abrv.equalsIgnoreCase(s)) {
 				return Quantity.VOLUME;
 			}
 		}
 		
-		for (int i = 0; i < pressureUnits.length; i++) {
-			if (pressureUnits[i].unit.equalsIgnoreCase(s) ||
-					pressureUnits[i].abrv.equalsIgnoreCase(s)) {
+		for (Converter pressure : pressureUnits) {
+			if (pressure.unit.equalsIgnoreCase(s) ||
+					pressure.abrv.equalsIgnoreCase(s)) {
 				return Quantity.PRESSURE;
 			}
 		}
 
-        for (int i = 0; i < otherUnits.length; i++) {
-            if (otherUnits[i].unit.equalsIgnoreCase(s) ||
-                    otherUnits[i].abrv.equalsIgnoreCase(s)) {
+        for (Converter other : otherUnits) {
+            if (other.unit.equalsIgnoreCase(s) ||
+                    other.abrv.equalsIgnoreCase(s)) {
                 return Quantity.OTHER;
             }
         }
@@ -337,26 +339,33 @@ public class Quantity {
 	 */
 
 	static public List<String> getListofUnits(String type, boolean abrv) {
-		List<String> list = new ArrayList<String>();
-		int i = 0;
-		if (type.equals("weight")) {
-			for (i = 0; i < weightUnits.length; i++) 
-				if (abrv)
-					list.add(weightUnits[i].abrv);
-				else
-					list.add(weightUnits[i].unit);
-		} else if (type.equals("pressure")) {
-			for (i = 0; i < pressureUnits.length; i++) 
-				if (abrv)
-					list.add(pressureUnits[i].abrv);
-				else
-					list.add(pressureUnits[i].unit);
-		} else {
-			for (i = 0; i < volUnits.length; i++)
-				if (abrv)
-					list.add(volUnits[i].abrv);
-				else
-					list.add(volUnits[i].unit);
+		List<String> list = new ArrayList<>();
+		switch (type){
+
+            case "weight":
+			for (Converter w : weightUnits) {
+                if (abrv)
+                    list.add(w.abrv);
+                else
+                    list.add(w.unit);
+
+            }
+                break;
+            case "pressure":
+			for (Converter p: pressureUnits) {
+                if (abrv)
+                    list.add(p.abrv);
+                else
+                    list.add(p.unit);
+            }
+                break;
+            default:
+			for (Converter v: volUnits) {
+                if (abrv)
+                    list.add(v.abrv);
+                else
+                    list.add(v.unit);
+            }
 		}			
 
 		return list;
@@ -380,7 +389,7 @@ public class Quantity {
 
     /**
      * Return the current Quantity as a string of "<volume> <units>"
-     * @return
+     * @return the current quantity
      */
     @Override
     public String toString() {

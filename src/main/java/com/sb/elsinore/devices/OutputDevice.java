@@ -20,6 +20,7 @@ public class OutputDevice {
 
     protected BigDecimal cycleTime = new BigDecimal(5000);    //5 second default
     protected OutPin ssr = null;    //The output pin.
+    private final Object ssrLock = new Object();
     protected String name;    //The name of this device
     private String gpio;    //The gpio pin
 
@@ -48,7 +49,7 @@ public class OutputDevice {
 
     public void disable() {
         if (ssr != null) {
-            synchronized (ssr) {
+            synchronized (ssrLock) {
                 ssr.close();
                 ssr = null;
             }
@@ -62,7 +63,9 @@ public class OutputDevice {
     protected void initializeSSR() throws InvalidGPIOException {
         if (ssr == null) {
             if (gpio != null && gpio.length() > 0) {
-                ssr = new OutPin(gpio);
+                synchronized (ssrLock) {
+                    ssr = new OutPin(gpio);
+                }
                 turnOff();
             }
         }
@@ -105,7 +108,7 @@ public class OutputDevice {
 
     protected void setValue(boolean value) {
         if (this.ssr != null) {
-            synchronized (this.ssr) {
+            synchronized (ssrLock) {
                 // invert the output if needed
                 if (this.invertOutput) {
                     value = !value;
@@ -127,13 +130,6 @@ public class OutputDevice {
      */
     public void setName(String name) {
         this.name = name;
-    }
-
-    /**
-     * @return the cycleTime
-     */
-    public BigDecimal getCycleTime() {
-        return this.cycleTime.divide(THOUSAND);
     }
 
     /**
@@ -167,10 +163,4 @@ public class OutputDevice {
         this.invertOutput = inverted;
     }
 
-    /**
-     * @return Return true if the output is inverted.
-     */
-    public final boolean getInverted() {
-        return this.invertOutput;
-    }
 }

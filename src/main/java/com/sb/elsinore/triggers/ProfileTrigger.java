@@ -64,22 +64,19 @@ public class ProfileTrigger implements TriggerInterface {
 
         TriggerControl triggerControl = LaunchControl.findTriggerControl(
                 this.targetName);
-        TriggerInterface triggerEntry = triggerControl.getCurrentTrigger();
+        TriggerInterface triggerEntry = triggerControl != null ? triggerControl.getCurrentTrigger() : null;
+        if (triggerControl == null) { return;}
 
         int stepToUse = -1;
-        // We have a mash step position
-        if (position >= 0) {
-            stepToUse = position;
-            BrewServer.LOG.warning("Using mash step for " + this.targetName
-                    + " at position " + position);
-        }
-
         if (!this.activate) {
             // We're de-activating everything
             stepToUse = -1;
         } else {
-            if (triggerEntry == null && triggerControl.triggerCount() > 0) {
-                stepToUse = 0;
+            if (triggerEntry == null)
+            {
+                if (triggerControl.triggerCount() > 0) {
+                    stepToUse = 0;
+                }
             } else {
                 stepToUse = triggerEntry.getPosition();
             }

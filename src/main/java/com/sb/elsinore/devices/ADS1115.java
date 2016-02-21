@@ -20,7 +20,6 @@ public class ADS1115 extends ADS1015 {
       * -----------------------------------------------------------------------
       */
     private static int ADS1015_REG_CONFIG_OS_MASK = 0x8000;
-    private static int ADS1015_REG_CONFIG_OS_SINGLE = 0x8000; // Write: Set to
     // start a
     // single-conversion
     private static int ADS1015_REG_CONFIG_OS_BUSY = 0x0000; // Read: Bit = 0
@@ -44,21 +43,10 @@ public class ADS1115 extends ADS1015 {
     // P = AIN1,
     // N = AIN3
     private static int ADS1015_REG_CONFIG_MUX_DIFF_2_3 = 0x3000; // Differential
-    // P = AIN2,
-    // N = AIN3
-    private static int ADS1015_REG_CONFIG_MUX_SINGLE_0 = 0x4000; // Single-ended
-    // AIN0
-    private static int ADS1015_REG_CONFIG_MUX_SINGLE_1 = 0x5000; // Single-ended
-    // AIN1
-    private static int ADS1015_REG_CONFIG_MUX_SINGLE_2 = 0x6000; // Single-ended
-    // AIN2
-    private static int ADS1015_REG_CONFIG_MUX_SINGLE_3 = 0x7000; // Single-ended
     // AIN3
 
     private static int ADS1015_REG_CONFIG_PGA_MASK = 0x0E00;
     private static int ADS1015_REG_CONFIG_PGA_6_144V = 0x0000; // +/-6.144V
-    // range
-    private static int ADS1015_REG_CONFIG_PGA_4_096V = 0x0200; // +/-4.096V
     // range
     private static int ADS1015_REG_CONFIG_PGA_2_048V = 0x0400; // +/-2.048V
     // range
@@ -72,9 +60,6 @@ public class ADS1115 extends ADS1015 {
 
     private static int ADS1015_REG_CONFIG_MODE_MASK = 0x0100;
     private static int ADS1015_REG_CONFIG_MODE_CONTIN = 0x0000; // Continuous
-    // conversion
-    // mode
-    private static int ADS1015_REG_CONFIG_MODE_SINGLE = 0x0100; // Power-down
     // single-shot
     // mode
     // (default)
@@ -86,8 +71,6 @@ public class ADS1115 extends ADS1015 {
     // second
     private static int ADS1015_REG_CONFIG_DR_490SPS = 0x0040; // 490 samples per
     // second
-    private static int ADS1015_REG_CONFIG_DR_920SPS = 0x0060; // 920 samples per
-    // second
     private static int ADS1015_REG_CONFIG_DR_1600SPS = 0x0080; // 1600 samples
     // per second
     // (default)
@@ -97,7 +80,6 @@ public class ADS1115 extends ADS1015 {
     // per second
 
     private static int ADS1015_REG_CONFIG_CMODE_MASK = 0x0010;
-    private static int ADS1015_REG_CONFIG_CMODE_TRAD = 0x0000; // Traditional
     // comparator
     // with
     // hysteresis
@@ -105,21 +87,16 @@ public class ADS1115 extends ADS1015 {
     private static int ADS1015_REG_CONFIG_CMODE_WINDOW = 0x0010; // Window
     // comparator
     private static int ADS1015_REG_CONFIG_CPOL_MASK = 0x0008;
-    private static int ADS1015_REG_CONFIG_CPOL_ACTVLOW = 0x0000; // ALERT/RDY
     // pin is
     // low when
     // active
     // (default)
-    private static int ADS1015_REG_CONFIG_CPOL_ACTVHI = 0x0008;; // ALERT/RDY
+    private static int ADS1015_REG_CONFIG_CPOL_ACTVHI = 0x0008; // ALERT/RDY
     // pin is
     // high when
     // active
 
     private static int ADS1015_REG_CONFIG_CLAT_MASK = 0x0004; // Determines if
-    // ALERT/RDY pin
-    // latches once
-    // asserted
-    private static int ADS1015_REG_CONFIG_CLAT_NONLAT = 0x0000; // Non-latching
     // comparator
     // (default)
     private static int ADS1015_REG_CONFIG_CLAT_LATCH = 0x0004; // Latching
@@ -135,10 +112,6 @@ public class ADS1115 extends ADS1015 {
     // after two
     // conversions
     private static int ADS1015_REG_CONFIG_CQUE_4CONV = 0x0002; // Assert
-    // ALERT/RDY
-    // after four
-    // conversions
-    private static int ADS1015_REG_CONFIG_CQUE_NONE = 0x0003; // Disable the
 
     public ADS1115(int deviceNo, int address) {
         super(deviceNo, address);
@@ -148,6 +121,12 @@ public class ADS1115 extends ADS1015 {
     private Integer getConfigDefaults()
     {
         // Start with default values
+        int ADS1015_REG_CONFIG_CQUE_NONE = 0x0003;
+        int ADS1015_REG_CONFIG_CLAT_NONLAT = 0x0000;
+        int ADS1015_REG_CONFIG_CPOL_ACTVLOW = 0x0000;
+        int ADS1015_REG_CONFIG_CMODE_TRAD = 0x0000;
+        int ADS1015_REG_CONFIG_DR_920SPS = 0x0060;
+        int ADS1015_REG_CONFIG_MODE_SINGLE = 0x0100;
         Integer config = ADS1015_REG_CONFIG_CQUE_NONE | // Disable the
                 // comparator
                 // (default
@@ -168,6 +147,7 @@ public class ADS1115 extends ADS1015 {
         // (default)
 
         // Set PGA/voltage range
+        int ADS1015_REG_CONFIG_PGA_4_096V = 0x0200;
         config |= ADS1015_REG_CONFIG_PGA_4_096V; // +/- 6.144V range
         // (limited to
         // VDD +0.3V max!)
@@ -184,19 +164,24 @@ public class ADS1115 extends ADS1015 {
         switch (devChannel)
         {
             case (0):
+                int ADS1015_REG_CONFIG_MUX_SINGLE_0 = 0x4000;
                 config |= ADS1015_REG_CONFIG_MUX_SINGLE_0;
                 break;
             case (1):
+                int ADS1015_REG_CONFIG_MUX_SINGLE_1 = 0x5000;
                 config |= ADS1015_REG_CONFIG_MUX_SINGLE_1;
                 break;
             case (2):
+                int ADS1015_REG_CONFIG_MUX_SINGLE_2 = 0x6000;
                 config |= ADS1015_REG_CONFIG_MUX_SINGLE_2;
                 break;
             case (3):
+                int ADS1015_REG_CONFIG_MUX_SINGLE_3 = 0x7000;
                 config |= ADS1015_REG_CONFIG_MUX_SINGLE_3;
                 break;
         }
 
+        int ADS1015_REG_CONFIG_OS_SINGLE = 0x8000;
         config |= ADS1015_REG_CONFIG_OS_SINGLE;
 
         if (ads1015WriteRegister(ADS1015_REG_POINTER_CONFIG, config) != ads1015error.ADS1015_ERROR_OK)

@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import com.sb.elsinore.devices.I2CDevice;
-import org.rendersnake.HtmlAttributes;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.Renderable;
 

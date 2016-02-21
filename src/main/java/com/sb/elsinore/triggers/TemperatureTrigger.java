@@ -9,7 +9,6 @@ import java.util.Set;
 import com.sb.elsinore.*;
 import com.sb.elsinore.notificiations.Notifications;
 import com.sb.elsinore.notificiations.WebNotification;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.tools.PrettyWriter;
@@ -17,7 +16,6 @@ import org.rendersnake.tools.PrettyWriter;
 import static org.rendersnake.HtmlAttributesFactory.*;
 
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 /**
  * A TemperatureTrigger will hold until the specified probe hits the target
@@ -139,9 +137,8 @@ public class TemperatureTrigger implements TriggerInterface {
         this.type = inType;
         this.mode = inMode;
 
-        BigDecimal tTemp = new BigDecimal(
+        this.targetTemp = new BigDecimal(
                 parameters.get(TemperatureTrigger.TARGET_TEMP).toString().replace(",", "."), this.temperatureProbe.context);
-        this.targetTemp = tTemp;
     }
 
     /**

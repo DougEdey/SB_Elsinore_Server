@@ -100,22 +100,21 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
 	}
 
 	public String toXML() {
-		StringBuffer sb = new StringBuffer();
-		sb.append("    <ITEM>\n");
-		sb.append("      <HOP>" + getName() + "</HOP>\n");
-		sb.append("      <AMOUNT>" + getAmountAs(getUnits()) + "</AMOUNT>\n");
-		sb.append("      <TIME>" + getMinutes() + "</TIME>\n");
-		sb.append("      <UNITS>" + getUnitsAbrv() + "</UNITS>\n");
-		sb.append("      <FORM>" + getType() + "</FORM>\n");
-		sb.append("      <ALPHA>" + alpha + "</ALPHA>\n");
-		sb.append("      <COSTOZ>" + getCostPerU() + "</COSTOZ>\n");
-		sb.append("      <ADD>" + add + "</ADD>\n");
-		sb.append("      <DESCRIPTION>"
-				+ SBStringUtils.subEntities(getDescription())
-				+ "</DESCRIPTION>\n");
-		sb.append("      <DATE>" + getDate() + "</DATE>\n");
-		sb.append("    </ITEM>\n");
-		return sb.toString();
+		return String.format("    <ITEM>\n" +
+						"      <HOP>%s</HOP>\n" +
+						"      <AMOUNT>%s</AMOUNT>\\n" +
+						"      <UNITS>%s</UNITS>\n" +
+						"      <FORM>%s</FORM>\n" +
+						"      <ALPHA>%s</ALPHA>\n" +
+						"      <COSTOZ>%s</COSTOZ>\n" +
+						"      <ADD>%s</ADD>\n" +
+						"      <DESCRIPTION>%s</DESCRIPTION>" +
+						"      <DATE>%s</DATE>" +
+						"    </ITEM>\n",
+						getName(), getAmountAs(getUnits()), getUnitsAbrv(),
+						getType(), alpha, getCostPerU(), add,
+				SBStringUtils.subEntities(getDescription()),
+						getDate());
 	}
 
 	public int compareTo(@Nonnull Ingredient i) {
@@ -133,7 +132,7 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
 		// Check to see if the additions are at the same time
 		if (this.getMinutes() == 0 && h.getMinutes() == 0) {
 			// Check to see if we have dry hopping
-			if (this.getAdd() == h.getAdd()) {
+			if (this.getAdd().equals(h.getAdd())) {
 				// Same addition, continue the compare
 				return super.compareTo(h);
 			} else {
@@ -144,7 +143,7 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
 			}
 		} else {
 			// Times are not the same, straightforward comparrison
-			int result = ((Integer) h.getMinutes()).compareTo((Integer) this
+			int result = ((Integer) h.getMinutes()).compareTo(this
 					.getMinutes());
 			return (result == 0 ? -1 : result);
 		}

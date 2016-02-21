@@ -37,6 +37,7 @@ public class XMLTest {
         assert(beerXMLReader.readFile(yellowSnowFile));
 
         ArrayList<String> recipeArrayList = beerXMLReader.getListOfRecipes();
+        assert (recipeArrayList != null);
         assert (recipeArrayList.size() == 1);
 
         System.out.println("Read file");
@@ -93,7 +94,7 @@ public class XMLTest {
         try {
             recipes = BeerXMLReader.getInstance().readAllRecipes();
             assertEquals(recipes.length, 1);
-        } catch (XPathException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             assert(true);
         }
@@ -103,7 +104,7 @@ public class XMLTest {
         BeerXMLWriter recipeWriter = new BeerXMLWriter(output);
         try {
             recipeWriter.writeRecipes(new File("recipes/greenhouseoutput.xml"));
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             assert(true);
         }
@@ -118,7 +119,7 @@ public class XMLTest {
         try {
             recipes = BeerXMLReader.getInstance().readAllRecipes();
             assertEquals(recipes.length, 1);
-        } catch (XPathException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             assert(true);
         }
@@ -128,7 +129,7 @@ public class XMLTest {
         BeerXMLWriter recipeWriter = new BeerXMLWriter(output);
         try {
             recipeWriter.writeRecipes(new File("recipes/robertsmildoutput.xml"));
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             assert(true);
         }
@@ -143,7 +144,7 @@ public class XMLTest {
         try {
             recipes = BeerXMLReader.getInstance().readAllRecipes();
             assertEquals(recipes.length, 1);
-        } catch (XPathException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             assert(true);
         }
@@ -153,7 +154,7 @@ public class XMLTest {
         BeerXMLWriter recipeWriter = new BeerXMLWriter(output);
         try {
             recipeWriter.writeRecipes(new File("recipes/barrelagedstoutoutput.xml"));
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             assert(true);
         }

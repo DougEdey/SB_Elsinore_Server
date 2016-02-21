@@ -9,7 +9,6 @@ import jGPIO.InvalidGPIOException;
 
 import java.io.*;
 import java.math.BigDecimal;
-import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
@@ -2483,10 +2482,13 @@ public class UrlEndpoints {
         }
 
         Timer timer = LaunchControl.findTimer(timerName);
+
         JSONObject timerSettings = new JSONObject();
-        timerSettings.put("name", timer.getName());
-        timerSettings.put("duration", timer.getTarget());
-        timerSettings.put("inverted", timer.getInverted());
+        if (timer != null) {
+            timerSettings.put("name", timer.getName());
+            timerSettings.put("duration", timer.getTarget());
+            timerSettings.put("inverted", timer.getInverted());
+        }
         return  new Response(Status.OK, MIME_TYPES.get("json"), timerSettings.toJSONString());
     }
 

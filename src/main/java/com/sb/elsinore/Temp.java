@@ -243,15 +243,6 @@ public final class Temp implements Runnable, Comparable<Temp> {
         }
     }
 
-    public void enableCutoff()
-    {
-        this.cutoffEnabled = true;
-    }
-
-    public void disableCutoff()
-    {
-        this.cutoffEnabled = false;
-    }
     // PRIVATE ////
     /**
      * Setup strings for the probe.
@@ -467,8 +458,8 @@ public final class Temp implements Runnable, Comparable<Temp> {
         BigDecimal temp = ERROR_TEMP;
         String rawTemp = "";
         try {
-            rawTemp =  LaunchControl.readOWFSPath(probeName + "/temperature");
-            if (rawTemp == null || rawTemp.equals("")) {
+            rawTemp = LaunchControl.readOWFSPath(probeName + "/temperature");
+            if (rawTemp.equals("")) {
                 BrewServer.LOG.severe(
                     "Couldn't find the probe " + probeName + " for " + name);
                 LaunchControl.setupOWFS();
@@ -1031,15 +1022,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
     public boolean isHidden() {
         return this.hidden;
     }
-    
-    public String getVisibility() {
-        if (this.hidden) {
-            return "SHOWN";
-        } else {
-            return "HIDDEN";
-        }
-    }
- 
+
     public void setGravity(BigDecimal newGravity) {
         this.gravity = newGravity;
     }

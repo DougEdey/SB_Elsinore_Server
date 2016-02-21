@@ -61,11 +61,7 @@ public class Acid {
 	}
 	
 	public boolean isLiquid() {
-		if (mgPerML == 0) {
-			return false;
-		} else {
-			return true;
-		}
+		return mgPerML != 0;
 	}
 	
 	public String getAcidUnit() {

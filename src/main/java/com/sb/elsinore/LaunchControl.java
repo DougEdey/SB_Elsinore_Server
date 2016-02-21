@@ -5,7 +5,6 @@ import com.sb.common.CollectionsUtil;
 import com.sb.elsinore.devices.I2CDevice;
 import com.sb.elsinore.inputs.PhSensor;
 import com.sb.elsinore.notificiations.Notifications;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import jGPIO.GPIO;
 import jGPIO.InvalidGPIOException;
 import org.apache.commons.cli.*;
@@ -31,7 +30,6 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.*;
 import java.io.*;
 import java.math.BigDecimal;
-import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.channels.FileChannel;
@@ -659,6 +657,7 @@ public class LaunchControl {
      *
      * @return a JSON Object representing the current system status
      */
+    @SuppressWarnings("unchecked")
     public static String getSystemStatus() {
         JSONObject retVal = new JSONObject();
         retVal.put(StatusRecorder.RECORDER, LaunchControl.recorder != null);
@@ -738,7 +737,7 @@ public class LaunchControl {
             StatusRecorder.THRESHOLD = Double.parseDouble(getTextForElement(config, StatusRecorder.RECORDER_DIFF, "0.15"));
             StatusRecorder.SLEEP = Long.parseLong(getTextForElement(config, StatusRecorder.RECORDER_TIME, "5000"));
 
-            String cosmAPIKey = null;
+            String cosmAPIKey;
             Integer cosmFeedID;
 
             // Check for the COSM Feed details
@@ -827,8 +826,10 @@ public class LaunchControl {
                             + " position: " + tempString);
                 }
             }
+
+            Switch tSwitch = null;
             try {
-                Switch tSwitch = new Switch(switchName, gpio);
+                tSwitch = new Switch(switchName, gpio);
                 tSwitch.setPosition(position);
                 switchList.add(tSwitch);
             } catch (InvalidGPIOException e) {
@@ -841,7 +842,7 @@ public class LaunchControl {
 
             Element invert = getFirstElement(curSwitch, "invert");
             if (invert != null) {
-                LaunchControl.findSwitch(switchName).setInverted(
+                tSwitch.setInverted(
                         Boolean.parseBoolean(invert.getTextContent()));
             }
         }
@@ -3016,7 +3017,6 @@ public class LaunchControl {
         }
 
         // Read output
-        StringBuilder out = new StringBuilder();
         BufferedReader br = new BufferedReader(new InputStreamReader(
                 process.getInputStream()));
         String line, previous = null;
@@ -3029,16 +3029,13 @@ public class LaunchControl {
                     if (Pattern.matches("[0-9a-f]{5,40}", line)) {
                         currentSha = line;
                     }
-                    out.append(line).append('\n');
                     BrewServer.LOG.info(line);
                 }
             }
         } catch (IOException e2) {
             BrewServer.LOG.info("Couldn't read a line when checking SHA");
             e2.printStackTrace();
-            if (process != null) {
-                process.destroy();
-            }
+            process.destroy();
             pb = null;
             return null;
         }
@@ -3046,9 +3043,7 @@ public class LaunchControl {
         if (currentSha == null) {
             BrewServer.LOG.info("Couldn't check " + target + " revision");
             LaunchControl.setMessage("Couldn't check " + target + " revision");
-            if (process != null) {
                 process.destroy();
-            }
             pb = null;
             return null;
         }
@@ -3102,7 +3097,6 @@ public class LaunchControl {
         }
         LaunchControl.setMessage(out.toString());
         BrewServer.LOG.warning(out.toString());
-        pb = null;
         System.exit(EXIT_UPDATE);
     }
 

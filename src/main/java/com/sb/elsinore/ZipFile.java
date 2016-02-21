@@ -36,7 +36,7 @@ public class ZipFile {
      * @throws IOException If the Zipfile hasn't been opened.
      */
     public final void addToZipFile(final String fileName)
-            throws FileNotFoundException, IOException {
+            throws IOException {
         if (zos == null) {
             throw new IOException("Zip file has not been opened");
         }

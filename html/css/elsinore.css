@@ -15,7 +15,7 @@ p > .temperature {
 
 p > #value {
     font-size: 3rem;
-    font-family: "Helvetica Neue", "Helvetica", "Arial";
+    font-family: "Helvetica Neue", "Helvetica", "Arial", "serif";
     font-weight: 100;
     vertical-align: middle;
 }
@@ -70,12 +70,12 @@ br { display:none; }
     -moz-transition: all 0.25s ease-out;
     transition: all 0.25s ease-out;
   }
-  .row-offcanvas-right
+  .row-offcanvas-right,
   .sidebar-offcanvas {
     right: -41.6%;
   }
 
-  .row-offcanvas-left
+  .row-offcanvas-left,
   .sidebar-offcanvas {
     left: -41.6%;
   }

@@ -1,218 +1,192 @@
-String.prototype.capitalizeFirstLetter = function() {
+String.prototype.capitalizeFirstLetter = function () {
     return this.charAt(0).toUpperCase() + this.slice(1);
-}
+};
 
 function jsonConcat(o1, o2) {
- for (var key in o2) {
-  o1[key] = o2[key];
- }
- return o1;
+    for (var key in o2) {
+        o1[key] = o2[key];
+    }
+    return o1;
 }
 
-$.fn.serializeObject = function() {
-	var o = {};
-	var a = this.serializeArray();
-	$.each(a, function() {
-		if (o[this.name] !== undefined) {
-			if (!o[this.name].push) {
-				o[this.name] = [ o[this.name] ];
-			}
-			o[this.name].push(this.value || '');
-		} else {
-			o[this.name] = this.value || '';
-		}
-	});
-	return o;
+$.fn.serializeObject = function () {
+    var o = {};
+    var a = this.serializeArray();
+    $.each(a, function () {
+        if (o[this.name] !== undefined) {
+            if (!o[this.name].push) {
+                o[this.name] = [o[this.name]];
+            }
+            o[this.name].push(this.value || '');
+        } else {
+            o[this.name] = this.value || '';
+        }
+    });
+    return o;
 };
 
 var triggerDragSrc = null;
 
-function parseVessels(vessels)
-{
-    $.each(vessels, function (vesselProbe, vesselStatus)
-    {
-        if (vesselStatus.tempprobe.hidden)
-        {
-            $("#hiddenProbes").show();
+function parseVessels(vessels) {
+    var hiddenProbes = $("#hiddenProbes");
+    var selection = hiddenProbes.find("#probeList");
+    $.each(vessels, function (vesselProbe, vesselStatus) {
+        var vOption = hiddenProbes.find("option[value='" + vesselStatus.deviceaddr + "']");
+        if (vesselStatus.tempprobe.hidden) {
+            hiddenProbes.show();
 
             var probeCard = $("#probes  #" + vesselStatus.deviceAddr);
-            if (probeCard.eq(0).size() != 0)
-            {
+            if (probeCard.eq(0).size() != 0) {
                 probeCard.remove();
             }
-            var vOption = $("#hiddenProbes #probeList option[value='"+vesselStatus.deviceaddr+"']");
-            if (vOption.size() == 0)
-            {
-                $("#hiddenProbes #probeList").append($("<option>", {
-                         value:vesselStatus.deviceaddr,
-                         text:decodeURI(vesselStatus.name)
-                     }));
-                vOption = $("#hiddenProbes #probeList option[value='"+vesselStatus.deviceaddr+"']");
+
+            if (vOption.size() == 0) {
+                selection.append($("<option>", {
+                    value: vesselStatus.deviceaddr,
+                    text: decodeURI(vesselStatus.name)
+                }));
+                vOption = selection.find("option[value='" + vesselStatus.deviceaddr + "']");
             }
             vOption.data("temp", vesselStatus.tempprobe);
-            if ("piddata" in vesselStatus)
-            {
+            if ("piddata" in vesselStatus) {
                 vOption.data("pid", vesselStatus.piddata);
             }
-            return;
         }
-        var vOption = $("#hiddenProbes #probeList option[value='"+vesselStatus.deviceaddr+"']");
-        if (vOption.size() != 0)
-        {
-            vOption.remove();
-        }
-        var probeCard = $("#probes  #" + vesselStatus.deviceaddr);
-        if (probeCard.eq(0).size() == 0)
-        {
-            probeCard = addProbeCard(vesselStatus.deviceaddr, vesselStatus.tempprobe.position);
-        }
-        // Set card name
-        setCardName(probeCard, decodeURI(vesselStatus.name));
-        loadTempProbeData(probeCard, vesselStatus.tempprobe);
-        if ("pidstatus" in vesselStatus)
-        {
-            loadPIDData(probeCard, vesselStatus.pidstatus);
-        }
+        else {
 
+            if (vOption.size() != 0) {
+                vOption.remove();
+            }
+            probeCard = $("#probes  #" + vesselStatus.deviceaddr);
+            if (probeCard.eq(0).size() == 0) {
+                probeCard = addProbeCard(vesselStatus.deviceaddr, vesselStatus.tempprobe.position);
+            }
+            // Set card name
+            setCardName(probeCard, decodeURI(vesselStatus.name));
+            loadTempProbeData(probeCard, vesselStatus.tempprobe);
+            if ("pidstatus" in vesselStatus) {
+                loadPIDData(probeCard, vesselStatus.pidstatus);
+            }
+        }
     });
-    if ($("#hiddenProbes #probeList option").length == 1)
-    {
-        $("#hiddenProbes").hide();
+    if (hiddenProbes.find("option").length == 1) {
+        hiddenProbes.hide();
     }
 }
 
-function parseTriggers(triggers)
-{
-    $.each(triggers, function (vesselProbe, triggerList)
-    {
-        if ($("#probes #" + vesselProbe).size() == 0)
-        {
+function parseTriggers(triggers) {
+    var probes = $("#probes");
+    $.each(triggers, function (vesselProbe, triggerList) {
+        var currentProbe = probes.find("#" + vesselProbe);
+        if (currentProbe.size() == 0) {
             return;
         }
-        var triggerTable = $("#probes #" + vesselProbe + " #triggers");
+        var triggerTable = currentProbe.find("#triggers");
 
-        if (triggerTable.eq(0).size() == 0)
-        {
-            $("#probes #" + vesselProbe).append("<ul class='list-group' id='triggers'></ul>");
-            triggerTable = $("#probes #" + vesselProbe + " #triggers");
+        /// Add the trigger list if it doesn't exist
+        if (triggerTable.eq(0).size() == 0) {
+            currentProbe.append("<ul class='list-group' id='triggers'></ul>");
+            triggerTable = currentProbe.find("#triggers");
         }
 
-        // Something has been removed, so clear the table.
-        if ((triggerTable.children().size() - 1) > triggerList.length)
-        {
+        // Something has been removed, so clear the list
+        if ((triggerTable.children().size() - 1) > triggerList.length) {
             triggerTable.empty();
         }
         var enabled = false;
-        $.each(triggerList, function(index, trigger)
-        {
-            if (trigger.active == "true")
-            {
+        $.each(triggerList, function (index, trigger) {
+            if (trigger.active == "true") {
                 enabled = true;
             }
 
             var triggerLi = triggerTable.find("#" + trigger.position);
             var content = trigger.description + ": " + trigger.target;
-            if (triggerLi.size() == 0)
-            {
+            if (triggerLi.size() == 0) {
                 triggerTable.append("<li class='list-group-item trigger-row' draggable='true'" +
-                    "id='"+trigger.position+"'>" + content +
+                    "id='" + trigger.position + "'>" + content +
                     "</li>");
                 triggerLi = triggerTable.find("#" + trigger.position)[0];
                 triggerLi.addEventListener('dragstart', handleTriggerDragStart, false);
-                triggerLi.addEventListener('dragenter', handleTriggerDragEnter, false)
+                triggerLi.addEventListener('dragenter', handleTriggerDragEnter, false);
                 triggerLi.addEventListener('dragover', handleTriggerDragOver, false);
                 triggerLi.addEventListener('dragleave', handleTriggerDragLeave, false);
                 triggerLi.addEventListener('drop', handleTriggerDrop, false);
                 triggerLi.addEventListener('dragend', handleTriggerDragEnd, false);
                 triggerLi.addEventListener('dblclick', handleTriggerEdit, false);
             }
-            else
-            {
+            else {
                 triggerLi = triggerLi[0];
-                if (triggerLi.text != content)
-                {
+                if (triggerLi.text != content) {
                     triggerLi.text = content;
                 }
             }
-            if (trigger.active == "true")
-            {
-                if (!triggerLi.classList.contains("active"))
-                {
+            if (trigger.active == "true") {
+                if (!triggerLi.classList.contains("active")) {
                     triggerLi.classList.add("active");
                 }
             }
-            else
-            {
-                if (triggerLi.classList.contains("active"))
-                {
+            else {
+                if (triggerLi.classList.contains("active")) {
                     triggerLi.classList.remove("active");
                 }
             }
         });
         var triggerLi = triggerTable.find("#footer");
-        if (triggerLi.size() == 0)
-        {
+        if (triggerLi.size() == 0) {
             triggerTable.append("<a href='#' class='list-group-item trigger-row' draggable='true'" +
                 "id='footer' onClick='toggleTriggers(this);'>Toggle</a>");
             triggerLi = triggerTable.find("#footer");
         }
-        if (enabled)
-        {
+        if (enabled) {
             triggerLi.attr("name", "deactivate");
             triggerLi.html("Deactivate");
         }
-        else
-        {
+        else {
             triggerLi.attr("name", "activate");
             triggerLi.html("Activate");
         }
     });
 }
 
-function parseTimers(timers)
-{
-    $.each(timers, function(name, data) {
-        if (name == "")
-        {
+function parseTimers(timers) {
+    var timersElement = $("#timers");
+    $.each(timers, function (name, data) {
+        if (name == "") {
             return;
         }
-        originalName = name;
+        var originalName = name;
         name = name.replace(" ", "_");
-        var timerCard = $("#timers #"+name);
-        if (timerCard.eq(0).size() == 0)
-        {
-            $("#timers").append("<div class='timer-row' id='"+name+"'>"+
-                    "<div class='row'>" +
-                        "<div class='form-group form-inline row'>" +
-                            "<label for='timer' onclick='editTimer(this);' id='title' class='control-label'>"+originalName+"</label>" +
-                            "<input type='text' id='timer' name='timer' class='timer-body form-control timer' placeholder='0 sec' />" +
-                            "<button class='btn btn-success start-timer-btn' onClick='startTimer(this);'>Start</button>" +
-                            "<button class='btn btn-success resume-timer-btn hidden' onClick='startTimer(this);'>Resume</button>" +
-                            "<button class='btn btn-secondary pause-timer-btn hidden' onClick='startTimer(this);'>Pause</button>" +
-                            "<button class='btn btn-secondary reset-timer-btn hidden' onClick='resetTimer(this);'>Reset</button>" +
-                        "</div>" +
-                    "</div>" +
+        var timerCard = timersElement.find("#" + name);
+        if (timerCard.eq(0).size() == 0) {
+            timersElement.append("<div class='timer-row' id='" + name + "'>" +
+                "<div class='row'>" +
+                "<div class='form-group form-inline row'>" +
+                "<label for='timer' onclick='editTimer(this);' id='title' class='control-label'>" + originalName + "</label>" +
+                "<input type='text' id='timer' name='timer' class='timer-body form-control timer' placeholder='0 sec' />" +
+                "<button class='btn btn-success start-timer-btn' onClick='startTimer(this);'>Start</button>" +
+                "<button class='btn btn-success resume-timer-btn hidden' onClick='startTimer(this);'>Resume</button>" +
+                "<button class='btn btn-secondary pause-timer-btn hidden' onClick='startTimer(this);'>Pause</button>" +
+                "<button class='btn btn-secondary reset-timer-btn hidden' onClick='resetTimer(this);'>Reset</button>" +
+                "</div>" +
+                "</div>" +
                 "</div>");
-            timerCard = $("#timers #"+name);
+            timerCard = timersElement.find("#" + name);
         }
 
         timerCard.find("#timer").val(msToString(data.elapsedms));
-        if (data.mode == "off")
-        {
+        if (data.mode == "off") {
             timerCard.find(".start-timer-btn").show();
             timerCard.find(".resume-timer-btn").hide();
             timerCard.find(".pause-timer-btn").hide();
             timerCard.find(".reset-timer-btn").hide();
         }
-        else if (data.mode == "running")
-        {
+        else if (data.mode == "running") {
             timerCard.find(".start-timer-btn").hide();
             timerCard.find(".resume-timer-btn").hide();
             timerCard.find(".pause-timer-btn").show();
             timerCard.find(".reset-timer-btn").hide();
         }
-        else if (data.mode == "paused")
-        {
+        else if (data.mode == "paused") {
             timerCard.find(".start-timer-btn").hide();
             timerCard.find(".resume-timer-btn").show();
             timerCard.find(".pause-timer-btn").hide();
@@ -221,191 +195,164 @@ function parseTimers(timers)
     });
 }
 
-function parseData(data)
-{
-    if ("breweryName" in data && $("#brewery_name").text() !== data.breweryName)
-    {
-        $("#brewery_name").text(data.breweryName);
+function parseData(data) {
+    var breweryNameElement = $("#brewery_name");
+    if ("breweryName" in data && breweryNameElement.text() !== data.breweryName) {
+        breweryNameElement.text(data.breweryName);
     }
 
-    if ("vessels" in data)
-    {
+    if ("vessels" in data) {
         parseVessels(data.vessels);
     }
-    if ("triggers" in data)
-    {
+    if ("triggers" in data) {
         parseTriggers(data.triggers);
     }
-    if ("switches" in data)
-    {
+    if ("switches" in data) {
         parseSwitches(data.switches);
     }
-    if ("timers" in data)
-    {
+    if ("timers" in data) {
         parseTimers(data.timers);
     }
-    if ("phSensors" in data)
-    {
+    if ("phSensors" in data) {
         parsePhSensors(data.phSensors);
     }
 
-    if ("recipeCount" in data)
-    {
+    var recipeNameElement = $("#recipeName");
+    if ("recipeCount" in data) {
         var recipeName = null;
-        if ("recipe" in data)
-        {
+        if ("recipe" in data) {
             recipeName = data.recipe;
         }
         showRecipes(data.recipeCount, recipeName);
-        $("#recipeName").text(recipeName);
-        $("#recipeName").show();
+
+        recipeNameElement.text(recipeName);
+        recipeNameElement.show();
         $("#clearRecipe").show();
     }
-    else
-    {
-        $("#recipeName").hide();
+    else {
+        recipeNameElement.hide();
         $("#clearRecipe").hide();
     }
 
-    if ("message" in data )
-    {
+    if ("message" in data) {
         var messageElement = $("#message");
-        if (data.message == "")
-        {
+        if (data.message == "") {
             messageElement.text("");
             messageElement.hide();
         }
-        else
-        {
+        else {
             messageElement.html(data.message);
             messageElement.show();
         }
     }
-    if ("version" in data)
-    {
-        $(".footer #elsinore_sha").html(data.version.sha);
-        $(".footer #date").html(data.version.date);
+    if ("version" in data) {
+        var footer = $(".footer");
+        footer.find("#elsinore_sha").html(data.version.sha);
+        footer.find("#date").html(data.version.date);
     }
 }
 
-function clearMessage()
-{
+function clearMessage() {
     $.ajax({
         type: 'GET',
         url: '/clearstatus'
     });
 }
 
-function requestData()
-{
+function requestData() {
     $.ajax({
-        type: 'GET',
-        url: '/getstatus',
-        dataType: 'json',
-        async: true,
-        cache: false,
-        timeout: 5000,
-        success: parseData
+            type: 'GET',
+            url: '/getstatus',
+            dataType: 'json',
+            async: true,
+            cache: false,
+            timeout: 5000,
+            success: parseData
         }
     );
 }
 
-function addProbeCard(vesselProbe, position)
-{
-    var div = "<div id='" + vesselProbe 
-    + "' class='col-sm-12 col-md-6 col-lg-5 col-xl-4 card card-block text-center m-x'>"
+function addProbeCard(vesselProbe, position) {
+    var div = "<div id='" + vesselProbe
+        + "' class='col-sm-12 col-md-6 col-lg-5 col-xl-4 card card-block text-center m-x'>"
         + "</div>";
-    $("#probes > #card-deck").append(div);
+    $("#probes").children("#card-deck").append(div);
     return $("#probes #" + vesselProbe);
 }
 
-function addTimerCard(name, position)
-{
+function addTimerCard(name, position) {
     var div = "<div id='" + name
-    + "' class='col-sm-12 col-md-6 col-lg-5 col-xl-3 card card-block text-center'>"
+        + "' class='col-sm-12 col-md-6 col-lg-5 col-xl-3 card card-block text-center'>"
         + "</div>";
-    $("#timers > #card-body").append(div);
+    $("#timers").children("#card-body").append(div);
     return $("#timers #" + name);
 }
 
-function setCardName(card, name)
-{
+function setCardName(card, name) {
     var addr = card[0].id;
     var title = card.find("#card-header");
-    if (title.size() == 0)
-    {
+    if (title.size() == 0) {
         card.prepend("<button class='card-header btn bth-secondary' id='card-header' data-device='" + addr + "' type='button' onclick='editDevice(this)'></button>");
         title = card.find("#card-header");
     }
 
-    if (title.text() != name)
-    {
+    if (title.text() != name) {
         title.text(name);
     }
 }
 
-function loadTempProbeData(card, tempprobe)
-{
+function loadTempProbeData(card, tempprobe) {
     card.find('.card-header').data("temp", tempprobe);
     var value = card.find("#value");
-    if (value.size() == 0)
-    {
+    if (value.size() == 0) {
         card.append("<p class='temperature' ><span id='value'></span><span id='units'></span></p>"
-        + "<p><div id='error' class='alert alert-info'></div></p>");
+            + "<p><div id='error' class='alert alert-info'></div></p>");
         value = card.find("#value");
     }
-    units = card.find("#units");
+    var units = card.find("#units");
     value.html(tempprobe.temp.toFixed(2));
     units.html("&#176" + tempprobe.scale);
     // Parse the error text
     var errormsg = card.find('#error');
-    if ("error" in tempprobe && tempprobe.error != "")
-    {
+    if ("error" in tempprobe && tempprobe.error != "") {
         errormsg.text(tempprobe.error);
         errormsg.show();
     }
-    else
-    {
+    else {
         errormsg.text("");
         errormsg.hide();
     }
 }
 
-function loadPIDData(card, pid)
-{
+function loadPIDData(card, pid) {
     card.find('.card-header').data("pid", pid);
 
     // Setup the progress bar first
     var pidstatus = card.find("#status");
-    if (pidstatus.size() == 0)
-    {
-        card.append("<div id='status-wrapper'><progress id='status' class='progress' min='0' max='100' value='0'></progress><div id='status-text'></div></div>");
+    if (pidstatus.size() == 0) {
+        card.append("<div id='status-wrapper'><progress id='status' class='progress' max='100' value='0'></progress><div id='status-text'></div></div>");
         pidstatus = card.find("#status");
     }
 
     var duty = pid.duty;
-    if ("actualduty" in pid)
-    {
+    if ("actualduty" in pid) {
         duty = pid.actualduty;
     }
     pidstatus.html(Math.round(Math.abs(duty)));
     pidstatus.val(Math.round(Math.abs(duty)));
-    card.find("#status-text").text(duty + "%")
-    if (duty > 0)
-    {
+    card.find("#status-text").text(duty + "%");
+    if (duty > 0) {
         pidstatus.removeClass("progress-info");
         pidstatus.addClass("progress-danger");
     }
-    else
-    {
+    else {
         pidstatus.addClass("progress-info");
         pidstatus.removeClass("progress-danger");
     }
 
     // Mode buttons
     var pidmode = card.find("#mode");
-    if (pidmode.size() == 0)
-    {
+    if (pidmode.size() == 0) {
         card.append("<div id='mode' class='btn-toolbar'>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='off'>Off</button>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='auto'>Auto</button>"
@@ -415,46 +362,37 @@ function loadPIDData(card, pid)
         pidmode = card.find("#mode");
     }
 
-    if ("aux" in pid)
-    {
-        if (card.find("#aux").length == 0)
-        {
+    if ("aux" in pid) {
+        if (card.find("#aux").length == 0) {
             card.append("<div id='mode' class='btn-toolbar m-t'>"
                 + "<button type='button' onclick='toggleAux(this)' class='btn btn-warning-outline' id='aux'>Aux</button>"
                 + "</div>");
         }
         var auxSwitch = card.find("#aux");
-        if (pid.aux.status == "1")
-        {
-
+        if (pid.aux.status == "1") {
             auxSwitch.removeClass("btn-warning-outline");
             auxSwitch.addClass("btn-warning");
         }
-        else
-        {
+        else {
             auxSwitch.addClass("btn-warning-outline");
             auxSwitch.removeClass("btn-warning");
         }
     }
 
     var selected = pidmode.find(".btn-danger");
-    if (selected.size() == 1 && selected.id != pid.mode)
-    {
-       selected.removeClass("btn-danger");
-       selected.addClass("btn-secondary")
+    if (selected.size() == 1 && selected.id != pid.mode) {
+        selected.removeClass("btn-danger");
+        selected.addClass("btn-secondary")
     }
     selected = pidmode.find("#" + pid.mode);
-    if (!selected.hasClass("btn-danger active"))
-    {
+    if (!selected.hasClass("btn-danger active")) {
         selected.removeClass("btn-secondary");
         selected.addClass("btn-danger active");
     }
-    if (pid.mode == "off")
-    {
+    if (pid.mode == "off") {
         pidstatus.parent().hide();
     }
-    else
-    {
+    else {
         pidstatus.parent().show();
     }
 
@@ -464,38 +402,34 @@ function toggleAux(button) {
     console.log(button);
     var card = $(getCard(button));
 
-	$.ajax({
-		url : 'toggleAux',
-		type : 'POST',
-		data : "toggle=" + card.attr("id"),
-		success : function(data) {
-			data = null
-		}
-	});
-	window.disableUpdates = 0;
-	return false;
+    $.ajax({
+        url: 'toggleAux',
+        type: 'POST',
+        data: "toggle=" + card.attr("id"),
+        success: function (data) {
+            data = null
+        }
+    });
+    window.disableUpdates = 0;
+    return false;
 }
 
-function toggleMode(button)
-{
+function toggleMode(button) {
     console.log(button);
     var card = $(getCard(button));
-    if(!card.find("#mode > .active").hasClass("btn-danger"))
-    {
+    if (!card.find("#mode > .active").hasClass("btn-danger")) {
         card.find("#mode > .active").addClass("btn-danger");
     }
-    if (card.find("#mode > .btn-success").size() == 1)
-    {
+    if (card.find("#mode > .btn-success").size() == 1) {
         card.find("#mode > .btn-success").removeClass('btn-success');
     }
-    if ($(button).hasClass('btn-success'))
-    {
+    if ($(button).hasClass('btn-success')) {
         return;
     }
     $(button).removeClass('btn-success btn-danger');
     $(button).addClass('btn-success');
     var mode = button.id;
-    switch(mode) {
+    switch (mode) {
         case "off":
             console.log("Off");
             showOff(card);
@@ -515,42 +449,35 @@ function toggleMode(button)
     }
 }
 
-function getCard(element)
-{
+function getCard(element) {
     var card = $(element).closest('.card');
-    if (card.size() == 1)
-    {
+    if (card.size() == 1) {
         return card[0];
     }
     return null;
 }
 
-function showOff(card)
-{
+function showOff(card) {
     card = $(card);
-    pidsettings = card.find("#pidsettings");
-    if (pidsettings.size() == 0)
-    {
+    var pidsettings = card.find("#pidsettings");
+    if (pidsettings.size() == 0) {
         pidsettings = addPIDSettings(card);
     }
     pidsettings.empty();
     pidsettings.append("<div class='form-group form-inline row'><button type='button' class='btn btn-danger' id='submit' onclick='submitForm(this);'>Submit</button></div>");
 }
 
-function addPIDSettings(card)
-{
+function addPIDSettings(card) {
     card.append("<div id='pidsettings' class='m-t'></div>");
     return card.find("#pidsettings");
 }
 
-function showAuto(card)
-{
+function showAuto(card) {
     card = $(card);
     var pidsettings = card.find('#pidsettings');
     var piddata = card.find(".card-header").data("pid");
     var tempdata = card.find(".card-header").data("temp");
-    if (pidsettings.size() == 0)
-    {
+    if (pidsettings.size() == 0) {
 
         pidsettings = addPIDSettings(card);
     }
@@ -560,13 +487,13 @@ function showAuto(card)
     pidsettings.append("<form></form>");
     var form = pidsettings.find("form");
     form.append("<div class='form-group'>"
-                + "<label class='sr-only' for='setpoint_input'>Setpoint</label>"
-                + "<div class='input-group'>"
-                    + "<div class='input-group-addon input-group-addon-label'>Setpoint</div>"
-                    + "<input type='number' class='form-control' id='setpoint_input' placeholder='Setpoint' >"
-                    + "<div class='input-group-addon input-group-addon-unit'>&#176" + tempdata.scale + "</div>"
-                + "</div>"
-            + "</div>");
+        + "<label class='sr-only' for='setpoint_input'>Setpoint</label>"
+        + "<div class='input-group'>"
+        + "<div class='input-group-addon input-group-addon-label'>Setpoint</div>"
+        + "<input type='number' class='form-control' id='setpoint_input' placeholder='Setpoint' >"
+        + "<div class='input-group-addon input-group-addon-unit'>&#176" + tempdata.scale + "</div>"
+        + "</div>"
+        + "</div>");
 
     form.find("#setpoint_input").val(piddata.setpoint);
     // Set the first tab to active
@@ -574,53 +501,50 @@ function showAuto(card)
     form.append("<div class='form-group form-inline row'><button type='button' class='btn btn-danger' id='submit' onclick='submitForm(this);'>Submit</button></div>");
 }
 
-function appendSettings(pidsettings, type, piddata, scale)
-{
+function appendSettings(pidsettings, type, piddata, scale) {
     pidsettings += "<div id='" + type + "' role='tabpanel' class='tab-pane'>";
 
     pidsettings += "<div class='form-group'>"
-            + "<label class='sr-only' for='cycletime_input'>Cycle Time</label>"
-            + "<div class='input-group'>"
-                + "<div class='input-group-addon input-group-addon-label'>Cycle Time</div>"
-                + "<input type='number' class='form-control form-control-minwidth' id='cycletime_input' placeholder='Cycle Time' >"
-                + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
-            + "</div>"
+        + "<label class='sr-only' for='cycletime_input'>Cycle Time</label>"
+        + "<div class='input-group'>"
+        + "<div class='input-group-addon input-group-addon-label'>Cycle Time</div>"
+        + "<input type='number' class='form-control form-control-minwidth' id='cycletime_input' placeholder='Cycle Time' >"
+        + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
+        + "</div>"
         + "</div>"
         + "<div class='form-group'>"
-            + "<label class='sr-only' for='p_input'>Proportional</label>"
-            + "<div class='input-group'>"
-                + "<div class='input-group-addon input-group-addon-label'>Proportional</div>"
-                + "<input type='number' class='form-control form-control-minwidth' id='p_input' placeholder='Proportional' >"
-                + "<div class='input-group-addon input-group-addon-unit'>secs/&#176" + scale + "</div>"
-            + "</div>"
+        + "<label class='sr-only' for='p_input'>Proportional</label>"
+        + "<div class='input-group'>"
+        + "<div class='input-group-addon input-group-addon-label'>Proportional</div>"
+        + "<input type='number' class='form-control form-control-minwidth' id='p_input' placeholder='Proportional' >"
+        + "<div class='input-group-addon input-group-addon-unit'>secs/&#176" + scale + "</div>"
+        + "</div>"
         + "</div>"
         + "<div class='form-group'>"
-            + "<label class='sr-only' for='i_input'>Integral</label>"
-            + "<div class='input-group'>"
-                + "<div class='input-group-addon input-group-addon-label'>Integral</div>"
-                + "<input type='number' class='form-control form-control-minwidth' id='i_input' placeholder='Integral' >"
-                + "<div class='input-group-addon input-group-addon-unit'>&#176" + scale + "/sec</div>"
-            + "</div>"
+        + "<label class='sr-only' for='i_input'>Integral</label>"
+        + "<div class='input-group'>"
+        + "<div class='input-group-addon input-group-addon-label'>Integral</div>"
+        + "<input type='number' class='form-control form-control-minwidth' id='i_input' placeholder='Integral' >"
+        + "<div class='input-group-addon input-group-addon-unit'>&#176" + scale + "/sec</div>"
+        + "</div>"
         + "</div>"
         + "<div class='form-group'>"
-            + "<label class='sr-only' for='i_input'>Differential</label>"
-            + "<div class='input-group'>"
-                + "<div class='input-group-addon input-group-addon-label'>Differential</div>"
-                + "<input type='number' class='form-control form-control-minwidth' id='d_input' placeholder='Differential' >"
-                + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
-            + "</div>"
+        + "<label class='sr-only' for='i_input'>Differential</label>"
+        + "<div class='input-group'>"
+        + "<div class='input-group-addon input-group-addon-label'>Differential</div>"
+        + "<input type='number' class='form-control form-control-minwidth' id='d_input' placeholder='Differential' >"
+        + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
         + "</div>"
-    + "</div>";
+        + "</div>"
+        + "</div>";
     return pidsettings;
 }
 
-function showManual(card)
-{
+function showManual(card) {
     card = $(card);
     var pidsettings = card.find('#pidsettings');
     var piddata = card.find(".card-header").data("pid");
-    if (pidsettings.size() == 0)
-    {
+    if (pidsettings.size() == 0) {
         pidsettings = addPIDSettings(card);
     }
 
@@ -629,20 +553,20 @@ function showManual(card)
     pidsettings.append("<form></form>");
     var form = pidsettings.find("form");
     form.append("<div class='form-group'>"
-            + "<label class='sr-only' for='cycletime_input'>Cycle Time</label>"
-            + "<div class='input-group'>"
-                + "<div class='input-group-addon input-group-addon-label'>Cycle Time</div>"
-                + "<input type='number' class='form-control form-control-minwidth' id='cycletime_input' placeholder='Cycle Time' >"
-                + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
-            + "</div>"
+        + "<label class='sr-only' for='cycletime_input'>Cycle Time</label>"
+        + "<div class='input-group'>"
+        + "<div class='input-group-addon input-group-addon-label'>Cycle Time</div>"
+        + "<input type='number' class='form-control form-control-minwidth' id='cycletime_input' placeholder='Cycle Time' >"
+        + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
+        + "</div>"
         + "</div>");
     form.append("<div class='form-group'>"
-            + "<label class='sr-only' for='dutycycle_input'>Cycle Time</label>"
-            + "<div class='input-group'>"
-                + "<div class='input-group-addon input-group-addon-label'>Duty Cycle</div>"
-                + "<input type='number' class='form-control form-control-minwidth' id='dutycycle_input' placeholder='Duty Cycle' >"
-                + "<div class='input-group-addon input-group-addon-unit'>%</div>"
-            + "</div>"
+        + "<label class='sr-only' for='dutycycle_input'>Cycle Time</label>"
+        + "<div class='input-group'>"
+        + "<div class='input-group-addon input-group-addon-label'>Duty Cycle</div>"
+        + "<input type='number' class='form-control form-control-minwidth' id='dutycycle_input' placeholder='Duty Cycle' >"
+        + "<div class='input-group-addon input-group-addon-unit'>%</div>"
+        + "</div>"
         + "</div>");
 
     form.find("#dutycycle_input").val(Math.abs(piddata.manualduty));
@@ -650,14 +574,12 @@ function showManual(card)
     form.append("<div class='form-group form-inline row'><button type='button' class='btn btn-danger' id='submit' onclick='submitForm(this);'>Submit</button></div>");
 }
 
-function showHysteria(card)
-{
+function showHysteria(card) {
     card = $(card);
     var pidsettings = card.find('#pidsettings');
     var piddata = card.find(".card-header").data("pid");
     var tempdata = card.find(".card-header").data("temp");
-    if (pidsettings.size() == 0)
-    {
+    if (pidsettings.size() == 0) {
         pidsettings = addPIDSettings(card);
     }
 
@@ -667,92 +589,84 @@ function showHysteria(card)
     var form = pidsettings.find("form");
 
     form.append("<div class='form-group'>"
-            + "<label class='sr-only' for='min_input'>Min</label>"
-            + "<div class='input-group'>"
-                + "<div class='input-group-addon input-group-addon-label'>Min</div>"
-                + "<input type='number' class='form-control form-control-minwidth' id='min_input' placeholder='Min'>"
-                + "<div class='input-group-addon input-group-addon-unit'>&#176" + tempdata.scale + "</div>"
-            + "</div>"
+        + "<label class='sr-only' for='min_input'>Min</label>"
+        + "<div class='input-group'>"
+        + "<div class='input-group-addon input-group-addon-label'>Min</div>"
+        + "<input type='number' class='form-control form-control-minwidth' id='min_input' placeholder='Min'>"
+        + "<div class='input-group-addon input-group-addon-unit'>&#176" + tempdata.scale + "</div>"
+        + "</div>"
         + "</div>");
     form.append("<div class='form-group'>"
-            + "<label class='sr-only' for='max_input'>Max</label>"
-            + "<div class='input-group'>"
-                + "<div class='input-group-addon input-group-addon-label'>Max</div>"
-                + "<input type='number' class='form-control form-control-minwidth' id='max_input' placeholder='Max'>"
-                + "<div class='input-group-addon input-group-addon-unit'>&#176" + tempdata.scale + "</div>"
-            + "</div>"
+        + "<label class='sr-only' for='max_input'>Max</label>"
+        + "<div class='input-group'>"
+        + "<div class='input-group-addon input-group-addon-label'>Max</div>"
+        + "<input type='number' class='form-control form-control-minwidth' id='max_input' placeholder='Max'>"
+        + "<div class='input-group-addon input-group-addon-unit'>&#176" + tempdata.scale + "</div>"
+        + "</div>"
         + "</div>");
     form.append("<div class='form-group'>"
         + "<label class='sr-only' for='time_input'>Time</label>"
         + "<div class='input-group'>"
-            + "<div class='input-group-addon input-group-addon-label'>Time</div>"
-            + "<input type='number' class='form-control form-control-minwidth' id='time_input' placeholder='Time'>"
-            + "<div class='input-group-addon input-group-addon-unit'>Minutes</div>"
+        + "<div class='input-group-addon input-group-addon-label'>Time</div>"
+        + "<input type='number' class='form-control form-control-minwidth' id='time_input' placeholder='Time'>"
+        + "<div class='input-group-addon input-group-addon-unit'>Minutes</div>"
         + "</div>"
-    + "</div>");
+        + "</div>");
     form.find("#min_input").val(piddata.min);
     form.find("#max_input").val(piddata.max);
     form.find("#time_input").val(piddata.time);
     form.append("<div class='form-group form-inline row'><button type='button' class='btn btn-danger' id='submit' onclick='submitForm(this);'>Submit</button></div>");
 }
 
-function submitForm(element)
-{
+function submitForm(element) {
     if (element.id.lastIndexOf("-editPhSensor") != -1) {
-    		var sensorName = element.id.substring(0, element.id.lastIndexOf("-editPhSensor"));
-    		var formdata = {}
-    		var serialized = $(element).serializeObject();
-    		serialized.new_name = encodeURI(serialized.name)
-    		serialized["i2c_address"] = serialized[serialized.i2c_device];
-    		formdata[sensorName] = JSON.stringify(serialized);
-    		$.ajax({
-    			url : 'addphsensor',
-    			type : 'POST',
-    			data : formdata,
-    			dataType : 'json',
-    			success : function(data) {
-    				data = null
-    			}
-    		});
-    		location.reload();
-    		return;
+        var sensorName = element.id.substring(0, element.id.lastIndexOf("-editPhSensor"));
+        var formdata = {};
+        var serialized = $(element).serializeObject();
+        serialized.new_name = encodeURI(serialized.name);
+        serialized["i2c_address"] = serialized[serialized.i2c_device];
+        formdata[sensorName] = JSON.stringify(serialized);
+        $.ajax({
+            url: 'addphsensor',
+            type: 'POST',
+            data: formdata,
+            dataType: 'json',
+            success: function (data) {
+                data = null
+            }
+        });
+        location.reload();
+        return;
     }
     var settings = $(element).closest("#pidsettings");
     var device = $(element).closest(".card-block")[0].id;
     var mButton = $(element).closest(".card-block").find("#mode").find(".btn-success")[0];
-    if (mButton == undefined)
-    {
+    if (mButton == undefined) {
         mButton = $(element).closest(".card-block").find("#mode").find(".btn-danger")[0];
     }
     var mode = mButton.id;
-    if (mode == "off")
-    {
+    if (mode == "off") {
         switchOff(device, settings);
     }
-    else if (mode == "auto")
-    {
+    else if (mode == "auto") {
         switchAuto(device, settings);
     }
-    else if (mode == "hysteria")
-    {
+    else if (mode == "hysteria") {
         switchHysteria(device, settings);
     }
-    else if (mode == "manual")
-    {
+    else if (mode == "manual") {
         switchManual(device, settings);
     }
 }
 
-function switchOff(device, settings)
-{
+function switchOff(device, settings) {
     var data = {};
     data["inputunit"] = device;
     data["mode"] = "off";
     updatePID(device, data);
 }
 
-function switchAuto(device, settings)
-{
+function switchAuto(device, settings) {
     var data = {};
     data["inputunit"] = device;
     data["mode"] = "auto";
@@ -762,8 +676,7 @@ function switchAuto(device, settings)
     updatePID(device, data);
 }
 
-function switchManual(device, settings)
-{
+function switchManual(device, settings) {
     var data = {};
     data["inputunit"] = device;
     data["mode"] = "manual";
@@ -772,8 +685,7 @@ function switchManual(device, settings)
     updatePID(device, data);
 }
 
-function switchHysteria(device, settings)
-{
+function switchHysteria(device, settings) {
     var data = {};
     data["inputunit"] = device;
     data["mode"] = "hysteria";
@@ -783,82 +695,79 @@ function switchHysteria(device, settings)
     updatePID(device, data);
 }
 
-function updatePID(device, data)
-{
-    $("#"+device).find("#submit").text("Updating");
+function updatePID(device, data) {
+    var submitButton = $("#" + device).find("#submit");
+    submitButton.text("Updating");
     $.ajax({
-            url : '/updatepid',
-            type : 'POST',
-            data : data,
-            dataType : 'text',
-            success : function(data) {
-                data = null
-                $("#"+device).find("#submit").text("Updated");
-                setTimeout(clearPIDSettings, 5000, device);
-            },
-            error: function(XMLHttpRequest, textStatus, errorThrown) { 
-                alert("Status: " + textStatus); alert("Error: " + errorThrown); 
-            }    
+        url: '/updatepid',
+        type: 'POST',
+        data: data,
+        dataType: 'text',
+        success: function (data) {
+            data = null;
+            submitButton.text("Updated");
+            setTimeout(clearPIDSettings, 5000);
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+            alert("Status: " + textStatus);
+            alert("Error: " + errorThrown);
+        }
 
-        });
-    
+    });
+
 }
 
-function clearPIDSettings(device) 
-{
-    var pidSettings = $("#"+device).find("#pidsettings");
-    pidSettings.animate({opacity:0.01}, 200, 
-        function() {pidSettings.slideUp(200, function()
-        { 
-            pidSettings.remove();
+function clearPIDSettings(device) {
+    var deviceEle = $("#" + device);
+    var pidSettings = deviceEle.find("#pidsettings");
+    pidSettings.animate({opacity: 0.01}, 200,
+        function () {
+            pidSettings.slideUp(200, function () {
+                pidSettings.remove();
+            });
         });
-    });
-    var successBtn = $("#"+device).find(".btn-success");
-    if (successBtn.size() == 1)
-    {
+    var successBtn = deviceEle.find(".btn-success");
+    if (successBtn.size() == 1) {
         successBtn.removeClass("btn-success");
-        if (successBtn.hasClass("active"))
-        {
+        if (successBtn.hasClass("active")) {
             successBtn.addClass("btn-danger");
         }
 
     }
 }
 
-$(document).ready(function() {
-    $('[data-toggle=offcanvas]').click(function() {
-       $('.row-offcanvas').toggleClass('active');
+$(document).ready(function () {
+    $('[data-toggle=offcanvas]').click(function () {
+        $('.row-offcanvas').toggleClass('active');
     });
     $("#recipeFile").fileupload({
-       dataType : 'json',
-       url: '/uploadbeerxml',
-       done: function (e, data) {
+        dataType: 'json',
+        url: '/uploadbeerxml',
+        done: function (e, data) {
             $.each(data.result.files, function (index, file) {
-                        $('<p/>').text(file.name).appendTo(document.body);
-                });
-       }
+                $('<p/>').text(file.name).appendTo(document.body);
+            });
+        }
     });
     requestData();
     // When the Analog box is shown grab the analog data and render it
-    $('#analog-modal').on('show.bs.modal', function (event) {
-
-          var modal = $(this);
-
-          $.ajax({
-            url : '/getphsensorform',
-            type : 'GET',
+    var anaModel = $('#analog-modal');
+    anaModel.on('show.bs.modal', function (event) {
+        var modal = $(this);
+        $.ajax({
+            url: '/getphsensorform',
+            type: 'GET',
             data: {sensor: modal.data().name},
-            success : function(data) {
-                $("#analog-modal .modal-body").html(data);
+            success: function (data) {
+                anaModel.find(".modal-body").html(data);
             }
-          })
+        })
     });
-    setInterval("requestData()",10000);
+    setInterval("requestData()", 10000);
 });
 
 
-function handleTriggerDragStart(e)
-{
+function handleTriggerDragStart(e) {
     this.style.opacity = '0.4';
     triggerDragSrc = e;
     e.dataTransfer.effectAllowed = 'move';
@@ -866,22 +775,22 @@ function handleTriggerDragStart(e)
 }
 
 function handleTriggerDragOver(e) {
-  if (e.preventDefault) {
-    e.preventDefault(); // Necessary. Allows us to drop.
-  }
+    if (e.preventDefault) {
+        e.preventDefault(); // Necessary. Allows us to drop.
+    }
 
-  e.dataTransfer.dropEffect = 'move';  // See the section on the DataTransfer object.
+    e.dataTransfer.dropEffect = 'move';  // See the section on the DataTransfer object.
 
-  return false;
+    return false;
 }
 
 function handleTriggerDragEnter(e) {
-  // this / e.target is the current hover target.
-  this.classList.add('over');
+    // this / e.target is the current hover target.
+    this.classList.add('over');
 }
 
 function handleTriggerDragLeave(e) {
-  this.classList.remove('over');  // this / e.target is previous target element.
+    this.classList.remove('over');  // this / e.target is previous target element.
 }
 
 function handleTriggerDrop(e) {
@@ -892,39 +801,38 @@ function handleTriggerDrop(e) {
     // Don't do anything if dropping the same column we're dragging.
     if (triggerDragSrc != e) {
         // Set the source column's HTML to the HTML of the column we dropped on.
-        originalId = triggerDragSrc.target.id;
-        originalHtml = triggerDragSrc.target.innerHTML;
+        var originalId = triggerDragSrc.target.id;
+        var originalHtml = triggerDragSrc.target.innerHTML;
         triggerDragSrc.target.innerHTML = this.innerHTML;
         triggerDragSrc.target.id = this.id;
         this.innerHTML = originalHtml;
         this.id = originalId;
-        // TODO: Update the server here
+
         var originalProbe = $(triggerDragSrc.target).closest(".card")[0].id;
         var targetProbe = $(this).closest(".card")[0].id;
-        if (originalProbe != targetProbe)
-        {
+        if (originalProbe != targetProbe) {
             return false;
         }
         var data = {};
         data["tempprobe"] = originalProbe;
-        $.each($(".trigger-row"), function (index, row)
-        {
+        $.each($(".trigger-row"), function (index, row) {
             data[row.id] = index;
         });
 
-         $.ajax({
-            url : '/reordertriggers',
-            type : 'POST',
-            data : data,
-            dataType : 'text',
-            success : function(data) {
-                data = null
-                $("#"+originalProbe + " .trigger-row").each(function(index, row) {
+        $.ajax({
+            url: '/reordertriggers',
+            type: 'POST',
+            data: data,
+            dataType: 'text',
+            success: function (data) {
+                data = null;
+                $("#" + originalProbe + " .trigger-row").each(function (index, row) {
                     row.style.opacity = 1.0;
                 });
             },
-            error: function(XMLHttpRequest, textStatus, errorThrown) {
-                alert("Status: " + textStatus); alert("Error: " + errorThrown);
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert("Status: " + textStatus);
+                alert("Error: " + errorThrown);
             }
 
         });
@@ -933,55 +841,52 @@ function handleTriggerDrop(e) {
 }
 
 function handleTriggerDragEnd(e) {
-    if (e.dataTransfer.dropEffect == 'none')
-    {
+    if (e.dataTransfer.dropEffect == 'none') {
         var position = e.target.id;
         var device = $(e.target).closest(".card")[0].id;
         // Remove the trigger
         $.ajax({
-            url : 'delTriggerStep',
-            type : 'POST',
-            data : "device=" + device + "&position=" + position,
-            success : function(data) {
+            url: 'delTriggerStep',
+            type: 'POST',
+            data: "device=" + device + "&position=" + position,
+            success: function (data) {
                 data = null
             },
-            error: function(XMLHttpRequest, textStatus, errorThrown) {
-                alert("Status: " + textStatus); alert("Error: " + errorThrown);
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert("Status: " + textStatus);
+                alert("Error: " + errorThrown);
             }
         });
         $(e.target).remove();
     }
-    $(".trigger-row").each(function (index, row)
-    {
+    $(".trigger-row").each(function (index, row) {
         row.classList.remove('over');
         row.style.opacity = 1.0;
     });
 }
 
-function deleteDevice(submitButton)
-{
+function deleteDevice(submitButton) {
     var form = $(submitButton).parent().parent().find("form");
     var data = {};
     data['probe'] = form.find('#device-address').val();
     $.ajax({
-        url : 'deleteprobe',
-        type : 'POST',
-        data : data,
-        data : data,
-        dataType : 'text',
-        success : function(data) {
-             data = null;
-             $("#edit-modal").modal('toggle');
-             swal({title:"Deleted!"});
-         },
-         error: function(XMLHttpRequest, textStatus, errorThrown) {
-             alert("Status: " + textStatus); alert("Error: " + errorThrown);
-         }
+        url: 'deleteprobe',
+        type: 'POST',
+        data: data,
+        dataType: 'text',
+        success: function (data) {
+            data = null;
+            $("#edit-modal").modal('toggle');
+            swal({title: "Deleted!"});
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+            alert("Status: " + textStatus);
+            alert("Error: " + errorThrown);
+        }
     });
 
 }
-function saveDevice(submitButton)
-{
+function saveDevice(submitButton) {
     var form = $(submitButton).parent().parent().find("form");
     var data = {};
     data['address'] = form.find('#device-address').val();
@@ -997,8 +902,7 @@ function saveDevice(submitButton)
     data['calibration'] = form.find('#calibration').val();
 
     var heatdiv = form.parent().parent().find("#heat");
-    if (heatdiv.length == 1)
-    {
+    if (heatdiv.length == 1) {
         data["heat_p"] = heatdiv.find("#p_input").val();
         data["heat_i"] = heatdiv.find("#i_input").val();
         data["heat_d"] = heatdiv.find("#d_input").val();
@@ -1006,8 +910,7 @@ function saveDevice(submitButton)
     }
 
     var cooldiv = form.parent().parent().find("#cool");
-    if (cooldiv.length == 1)
-    {
+    if (cooldiv.length == 1) {
         data["cool_p"] = cooldiv.find("#p_input").val();
         data["cool_i"] = cooldiv.find("#i_input").val();
         data["cool_d"] = cooldiv.find("#d_input").val();
@@ -1015,214 +918,214 @@ function saveDevice(submitButton)
     }
 
     $.ajax({
-        url : 'editdevice',
-        type : 'POST',
-        data : data,
-        data : data,
-        dataType : 'text',
-        success : function(data) {
-             data = null;
-             $("#edit-modal").modal('toggle');
-             swal({title:"Updated!"});
-         },
-         error: function(XMLHttpRequest, textStatus, errorThrown) {
-             alert("Status: " + textStatus); alert("Error: " + errorThrown);
-         }
+        url: 'editdevice',
+        type: 'POST',
+        data: data,
+        dataType: 'text',
+        success: function (data) {
+            data = null;
+            $("#edit-modal").modal('toggle');
+            swal({title: "Updated!"});
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+            alert("Status: " + textStatus);
+            alert("Error: " + errorThrown);
+        }
     });
 
 }
 
-function handleTriggerAdd(e)
-{
+function handleTriggerAdd(e) {
     var pid = $(e).closest("form").find("#device-address").val();
 
     //$("#edit-modal").modal('toggle');
-    $("#edit-modal").data('device', pid);
-    $("#edit-modal .modal-body").empty();
+    var editModal = $("#edit-modal");
+    editModal.data('device', pid);
+    var modalBody = editModal.find(".modal-body");
+    modalBody.empty();
     $.ajax({
         url: '/getNewTriggers',
         data: {temp: pid},
         dataType: 'html',
         showConfirmButton: false,
         showCancelButton: false,
-        success: function(html) {
+        success: function (html) {
             $("#edit-modal-heading").html("Add New Trigger");
-            $("#edit-modal .modal-body").html(html);
-            $("#edit-modal .btn-primary").show();
-            $("#edit-modal .modal-body").attr("height","100%");
+            modalBody.html(html);
+            editModal.find(".btn-primary").show();
+            modalBody.attr("height", "100%");
         }
     });
 }
 
-function toggleVisibility(e)
-{
+function toggleVisibility(e) {
     var pid = $(e).closest(".modal-body").find("#device-address").val();
     $.ajax({
         url: '/toggleDevice',
         data: {device: pid},
         dataType: 'text',
-        success: function(data) { swal({title:"Updated!"});}
+        success: function (data) {
+            swal({title: "Updated!"});
+        }
     });
 
 }
 
-function handleTriggerEdit(e)
-{
+function handleTriggerEdit(e) {
     var target = getCard($(e.target));
     var triggerIndex = e.target.id;
     var device = target.id;
+    var editModal = $("#edit-modal");
+    var modalBody = editModal.find(".modal-body");
 
-    $("#edit-modal").data('device', device);
+    editModal.data('device', device);
     $.ajax({
         url: '/gettriggeredit',
         data: {tempprobe: device, position: triggerIndex},
         dataType: 'html',
-        success: function(html) {
+        success: function (html) {
             $("#edit-modal-heading").html("Edit " + device + " trigger at " + triggerIndex);
-            $("#edit-modal .modal-body").html(html);
-            $("#edit-modal .modal-body").attr("height","100%");
-            $("#edit-modal .btn-primary").show();
-            $("#edit-modal .modal-footer").hide();
-            $("#edit-modal").modal('toggle');
+            modalBody.html(html);
+            modalBody.attr("height", "100%");
+            editModal.find(".btn-primary").show();
+            editModal.find(".modal-footer").hide();
+            editModal.modal('toggle');
         }
     });
 }
 
 function updateTriggerStep(element) {
-	var data = $(element).closest("#editTriggersForm").serializeObject();
+    var data = $(element).closest("#editTriggersForm").serializeObject();
     data['tempprobe'] = $("#edit-modal").data('device');
 
-	$.ajax({
-		url : 'updatetrigger',
-		type : 'POST',
-		data : data,
-		success : function(data) {
-			data = null
-		},
-		error: function(XMLHttpRequest, textStatus, errorThrown) {
-            alert("Status: " + textStatus); alert("Error: " + errorThrown);
+    $.ajax({
+        url: 'updatetrigger',
+        type: 'POST',
+        data: data,
+        success: function (data) {
+            data = null
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+            alert("Status: " + textStatus);
+            alert("Error: " + errorThrown);
         }
-	});
+    });
 
-	window.disableUpdates = 0;
-	return true;
+    window.disableUpdates = 0;
+    return true;
 }
 
 
 function newTrigger(button, probe) {
-	// Do we need to disable the input form?
-	var childInput = $(button).closest(".modal-body").find("#childInput");
-	if ($(button).closest("#newTriggersForm").find("[name=type] option:selected").val() == "") {
-		childInput.html("");
-		return false;
-	}
-	childInput.html("Loading...");
-	$.ajax({
+    // Do we need to disable the input form?
+    var childInput = $(button).closest(".modal-body").find("#childInput");
+    if ($(button).closest("#newTriggersForm").find("[name=type] option:selected").val() == "") {
+        childInput.html("");
+        return false;
+    }
+    childInput.html("Loading...");
+    $.ajax({
         url: '/getTriggerForm',
         data: $(button.parentElement).serializeObject(),
         dataType: 'html',
-        success: function(html) {
-        	childInput.html(html)
+        success: function (html) {
+            childInput.html(html)
         }
     });
-	return false;
+    return false;
 }
 
 
 function submitNewTriggerStep(button) {
-	var data1 = $(button).closest("#newTriggersForm").serializeObject();
-	var data2 = $("#newTriggersForm form").serializeObject();
+    var newTriggers = $(button).closest("#newTriggersForm");
+    var data1 = newTriggers.serializeObject();
+    var data2 = newTriggers.find("form").serializeObject();
 
     var data = {};
-	data = jsonConcat(data, data1);
-	data = jsonConcat(data, data2);
-	if (!("tempprobe" in data)) {
-		data['tempprobe'] = data['temp']
-	}
+    data = jsonConcat(data, data1);
+    data = jsonConcat(data, data2);
+    if (!("tempprobe" in data)) {
+        data['tempprobe'] = data['temp']
+    }
 
-	if (!("position" in data)) {
-	    $("#" + data['tempprobe'] + ".trigger-row").length;
-	}
+    if (!("position" in data)) {
+        data.position = $("#" + data['tempprobe']).find(".trigger-row").length;
+    }
 
-	$.ajax({
-		url : 'addtriggertotemp',
-		type : 'POST',
-		data : data,
-		success : function(data) {
-			data = null
-		}
-	});
+    $.ajax({
+        url: 'addtriggertotemp',
+        type: 'POST',
+        data: data,
+        success: function (data) {
+            data = null
+        }
+    });
 
-	window.disableUpdates = 0;
-	return false;
+    window.disableUpdates = 0;
+    return false;
 }
 
-function editAnalog(button)
-{
-    $("#analog-modal").data("name", button.id);
-    $("#analog-modal").modal("toggle");
+function editAnalog(button) {
+    var analogModal = $("#analog-modal");
+    analogModal.data("name", button.id);
+    analogModal.modal("toggle");
 }
 
-function parsePhSensors(sensors)
-{
-    $.each(sensors, function(name, status){
+function parsePhSensors(sensors) {
+    $.each(sensors, function (name, status) {
         var textname = decodeURI(name) + "(" + status.phReading + ")";
-        var sensorEle = $("#analog [id='" + name + "']");
-        if (sensorEle.length == 0)
-        {
-            $("#analog .card-body").append("<button id='"+name
-            +"' class='btn btn-primary col-xs-10 col-xs-offset-1' onClick='updateAnalog(this);' onDblClick='editAnalog(this);'>"
-            +textname+"</button>");
-            sensorEle = $("#analog [id='" + name +"']");
+        var analog = $("#analog");
+        var sensorEle = analog.find("[id='" + name + "']");
+        if (sensorEle.length == 0) {
+            analog.find(".card-body").append("<button id='" + name
+                + "' class='btn btn-primary col-xs-10 col-xs-offset-1' onClick='updateAnalog(this);' onDblClick='editAnalog(this);'>"
+                + textname + "</button>");
+            sensorEle = analog.find("[id='" + name + "']");
         }
 
-        if (sensorEle.text() != textname)
-        {
+        if (sensorEle.text() != textname) {
             sensorEle.text(textname);
         }
     });
 }
 
 function updateAnalog(element) {
-	$.ajax({
-		url : "/readPhSensor",
-		type : "GET",
-		data : {name: element.id},
-		dataType : "json",
-		success : function(html) {
-			// We got the data from the sensor
-			$(element).html(html);
-		}
-	});
+    $.ajax({
+        url: "/readPhSensor",
+        type: "GET",
+        data: {name: element.id},
+        dataType: "json",
+        success: function (html) {
+            // We got the data from the sensor
+            $(element).html(html);
+        }
+    });
 }
-function parseSwitches(switches)
-{
+function parseSwitches(switches) {
     // clear out the existing switches
-    $("#switches .card-body button").each(function(index, switchCard)
-        {
-            if (!(switchCard.id in switches))
-            {
+    var switchesElement = $("#switches");
+    var switchesBody = switchesElement.find(".card-body");
+
+    switchesBody.find("button").each(function (index, switchCard) {
+            if (!(switchCard.id in switches)) {
                 switchCard.remove();
             }
         }
     );
     // Add or update the rest
-    $.each(switches, function(name, status){
+    $.each(switches, function (name, status) {
         var textname = decodeURI(name);
-        var switchEle = $("#switches [id='" + name +"']");
-        if (switchEle.length == 0)
-        {
-            $("#switches .card-body").append("<button id='"+name+"' class='btn btn-danger-outline m-t col-xs-10 col-xs-offset-1' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'>"+textname+"</button>");
-            switchEle = $("#switches [id='" + name +"']");
+        var switchEle = switchesElement.find("[id='" + name + "']");
+        if (switchEle.length == 0) {
+            switchesBody.append("<button id='" + name + "' class='btn btn-danger-outline m-t col-xs-10 col-xs-offset-1' onClick='toggleSwitch(this);' onDblClick='editSwitch(this);'>" + textname + "</button>");
+            switchEle = switchesElement.find("[id='" + name + "']");
         }
 
-        if (status)
-        {
+        if (status) {
             switchEle.removeClass("btn-danger-outline");
             switchEle.addClass("btn-danger");
         }
-        else
-        {
+        else {
             switchEle.addClass("btn-danger-outline");
             switchEle.removeClass("btn-danger");
         }
@@ -1230,259 +1133,242 @@ function parseSwitches(switches)
     });
 }
 
-function createSwitch()
-{
+function createSwitch() {
     // Clear the modal first
     var modal = $('#switches-modal');
     modal.find("#name").val("");
     modal.find("#gpio").val("");
-    if (modal.find("#invert").hasClass("active"))
-    {
+    if (modal.find("#invert").hasClass("active")) {
         modal.find("#invert").toggle();
     }
     modal.modal('toggle');
 }
 
-function deleteSwitch(element)
-{
+function deleteSwitch(element) {
     var data = $("#addSwitch").serializeObject();
     data['name'] = encodeURI(data['name']);
     $.ajax({
-        url : 'deleteswitch',
-        type : 'POST',
-        data : data,
-        success : function(data) {
+        url: 'deleteswitch',
+        type: 'POST',
+        data: data,
+        success: function (data) {
             data = null;
             location.reload();
         }
     });
 }
 
-function saveSwitch(element)
-{
+function saveSwitch(element) {
     var data = $("#addSwitch").serializeObject();
     data['originalname'] = encodeURI(data['originalname']);
     data['name'] = encodeURI(data['name']);
     $.ajax({
-        url : 'addswitch',
-        type : 'POST',
-        data : data,
-        success : function(data) {
+        url: 'addswitch',
+        type: 'POST',
+        data: data,
+        success: function (data) {
             data = null
         }
     });
 }
 
-function toggleSwitch(element)
-{
+function toggleSwitch(element) {
     var data = {};
     data["toggle"] = element.id;
     $.ajax({
-        url : 'updateswitch',
-        type : 'POST',
-        data : data,
-        success : function(data) {
+        url: 'updateswitch',
+        type: 'POST',
+        data: data,
+        success: function (data) {
             data = null
         }
     });
 }
 
-function editSwitch(element)
-{
+function editSwitch(element) {
     var data = {};
     data["name"] = element.id;
     $.ajax({
-        url : 'getswitchsettings',
-        type : 'POST',
-        data : data,
+        url: 'getswitchsettings',
+        type: 'POST',
+        data: data,
         dataType: 'json',
-        success: function(switchSettings) {
-            $("#switches-modal").modal();
+        success: function (switchSettings) {
+            var switchesModal = $("#switches-modal");
+            switchesModal.modal();
             $("#switches-modal-heading").text("Edit Switch");
-            $("#switches-modal #originalname").val(decodeURI(switchSettings.name));
-            $("#switches-modal #name").val(decodeURI(switchSettings.name));
-            $("#switches-modal #gpio").val(switchSettings.gpio);
-            if (switchSettings.inverted)
-            {
-                $("#switches-modal #invert").button("toggle");
+            switchesModal.find("#originalname").val(decodeURI(switchSettings.name));
+            switchesModal.find("#name").val(decodeURI(switchSettings.name));
+            switchesModal.find("#gpio").val(switchSettings.gpio);
+            if (switchSettings.inverted) {
+                switchesModal.find("#invert").button("toggle");
             }
         }
     });
 
 }
 
-function dismissSwitch()
-{
+function dismissSwitch() {
+    var switchesModal = $("#switches-modal");
     $("#switches-modal-heading").text("Add Switch");
-    $("#switches-modal #name").val("");
-    $("#switches-modal #gpio").val("");
+    switchesModal.find("#name").val("");
+    switchesModal.find("#gpio").val("");
 }
 
-function editTimer(element)
-{
+function editTimer(element) {
     var data = {};
     data["timer"] = $(element).text();
     $.ajax({
-        url : 'gettimersettings',
-        type : 'POST',
-        data : data,
+        url: 'gettimersettings',
+        type: 'POST',
+        data: data,
         dataType: 'json',
-        success: function(timerSettings) {
-            $("#timers-modal-heading").text("Edit Timer")
-            $("#timers-modal #name").val(decodeURI(timerSettings.name));
-            $("#timers-modal #duration").val(timerSettings.duration);
-            if (timerSettings.inverted)
-            {
-                $("#timers-modal #invert").button("toggle");
+        success: function (timerSettings) {
+            var timersModal = $("#timers-modal");
+            $("#timers-modal-heading").text("Edit Timer");
+            timersModal.find("#name").val(decodeURI(timerSettings.name));
+            timersModal.find("#duration").val(timerSettings.duration);
+            if (timerSettings.inverted) {
+                timersModal.find("#invert").button("toggle");
             }
 
-            $('#timers-modal').modal('toggle');
+            timersModal.modal('toggle');
         }
     });
 }
 
-function dismissTimer()
-{
+function dismissTimer() {
+    var timersModal = $("#timers-modal");
     $("#timers-modal-heading").text("Add Timer");
-    $("#timers-modal #name").val("");
-    $("#timers-modal #duration").val("");
+    timersModal.find("#name").val("");
+    timersModal.find("#duration").val("");
 }
 
-function deleteTimer(element)
-{
+function deleteTimer(element) {
     var data = $("#addTimer").serializeObject();
     $.ajax({
-        url : 'deletetimer',
-        type : 'POST',
-        data : data,
-        success : function(data) {
+        url: 'deletetimer',
+        type: 'POST',
+        data: data,
+        success: function (data) {
             data = null;
             location.reload();
         }
     });
 }
 
-function saveTimer(element)
-{
+function saveTimer(element) {
     var data = $("#addTimer").serializeObject();
     $.ajax({
-        url : 'addtimer',
-        type : 'POST',
-        data : data,
-        success : function(data) {
+        url: 'addtimer',
+        type: 'POST',
+        data: data,
+        success: function (data) {
             data = null
         }
     });
 }
 
-function startTimer(element)
-{
+function startTimer(element) {
     var timer = $(element).closest(".timer_row").find("#timer");
     var name = $(element).closest(".timer-row").find("#title");
     timer.timer();
     toggleTimer(name);
 }
 
-function toggleTimer(element)
-{
+function toggleTimer(element) {
     var data = {};
     data["toggle"] = $(element).text();
     $.ajax({
-        url : 'toggletimer',
-        type : 'POST',
-        data : data,
-        success : function(data) {
+        url: 'toggletimer',
+        type: 'POST',
+        data: data,
+        success: function (data) {
             data = null
         },
-         error: function(XMLHttpRequest, textStatus, errorThrown) {
-             alert("Status: " + textStatus); alert("Error: " + errorThrown);
-         }
-    });
-}
-
-function resetTimer(element)
-{
-    var data = {};
-    data["reset"] = $(element).closest(".timer-row").find("#title").text();
-    $.ajax({
-        url : 'toggletimer',
-        type : 'POST',
-        data : data,
-        success : function(data) {
-            data = null
-        },
-        error: function(XMLHttpRequest, textStatus, errorThrown) {
-            alert("Status: " + textStatus); alert("Error: " + errorThrown);
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+            alert("Status: " + textStatus);
+            alert("Error: " + errorThrown);
         }
     });
 }
 
-function msToString(ms)
-{
-     var min = (ms/1000/60) << 0,
-       sec = ((ms/1000) % 60) << 0;
-       if (sec < 10)
-       {
-            sec = "0" + sec;
-       }
-     return min + ":" + sec;
+function resetTimer(element) {
+    var data = {};
+    data["reset"] = $(element).closest(".timer-row").find("#title").text();
+    $.ajax({
+        url: 'toggletimer',
+        type: 'POST',
+        data: data,
+        success: function (data) {
+            data = null
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+            alert("Status: " + textStatus);
+            alert("Error: " + errorThrown);
+        }
+    });
+}
+
+function msToString(ms) {
+    var min = (ms / 1000 / 60) << 0,
+        sec = ((ms / 1000) % 60) << 0;
+    if (sec < 10) {
+        sec = "0" + sec;
+    }
+    return min + ":" + sec;
 
 }
 
-function loadRecipe()
-{
+function loadRecipe() {
     document.getElementById("recipeFile").click();
 }
 
 function clearStatus() {
-	$.ajax({
-		url : 'clearStatus',
-		type : 'POST',
-		success : function(data) {
-			data = null
-		}
-	});
+    $.ajax({
+        url: 'clearStatus',
+        type: 'POST',
+        success: function (data) {
+            data = null
+        }
+    });
 }
 
-function showRecipes(count, name)
-{
-    if (name != null && count == 1)
-    {
+function showRecipes(count, name) {
+    if (name != null && count == 1) {
         $("#currentRecipe").hide();
     }
-    else
-    {
-       $.ajax({
-       		url : 'getrecipelist',
-       		type : 'GET',
-       		success : function(data) {
-       			$("#currentRecipe").html(data);
-       			$("#currentRecipe").show();
-       		}
-       	});
+    else {
+        $.ajax({
+            url: 'getrecipelist',
+            type: 'GET',
+            success: function (data) {
+                var currentRecipe = $("#currentRecipe");
+                currentRecipe.html(data);
+                currentRecipe.show();
+            }
+        });
     }
 }
 
-function setRecipe(element)
-{
+function setRecipe(element) {
     var recipeName;
-    if ($(element).is("select"))
-    {
+    if ($(element).is("select")) {
         recipeName = $(element).find(":selected").val();
     }
 
-    if (recipeName != undefined)
-    {
-        $("#edit-modal").modal('toggle');
-        $("#edit-modal").data('recipe', recipeName);
+    if (recipeName != undefined) {
+        var editModal = $("#edit-modal");
+        editModal.modal('toggle');
+        editModal.data('recipe', recipeName);
         $("#edit-modal-heading").html("Recipe Settings");
         $.ajax({
             url: '/showrecipe',
             data: {recipeName: recipeName},
             dataType: 'html',
-            success: function(html) {
+            success: function (html) {
                 $("#edit-modal-heading").html(recipeName);
-                $("#edit-modal .modal-body").html(html);
+                editModal.find(".modal-body").html(html);
             }
         });
     }
@@ -1513,34 +1399,33 @@ function setProfile(element, profile) {
     })
 }
 
-function toggleTriggers(element)
-{
+function toggleTriggers(element) {
     var status = $(element).attr("name");
     var originalProbe = $(element).closest(".card")[0].id;
     $.ajax({
         url: '/toggleTrigger',
-        data: {tempprobe: originalProbe, status:status, position:-1},
+        data: {tempprobe: originalProbe, status: status, position: -1},
         dataType: "html"
     })
 }
 
-function showConfig()
-{
-    $("#edit-modal").modal('toggle');
-    $("#edit-modal .btn-primary").show();
+function showConfig() {
+    var editModal = $("#edit-modal");
+    editModal.modal('toggle');
+    editModal.find(".btn-primary").show();
     $("#edit-modal-heading").html("General Settings");
     $.ajax({
         url: '/getsystemsettings',
         dataType: 'json',
-        success: function(json) {
-        var settingsHTML = "<form id='settings-form' class='form-horizontal'>"
+        success: function (json) {
+            var settingsHTML = "<form id='settings-form' class='form-horizontal'>"
                 + "<div class='form-group'><div class='btn-group' data-toggle='buttons'>"
                 + " <label class='btn btn-primary-outline active'>"
-                       +"<input type='radio' name='scale' id='Celsius' value='C' autocomplete='off'> Celsius"
-                     +"</label>"
-                     +"<label class='btn btn-primary-outline'>"
-                       +"<input type='radio' name='scale' id='Fahrenheit' value='F' autocomplete='off'> Fahrenheit"
-                     +"</label>"
+                + "<input type='radio' name='scale' id='Celsius' value='C' autocomplete='off'> Celsius"
+                + "</label>"
+                + "<label class='btn btn-primary-outline'>"
+                + "<input type='radio' name='scale' id='Fahrenheit' value='F' autocomplete='off'> Fahrenheit"
+                + "</label>"
                 + "</div></div>"
                 + "<div class='form-group'>"
                 + "<div class='btn-group' data-toggle='buttons'><label class='btn btn-primary-outline' >"
@@ -1550,69 +1435,65 @@ function showConfig()
 
                 + "<div class='form-group'>"
                 + "<div class='btn-group' data-toggle='buttons'><label class='btn btn-primary-outline' >"
-                +'<input type="checkbox" name="recorder" autocomplete="off" id="recorder">Recorder Enabled</label>'
+                + '<input type="checkbox" name="recorder" autocomplete="off" id="recorder">Recorder Enabled</label>'
                 + "</div>"
                 + "</div>"
                 + "<div class='form-group'>"
                 + "<div class='input-group'>"
-                    + "<div class='input-group-addon input-group-addon-label'>Tolerance</div>"
-                    + "<input type='number' step='0.01' min='0' name='recorderDiff' class='form-control' id='recorderDiff' placeholder='tolerance' >"
-                    + "<div class='input-group-addon input-group-addon-unit'>&#176</div>"
+                + "<div class='input-group-addon input-group-addon-label'>Tolerance</div>"
+                + "<input type='number' step='0.01' min='0' name='recorderDiff' class='form-control' id='recorderDiff' placeholder='tolerance' >"
+                + "<div class='input-group-addon input-group-addon-unit'>&#176</div>"
                 + "</div>"
                 + "<div class='form-group'>"
                 + "<div class='input-group m-t'>"
-                    + "<div class='input-group-addon input-group-addon-label'>Time</div>"
-                    + "<input type='number' step='1' min='5000' name='recorderTime' class='form-control' id='recorderTime' placeholder='time' >"
-                    + "<div class='input-group-addon input-group-addon-unit'>ms</div>"
+                + "<div class='input-group-addon input-group-addon-label'>Time</div>"
+                + "<input type='number' step='1' min='5000' name='recorderTime' class='form-control' id='recorderTime' placeholder='time' >"
+                + "<div class='input-group-addon input-group-addon-unit'>ms</div>"
                 + "</div>"
                 + "<div class='form-group m-t'>"
-                    + '<div class="btn-group " data-toggle="buttons">'
-                        + '<label class="btn btn-primary-outline">'
-                        + '<input type="checkbox" id="use_owfs" name="use_owfs" autocomplete="off" value="on">'
-                        + 'Use OWFS'
-                        + '</label>'
-                    + '</div>'
+                + '<div class="btn-group " data-toggle="buttons">'
+                + '<label class="btn btn-primary-outline">'
+                + '<input type="checkbox" id="use_owfs" name="use_owfs" autocomplete="off" value="on">'
+                + 'Use OWFS'
+                + '</label>'
+                + '</div>'
                 + '</div>'
                 + "<div class='input-group m-t'>"
-                    + "<div class='input-group-addon input-group-addon-label'>Server</div>"
-                    + "<input name='owfs_server' class='form-control' id='owfs_server' placeholder='Host' >"
+                + "<div class='input-group-addon input-group-addon-label'>Server</div>"
+                + "<input name='owfs_server' class='form-control' id='owfs_server' placeholder='Host' >"
                 + "</div>"
                 + "<div class='input-group m-t'>"
-                    + "<div class='input-group-addon input-group-addon-label'>Port</div>"
-                    + "<input name='owfs_port' type='number' step='1' min='1' max='65535' class='form-control' id='owfs_port' placeholder='Port' >"
+                + "<div class='input-group-addon input-group-addon-label'>Port</div>"
+                + "<input name='owfs_port' type='number' step='1' min='1' max='65535' class='form-control' id='owfs_port' placeholder='Port' >"
                 + "</div>"
                 + "<div class='btn-toolbar text-center m-t'>"
                 + "<button class='btn btn-success' onclick='saveSystem();'>Save</button>"
                 + "</div>"
                 + "</form>";
-            $("#edit-modal .modal-body").html(settingsHTML);
-            $("#edit-modal .modal-footer").hide();
-            $("#edit-modal .modal-body #recorderDiff").val(json.recorderDiff);
-            $("#edit-modal .modal-body #recorderTime").val(json.recorderTime);
-            $("#edit-modal .modal-body #owfs_server").val(json.owfs_server);
-            $("#edit-modal .modal-body #owfs_port").val(json.owfs_port);
-            if (json.OWFS)
-            {
-                $("#edit-modal .modal-body #use_owfs").parent().click();
+            var editBody = editModal.find(".modal-body");
+            editBody.html(settingsHTML);
+            editModal.find(".modal-footer").hide();
+            editModalBody.find("#recorderDiff").val(json.recorderDiff);
+            editModalBody.find("#recorderTime").val(json.recorderTime);
+            editModalBody.find("#owfs_server").val(json.owfs_server);
+            editModalBody.find("#owfs_port").val(json.owfs_port);
+            if (json.OWFS) {
+                editModalBody.find("#use_owfs").parent().click();
             }
 
-            if (json.recorder)
-            {
-                $("#edit-modal .modal-body #recorder").parent().click();
+            if (json.recorder) {
+                editModalBody.find("#recorder").parent().click();
             }
 
-            if (json.restore)
-            {
-                $("#edit-modal .modal-body #restore").parent().click();
+            if (json.restore) {
+                editModalBody.find("#restore").parent().click();
             }
 
-            if (json.scale == "F")
-            {
-                $("#edit-modal .modal-body #Fahrenheit").click();
+            if (json.scale == "F") {
+                editModalBody.find("#Fahrenheit").click();
             }
-            else if (json.scale == "C")
-            {
-                $("#edit-modal .modal-body #Celsius").click();
+            else if (json.scale == "C") {
+                editModalBody.find("#Celsius").click();
             }
         }
 
@@ -1620,30 +1501,29 @@ function showConfig()
 
 }
 
-function saveSystem()
-{
+function saveSystem() {
     var formdata = $('form[id=settings-form]').serializeObject();
     $.ajax({
-        url : 'updateSystemSettings',
-        type : 'POST',
+        url: 'updateSystemSettings',
+        type: 'POST',
         data: formdata,
-        success : function(data) {
+        success: function (data) {
             data = null;
             $("#edit-modal").modal('toggle');
-            swal({title:"Updated!"});
+            swal({title: "Updated!"});
         }
     });
 }
 
-function changeName()
-{
+function changeName() {
 
     swal({
-        title: "Brewery Name",
-        html:'<p><input id="input-field">',
-        showCancelButton: true,
-        closeOnConfirm: false},
-        function(){
+            title: "Brewery Name",
+            html: '<p><input id="input-field">',
+            showCancelButton: true,
+            closeOnConfirm: false
+        },
+        function () {
 
             var inputValue = $('#input-field').val();
             if (inputValue === false) return false;
@@ -1652,388 +1532,359 @@ function changeName()
                 return false;
             }
             $.ajax({
-                url : 'setBreweryName',
-                type : 'POST',
+                url: 'setBreweryName',
+                type: 'POST',
                 data: {name: inputValue},
                 dataType: "text",
-                success : function(data) {
+                success: function (data) {
                     data = null;
-                    swal({title: "Completed", text:"Brewery name updated"});
+                    swal({title: "Completed", text: "Brewery name updated"});
                 }
             });
         }
     );
-};
+}
 
-function selectedI2C(input)
-{
+function selectedI2C(input) {
     var selectedDevice = input.selectedOptions[0].value;
     $(input.parentElement).find("select[id^=i2c-]").css("display", "none");
     $(input.parentElement).find("select[id=" + selectedDevice + "]").css("display", "block");
 }
 
-function selectedInput(input)
-{
-    if (input.selectedOptions[0].value == "ds2450")
-    {
+function selectedInput(input) {
+    if (input.selectedOptions[0].value == "ds2450") {
         $(input.parentElement).find("div[id=ds_div]").css("display", "block");
         $(input.parentElement).find("div[id=ain_div]").css("display", "none");
         $(input.parentElement).find("div[id=i2c_div]").css("display", "none");
     }
-    else if (input.selectedOptions[0].value == "ain")
-    {
+    else if (input.selectedOptions[0].value == "ain") {
         $(input.parentElement).find("div[id=ds_div]").css("display", "none");
         $(input.parentElement).find("div[id=ain_div]").css("display", "block");
         $(input.parentElement).find("div[id=i2c_div]").css("display", "none");
     }
-    else if (input.selectedOptions[0].value == "i2c")
-    {
+    else if (input.selectedOptions[0].value == "i2c") {
         $(input.parentElement).find("div[id=ds_div]").css("display", "none");
         $(input.parentElement).find("div[id=ain_div]").css("display", "none");
         $(input.parentElement).find("div[id=i2c_div]").css("display", "block");
     }
 }
 
-function editHidden(element)
-{
+function editHidden(element) {
     var option = $(element).find("option:selected");
     showDeviceEdit(option, option.val(), option.text());
 }
 
-function editDevice(element)
-{
+function editDevice(element) {
     showDeviceEdit(element, $(element).data("device"), $(element).text());
 }
 
-function showDeviceEdit(element, addr, name)
-{
+function showDeviceEdit(element, addr, name) {
     var piddata = $(element).data("pid");
     var temp = $(element).data("temp");
     var htmlContent = "<div class='text-center'>" +
-    "<ul class='nav nav-tabs' role='tablist'>";
+        "<ul class='nav nav-tabs' role='tablist'>";
     type = "general";
-    htmlContent += "<li class='nav-item'><a class='nav-link active' aria-controls='"+type+"' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
+    htmlContent += "<li class='nav-item'><a class='nav-link active' aria-controls='" + type + "' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
     if (piddata != null) {
-        if ("heat" in piddata && piddata.heat.gpio != "")
-        {
+        if ("heat" in piddata && piddata.heat.gpio != "") {
             type = "heat";
-            htmlContent += "<li class='nav-item'><a class='nav-link' aria-controls='"+type+"' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
+            htmlContent += "<li class='nav-item'><a class='nav-link' aria-controls='" + type + "' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
         }
-        if ("cool" in piddata && piddata.cool.gpio != "")
-        {
+        if ("cool" in piddata && piddata.cool.gpio != "") {
             type = "cool";
-            htmlContent += "<li class='nav-item'><a class='nav-link' aria-controls='"+type+"' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
+            htmlContent += "<li class='nav-item'><a class='nav-link' aria-controls='" + type + "' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
         }
     }
     htmlContent += "</ul>";
     htmlContent += "<div class='tab-content'>";
     htmlContent += "<div id='general' role='tabpanel' class='tab-pane active'>";
-    htmlContent += '<form id="editDevice">'+
-                                '<input type="hidden" id="device-address" value="' + addr + '">' +
-                                  '<div class="input-group m-t">'+
-                                      '<div class="input-group-addon input-group-addon-label">Name</div>' +
-                                      '<input type="text" class="form-control" id="device-name" value="'+name+'">' +
-                                  '</div>' +
-                                  '<div class="input-group m-t">' +
-                                      '<div class="input-group-addon input-group-addon-label">Heat GPIO</div>' +
-                                      '<input type="text" class="form-control" id="heat-gpio">' +
-                                    '<div class="input-group-btn btn-group" data-toggle="buttons">'+
-                                    '<label class="btn btn-primary-outline">' +
-                                      '<input type="checkbox" id="invert-heat" autocomplete="off" value="invert">' +
-                                      'Invert' +
-                                    '</label>' +
-                                    '</div>' +
-                                  '</div>' +
-                                  '<div class="input-group m-t">' +
-                                      '<div class="input-group-addon input-group-addon-label">Cool GPIO</div>' +
-                                      '<input type="text" class="form-control" id="cool-gpio">' +
-                                    '<div class="input-group-btn btn-group" data-toggle="buttons">'+
-                                        '<label class="btn btn-primary-outline">' +
-                                        '<input type="checkbox" id="invert-cool" value="invert" autocomplete="off">' +
-                                        'Invert' +
-                                    '</label>' +
-                                    '</div>' +
-                                  '</div>' +
-                                  '<div class="input-group m-t">' +
-                                    '<div class="input-group-addon input-group-addon-label">Aux GPIO</div>' +
-                                    '<input type="text" class="form-control" id="aux-gpio">' +
-                                    '<div class="input-group-btn btn-group" data-toggle="buttons">'+
-                                    '<label class="btn btn-primary-outline">' +
-                                      '<input type="checkbox" id="invert-aux" value="invert" autocomplete="off">' +
-                                      'Invert' +
-                                    '</label>' +
-                                    '</div>' +
-                                  '</div>' +
-                                  '<div class="input-group m-t">' +
-                                      '<div class="input-group-addon input-group-addon-label">Calibration</div>' +
-                                      '<input type="number" class="form-control" id="calibration">' +
-                                  '</div>' +
-                                  '<div class="input-group m-t">' +
-                                      '<div class="input-group-btn btn-group" data-toggle="buttons">'+
-                                      '<label class="btn btn-primary-outline">' +
-                                        '<input type="checkbox" name="cutoff-enabled" id="cutoff-enabled" value="true" autocomplete="off">' +
-                                        'Cutoff Enabled' +
-                                      '</label>' +
-                                      '</div>' +
-                                  '</div>' +
-                                  '<div class="input-group m-t">' +
-                                      '<div class="input-group-addon input-group-addon-label">Safety</div>' +
-                                      '<input type="number" class="form-control" id="shutoff">' +
-                                  '</div>';
+    htmlContent += '<form id="editDevice">' +
+        '<input type="hidden" id="device-address" value="' + addr + '">' +
+        '<div class="input-group m-t">' +
+        '<div class="input-group-addon input-group-addon-label">Name</div>' +
+        '<input type="text" class="form-control" id="device-name" value="' + name + '">' +
+        '</div>' +
+        '<div class="input-group m-t">' +
+        '<div class="input-group-addon input-group-addon-label">Heat GPIO</div>' +
+        '<input type="text" class="form-control" id="heat-gpio">' +
+        '<div class="input-group-btn btn-group" data-toggle="buttons">' +
+        '<label class="btn btn-primary-outline">' +
+        '<input type="checkbox" id="invert-heat" autocomplete="off" value="invert">' +
+        'Invert' +
+        '</label>' +
+        '</div>' +
+        '</div>' +
+        '<div class="input-group m-t">' +
+        '<div class="input-group-addon input-group-addon-label">Cool GPIO</div>' +
+        '<input type="text" class="form-control" id="cool-gpio">' +
+        '<div class="input-group-btn btn-group" data-toggle="buttons">' +
+        '<label class="btn btn-primary-outline">' +
+        '<input type="checkbox" id="invert-cool" value="invert" autocomplete="off">' +
+        'Invert' +
+        '</label>' +
+        '</div>' +
+        '</div>' +
+        '<div class="input-group m-t">' +
+        '<div class="input-group-addon input-group-addon-label">Aux GPIO</div>' +
+        '<input type="text" class="form-control" id="aux-gpio">' +
+        '<div class="input-group-btn btn-group" data-toggle="buttons">' +
+        '<label class="btn btn-primary-outline">' +
+        '<input type="checkbox" id="invert-aux" value="invert" autocomplete="off">' +
+        'Invert' +
+        '</label>' +
+        '</div>' +
+        '</div>' +
+        '<div class="input-group m-t">' +
+        '<div class="input-group-addon input-group-addon-label">Calibration</div>' +
+        '<input type="number" class="form-control" id="calibration">' +
+        '</div>' +
+        '<div class="input-group m-t">' +
+        '<div class="input-group-btn btn-group" data-toggle="buttons">' +
+        '<label class="btn btn-primary-outline">' +
+        '<input type="checkbox" name="cutoff-enabled" id="cutoff-enabled" value="true" autocomplete="off">' +
+        'Cutoff Enabled' +
+        '</label>' +
+        '</div>' +
+        '</div>' +
+        '<div class="input-group m-t">' +
+        '<div class="input-group-addon input-group-addon-label">Safety</div>' +
+        '<input type="number" class="form-control" id="shutoff">' +
+        '</div>';
     htmlContent += "</div>";
 
-    if (piddata != undefined && (piddata.heat.gpio != "" || piddata.cool.gpio != ""))
-    {
-        if ("heat" in piddata && piddata.heat.gpio != "")
-        {
+    if (piddata != undefined && (piddata.heat.gpio != "" || piddata.cool.gpio != "")) {
+        if ("heat" in piddata && piddata.heat.gpio != "") {
             htmlContent = appendSettings(htmlContent, "heat", piddata, temp.scale);
         }
-        if ("cool" in piddata && piddata.cool.gpio != "")
-        {
+        if ("cool" in piddata && piddata.cool.gpio != "") {
             htmlContent = appendSettings(htmlContent, "cool", piddata, temp.scale);
         }
         htmlContent += "</div>";
     }
 
     htmlContent += '</form>' +
-         '<div class="btn-toolbar m-t">' +
-             '<button type="button" id="visibility" class="btn btn-primary" onClick="toggleVisibility(this);">Show</button>' +
-             '<button type="button" class="btn btn-primary" onClick="handleTriggerAdd(this);">Add New Trigger</button>' +
-             '<button type="button" class="btn btn-primary" onclick="saveDevice(this);">Save Changes</button>' +
-             '<button type="button" class="btn btn-primary" onclick="deleteDevice(this);">Delete</button>' +
-         '</div>'
-         +'</div>';
-    $("#edit-modal").modal("toggle");
-    $("#edit-modal .modal-body").empty();
-    $("#edit-modal .modal-footer").hide();
-    $("#edit-modal .modal-body").html(htmlContent);
+        '<div class="btn-toolbar m-t">' +
+        '<button type="button" id="visibility" class="btn btn-primary" onClick="toggleVisibility(this);">Show</button>' +
+        '<button type="button" class="btn btn-primary" onClick="handleTriggerAdd(this);">Add New Trigger</button>' +
+        '<button type="button" class="btn btn-primary" onclick="saveDevice(this);">Save Changes</button>' +
+        '<button type="button" class="btn btn-primary" onclick="deleteDevice(this);">Delete</button>' +
+        '</div>'
+        + '</div>';
+    var editModal = $("#edit-modal");
+    editModal.modal("toggle");
+    var editModalBody = editModal.find(".modal-body");
+    editModalBody.empty();
+    editModal.find(".modal-footer").hide();
+    editModalBody.html(htmlContent);
 
-        var modal = $("#edit-modal .modal-body");
-         if (temp.hidden)
-         {
-           modal.find("#visibility").text("Show");
-         }
-         else
-         {
-           modal.find("#visibility").text("Hide");
-         }
+    if (temp.hidden) {
+        editModalBody.find("#visibility").text("Show");
+    }
+    else {
+        editModalBody.find("#visibility").text("Hide");
+    }
 
 
-         if (piddata != undefined)
-         {
-             modal.find('#cool-gpio').val(piddata.cool.gpio);
-             modal.find('#heat-gpio').val(piddata.heat.gpio);
-             if (piddata.cool.inverted)
-             {
-                modal.find('#invert-cool').parent().click();
-             }
-             if (piddata.heat.inverted)
-             {
-                modal.find('#invert-heat').parent().click();
-             }
+    if (piddata != undefined) {
+        modal.find('#cool-gpio').val(piddata.cool.gpio);
+        modal.find('#heat-gpio').val(piddata.heat.gpio);
+        if (piddata.cool.inverted) {
+            modal.find('#invert-cool').parent().click();
+        }
+        if (piddata.heat.inverted) {
+            modal.find('#invert-heat').parent().click();
+        }
 
-             if ("heat" in piddata)
-             {
-                type = "heat";
-                var heatDiv = modal.find("#" + type);
-                 heatDiv.find("#cycletime_input").val(piddata[type].cycle);
-                 heatDiv.find("#p_input").val(piddata[type].p);
-                 heatDiv.find("#i_input").val(piddata[type].i);
-                 heatDiv.find("#d_input").val(piddata[type].d);
-             }
-             if ("cool" in piddata)
-             {
-                 type = "cool";
-                 var heatDiv = modal.find("#" + type);
-                  heatDiv.find("#cycletime_input").val(piddata[type].cycle);
-                  heatDiv.find("#p_input").val(piddata[type].p);
-                  heatDiv.find("#i_input").val(piddata[type].i);
-                  heatDiv.find("#d_input").val(piddata[type].d);
-             }
-             if ("aux" in piddata)
-             {
-                modal.find('#aux-gpio').val(piddata.aux.gpio);
-                if (piddata.aux.inverted)
-                {
-                   modal.find('#invert-aux').parent().click();
-                }
-             }
-         }
-         if (temp != undefined)
-         {
-             modal.find('#calibration').val(temp.calibration);
-             modal.find('#shutoff').val(temp.cutoff);
-             if (temp.cutoffEnabled)
-             {
-                modal.find("#cutoff-enabled").parent().click();
-             }
-         }
+        if ("heat" in piddata) {
+            var type = "heat";
+            var heatDiv = modal.find("#" + type);
+            heatDiv.find("#cycletime_input").val(piddata[type].cycle);
+            heatDiv.find("#p_input").val(piddata[type].p);
+            heatDiv.find("#i_input").val(piddata[type].i);
+            heatDiv.find("#d_input").val(piddata[type].d);
+        }
+        if ("cool" in piddata) {
+            type = "cool";
+            var coolDiv = modal.find("#" + type);
+            coolDiv.find("#cycletime_input").val(piddata[type].cycle);
+            coolDiv.find("#p_input").val(piddata[type].p);
+            coolDiv.find("#i_input").val(piddata[type].i);
+            coolDiv.find("#d_input").val(piddata[type].d);
+        }
+        if ("aux" in piddata) {
+            modal.find('#aux-gpio').val(piddata.aux.gpio);
+            if (piddata.aux.inverted) {
+                modal.find('#invert-aux').parent().click();
+            }
+        }
+    }
+    if (temp != undefined) {
+        modal.find('#calibration').val(temp.calibration);
+        modal.find('#shutoff').val(temp.cutoff);
+        if (temp.cutoffEnabled) {
+            modal.find("#cutoff-enabled").parent().click();
+        }
+    }
 }
 
-function clearRecipe()
-{
+function clearRecipe() {
     $.ajax({
-        url : '/clearbeerxml',
-        type : 'get',
+        url: '/clearbeerxml',
+        type: 'get',
         dataType: "text",
-        success : function(data) {
+        success: function (data) {
             data = null;
-            swal({title: "Completed", text:"Cleared BeerXML"});
+            swal({title: "Completed", text: "Cleared BeerXML"});
         }
     });
 }
 
-function checkForUpdate()
-{
+function checkForUpdate() {
     $.ajax({
-        url : '/checkgit',
+        url: '/checkgit',
         dataType: "text",
-        success : function(data) {
+        success: function (data) {
             data = null;
-            swal({title: "Checking", text:"Checking git for updates..."});
+            swal({title: "Checking", text: "Checking git for updates..."});
         },
-        error: function (data)
-        {
-            swal({title:"Update", text:"Already checking for updates"});
+        error: function (data) {
+            swal({title: "Update", text: "Already checking for updates"});
         }
 
     });
     return false;
 }
 
-function showHopAdditions()
-{
+function showHopAdditions() {
     showRecipeDetails("hops");
 }
 
-function showMashProfile()
-{
+function showMashProfile() {
     showRecipeDetails("mash");
 }
 
-function showFermentationProfile()
-{
+function showFermentationProfile() {
     showRecipeDetails("fermentation");
 }
 
-function showRecipeDetails(recipeSubset)
-{
+function showRecipeDetails(recipeSubset) {
     var recipeName = $("#recipeName").text();
-
-    if (recipeName != undefined && recipeName != "")
-    {
-        $("#edit-modal").modal('toggle');
-        $("#edit-modal").data('recipe', recipeName);
-        $("#edit-modal-heading").html("Recipe Settings");
+    var editModal = $("#edit-modal");
+    var editModalHeading = $("#edit-modal-heading");
+    if (recipeName != undefined && recipeName != "") {
+        editModal.modal('toggle');
+        editModal.data('recipe', recipeName);
+        editModalHeading.html("Recipe Settings");
         $.ajax({
             url: '/showrecipe',
-            data: {recipeName: recipeName,
-                subset: recipeSubset},
+            data: {
+                recipeName: recipeName,
+                subset: recipeSubset
+            },
             dataType: 'html',
-            success: function(html) {
-                $("#edit-modal-heading").html(recipeName);
-                $("#edit-modal .modal-body").html(html);
-                $("#edit-modal .btn-primary").hide();
+            success: function (html) {
+                editModalHeading.html(recipeName);
+                editModal.find(".modal-body").html(html);
+                editModal.find(".btn-primary").hide();
             }
         });
     }
-    else
-    {
-        $("#edit-modal").modal('toggle');
-        $("#edit-modal-heading").html(recipeSubset);
-        $("#edit-modal .modal-body").html("<h1>Not implemented yet, sorry</h1>");
+    else {
+        editModal.modal('toggle');
+        editModalHeading.html(recipeSubset);
+        editModal.find(".modal-body").html("<h1>Not implemented yet, sorry</h1>");
     }
 }
 
 function selectPhAddress(element) {
     var form = element.closest("form");
-	if (element.value == "") {
+    if (element.value == "") {
 
-		form.find("[id=adc_pin]").show();
-	} else {
-		form.find("[id=adc_pin]").hide();
-	}
+        form.find("[id=adc_pin]").show();
+    } else {
+        form.find("[id=adc_pin]").hide();
+    }
 }
 
 function phAINChange(element) {
     var form = element.closest("form");
-	if (element.value == "") {
-		form.find("[id=dsAddress]").show();
-		form.find("[id=dsOffset]").show();
-	} else {
-		form.find("[id=dsAddress]").hide();
-		form.find("[id=dsOffset]").hide();
-	}
+    if (element.value == "") {
+        form.find("[id=dsAddress]").show();
+        form.find("[id=dsOffset]").show();
+    } else {
+        form.find("[id=dsAddress]").hide();
+        form.find("[id=dsOffset]").hide();
+    }
 }
 
 
 function shutdownSystem() {
     sweetAlert({
-      title: "Shutdown!",
-      text: "This will shutdown the whole system. Are you sure?",
-      type: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#DD6B55",
-      confirmButtonText: "Yes, shutdown system",
-      closeOnConfirm: false,
-      html: false,
-      allowEscapeKey: true,
-      allowOutsideClick: true
-    }, function(shutdownSystem){
+        title: "Shutdown!",
+        text: "This will shutdown the whole system. Are you sure?",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#DD6B55",
+        confirmButtonText: "Yes, shutdown system",
+        closeOnConfirm: false,
+        html: false,
+        allowEscapeKey: true,
+        allowOutsideClick: true
+    }, function (shutdownSystem) {
         if (!shutdownSystem) {
-        return;
+            return;
         }
         var txtMsg = "Shutting Down System.";
         reallyShutdown(true);
         swal("Shutting down!",
-        txtMsg,
-        "success");
-      });
+            txtMsg,
+            "success");
+    });
 }
 
 function shutdown() {
     sweetAlert({
-      title: "Shutdown!",
-      text: "This will shutdown Elsinore. Are you sure?",
-      type: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#DD6B55",
-      confirmButtonText: "Yes, shutdown",
-      closeOnConfirm: false,
-      html: false,
-      allowEscapeKey: true,
-      allowOutsideClick: true
-    }, function(shutdownSystem){
+        title: "Shutdown!",
+        text: "This will shutdown Elsinore. Are you sure?",
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#DD6B55",
+        confirmButtonText: "Yes, shutdown",
+        closeOnConfirm: false,
+        html: false,
+        allowEscapeKey: true,
+        allowOutsideClick: true
+    }, function (shutdownSystem) {
         if (!shutdownSystem) {
-        return;
+            return;
         }
         var txtMsg = "Shutting Down Elsinore.";
         reallyShutdown(false);
         swal("Shutting down!",
-        txtMsg,
-        "success");
-      });
+            txtMsg,
+            "success");
+    });
 }
 
 function reallyShutdown(shutdownSystem) {
-$.ajax({
-        url : 'shutdownSystem',
-        type : 'POST',
-        data : "turnoff=" + shutdownSystem,
-        success : function(data) {
+    $.ajax({
+        url: 'shutdownSystem',
+        type: 'POST',
+        data: "turnoff=" + shutdownSystem,
+        success: function (data) {
             data = null
         }
     });
 }
 
 function updateElsinore() {
-	$.ajax({
-		url : 'restartUpdate',
-		type : 'POST',
-		success : function(data) {
-			data = null
-		}
-	});
-	window.disableUpdates = 0;
-	return false;
+    $.ajax({
+        url: 'restartUpdate',
+        type: 'POST',
+        success: function (data) {
+            data = null
+        }
+    });
+    window.disableUpdates = 0;
+    return false;
 }

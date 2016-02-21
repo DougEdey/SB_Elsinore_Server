@@ -36,7 +36,7 @@ import javax.xml.xpath.XPathFactory;
 public class BeerXMLWriter {
 
     Recipe[] recipes;
-    String TAG = BeerXMLWriter.class.getName();
+    //String TAG = BeerXMLWriter.class.getName();
 
     public BeerXMLWriter(Recipe[] recipes) {
         this.recipes = recipes;
@@ -44,12 +44,12 @@ public class BeerXMLWriter {
 
     public int writeRecipes(File outputFile) throws IOException {
         FileOutputStream outputStream = new FileOutputStream(outputFile);
-        return writeRecipes(outputStream, false);
+        return writeRecipes(outputStream);
     }
 
-    public int writeRecipes(OutputStream recipeOutputStream, boolean publish) throws IOException {
+    public int writeRecipes(OutputStream recipeOutputStream) throws IOException {
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder = null;
+        DocumentBuilder dBuilder;
         try {
             dBuilder = dbFactory.newDocumentBuilder();
         } catch (ParserConfigurationException e1) {
@@ -59,15 +59,14 @@ public class BeerXMLWriter {
             return -1;
         }
 
-        Document recipeDocument = null;
-        XPath xp = null;
+        Document recipeDocument;
+        XPath xp ;
         // Create the Recipe Node
         recipeDocument = dBuilder.newDocument();
         Element recipesElement = recipeDocument.createElement("RECIPES");
 
         int success = 0;
-        for (int i = 0; i < recipes.length; i++) {
-            Recipe recipe = recipes[i];
+        for (Recipe recipe: recipes) {
             try {
                 Element recipeElement = writeRecipe(recipe, recipeDocument);
                 if (recipeElement != null) {
@@ -653,7 +652,7 @@ public class BeerXMLWriter {
 
         if (yeast.getTimesCultured() > 0) {
             tElement = recipeDocument.createElement("TIMES_CULTURED");
-            tElement.setTextContent(String.format("%.6f", yeast.getTimesCultured()));
+            tElement.setTextContent(String.format("%.6d", yeast.getTimesCultured()));
             yeastElement.appendChild(tElement);
         }
 
