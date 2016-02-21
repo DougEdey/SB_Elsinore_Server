@@ -75,7 +75,7 @@ function parseVessels(vessels)
         }
 
     });
-    if ($("#hiddenProbes #probeList option").length == 0)
+    if ($("#hiddenProbes #probeList option").length == 1)
     {
         $("#hiddenProbes").hide();
     }
