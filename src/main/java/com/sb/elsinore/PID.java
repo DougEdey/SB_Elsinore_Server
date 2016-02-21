@@ -1158,7 +1158,9 @@ public final class PID implements Runnable {
                 this.outputControl.setDuty(this.duty_cycle);
                 this.outputThread.interrupt();
             }
-        } else if (this.getTempF().compareTo(minTempF) >= 0 && this.getTempF().compareTo(maxTempF) <= 0 && this.minTimePassed(state)) {
+        } else if (this.getTempF().compareTo(minTempF) >= 0 && this.getTempF().compareTo(maxTempF) <= 0
+                && this.duty_cycle.compareTo(new BigDecimal(0)) != 0
+                && this.minTimePassed(state)) {
             this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
             this.duty_cycle = BigDecimal.ZERO;
             this.outputControl.setDuty(this.duty_cycle);
