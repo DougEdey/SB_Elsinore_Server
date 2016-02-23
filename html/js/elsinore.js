@@ -1547,25 +1547,28 @@ function changeName() {
 
 function selectedI2C(input) {
     var selectedDevice = input.selectedOptions[0].value;
-    $(input.parentElement).find("select[id^=i2c-]").css("display", "none");
-    $(input.parentElement).find("select[id=" + selectedDevice + "]").css("display", "block");
+    var parent = $(input.parentElement);
+    parent.find("select[id^=i2c-]").css("display", "none");
+    parent.find("select[id=" + selectedDevice + "]").css("display", "block");
+    //parent.find("select[id=i2c-")
 }
 
 function selectedInput(input) {
+    var parent = $(input.parentElement);
     if (input.selectedOptions[0].value == "ds2450") {
-        $(input.parentElement).find("div[id=ds_div]").css("display", "block");
-        $(input.parentElement).find("div[id=ain_div]").css("display", "none");
-        $(input.parentElement).find("div[id=i2c_div]").css("display", "none");
+        parent.find("div[id=ds_div]").css("display", "block");
+        parent.find("div[id=ain_div]").css("display", "none");
+        parent.find("div[id=i2c_div]").css("display", "none");
     }
     else if (input.selectedOptions[0].value == "ain") {
-        $(input.parentElement).find("div[id=ds_div]").css("display", "none");
-        $(input.parentElement).find("div[id=ain_div]").css("display", "block");
-        $(input.parentElement).find("div[id=i2c_div]").css("display", "none");
+        parent.find("div[id=ds_div]").css("display", "none");
+        parent.find("div[id=ain_div]").css("display", "block");
+        parent.find("div[id=i2c_div]").css("display", "none");
     }
     else if (input.selectedOptions[0].value == "i2c") {
-        $(input.parentElement).find("div[id=ds_div]").css("display", "none");
-        $(input.parentElement).find("div[id=ain_div]").css("display", "none");
-        $(input.parentElement).find("div[id=i2c_div]").css("display", "block");
+        parent.find("div[id=ds_div]").css("display", "none");
+        parent.find("div[id=ain_div]").css("display", "none");
+        parent.find("div[id=i2c_div]").css("display", "block");
     }
 }
 

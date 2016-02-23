@@ -125,8 +125,9 @@ public class PhSensor {
      */
     public final void calibrate(final BigDecimal targetRead) {
         BigDecimal tolerance = new BigDecimal(0.3);
+        this.offset = BigDecimal.ZERO;
         BigDecimal currentValue = this.calcPhValue();
-        if (currentValue.subtract(targetRead).plus()
+        if (currentValue.subtract(targetRead).abs()
                 .compareTo(tolerance) > 0) {
             // We're outside of the tolerance. So Set the offset.
             offset = targetRead.subtract(currentValue);
@@ -150,6 +151,7 @@ public class PhSensor {
         retVal.put("phReading", phReading);
         retVal.put("name", name);
         retVal.put("deviceType", model);
+        retVal.put("offset", getOffset());
         return retVal;
     }
 
@@ -372,7 +374,9 @@ public class PhSensor {
      * @param attribute The Calibration offset
      */
     public final void setOffset(final String attribute) {
-        setOffset(new BigDecimal(attribute));
+        if (attribute != null && attribute.length() > 0) {
+            setOffset(new BigDecimal(attribute));
+        }
     }
 
     /**

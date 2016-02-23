@@ -128,9 +128,14 @@ public class PhSensorForm implements Renderable {
                             ._option();
                 }
                 html._select();
-
+                int i2cSensorAddr = Integer.parseInt(phSensor.getI2CDevAddressString());
                 for (String device: I2CDevice.getAvailableDevices()) {
-                    html.select(class_("form-control m-t ").name(device).id(device).style("display:none"));
+                    String devStyle = "display: none";
+                    if (phSensor.getI2CDevicePath().endsWith(device))
+                    {
+                        devStyle = "display: block";
+                    }
+                    html.select(class_("form-control m-t ").name(device).id(device).style(devStyle));
                     html.option(value("").selected_if(phSensor.getI2CDevicePath().equals("")))
                             .write(Messages.I2C_DEVICE_ADDRESS)._option();
                     ArrayList<String> devAddrs = I2CDevice.getAvailableAddresses(device);
@@ -141,7 +146,8 @@ public class PhSensorForm implements Renderable {
                     }
                     else {
                         for (String addr : devAddrs) {
-                            html.option(value(addr).selected_if(phSensor.getI2CDevAddressString().equals(addr)))
+                            int addrInt = Integer.decode(addr);
+                            html.option(value(addr).selected_if(addrInt == i2cSensorAddr))
                                     .write(addr)._option();
                         }
                     }
