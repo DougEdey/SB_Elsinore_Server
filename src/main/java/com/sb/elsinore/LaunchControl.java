@@ -397,6 +397,12 @@ public class LaunchControl {
         // See if we have an active configuration file
         readConfig();
 
+        // Load the System probe if it's not configured
+        Temp systemProbe = findTemp("System");
+        if (systemProbe == null)
+        {
+            addSystemTemp();
+        }
         // Debug info before launching the BrewServer itself
         LaunchControl.loadCompleted = true;
         BrewServer.LOG.log(Level.INFO, "CONFIG READ COMPLETED***********");

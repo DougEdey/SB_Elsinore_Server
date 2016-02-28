@@ -44,8 +44,8 @@
                     <li id="settings" class="nav-item"><a class="nav-link" href="#" onclick="showConfig();">System Configuration</a></li>
                     <li id="log" class="nav-item"><a class="nav-link" href="elsinore.log" target="_blank">Logfile</a></li>
                     <li id="hiddenProbes" class="nav-item">
-                        <select class="form-control" onclick="editHidden(this);" id="probeList">
-                            <option>Hidden Probes</option>
+                        <select class="form-control" id="probeList" onchange="editHidden(this);" onfocus="this.selectedIndex=-1;">
+                            <option value="">Hidden Probes</option>
                         </select>
                     </li>
                     <li role="separator" class="dropdown-divider"></li>

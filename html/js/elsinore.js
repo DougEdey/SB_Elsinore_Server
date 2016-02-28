@@ -1573,7 +1573,10 @@ function selectedInput(input) {
 }
 
 function editHidden(element) {
+
     var option = $(element).find("option:selected");
+    if (option.val() == "")
+    {return;}
     showDeviceEdit(option, option.val(), option.text());
 }
 
