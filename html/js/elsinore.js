@@ -131,11 +131,11 @@ function parseTriggers(triggers) {
                 }
             }
         });
-        var triggerLi = triggerTable.find("#footer");
+        var triggerLi = triggerTable.find(".trigger-footer");
         if (triggerLi.size() == 0) {
-            triggerTable.append("<a href='#' class='list-group-item trigger-row' draggable='true'" +
+            triggerTable.append("<a class='list-group-item list-group-item-warning trigger-row trigger-footer' draggable='true'" +
                 "id='footer' onClick='toggleTriggers(this);'>Toggle</a>");
-            triggerLi = triggerTable.find("#footer");
+            triggerLi = triggerTable.find(".trigger-footer");
         }
         if (enabled) {
             triggerLi.attr("name", "deactivate");
@@ -936,7 +936,7 @@ function saveDevice(submitButton) {
 }
 
 function handleTriggerAdd(e) {
-    var pid = $(e).closest("form").find("#device-address").val();
+    var pid = $(e).closest(".modal-body").find("#device-address").val();
 
     //$("#edit-modal").modal('toggle');
     var editModal = $("#edit-modal");
@@ -1045,7 +1045,7 @@ function submitNewTriggerStep(button) {
     data = jsonConcat(data, data1);
     data = jsonConcat(data, data2);
     if (!("tempprobe" in data)) {
-        data['tempprobe'] = data['temp']
+        data['tempprobe'] = $("#edit-modal").data('device');
     }
 
     if (!("position" in data)) {
