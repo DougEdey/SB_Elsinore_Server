@@ -1473,6 +1473,7 @@ function showConfig() {
             var editBody = editModal.find(".modal-body");
             editBody.html(settingsHTML);
             editModal.find(".modal-footer").hide();
+            var editModalBody = editModal.find(".modal-body");
             editModalBody.find("#recorderDiff").val(json.recorderDiff);
             editModalBody.find("#recorderTime").val(json.recorderTime);
             editModalBody.find("#owfs_server").val(json.owfs_server);
