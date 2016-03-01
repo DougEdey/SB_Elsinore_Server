@@ -1590,16 +1590,13 @@ function showDeviceEdit(element, addr, name) {
     var temp = $(element).data("temp");
     var htmlContent = "<div class='text-center'>" +
         "<ul class='nav nav-tabs' role='tablist'>";
-    type = "general";
+    var type = "general";
     htmlContent += "<li class='nav-item'><a class='nav-link active' aria-controls='" + type + "' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
     if (piddata != null) {
-        if ("heat" in piddata && piddata.heat.gpio != "") {
-            type = "heat";
-            htmlContent += "<li class='nav-item'><a class='nav-link' aria-controls='" + type + "' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
-        }
-        if ("cool" in piddata && piddata.cool.gpio != "") {
-            type = "cool";
-            htmlContent += "<li class='nav-item'><a class='nav-link' aria-controls='" + type + "' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
+        for(var pidtype of ["heat", "cool"]) {
+            if (pidtype in piddata && piddata[pidtype].gpio != "") {
+                htmlContent += "<li class='nav-item'><a class='nav-link' aria-controls='" + pidtype + "' href='#" + pidtype + "' role='tab' data-toggle='tab'>" + pidtype.capitalizeFirstLetter() + "</a></li>";
+            }
         }
     }
     htmlContent += "</ul>";
@@ -1691,40 +1688,25 @@ function showDeviceEdit(element, addr, name) {
         editModalBody.find("#visibility").text("Hide");
     }
 
-
     if (piddata != undefined) {
-        editModalBody.find('#cool-gpio').val(piddata.cool.gpio);
-        editModalBody.find('#heat-gpio').val(piddata.heat.gpio);
-        if (piddata.cool.inverted) {
-            editModalBody.find('#invert-cool').parent().click();
-        }
-        if (piddata.heat.inverted) {
-            editModalBody.find('#invert-heat').parent().click();
-        }
+        for(var pidtype of ["heat", "cool", "aux"]) {
+            if(pidtype in piddata) {
+                editModalBody.find("#" + pidtype + "-gpio").val(piddata[pidtype].gpio);
+                if (piddata[pidtype].inverted) {
+                    editModalBody.find("#invert-" + pidtype).parent().click();
+                }
 
-        if ("heat" in piddata) {
-            var type = "heat";
-            var heatDiv = editModalBody.find("#" + type);
-            heatDiv.find("#cycletime_input").val(piddata[type].cycle);
-            heatDiv.find("#p_input").val(piddata[type].p);
-            heatDiv.find("#i_input").val(piddata[type].i);
-            heatDiv.find("#d_input").val(piddata[type].d);
-        }
-        if ("cool" in piddata) {
-            type = "cool";
-            var coolDiv = editModalBody.find("#" + type);
-            coolDiv.find("#cycletime_input").val(piddata[type].cycle);
-            coolDiv.find("#p_input").val(piddata[type].p);
-            coolDiv.find("#i_input").val(piddata[type].i);
-            coolDiv.find("#d_input").val(piddata[type].d);
-        }
-        if ("aux" in piddata) {
-            editModalBody.find('#aux-gpio').val(piddata.aux.gpio);
-            if (piddata.aux.inverted) {
-                editModalBody.find('#invert-aux').parent().click();
+                if (pidtype != "aux") {
+                    var pidTypeDiv = editModalBody.find("#" + pidtype);
+                    pidTypeDiv.find("#cycletime_input").val(piddata[pidtype].cycle);
+                    pidTypeDiv.find("#p_input").val(piddata[pidtype].p);
+                    pidTypeDiv.find("#i_input").val(piddata[pidtype].i);
+                    pidTypeDiv.find("#d_input").val(piddata[pidtype].d);
+                }
             }
         }
     }
+
     if (temp != undefined) {
         editModalBody.find('#calibration').val(temp.calibration);
         editModalBody.find('#shutoff').val(temp.cutoff);
