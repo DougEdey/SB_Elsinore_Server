@@ -377,6 +377,8 @@ function loadPIDData(card, pid) {
             auxSwitch.addClass("btn-warning-outline");
             auxSwitch.removeClass("btn-warning");
         }
+    } else if (card.find("#aux").length != 0) {
+            card.find("#aux").remove();
     }
 
     var selected = pidmode.find(".btn-danger");
@@ -1687,6 +1689,7 @@ function showDeviceEdit(element, addr, name) {
     else {
         editModalBody.find("#visibility").text("Hide");
     }
+
 
     if (piddata != undefined) {
         for(var pidtype of ["heat", "cool", "aux"]) {
