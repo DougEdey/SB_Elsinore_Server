@@ -1475,28 +1475,27 @@ function showConfig() {
             var editBody = editModal.find(".modal-body");
             editBody.html(settingsHTML);
             editModal.find(".modal-footer").hide();
-            var editModalBody = editModal.find(".modal-body");
-            editModalBody.find("#recorderDiff").val(json.recorderDiff);
-            editModalBody.find("#recorderTime").val(json.recorderTime);
-            editModalBody.find("#owfs_server").val(json.owfs_server);
-            editModalBody.find("#owfs_port").val(json.owfs_port);
+            editBody.find("#recorderDiff").val(json.recorderDiff);
+            editBody.find("#recorderTime").val(json.recorderTime);
+            editBody.find("#owfs_server").val(json.owfs_server);
+            editBody.find("#owfs_port").val(json.owfs_port);
             if (json.OWFS) {
-                editModalBody.find("#use_owfs").parent().click();
+                editBody.find("#use_owfs").parent().click();
             }
 
             if (json.recorder) {
-                editModalBody.find("#recorder").parent().click();
+                editBody.find("#recorder").parent().click();
             }
 
             if (json.restore) {
-                editModalBody.find("#restore").parent().click();
+                editBody.find("#restore").parent().click();
             }
 
             if (json.scale == "F") {
-                editModalBody.find("#Fahrenheit").click();
+                editBody.find("#Fahrenheit").click();
             }
             else if (json.scale == "C") {
-                editModalBody.find("#Celsius").click();
+                editBody.find("#Celsius").click();
             }
         }
 
