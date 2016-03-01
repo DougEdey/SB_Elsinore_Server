@@ -1693,18 +1693,18 @@ function showDeviceEdit(element, addr, name) {
 
 
     if (piddata != undefined) {
-        modal.find('#cool-gpio').val(piddata.cool.gpio);
-        modal.find('#heat-gpio').val(piddata.heat.gpio);
+        editModalBody.find('#cool-gpio').val(piddata.cool.gpio);
+        editModalBody.find('#heat-gpio').val(piddata.heat.gpio);
         if (piddata.cool.inverted) {
-            modal.find('#invert-cool').parent().click();
+            editModalBody.find('#invert-cool').parent().click();
         }
         if (piddata.heat.inverted) {
-            modal.find('#invert-heat').parent().click();
+            editModalBody.find('#invert-heat').parent().click();
         }
 
         if ("heat" in piddata) {
             var type = "heat";
-            var heatDiv = modal.find("#" + type);
+            var heatDiv = editModalBody.find("#" + type);
             heatDiv.find("#cycletime_input").val(piddata[type].cycle);
             heatDiv.find("#p_input").val(piddata[type].p);
             heatDiv.find("#i_input").val(piddata[type].i);
@@ -1712,24 +1712,24 @@ function showDeviceEdit(element, addr, name) {
         }
         if ("cool" in piddata) {
             type = "cool";
-            var coolDiv = modal.find("#" + type);
+            var coolDiv = editModalBody.find("#" + type);
             coolDiv.find("#cycletime_input").val(piddata[type].cycle);
             coolDiv.find("#p_input").val(piddata[type].p);
             coolDiv.find("#i_input").val(piddata[type].i);
             coolDiv.find("#d_input").val(piddata[type].d);
         }
         if ("aux" in piddata) {
-            modal.find('#aux-gpio').val(piddata.aux.gpio);
+            editModalBody.find('#aux-gpio').val(piddata.aux.gpio);
             if (piddata.aux.inverted) {
-                modal.find('#invert-aux').parent().click();
+                editModalBody.find('#invert-aux').parent().click();
             }
         }
     }
     if (temp != undefined) {
-        modal.find('#calibration').val(temp.calibration);
-        modal.find('#shutoff').val(temp.cutoff);
+        editModalBody.find('#calibration').val(temp.calibration);
+        editModalBody.find('#shutoff').val(temp.cutoff);
         if (temp.cutoffEnabled) {
-            modal.find("#cutoff-enabled").parent().click();
+            editModalBody.find("#cutoff-enabled").parent().click();
         }
     }
 }
