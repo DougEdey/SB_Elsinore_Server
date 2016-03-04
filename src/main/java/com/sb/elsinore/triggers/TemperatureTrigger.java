@@ -138,7 +138,11 @@ public class TemperatureTrigger implements TriggerInterface {
         this.mode = inMode;
 
         this.targetTemp = new BigDecimal(
-                parameters.get(TemperatureTrigger.TARGET_TEMP).toString().replace(",", "."), this.temperatureProbe.context);
+                parameters.get(TemperatureTrigger.TARGET_TEMP).toString().replace(",", "."),
+                this.temperatureProbe.context);
+        this.exitTemp = new BigDecimal(
+                parameters.get(TemperatureTrigger.EXIT_TEMP).toString().replace(",", "."),
+                this.temperatureProbe.context);
     }
 
     /**

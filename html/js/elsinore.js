@@ -274,7 +274,7 @@ function requestData() {
 
 function addProbeCard(vesselProbe, position) {
     var div = "<div id='" + vesselProbe
-        + "' class='col-sm-12 col-md-6 col-lg-5 col-xl-4 card card-block text-center m-x'>"
+        + "' class='col-sm-12 col-md-6 col-lg-5 col-xl-4 card card-block text-xs-center m-x'>"
         + "</div>";
     $("#probes").children("#card-deck").append(div);
     return $("#probes #" + vesselProbe);
@@ -292,7 +292,7 @@ function setCardName(card, name) {
     var addr = card[0].id;
     var title = card.find("#card-header");
     if (title.size() == 0) {
-        card.prepend("<button class='card-header btn bth-secondary' id='card-header' data-device='" + addr + "' type='button' onclick='editDevice(this)'></button>");
+        card.prepend("<div class='btn-toolbar'><button class='btn-block card-header btn bth-secondary' id='card-header' data-device='" + addr + "' type='button' onclick='editDevice(this)'></button></div>");
         title = card.find("#card-header");
     }
 
@@ -353,7 +353,7 @@ function loadPIDData(card, pid) {
     // Mode buttons
     var pidmode = card.find("#mode");
     if (pidmode.size() == 0) {
-        card.append("<div id='mode' class='btn-toolbar'>"
+        card.append("<div class='btn-toolbar' id='mode'>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='off'>Off</button>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='auto'>Auto</button>"
             + "<button type='button' onclick='toggleMode(this)' class='btn btn-secondary' id='manual'>Manual</button>"
