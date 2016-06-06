@@ -5,6 +5,9 @@ import com.sb.elsinore.triggers.WaitTrigger;
 import org.json.simple.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.HashMap;
@@ -14,22 +17,24 @@ import static org.junit.Assert.assertEquals;
 import static org.powermock.api.mockito.PowerMockito.*;
 
 /**
+ * Trigger creation tests
  * Created by doug on 25/09/15.
  */
 @RunWith(PowerMockRunner.class)
+@PrepareForTest(LaunchControl.class)
 public class TriggerTest {
 
     private TriggerControl mTriggerControl;
-
+    private LaunchControl launchControl;
     @Test
     public void testTriggerInterface()
     {
-        //mLaunchControl = new LaunchControl(8080);
+
         //doNothing().when(mLaunchControl.saveSettings());//.saveSettings();
-        //mock(LaunchControl.class);
+        launchControl = mock(LaunchControl.class);
+        PowerMockito.mockStatic(LaunchControl.class);
         try {
-            spy(LaunchControl.class);
-            doNothing().when(LaunchControl.class);
+            Mockito.when(LaunchControl.getInstance()).thenReturn(launchControl);
         }
         catch (Exception e)
         {

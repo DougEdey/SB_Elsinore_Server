@@ -66,7 +66,7 @@ public interface TriggerInterface extends Comparable<TriggerInterface> {
      * Get the current status of this object as a JSONObject.
      * @return the current status.
      */
-    JSONObject getJSONStatus();
+    String getJSONStatus();
 
     /**
      * Get the type of device this trigger is intended for.
@@ -82,7 +82,4 @@ public interface TriggerInterface extends Comparable<TriggerInterface> {
      */
     boolean updateTrigger(JSONObject params);
 
-    boolean readTrigger(Element rootElement);
-
-    void updateElement(Element rootElement);
 }

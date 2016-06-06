@@ -1,11 +1,5 @@
 package com.sb.elsinore.triggers;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.sb.elsinore.*;
 import com.sb.elsinore.notificiations.Notifications;
 import com.sb.elsinore.notificiations.WebNotification;
@@ -13,9 +7,11 @@ import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.tools.PrettyWriter;
 
-import static org.rendersnake.HtmlAttributesFactory.*;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Date;
 
-import org.w3c.dom.Element;
+import static org.rendersnake.HtmlAttributesFactory.*;
 
 /**
  * A TemperatureTrigger will hold until the specified probe hits the target
@@ -175,71 +171,6 @@ public class TemperatureTrigger implements TriggerInterface {
             return true;
         }
         return false;
-    }
-
-    @Override
-    public void updateElement(Element rootElement) {
-        Element triggerElement;
-        if (rootElement.getNodeName().equals(TriggerControl.NAME))
-        {
-            triggerElement = LaunchControl.addNewElement(rootElement, TriggerInterface.NAME);
-        }
-        else if (rootElement.getNodeName().equals(TriggerInterface.NAME))
-        {
-            triggerElement = rootElement;
-        }
-        else
-        {
-            return;
-        }
-
-        triggerElement.setAttribute(TriggerInterface.POSITION, Integer.toString(this.position));
-        triggerElement.setAttribute(TriggerInterface.TYPE, getName());
-
-        if (triggerElement.hasChildNodes()) {
-            Set<Element> delElements = new HashSet<>();
-            // Can't delete directly from the nodelist, concurrency issues.
-            for (int i = 0; i < triggerElement.getChildNodes().getLength(); i++) {
-                delElements.add((Element) triggerElement.getChildNodes().item(i));
-            }
-            // now we can delete them.
-            for (Element e : delElements) {
-                e.getParentNode().removeChild(e);
-            }
-        }
-
-        LaunchControl.addNewElement(triggerElement, TemperatureTrigger.METHOD).setTextContent(this.method);
-        LaunchControl.addNewElement(triggerElement, TemperatureTrigger.MODE).setTextContent(this.mode);
-        LaunchControl.addNewElement(triggerElement, TemperatureTrigger.STEPTYPE).setTextContent(this.type);
-        LaunchControl.addNewElement(triggerElement, TriggerInterface.ACTIVE).setTextContent(Boolean.toString(this.active));
-        LaunchControl.addNewElement(triggerElement, TemperatureTrigger.TARGET_TEMP).setTextContent(this.targetTemp.toString());
-        LaunchControl.addNewElement(triggerElement, TemperatureTrigger.EXIT_TEMP).setTextContent(this.exitTemp.toString());
-        LaunchControl.addNewElement(triggerElement, TemperatureTrigger.TEMPPROBE).setTextContent(this.temperatureProbe.getName());
-    }
-
-    @Override
-    public boolean readTrigger(Element rootElement) {
-        if (!rootElement.getAttribute(TriggerInterface.TYPE).equals(getName()))
-        {
-            return false;
-        }
-
-        position = Integer.parseInt(rootElement.getAttribute(TemperatureTrigger.POSITION));
-        method = LaunchControl.getTextForElement(rootElement, METHOD, "");
-        mode = LaunchControl.getTextForElement(rootElement, MODE, "");
-        type = LaunchControl.getTextForElement(rootElement, STEPTYPE, "");
-        if (LaunchControl.shouldRestore()) {
-            active = Boolean.parseBoolean(LaunchControl.getTextForElement(rootElement, ACTIVE, "false"));
-        }
-        targetTemp = new BigDecimal(LaunchControl.getTextForElement(rootElement, TARGET_TEMP, "0"));
-        exitTemp = new BigDecimal(LaunchControl.getTextForElement(rootElement, EXIT_TEMP, "0"));
-        String probe = LaunchControl.getTextForElement(rootElement, TEMPPROBE, null);
-        if (probe != null)
-        {
-            temperatureProbe = LaunchControl.findTemp(probe);
-        }
-
-        return true;
     }
 
     /**
@@ -487,27 +418,8 @@ public class TemperatureTrigger implements TriggerInterface {
      * @return The current status as a JSONObject.
      */
     @Override
-    public final JSONObject getJSONStatus() {
-        String targetTempString = String.format("%.2f", this.targetTemp)
-                + this.temperatureProbe.getScale();
-        String description = this.method + ": " + this.type;
-        if (this.mode != null) {
-            description +=" (" + this.mode + ")";
-        }
-
-        String startDateStamp = "";
-        if (this.startDate != null) {
-            startDateStamp = BrewDay.lFormat.format(this.startDate);
-        }
-
-        JSONObject currentStatus = new JSONObject();
-        currentStatus.put("position", this.position);
-        currentStatus.put("start", startDateStamp);
-        currentStatus.put("target", targetTempString);
-        currentStatus.put("description", description);
-        currentStatus.put("active", Boolean.toString(this.active));
-
-        return currentStatus;
+    public String getJSONStatus() {
+        return LaunchControl.getInstance().toJsonString(this);
     }
 
     /**
@@ -541,7 +453,7 @@ public class TemperatureTrigger implements TriggerInterface {
         return exitTemp;
     }
 
-    public void createNotifications(String s) {
+    private void createNotifications(String s) {
         if (webNotification != null) {
             //Clear the existing notifications
             clearNotifications();
@@ -552,7 +464,7 @@ public class TemperatureTrigger implements TriggerInterface {
         Notifications.getInstance().addNotification(webNotification);
     }
 
-    public void clearNotifications() {
+    private void clearNotifications() {
         if (webNotification == null) {
             return;
         }

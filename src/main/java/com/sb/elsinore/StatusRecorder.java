@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 
+import com.google.gson.annotations.Expose;
 import com.sb.common.SBStringUtils;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.json.simple.JSONArray;
@@ -18,25 +19,24 @@ import java.util.Map;
  */
 public class StatusRecorder implements Runnable {
 
-    public static final String RECORDER = "recorder";
-    public static final String RECORDER_TIME = "recorderTime";
-    public static final String RECORDER_DIFF = "recorderDiff";
+    @Expose
+    double diff = .15d;
+    @Expose
+    long sleep = 1000 * 5; // 5 seconds - is this too fast?
 
-    public static double THRESHOLD = .15d;
-    public static long SLEEP = 1000 * 5; // 5 seconds - is this too fast?
     private JSONObject lastStatus = null;
     private String logFile = null;
     private Thread thread;
-    private String recorderDirectory = StatusRecorder.defaultDirectory;
+    @Expose
+    String recorderDirectory = StatusRecorder.defaultDirectory;
     private HashMap<String, Status> temperatureMap;
     private HashMap<String, Status> dutyMap;
-    boolean writeRawLog = false;
-    public static String defaultDirectory = "graph-data/";
-    public static String DIRECTORY_PROPERTY = "recorder_directory";
-    public static String RECORDER_ENABLED = "recorder_enabled";
+    static String defaultDirectory = "graph-data/";
+    static String DIRECTORY_PROPERTY = "recorder_directory";
+    static String RECORDER_ENABLED = "recorder_enabled";
     private String currentDirectory = null;
 
-    public StatusRecorder(String recorderDirectory) {
+    StatusRecorder(String recorderDirectory) {
         this.recorderDirectory = recorderDirectory;
     }
 
@@ -106,38 +106,33 @@ public class StatusRecorder implements Runnable {
                 BrewServer.LOG.warning("Could not create directory: " + currentDirectory);
                 return;
             }
-            LaunchControl.setFileOwner(directoryFile.getParentFile());
-            LaunchControl.setFileOwner(directoryFile);
+            LaunchControl.getInstance().setFileOwner(directoryFile.getParentFile());
+            LaunchControl.getInstance().setFileOwner(directoryFile);
 
             //Generate a new log file under the current directory
             logFile = currentDirectory + "raw.log";
 
             File file = new File(this.logFile);
-            boolean fileExists = file.exists();
-            LaunchControl.setFileOwner(file);
+            LaunchControl.getInstance().setFileOwner(file);
 
             boolean continueRunning = true;
             while (continueRunning) {
                 //Just going to record when something changes
                 try {
-                    String status = LaunchControl.getJSONStatus();
+                    String status = LaunchControl.getInstance().getJSONStatus();
                     JSONObject newStatus = (JSONObject) JSONValue.parse(status);
                     if (lastStatus == null || isDifferent(lastStatus, newStatus)) {
                         //For now just log the whole status
                         //Eventually we may want multiple logs, etc.
-                        if (writeRawLog) {
-                            writeToLog(newStatus, fileExists);
-                        }
 
                         Date now = new Date();
                         printJsonToCsv(now, newStatus, currentDirectory);
                         lastStatus = newStatus;
-                        fileExists = true;
                     }
                 } catch (Exception ioe) {
                     continueRunning = false;
                 }
-                Thread.sleep(SLEEP);
+                Thread.sleep(sleep);
             }
         } catch (InterruptedException ex) {
             BrewServer.LOG.warning("Status Recorder shutting down");
@@ -145,9 +140,9 @@ public class StatusRecorder implements Runnable {
 
     }
     
-    protected boolean checkInitialized()
+    private boolean checkInitialized()
     {
-        return LaunchControl.isInitialized();
+        return LaunchControl.getInstance().isInitialized();
     }
 
     /**
@@ -157,8 +152,7 @@ public class StatusRecorder implements Runnable {
      * @param newStatus The JSON Status object to dump
      * @param directory The graph data directory.
      */
-    protected final void printJsonToCsv(final Date nowDate,
-            final JSONObject newStatus, final String directory) {
+    private void printJsonToCsv(Date nowDate, JSONObject newStatus, String directory) {
         //Now look for differences in the temperature and duty
         long now = nowDate.getTime();
         JSONArray vessels = (JSONArray) newStatus.get("vessels");
@@ -182,8 +176,8 @@ public class StatusRecorder implements Runnable {
 
                     if (lastStatus.isDifferentEnough(temp)) {
                         File tempFile = new File(directory + name + "-temp.csv");
-                        if (now - lastStatus.timestamp > SLEEP * 1.5) {
-                            appendToLog(tempFile, now - SLEEP + "," + lastStatus.value + "\r\n");
+                        if (now - lastStatus.timestamp > sleep * 1.5) {
+                            appendToLog(tempFile, now - sleep + "," + lastStatus.value + "\r\n");
                         }
                         appendToLog(tempFile, now + "," + temp + "\r\n");
 
@@ -207,8 +201,8 @@ public class StatusRecorder implements Runnable {
 
                     if (!duty.equals(lastStatus.value)) {
                         File dutyFile = new File(directory + name + "-duty.csv");
-                        if (now - lastStatus.timestamp > SLEEP * 1.5) {
-                            appendToLog(dutyFile, now - SLEEP + "," + lastStatus.value + "\r\n");
+                        if (now - lastStatus.timestamp > sleep * 1.5) {
+                            appendToLog(dutyFile, now - sleep + "," + lastStatus.value + "\r\n");
                         }
                         appendToLog(dutyFile, now + "," + duty + "\r\n");
                         dutyMap.put(name, new Status(duty, now));
@@ -225,7 +219,7 @@ public class StatusRecorder implements Runnable {
      * @param file The file object to save to
      * @param toAppend The string to add to the file
      */
-    protected final void appendToLog(final File file, final String toAppend) {
+    private final void appendToLog(final File file, final String toAppend) {
         FileWriter fileWriter = null;
         try {
             fileWriter = new FileWriter(file, true);
@@ -265,8 +259,8 @@ public class StatusRecorder implements Runnable {
      * @param current The second object to check
      * @return True if the objects are different
      */
-    protected final boolean isDifferent(final JSONObject previous,
-            final JSONObject current) {
+    private boolean isDifferent(final JSONObject previous,
+                                      final JSONObject current) {
         if (previous.size() != current.size()) {
             return true;
         }
@@ -291,8 +285,8 @@ public class StatusRecorder implements Runnable {
      * @param current The second JSONArray to check.
      * @return True if the JSONArrays are different
      */
-    protected final boolean isDifferent(final JSONArray previous,
-            final JSONArray current) {
+    private boolean isDifferent(final JSONArray previous,
+                                      final JSONArray current) {
 
         if (previous.size() != current.size()) {
             return true;
@@ -349,21 +343,21 @@ public class StatusRecorder implements Runnable {
 
     private class Status {
 
-        public long timestamp;
+        long timestamp;
         public String value;
 
-        public Status(String value, long timestamp) {
+        Status(String value, long timestamp) {
             this.value = value;
             this.timestamp = timestamp;
         }
 
-        public boolean isDifferentEnough(String newValue) {
+        boolean isDifferentEnough(String newValue) {
             boolean retVal = false;
 
             try {
                 double oldVal = Double.valueOf(value);
                 double newVal = Double.valueOf(newValue);
-                retVal = Math.abs(oldVal - newVal) > THRESHOLD;
+                retVal = Math.abs(oldVal - newVal) > diff;
             } catch (Throwable ignored) {
             }
 
@@ -372,36 +366,28 @@ public class StatusRecorder implements Runnable {
         }
     }
 
-    /**
-     * Set the Threshold for the status recorder.
-     * @param recorderDiff The threshold to use.
-     */
-    public void setThreshold(double recorderDiff) {
-        THRESHOLD = recorderDiff;
-    }
-    
     public double getDiff() {
-        return StatusRecorder.THRESHOLD;
+        return diff;
     }
     
     public double getTime() {
-        return StatusRecorder.SLEEP;
+        return sleep;
     }
 
     public void setDiff(double threshold) {
-        StatusRecorder.THRESHOLD = threshold;
+        diff = threshold;
     }
     
     public void setTime(long time) {
-        StatusRecorder.SLEEP = time;
+        sleep = time;
     }
 
-    public String getCurrentDir() {
+    private String getCurrentDir() {
         return this.currentDirectory;
     }
 
     @SuppressWarnings("unchecked")
-    public NanoHTTPD.Response getData(Map<String, String> params) {
+    NanoHTTPD.Response getData(Map<String, String> params) {
         String rootPath;
         try {
             rootPath = SBStringUtils.getAppPath("");
@@ -665,7 +651,7 @@ public class StatusRecorder implements Runnable {
                 finalJSON.toJSONString());
     }
 
-    public NanoHTTPD.Response deleteAllData() {
+    NanoHTTPD.Response deleteAllData() {
         File graphDir = new File(this.recorderDirectory);
         File[] fileList = graphDir.listFiles();
 
@@ -680,7 +666,7 @@ public class StatusRecorder implements Runnable {
                 "{Complete}");
     }
 
-    public boolean deleteDir(File file) {
+    private boolean deleteDir(File file) {
         if (file.isDirectory()) {
             String[] children = file.list();
             for (String childDir : children) {

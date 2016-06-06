@@ -3,6 +3,7 @@ package com.sb.elsinore;
 import ca.strangebrew.recipe.Recipe;
 import com.sb.elsinore.NanoHTTPD.Response.Status;
 import com.sb.elsinore.annotations.Parameter;
+import com.sb.elsinore.annotations.RestEndpoint;
 import com.sb.elsinore.annotations.UrlEndpoint;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -28,14 +29,18 @@ import java.util.logging.Logger;
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class BrewServer extends NanoHTTPD {
 
-    public static String SHA = "";
-    public static String SHA_DATE = "";
+    static String SHA = "";
+    static String SHA_DATE = "";
     private static Recipe currentRecipe;
     private final TreeMap<String, java.lang.reflect.Method> m_endpoints = new TreeMap<>();
+    private final TreeMap<String, java.lang.reflect.Method> getRestEndpoints = new TreeMap<>();
+    private final TreeMap<String, java.lang.reflect.Method> putRestEndpoints = new TreeMap<>();
+    private final TreeMap<String, java.lang.reflect.Method> deleteRestEndpoints = new TreeMap<>();
+    private final TreeMap<String, java.lang.reflect.Method> postRestEndpoints = new TreeMap<>();
     /**
      * The Root Directory of the files to be served.
      */
-    public File rootDir;
+    private File rootDir;
 
     /**
      * The Logger object.
@@ -45,7 +50,7 @@ public class BrewServer extends NanoHTTPD {
     /**
      * Hashtable mapping (String)FILENAME_EXTENSION -> (String)MIME_TYPE.
      */
-    public static final Map<String, String> MIME_TYPES
+    static final Map<String, String> MIME_TYPES
         = new HashMap<String, String>() {
         /**
          * The Serial UID.
@@ -132,9 +137,33 @@ public class BrewServer extends NanoHTTPD {
                 m_endpoints.put(urlMethod.url().toLowerCase(), m);
             }
         }
+
+        for (java.lang.reflect.Method m
+                : RestEndpoints.class.getDeclaredMethods()) {
+            RestEndpoint urlMethod = m.getAnnotation(RestEndpoint.class);
+            if (urlMethod != null) {
+
+                switch (urlMethod.method())
+                {
+                    case PUT:
+                        putRestEndpoints.put(urlMethod.path().toLowerCase(), m);
+                        break;
+                    case GET:
+                        getRestEndpoints.put(urlMethod.path().toLowerCase(), m);
+                        break;
+                    case DELETE:
+                        deleteRestEndpoints.put(urlMethod.path().toLowerCase(), m);
+                        break;
+                    case POST:
+                        postRestEndpoints.put(urlMethod.path().toLowerCase(), m);
+                        break;
+
+                }
+            }
+        }
     }
 
-    public static void setRecipeList(ArrayList<String> recipeList) {
+    static void setRecipeList(ArrayList<String> recipeList) {
         BrewServer.recipeList = recipeList;
     }
 
@@ -142,16 +171,16 @@ public class BrewServer extends NanoHTTPD {
         return recipeList;
     }
 
-    public static void setCurrentRecipe(Recipe recipe) {
+    static void setCurrentRecipe(Recipe recipe) {
         BrewServer.currentRecipe = recipe;
     }
 
-    public static Recipe getCurrentRecipe() {
+    static Recipe getCurrentRecipe() {
         return BrewServer.currentRecipe;
     }
 
     @SuppressWarnings("unchecked")
-    public static JSONObject getVersionStatus() {
+    static JSONObject getVersionStatus() {
         JSONObject verStatus = new JSONObject();
         verStatus.put("sha", BrewServer.SHA);
         verStatus.put("date", BrewServer.SHA_DATE);
@@ -205,11 +234,12 @@ public class BrewServer extends NanoHTTPD {
         if (uri.equalsIgnoreCase("/favicon.ico")) {
             // Has the favicon been overridden?
             // Check to see if there's a theme set.
-            if (LaunchControl.theme != null
-                    && !LaunchControl.theme.equals("")) {
+            String theme = LaunchControl.getInstance().theme;
+            if (theme != null
+                    && !theme.equals("")) {
                 if (new File(rootDir,
-                        "/logos/" + LaunchControl.theme + ".ico").exists()) {
-                    return serveFile("/logos/" + LaunchControl.theme + ".ico",
+                        "/logos/" + theme + ".ico").exists()) {
+                    return serveFile("/logos/" + theme + ".ico",
                             header, rootDir);
                 }
             }
@@ -287,6 +317,52 @@ public class BrewServer extends NanoHTTPD {
             });
             helpJSON.put("parameters", paramsJSON);
             return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"), helpJSON.toJSONString());
+        }
+        else {
+            // Get the base name of the url request
+            String[] elements = endpointName.split("/");
+            if (elements.length == 0)
+            {
+
+            }
+            else{
+                String baseString = elements[0];
+                if (baseString.length()==0)
+                {
+                    baseString = elements[1];
+                }
+                switch(method)
+                {
+
+                    case GET:
+                        urlMethod = getRestEndpoints.get(baseString.toLowerCase());
+                        break;
+                    case PUT:
+                        urlMethod = putRestEndpoints.get(baseString.toLowerCase());
+                        break;
+                    case POST:
+                        urlMethod = postRestEndpoints.get(baseString.toLowerCase());
+                        break;
+                    case DELETE:
+                        urlMethod = deleteRestEndpoints.get(baseString.toLowerCase());
+                        break;
+                }
+
+                if (urlMethod != null)
+                {
+                    try {
+                        RestEndpoints restEndpoints = new RestEndpoints();
+                        restEndpoints.parameters = parms;
+                        restEndpoints.files = files;
+                        restEndpoints.header = header;
+                        restEndpoints.rootDir = rootDir;
+                        return (Response) urlMethod.invoke(restEndpoints);
+                    } catch (Exception e) {
+                        LOG.warning("Couldn't access URL: " + uri);
+                        e.printStackTrace();
+                    }
+                }
+            }
         }
 
         if (uri.equals("/"))

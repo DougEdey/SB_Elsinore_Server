@@ -36,33 +36,25 @@ public final class OutputControl implements Runnable {
      * @param fGPIO the heating GPIO pin.
      * @param cycleTime the duty time for the heating output.
      */
-   public OutputControl(final String aName, final String fGPIO,
-           final BigDecimal cycleTime) {
-           // just for heating
-        heater = new OutputDevice(aName, fGPIO, cycleTime);
-        //cooler = new OutputDevice(aName, null, cycle_time);
+   public OutputControl(final String name, PIDSettings settings) {
+        heater = new OutputDevice(name, settings);
 
    }
 
    /**
     * Set the current cooling information.
-    * @param gpio The GPIO to use for the cooling output
-    * @param cycle_time The cycle time for the cooling output
-    * @param delay The delay between cooling start/stop calls.
     */
-   public void setCool(final String gpio, final BigDecimal cycle_time,
-           final BigDecimal delay) {
+   public void setCool(PIDSettings settings) {
 
         //If there is a cooling delay between cycles,
         //then assume this is a compressor device
-        if (BigDecimal.ZERO.compareTo(delay) == -1) {
+        if (BigDecimal.ZERO.compareTo(settings.getCycleTime()) == -1) {
             CompressorDevice coolDevice =
-                    new CompressorDevice("cooler", gpio, cycle_time);
-            coolDevice.setDelay(delay);
+                    new CompressorDevice("cooler", settings);
             setCooler(coolDevice);
         }
         else {
-            setCooler(new OutputDevice("cooler", gpio, cycle_time));
+            setCooler(new OutputDevice("cooler", settings));
         }
         
    }

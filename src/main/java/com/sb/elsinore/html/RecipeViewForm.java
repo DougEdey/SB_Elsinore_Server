@@ -115,10 +115,12 @@ public class RecipeViewForm implements Renderable {
             html.option(value("").selected_if(true))
                     .write("Select Probe")
                     ._option();
-            for (PID entry: LaunchControl.pidList) {
-                html.option(value(entry.getName()))
-                        .write(entry.getName())
-                        ._option();
+            for (Temp entry: LaunchControl.tempList) {
+                if (entry instanceof  PID) {
+                    html.option(value(entry.getName()))
+                            .write(entry.getName())
+                            ._option();
+                }
             }
             html._select();
             html.button(id("setFermProfile").class_("btn btn-default").onClick("setFermProfile(this)"))
@@ -214,10 +216,12 @@ public class RecipeViewForm implements Renderable {
             html.option(value("").selected_if(true))
                     .write("Select Probe")
                     ._option();
-            for (PID entry: LaunchControl.pidList) {
-                html.option(value(entry.getName()))
-                        .write(entry.getName())
-                        ._option();
+            for (Temp entry: LaunchControl.tempList) {
+                if (entry instanceof PID) {
+                    html.option(value(entry.getName()))
+                            .write(entry.getName())
+                            ._option();
+                }
             }
             html._select();
             html.button(id("setMashProfile").class_("btn btn-default").onClick("setMashProfile(this)"))

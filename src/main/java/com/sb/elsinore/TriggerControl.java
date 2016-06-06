@@ -7,15 +7,16 @@ import org.json.simple.JSONObject;
 import org.reflections.Reflections;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.tools.PrettyWriter;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.rendersnake.HtmlAttributesFactory.*;
@@ -77,7 +78,8 @@ public class TriggerControl implements Runnable {
                 | NoSuchMethodException | SecurityException e) {
             e.printStackTrace();
         }
-        LaunchControl.saveSettings();
+
+        LaunchControl.getInstance().saveEverything();
         return triggerStep;
     }
 
@@ -87,8 +89,8 @@ public class TriggerControl implements Runnable {
      * @param type The Type of the Trigger interface to get.
      * @return The HtmlCanvas representing the form.
      */
-    public static HtmlCanvas getNewTriggerForm(final int position,
-            final String type) {
+    static HtmlCanvas getNewTriggerForm(final int position,
+                                        final String type) {
         TriggerInterface triggerStep;
         Class<? extends TriggerInterface> triggerClass = getTriggerOfName(type);
         if (triggerClass == null) {
@@ -127,8 +129,8 @@ public class TriggerControl implements Runnable {
      * @return The HtmlCanvas representing the form.
      */
     @SuppressWarnings("unused")
-    public final HtmlCanvas getEditTriggerForm(final int position,
-            final JSONObject params) {
+    final HtmlCanvas getEditTriggerForm(final int position,
+                                        final JSONObject params) {
         TriggerInterface trigger = this.triggerList.get(position);
         // Try to get the form.
         try {
@@ -144,10 +146,10 @@ public class TriggerControl implements Runnable {
      * @param position The position to update the new trigger at.
      * @param params The new parameters
      */
-    public final boolean updateTrigger(final int position,
-            final JSONObject params) {
+    final boolean updateTrigger(final int position,
+                                final JSONObject params) {
         TriggerInterface trigger = this.triggerList.get(position);
-        LaunchControl.saveSettings();
+        LaunchControl.getInstance().saveEverything();
         return trigger.updateTrigger(params);
     }
 
@@ -156,7 +158,7 @@ public class TriggerControl implements Runnable {
      * @param name The name of the trigger to get.
      * @return The Class representing the trigger.
      */
-    public static Class<? extends TriggerInterface> getTriggerOfName(
+    private static Class<? extends TriggerInterface> getTriggerOfName(
             final String name) {
         String seekName = name + "Trigger";
         // Find the trigger.
@@ -167,7 +169,7 @@ public class TriggerControl implements Runnable {
      * Get a map of the triggerInterface classes.
      * @return A Map of className: Class.
      */
-    public static Map<String, Class<? extends TriggerInterface>>
+    private static Map<String, Class<? extends TriggerInterface>>
         getTriggerList() {
         HashMap<String, Class<? extends TriggerInterface>> interfaceMap = new HashMap<>();
 
@@ -181,7 +183,7 @@ public class TriggerControl implements Runnable {
         return interfaceMap;
     }
 
-    public static Map<String, String> getTriggerTypes(final String inType) {
+    private static Map<String, String> getTriggerTypes(final String inType) {
         Map<String, Class<? extends TriggerInterface>> interfaceMap =
                 getTriggerList();
         Map<String, String> typeMap = new HashMap<>();
@@ -243,6 +245,10 @@ public class TriggerControl implements Runnable {
      */
     @Override
     public final void run() {
+        if (!LaunchControl.getInstance().systemSettings.restoreState)
+        {
+            triggerList.forEach(trigger -> trigger.deactivate(true));
+        }
         // Run through and update the times based on the currently active step
         TriggerInterface triggerEntry = getCurrentTrigger();
 
@@ -315,7 +321,7 @@ public class TriggerControl implements Runnable {
         }
 
         triggerEntry.setActive();
-        LaunchControl.saveSettings();
+        LaunchControl.getInstance().saveEverything();
         return true;
     }
 
@@ -349,7 +355,7 @@ public class TriggerControl implements Runnable {
      * @param fromUI True if the trigger is deactivated from the UI.
      * @return True if deactivated OK, false if not.
      */
-    public boolean deactivateTrigger(int position, boolean fromUI) {
+    boolean deactivateTrigger(int position, boolean fromUI) {
         // deactivate all the steps first
 
         if (position >= 0) {
@@ -367,7 +373,7 @@ public class TriggerControl implements Runnable {
                 mEntry.deactivate(fromUI);
             }
         }
-        LaunchControl.saveSettings();
+        LaunchControl.getInstance().saveEverything();
         return true;
     }
 
@@ -376,7 +382,7 @@ public class TriggerControl implements Runnable {
      * @return The JSONObject representing the current state.
      */
     @SuppressWarnings("unchecked")
-    public final JSONArray getJSONData() {
+    private JSONArray getJSONData() {
         JSONArray masterArray = new JSONArray();
         for (TriggerInterface e : triggerList) {
             masterArray.add(e.getJSONStatus());
@@ -387,28 +393,28 @@ public class TriggerControl implements Runnable {
     /**
      * @return Is the shutdown flag set?
      */
-    public final boolean isShutdownFlag() {
+    private boolean isShutdownFlag() {
         return shutdownFlag;
     }
 
     /**
      * @param newFlag Value to set the shutdown flag to
      */
-    public final void setShutdownFlag(final boolean newFlag) {
+    void setShutdownFlag(final boolean newFlag) {
         this.shutdownFlag = newFlag;
     }
 
     /**
      * @return the outputControl
      */
-    public final String getOutputControl() {
+    String getOutputControl() {
         return outputControl;
     }
 
     /**
      * @param newControl the outputControl to set
      */
-    public final void setOutputControl(final String newControl) {
+    void setOutputControl(final String newControl) {
         this.outputControl = newControl;
     }
 
@@ -447,7 +453,7 @@ public class TriggerControl implements Runnable {
             setShutdownFlag(true);
             Thread.currentThread().interrupt();
         }
-        LaunchControl.saveSettings();
+        LaunchControl.getInstance().saveEverything();
     }
 
     /**
@@ -456,7 +462,7 @@ public class TriggerControl implements Runnable {
      * @return The new triggers canvas
      * @throws IOException If the form couldn't be created.
      */
-    public static HtmlCanvas getNewTriggersForm(final String probe)
+    static HtmlCanvas getNewTriggersForm(final String probe)
             throws IOException {
         String probeType;
         if (LaunchControl.findPID(probe) != null) {
@@ -500,58 +506,12 @@ public class TriggerControl implements Runnable {
 
     public void clear() {
         this.triggerList.clear();
-        LaunchControl.saveSettings();
+        LaunchControl.getInstance().saveEverything();
     }
 
     public void addTrigger(TriggerInterface newTrigger) {
         this.triggerList.add(newTrigger);
-        LaunchControl.saveSettings();
-    }
-
-    public void saveTriggers(Element rootElement)
-    {
-        Element triggersRoot = rootElement;
-        if (!rootElement.getNodeName().equals(NAME))
-        {
-            triggersRoot = LaunchControl.addNewElement(rootElement, NAME);
-        }
-
-        for (TriggerInterface triggerInterface: triggerList) {
-            triggerInterface.updateElement(triggersRoot);
-        }
-    }
-
-    public void readTriggers(Element rootElement)
-    {
-        Element triggersElement = rootElement;
-        if (!NAME.equals(rootElement.getNodeName()))
-        {
-            triggersElement = LaunchControl.addNewElement(rootElement, NAME);
-        }
-        NodeList triggers = triggersElement.getElementsByTagName(TriggerInterface.NAME);
-        for(int i = 0; i < triggers.getLength(); i++)
-        {
-            Element trigger = (Element) triggers.item(i);
-            String type = trigger.getAttribute(TriggerInterface.TYPE);
-            Class<? extends TriggerInterface> triggerInterface = TriggerControl.getTriggerOfName(type);
-            if (triggerInterface != null)
-            {
-                try {
-                    TriggerInterface triggerStep = triggerInterface.newInstance();
-                    if (!triggerStep.readTrigger(trigger))
-                    {
-                        BrewServer.LOG.warning("Couldn't read trigger: " + trigger.toString());
-                    }
-                    else
-                    {
-                        this.triggerList.add(triggerStep);
-                    }
-                } catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
-            }
-        }
+        LaunchControl.getInstance().saveEverything();
     }
 
     public boolean isActive() {
@@ -565,7 +525,7 @@ public class TriggerControl implements Runnable {
         return false;
     }
 
-    public void deactivate() {
+    void deactivate() {
         for (TriggerInterface triggerInterface: triggerList)
         {
             if (triggerInterface.isActive())

@@ -1,26 +1,21 @@
 package com.sb.elsinore.triggers;
 
-import static org.rendersnake.HtmlAttributesFactory.class_;
-import static org.rendersnake.HtmlAttributesFactory.id;
-import static org.rendersnake.HtmlAttributesFactory.name;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.sb.common.SBStringUtils;
-import com.sb.elsinore.*;
+import com.sb.elsinore.BrewServer;
+import com.sb.elsinore.LaunchControl;
+import com.sb.elsinore.Messages;
 import com.sb.elsinore.notificiations.Notifications;
 import com.sb.elsinore.notificiations.WebNotification;
+import com.sb.util.MathUtil;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 
-import com.sb.util.MathUtil;
-import org.w3c.dom.Element;
-
 import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Date;
+
+import static org.rendersnake.HtmlAttributesFactory.*;
 
 /**
  * A trigger that waits for a certain period of time before continuing.
@@ -155,26 +150,8 @@ public class WaitTrigger implements TriggerInterface {
 
     @Override
     @SuppressWarnings("unchecked")
-    public JSONObject getJSONStatus() {
-        String startDateStamp = "";
-        if (this.startDate != null) {
-            startDateStamp = BrewDay.readableFormat.format(this.startDate);
-        }
-        String endDateStamp;
-        if (this.endDate != null) {
-            endDateStamp = "End: " + BrewDay.readableFormat.format(this.endDate) + "<br />";
-        } else {
-            endDateStamp = "";
-        }
-
-        String targetStr = SBStringUtils.formatTime(this.minutes);
-        JSONObject currentStatus = new JSONObject();
-        currentStatus.put("position", this.position);
-        currentStatus.put("start", startDateStamp);
-        currentStatus.put("target", targetStr);
-        currentStatus.put("description", endDateStamp + "<br />\n" + this.note);
-        currentStatus.put("active", Boolean.toString(this.active));
-        return currentStatus;
+    public String getJSONStatus() {
+        return  LaunchControl.getInstance().toJsonString(this);
     }
 
     @Override
@@ -185,7 +162,7 @@ public class WaitTrigger implements TriggerInterface {
     @Override
     public void setActive() {
         this.active = true;
-        String message = "";
+        String message;
         if (endDate != null) {
             message = SBStringUtils.dateFormatShort.format(endDate);
 
@@ -285,58 +262,6 @@ public class WaitTrigger implements TriggerInterface {
         return updateParams(params);
     }
 
-    @Override
-    public boolean readTrigger(Element rootElement) {
-        if (!getName().equals(rootElement.getAttribute(TYPE)))
-        {
-            BrewServer.LOG.warning(rootElement.getAttribute(TYPE) + " is not a "  + getName());
-            return false;
-        }
-        if (LaunchControl.shouldRestore()) {
-            this.active = Boolean.parseBoolean(LaunchControl.getTextForElement(rootElement, ACTIVE, "false"));
-        }
-        this.position = Integer.parseInt(rootElement.getAttribute(POSITION));
-        this.minutes = Double.parseDouble(LaunchControl.getTextForElement(rootElement, WAITTIMEMINS, "0"));
-        this.seconds = Double.parseDouble(LaunchControl.getTextForElement(rootElement, WAITTIMESECS, "0"));
-        this.note = LaunchControl.getTextForElement(rootElement, NOTES, "");
-        return true;
-    }
-
-    @Override
-    public void updateElement(Element rootElement) {
-        Element triggerElement;
-        if (rootElement.getNodeName().equals(TriggerControl.NAME))
-        {
-            triggerElement = LaunchControl.addNewElement(rootElement, TriggerInterface.NAME);
-        }
-        else if (rootElement.getNodeName().equals(TriggerInterface.NAME))
-        {
-            triggerElement = rootElement;
-        }
-        else
-        {
-            return;
-        }
-
-        triggerElement.setAttribute(TriggerInterface.POSITION, Integer.toString(this.position));
-        triggerElement.setAttribute(TriggerInterface.TYPE, getName());
-
-        if (triggerElement.hasChildNodes()) {
-            Set<Element> delElements = new HashSet<>();
-            // Can't delete directly from the nodelist, concurrency issues.
-            for (int i = 0; i < triggerElement.getChildNodes().getLength(); i++) {
-                delElements.add((Element) triggerElement.getChildNodes().item(i));
-            }
-            // now we can delete them.
-            for (Element e : delElements) {
-                e.getParentNode().removeChild(e);
-            }
-        }
-        LaunchControl.addNewElement(triggerElement, WAITTIMEMINS).setTextContent(Double.toString(this.minutes));
-        LaunchControl.addNewElement(triggerElement, WAITTIMESECS).setTextContent(Double.toString(this.seconds));
-        LaunchControl.addNewElement(triggerElement, NOTES).setTextContent(this.note);
-    }
-
     public void setNote(String note) {
         this.note = note;
     }
@@ -345,7 +270,7 @@ public class WaitTrigger implements TriggerInterface {
         return note;
     }
 
-    public void createNotifications(String s) {
+    private void createNotifications(String s) {
         webNotification = new WebNotification();
         webNotification.setMessage(s);
         webNotification.sendNotification();

@@ -1,6 +1,7 @@
 package com.sb.elsinore.devices;
 
 import com.sb.elsinore.BrewServer;
+import com.sb.elsinore.PIDSettings;
 import jGPIO.InvalidGPIOException;
 import java.math.BigDecimal;
 
@@ -17,8 +18,8 @@ public class CompressorDevice extends OutputDevice {
     protected boolean running = false;
     protected long delayBetweenRuns = 1000 * 60 * 3; // 3 Minutes
 
-    public CompressorDevice(String name, String gpio, BigDecimal cycleTimeSeconds) {
-        super(name, gpio, cycleTimeSeconds);
+    public CompressorDevice(String name, PIDSettings settings) {
+        super(name, settings);
     }
 
     
@@ -47,7 +48,7 @@ public class CompressorDevice extends OutputDevice {
                     BrewServer.LOG.warning("Need to wait before starting compressor again.: "+(delayBetweenRuns - (System.currentTimeMillis() - lastStopTime)));
                 }
             }
-            Thread.sleep(cycleTime.intValue());
+            Thread.sleep(settings.getCycleTime().intValue());
         }
     }
 

@@ -1,22 +1,17 @@
 package com.sb.elsinore.triggers;
 
-import static org.rendersnake.HtmlAttributesFactory.class_;
-import static org.rendersnake.HtmlAttributesFactory.id;
-import static org.rendersnake.HtmlAttributesFactory.name;
-import static org.rendersnake.HtmlAttributesFactory.value;
-
-import java.io.IOException;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
-import com.sb.elsinore.*;
+import com.sb.elsinore.BrewServer;
+import com.sb.elsinore.LaunchControl;
+import com.sb.elsinore.Messages;
+import com.sb.elsinore.Switch;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 
-import org.w3c.dom.Element;
-
 import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.util.Date;
+
+import static org.rendersnake.HtmlAttributesFactory.*;
 
 @SuppressWarnings("unused")
 public class SwitchTrigger implements TriggerInterface {
@@ -260,54 +255,6 @@ public class SwitchTrigger implements TriggerInterface {
         return false;
     }
 
-    @Override
-    public boolean readTrigger(Element rootElement) {
-        if (getName().equals(rootElement.getAttribute(TYPE)))
-        {
-            return false;
-        }
-        this.position = Integer.parseInt(rootElement.getAttribute(POSITION));
-        if (LaunchControl.shouldRestore()) {
-            this.activate = LaunchControl.getTextForElement(rootElement, ACTIVATE, ACTIVATE);
-        }
-        this.switchName = LaunchControl.getTextForElement(rootElement, SWITCHNAME, "");
-        return true;
-    }
-
-    @Override
-    public void updateElement(Element rootElement) {
-        Element triggerElement;
-        if (rootElement.getNodeName().equals(TriggerControl.NAME))
-        {
-            triggerElement = LaunchControl.addNewElement(rootElement, TriggerInterface.NAME);
-        }
-        else if (rootElement.getNodeName().equals(TriggerInterface.NAME))
-        {
-            triggerElement = rootElement;
-        }
-        else
-        {
-            return;
-        }
-
-        triggerElement.setAttribute(TriggerInterface.POSITION, Integer.toString(this.position));
-        triggerElement.setAttribute(TriggerInterface.TYPE, getName());
-
-        if (triggerElement.hasChildNodes()) {
-            Set<Element> delElements = new HashSet<>();
-            // Can't delete directly from the nodelist, concurrency issues.
-            for (int i = 0; i < triggerElement.getChildNodes().getLength(); i++) {
-                delElements.add((Element) triggerElement.getChildNodes().item(i));
-            }
-            // now we can delete them.
-            for (Element e : delElements) {
-                e.getParentNode().removeChild(e);
-            }
-        }
-
-        LaunchControl.addNewElement(rootElement, SWITCHNAME).setTextContent(this.switchName);
-        LaunchControl.addNewElement(rootElement, ACTIVATE).setTextContent(this.activate);
-    }
 
     /**
      * @param newPos The position to set this step to.
@@ -321,21 +268,8 @@ public class SwitchTrigger implements TriggerInterface {
      * @return The JSON Status.
      */
     @Override
-    public final JSONObject getJSONStatus() {
-        String description = this.switchName + ": " + this.activate;
-        String startDateStamp = "";
-        if (this.startDate  != null) {
-            startDateStamp = BrewDay.lFormat.format(this.startDate);
-        }
-
-        JSONObject currentStatus = new JSONObject();
-        currentStatus.put("position", this.position);
-        currentStatus.put("start", startDateStamp);
-        currentStatus.put("target", "");
-        currentStatus.put("description", description);
-        currentStatus.put("active", Boolean.toString(this.active));
-
-        return currentStatus;
+    public String getJSONStatus() {
+        return LaunchControl.getInstance().toJsonString(this);
     }
 
     /**

@@ -1,11 +1,13 @@
 package com.sb.elsinore;
+import com.google.gson.annotations.Expose;
 import com.sb.elsinore.devices.I2CDevice;
 import com.sb.util.MathUtil;
-import javax.annotation.Nonnull;
 import jGPIO.GPIO.Direction;
 import jGPIO.InPin;
 import jGPIO.InvalidGPIOException;
+import org.owfs.jowfsclient.OwfsException;
 
+import javax.annotation.Nonnull;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -14,27 +16,19 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.owfs.jowfsclient.OwfsException;
 
 /**
  * Temp class is used to monitor temperature on the one wire system.
  * @author Doug Edey
  *
  */
-public final class Temp implements Runnable, Comparable<Temp> {
+public class Temp implements Comparable<Temp> {
 
     /**
      * Strings for the Nodes.
@@ -57,12 +51,16 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * FREEZING: The freezing point of Fahrenheit.
      */
     public MathContext context = new MathContext(2, RoundingMode.HALF_DOWN);
-    public static BigDecimal FREEZING = new BigDecimal(32);
-    public static BigDecimal ERROR_TEMP = new BigDecimal(-999);
+    private static BigDecimal FREEZING = new BigDecimal(32);
+    private static BigDecimal ERROR_TEMP = new BigDecimal(-999);
     private boolean badTemp = false;
     private boolean keepalive = true;
+    private boolean isStarted = false;
+    private String fileProbe = null;
+    @Expose
     private boolean hidden = false;
-    public boolean cutoffEnabled = false;
+    @Expose
+    boolean cutoffEnabled = false;
 
     /**
      * Base path for BBB System Temp.
@@ -78,18 +76,15 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * Match the temperature regexp.
      */
     private final Pattern tempRegexp = Pattern.compile("^(-?)([0-9]+)(.[0-9]{1,2})?$");
+    @Expose
     private int size = SIZE_LARGE;
-    public I2CDevice i2cDevice = null;
-    public int i2cChannel = -1;
-
-    /**
-     * Save the current object to the configuration using LaunchControl.
-     */
-    public void save() {
-        if (name != null && !name.equals("")) {
-            LaunchControl.addTempToConfig(this);
-        }
-    }
+    @Expose
+    I2CDevice i2cDevice = null;
+    @Expose
+    int i2cChannel = -1;
+    @Expose
+    String device = "";
+    private boolean loggingOn = true;
 
     /**
      * Standard constructor.
@@ -99,35 +94,34 @@ public final class Temp implements Runnable, Comparable<Temp> {
      */
     public Temp(String name, String inProbe) {
 
-        String aName = inProbe;
-        BrewServer.LOG.info("Adding" + aName);
+        device = inProbe;
+        BrewServer.LOG.info("Adding" + device);
         if (name.equalsIgnoreCase("system")) {
-            aName = "System";
+            device = "System";
             File tempFile = new File(rpiSystemTemp);
             if (tempFile.exists()) {
-                fProbe = rpiSystemTemp;
-            } else {
+                fileProbe = rpiSystemTemp;
+            }
+            else {
                 tempFile = new File(bbbSystemTemp);
                 if (tempFile.exists()) {
-                    fProbe = bbbSystemTemp;
+                    fileProbe = bbbSystemTemp;
                 } else {
                     BrewServer.LOG.warning(
                             "Couldn't find a valid system temperature probe");
                     return;
                 }
             }
+
         }
-        else if (name.equalsIgnoreCase("Blank")){
-            // This is a special case for no temp probe.
-            fProbe = null;
-        } else {
-            fProbe = "/sys/bus/w1/devices/" + aName + "/w1_slave";
+        else if (!name.equalsIgnoreCase("Blank")){
+            fileProbe = "/sys/bus/w1/devices/" + device + "/w1_slave";
             File probePath =
-                new File(fProbe);
+                new File(fileProbe);
 
             // Lets assume that OWFS has "." separated names
-            if (!probePath.exists() && aName.contains(".")) {
-                String[] newAddress = aName.split("\\.|-");
+            if (!probePath.exists() && device.contains(".")) {
+                String[] newAddress = device.split("\\.|-");
 
                 if (newAddress.length == 2) {
                     String devFamily = newAddress[0];
@@ -145,26 +139,25 @@ public final class Temp implements Runnable, Comparable<Temp> {
 
                     BrewServer.LOG.info("Converted address: " + fixedAddress);
 
-                    this.fProbe = "/sys/bus/w1/devices/" + fixedAddress + "/w1_slave";
-                    probePath = new File(fProbe);
-                    if (!probePath.exists())
+                    fileProbe = "/sys/bus/w1/devices/" + fixedAddress + "/w1_slave";
+                    probePath = new File(fileProbe);
+                    if (probePath.exists())
                     {
-                        // Try OWFS
-                        fProbe = null;
+                        device = fixedAddress;
                     }
                 }
             }
 
         }
 
-        this.probeName = aName;
+        this.probeName = device;
         this.name = name;
         BrewServer.LOG.info(this.probeName + " added.");
     }
 
     /**
      * The Runnable loop.
-     */
+
     public void run() {
 
         while (keepalive) {
@@ -174,7 +167,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
                     return;
                 }
                 // Uh(oh no file found, disable output to prevent logging floods
-                loggingOn = false;
+
             } else {
                 loggingOn = true;
             }
@@ -190,7 +183,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
             }
         }
     }
-
+*/
     /**
      * @param n The name to set this Temp to.
      */
@@ -205,6 +198,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
         return name.replaceAll(" ", "_");
     }
 
+    public String getDevice() { return device; }
     /**
      * @return The address of this probe
      */
@@ -217,7 +211,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      *  and then update the cutoffTemp.
      * @param cutoffInput String describing the temperature
      */
-    public void setCutoffTemp(final String cutoffInput) {
+    void setCutoffTemp(final String cutoffInput) {
 
         Matcher tempMatcher = tempRegexp.matcher(cutoffInput);
 
@@ -244,22 +238,20 @@ public final class Temp implements Runnable, Comparable<Temp> {
     }
 
     // PRIVATE ////
-    /**
-     * Setup strings for the probe.
-     */
-    private String fProbe, name, probeName;
-    /**
-     * Turn on and off logging.
-     */
-    private boolean loggingOn = true;
+    @Expose
+    private String name;
+    private String probeName;
+
     /**
      * Hold the current error string.
      */
+    @Expose
     public String currentError = null;
 
     /**
      * The current temp.
      */
+    @Expose
     private BigDecimal currentTemp = new BigDecimal(0),
             currentVolume = new BigDecimal(0),
             cutoffTemp = new BigDecimal(-999.0),
@@ -274,16 +266,19 @@ public final class Temp implements Runnable, Comparable<Temp> {
     /**
      * Other strings, obviously named.
      */
+    @Expose
     private String scale = "C", volumeAddress = "", volumeOffset = "",
             volumeUnit = "";
 
     /**
      * Are we measuring volume?
      */
+    @Expose
     private boolean volumeMeasurement = false;
     /**
      * Volume analog input number.
      */
+    @Expose
     private int volumeAIN = -1;
     /**
      * The baselist of volume measurements.
@@ -293,9 +288,12 @@ public final class Temp implements Runnable, Comparable<Temp> {
     /**
      * The input pin to read.
      */
+    @Expose
     private InPin volumePin = null;
     private boolean stopVolumeLogging;
+    @Expose
     private BigDecimal calibration = BigDecimal.ZERO;
+    @Expose
     private TriggerControl triggerControl = null;
     private int position = -1;
 
@@ -303,6 +301,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * @return Get the current temperature
      */
     public BigDecimal getTemp() {
+        updateTemp();
         // set up the reader
         if (scale.equals("F")) {
             return getTempF();
@@ -350,7 +349,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
     /**
      * @return The current temperature in fahrenheit.
      */
-    public BigDecimal getTempF() {
+    BigDecimal getTempF() {
         if (scale.equals("F")) {
             return currentTemp.add(this.calibration);
         }
@@ -360,7 +359,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
     /**
      * @return The current temperature in celsius.
      */
-    public BigDecimal getTempC() {
+    BigDecimal getTempC() {
         if (scale.equals("C")) {
             return currentTemp.add(this.calibration);
         }
@@ -371,7 +370,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * @param currentTemp temperature to convert in Fahrenheit
      * @return Temperature in celsius
      */
-    public static BigDecimal fToC(final BigDecimal currentTemp) {
+    private static BigDecimal fToC(final BigDecimal currentTemp) {
         BigDecimal t = currentTemp.subtract(FREEZING);
         t = MathUtil.divide(MathUtil.multiply(t, 5),9);
         return t;
@@ -381,7 +380,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * @param currentTemp temperature to convert in Celsius
      * @return Temperature in Fahrenheit
      */
-    public static BigDecimal cToF(final BigDecimal currentTemp) {
+    static BigDecimal cToF(final BigDecimal currentTemp) {
         BigDecimal t = MathUtil.divide(MathUtil.multiply(currentTemp, 9), 5);
         t = t.add(FREEZING);
         return t;
@@ -397,7 +396,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
     /**
      * @return The current cutoff temp.
      */
-    public String getCutoff() {
+    String getCutoff() {
         return cutoffTemp.toPlainString();
     }
 
@@ -410,7 +409,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
         if (badTemp && currentError != null && currentError.equals("")) {
             BrewServer.LOG.warning("Trying to recover " + this.getName());
         }
-        if (fProbe == null) {
+        if (probeName == null) {
             result = updateTempFromOWFS();
         } else {
             result = updateTempFromFile();
@@ -458,11 +457,11 @@ public final class Temp implements Runnable, Comparable<Temp> {
         BigDecimal temp = ERROR_TEMP;
         String rawTemp = "";
         try {
-            rawTemp = LaunchControl.readOWFSPath(probeName + "/temperature");
+            rawTemp = LaunchControl.getInstance().readOWFSPath(probeName + "/temperature");
             if (rawTemp.equals("")) {
                 BrewServer.LOG.severe(
                     "Couldn't find the probe " + probeName + " for " + name);
-                LaunchControl.setupOWFS();
+                LaunchControl.getInstance().setupOWFS();
             } else {
                 temp = new BigDecimal(rawTemp);
             }
@@ -472,18 +471,17 @@ public final class Temp implements Runnable, Comparable<Temp> {
         } catch (OwfsException e) {
             currentError = "Couldn't read " + probeName;
             BrewServer.LOG.log(Level.SEVERE, currentError, e);
-            LaunchControl.setupOWFS();
+            LaunchControl.getInstance().setupOWFS();
         } catch (NumberFormatException e) {
             currentError = "Couldn't parse" + rawTemp;
             BrewServer.LOG.log(Level.SEVERE, currentError, e);
         }
 
+        loggingOn = (!temp.equals(ERROR_TEMP));
+
         return temp;
     }
 
-    /**
-     * @return The current temperature read directly from the file system.
-     */
     public BigDecimal updateTempFromFile() {
         BufferedReader br = null;
         String temp = null;
@@ -491,12 +489,12 @@ public final class Temp implements Runnable, Comparable<Temp> {
         BigDecimal newTemperature = null;
 
         try {
-            br = new BufferedReader(new FileReader(fProbe));
+            br = new BufferedReader(new FileReader(fileProbe));
             String line = br.readLine();
             
             if (line == null || line.contains("NO")) {
                 // bad CRC, do nothing
-                this.currentError = "Bad CRC from " + fProbe;
+                this.currentError = "Bad CRC from " + fileProbe;
             } else if (line.contains("YES")) {
                 // good CRC
                 line = br.readLine();
@@ -514,10 +512,10 @@ public final class Temp implements Runnable, Comparable<Temp> {
 
         } catch (IOException ie) {
             if (loggingOn) {
-                this.currentError = "Couldn't find the device under: " + fProbe;
+                this.currentError = "Couldn't find the device under: " + fileProbe;
                 BrewServer.LOG.warning(currentError);
-                if (fProbe.equals(rpiSystemTemp)) {
-                    fProbe = bbbSystemTemp;
+                if (fileProbe.equals(rpiSystemTemp)) {
+                    fileProbe = bbbSystemTemp;
                 }
             }
             return ERROR_TEMP;
@@ -546,8 +544,8 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * @param offset Device offset input.
      * @param unit The volume unit to read as.
      */
-    public boolean setupVolumes(final String address, final String offset,
-            final String unit) {
+    boolean setupVolumes(final String address, final String offset,
+                         final String unit) {
         // start a volume measurement at the same time
         if (unit == null
             || (!unit.equals(VolumeUnits.LITRES)
@@ -565,7 +563,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
             BrewServer.LOG.log(Level.INFO,
                 "Volume ADC at: " + volumeAddress + " - " + offset);
             String temp =
-                LaunchControl.readOWFSPath(volumeAddress + "/volt." + offset);
+                LaunchControl.getInstance().readOWFSPath(volumeAddress + "/volt." + offset);
 
             // Check to make sure we can read OK
             if (temp.equals("")) {
@@ -596,7 +594,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * @return True is setup OK
      * @throws InvalidGPIOException If the Pin cannot be setup
      */
-    public boolean setupVolumes(final int analogPin, final String unit)
+    boolean setupVolumes(final int analogPin, final String unit)
             throws InvalidGPIOException {
         // start a volume measurement at the same time
         if (unit == null
@@ -631,7 +629,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
     /**
      * Calculate volume reading maths.
      */
-    public void setupVolume() {
+    private void setupVolume() {
         if (volumeBase == null) {
             return;
         }
@@ -700,7 +698,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
             } else if (volumeAddress != null && volumeOffset != null) {
                 try {
                     pinValue = new BigDecimal(
-                        LaunchControl.readOWFSPath(
+                        LaunchControl.getInstance().readOWFSPath(
                             volumeAddress + "/volt." + volumeOffset));
                     if (this.stopVolumeLogging) {
                         BrewServer.LOG.log(Level.SEVERE,
@@ -714,7 +712,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
                         this.stopVolumeLogging = true;
                     }
                     BrewServer.LOG.info("Reconnecting OWFS");
-                    LaunchControl.setupOWFS();
+                    LaunchControl.getInstance().setupOWFS();
 
                     return BigDecimal.ZERO;
                 }
@@ -803,7 +801,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * @param unit Unit to set the volume units to.
      */
     @SuppressWarnings("unused")
-    public void setVolumeUnit(final String unit) {
+    private void setVolumeUnit(final String unit) {
         this.volumeUnit = unit;
     }
 
@@ -812,7 +810,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * @param volume Volume measurement to record.
      * @return True if added OK.
      */
-    public boolean addVolumeMeasurement(final BigDecimal volume) {
+    boolean addVolumeMeasurement(final BigDecimal volume) {
         // record 10 readings and average it
         BigDecimal maxReads = BigDecimal.TEN;
         BigDecimal total = new BigDecimal(0);
@@ -825,7 +823,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
                     } else {
                         try {
                             total = total.add(new BigDecimal(
-                                LaunchControl.readOWFSPath(
+                                LaunchControl.getInstance().readOWFSPath(
                                     volumeAddress + "/volt." + volumeOffset)));
                         } catch (OwfsException e) {
                             e.printStackTrace();
@@ -867,7 +865,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * @param key The key to overwrite/set
      * @param value The value to overwrite/set
      */
-    public void addVolumeMeasurement(
+    private void addVolumeMeasurement(
             final BigDecimal key, final BigDecimal value) {
         BrewServer.LOG.info("Adding " + key + " with value " + value);
         if (volumeBase == null) {
@@ -930,7 +928,7 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * Check to see if this object has a valid volume input.
      * @return true if there's a valid volume input on this class
      */
-    public boolean hasVolume() {
+    boolean hasVolume() {
         return (this.volumeAddress != null && !this.volumeAddress.equals("")
                 && this.volumeOffset != null && !this.volumeOffset.equals("")) || (this.volumeAIN != -1);
     }
@@ -939,24 +937,8 @@ public final class Temp implements Runnable, Comparable<Temp> {
      * Helper function to return a map of the current status.
      * @return The current status of the temperature probe.
      */
-    public Map<String, Object> getMapStatus() {
-        Map<String, Object> statusMap = new HashMap<>();
-        statusMap.put("hidden", isHidden());
-        statusMap.put("temp", getTemp());
-        statusMap.put("elapsed", getTime());
-        statusMap.put("scale", getScale());
-        statusMap.put("cutoff", getCutoff());
-        statusMap.put("cutoffEnabled", cutoffEnabled);
-        statusMap.put("calibration", getCalibration());
-        statusMap.put("gravity", gravity);
-        statusMap.put("position", this.position);
-        statusMap.put("size", this.size);
-
-        if (currentError != null) {
-            statusMap.put("error", currentError);
-        }
-
-        return statusMap;
+    String getJsonStatus() {
+        return LaunchControl.getInstance().toJsonString(this);
     }
 
     public void shutdown() {
@@ -964,6 +946,18 @@ public final class Temp implements Runnable, Comparable<Temp> {
         keepalive = false;
         BrewServer.LOG.warning(this.getName() + " is shutting down");
         Thread.currentThread().interrupt();
+    }
+
+    public boolean isStarted() {
+        return isStarted;
+    }
+
+    public boolean isRunning() {
+        return keepalive;
+    }
+
+    public void started() {
+        this.isStarted = true;
     }
 
     public void setCalibration(String calibration) {
@@ -1134,11 +1128,11 @@ public final class Temp implements Runnable, Comparable<Temp> {
         return i2cDevice.getDevName();
     }
 
-    public boolean setupVolumeI2C(String i2c_device, String i2c_address, String i2c_channel, String i2c_type, String units) {
-        return setupVolumeI2C(LaunchControl.getI2CDevice(i2c_device, i2c_address, i2c_type), i2c_channel, units);
+    boolean setupVolumeI2C(String i2c_device, String i2c_address, String i2c_channel, String i2c_type, String units) {
+        return setupVolumeI2C(LaunchControl.getInstance().getI2CDevice(i2c_device, i2c_address, i2c_type), i2c_channel, units);
     }
 
-    public boolean setupVolumeI2C(I2CDevice i2c_device, String i2c_channel, String volumeUnits) {
+    private boolean setupVolumeI2C(I2CDevice i2c_device, String i2c_channel, String volumeUnits) {
         this.i2cDevice = i2c_device;
         this.i2cChannel = Integer.parseInt(i2c_channel);
         this.setVolumeUnit(volumeUnits);

@@ -12,6 +12,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Parameter {
-    String name();
-    String value();
+    String name() default "<None>";
+    String value() default "<None>";
 }

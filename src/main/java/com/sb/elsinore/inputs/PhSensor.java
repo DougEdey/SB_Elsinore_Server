@@ -161,7 +161,7 @@ public class PhSensor {
      */
     public final BigDecimal updateReading() {
         BigDecimal pinValue = new BigDecimal(0);
-
+        LaunchControl lc = LaunchControl.getInstance();
         if (ainGPIO != null) {
             try {
                 pinValue = new BigDecimal(ainGPIO.readValue());
@@ -177,13 +177,13 @@ public class PhSensor {
                     this.stopLogging = true;
                 }
                 BrewServer.LOG.info("Reconnecting OWFS");
-                LaunchControl.setupOWFS();
+                lc.setupOWFS();
             }
         } else if (dsAddress != null && dsAddress.length() > 0
                 && dsOffset != null && dsOffset.length() > 0) {
             try {
                 pinValue = new BigDecimal(
-                    LaunchControl.readOWFSPath(
+                    lc.readOWFSPath(
                         dsAddress + "/volt." + dsOffset));
                 if (this.stopLogging) {
                     BrewServer.LOG.log(Level.SEVERE,
@@ -197,7 +197,7 @@ public class PhSensor {
                     this.stopLogging = true;
                 }
                 BrewServer.LOG.info("Reconnecting OWFS");
-                LaunchControl.setupOWFS();
+                lc.setupOWFS();
             }
         }
         else if (i2cDevice != null && i2cChannel > -1)
@@ -269,7 +269,7 @@ public class PhSensor {
      */
     public final BigDecimal calcPhValue() {
         BigDecimal value = new BigDecimal(0);
-
+        LaunchControl lc = LaunchControl.getInstance();
         for (java.lang.reflect.Method m
                 : PhSensor.class.getDeclaredMethods()) {
            PhSensorType calcMethod =
@@ -282,15 +282,13 @@ public class PhSensor {
                        if (value.compareTo(BigDecimal.ZERO) > 0)
                        {
                            phReading = value;
-                           if (LaunchControl.recorder != null)
+                           if (lc.systemSettings.recorder != null)
                            {
-                               LaunchControl.recorder.saveReading(name, phReading);
+                               lc.systemSettings.recorder.saveReading(name, phReading);
                            }
                        }
-                   } catch (IllegalAccessException e) {
+                   } catch (IllegalAccessException | InvocationTargetException e) {
                        e.printStackTrace();
-                   } catch (InvocationTargetException o) {
-                       o.printStackTrace();
                    }
                }
            }
@@ -304,7 +302,7 @@ public class PhSensor {
      * @return The List of available sensor types.
      */
     public final List<String> getAvailableTypes() {
-        List<String> typeList = new ArrayList<String>();
+        List<String> typeList = new ArrayList<>();
         for (java.lang.reflect.Method m
                 : PhSensor.class.getDeclaredMethods()) {
            PhSensorType calcMethod =
@@ -336,7 +334,7 @@ public class PhSensor {
      * @param maxRead The number of samples to take.
      * @return The current average.
      */
-    public final BigDecimal getAverage(final int maxRead) {
+    private final BigDecimal getAverage(final int maxRead) {
         BigDecimal readValue = new BigDecimal(0);
         BigDecimal t;
         int i;

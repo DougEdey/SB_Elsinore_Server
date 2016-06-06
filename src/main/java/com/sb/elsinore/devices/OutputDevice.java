@@ -1,10 +1,17 @@
 package com.sb.elsinore.devices;
 
 import com.sb.elsinore.BrewServer;
+import com.sb.elsinore.PIDSettings;
 import com.sb.util.MathUtil;
+import com.sun.media.jfxmedia.logging.Logger;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
+import org.w3c.tidy.TidyMessage;
+
 import java.math.BigDecimal;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.logging.Level;
 
 /**
  * This class represents a single heating/cooling device that can have a duty
@@ -12,19 +19,18 @@ import java.math.BigDecimal;
  *
  * @author Andy
  */
-public class OutputDevice {
+public class OutputDevice implements Observer {
 
-    protected boolean invertOutput = false;
-    protected static BigDecimal HUNDRED = new BigDecimal(100);
-    protected static BigDecimal THOUSAND = new BigDecimal(1000);
+    private boolean invertOutput = false;
+    static BigDecimal HUNDRED = new BigDecimal(100);
+    private static BigDecimal THOUSAND = new BigDecimal(1000);
 
-    protected BigDecimal cycleTime = new BigDecimal(5000);    //5 second default
-    protected OutPin ssr = null;    //The output pin.
+    private OutPin ssr = null;    //The output pin.
     private final Object ssrLock = new Object();
     protected String name;    //The name of this device
-    private String gpio;    //The gpio pin
+    protected PIDSettings settings = null;
 
-    public OutputDevice(String name, String gpio, BigDecimal cycleTimeSeconds) {
+    public OutputDevice(String name, PIDSettings settings) {
         // Check for inverted outputs using a property.
         try {
             String invOut = System.getProperty("invert_outputs");
@@ -36,10 +42,11 @@ public class OutputDevice {
         } catch (Exception e) {
             // Incase get property fails
         }
+        settings.addObserver(this);
 
         this.name = name;
-        setCycleTime(cycleTimeSeconds);
-        this.gpio = gpio;
+        this.settings = settings;
+
         try {
             initializeSSR();
         } catch (Exception e) {
@@ -60,7 +67,8 @@ public class OutputDevice {
         setValue(false);
     }
 
-    protected void initializeSSR() throws InvalidGPIOException {
+    void initializeSSR() throws InvalidGPIOException {
+        String gpio = settings.getGPIO();
         if (ssr == null) {
             if (gpio != null && gpio.length() > 0) {
                 synchronized (ssrLock) {
@@ -75,6 +83,10 @@ public class OutputDevice {
         }
     }
 
+    public String getGpio()
+    {
+        return ssr.getGPIOName();
+    }
     
     /**
      * Run through a cycle and turn the device on/off as appropriate based on the input duty.
@@ -89,8 +101,8 @@ public class OutputDevice {
             initializeSSR();
 
             duty = MathUtil.divide(duty, HUNDRED);
-            BigDecimal onTime = duty.multiply(cycleTime);
-            BigDecimal offTime = cycleTime.subtract(onTime);
+            BigDecimal onTime = duty.multiply(settings.getCycleTime());
+            BigDecimal offTime = settings.getCycleTime().subtract(onTime);
             BrewServer.LOG.info("On: " + onTime
                     + " Off; " + offTime);
 
@@ -133,29 +145,6 @@ public class OutputDevice {
     }
 
     /**
-     * @param cycleTime the cycleTime to set
-     */
-    public void setCycleTime(BigDecimal cycleTime) {
-        if (cycleTime != null) {
-            this.cycleTime = cycleTime.multiply(THOUSAND);
-        }
-    }
-
-    /**
-     * @return the GPIO.
-     */
-    public final String getGpio() {
-        return gpio;
-    }
-
-    /**
-     * @param gpioIn the GPIO to set.
-     */
-    public final void setGpio(final String gpioIn){
-        this.gpio = gpioIn;
-    }
-
-    /**
      * Sets the outputs to be inverted for this device.
      * @param inverted True to invert the output.
      */
@@ -163,4 +152,30 @@ public class OutputDevice {
         this.invertOutput = inverted;
     }
 
+    @Override
+    public void update(Observable o, Object arg) {
+        if (arg instanceof String)
+        {
+            String propName = (String) arg;
+            switch (propName)
+            {
+                case "cycle_time":
+                case "proportional":
+                case "integral":
+                case "derivative":
+                case "delay":
+                case "mode":
+                case "inverted":
+                    Thread.currentThread().interrupt();
+                    break;
+                case "gpio":
+                    try {
+                        initializeSSR();
+                    } catch (InvalidGPIOException e)
+                    {
+                        BrewServer.LOG.log(Level.WARNING, "Failed to update GPIO.", e);
+                    }
+            }
+        }
+    }
 }

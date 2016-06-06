@@ -31,25 +31,27 @@ function parseVessels(vessels) {
     var hiddenProbes = $("#hiddenProbes");
     var selection = hiddenProbes.find("#probeList");
     $.each(vessels, function (vesselProbe, vesselStatus) {
-        var vOption = hiddenProbes.find("option[value='" + vesselStatus.deviceaddr + "']");
-        if (vesselStatus.tempprobe.hidden) {
+        var vOption = hiddenProbes.find("option[value='" + vesselStatus.device + "']");
+        if (vesselStatus.hidden) {
             hiddenProbes.show();
 
-            var probeCard = $("#probes  #" + vesselStatus.deviceAddr);
+            var probeCard = $("#probes  #" + vesselStatus.device);
             if (probeCard.eq(0).size() != 0) {
                 probeCard.remove();
             }
 
             if (vOption.size() == 0) {
-                selection.append($("<option>", {
-                    value: vesselStatus.deviceaddr,
-                    text: decodeURI(vesselStatus.name)
-                }));
-                vOption = selection.find("option[value='" + vesselStatus.deviceaddr + "']");
+                if ("name" in vesselStatus) {
+                    selection.append($("<option>", {
+                        value: vesselStatus.device,
+                        text: decodeURI(vesselStatus.name)
+                    }));
+                    vOption = selection.find("option[value='" + vesselStatus.device + "']");
+                }
             }
             vOption.data("temp", vesselStatus.tempprobe);
             if ("piddata" in vesselStatus) {
-                vOption.data("pid", vesselStatus.piddata);
+                vOption.data("pid", vesselStatus);
             }
         }
         else {
@@ -57,15 +59,18 @@ function parseVessels(vessels) {
             if (vOption.size() != 0) {
                 vOption.remove();
             }
-            probeCard = $("#probes  #" + vesselStatus.deviceaddr);
+            probeCard = $("#probes  #" + vesselStatus.device);
             if (probeCard.eq(0).size() == 0) {
-                probeCard = addProbeCard(vesselStatus.deviceaddr, vesselStatus.tempprobe.position);
+                probeCard = addProbeCard(vesselStatus.device, vesselStatus.position);
             }
             // Set card name
-            setCardName(probeCard, decodeURI(vesselStatus.name));
-            loadTempProbeData(probeCard, vesselStatus.tempprobe);
+            if ("name" in vesselStatus)
+            {
+                setCardName(probeCard, decodeURI(vesselStatus.name));
+            }
+            loadTempProbeData(probeCard, vesselStatus);
             if ("pidstatus" in vesselStatus) {
-                loadPIDData(probeCard, vesselStatus.pidstatus);
+                loadPIDData(probeCard, vesselStatus);
             }
         }
     });
@@ -201,8 +206,8 @@ function parseData(data) {
         breweryNameElement.text(data.breweryName);
     }
 
-    if ("vessels" in data) {
-        parseVessels(data.vessels);
+    if ("devices" in data) {
+        parseVessels(data.devices);
     }
     if ("triggers" in data) {
         parseTriggers(data.triggers);
@@ -310,12 +315,12 @@ function loadTempProbeData(card, tempprobe) {
         value = card.find("#value");
     }
     var units = card.find("#units");
-    value.html(tempprobe.temp.toFixed(2));
+    value.html(tempprobe.currentTemp.toFixed(2));
     units.html("&#176" + tempprobe.scale);
     // Parse the error text
     var errormsg = card.find('#error');
-    if ("error" in tempprobe && tempprobe.error != "") {
-        errormsg.text(tempprobe.error);
+    if ("currentError" in tempprobe && tempprobe.currentError != "") {
+        errormsg.text(tempprobe.currentError);
         errormsg.show();
     }
     else {
@@ -1711,7 +1716,7 @@ function showDeviceEdit(element, addr, name) {
 
     if (temp != undefined) {
         editModalBody.find('#calibration').val(temp.calibration);
-        editModalBody.find('#shutoff').val(temp.cutoff);
+        editModalBody.find('#shutoff').val(temp.cutoffTemp);
         if (temp.cutoffEnabled) {
             editModalBody.find("#cutoff-enabled").parent().click();
         }

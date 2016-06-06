@@ -39,7 +39,7 @@ public class PhSensorForm implements Renderable {
                     .selected_if(phSensor.getAIN().length() > 0))
                     .write("Onboard AIN")
                     ._option();
-        if (LaunchControl.useOWFS) {
+        if (LaunchControl.getInstance().getOWFS() != null) {
             html.option(value("ds2450")
                     .selected_if(phSensor.getDsAddress().length() > 0))
                     .write("DS2450")
@@ -78,7 +78,7 @@ public class PhSensorForm implements Renderable {
         {
             styleString = "display: none";
         }
-        if (LaunchControl.useOWFS) {
+        if (LaunchControl.getInstance().getOWFS() != null) {
             html.div(id("ds_div").name("ds_div").style(styleString));
 
             html.select(class_("form-control m-t").name("dsAddress")
@@ -87,7 +87,7 @@ public class PhSensorForm implements Renderable {
                     "".equals(phSensor.getDsAddress())))
                     .write(Messages.DS2450_ADDRESS)
                     ._option();
-            for (String addr : LaunchControl.getOneWireDevices("/20")) {
+            for (String addr : LaunchControl.getInstance().getOneWireDevices("/20")) {
                 String address = addr.substring(1);
                 html.option(value(address)
                         .selected_if(address.equals(phSensor.getDsAddress())))

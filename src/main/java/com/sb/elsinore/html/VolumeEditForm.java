@@ -82,7 +82,7 @@ public class VolumeEditForm implements Renderable {
                 "".equals(vessel.getVolumeAddress())))
                 .write(Messages.DS2450_ADDRESS)
                 ._option();
-        for (String addr: LaunchControl.getOneWireDevices("/20")) {
+        for (String addr: LaunchControl.getInstance().getOneWireDevices("/20")) {
             String address = addr.substring(1);
             html.option(value(address)
                     .selected_if(address.equals(vessel.getVolumeAddress())))

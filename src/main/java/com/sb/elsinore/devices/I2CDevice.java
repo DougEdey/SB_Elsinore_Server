@@ -1,9 +1,9 @@
 package com.sb.elsinore.devices;
 
 import com.sb.elsinore.BrewServer;
-import com.sb.elsinore.LaunchControl;
-import com.sun.jna.*;
-import org.w3c.dom.Element;
+import com.sun.jna.Native;
+import com.sun.jna.NativeLong;
+import com.sun.jna.Structure;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -455,17 +455,6 @@ public abstract class I2CDevice {
 
     public abstract float readValue(int devChannel);
 
-    public static I2CDevice parseElement(Element i2cElement) {
-        String devType = LaunchControl.getFirstElement(i2cElement, DEV_ADDRESS).getNodeValue();
-        if (devType == null) {
-            return null;
-        }
-
-        String devNumber = LaunchControl.getFirstElement(i2cElement, DEV_NUMBER).getNodeValue();
-        String devAddress = LaunchControl.getFirstElement(i2cElement, DEV_ADDRESS).getNodeValue();
-
-        return create(devNumber, devAddress, devType);
-    }
 
     public int getAddress()
     {
