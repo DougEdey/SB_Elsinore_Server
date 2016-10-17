@@ -19,6 +19,7 @@ import static org.rendersnake.HtmlAttributesFactory.*;
 
 /**
  * A trigger that waits for a certain period of time before continuing.
+ *
  * @author Doug Edey
  */
 @SuppressWarnings("unused")
@@ -64,23 +65,24 @@ public class WaitTrigger implements TriggerInterface {
 
     /**
      * Set the values of this trigger.
+     *
      * @param parameters The updated parameters.
      */
     private boolean updateParams(final JSONObject parameters) {
         String waitTimeMins = "0";
         if (parameters.get(WAITTIMEMINS) != null) {
-                waitTimeMins = (String) parameters.get(WAITTIMEMINS);
-                if (waitTimeMins.length() == 0) {
-                    waitTimeMins = "0";
-                }
+            waitTimeMins = (String) parameters.get(WAITTIMEMINS);
+            if (waitTimeMins.length() == 0) {
+                waitTimeMins = "0";
+            }
         }
         this.minutes = Double.parseDouble(waitTimeMins);
         String waitTimeSecs = "0";
         if (parameters.get(WAITTIMESECS) != null) {
-                waitTimeSecs = (String) parameters.get(WAITTIMESECS);
-                if (waitTimeSecs.length() == 0) {
-                    waitTimeSecs = "0";
-                }
+            waitTimeSecs = (String) parameters.get(WAITTIMESECS);
+            if (waitTimeSecs.length() == 0) {
+                waitTimeSecs = "0";
+            }
         }
         this.seconds = Double.parseDouble(waitTimeSecs);
 
@@ -95,31 +97,33 @@ public class WaitTrigger implements TriggerInterface {
 
     /**
      * Suspend the thread for a certain period of time.
+     *
      * @param ms The time in milliseconds to suspend for.
      */
     private void cooldown(final long ms) {
-        synchronized (lck) {
+        synchronized (this.lck) {
             long startTime = System.currentTimeMillis();
             this.startDate = new Date();
             this.endDate = new Date(startTime + ms);
 
             // Do thread need to wait
-            if (waitStatus) {
+            if (this.waitStatus) {
                 while (System.currentTimeMillis() - startTime < ms) {
                     try {
-                        lck.wait(1000);
+                        this.lck.wait(1000);
                     } catch (InterruptedException e) {
                         // DO NOTHING!
                     }
                 }
                 //  Wait over no other thread will wait
-                waitStatus = false;
+                this.waitStatus = false;
             }
         }
     }
 
     /**
      * Compare by position.
+     *
      * @param o the TriggerInterface to compare to.
      * @return Compare.
      */
@@ -130,6 +134,7 @@ public class WaitTrigger implements TriggerInterface {
 
     /**
      * This is for all inputs.
+     *
      * @return pid
      */
     @Override
@@ -151,7 +156,7 @@ public class WaitTrigger implements TriggerInterface {
     @Override
     @SuppressWarnings("unchecked")
     public String getJSONStatus() {
-        return  LaunchControl.getInstance().toJsonString(this);
+        return LaunchControl.getInstance().toJsonString(this);
     }
 
     @Override
@@ -163,8 +168,8 @@ public class WaitTrigger implements TriggerInterface {
     public void setActive() {
         this.active = true;
         String message;
-        if (endDate != null) {
-            message = SBStringUtils.dateFormatShort.format(endDate);
+        if (this.endDate != null) {
+            message = SBStringUtils.dateFormatShort.format(this.endDate);
 
         } else {
             message = SBStringUtils.formatTime(this.minutes);
@@ -188,28 +193,28 @@ public class WaitTrigger implements TriggerInterface {
     public HtmlCanvas getForm() throws IOException {
         HtmlCanvas html = new HtmlCanvas();
         html.div(id("NewWaitTrigger").class_(""));
-            html.form(id("newTriggersForm"));
-                html.input(id("type").name("type").class_("form-control m-t")
-                            .hidden("true").value("Wait"));
-                html.input(class_("inputBox temperature form-control m-t")
-                        .type("number").add("step", "any")
-                        .add("placeholder", Messages.MINUTES)
-                        .name(WAITTIMEMINS).value(""));
-                html.input(class_("inputBox temperature form-control m-t")
-                        .type("number").add("step", "any")
-                        .add("placeholder", Messages.SECS)
-                        .name(WAITTIMESECS).value(""));
-                html.input(class_("inputBox form-control m-t")
-                    .name(NOTES).value("")
-                    .add("placeholder", Messages.NOTES)
-                    .value(this.note));
-                html.button(name("submitWait")
-                        .class_("btn btn-primary col-md-12")
-                        .add("data-toggle", "clickover")
-                        .onClick("submitNewTriggerStep(this);"))
-                    .write(Messages.ADD_TRIGGER)
+        html.form(id("newTriggersForm"));
+        html.input(id(TYPE).name(TYPE).class_("form-control m-t")
+                .hidden("true").value("Wait"));
+        html.input(class_("inputBox temperature form-control m-t")
+                .type("number").add("step", "any")
+                .add("placeholder", Messages.MINUTES)
+                .name(WAITTIMEMINS).value(""));
+        html.input(class_("inputBox temperature form-control m-t")
+                .type("number").add("step", "any")
+                .add("placeholder", Messages.SECS)
+                .name(WAITTIMESECS).value(""));
+        html.input(class_("inputBox form-control m-t")
+                .name(NOTES).value("")
+                .add("placeholder", Messages.NOTES)
+                .value(this.note));
+        html.button(name("submitWait")
+                .class_("btn btn-primary col-md-12")
+                .add("data-toggle", "clickover")
+                .onClick("submitNewTriggerStep(this);"))
+                .write(Messages.ADD_TRIGGER)
                 ._button();
-            html._form();
+        html._form();
         html._div();
         return html;
     }
@@ -223,38 +228,39 @@ public class WaitTrigger implements TriggerInterface {
     public HtmlCanvas getEditForm() throws IOException {
         HtmlCanvas html = new HtmlCanvas();
         html.div(id("EditWaitTrigger").class_(""));
-            html.form(id("editTriggersForm"));
-                html.input(id("type").name("type")
-                        .hidden("true").value("Wait"));
-                html.input(id("type").name("position")
-                        .hidden("position").value("" + this.position));
-                html.input(class_("inputBox temperature form-control")
-                        .type("number").add("step", "any")
-                        .add("placeholder", Messages.MINUTES)
-                        .name(WAITTIMEMINS)
-                        .value(Double.toString(this.minutes)));
-                html.input(class_("inputBox temperature form-control")
-                        .type("number").add("step", "any")
-                        .add("placeholder", Messages.SECS)
-                        .name(WAITTIMESECS)
-                        .value(Double.toString(this.seconds)));
-                html.input(class_("inputBox form-control")
-                    .name(NOTES).value("")
-                    .add("placeholder", Messages.NOTES)
-                    .value(this.note));
-                html.button(name("submitWait")
-                        .class_("btn col-md-12")
-                        .add("data-toggle", "clickover")
-                        .onClick("updateTriggerStep(this);"))
-                    .write(Messages.ADD_TRIGGER)
+        html.form(id("editTriggersForm"));
+        html.input(id(TYPE).name(TYPE)
+                .hidden("true").value("Wait"));
+        html.input(id(POSITION).name(POSITION)
+                .hidden("position").value("" + this.position));
+        html.input(class_("inputBox temperature form-control")
+                .type("number").add("step", "any")
+                .add("placeholder", Messages.MINUTES)
+                .name(WAITTIMEMINS)
+                .value(Double.toString(this.minutes)));
+        html.input(class_("inputBox temperature form-control")
+                .type("number").add("step", "any")
+                .add("placeholder", Messages.SECS)
+                .name(WAITTIMESECS)
+                .value(Double.toString(this.seconds)));
+        html.input(class_("inputBox form-control")
+                .name(NOTES).value("")
+                .add("placeholder", Messages.NOTES)
+                .value(this.note));
+        html.button(name("submitWait")
+                .class_("btn col-md-12")
+                .add("data-toggle", "clickover")
+                .onClick("updateTriggerStep(this);"))
+                .write(Messages.ADD_TRIGGER)
                 ._button();
-            html._form();
+        html._form();
         html._div();
         return html;
     }
 
     /**
      * Update the wait trigger with new timings.
+     *
      * @param params The new parameters.
      */
     @Override
@@ -267,20 +273,20 @@ public class WaitTrigger implements TriggerInterface {
     }
 
     public String getNote() {
-        return note;
+        return this.note;
     }
 
     private void createNotifications(String s) {
-        webNotification = new WebNotification();
-        webNotification.setMessage(s);
-        webNotification.sendNotification();
-        Notifications.getInstance().addNotification(webNotification);
+        this.webNotification = new WebNotification();
+        this.webNotification.setMessage(s);
+        this.webNotification.sendNotification();
+        Notifications.getInstance().addNotification(this.webNotification);
     }
 
     public void clearNotifications() {
-        if (webNotification == null) {
+        if (this.webNotification == null) {
             return;
         }
-        Notifications.getInstance().clearNotification(webNotification);
+        Notifications.getInstance().clearNotification(this.webNotification);
     }
 }

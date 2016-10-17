@@ -13,6 +13,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.sb.elsinore.UrlEndpoints.TEMPPROBE;
+
 /**
  *
  *
@@ -44,12 +46,12 @@ public class StatusRecorder implements Runnable {
      * Start the thread.
      */
     public final void start() {
-        if (thread == null || !thread.isAlive()) {
-            temperatureMap = new HashMap<>();
-            dutyMap = new HashMap<>();
-            thread = new Thread(this);
-            thread.setName("Status recorder");
-            thread.start();
+        if (this.thread == null || !this.thread.isAlive()) {
+            this.temperatureMap = new HashMap<>();
+            this.dutyMap = new HashMap<>();
+            this.thread = new Thread(this);
+            this.thread.setName("Status recorder");
+            this.thread.start();
         }
     }
 
@@ -57,27 +59,27 @@ public class StatusRecorder implements Runnable {
      * Stop the thread.
      */
     public final void stop() {
-        if (thread != null) {
-            thread.interrupt();
-            while (thread.isAlive()) {
+        if (this.thread != null) {
+            this.thread.interrupt();
+            while (this.thread.isAlive()) {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-            thread = null;
+            this.thread = null;
         }
     }
 
     /**
      * Save a specific value to the status recorder data files.
-     * @param name The name to save to.
+     *
+     * @param name  The name to save to.
      * @param value The value to store
      */
-    public void saveReading(String name, BigDecimal value)
-    {
-        File tempFile = new File(currentDirectory + name + "-manual.csv");
+    public void saveReading(String name, BigDecimal value) {
+        File tempFile = new File(this.currentDirectory + name + "-manual.csv");
         appendToLog(tempFile, new Date().getTime() + "," + value.toPlainString() + "\r\n");
     }
 
@@ -90,27 +92,27 @@ public class StatusRecorder implements Runnable {
         // one for each series (duty & temperature per vessel)
         // For now - we'll store Duty, temperature vs time
         //Assume new logs on each run
-        
+
         //Keep checking the status until all the temperature sensors are initialized
         try {
-            
+
             while (!checkInitialized()) {
                 Thread.sleep(1000);
             }
 
             long startTime = System.currentTimeMillis();
 
-            currentDirectory = recorderDirectory + "/" + startTime + "/";
-            File directoryFile = new File(currentDirectory);
+            this.currentDirectory = this.recorderDirectory + "/" + startTime + "/";
+            File directoryFile = new File(this.currentDirectory);
             if (!directoryFile.mkdirs()) {
-                BrewServer.LOG.warning("Could not create directory: " + currentDirectory);
+                BrewServer.LOG.warning("Could not create directory: " + this.currentDirectory);
                 return;
             }
             LaunchControl.getInstance().setFileOwner(directoryFile.getParentFile());
             LaunchControl.getInstance().setFileOwner(directoryFile);
 
             //Generate a new log file under the current directory
-            logFile = currentDirectory + "raw.log";
+            this.logFile = this.currentDirectory + "raw.log";
 
             File file = new File(this.logFile);
             LaunchControl.getInstance().setFileOwner(file);
@@ -121,34 +123,33 @@ public class StatusRecorder implements Runnable {
                 try {
                     String status = LaunchControl.getInstance().getJSONStatus();
                     JSONObject newStatus = (JSONObject) JSONValue.parse(status);
-                    if (lastStatus == null || isDifferent(lastStatus, newStatus)) {
+                    if (this.lastStatus == null || isDifferent(this.lastStatus, newStatus)) {
                         //For now just log the whole status
                         //Eventually we may want multiple logs, etc.
 
                         Date now = new Date();
-                        printJsonToCsv(now, newStatus, currentDirectory);
-                        lastStatus = newStatus;
+                        printJsonToCsv(now, newStatus, this.currentDirectory);
+                        this.lastStatus = newStatus;
                     }
                 } catch (Exception ioe) {
                     continueRunning = false;
                 }
-                Thread.sleep(sleep);
+                Thread.sleep(this.sleep);
             }
         } catch (InterruptedException ex) {
             BrewServer.LOG.warning("Status Recorder shutting down");
         }
 
     }
-    
-    private boolean checkInitialized()
-    {
+
+    private boolean checkInitialized() {
         return LaunchControl.getInstance().isInitialized();
     }
 
     /**
      * Save the status to the directory.
      *
-     * @param nowDate The current date to save the datapoint for.
+     * @param nowDate   The current date to save the datapoint for.
      * @param newStatus The JSON Status object to dump
      * @param directory The graph data directory.
      */
@@ -160,28 +161,28 @@ public class StatusRecorder implements Runnable {
             JSONObject vessel = (JSONObject) vessel1;
             if (vessel.containsKey("name")) {
                 String name = vessel.get("name").toString();
-                Temp currentTemp = LaunchControl.findTemp(name);
+                Temp currentTemp = LaunchControl.getInstance().findTemp(name);
                 if (currentTemp != null) {
                     name = currentTemp.getProbe();
                 }
-                if (vessel.containsKey("tempprobe")) {
-                    String temp = ((JSONObject) vessel.get("tempprobe"))
+                if (vessel.containsKey(TEMPPROBE)) {
+                    String temp = ((JSONObject) vessel.get(TEMPPROBE))
                             .get("temp").toString();
 
 
-                    Status lastStatus = temperatureMap.get(name);
+                    Status lastStatus = this.temperatureMap.get(name);
                     if (lastStatus == null) {
                         lastStatus = new Status("-999", now);
                     }
 
                     if (lastStatus.isDifferentEnough(temp)) {
                         File tempFile = new File(directory + name + "-temp.csv");
-                        if (now - lastStatus.timestamp > sleep * 1.5) {
-                            appendToLog(tempFile, now - sleep + "," + lastStatus.value + "\r\n");
+                        if (now - lastStatus.timestamp > this.sleep * 1.5) {
+                            appendToLog(tempFile, now - this.sleep + "," + lastStatus.value + "\r\n");
                         }
                         appendToLog(tempFile, now + "," + temp + "\r\n");
 
-                        temperatureMap.put(name, new Status(temp, now));
+                        this.temperatureMap.put(name, new Status(temp, now));
                     }
                 }
 
@@ -194,18 +195,18 @@ public class StatusRecorder implements Runnable {
                         duty = pid.get("duty").toString();
                     }
 
-                    Status lastStatus = dutyMap.get(name);
+                    Status lastStatus = this.dutyMap.get(name);
                     if (lastStatus == null) {
                         lastStatus = new Status("-999", now);
                     }
 
                     if (!duty.equals(lastStatus.value)) {
                         File dutyFile = new File(directory + name + "-duty.csv");
-                        if (now - lastStatus.timestamp > sleep * 1.5) {
-                            appendToLog(dutyFile, now - sleep + "," + lastStatus.value + "\r\n");
+                        if (now - lastStatus.timestamp > this.sleep * 1.5) {
+                            appendToLog(dutyFile, now - this.sleep + "," + lastStatus.value + "\r\n");
                         }
                         appendToLog(dutyFile, now + "," + duty + "\r\n");
-                        dutyMap.put(name, new Status(duty, now));
+                        this.dutyMap.put(name, new Status(duty, now));
                     }
                 }
 
@@ -216,7 +217,7 @@ public class StatusRecorder implements Runnable {
     /**
      * Save the string to the log file.
      *
-     * @param file The file object to save to
+     * @param file     The file object to save to
      * @param toAppend The string to add to the file
      */
     private final void appendToLog(final File file, final String toAppend) {
@@ -242,12 +243,12 @@ public class StatusRecorder implements Runnable {
     /**
      * Write a JSON object to the log file.
      *
-     * @param status The JSON Object to log
+     * @param status     The JSON Object to log
      * @param fileExists If the file exists, prepend a "," otherwise an open
-     * brace "["
+     *                   brace "["
      */
     protected final void writeToLog(final JSONObject status,
-            final boolean fileExists) {
+                                    final boolean fileExists) {
         String append = fileExists ? "," : "[" + status.toJSONString();
         appendToLog(new File(this.logFile), append);
     }
@@ -256,11 +257,11 @@ public class StatusRecorder implements Runnable {
      * Check to see if the objects are different.
      *
      * @param previous The first object to check.
-     * @param current The second object to check
+     * @param current  The second object to check
      * @return True if the objects are different
      */
     private boolean isDifferent(final JSONObject previous,
-                                      final JSONObject current) {
+                                final JSONObject current) {
         if (previous.size() != current.size()) {
             return true;
         }
@@ -282,11 +283,11 @@ public class StatusRecorder implements Runnable {
      * Check to see if the JSONArrays are different.
      *
      * @param previous The first JSONArray to check
-     * @param current The second JSONArray to check.
+     * @param current  The second JSONArray to check.
      * @return True if the JSONArrays are different
      */
     private boolean isDifferent(final JSONArray previous,
-                                      final JSONArray current) {
+                                final JSONArray current) {
 
         if (previous.size() != current.size()) {
             return true;
@@ -307,11 +308,11 @@ public class StatusRecorder implements Runnable {
      * Compare two generic objects.
      *
      * @param previousValue First object to check
-     * @param currentValue Second object to check
+     * @param currentValue  Second object to check
      * @return True if the objects are different, false if the same.
      */
     protected final boolean compare(final Object previousValue,
-            final Object currentValue) {
+                                    final Object currentValue) {
         if (previousValue == null && currentValue == null) {
             return true;
         }
@@ -355,9 +356,9 @@ public class StatusRecorder implements Runnable {
             boolean retVal = false;
 
             try {
-                double oldVal = Double.valueOf(value);
+                double oldVal = Double.valueOf(this.value);
                 double newVal = Double.valueOf(newValue);
-                retVal = Math.abs(oldVal - newVal) > diff;
+                retVal = Math.abs(oldVal - newVal) > StatusRecorder.this.diff;
             } catch (Throwable ignored) {
             }
 
@@ -367,19 +368,19 @@ public class StatusRecorder implements Runnable {
     }
 
     public double getDiff() {
-        return diff;
+        return this.diff;
     }
-    
+
     public double getTime() {
-        return sleep;
+        return this.sleep;
     }
 
     public void setDiff(double threshold) {
-        diff = threshold;
+        this.diff = threshold;
     }
-    
+
     public void setTime(long time) {
-        sleep = time;
+        this.sleep = time;
     }
 
     private String getCurrentDir() {
@@ -410,7 +411,7 @@ public class StatusRecorder implements Runnable {
             vessel = params.get("vessel");
         }
         String vesselName = vessel;
-        Temp temp = LaunchControl.findTemp(vessel);
+        Temp temp = LaunchControl.getInstance().findTemp(vessel);
         if (temp != null) {
             vesselName = temp.getProbe();
         }
@@ -479,7 +480,7 @@ public class StatusRecorder implements Runnable {
                 name = name.substring(0, name.length() - 4);
                 localName = name.substring(0, name.lastIndexOf("-"));
                 String type = name.substring(name.lastIndexOf("-") + 1);
-                Temp localTemp = LaunchControl.findTemp(localName);
+                Temp localTemp = LaunchControl.getInstance().findTemp(localName);
                 if (localTemp != null) {
                     localName = localTemp.getName();
                 } else {
@@ -517,7 +518,7 @@ public class StatusRecorder implements Runnable {
                 try {
                     reader = new ReversedLinesFileReader(content);
                     String line;
-                    String[] lArray ;
+                    String[] lArray;
 
                     int count = 0;
                     try {
@@ -536,7 +537,7 @@ public class StatusRecorder implements Runnable {
                                 dataArray.add(lArray[1].trim());
                             }
                             xArray.add(BrewDay.mFormat
-                                            .format(new Date(timestamp))
+                                    .format(new Date(timestamp))
                             );
                             dataArray.add(lArray[1].trim());
                             count++;
@@ -545,7 +546,6 @@ public class StatusRecorder implements Runnable {
                         // Do nothing. File doesn't have any data.
                         BrewServer.LOG.info("Error when reading for temperature: " + content.getAbsolutePath());
                     }
-
 
 
                     dataBuffer.add(xArray);
@@ -604,7 +604,7 @@ public class StatusRecorder implements Runnable {
         y1Label.put("text", "Temperature");
         y1Label.put("position", "outer-middle");
         JSONObject y1 = new JSONObject();
-        y1.put("show",  "true");
+        y1.put("show", "true");
         y1.put("label", y1Label);
 
         JSONObject padding = new JSONObject();
@@ -669,6 +669,9 @@ public class StatusRecorder implements Runnable {
     private boolean deleteDir(File file) {
         if (file.isDirectory()) {
             String[] children = file.list();
+            if (children == null) {
+                return false;
+            }
             for (String childDir : children) {
                 boolean success = deleteDir(new File(file, childDir));
                 if (!success) {

@@ -19,6 +19,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static com.sb.elsinore.UrlEndpoints.POSITION;
+import static com.sb.elsinore.UrlEndpoints.TEMP;
 import static org.rendersnake.HtmlAttributesFactory.*;
 
 /********************
@@ -32,6 +34,7 @@ import static org.rendersnake.HtmlAttributesFactory.*;
 public class TriggerControl implements Runnable {
 
     public static final String NAME = "triggers";
+    public static final String PID = "pid";
     /**
      * The output PID to be controlled & read from.
      */
@@ -50,14 +53,15 @@ public class TriggerControl implements Runnable {
 
     /**
      * Add a mashstep at a position, overriding the old one.
-     * @param position The position to add the mashstep at
-     * @param type The Type of the Trigger to add.
+     *
+     * @param position   The position to add the mashstep at
+     * @param type       The Type of the Trigger to add.
      * @param parameters The Incoming parameter JSONObject
-     * to use to setup the trigger
+     *                   to use to setup the trigger
      * @return The new Mash Step
      */
     public final TriggerInterface addTrigger(int position,
-            final String type, final JSONObject parameters) {
+                                             final String type, final JSONObject parameters) {
         TriggerInterface triggerStep = null;
         Class<? extends TriggerInterface> triggerClass = getTriggerOfName(type);
         if (triggerClass == null) {
@@ -65,14 +69,14 @@ public class TriggerControl implements Runnable {
         }
 
         if (position < 0) {
-            position = triggerList.size();
+            position = this.triggerList.size();
         }
 
         // Find the constructor.
         try {
             Constructor<? extends TriggerInterface> triggerConstructor = triggerClass.getConstructor(int.class, JSONObject.class);
             triggerStep = triggerConstructor.newInstance(position, parameters);
-            CollectionsUtil.addInOrder(triggerList, triggerStep);
+            CollectionsUtil.addInOrder(this.triggerList, triggerStep);
         } catch (InstantiationException | IllegalAccessException
                 | IllegalArgumentException | InvocationTargetException
                 | NoSuchMethodException | SecurityException e) {
@@ -85,8 +89,9 @@ public class TriggerControl implements Runnable {
 
     /**
      * Get the input trigger form for the specified type.
+     *
      * @param position The position to add the new trigger at.
-     * @param type The Type of the Trigger interface to get.
+     * @param type     The Type of the Trigger interface to get.
      * @return The HtmlCanvas representing the form.
      */
     static HtmlCanvas getNewTriggerForm(final int position,
@@ -102,11 +107,11 @@ public class TriggerControl implements Runnable {
         // Find the constructor.
         try {
             Constructor<? extends TriggerInterface> triggerConstructor
-                = triggerClass.getConstructor(
-                        int.class);
+                    = triggerClass.getConstructor(
+                    int.class);
             if (triggerConstructor == null) {
                 LaunchControl.setMessage(
-                    "Couldn't find the basic constructor for " + type);
+                        "Couldn't find the basic constructor for " + type);
                 return null;
             }
             triggerStep = triggerConstructor.newInstance(
@@ -124,8 +129,9 @@ public class TriggerControl implements Runnable {
 
     /**
      * Get the input trigger form for the specified type.
+     *
      * @param position The position to add the new trigger at.
-     * @param params The incoming params.
+     * @param params   The incoming params.
      * @return The HtmlCanvas representing the form.
      */
     @SuppressWarnings("unused")
@@ -143,8 +149,9 @@ public class TriggerControl implements Runnable {
 
     /**
      * Update the trigger.
+     *
      * @param position The position to update the new trigger at.
-     * @param params The new parameters
+     * @param params   The new parameters
      */
     final boolean updateTrigger(final int position,
                                 final JSONObject params) {
@@ -155,6 +162,7 @@ public class TriggerControl implements Runnable {
 
     /**
      * Get the Trigger Class that matches the incoming name.
+     *
      * @param name The name of the trigger to get.
      * @return The Class representing the trigger.
      */
@@ -167,16 +175,17 @@ public class TriggerControl implements Runnable {
 
     /**
      * Get a map of the triggerInterface classes.
+     *
      * @return A Map of className: Class.
      */
     private static Map<String, Class<? extends TriggerInterface>>
-        getTriggerList() {
+    getTriggerList() {
         HashMap<String, Class<? extends TriggerInterface>> interfaceMap = new HashMap<>();
 
         Set<Class<? extends TriggerInterface>> triggerSet =
                 new Reflections("com.sb.elsinore.triggers")
-                    .getSubTypesOf(TriggerInterface.class);
-        for (Class<? extends TriggerInterface> triggerClass: triggerSet) {
+                        .getSubTypesOf(TriggerInterface.class);
+        for (Class<? extends TriggerInterface> triggerClass : triggerSet) {
             interfaceMap.put(triggerClass.getSimpleName(), triggerClass);
         }
 
@@ -189,15 +198,15 @@ public class TriggerControl implements Runnable {
         Map<String, String> typeMap = new HashMap<>();
 
         // Get the String, String array
-        for (Entry<String, Class<? extends TriggerInterface>> entry:
-            interfaceMap.entrySet()) {
+        for (Entry<String, Class<? extends TriggerInterface>> entry :
+                interfaceMap.entrySet()) {
             Constructor<? extends TriggerInterface> tempTrigger;
             try {
                 tempTrigger = entry.getValue().getConstructor();
                 if (tempTrigger.newInstance()
                         .getTriggerType(inType)) {
-                    typeMap.put(entry.getKey().replace("Trigger",  ""),
-                        tempTrigger.newInstance().getName());
+                    typeMap.put(entry.getKey().replace("Trigger", ""),
+                            tempTrigger.newInstance().getName());
                 }
             } catch (NoSuchMethodException | SecurityException |
                     InstantiationException | IllegalAccessException |
@@ -212,14 +221,16 @@ public class TriggerControl implements Runnable {
 
     /**
      * Get the current size of the trigger list.
+     *
      * @return The size of the trigger list
      */
     public final int getTriggersSize() {
-        return triggerList.size();
+        return this.triggerList.size();
     }
 
     /**
      * Get the mash step at the specified position.
+     *
      * @param position The position to get the mash step at
      * @return The mash step at the specified position.
      */
@@ -229,10 +240,11 @@ public class TriggerControl implements Runnable {
 
     /**
      * Get the current mash step that's activated.
+     *
      * @return And entry with the position and the mash step
      */
     public final TriggerInterface getCurrentTrigger() {
-        for (TriggerInterface m: triggerList) {
+        for (TriggerInterface m : this.triggerList) {
             if (m.isActive()) {
                 return m;
             }
@@ -245,9 +257,8 @@ public class TriggerControl implements Runnable {
      */
     @Override
     public final void run() {
-        if (!LaunchControl.getInstance().systemSettings.restoreState)
-        {
-            triggerList.forEach(trigger -> trigger.deactivate(true));
+        if (!LaunchControl.getInstance().systemSettings.restoreState) {
+            this.triggerList.forEach(trigger -> trigger.deactivate(true));
         }
         // Run through and update the times based on the currently active step
         TriggerInterface triggerEntry = getCurrentTrigger();
@@ -271,7 +282,7 @@ public class TriggerControl implements Runnable {
                     currentTrigger = triggerEntry;
                     currentTriggerPosition = triggerEntry.getPosition();
                     BrewServer.LOG.warning("Found an active mash step: "
-                        + currentTriggerPosition);
+                            + currentTriggerPosition);
                 }
             }
 
@@ -301,6 +312,7 @@ public class TriggerControl implements Runnable {
     /**
      * Activate the step at the selected position.
      * Deactivates the other mash steps.
+     *
      * @param position The position to activate the step at
      * @return True if activated OK, false if there's an error
      */
@@ -327,6 +339,7 @@ public class TriggerControl implements Runnable {
 
     /**
      * Return the current state of this MashControl as a JSON string.
+     *
      * @return The String representing the current state.
      */
     public final String getJSONDataString() {
@@ -342,6 +355,7 @@ public class TriggerControl implements Runnable {
 
     /**
      * Deactivate the step at the position specified.
+     *
      * @param position The step to deactivate. If < 0 deactivate all.
      * @return True if deactivated OK, false if not.
      */
@@ -351,8 +365,9 @@ public class TriggerControl implements Runnable {
 
     /**
      * Deactivate the step at the position specified.
+     *
      * @param position The step to deactivate. If < 0 deactivate all.
-     * @param fromUI True if the trigger is deactivated from the UI.
+     * @param fromUI   True if the trigger is deactivated from the UI.
      * @return True if deactivated OK, false if not.
      */
     boolean deactivateTrigger(int position, boolean fromUI) {
@@ -369,7 +384,7 @@ public class TriggerControl implements Runnable {
             triggerEntry.deactivate(fromUI);
         } else {
             // Otherwise deactivate all the steps
-            for (TriggerInterface mEntry : triggerList) {
+            for (TriggerInterface mEntry : this.triggerList) {
                 mEntry.deactivate(fromUI);
             }
         }
@@ -379,12 +394,13 @@ public class TriggerControl implements Runnable {
 
     /**
      * Get the current status as a JSONObject.
+     *
      * @return The JSONObject representing the current state.
      */
     @SuppressWarnings("unchecked")
     private JSONArray getJSONData() {
         JSONArray masterArray = new JSONArray();
-        for (TriggerInterface e : triggerList) {
+        for (TriggerInterface e : this.triggerList) {
             masterArray.add(e.getJSONStatus());
         }
         return masterArray;
@@ -394,7 +410,7 @@ public class TriggerControl implements Runnable {
      * @return Is the shutdown flag set?
      */
     private boolean isShutdownFlag() {
-        return shutdownFlag;
+        return this.shutdownFlag;
     }
 
     /**
@@ -408,7 +424,7 @@ public class TriggerControl implements Runnable {
      * @return the outputControl
      */
     String getOutputControl() {
-        return outputControl;
+        return this.outputControl;
     }
 
     /**
@@ -420,27 +436,23 @@ public class TriggerControl implements Runnable {
 
     /**
      * Delete the specified trigger step.
+     *
      * @param position The step position to delete
      */
-    public final void  delTriggerStep(final int position)
-    {
+    public final void delTriggerStep(final int position) {
         int i = -1;
-        for (TriggerInterface ti: triggerList)
-        {
-            if (ti.getPosition() == position)
-            {
-                i = triggerList.indexOf(ti);
+        for (TriggerInterface ti : this.triggerList) {
+            if (ti.getPosition() == position) {
+                i = this.triggerList.indexOf(ti);
                 break;
             }
         }
-        if (i != -1)
-        {
+        if (i != -1) {
             this.triggerList.remove(i);
             // Drop the rest of the positions down by one.
             TriggerInterface ti;
-            for (;i < triggerList.size(); i++)
-            {
-                ti = triggerList.get(i);
+            for (; i < this.triggerList.size(); i++) {
+                ti = this.triggerList.get(i);
                 if (ti != null) {
                     ti.setPosition(ti.getPosition() - 1);
                 }
@@ -449,7 +461,7 @@ public class TriggerControl implements Runnable {
         }
 
         // No more steps, turn off the MashControl
-        if (triggerList.size() == 0) {
+        if (this.triggerList.size() == 0) {
             setShutdownFlag(true);
             Thread.currentThread().interrupt();
         }
@@ -458,6 +470,7 @@ public class TriggerControl implements Runnable {
 
     /**
      * Get the new triggers form for display.
+     *
      * @param probe The name of the probe to attach to.
      * @return The new triggers canvas
      * @throws IOException If the form couldn't be created.
@@ -465,39 +478,40 @@ public class TriggerControl implements Runnable {
     static HtmlCanvas getNewTriggersForm(final String probe)
             throws IOException {
         String probeType;
-        if (LaunchControl.findPID(probe) != null) {
-            probeType = "pid";
+        if (LaunchControl.getInstance().findPID(probe) != null) {
+            probeType = PID;
         } else {
-            probeType = "temp";
+            probeType = TEMP;
         }
 
         HtmlCanvas htmlCanvas = new HtmlCanvas(new PrettyWriter());
         htmlCanvas.div(id("newTriggersForm"))
-            .form()
+                .form()
                 .select(name("type").class_("form-control m-t")
                         .onClick("newTrigger(this, '" + probe + "');"));
-            htmlCanvas.option(value("").selected_if(true))
+        htmlCanvas.option(value("").selected_if(true))
                 .write("Select Trigger Type")
-            ._option();
-            Map<String, String> triggers = getTriggerTypes(probeType);
-            for (Entry<String, String> entry: triggers.entrySet()) {
-                htmlCanvas.option(value(entry.getKey()))
-                    .write(entry.getValue())
                 ._option();
-            }
-                htmlCanvas._select();
-                htmlCanvas.input(id("temp").name("temp")
-                        .hidden("true").value(probe));
-                htmlCanvas.input(id("position").name("position")
-                        .hidden("true").value("-1"))
-            ._form()
-        ._div()
-        .div(id("childInput"))._div();
+        Map<String, String> triggers = getTriggerTypes(probeType);
+        for (Entry<String, String> entry : triggers.entrySet()) {
+            htmlCanvas.option(value(entry.getKey()))
+                    .write(entry.getValue())
+                    ._option();
+        }
+        htmlCanvas._select();
+        htmlCanvas.input(id(TEMP).name(TEMP)
+                .hidden("true").value(probe));
+        htmlCanvas.input(id(POSITION).name(POSITION)
+                .hidden("true").value("-1"))
+                ._form()
+                ._div()
+                .div(id("childInput"))._div();
         return htmlCanvas;
     }
 
     /**
      * Return the count of how many triggers have been added.
+     *
      * @return The size of the trigger list.
      */
     public final int triggerCount() {
@@ -515,10 +529,8 @@ public class TriggerControl implements Runnable {
     }
 
     public boolean isActive() {
-        for (TriggerInterface triggerInterface: triggerList)
-        {
-            if (triggerInterface.isActive())
-            {
+        for (TriggerInterface triggerInterface : this.triggerList) {
+            if (triggerInterface.isActive()) {
                 return true;
             }
         }
@@ -526,10 +538,8 @@ public class TriggerControl implements Runnable {
     }
 
     void deactivate() {
-        for (TriggerInterface triggerInterface: triggerList)
-        {
-            if (triggerInterface.isActive())
-            {
+        for (TriggerInterface triggerInterface : this.triggerList) {
+            if (triggerInterface.isActive()) {
                 triggerInterface.deactivate(false);
             }
         }

@@ -10,6 +10,8 @@ import com.sb.elsinore.PID;
 import com.sb.elsinore.Temp;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.Renderable;
+
+import static com.sb.elsinore.UrlEndpoints.TEMPPROBE;
 import static org.rendersnake.HtmlAttributesFactory.*;
 
 import java.io.IOException;
@@ -74,11 +76,11 @@ public class RecipeViewForm implements Renderable {
                 html._tr();
             }
             html._table();
-            html.select(name("tempprobe").class_("form-control"));
+            html.select(name(TEMPPROBE).class_("form-control"));
             html.option(value("").selected_if(true))
                     .write("Select Probe")
                     ._option();
-            for (Temp entry: LaunchControl.tempList) {
+            for (Temp entry: LaunchControl.getInstance().tempList) {
                 html.option(value(entry.getName()))
                         .write(entry.getName())
                         ._option();
@@ -111,11 +113,11 @@ public class RecipeViewForm implements Renderable {
                 html._tr();
             }
             html._table();
-            html.select(name("tempprobe").class_("form-control"));
+            html.select(name(TEMPPROBE).class_("form-control"));
             html.option(value("").selected_if(true))
                     .write("Select Probe")
                     ._option();
-            for (Temp entry: LaunchControl.tempList) {
+            for (Temp entry: LaunchControl.getInstance().tempList) {
                 if (entry instanceof  PID) {
                     html.option(value(entry.getName()))
                             .write(entry.getName())
@@ -167,11 +169,11 @@ public class RecipeViewForm implements Renderable {
                 html._tr();
             }
             html._table();
-            html.select(name("tempprobe").class_("form-control"));
+            html.select(name(TEMPPROBE).class_("form-control"));
             html.option(value("").selected_if(true))
                     .write("Select Probe")
                     ._option();
-            for (Temp entry: LaunchControl.tempList) {
+            for (Temp entry: LaunchControl.getInstance().tempList) {
                 html.option(value(entry.getName()))
                         .write(entry.getName())
                         ._option();
@@ -212,11 +214,11 @@ public class RecipeViewForm implements Renderable {
                 html._tr();
             }
             html._table();
-            html.select(name("tempprobe").class_("form-control"));
+            html.select(name(TEMPPROBE).class_("form-control"));
             html.option(value("").selected_if(true))
                     .write("Select Probe")
                     ._option();
-            for (Temp entry: LaunchControl.tempList) {
+            for (Temp entry: LaunchControl.getInstance().tempList) {
                 if (entry instanceof PID) {
                     html.option(value(entry.getName()))
                             .write(entry.getName())

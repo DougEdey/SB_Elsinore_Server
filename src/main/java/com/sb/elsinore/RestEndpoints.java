@@ -1,16 +1,17 @@
 package com.sb.elsinore;
 
-import com.sb.elsinore.annotations.Parameter;
 import com.sb.elsinore.annotations.RestEndpoint;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import static com.sb.elsinore.BrewServer.MIME_TYPES;
+import static com.sb.elsinore.UrlEndpoints.INPUTUNIT;
 
 /**
  * This class hosts the REST based endpoints for Angular et al
@@ -18,57 +19,25 @@ import java.util.Set;
  */
 @SuppressWarnings("Duplicates")
 public class RestEndpoints {
+    public static final String FORM = "form";
     public File rootDir;
     public Map<String, String> parameters = null;
     public Map<String, String> files = null;
     public Map<String, String> header = null;
 
-    public static final Map<String, String> MIME_TYPES
-            = new HashMap<String, String>() {
-        /**
-         * The Serial UID.
-         */
-        public static final long serialVersionUID = 1L;
-        {
-            put("css", "text/css");
-            put("htm", "text/html");
-            put("html", "text/html");
-            put("xml", "text/xml");
-            put("axml", "application/xml");
-            put("txt", "text/plain");
-            put("asc", "text/plain");
-            put("gif", "image/gif");
-            put("jpg", "image/jpeg");
-            put("jpeg", "image/jpeg");
-            put("png", "image/png");
-            put("mp3", "audio/mpeg");
-            put("m3u", "audio/mpeg-url");
-            put("mp4", "video/mp4");
-            put("ogv", "video/ogg");
-            put("flv", "video/x-flv");
-            put("mov", "video/quicktime");
-            put("swf", "application/x-shockwave-flash");
-            put("js", "application/javascript");
-            put("pdf", "application/pdf");
-            put("doc", "application/msword");
-            put("ogg", "application/x-ogg");
-            put("zip", "application/octet-stream");
-            put("exe", "application/octet-stream");
-            put("class", "application/octet-stream");
-            put("json", "application/json");
-        }
-    };
     public static final String MIME_HTML = "text/html";
 
     public Map<String, String> ParseParams() {
-        return this.ParseParams(this.parameters);
+        return ParseParams(this.parameters);
     }
+
     /**
      * Convert a JSON parameter set into a hashmap.
+     *
      * @param params The incoming parameter listing
      * @return The converted parameters
      */
-    public Map<String, String> ParseParams(Map<String, String> params) {
+    public static Map<String, String> ParseParams(Map<String, String> params) {
         Set<Map.Entry<String, String>> incomingParams = params.entrySet();
         Map<String, String> parms;
         Iterator<Map.Entry<String, String>> it = incomingParams.iterator();
@@ -101,30 +70,30 @@ public class RestEndpoints {
             BrewServer.LOG.info("Found valid data for " + inputUnit);
             parms = (Map<String, String>) incomingData;
         } else {
-            inputUnit = params.get("form");
+            inputUnit = params.get(FORM);
             parms = params;
         }
 
         if (inputUnit != null) {
-            parms.put("inputunit", inputUnit);
+            parms.put(INPUTUNIT, inputUnit);
+        }
+
+        if (parms.size() == 0) {
+            return params;
         }
 
         return parms;
     }
-    @RestEndpoint(path="probes", method = NanoHTTPD.Method.GET, help = "Lists all the Temperature probes in the system")
-    public NanoHTTPD.Response GetTemperatureProbes()
-    {
+
+    @RestEndpoint(path = "probes", method = NanoHTTPD.Method.GET, help = "Lists all the Temperature probes in the system")
+    public NanoHTTPD.Response GetTemperatureProbes() {
         NanoHTTPD.Response.Status status = NanoHTTPD.Response.Status.INTERNAL_ERROR;
         JSONObject responseJSON = new JSONObject();
-        if (LaunchControl.tempList.size() == 0)
-        {
+        if (LaunchControl.getInstance().tempList.size() == 0) {
             status = NanoHTTPD.Response.Status.NO_CONTENT;
             responseJSON.put("Error", "No temperature probes");
-        }
-        else
-        {
-            for(Temp t: LaunchControl.tempList)
-            {
+        } else {
+            for (Temp t : LaunchControl.getInstance().tempList) {
                 responseJSON.put(t.getName(), t.getProbe());
             }
         }

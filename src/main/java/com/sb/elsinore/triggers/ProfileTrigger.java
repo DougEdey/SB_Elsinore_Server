@@ -45,12 +45,12 @@ public class ProfileTrigger implements TriggerInterface {
 
     @Override
     public void waitForTrigger() {
-        startDate = new Date();
+        this.startDate = new Date();
         if (this.targetName == null) {
             return;
         }
 
-        TriggerControl triggerControl = LaunchControl.findTriggerControl(
+        TriggerControl triggerControl = LaunchControl.getInstance().findTriggerControl(
                 this.targetName);
         TriggerInterface triggerEntry = triggerControl != null ? triggerControl.getCurrentTrigger() : null;
         if (triggerControl == null) {
@@ -81,7 +81,7 @@ public class ProfileTrigger implements TriggerInterface {
                     + stepToUse);
         }
 
-        LaunchControl.startMashControl(this.targetName);
+        LaunchControl.getInstance().startMashControl(this.targetName);
     }
 
     @Override
@@ -113,7 +113,7 @@ public class ProfileTrigger implements TriggerInterface {
         HtmlCanvas html = new HtmlCanvas();
         html.div(id("NewTriggerTrigger").class_(""));
         html.form(id("newTriggersForm"));
-        html.input(id("type").name("type").class_("form-control m-t")
+        html.input(id(TYPE).name(TYPE).class_("form-control m-t")
                 .hidden("true").value("Profile"));
         // Add the probe as a drop down list.
         html.select(class_("form-control m-t").name(TARGET_NAME)
@@ -121,7 +121,7 @@ public class ProfileTrigger implements TriggerInterface {
         html.option(value(""))
                 .write("Target Probe")
                 ._option();
-        for (Temp tTemp : LaunchControl.tempList) {
+        for (Temp tTemp : LaunchControl.getInstance().tempList) {
             String tName = tTemp.getName();
             html.option(value(tName))
                     .write(tName)
@@ -173,7 +173,7 @@ public class ProfileTrigger implements TriggerInterface {
         html.option(value(""))
                 .write("Target Probe")
                 ._option();
-        for (Temp tTemp : LaunchControl.tempList) {
+        for (Temp tTemp : LaunchControl.getInstance().tempList) {
             String tName = tTemp.getName();
             html.option(value(tName))
                     .write(tName)
@@ -233,7 +233,7 @@ public class ProfileTrigger implements TriggerInterface {
         String target = (String) params.get(TARGET_NAME);
         String newAct = (String) params.get(ACTIVATE);
 
-        if (target != null && LaunchControl.findTemp(target) != null) {
+        if (target != null && LaunchControl.getInstance().findTemp(target) != null) {
             this.targetName = target;
         } else {
             return false;

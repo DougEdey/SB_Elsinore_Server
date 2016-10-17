@@ -11,4 +11,9 @@ bin
 *~
 
 # Remove Idea directory
-.idea/
+**.idea/
+recipes/barrelagedstoutoutput.xml
+recipes/greenhouseoutput.xml
+recipes/robertsmildoutput.xml
+recipes/yellowsnowoutput.xml
+/.idea/

@@ -11,6 +11,8 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Date;
 
+import static com.sb.elsinore.UrlEndpoints.OFF_STRING;
+import static com.sb.elsinore.UrlEndpoints.ON_STRING;
 import static org.rendersnake.HtmlAttributesFactory.*;
 
 @SuppressWarnings("unused")
@@ -33,6 +35,7 @@ public class SwitchTrigger implements TriggerInterface {
 
     /**
      * Create a trigger with a specific position.
+     *
      * @param inPosition The position to create.
      */
     public SwitchTrigger(final int inPosition) {
@@ -41,7 +44,8 @@ public class SwitchTrigger implements TriggerInterface {
 
     /**
      * Create a trigger with parameters.
-     * @param inPos The position to create the trigger at.
+     *
+     * @param inPos      The position to create the trigger at.
      * @param parameters The parameters.
      */
     public SwitchTrigger(final int inPos, final JSONObject parameters) {
@@ -52,6 +56,7 @@ public class SwitchTrigger implements TriggerInterface {
 
     /**
      * Compare by position.
+     *
      * @param o the TriggerInterface to compare to.
      * @return Compare.
      */
@@ -84,7 +89,7 @@ public class SwitchTrigger implements TriggerInterface {
      * Trigger the switch.
      */
     private void triggerSwitch() {
-        Switch aSwitch = LaunchControl.findSwitch(this.switchName);
+        Switch aSwitch = LaunchControl.getInstance().findSwitch(this.switchName);
         if (aSwitch != null) {
             if (this.activate.equals("on")) {
                 aSwitch.turnOn();
@@ -112,6 +117,7 @@ public class SwitchTrigger implements TriggerInterface {
 
     /**
      * Deactivate this step.
+     *
      * @param fromUI
      */
     @Override
@@ -136,42 +142,42 @@ public class SwitchTrigger implements TriggerInterface {
         HtmlCanvas html = new HtmlCanvas();
         html.div(id("NewSwitchTrigger").class_(""));
         html.form(id("newTriggersForm"));
-            html.input(id("type").name("type")
-                        .hidden("true").value("Switch"));
-            // Add the Switches as a drop down list.
-            html.select(class_("holo-spinner").name("switchname")
-                    .id("switchName"));
-                html.option(value(""))
-                        .write(Messages.SWITCHES)
+        html.input(id(TYPE).name(TYPE)
+                .hidden("true").value("Switch"));
+        // Add the Switches as a drop down list.
+        html.select(class_("holo-spinner").name(SWITCHNAME)
+                .id(SWITCHNAME));
+        html.option(value(""))
+                .write(Messages.SWITCHES)
                 ._option();
-                for (Switch tSwitch : LaunchControl.switchList) {
-                    String tName = tSwitch.getName();
-                    html.option(value(tName))
-                        .write(tName)
+        for (Switch tSwitch : LaunchControl.getInstance().switchList) {
+            String tName = tSwitch.getName();
+            html.option(value(tName))
+                    .write(tName)
                     ._option();
-                }
-            html._select();
+        }
+        html._select();
 
-            // Add the on/off values
-            html.select(class_("holo-spinner").name("activate")
-                    .id("activate"));
-                html.option(value(""))
-                        .write("")
+        // Add the on/off values
+        html.select(class_("holo-spinner").name(ACTIVATE)
+                .id(ACTIVATE));
+        html.option(value(""))
+                .write("")
                 ._option();
-                html.option(value("on"))
-                    .write(Messages.SWITCH_ON)
+        html.option(value("on"))
+                .write(Messages.SWITCH_ON)
                 ._option();
-                html.option(value("off"))
-                    .write(Messages.SWITCH_OFF)
+        html.option(value("off"))
+                .write(Messages.SWITCH_OFF)
                 ._option();
-            html._select();
+        html._select();
 
-            html.button(name("submitSwitchTrigger")
-                    .class_("btn col-md-12")
-                    .add("data-toggle", "clickover")
-                    .onClick("submitNewTriggerStep(this);"))
+        html.button(name("submitSwitchTrigger")
+                .class_("btn col-md-12")
+                .add("data-toggle", "clickover")
+                .onClick("submitNewTriggerStep(this);"))
                 .write(Messages.ADD_TRIGGER)
-            ._button();
+                ._button();
         html._form();
         html._div();
         return html;
@@ -186,47 +192,47 @@ public class SwitchTrigger implements TriggerInterface {
         HtmlCanvas html = new HtmlCanvas();
         html.div(id("EditSwitchTrigger").class_(""));
         html.form(id("editTriggersForm"));
-            html.input(id("type").name("type").class_("form-control m-t")
-                        .hidden("true").value("switch"));
-            html.input(id("type").name("position").class_("form-control m-t")
-                    .hidden("position").value("" + this.position));
-            // Add the Switches as a drop down list.
-            html.select(class_("form-control m-t").name(SWITCHNAME)
-                    .id("switchName"));
-                html.option(value(""))
-                        .write(Messages.SWITCHES)
+        html.input(id(TYPE).name(TYPE).class_("form-control m-t")
+                .hidden("true").value("switch"));
+        html.input(id(POSITION).name(POSITION).class_("form-control m-t")
+                .hidden("position").value("" + this.position));
+        // Add the Switches as a drop down list.
+        html.select(class_("form-control m-t").name(SWITCHNAME)
+                .id("switchName"));
+        html.option(value(""))
+                .write(Messages.SWITCHES)
                 ._option();
-                for (Switch tSwitch : LaunchControl.switchList) {
-                    String tName = tSwitch.getName();
-                    html.option(value(tName)
-                            .selected_if(this.switchName.equals(tName)))
-                        .write(tName)
+        for (Switch tSwitch : LaunchControl.getInstance().switchList) {
+            String tName = tSwitch.getName();
+            html.option(value(tName)
+                    .selected_if(this.switchName.equals(tName)))
+                    .write(tName)
                     ._option();
-                }
-            html._select();
+        }
+        html._select();
 
-            // Add the on/off values
-            html.select(class_("form-control m-t").name("activate")
-                    .id("activate"));
-                html.option(value(""))
-                        .write("")
+        // Add the on/off values
+        html.select(class_("form-control m-t").name(ACTIVATE)
+                .id(ACTIVATE));
+        html.option(value(""))
+                .write("")
                 ._option();
-                html.option(value(Messages.SWITCH_ON)
-                        .selected_if(this.activate.equals("on")))
-                    .write("On")
+        html.option(value(Messages.SWITCH_ON)
+                .selected_if(this.activate.equals(ON_STRING)))
+                .write("On")
                 ._option();
-                html.option(value(Messages.SWITCH_OFF)
-                        .selected_if(this.activate.equals("off")))
-                    .write("Off")
+        html.option(value(Messages.SWITCH_OFF)
+                .selected_if(this.activate.equals(OFF_STRING)))
+                .write("Off")
                 ._option();
-            html._select();
+        html._select();
 
-            html.button(name("submitSwitchTrigger")
-                    .class_("btn btn-primary col-md-12")
-                    .add("data-toggle", "clickover")
-                    .onClick("updateTriggerStep(this);"))
+        html.button(name("submitSwitchTrigger")
+                .class_("btn btn-primary col-md-12")
+                .add("data-toggle", "clickover")
+                .onClick("updateTriggerStep(this);"))
                 .write(Messages.EDIT)
-            ._button();
+                ._button();
         html._form();
         html._div();
         return html;
@@ -234,6 +240,7 @@ public class SwitchTrigger implements TriggerInterface {
 
     /**
      * Update this trigger.
+     *
      * @param params The parameters to update with.
      */
     @Override
@@ -245,7 +252,7 @@ public class SwitchTrigger implements TriggerInterface {
         if (tActivate != null) {
             this.activate = tActivate;
         }
-        if (tName != null && LaunchControl.findSwitch(tName) != null) {
+        if (tName != null && LaunchControl.getInstance().findSwitch(tName) != null) {
             this.switchName = tName;
             if (this.active) {
                 triggerSwitch();
@@ -273,12 +280,12 @@ public class SwitchTrigger implements TriggerInterface {
     }
 
     /**
-     * @return true if at least one switch is setup.
      * @param inType The type of the device to check against.
+     * @return true if at least one switch is setup.
      */
     @Override
     public final boolean getTriggerType(final String inType) {
-        return (LaunchControl.switchList.size() > 0);
+        return (LaunchControl.getInstance().switchList.size() > 0);
     }
 
 }

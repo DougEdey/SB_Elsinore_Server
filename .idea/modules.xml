@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Elsinore.iml" filepath="$PROJECT_DIR$/Elsinore.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../jGPIO/jGPIO.iml" filepath="$PROJECT_DIR$/../jGPIO/jGPIO.iml" />
     </modules>
   </component>
 </project>

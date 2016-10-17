@@ -2,18 +2,19 @@ package com.sb.elsinore;
 
 import ca.strangebrew.recipe.Recipe;
 import com.sb.common.CollectionsUtil;
+import com.sb.elsinore.NanoHTTPD.Response;
+import com.sb.elsinore.NanoHTTPD.Response.Status;
 import com.sb.elsinore.annotations.Parameter;
-import com.sb.elsinore.html.*;
+import com.sb.elsinore.annotations.UrlEndpoint;
+import com.sb.elsinore.html.PhSensorForm;
+import com.sb.elsinore.html.RecipeListForm;
+import com.sb.elsinore.html.RecipeViewForm;
+import com.sb.elsinore.html.VolumeEditForm;
+import com.sb.elsinore.inputs.PhSensor;
 import com.sb.elsinore.notificiations.Notifications;
+import com.sb.elsinore.recipes.BeerXMLReader;
+import com.sb.elsinore.triggers.TriggerInterface;
 import jGPIO.InvalidGPIOException;
-
-import java.io.*;
-import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.logging.Level;
-
 import org.apache.tika.Tika;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -21,128 +22,135 @@ import org.json.simple.parser.JSONParser;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.tools.PrettyWriter;
 
-import com.sb.elsinore.NanoHTTPD.Response;
-import com.sb.elsinore.NanoHTTPD.Response.Status;
-import com.sb.elsinore.annotations.UrlEndpoint;
-import com.sb.elsinore.inputs.PhSensor;
-import com.sb.elsinore.recipes.BeerXMLReader;
-import com.sb.elsinore.triggers.TriggerInterface;
-
 import javax.xml.xpath.XPathException;
+import java.io.File;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.logging.Level;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.sb.elsinore.BrewServer.*;
+import static com.sb.elsinore.NanoHTTPD.MIME_PLAINTEXT;
+import static com.sb.elsinore.PID.HYSTERIA;
+import static com.sb.elsinore.PID.MANUAL;
 import static org.rendersnake.HtmlAttributesFactory.id;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "WeakerAccess"})
 public class UrlEndpoints {
 
-    public File rootDir;
+
+    public static final String HEAT = "heat";
+    public static final String COOL = "cool";
+    public static final String P = "p";
+    public static final String I = "i";
+    public static final String D = "d";
+    public static final String CYCLETIME = "cycletime";
+
+    public static final String NAME = "name";
+    public static final String DURATION = "duration";
+    public static final String INVERT = "invert";
+    public static final String INPUTUNIT = "inputunit";
+    public static final String FORM = "form";
+    public static final String TOGGLE = "toggle";
+    public static final String GPIO = "gpio";
+    public static final String INVERTED = "inverted";
+    public static final String VESSEL = "vessel";
+    public static final String SENSOR = "sensor";
+    public static final String DS_ADDRESS = "dsAddress";
+    public static final String DS_OFFSET = "dsOffset";
+    public static final String ADC_PIN = "adc_pin";
+    public static final String I_2_C_MODEL = "i2c_model";
+    public static final String I_2_C_DEVICE = "i2c_device";
+    public static final String I_2_C_ADDRESS = "i2c_address";
+    public static final String I_2_C_CHANNEL = "i2c_channel";
+    public static final String VOLUME = "volume";
+    public static final String UNITS = "units";
+    public static final String ONEWIRE_ADDRESS = "onewire_address";
+    public static final String ONEWIRE_OFFSET = "onewire_offset";
+    public static final String I_2_C_TYPE = "i2c_type";
+    public static final String PH_MODEL = "ph_model";
+    public static final String CALIBRATION = "calibration";
+    public static final String POSITION = "position";
+    public static final String TYPE = "type";
+    public static final String TEMP = "temp";
+    public static final String TEMP_UNIT = "tempUnit";
+    public static final String TEMPPROBE = "tempprobe";
+    public static final String ORIGINALNAME = "originalname";
+    public static final String ON_STRING = "on";
+    public static final String OFF_STRING = "off";
+    public static final String GRAVITY = "gravity";
+    public static final String DUTYCYCLE = "dutycycle";
+    public static final String ACTUAL_DUTY = "actualduty";
+    public static final String SETPOINT = "setpoint";
+    public static final String MANUAL_DUTY = "manual_duty";
+    public static final String MANUAL_TIME = "manual_time";
+    public static final String MODE = "mode";
+    public static final String MIN = "min";
+    public static final String MAX = "max";
+    public static final String TIME = "time";
+    public static final String COOLDELAY = "cooldelay";
+    public static final String FILE = "file";
+    public static final String SCALE = "scale";
+    public static final String DEVICE = "device";
+    public static final String RECORDER = "recorder";
+    public static final String RECORDER_DIFF = "recorderDiff";
+    public static final String RECORDER_TIME = "recorderTime";
+    public static final String RESTORE = "restore";
+    public static final String USE_OWFS = "use_owfs";
+    public static final String OWFS_SERVER = "owfs_server";
+    public static final String OWFS_PORT = "owfs_port";
+    public static final String CELSIUS = "Celsius";
+    public static final String C = "C";
+    public static final String FAHRENHEIT = "Fahrenheit";
+    public static final String F = "F";
+    public static final String RECIPE_NAME = "recipeName";
+    public static final String SUBSET = "subset";
+    public static final String MASH = "mash";
+    public static final String HOPS = "hops";
+    public static final String FERMENTATION = "fermentation";
+    public static final String DRY = "dry";
+    public static final String PROFILE = "profile";
+    public static final String BOIL = "boil";
+    public static final String FERM = "ferm";
+    public static final String NOTIFICATION = "notification";
+    public static final String PROBE = "probe";
+    public static final String TURNOFF = "turnoff";
+    public static final String START = "start";
+    public static final String RESET = "reset";
+    public static final String TIMER = "timer";
+
+    File rootDir;
     public Map<String, String> parameters = null;
     public Map<String, String> files = null;
     public Map<String, String> header = null;
-    public static final Map<String, String> MIME_TYPES
-        = new HashMap<String, String>() {
-        /**
-         * The Serial UID.
-         */
-        public static final long serialVersionUID = 1L;
-        {
-            put("css", "text/css");
-            put("htm", "text/html");
-            put("html", "text/html");
-            put("xml", "text/xml");
-            put("axml", "application/xml");
-            put("txt", "text/plain");
-            put("asc", "text/plain");
-            put("gif", "image/gif");
-            put("jpg", "image/jpeg");
-            put("jpeg", "image/jpeg");
-            put("png", "image/png");
-            put("mp3", "audio/mpeg");
-            put("m3u", "audio/mpeg-url");
-            put("mp4", "video/mp4");
-            put("ogv", "video/ogg");
-            put("flv", "video/x-flv");
-            put("mov", "video/quicktime");
-            put("swf", "application/x-shockwave-flash");
-            put("js", "application/javascript");
-            put("pdf", "application/pdf");
-            put("doc", "application/msword");
-            put("ogg", "application/x-ogg");
-            put("zip", "application/octet-stream");
-            put("exe", "application/octet-stream");
-            put("class", "application/octet-stream");
-            put("json", "application/json");
-        }
-    };
+
     public static final String MIME_HTML = "text/html";
 
     public Map<String, String> getParameters() {
         return this.parameters;
     }
-    
-    public Map<String, String> ParseParams() {
-        return this.ParseParams(this.getParameters());
+
+    private Map<String, String> ParseParams() {
+        return RestEndpoints.ParseParams(this.getParameters());
     }
-    /**
-     * Convert a JSON parameter set into a hashmap.
-     * @param params The incoming parameter listing
-     * @return The converted parameters
-     */
-    public Map<String, String> ParseParams(Map<String, String> params) {
-        Set<Entry<String, String>> incomingParams = params.entrySet();
-        Map<String, String> parms;
-        Iterator<Entry<String, String>> it = incomingParams.iterator();
-        Entry<String, String> param;
-        JSONObject incomingData = null;
-        JSONParser parser = new JSONParser();
-        String inputUnit = null;
 
-        // Try to Parse JSON Data
-        while (it.hasNext()) {
-            param = it.next();
-            BrewServer.LOG.info("Key: " + param.getKey());
-            BrewServer.LOG.info("Entry: " + param.getValue());
-            try {
-                Object parsedData = parser.parse(param.getValue());
-                if (parsedData instanceof JSONArray) {
-                    incomingData = (JSONObject) ((JSONArray) parsedData).get(0);
-                } else {
-                    incomingData = (JSONObject) parsedData;
-                    inputUnit = param.getKey();
-                }
-            } catch (Exception e) {
-                BrewServer.LOG.info("couldn't read " + param.getValue()
-                        + " as a JSON Value " + e.getMessage());
-            }
-        }
-
-        if (incomingData != null) {
-            // Use the JSON Data
-            BrewServer.LOG.info("Found valid data for " + inputUnit);
-            parms = (Map<String, String>) incomingData;
-        } else {
-            inputUnit = params.get("form");
-            parms = params;
-        }
-
-        if (inputUnit != null) {
-            parms.put("inputunit", inputUnit);
-        }
-
-        return parms;
-    }
 
     @UrlEndpoint(url = "/addsystem", help = "Enable the system temperature probe",
-    parameters = {})
-    public final Response addSystemTempProbe()
-    {
+            parameters = {})
+    public final Response addSystemTempProbe() {
         LaunchControl.getInstance().addSystemTemp();
         return new NanoHTTPD.Response(Status.OK, MIME_HTML,
                 "Added system temperature");
     }
 
     @UrlEndpoint(url = "/clearStatus", help = "Clear the current status message",
-    parameters = {})
+            parameters = {})
     public final Response clearStatus() {
         LaunchControl.setMessage("");
         return new NanoHTTPD.Response(Status.OK, MIME_HTML,
@@ -151,7 +159,7 @@ public class UrlEndpoints {
 
 
     @UrlEndpoint(url = "/delsystem", help = "Disable the system temperature probe",
-    parameters = {})
+            parameters = {})
     public final Response delSystemStempProbe() {
         LaunchControl.getInstance().delSystemTemp();
         return new NanoHTTPD.Response(Status.OK, MIME_HTML,
@@ -159,28 +167,28 @@ public class UrlEndpoints {
     }
 
     @UrlEndpoint(url = "/getstatus", help = "Get the current status JSON",
-    parameters = {})
+            parameters = {})
     public final Response getStatus() {
         return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
                 LaunchControl.getInstance().getJSONStatus());
     }
 
     @UrlEndpoint(url = "/getsystemsettings", help = "Get the current system settings",
-    parameters = {})
+            parameters = {})
     public final Response getSystemSettings() {
         return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
                 LaunchControl.getInstance().getSystemStatus());
     }
 
-    @UrlEndpoint( url = "/graph", help = "Get the current Graph file",
-    parameters = {})
+    @UrlEndpoint(url = "/graph", help = "Get the current Graph file",
+            parameters = {})
     public final Response getGraph() {
-        return BrewServer.serveFile("/templates/static/graph/graph.html", header,
-                rootDir);
+        return serveFile("/templates/static/graph/graph.html", this.header,
+                this.rootDir);
     }
 
     @UrlEndpoint(url = "/checkgit", help = "Check for updates from GIT",
-    parameters = {})
+            parameters = {})
     public final Response checkForUpdates() {
         LaunchControl.getInstance().checkForUpdates();
         return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
@@ -188,18 +196,17 @@ public class UrlEndpoints {
     }
 
     @UrlEndpoint(url = "/restartupdate", help = "Update from GIT and restart",
-    parameters = {})
-    public final Response updateFromGit()
-    {
+            parameters = {})
+    public final Response updateFromGit() {
         LaunchControl.updateFromGit();
         return new NanoHTTPD.Response(Status.OK, MIME_TYPES.get("json"),
                 "{Status:'OK'}");
     }
 
     @UrlEndpoint(url = "/settheme", help = "Set the current theme name",
-    parameters = {@Parameter(name = "name", value = "The name of the theme to set")})
+            parameters = {@Parameter(name = "name", value = "The name of the theme to set")})
     public final Response setTheme() {
-        String newTheme = parameters.get("name");
+        String newTheme = this.parameters.get("name");
 
         if (newTheme == null) {
             return new NanoHTTPD.Response(Status.BAD_REQUEST,
@@ -208,7 +215,7 @@ public class UrlEndpoints {
         }
 
         String fileName = "/logos/" + newTheme + ".ico";
-        if (!(new File(rootDir, fileName).exists())) {
+        if (!(new File(this.rootDir, fileName).exists())) {
             // It doesn't exist
             LaunchControl.setMessage("Favicon for the new theme: "
                     + newTheme + ", doesn't exist."
@@ -219,7 +226,7 @@ public class UrlEndpoints {
         }
 
         fileName = "/logos/" + newTheme + ".gif";
-        if (!(new File(rootDir, fileName).exists())) {
+        if (!(new File(this.rootDir, fileName).exists())) {
             // It doesn't exist
             LaunchControl.setMessage("Brewry image for the new theme: "
                     + newTheme + ", doesn't exist."
@@ -237,12 +244,13 @@ public class UrlEndpoints {
 
     /**
      * Parse the parameters to update the MashProfile.
+     *
      * @return True if the profile is updated successfully.
      */
     @UrlEndpoint(url = "/triggerprofile", help = "Get the trigger profile for a temperature probe",
-        parameters = {@Parameter(name = "tempprobe", value = "The Temperature probe to trigger the profile for.")})
+            parameters = {@Parameter(name = TEMPPROBE, value = "The Temperature probe to trigger the profile for.")})
     public final Response updateTriggerProfile() {
-        String tempProbe = parameters.get("tempprobe");
+        String tempProbe = this.parameters.get(TEMPPROBE);
         if (tempProbe == null) {
             LaunchControl.setMessage("Could not trigger profile,"
                     + " no tempProbe provided");
@@ -259,33 +267,33 @@ public class UrlEndpoints {
         TriggerControl triggerControl = tProbe.getTriggerControl();
         if (triggerControl.triggerCount() > 0) {
             triggerControl.activateTrigger(0);
-            if (triggerControl.isActive())
-            {
+            if (triggerControl.isActive()) {
                 triggerControl.deactivate();
             }
         }
 
         return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                    "Updated MashProfile");
+                "Updated MashProfile");
     }
 
     /**
      * Reorder the triggers steps.
+     *
      * @return The Response object.
      */
     @UrlEndpoint(url = "/reordertriggers", help = "Re-order the triggers",
-        parameters = {@Parameter(name = "tempprobe", value = "The temperature probe to re-order the triggers for"),
-            @Parameter(name = "<old position>", value="<new position>")}
+            parameters = {@Parameter(name = TEMPPROBE, value = "The temperature probe to re-order the triggers for"),
+                    @Parameter(name = "<old position>", value = "<new position>")}
     )
     public final Response reorderMashProfile() {
         Map<String, String> params = this.parameters;
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Set the order for the mash profile.");
-        usage.put("tempprobe",
+        usage.put(TEMPPROBE,
                 "The name of the TempProbe to change the mash profile order on.");
         usage.put(":old=:new", "The old position and the new position");
         // Resort the mash profile for the PID, then sort the rest
-        String tempProbe = params.get("tempprobe");
+        String tempProbe = params.get(TEMPPROBE);
         // Do we have a PID coming in?
         if (tempProbe == null) {
             LaunchControl.setMessage(
@@ -294,15 +302,14 @@ public class UrlEndpoints {
                     usage.toJSONString());
         }
         // Prevent any errors from the PID not being a number.
-        params.remove("tempprobe");
+        params.remove(TEMPPROBE);
         // Do we have a mash control for the PID?
         TriggerControl mControl = LaunchControl.getInstance().findTriggerControl(tempProbe);
-        if (mControl == null)
-        {
+        if (mControl == null) {
             return null;
         }
         // Should be good to go, iterate and update!
-        for (Map.Entry<String, String> mEntry: params.entrySet()) {
+        for (Map.Entry<String, String> mEntry : params.entrySet()) {
             if (mEntry.getKey().equals("NanoHttpd.QUERY_STRING")) {
                 continue;
             }
@@ -312,9 +319,9 @@ public class UrlEndpoints {
                 mControl.getTrigger(oldPos).setPosition(newPos);
             } catch (NumberFormatException nfe) {
                 LaunchControl.setMessage(
-                    "Failed to parse Trigger reorder value,"
-                    + " things may get weird: "
-                    + mEntry.getKey() + ": " + mEntry.getValue());
+                        "Failed to parse Trigger reorder value,"
+                                + " things may get weird: "
+                                + mEntry.getKey() + ": " + mEntry.getValue());
             } catch (IndexOutOfBoundsException ie) {
                 LaunchControl.setMessage(
                         "Invalid trigger position, things may get weird");
@@ -327,11 +334,12 @@ public class UrlEndpoints {
 
     /**
      * Delete the specified trigger step.
+     *
      * @return The Response.
      */
     @UrlEndpoint(url = "/deltriggerstep", help = "Delete the trigger step at a specific position",
-    parameters = {@Parameter(name = "device", value = "The name of the temperature probe to delete the trigger step from"),
-    @Parameter(name = "position", value = "The integer position of the trigger to delete from the profile")})
+            parameters = {@Parameter(name = DEVICE, value = "The name of the temperature probe to delete the trigger step from"),
+                    @Parameter(name = POSITION, value = "The integer position of the trigger to delete from the profile")})
     public Response delTriggerStep() {
         Map<String, String> params = this.parameters;
         // Parse the response
@@ -339,19 +347,18 @@ public class UrlEndpoints {
         // Default to the existing temperature scale
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Add a new mashstep to the specified PID");
-        usage.put("device", "The PID to delete the mash step from");
-        usage.put("position", "The mash step to delete");
+        usage.put(DEVICE, "The PID to delete the mash step from");
+        usage.put(POSITION, "The mash step to delete");
         Status status = Status.OK;
 
         try {
-            String tempProbe = params.get("device");
+            String tempProbe = params.get(DEVICE);
             if (tempProbe == null) {
-                BrewServer.LOG.warning("No device parameter supplied to delete trigger.");
+                LOG.warning("No device parameter supplied to delete trigger.");
             }
-            int position = Integer.parseInt(params.get("position"));
+            int position = Integer.parseInt(params.get(POSITION));
             Temp temp = LaunchControl.getInstance().findTemp(tempProbe);
-            if (temp == null)
-            {
+            if (temp == null) {
                 return null;
             }
             TriggerControl mControl = temp.getTriggerControl();
@@ -383,49 +390,49 @@ public class UrlEndpoints {
 
     /**
      * Toggle the state of the mash profile on/off.
+     *
      * @return True if set, false if there's an error
      */
     @UrlEndpoint(url = "/toggleTrigger", help = "Toggle the trigger profile on or off for a temp probe",
-        parameters = {@Parameter(name = "tempprobe", value = "The temperature probe to toggle the trigger profile for"),
-        @Parameter(name = "status", value = "\"activate\" or \"deactivate\" to enable or disable the profile"),
-        @Parameter(name = "position", value = "The integer position of the step to activate or deactivate (starting from 0)")})
+            parameters = {@Parameter(name = TEMPPROBE, value = "The temperature probe to toggle the trigger profile for"),
+                    @Parameter(name = "status", value = "\"activate\" or \"deactivate\" to enable or disable the profile"),
+                    @Parameter(name = POSITION, value = "The integer position of the step to activate or deactivate (starting from 0)")})
     public Response toggleTriggerProfile() {
 
         String tempProbe;
-        if (parameters.containsKey("tempprobe")) {
-            tempProbe = parameters.get("tempprobe");
+        if (this.parameters.containsKey(TEMPPROBE)) {
+            tempProbe = this.parameters.get(TEMPPROBE);
         } else {
-            BrewServer.LOG.warning("No Temp provided to toggle Trigger Profile");
+            LOG.warning("No Temp provided to toggle Trigger Profile");
             return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
                     "Failed to toggle mash profile");
         }
 
         boolean activate = false;
-        if (parameters.containsKey("status")) {
-            if (parameters.get("status").equalsIgnoreCase("activate")) {
+        if (this.parameters.containsKey("status")) {
+            if (this.parameters.get("status").equalsIgnoreCase("activate")) {
                 activate = true;
             }
         } else {
-            BrewServer.LOG.warning("No Status provided to toggle Profile");
+            LOG.warning("No Status provided to toggle Profile");
             return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
                     "Failed to toggle mash profile");
         }
 
         int position = -1;
-        if (parameters.containsKey("position")) {
+        if (this.parameters.containsKey(POSITION)) {
             try {
-                position = Integer.parseInt(parameters.get("position"));
+                position = Integer.parseInt(this.parameters.get(POSITION));
             } catch (NumberFormatException e) {
-                BrewServer.LOG.warning("Couldn't parse positional argument: "
-                        + parameters.get("position"));
+                LOG.warning("Couldn't parse positional argument: "
+                        + this.parameters.get(POSITION));
                 return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_HTML,
                         "Failed to toggle mash profile");
             }
         }
 
         Temp temp = LaunchControl.getInstance().findTemp(tempProbe);
-        if (temp == null)
-        {
+        if (temp == null) {
             return null;
         }
         TriggerControl mObj = temp.getTriggerControl();
@@ -435,7 +442,7 @@ public class UrlEndpoints {
         int stepToUse;
         // We have a mash step position
         if (position >= 0) {
-            BrewServer.LOG.warning("Using mash step for " + tempProbe
+            LOG.warning("Using mash step for " + tempProbe
                     + " at position " + position);
         }
 
@@ -452,11 +459,11 @@ public class UrlEndpoints {
 
         if (stepToUse >= 0 && activate) {
             mObj.activateTrigger(stepToUse);
-            BrewServer.LOG.warning(
+            LOG.warning(
                     "Activated " + tempProbe + " step at " + stepToUse);
         } else {
             mObj.deactivateTrigger(stepToUse, true);
-            BrewServer.LOG.warning("Deactivated " + tempProbe + " step at "
+            LOG.warning("Deactivated " + tempProbe + " step at "
                     + stepToUse);
         }
 
@@ -468,20 +475,21 @@ public class UrlEndpoints {
 
     /**
      * Read the incoming parameters and edit the vessel as appropriate.
+     *
      * @return True is success, false if failure.
      */
     @SuppressWarnings("ConstantConditions")
     @UrlEndpoint(url = "/editdevice", help = "Edit the main settings for a device",
-    parameters = {@Parameter(name = "form", value="The Address of the temperature probe to update"),
-            @Parameter(name = "new_name", value="The new name of the probe"),
-            @Parameter(name = "new_heat_gpio", value="The Heat GPIO"),
-            @Parameter(name = "new_cool_gpio", value="The Cool GPIO"),
-            @Parameter(name = "heat_invert", value="\"on\" to enable inverted outputs for the heating pin"),
-            @Parameter(name = "cool_invert", value="\"on\" to enable inverted outputs for the cooling pin"),
-            @Parameter(name = "aux_gpio", value="A pin to use for auxilliary output"),
-            @Parameter(name = "cutoff", value="A temperature value at which to shutdown Elsinore as a safety measure"),
-            @Parameter(name = "cutoff_enabled", value="On to use the cutoff temperature"),
-            @Parameter(name = "calibration", value="An offset for calibration")})
+            parameters = {@Parameter(name = "form", value = "The Address of the temperature probe to update"),
+                    @Parameter(name = "new_name", value = "The new name of the probe"),
+                    @Parameter(name = "new_heat_gpio", value = "The Heat GPIO"),
+                    @Parameter(name = "new_cool_gpio", value = "The Cool GPIO"),
+                    @Parameter(name = "heat_invert", value = "\"on\" to enable inverted outputs for the heating pin"),
+                    @Parameter(name = "cool_invert", value = "\"on\" to enable inverted outputs for the cooling pin"),
+                    @Parameter(name = "aux_gpio", value = "A pin to use for auxilliary output"),
+                    @Parameter(name = "cutoff", value = "A temperature value at which to shutdown Elsinore as a safety measure"),
+                    @Parameter(name = "cutoff_enabled", value = "On to use the cutoff temperature"),
+                    @Parameter(name = CALIBRATION, value = "An offset for calibration")})
     public Response editVessel() {
         final Map<String, String> params = this.parameters;
         String auxpin, newName, heatgpio;
@@ -500,8 +508,8 @@ public class UrlEndpoints {
         // Try to Parse JSON Data
         while (it.hasNext()) {
             param = it.next();
-            BrewServer.LOG.info("Key: " + param.getKey());
-            BrewServer.LOG.info("Entry: " + param.getValue());
+            LOG.info("Key: " + param.getKey());
+            LOG.info("Entry: " + param.getValue());
             try {
                 Object parsedData = parser.parse(param.getValue());
                 if (parsedData instanceof JSONArray) {
@@ -511,14 +519,14 @@ public class UrlEndpoints {
                     inputUnit = param.getKey();
                 }
             } catch (Exception e) {
-                BrewServer.LOG.info("couldn't read " + param.getValue()
+                LOG.info("couldn't read " + param.getValue()
                         + " as a JSON Value " + e.getMessage());
             }
         }
 
         if (incomingData != null && inputUnit != null) {
             // Use the JSON Data
-            BrewServer.LOG.info("Found valid data for " + inputUnit);
+            LOG.info("Found valid data for " + inputUnit);
             parms = (Map<String, String>) incomingData;
         } else {
             inputUnit = params.get("form");
@@ -535,22 +543,21 @@ public class UrlEndpoints {
         auxInvert = parms.get("aux_invert") != null && Boolean.parseBoolean(params.get("aux_invert"));
         cutoff = parms.get("cutoff");
         boolean cutoffEnabled = parms.get("cutoff_enabled") != null && Boolean.parseBoolean(parms.get("cutoff_enabled"));
-        calibration = parms.get("calibration");
+        calibration = parms.get(CALIBRATION);
 
         try {
             size = Integer.parseInt(parms.get("size"));
         } catch (NumberFormatException nfe) {
-            BrewServer.LOG.warning("Couldn't parse: " + parms.get("size") + " as an int.");
+            LOG.warning("Couldn't parse: " + parms.get("size") + " as an int.");
         }
 
         if (inputUnit == null || inputUnit.equals("")) {
             inputUnit = parms.get("address");
-            if (inputUnit == null)
-            {
-                BrewServer.LOG.warning("No Valid input unit");
+            if (inputUnit == null) {
+                LOG.warning("No Valid input unit");
             }
         }
-        inputUnit = inputUnit.replaceAll("_","\\.");
+        inputUnit = inputUnit.replaceAll("_", "\\.");
         Temp tProbe = LaunchControl.getInstance().findTemp(inputUnit);
         PID tPID = LaunchControl.getInstance().findPID(inputUnit);
 
@@ -567,27 +574,24 @@ public class UrlEndpoints {
 
         if (tProbe != null && !newName.equals("")) {
             tProbe.setName(newName);
-            BrewServer.LOG.warning("Updated temp name " + newName);
+            LOG.warning("Updated temp name " + newName);
         }
 
         tProbe.cutoffEnabled = cutoffEnabled;
-
-        if (!cutoff.equals("")) {
-            tProbe.setCutoffTemp(cutoff);
-        }
+        tProbe.setCutoffTemp(cutoff);
 
         if (calibration != null) {
             tProbe.setCalibration(calibration);
         }
         tProbe.setSize(size);
 
-        if (tPID != null && !newName.equals("")) {
-            tPID.setName(newName);
-            BrewServer.LOG.warning("Updated PID Name" + newName);
+        if (isNullOrEmpty(newName)) {
+            newName = inputUnit;
         }
 
-        if (newName.equals("")) {
-            newName = inputUnit;
+        if (tPID != null && !newName.equals("")) {
+            tPID.setName(newName);
+            LOG.warning("Updated PID Name" + newName);
         }
 
         if (tPID == null) {
@@ -595,17 +599,18 @@ public class UrlEndpoints {
             tPID = new PID(tProbe.getName(), tProbe.getDevice(), heatgpio);
         }
         // HEATING GPIO
-        if (heatgpio == null || heatgpio.equals("")) {
+        if (isNullOrEmpty(heatgpio)) {
             tPID.delHeatGPIO();
         }
-        if (coolgpio == null || coolgpio.equals("")) {
+        if (isNullOrEmpty(coolgpio)) {
             tPID.delCoolGPIO();
         }
 
         tPID.setAux(auxpin, auxInvert);
 
         LaunchControl lc = LaunchControl.getInstance();
-        if (!heatgpio.equals("") || !coolgpio.equals("")) {
+
+        if (!isNullOrEmpty(heatgpio) || !isNullOrEmpty(coolgpio)) {
             if (!heatgpio.equals(tPID.getHeatGPIO())) {
                 // We have a PID, set it to the new value
                 tPID.setHeatGPIO(heatgpio);
@@ -623,50 +628,49 @@ public class UrlEndpoints {
         }
 
         // Update the heat settings
-        if (params.containsKey("heat_p"))
-        {
-            tPID.setHeatP(new BigDecimal(params.get("heat_p")));
-        }
-
-        if (params.containsKey("heat_i"))
-        {
-            tPID.setHeatI(new BigDecimal(params.get("heat_i")));
-        }
-
-        if (params.containsKey("heat_d"))
-        {
-            tPID.setHeatD(new BigDecimal(params.get("heat_d")));
-        }
-
-        if (params.containsKey("heat_cycletime"))
-        {
-            tPID.setHeatCycle(new BigDecimal(params.get("heat_cycletime")));
-        }
+        parseAndUpdatePidSettings(tPID, params, HEAT);
 
         // update the cool settings
-        if (params.containsKey("cool_p"))
-        {
-            tPID.setCoolP(new BigDecimal(params.get("cool_p")));
-        }
-
-        if (params.containsKey("cool_i"))
-        {
-            tPID.setCoolI(new BigDecimal(params.get("cool_i")));
-        }
-
-        if (params.containsKey("cool_d"))
-        {
-            tPID.setCoolD(new BigDecimal(params.get("cool_d")));
-        }
-
-        if (params.containsKey("cool_cycletime"))
-        {
-            tPID.setCoolCycle(new BigDecimal(params.get("cool_cycletime")));
-        }
+        parseAndUpdatePidSettings(tPID, params, COOL);
 
         lc.saveConfigFile();
         return new Response(Status.OK, MIME_TYPES.get("txt"),
                 "PID Updated");
+    }
+
+    private void parseAndUpdatePidSettings(PID pid, Map<String, String> params, String type) {
+        String temp = params.get(type + "_" + P);
+        BigDecimal newValue = stringToBigDecimal(temp);
+        if (newValue != null) {
+            pid.getSettings(type).setProportional(newValue);
+        } else {
+            LOG.warning(String.format("Failed to parse %s Derivative as a number: %s", type, temp));
+        }
+
+        temp = params.get(type + "_" + I);
+        newValue = stringToBigDecimal(temp);
+        if (newValue != null) {
+            pid.getSettings(type).setIntegral(newValue);
+        } else {
+            LOG.warning(String.format("Failed to parse %s Integral as a number: %s", type, temp));
+        }
+
+        temp = params.get(type + "_" + D);
+        newValue = stringToBigDecimal(temp);
+        if (newValue != null) {
+            pid.getSettings(type).setDerivative(newValue);
+        } else {
+            LOG.warning(String.format("Failed to parse %s Derivative as a number: %s", type, temp));
+        }
+
+        temp = params.get(type + "_" + CYCLETIME);
+        newValue = stringToBigDecimal(temp);
+        if (newValue != null) {
+            pid.getSettings(type).setCycleTime(newValue);
+        } else {
+            LOG.warning(String.format("Failed to parse %s Cycle Time as a number: %s", type, temp));
+        }
+
     }
 
     /**
@@ -675,73 +679,35 @@ public class UrlEndpoints {
      * @return True if added ok
      */
     @UrlEndpoint(url = "/addtimer", help = "Add a new timer to the system",
-    parameters = {@Parameter(name = "name", value = "The Name of the timer to create"),
-    @Parameter(name = "duration", value = "The duration of the timer"),
-    @Parameter(name="invert", value="True to invert the timer (count down), false to count up")})
+            parameters = {@Parameter(name = "name", value = "The Name of the timer to create"),
+                    @Parameter(name = DURATION, value = "The duration of the timer"),
+                    @Parameter(name = INVERT, value = "True to invert the timer (count down), false to count up")})
     public final Response addTimer() {
         String newName;
-        String inputUnit = "";
 
-        Set<Entry<String, String>> incomingParams = parameters.entrySet();
-        Map<String, String> parms;
-        Iterator<Entry<String, String>> it = incomingParams.iterator();
-        Entry<String, String> param;
-        JSONObject incomingData = null;
-        JSONParser parser = new JSONParser();
-
-        // Try to Parse JSON Data
-        while (it.hasNext()) {
-            param = it.next();
-            BrewServer.LOG.info("Key: " + param.getKey());
-            BrewServer.LOG.info("Entry: " + param.getValue());
-            try {
-                Object parsedData = parser.parse(param.getValue());
-                if (parsedData instanceof JSONArray) {
-                    incomingData = (JSONObject) ((JSONArray) parsedData).get(0);
-                } else {
-                    incomingData = (JSONObject) parsedData;
-                    inputUnit = param.getKey();
-                }
-            } catch (Exception e) {
-                BrewServer.LOG.info("couldn't read " + param.getValue()
-                        + " as a JSON Value " + e.getMessage());
-            }
-        }
-
-        if (incomingData != null) {
-            // Use the JSON Data
-            BrewServer.LOG.info("Found valid data for " + inputUnit);
-            parms = (Map<String, String>) incomingData;
-        } else {
-            parms = parameters;
-        }
+        Map<String, String> parms = RestEndpoints.ParseParams(this.parameters);
 
         // Fall back to the old style
-        newName = parms.get("name");
-        if (newName == null || newName.trim().length() == 0)
-        {
+        newName = parms.get(NAME);
+        if (newName == null || newName.trim().length() == 0) {
             return new Response(Status.BAD_REQUEST, MIME_TYPES.get("txt"), "No name provided for the timer");
         }
-        String duration = parms.get("duration");
-        boolean inverted = Boolean.parseBoolean(parms.get("invert"));
+        String duration = parms.get(DURATION);
+        boolean inverted = Boolean.parseBoolean(parms.get(INVERT));
         LaunchControl lc = LaunchControl.getInstance();
         Timer timer = lc.findTimer(newName);
 
-        if (timer == null)
-        {
+        if (timer == null) {
             if (!lc.addTimer(newName, duration)) {
                 return new Response(Status.BAD_REQUEST, MIME_TYPES.get("txt"), "Failed to create timer");
             }
             timer = lc.findTimer(newName);
-            if (timer == null)
-            {
+            if (timer == null) {
                 return new Response(Status.BAD_REQUEST, MIME_TYPES.get("txt"), "Failed to find timer");
             }
             timer.setInverted(inverted);
             return new Response(Status.OK, MIME_TYPES.get("txt"), "Timer created");
-        }
-        else
-        {
+        } else {
             timer.setInverted(inverted);
             timer.setTarget(duration);
             return new Response(Status.OK, MIME_TYPES.get("txt"), "Timer Updated");
@@ -751,72 +717,37 @@ public class UrlEndpoints {
 
     /**
      * Add a new switch to the brewery.
-     * 
+     *
      * @return True if added ok
      */
     @UrlEndpoint(url = "/addswitch", help = "Add a new switch to the brewery",
-    parameters = {@Parameter(name = "name", value = "The name of the switch to add"),
-    @Parameter(name = "gpio", value = "The GPIO to control with this switch"),
-            @Parameter(name = "invert", value = "\"on\" to enable inversion of the outputs, anything else for normal output.")})
+            parameters = {@Parameter(name = NAME, value = "The name of the switch to add"),
+                    @Parameter(name = GPIO, value = "The GPIO to control with this switch"),
+                    @Parameter(name = INVERT, value = "\"on\" to enable inversion of the outputs, anything else for normal output.")})
     public Response addSwitch() {
         String newName = "", gpio = "", originalName = "";
-        String inputUnit = "";
         boolean invert = false;
 
-        Set<Entry<String, String>> incomingParams = this.parameters.entrySet();
-        Map<String, String> parms;
-        Iterator<Entry<String, String>> it = incomingParams.iterator();
-        Entry<String, String> param;
-        JSONObject incomingData = null;
-        JSONParser parser = new JSONParser();
-
-        // Try to Parse JSON Data
-        while (it.hasNext()) {
-            param = it.next();
-            BrewServer.LOG.info("Key: " + param.getKey());
-            BrewServer.LOG.info("Entry: " + param.getValue());
-            try {
-                Object parsedData = parser.parse(param.getValue());
-                if (parsedData instanceof JSONArray) {
-                    incomingData = (JSONObject) ((JSONArray) parsedData).get(0);
-                } else {
-                    incomingData = (JSONObject) parsedData;
-                    inputUnit = param.getKey();
-                }
-            } catch (Exception e) {
-                BrewServer.LOG.info("couldn't read " + param.getValue()
-                        + " as a JSON Value " + e.getMessage());
-            }
-        }
-
-        if (incomingData != null) {
-            // Use the JSON Data
-            BrewServer.LOG.info("Found valid data for " + inputUnit);
-            parms = (Map<String, String>) incomingData;
-        } else {
-            parms = this.parameters;
-        }
+        Map<String, String> parms = RestEndpoints.ParseParams(this.parameters);
 
         // Fall back to the old style
-        if (parms.containsKey("originalname")) {
-            originalName = parms.get("originalname");
+        if (parms.containsKey(ORIGINALNAME)) {
+            originalName = parms.get(ORIGINALNAME);
         }
 
-        if (parms.containsKey("name")) {
-            newName = parms.get("name");
+        if (parms.containsKey(NAME)) {
+            newName = parms.get(NAME);
         }
 
-        if (parms.containsKey("gpio")) {
-            gpio = parms.get("gpio");
+        if (parms.containsKey(GPIO)) {
+            gpio = parms.get(GPIO);
         }
 
-        if (parms.containsKey("invert")) {
-            String i = parms.get("invert");
-            if (i.equalsIgnoreCase("on")) {
-                invert = true;
-            } else
-                invert = !i.equalsIgnoreCase("off") && Boolean.parseBoolean(parms.get("invert"));
+        if (parms.containsKey(INVERT)) {
+            String i = parms.get(INVERT);
+            invert = i.equalsIgnoreCase(ON_STRING) || !i.equalsIgnoreCase(OFF_STRING) && Boolean.parseBoolean(parms.get(INVERT));
         }
+
         Switch aSwitch;
         LaunchControl lc = LaunchControl.getInstance();
         if (originalName != null && originalName.length() > 0) {
@@ -827,12 +758,10 @@ public class UrlEndpoints {
                     aSwitch.setGPIO(gpio);
                 } catch (InvalidGPIOException ignored) {
                 }
-            }
-            else {
+            } else {
                 aSwitch = lc.addSwitch(newName, gpio);
             }
-        }
-        else {
+        } else {
             aSwitch = lc.addSwitch(newName, gpio);
         }
         if (aSwitch != null) {
@@ -847,8 +776,8 @@ public class UrlEndpoints {
 
         JSONObject usage = new JSONObject();
         usage.put("Usage", "Add a new switch to the system");
-        usage.put("new_name", "The name of the switch to add");
-        usage.put("new_gpio", "The GPIO for the switch to work on");
+        usage.put(NAME, "The name of the switch to add");
+        usage.put(GPIO, "The GPIO for the switch to work on");
         usage.put("Error", "Invalid parameters passed "
                 + this.parameters.toString());
 
@@ -863,247 +792,113 @@ public class UrlEndpoints {
      */
     @SuppressWarnings("unchecked")
     @UrlEndpoint(url = "/updatepid", help = "The big one, update the PID parameters",
-        parameters = {@Parameter(name = "inputunit", value = "The PID to change settings for"),
-            @Parameter(name = "dutycycle", value = "The Duty cycle to set (between -100 and +100)"),
-            @Parameter(name = "cycletime", value = "The manual cycle time to use (in seconds)"),
-            @Parameter(name = "setpoint", value = "The target temperature for automatic mode."),
-            @Parameter(name = "heatcycletime", value = "The cycle time for the heating output"),
-            @Parameter(name = "heatp", value = "The proportional value for the heating PID"),
-            @Parameter(name = "heati", value = "The integral value for the heating PID"),
-            @Parameter(name = "heatd", value = "The differential value for the heating PID"),
-            @Parameter(name = "coolcycletime", value = "The cycle time for the cooling output"),
-            @Parameter(name = "coolp", value = "The proportional value for the cooling PID"),
-            @Parameter(name = "cooli", value = "The integral value for the cooling PID"),
-            @Parameter(name = "coold", value = "The differential value for the cooling PID"),
-            @Parameter(name = "mode", value = "The mode to use \"off\" \"auto\" \"manual\" \"hysteria\""),
-            @Parameter(name = "min", value = "The minimum temperature to turn on the heating output, or turn off the cooling output in hysteria mode"),
-            @Parameter(name = "max", value = "The maximum temperature to turn on the cooling output, or turn off the heating output in hysteria mode"),
-            @Parameter(name = "time", value = "The minimum amount of time to turn the cooling/heating output on or off for")})
+            parameters = {@Parameter(name = INPUTUNIT, value = "The PID to change settings for"),
+                    @Parameter(name = DUTYCYCLE, value = "The Duty cycle to set (between -100 and +100)"),
+                    @Parameter(name = CYCLETIME, value = "The manual cycle time to use (in seconds)"),
+                    @Parameter(name = SETPOINT, value = "The target temperature for automatic mode."),
+                    @Parameter(name = HEAT, value = "The New settings for the heating PID"),
+                    @Parameter(name = COOL, value = "The new settings for the cooling PID"),
+                    @Parameter(name = MODE, value = "The mode to use \"off\" \"auto\" \"manual\" \"hysteria\""),
+                    @Parameter(name = MIN, value = "The minimum temperature to turn on the heating output, or turn off the cooling output in hysteria mode"),
+                    @Parameter(name = MAX, value = "The maximum temperature to turn on the cooling output, or turn off the heating output in hysteria mode"),
+                    @Parameter(name = TIME, value = "The minimum amount of time to turn the cooling/heating output on or off for")})
     public Response updatePID() {
-        String temp, mode = "off";
-        BigDecimal dTemp, duty = null, heatcycle = null, setpoint = null,
-                heatp = null, heati = null, heatd = null, min = null,
-                max = null, time = null, coolcycle = null, coolp = null,
-                cooli = null, coold = null,cooldelay = null, cycle = null;
+        String temp, mode = OFF_STRING;
+        BigDecimal dTemp, duty = null, setpoint = null,
+                min = null, max = null, time = null, cycle = null;
 
         JSONObject sub_usage = new JSONObject();
-        Map<String, String> parms = ParseParams(parameters);
-        String inputUnit = parms.get("inputunit");
+        Map<String, String> parms = RestEndpoints.ParseParams(this.parameters);
+        String inputUnit = parms.get(INPUTUNIT);
         boolean errorValue = false;
         PID tPID = LaunchControl.getInstance().findPID(inputUnit);
         if (tPID == null) {
-            BrewServer.LOG.warning("Couldn't find PID: " + inputUnit);
+            LOG.warning("Couldn't find PID: " + inputUnit);
             LaunchControl.setMessage("Could not find PID: " + inputUnit);
-            LaunchControl.setMessage("Bad inputs when updating."
-                    + " Please check the system log");
-            return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
-                    "");
+            LaunchControl.setMessage("Bad inputs when updating. Please check the system log");
+            return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"), "");
         }
 
         // Fall back to the old style
-        sub_usage.put("dutycycle", "The new duty cycle % to set");
-        if (parms.containsKey("dutycycle")) {
-            temp = parms.get("dutycycle");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                duty = dTemp;
-                BrewServer.LOG.info("Duty cycle: " + duty);
-            } catch (NumberFormatException nfe) {
-                System.out.print("Bad duty");
+        sub_usage.put(DUTYCYCLE, "The new duty cycle % to set");
+        if (parms.containsKey(DUTYCYCLE)) {
+            temp = parms.get(DUTYCYCLE);
+            duty = stringToBigDecimal(temp);
+            if (duty == null) {
+                LOG.warning(String.format("Failed to parse duty: %s", temp));
+                errorValue = true;
+            } else {
+                LOG.info(String.format("New Duty Cycle: %s", duty));
+            }
+        }
+
+        sub_usage.put(SETPOINT, "The new target temperature to set");
+        if (parms.containsKey(SETPOINT)) {
+            temp = parms.get(SETPOINT);
+            setpoint = stringToBigDecimal(temp);
+            if (setpoint == null) {
+                LOG.warning(String.format("Failed to parse Setpoint: %s", temp));
+                errorValue = true;
+            } else {
+                LOG.info(String.format("New Setpoint: %s", setpoint));
+            }
+        }
+
+
+        sub_usage.put(CYCLETIME, "The new manual cycle time in seconds to set");
+        if (parms.containsKey(CYCLETIME)) {
+            temp = parms.get(CYCLETIME);
+            cycle = stringToBigDecimal(temp);
+            if (cycle == null) {
+                LOG.warning(String.format("Failed to read Cycle Time: %s", temp));
                 errorValue = true;
             }
         }
 
-        sub_usage.put("setpoint", "The new target temperature to set");
-        if (parms.containsKey("setpoint")) {
-            temp = parms.get("setpoint");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                setpoint = dTemp;
-                BrewServer.LOG.info("Set Point: " + setpoint);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad setpoint");
+        sub_usage.put(MODE, "The new mode to set");
+        if (parms.containsKey(MODE)) {
+            mode = parms.get(MODE);
+            LOG.info("Mode: " + mode);
+        }
+
+        sub_usage.put(MIN, "The minimum temperature to enable the output (HYSTERIA)");
+        if (parms.containsKey(MIN)) {
+            temp = parms.get(MIN);
+            min = stringToBigDecimal(temp);
+            if (min == null) {
+                LOG.warning(String.format("Failed to parse new minimum value: %s", temp));
                 errorValue = true;
+            } else {
+                LOG.info(String.format("New minimum hysteria value: %s", min));
             }
         }
 
-        sub_usage.put("heatcycletime", "The new heat cycle time in seconds to set");
-        if (parms.containsKey("heatcycletime")) {
-            temp = parms.get("heatcycletime");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                heatcycle = dTemp;
-                BrewServer.LOG.info("Cycle time: " + heatcycle);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad cycle");
-                errorValue = true;
+        sub_usage.put(MAX, "The maximum temperature to disable the output (HYSTERIA)");
+        if (parms.containsKey(MAX)) {
+            temp = parms.get(MAX);
+            max = stringToBigDecimal(temp);
 
+            if (max == null) {
+                LOG.warning(String.format("Failed to parse Maximum Temperature: %s", temp));
+                errorValue = true;
+            } else {
+                LOG.info(String.format("New maximum hysteria value: %s", max));
             }
         }
 
-        sub_usage.put("heatp", "The new proportional value to set");
-        if (parms.containsKey("heatp")) {
-            temp = parms.get("heatp");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                heatp = dTemp;
-                BrewServer.LOG.info("heat P: " + heatp);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad heat p");
+        sub_usage.put(TIME, "The minimum time when enabling the output (HYSTERIA)");
+        if (parms.containsKey(TIME)) {
+            temp = parms.get(TIME);
+            time = stringToBigDecimal(temp);
+            if (time == null) {
+                LOG.warning(String.format("Failed to parse minimum hysteria Time: %s", temp));
                 errorValue = true;
+            } else {
+                LOG.info(String.format("New minimum hysteria Time: %s", time));
             }
         }
 
-        sub_usage.put("heati", "The new integral value to set");
-        if (parms.containsKey("heati")) {
-            temp = parms.get("heati");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                heati = dTemp;
-                BrewServer.LOG.info("Heat I: " + heati);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad heat i");
-                errorValue = true;
-            }
-        }
-
-        sub_usage.put("heatd", "The new head differential value to set");
-        if (parms.containsKey("heatd")) {
-            temp = parms.get("heatd");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                heatd = dTemp;
-                BrewServer.LOG.info("Heat D: " + heatd);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad heat d");
-                errorValue = true;
-            }
-        }
-
-        sub_usage.put("coolcycletime", "The new cool cycle time in seconds to set");
-        if (parms.containsKey("coolcycletime")) {
-            temp = parms.get("coolcycletime");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                coolcycle = dTemp;
-                BrewServer.LOG.info("Cycle time: " + coolcycle);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad cycle");
-                errorValue = true;
-            }
-        }
-
-        sub_usage.put("cycletime", "The new manual cycle time in seconds to set");
-        if (parms.containsKey("cycletime")) {
-            temp = parms.get("cycletime");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                cycle = dTemp;
-                BrewServer.LOG.info("Cycle time: " + cycle);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad cycle");
-                errorValue = true;
-            }
-        }
-
-        sub_usage.put("cooldelay", "The new cool cycle delay in minutes to set");
-        if (parms.containsKey("cooldelay")) {
-            temp = parms.get("cooldelay");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                cooldelay = dTemp;
-                BrewServer.LOG.info("Delay time: " + cooldelay);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad Cool delay");
-                errorValue = true;
-            }
-        }
-
-        sub_usage.put("coolp", "The new proportional value to set");
-        if (parms.containsKey("coolp")) {
-            temp = parms.get("coolp");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                coolp = dTemp;
-                BrewServer.LOG.info("cool P: " + coolp);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad cool p");
-                errorValue = true;
-            }
-        }
-
-        sub_usage.put("cooli", "The new integral value to set");
-        if (parms.containsKey("cooli")) {
-            temp = parms.get("cooli");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                cooli = dTemp;
-                BrewServer.LOG.info("Heat I: " + cooli);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad cool i");
-                errorValue = true;
-            }
-        }
-
-        sub_usage.put("coold", "The new head differential value to set");
-        if (parms.containsKey("coold")) {
-            temp = parms.get("coold");
-            try {
-                dTemp = new BigDecimal(temp.replace(",", "."));
-                coold = dTemp;
-                BrewServer.LOG.info("Heat D: " + coold);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad cool d");
-                errorValue = true;
-            }
-        }
-
-        sub_usage.put("mode", "The new mode to set");
-        if (parms.containsKey("mode")) {
-            mode = parms.get("mode");
-            BrewServer.LOG.info("Mode: " + mode);
-        }
-
-        sub_usage.put("min",
-                "The minimum temperature to enable the output (HYSTERIA)");
-        if (parms.containsKey("min")) {
-            try {
-                dTemp = new BigDecimal(parms.get("min").replace(",", "."));
-                min = dTemp;
-                BrewServer.LOG.info("Min: " + mode);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad minimum");
-                errorValue = true;
-            }
-        }
-
-        sub_usage.put("max",
-                "The maximum temperature to disable the output (HYSTERIA)");
-        if (parms.containsKey("max")) {
-            try {
-                dTemp = new BigDecimal(parms.get("max").replace(",", "."));
-                max = dTemp;
-                BrewServer.LOG.info("Max: " + mode);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad maximum");
-                errorValue = true;
-            }
-        }
-
-        sub_usage.put("time",
-                "The minimum time when enabling the output (HYSTERIA)");
-        if (parms.containsKey("time")) {
-            try {
-                dTemp = new BigDecimal(parms.get("time").replace(",", "."));
-                time = dTemp;
-                BrewServer.LOG.info("Time: " + time);
-            } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Bad time");
-                errorValue = true;
-            }
-        }
-
-        BrewServer.LOG.info("Form: " + inputUnit);
+        LOG.info("Form: " + inputUnit);
 
         JSONObject usage = new JSONObject();
         usage.put(":PIDname", sub_usage);
@@ -1111,23 +906,25 @@ public class UrlEndpoints {
         if (errorValue) {
             LaunchControl.setMessage("Bad inputs when updating. Please check the system log");
             return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"),
-                    usage.toJSONString()); 
+                    usage.toJSONString());
         }
 
-        if (mode.equalsIgnoreCase("hysteria")) {
+        if (mode.equalsIgnoreCase(HYSTERIA)) {
             tPID.setHysteria(min, max, time);
             tPID.useHysteria();
         } else {
-            BrewServer.LOG.info(mode + ":" + duty + ":" + heatcycle + ":"
-                    + setpoint + ":" + heatp + ":" + heati + ":" + heatd);
-            tPID.updateValues(mode, duty, heatcycle, setpoint, heatp, heati, heatd);
-            tPID.setCoolCycle(coolcycle);
-            tPID.setCoolP(coolp);
-            tPID.setCoolI(cooli);
-            tPID.setCoolD(coold);
-            tPID.setCoolDelay(cooldelay);
+            LOG.info(mode + ":" + duty + ":" + setpoint);
+            tPID.setMode(mode);
+            tPID.setDuty(duty);
+            tPID.setTemp(setpoint);
+            if (parms.containsKey(HEAT)) {
+                parseAndUpdatePidSettings(tPID, parms, HEAT);
+            }
+            if (parms.containsKey(COOL)) {
+                parseAndUpdatePidSettings(tPID, parms, COOL);
+            }
 
-            if (mode.equalsIgnoreCase("manual")) {
+            if (mode.equalsIgnoreCase(MANUAL)) {
                 tPID.setManualDuty(duty);
                 tPID.setManualTime(cycle);
             }
@@ -1136,49 +933,59 @@ public class UrlEndpoints {
                 + " updated");
     }
 
+    private BigDecimal stringToBigDecimal(String temp) {
+        try {
+            return new BigDecimal(temp.replace(",", "."));
+        } catch (NumberFormatException nfe) {
+            LOG.warning(String.format("Couldn't parse %s as a number", temp));
+        }
+        return null;
+    }
+
     /**
      * Add a new data point for the volume reading.
+     *
      * @return A NanoHTTPD response
      */
     @UrlEndpoint(url = "/addvolpoint", help = "Add a volume data point to the vessel",
-    parameters = {
-            @Parameter(name = "name", value = "The temperature probe to add a volume data point to"),
-            @Parameter(name = "units", value = "The volume units to use for setup (Only required when setting up"),
-            @Parameter(name = "volume", value = "The volume that is in the vessel at the time of reading"),
-            @Parameter(name = "onewire_address", value = "The OneWire DS2450 Address to use for the readings"),
-            @Parameter(name = "onewire_offset", value = "The OneWire DS2450 offset (A|B|C|D) to use for the readings"),
-            @Parameter(name = "adc_pin", value = "The onboard AIN pin to use"),
-            @Parameter(name = "i2c_address", value = "The I2C Address to use for the Analogue readings"),
-            @Parameter(name = "i2c_device", value = "The I2C Device (integer) to use for the i2c_address"),
-            @Parameter(name = "i2c_channel", value = "The channel on the I2C ADC to use"),
-            @Parameter(name = "i2c_type", value = "The type of the I2C ADC chip."),
-    })
+            parameters = {
+                    @Parameter(name = NAME, value = "The temperature probe to add a volume data point to"),
+                    @Parameter(name = UNITS, value = "The volume units to use for setup (Only required when setting up"),
+                    @Parameter(name = VOLUME, value = "The volume that is in the vessel at the time of reading"),
+                    @Parameter(name = ONEWIRE_ADDRESS, value = "The OneWire DS2450 Address to use for the readings"),
+                    @Parameter(name = ONEWIRE_OFFSET, value = "The OneWire DS2450 offset (A|B|C|D) to use for the readings"),
+                    @Parameter(name = ADC_PIN, value = "The onboard AIN pin to use"),
+                    @Parameter(name = I_2_C_ADDRESS, value = "The I2C Address to use for the Analogue readings"),
+                    @Parameter(name = I_2_C_DEVICE, value = "The I2C Device (integer) to use for the i2c_address"),
+                    @Parameter(name = I_2_C_CHANNEL, value = "The channel on the I2C ADC to use"),
+                    @Parameter(name = I_2_C_TYPE, value = "The type of the I2C ADC chip."),
+            })
 
     public Response addVolumePoint() {
+        Map<String, String> parms = ParseParams();
         JSONObject usage = new JSONObject();
-        Map<String, String> parms = ParseParams(this.parameters);
-        usage.put("name", "Temperature probe name to add a volume point to");
-        usage.put("volume",
+        usage.put(NAME, "Temperature probe name to add a volume point to");
+        usage.put(VOLUME,
                 "Volume that is in the vessel to add a datapoint for");
-        usage.put("units",
+        usage.put(UNITS,
                 "The Volume units to use (only required when setting up)");
-        usage.put("onewire_address",
+        usage.put(ONEWIRE_ADDRESS,
                 "The one wire address to be used for analogue reads");
-        usage.put("onewire_offset",
+        usage.put(ONEWIRE_OFFSET,
                 "The one wire offset to be used for analogue reads");
-        usage.put("adc_pin", "The ADC Pin to be used for analogue reads");
+        usage.put(ADC_PIN, "The ADC Pin to be used for analogue reads");
 
-        String name = parms.get("name");
-        String volume = parms.get("volume");
-        String units = parms.get("units");
+        String name = parms.get(NAME);
+        String volume = parms.get(VOLUME);
+        String units = parms.get(UNITS);
 
-        String onewire_add = parms.get("onewire_address");
-        String onewire_offset = parms.get("onewire_offset");
-        String adc_pin = parms.get("adc_pin");
-        String i2c_address = parms.get("i2c_address");
-        String i2c_device = parms.get("i2c_device");
-        String i2c_channel = parms.get("i2c_channel");
-        String i2c_type = parms.get("i2c_type");
+        String onewire_add = parms.get(ONEWIRE_ADDRESS);
+        String onewire_offset = parms.get(ONEWIRE_OFFSET);
+        String adc_pin = parms.get(ADC_PIN);
+        String i2c_address = parms.get(I_2_C_ADDRESS);
+        String i2c_device = parms.get(I_2_C_DEVICE);
+        String i2c_channel = parms.get(I_2_C_CHANNEL);
+        String i2c_type = parms.get(I_2_C_TYPE);
         String error_msg;
 
         if (name == null || volume == null) {
@@ -1208,7 +1015,7 @@ public class UrlEndpoints {
             }
 
             // Check for ADC Pin
-            if (adc_pin != null && !adc_pin.equals("")) {
+            if (!isNullOrEmpty(adc_pin)) {
                 int adcpin = Integer.parseInt(adc_pin);
                 if (0 < adcpin || adcpin > 7) {
                     error_msg = "Invalid ADC Pin offset";
@@ -1231,8 +1038,7 @@ public class UrlEndpoints {
                             MIME_TYPES.get("json"), usage.toJSONString());
                 }
 
-            } else if (onewire_add != null && onewire_offset != null
-                    && !onewire_add.equals("") && !onewire_offset.equals("")) {
+            } else if (!isNullOrEmpty(onewire_add) && !isNullOrEmpty(onewire_offset)) {
                 // Setup Onewire pin
                 if (!t.setupVolumes(onewire_add, onewire_offset, units)) {
                     error_msg = "Could not setup volumes for " + onewire_add
@@ -1241,12 +1047,8 @@ public class UrlEndpoints {
                     return new Response(Response.Status.BAD_REQUEST,
                             MIME_TYPES.get("json"), usage.toJSONString());
                 }
-            }
-            else if (i2c_address != null && i2c_channel != null && i2c_device != null
-                    && i2c_address.length() > 0 && i2c_channel.length() > 0 && i2c_device.length() > 0 )
-            {
-                if (t.setupVolumeI2C(i2c_device, i2c_address, i2c_channel, i2c_type, units))
-                {
+            } else if (!isNullOrEmpty(i2c_address) && !isNullOrEmpty(i2c_channel) && !isNullOrEmpty(i2c_device)) {
+                if (t.setupVolumeI2C(i2c_device, i2c_address, i2c_channel, i2c_type, units)) {
                     error_msg = "Could not setup volumes for " + i2c_device
                             + " address: " + i2c_address + " Units: " + units;
                     usage.put("Error", "Invalid parameters: " + error_msg);
@@ -1278,10 +1080,11 @@ public class UrlEndpoints {
 
     /**
      * Get the graph data.
+     *
      * @return the JSON Response data
      */
     @UrlEndpoint(url = "/graph-data.zip", help = "Downloading data as a zip",
-    parameters = {})
+            parameters = {})
     public NanoHTTPD.Response getGraphDataZipWrapper() {
         return getGraphData();
     }
@@ -1298,7 +1101,7 @@ public class UrlEndpoints {
             return new NanoHTTPD.Response("Recorder disabled");
         }
 
-        Map<String, String> parms = ParseParams(parameters);
+        Map<String, String> parms = ParseParams();
         return lc.getRecorder().getData(parms);
     }
 
@@ -1309,15 +1112,14 @@ public class UrlEndpoints {
      */
     @SuppressWarnings("unchecked")
     @UrlEndpoint(url = "/setbreweryname", help = "Set the brewery name",
-    parameters = {@Parameter(name="name", value = "The name of the brewery to set")})
+            parameters = {@Parameter(name = NAME, value = "The name of the brewery to set")})
     public Response updateBreweryName() {
-        Map<String, String> parms = ParseParams(this.parameters);
-        String newName = parms.get("name");
+        Map<String, String> parms = ParseParams();
+        String newName = parms.get(NAME);
 
-        if (newName != null && !newName.equals("") && newName.length() > 0) {
+        if (!isNullOrEmpty(newName)) {
             LaunchControl.getInstance().setName(newName);
-            return new Response(Response.Status.OK,
-                    MIME_TYPES.get("text"), "Updated");
+            return new Response(Response.Status.OK, MIME_TYPES.get("text"), "Updated");
         }
 
         return null;
@@ -1326,11 +1128,12 @@ public class UrlEndpoints {
 
     /**
      * Read the incoming parameters and update the name as appropriate.
+     *
      * @return True if success, false if failure
      */
     @SuppressWarnings("unchecked")
     @UrlEndpoint(url = "/uploadimage", help = "Upload an image for the brewery logo",
-    parameters = {@Parameter(name = "file", value = "Push a file to this EndPoint to upload")})
+            parameters = {@Parameter(name = FILE, value = "Push a file to this EndPoint to upload")})
     public Response updateBreweryImage() {
 
         final Map<String, String> files = this.files;
@@ -1344,24 +1147,24 @@ public class UrlEndpoints {
                             uploadedFile.toPath());
 
                     if (fileType.equalsIgnoreCase(MIME_TYPES.get("gif"))
-                        || fileType.equalsIgnoreCase(MIME_TYPES.get("jpg"))
-                        || fileType.equalsIgnoreCase(MIME_TYPES.get("jpeg"))
-                        || fileType.equalsIgnoreCase(MIME_TYPES.get("png")))
-                    {
-                        File targetFile = new File(rootDir, "brewerImage.gif");
+                            || fileType.equalsIgnoreCase(MIME_TYPES.get("jpg"))
+                            || fileType.equalsIgnoreCase(MIME_TYPES.get("jpeg"))
+                            || fileType.equalsIgnoreCase(MIME_TYPES.get("png"))) {
+                        File targetFile = new File(this.rootDir, "brewerImage.gif");
                         if (targetFile.exists() && !targetFile.delete()) {
-                            BrewServer.LOG.warning("Failed to delete " + targetFile.getCanonicalPath());
+                            LOG.warning("Failed to delete " + targetFile.getCanonicalPath());
                         }
                         LaunchControl.copyFile(uploadedFile, targetFile);
 
                         if (!targetFile.setReadable(true, false) || targetFile.setWritable(true, false)) {
-                            BrewServer.LOG.warning("Failed to set read write permissions on " + targetFile.getCanonicalPath());
+                            LOG.warning("Failed to set read write permissions on " + targetFile.getCanonicalPath());
                         }
 
                         LaunchControl.getInstance().setFileOwner(targetFile);
                         return new Response(Response.Status.OK, MIME_TYPES.get("text"), "Updated brewery logo");
                     }
-                } catch (IOException e) {}
+                } catch (IOException e) {
+                }
             }
         }
         return null;
@@ -1370,15 +1173,16 @@ public class UrlEndpoints {
 
     /**
      * Update the switch order.
+     *
      * @return A HTTP Response
      */
     @UrlEndpoint(url = "/updateswitchorder", help = "Reorder the switches",
-    parameters = {@Parameter(name = "<name of the switch>", value = "New integer position of the switch")})
+            parameters = {@Parameter(name = "<name of the switch>", value = "New integer position of the switch")})
     public Response updateSwitchOrder() {
-        Map<String, String> params = ParseParams(this.parameters);
+        Map<String, String> params = ParseParams();
         Status status;
 
-        for (Map.Entry<String, String> entry: params.entrySet()) {
+        for (Map.Entry<String, String> entry : params.entrySet()) {
             if (entry.getKey().equals("NanoHttpd.QUERY_STRING")) {
                 continue;
             }
@@ -1395,9 +1199,7 @@ public class UrlEndpoints {
                 tSwitch.setPosition(Integer.parseInt(entry.getValue()));
                 CollectionsUtil.addInOrder(LaunchControl.getInstance().switchList, tSwitch);
             } catch (NumberFormatException nfe) {
-                LaunchControl.setMessage(
-                        "Couldn't parse " + entry.getValue()
-                        + " as an integer");
+                LaunchControl.setMessage("Couldn't parse " + entry.getValue() + " as an integer");
                 return null;
             }
             status = Response.Status.OK;
@@ -1409,16 +1211,17 @@ public class UrlEndpoints {
 
     /**
      * Delete a switch.
+     *
      * @return a reponse
      */
     @UrlEndpoint(url = "/deleteswitch", help = "Delete a switch",
-    parameters = {@Parameter(name = "name", value = "The name of the switch to delete")})
+            parameters = {@Parameter(name = NAME, value = "The name of the switch to delete")})
     public Response deleteSwitch() {
-        Map<String, String> params = ParseParams(this.parameters);
+        Map<String, String> params = ParseParams();
         Status status = Response.Status.OK;
 
         // find the switch
-        String switchName = params.get("name");
+        String switchName = params.get(NAME);
         if (switchName != null) {
             LaunchControl.getInstance().deleteSwitch(switchName);
             return new Response(status, MIME_TYPES.get("text"),
@@ -1429,18 +1232,19 @@ public class UrlEndpoints {
 
     /**
      * Update the timer order.
+     *
      * @return A HTTP Response
      */
     @UrlEndpoint(url = "/updatetimerorder", help = "Re-order the timers",
-    parameters = {@Parameter(name = "<name of timer>", value = "<Integer position of the timer>")})
+            parameters = {@Parameter(name = "<name of timer>", value = "<Integer position of the timer>")})
     public Response updateTimerOrder() {
-        Map<String, String> params = ParseParams(this.parameters);
+        Map<String, String> params = ParseParams();
 
         if (params.size() == 0) {
             return null;
         }
 
-        for (Map.Entry<String, String> entry: params.entrySet()) {
+        for (Map.Entry<String, String> entry : params.entrySet()) {
             if (entry.getKey().equals("NanoHttpd.QUERY_STRING")) {
                 continue;
             }
@@ -1458,7 +1262,7 @@ public class UrlEndpoints {
             } catch (NumberFormatException nfe) {
                 LaunchControl.setMessage(
                         "Couldn't parse " + entry.getValue()
-                        + " as an integer");
+                                + " as an integer");
                 return null;
             }
         }
@@ -1469,20 +1273,20 @@ public class UrlEndpoints {
 
     /**
      * Delete a timer.
+     *
      * @return a response
      */
     @UrlEndpoint(url = "/deletetimer", help = "Delete a timer",
-    parameters = {@Parameter(name = "name", value = "The name of the timer to delete")})
+            parameters = {@Parameter(name = "name", value = "The name of the timer to delete")})
     public Response deleteTimer() {
-        Map<String, String> params = ParseParams(this.parameters);
+        Map<String, String> params = ParseParams();
         Status status = Response.Status.OK;
 
         // find the switch
         String timerName = params.get("name");
         if (timerName != null) {
             LaunchControl.getInstance().deleteTimer(timerName);
-        }
-        else {
+        } else {
             return null;
         }
         return new Response(status, MIME_TYPES.get("text"),
@@ -1490,30 +1294,28 @@ public class UrlEndpoints {
     }
 
     @UrlEndpoint(url = "/setscale", help = "Set the temperature scale",
-    parameters = {@Parameter(name = "scale", value = "The new scale \"F\" or \"C\"")})
+            parameters = {@Parameter(name = SCALE, value = "The new scale \"F\" or \"C\"")})
     public Response setScale() {
-        Map<String, String> parms = this.parameters;
-        Map<String, String> params = ParseParams(parms);
+        Map<String, String> params = ParseParams();
 
         Status status = Response.Status.OK;
 
         // Iterate all the temperature probes and change the scale
-        if (!LaunchControl.getInstance().setTempScales(params.get("scale"))) {
+        if (!LaunchControl.getInstance().setTempScales(params.get(SCALE))) {
             return null;
         }
 
         return new Response(status, MIME_TYPES.get("text"),
-                "Scale set to " + params.get("scale"));
+                "Scale set to " + params.get(SCALE));
     }
 
     @UrlEndpoint(url = "/toggledevice", help = "Toggle the visibility of a device",
-    parameters = {@Parameter(name = "device", value = "The name of the device to toggle the visibility of")})
+            parameters = {@Parameter(name = DEVICE, value = "The name of the device to toggle the visibility of")})
     public Response toggleDevice() {
-        Map<String, String> parms = this.parameters;
-        Map<String, String> params = ParseParams(parms);
+        Map<String, String> params = ParseParams();
 
         Status status = Response.Status.OK;
-        Temp temp = LaunchControl.getInstance().findTemp(params.get("device"));
+        Temp temp = LaunchControl.getInstance().findTemp(params.get(DEVICE));
 
         if (temp != null) {
             temp.toggleVisibility();
@@ -1526,35 +1328,31 @@ public class UrlEndpoints {
     }
 
     @UrlEndpoint(url = "/updatesystemsettings", help = "Update the system settings",
-    parameters = {
-            @Parameter(name = "recorder", value = "\"on\" to enable the data recorder, \"off\" to disable it"),
-            @Parameter(name = "recorderDiff", value = "Decimal that represents the tolerance to use when recording data, when the temperature varies by this amount from the previous point, record it"),
-            @Parameter(name = "recorderTime", value = "The sample rate in milliseconds"),
-            @Parameter(name = "restore", value = "\"on\" to restore the previous state of Elsinore on startup."),
-            @Parameter(name = "use_owfs", value="Enable or disable OWFS"),
-            @Parameter(name = "owfs_server", value="OWFS server IP"),
-            @Parameter(name = "owfs_port", value="OWFS port"),
-            @Parameter(name = "scale", value="Scale in Celsius or Fahrenheit"),
-    })
+            parameters = {
+                    @Parameter(name = RECORDER, value = "\"on\" to enable the data recorder, \"off\" to disable it"),
+                    @Parameter(name = RECORDER_DIFF, value = "Decimal that represents the tolerance to use when recording data, when the temperature varies by this amount from the previous point, record it"),
+                    @Parameter(name = RECORDER_TIME, value = "The sample rate in milliseconds"),
+                    @Parameter(name = RESTORE, value = "\"on\" to restore the previous state of Elsinore on startup."),
+                    @Parameter(name = USE_OWFS, value = "Enable or disable OWFS"),
+                    @Parameter(name = OWFS_SERVER, value = "OWFS server IP"),
+                    @Parameter(name = OWFS_PORT, value = "OWFS port"),
+                    @Parameter(name = SCALE, value = "Scale in Celsius or Fahrenheit"),
+            })
     public final Response updateSystemSettings() {
-        Map<String, String> params = ParseParams(parameters);
+        Map<String, String> params = ParseParams();
         LaunchControl lc = LaunchControl.getInstance();
 
-        if (params.containsKey("scale"))
-        {
-            String scale = params.get("scale");
-            if (scale.equalsIgnoreCase("Celsius") || scale.equalsIgnoreCase("C"))
-            {
-                lc.setTempScales("C");
-            }
-            else if (scale.equalsIgnoreCase("Fahrenheit") || scale.equalsIgnoreCase("F"))
-            {
-                lc.setTempScales("F");
+        if (params.containsKey(SCALE)) {
+            String scale = params.get(SCALE);
+            if (scale.equalsIgnoreCase(CELSIUS) || scale.equalsIgnoreCase(C)) {
+                lc.setTempScales(C);
+            } else if (scale.equalsIgnoreCase(FAHRENHEIT) || scale.equalsIgnoreCase(F)) {
+                lc.setTempScales(F);
             }
         }
 
-        if (params.containsKey("recorder")) {
-            boolean recorderOn = params.get("recorder").equals("on");
+        if (params.containsKey(RECORDER)) {
+            boolean recorderOn = params.get(RECORDER).equals(ON_STRING);
             // If we're on, disable the recorder
             if (recorderOn) {
                 lc.enableRecorder();
@@ -1565,49 +1363,43 @@ public class UrlEndpoints {
             lc.disableRecorder();
         }
 
-        if (params.containsKey("recorderDiff")) {
+        if (params.containsKey(RECORDER_DIFF)) {
             try {
-                lc.getRecorder().setDiff(Double.parseDouble(params.get("recorderDiff")));
+                lc.getRecorder().setDiff(Double.parseDouble(params.get(RECORDER_DIFF)));
             } catch (Exception e) {
-                lc.setMessage(
-                    "Failed to parse Recorder diff as a double\n"
-                            + e.getMessage()
-                            + lc.getMessage());
+                LaunchControl.setMessage(
+                        "Failed to parse Recorder diff as a double\n"
+                                + e.getMessage()
+                                + LaunchControl.getMessage());
             }
         }
 
-        if (params.containsKey("recorderTime")) {
+        if (params.containsKey(RECORDER_TIME)) {
             try {
-                lc.getRecorder().setTime(Long.parseLong(params.get("recorderTime")));
+                lc.getRecorder().setTime(Long.parseLong(params.get(RECORDER_TIME)));
             } catch (Exception e) {
-                lc.setMessage(
-                    "Failed to parse Recorder time as a long\n" + e.getMessage()
-                            + lc.getMessage());
+                LaunchControl.setMessage(
+                        "Failed to parse Recorder time as a long\n" + e.getMessage()
+                                + LaunchControl.getMessage());
             }
         }
 
-        if (params.containsKey("restore"))
-        {
-            lc.setRestore(params.get("restore").equals("on"));
+        if (params.containsKey(RESTORE)) {
+            lc.setRestore(params.get(RESTORE).equals(ON_STRING));
         }
 
-        if (params.containsKey("use_owfs"))
-        {
-            lc.systemSettings.useOWFS = params.get("use_owfs").equals("on");
+        if (params.containsKey(USE_OWFS)) {
+            lc.systemSettings.useOWFS = params.get(USE_OWFS).equals(ON_STRING);
         }
 
-        if (params.containsKey("owfs_server"))
-        {
-            lc.systemSettings.owfsServer = params.get("owfs_server");
+        if (params.containsKey(OWFS_SERVER)) {
+            lc.systemSettings.owfsServer = params.get(OWFS_SERVER);
         }
-        if (params.containsKey("owfs_port"))
-        {
+        if (params.containsKey(OWFS_PORT)) {
             try {
-                lc.systemSettings.owfsPort = Integer.parseInt(params.get("owfs_port"));
-            }
-            catch (NumberFormatException nfe)
-            {
-                BrewServer.LOG.log(Level.WARNING, "Failed to parse " + params.get("owfs_port"), nfe);
+                lc.systemSettings.owfsPort = Integer.parseInt(params.get(OWFS_PORT));
+            } catch (NumberFormatException nfe) {
+                LOG.log(Level.WARNING, "Failed to parse " + params.get(OWFS_PORT), nfe);
             }
         }
 
@@ -1620,94 +1412,86 @@ public class UrlEndpoints {
 
     /**
      * Set the gravity for the specified device.
+     *
      * @return A response
      */
     @UrlEndpoint(url = "/setgravity", help = "Set the gravity reading for a device to improve the volume calculation",
-    parameters = {
-            @Parameter(name = "device", value = "The Device to set the gravity for"),
-            @Parameter(name = "gravity", value = "The  new specific gravity value")
-    })
+            parameters = {
+                    @Parameter(name = DEVICE, value = "The Device to set the gravity for"),
+                    @Parameter(name = GRAVITY, value = "The  new specific gravity value")
+            })
     public final Response setGravity() {
-        Map<String, String> parms = this.parameters;
-        Map<String, String> params = ParseParams(parms);
+        Map<String, String> params = ParseParams();
         Status status = Status.OK;
 
         Temp temp = null;
 
-        if (params.containsKey("inputunit")) {
-            temp = LaunchControl.getInstance().findTemp(params.get("inputunit"));
+        if (params.containsKey(INPUTUNIT)) {
+            temp = LaunchControl.getInstance().findTemp(params.get(INPUTUNIT));
             if (temp == null) {
-                LaunchControl.addMessage(
-                        "Could not find the temperature probe for: "
-                                + params.get("inputunit"));
+                LaunchControl.addMessage("Could not find the temperature probe for: " + params.get(INPUTUNIT));
                 status = Status.BAD_REQUEST;
             }
         } else {
-            LaunchControl.addMessage(
-                    "No device provided when setting the gravity");
+            LaunchControl.addMessage("No device provided when setting the gravity");
             status = Status.BAD_REQUEST;
         }
 
-        if (params.containsKey("gravity")) {
+        if (params.containsKey(GRAVITY)) {
             try {
-                BigDecimal gravity = new BigDecimal(params.get("gravity"));
+                BigDecimal gravity = new BigDecimal(params.get(GRAVITY));
                 if (temp != null) {
                     temp.setGravity(gravity);
                 }
             } catch (NumberFormatException nfe) {
-                LaunchControl.addMessage(
-                        "Could not parse gravity as a decimal: "
-                                + params.get("gravity"));
+                LaunchControl.addMessage("Could not parse gravity as a decimal: " + params.get(GRAVITY));
             }
         }
 
-        if (status == Status.BAD_REQUEST)
-        {
+        if (status == Status.BAD_REQUEST) {
             return null;
         }
         return new Response(status, MIME_TYPES.get("text"),
                 "Updated");
     }
 
-    @UrlEndpoint(url="/controller", help = "Get the main controller page HTML",
-    parameters = {})
+    @UrlEndpoint(url = "/controller", help = "Get the main controller page HTML",
+            parameters = {})
     public Response renderController() {
-        return BrewServer.serveFile("html/index.html", header, rootDir);
+        return serveFile("html/index.html", this.header, this.rootDir);
     }
 
 
     @UrlEndpoint(url = "/brewerImage.gif", help = "Get the current brewery logo",
-    parameters = {})
+            parameters = {})
     public Response getBrewerImage() {
         String uri = "/brewerImage.gif";
         LaunchControl lc = LaunchControl.getInstance();
         // Has the user uploaded a file?
-        if (new File(rootDir, uri).exists()) {
-            return BrewServer.serveFile(uri, this.header, rootDir);
+        if (new File(this.rootDir, uri).exists()) {
+            return serveFile(uri, this.header, this.rootDir);
         }
         // Check to see if there's a theme set.
         if (lc.theme != null
                 && !lc.theme.equals("")) {
-            if (new File(rootDir,
+            if (new File(this.rootDir,
                     "/logos/" + lc.theme + ".gif").exists()) {
-                return BrewServer.serveFile("/logos/" + lc.theme + ".gif",
-                        this.header, rootDir);
+                return serveFile("/logos/" + lc.theme + ".gif",
+                        this.header, this.rootDir);
             }
         }
 
-        return new NanoHTTPD.Response(Status.BAD_REQUEST,
-                BrewServer.MIME_TYPES.get("json"),
-                "{image: \"unavailable\"}");
+        return new NanoHTTPD.Response(Status.BAD_REQUEST, MIME_TYPES.get("json"), "{image: \"unavailable\"}");
     }
 
     @UrlEndpoint(url = "/updateswitch", help = "Toggle a switch on or off",
-    parameters = {@Parameter(name = "toggle", value = "The name of the switch to toggle")})
+            parameters = {@Parameter(name = TOGGLE, value = "The name of the switch to toggle")})
     public Response updateSwitch() {
 
-        if (parameters.containsKey("toggle")) {
-            String switchname = parameters.get("toggle");
+        if (this.parameters.containsKey(TOGGLE)) {
+            String switchName = this.parameters.get(TOGGLE);
             Switch tempSwitch =
-                    LaunchControl.getInstance().findSwitch(switchname);
+                    LaunchControl.getInstance().findSwitch(switchName);
             if (tempSwitch != null) {
                 if (tempSwitch.getStatus()) {
                     tempSwitch.turnOff();
@@ -1719,32 +1503,29 @@ public class UrlEndpoints {
                         "Updated Switch");
             } else {
                 JSONObject usage = new JSONObject();
-                usage.put("Error", "Invalid name supplied: " + switchname);
-                usage.put("toggle", "The name of the Switch to toggle on/off");
-                return new Response(Status.BAD_REQUEST,
-                        MIME_TYPES.get("json"), usage.toJSONString());
+                usage.put("Error", "Invalid name supplied: " + switchName);
+                usage.put(TOGGLE, "The name of the Switch to toggle on/off");
+                return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"), usage.toJSONString());
             }
         }
 
-        return new Response(Status.BAD_REQUEST,
-                MIME_TYPES.get("txt"), "Invalid data"
-                        + " provided.");
+        return new Response(Status.BAD_REQUEST, MIME_TYPES.get("txt"), "Invalid data" + " provided.");
     }
 
     @UrlEndpoint(url = "/getswitchsettings", help = "Get the settings for a switch",
-            parameters = {@Parameter(name = "name", value = "The name of the switch to get the details for")})
+            parameters = {@Parameter(name = NAME, value = "The name of the switch to get the details for")})
     public Response switchSettings() {
         Status status = Status.BAD_REQUEST;
         String data = "";
-        if (parameters.containsKey("name")) {
-            String switchname = parameters.get("name");
+        if (this.parameters.containsKey(NAME)) {
+            String switchName = this.parameters.get(NAME);
             Switch tempSwitch =
-                    LaunchControl.getInstance().findSwitch(switchname.replaceAll("_", " "));
+                    LaunchControl.getInstance().findSwitch(switchName.replaceAll("_", " "));
             if (tempSwitch != null) {
                 JSONObject values = new JSONObject();
-                values.put("name", tempSwitch.getName());
-                values.put("gpio", tempSwitch.getGPIO());
-                values.put("inverted", tempSwitch.getInverted());
+                values.put(NAME, tempSwitch.getName());
+                values.put(GPIO, tempSwitch.getGPIO());
+                values.put(INVERTED, tempSwitch.getInverted());
                 data = values.toJSONString();
                 status = Status.OK;
             }
@@ -1753,39 +1534,37 @@ public class UrlEndpoints {
     }
 
     @UrlEndpoint(url = "/toggleaux", help = "Toggle the aux pin for a PID",
-    parameters = {@Parameter(name = "toggle", value = "The name of the PID to toggle the pin for")})
+            parameters = {@Parameter(name = TOGGLE, value = "The name of the PID to toggle the pin for")})
     public Response toggleAux() {
         JSONObject usage = new JSONObject();
-        if (parameters.containsKey("toggle")) {
-            String pidname = parameters.get("toggle");
+        if (this.parameters.containsKey(TOGGLE)) {
+            String pidname = this.parameters.get(TOGGLE);
             PID tempPID = LaunchControl.getInstance().findPID(pidname);
             if (tempPID != null) {
                 tempPID.toggleAux();
-                return new NanoHTTPD.Response(Status.OK, MIME_HTML,
-                        "Updated Aux for " + pidname);
+                return new NanoHTTPD.Response(Status.OK, MIME_HTML, "Updated Aux for " + pidname);
             } else {
-                BrewServer.LOG.warning("Invalid PID: " + pidname + " provided.");
+                LOG.warning("Invalid PID: " + pidname + " provided.");
                 usage.put("Error", "Invalid name supplied: " + pidname);
             }
         }
 
-        usage.put("toggle",
-                "The name of the PID to toggle the aux output for");
+        usage.put("toggle", "The name of the PID to toggle the aux output for");
         return new Response(usage.toJSONString());
     }
 
     @UrlEndpoint(url = "/getvolumeform", help = "Get the volume update form for the specified vessel",
-    parameters = {
-            @Parameter(name = "vessel", value = "The name of the vessel to get the Volume form for")
-    })
+            parameters = {
+                    @Parameter(name = VESSEL, value = "The name of the vessel to get the Volume form for")
+            })
     public Response getVolumeForm() {
-        if (!parameters.containsKey("vessel")) {
+        if (!this.parameters.containsKey(VESSEL)) {
             LaunchControl.setMessage("No Vessel provided");
             return null;
         }
 
         // Check to make sure we have a valid vessel
-        Temp temp = LaunchControl.getInstance().findTemp(parameters.get("vessel"));
+        Temp temp = LaunchControl.getInstance().findTemp(this.parameters.get(VESSEL));
         if (temp == null) {
             return null;
         }
@@ -1807,16 +1586,16 @@ public class UrlEndpoints {
     }
 
     @UrlEndpoint(url = "/getphsensorform", help = "Get the HTML form for a pH Sensor",
-    parameters ={
-            @Parameter(name = "sensor", value = "The name of the sensor to get the pH Edit form for")
-    })
+            parameters = {
+                    @Parameter(name = SENSOR, value = "The name of the sensor to get the pH Edit form for")
+            })
     public Response getPhSensorForm() {
         PhSensor phSensor;
 
-        if (!parameters.containsKey("sensor")) {
+        if (!this.parameters.containsKey(SENSOR)) {
             phSensor = new PhSensor();
         } else {
-            phSensor = LaunchControl.getInstance().findPhSensor(parameters.get("sensor"));
+            phSensor = LaunchControl.getInstance().findPhSensor(this.parameters.get(SENSOR));
         }
 
         // Render away
@@ -1836,81 +1615,83 @@ public class UrlEndpoints {
     }
 
     @UrlEndpoint(url = "/addphsensor", help = "Add or update a pH Sensor",
-    parameters = {
-            @Parameter(name = "name", value = "The name of the pH Sensor to edit"),
-            @Parameter(name = "dsAddress", value = "The DS2450 Address to use for reading the pH Sensor Analogue value"),
-            @Parameter(name = "dsOffset", value = "The DS2450 Offset to use for reading the pH Sensor Analogue value"),
-            @Parameter(name = "adc_pin", value = "The onboard ADC AIN pin to use for reading the pH Sensor Analogue value"),
-            @Parameter(name = "i2c_model", value = "The I2C ADC model that's used for reading the pH Sensor Analogue value"),
-            @Parameter(name = "i2c_device", value = "The I2C device that's used for reading the pH Sensor Analogue value"),
-            @Parameter(name = "i2c_address", value = "The I2C ADC Address that's used for reading the pH Sensor Analogue value"),
-            @Parameter(name = "i2c_channel", value = "The I2C ADC channel that's used for reading the pH Sensor Analogue value"),
-            @Parameter(name = "ph_model", value = "The pH sensor model that being used"),
-            @Parameter(name = "calibration", value = "The offset for calibration")
+            parameters = {
+                    @Parameter(name = NAME, value = "The name of the pH Sensor to edit"),
+                    @Parameter(name = DS_ADDRESS, value = "The DS2450 Address to use for reading the pH Sensor Analogue value"),
+                    @Parameter(name = DS_OFFSET, value = "The DS2450 Offset to use for reading the pH Sensor Analogue value"),
+                    @Parameter(name = ADC_PIN, value = "The onboard ADC AIN pin to use for reading the pH Sensor Analogue value"),
+                    @Parameter(name = I_2_C_MODEL, value = "The I2C ADC model that's used for reading the pH Sensor Analogue value"),
+                    @Parameter(name = I_2_C_DEVICE, value = "The I2C device that's used for reading the pH Sensor Analogue value"),
+                    @Parameter(name = I_2_C_ADDRESS, value = "The I2C ADC Address that's used for reading the pH Sensor Analogue value"),
+                    @Parameter(name = I_2_C_CHANNEL, value = "The I2C ADC channel that's used for reading the pH Sensor Analogue value"),
+                    @Parameter(name = PH_MODEL, value = "The pH sensor model that being used"),
+                    @Parameter(name = CALIBRATION, value = "The offset for calibration")
 
-    })
+            })
     public Response addPhSensor() {
-        PhSensor phSensor = null;
+        PhSensor phSensor;
         String result = "";
         Map<String, String> localParams = this.ParseParams();
-        if (localParams.containsKey("name")) {
-            phSensor = LaunchControl.getInstance().findPhSensor(localParams.get("name"));
+        String sensorName = null;
+        if (localParams.containsKey(NAME)) {
+            sensorName = localParams.get(NAME);
         }
+        if (sensorName == null) {
+            return new Response(Status.BAD_REQUEST, MIME_PLAINTEXT, "Failed to find the Name parameter");
+        }
+        phSensor = LaunchControl.getInstance().findPhSensor(sensorName);
 
         if (phSensor == null) {
             phSensor = new PhSensor();
-            phSensor.setName(localParams.get("name"));
+            phSensor.setName(sensorName);
             LaunchControl.getInstance().addPhSensor(phSensor);
         }
 
         // Update the pH Sensor
-        String temp = localParams.get("dsAddress");
+        String temp = localParams.get(DS_ADDRESS);
         if (temp != null) {
             phSensor.setDsAddress(temp);
         }
-        temp = localParams.get("dsOffset");
+        temp = localParams.get(DS_OFFSET);
         if (temp != null) {
             phSensor.setDsOffset(temp);
         }
-        temp = localParams.get("adc_pin");
+        temp = localParams.get(ADC_PIN);
         if (temp != null) {
             int newPin = -1;
-            if (!temp.equals("")) {
+            if (!isNullOrEmpty(temp)) {
                 try {
                     newPin = Integer.parseInt(temp);
                 } catch (NumberFormatException nfe) {
-                    LaunchControl.setMessage(
-                            "Couldn't parse analog pin " + temp
-                            + " as an integer.");
+                    LaunchControl.setMessage("Couldn't parse analog pin " + temp + " as an integer.");
                 }
             }
             phSensor.setAinPin(newPin);
         }
         LaunchControl lc = LaunchControl.getInstance();
-        String i2cModel = localParams.get("i2c_model");
-        if (i2cModel != null && i2cModel.length() > 0)
-        {
-            String devNumber = localParams.get("i2c_device");
-            String devAddress = localParams.get("i2c_address");
-            String devChannel = localParams.get("i2c_channel");
+        String i2cModel = localParams.get(I_2_C_MODEL);
+        if (i2cModel != null && i2cModel.length() > 0) {
+            String devNumber = localParams.get(I_2_C_DEVICE);
+            String devAddress = localParams.get(I_2_C_ADDRESS);
+            String devChannel = localParams.get(I_2_C_CHANNEL);
 
             phSensor.i2cDevice = lc.getI2CDevice(devNumber, devAddress, i2cModel);
             phSensor.i2cChannel = Integer.parseInt(devChannel);
         }
 
-        temp = localParams.get("ph_model");
+        temp = localParams.get(PH_MODEL);
         if (temp != null) {
             phSensor.setModel(temp);
         }
 
         // Check for a calibration
-        temp = localParams.get("calibration");
-        if (temp != null && !temp.equals("")) {
+        temp = localParams.get(CALIBRATION);
+        if (!isNullOrEmpty(temp)) {
             try {
                 BigDecimal calibration = new BigDecimal(temp);
                 phSensor.calibrate(calibration);
             } catch (Exception e) {
-                lc.setMessage("Could not read calibration: " + temp
+                LaunchControl.setMessage("Could not read calibration: " + temp
                         + ", " + e.getLocalizedMessage());
             }
         }
@@ -1919,18 +1700,16 @@ public class UrlEndpoints {
     }
 
     @UrlEndpoint(url = "/delphsensor", help = "Remove a pH Sensor",
-    parameters = {
-            @Parameter(name = "name", value = "The name of the pH Sensor to delete")
-    })
+            parameters = {
+                    @Parameter(name = NAME, value = "The name of the pH Sensor to delete")
+            })
     public Response delPhSensor() {
-        String sensorName = parameters.get("name");
+        String sensorName = this.parameters.get(NAME);
         if (sensorName != null
                 && LaunchControl.getInstance().deletePhSensor(sensorName)) {
-            LaunchControl.setMessage("pH Sensor '" + sensorName
-                    + "' deleted.");
+            LaunchControl.setMessage("pH Sensor '" + sensorName + "' deleted.");
         } else {
-            LaunchControl.setMessage("Could not find pH Sensor with name: "
-                    + sensorName);
+            LaunchControl.setMessage("Could not find pH Sensor with name: " + sensorName);
         }
 
         return new Response(Status.OK, MIME_HTML, "");
@@ -1938,13 +1717,14 @@ public class UrlEndpoints {
 
     /**
      * Update the specified pH Sensor reading.
+     *
      * @return a Response with the pH Sensor value.
      */
     @UrlEndpoint(url = "/readphsensor", help = "Get the current value of a pH Sensor",
-    parameters = {@Parameter(name = "name", value = "The name of the pH Sensor to get the value for")})
+            parameters = {@Parameter(name = NAME, value = "The name of the pH Sensor to get the value for")})
     public final Response readPhSensor() {
         PhSensor phSensor = LaunchControl.getInstance().findPhSensor(
-                parameters.get("name").replace(" ", "_"));
+                this.parameters.get(NAME).replace(" ", "_"));
         // CHeck for errors
         String result;
         if (phSensor == null) {
@@ -1958,19 +1738,19 @@ public class UrlEndpoints {
 
     /**
      * Get the trigger input form for the trigger type specified.
+     *
      * @return The HTML Representing the trigger form.
      */
     @UrlEndpoint(url = "/getTriggerForm", help = "Get the trigger edit form for the specified trigger type at the position",
-    parameters = {
-            @Parameter(name = "position", value = "The integer position of the trigger to edit/add"),
-            @Parameter(name = "type", value = "The trigger type to get the edit/add form for.")
-    })
+            parameters = {
+                    @Parameter(name = POSITION, value = "The integer position of the trigger to edit/add"),
+                    @Parameter(name = TYPE, value = "The trigger type to get the edit/add form for.")
+            })
     public final Response getTriggerForm() {
-        int position = Integer.parseInt(parameters.get("position"));
-        String type = parameters.get("type");
+        int position = Integer.parseInt(this.parameters.get(POSITION));
+        String type = this.parameters.get(TYPE);
         HtmlCanvas result = TriggerControl.getNewTriggerForm(position, type);
-        if (result == null)
-        {
+        if (result == null) {
             return null;
         }
         return new Response(Status.OK, MIME_HTML, result.toHtml());
@@ -1978,14 +1758,15 @@ public class UrlEndpoints {
 
     /**
      * Get the form representing the new triggers.
+     *
      * @return The Response with the HTML.
      */
     @UrlEndpoint(url = "/getNewTriggers", help = "Get a form representing the new trigger types available for the temperature probe",
-    parameters = {@Parameter(name = "temp", value = "The name of the temperature probe/device to get the new trigger form for")})
+            parameters = {@Parameter(name = TEMP, value = "The name of the temperature probe/device to get the new trigger form for")})
     public final Response getNewTriggersForm() {
         Status status = Status.OK;
         HtmlCanvas htmlCanvas;
-        String probe = parameters.get("temp");
+        String probe = this.parameters.get(TEMP);
         if (probe == null) {
             LaunchControl.setMessage("No Temperature probe set.");
         }
@@ -2004,25 +1785,25 @@ public class UrlEndpoints {
 
     /**
      * Get the trigger edit form for the specified parameters.
+     *
      * @return The Edit form.
      */
     @UrlEndpoint(url = "/gettriggeredit", help = "Edit the trigger at the specified position for the temp probe",
-    parameters = {
-            @Parameter(name = "position", value = "The position in the trigger control to edit"),
-            @Parameter(name = "tempprobe", value = "The temperature probe to edit.")
-    })
+            parameters = {
+                    @Parameter(name = POSITION, value = "The position in the trigger control to edit"),
+                    @Parameter(name = TEMPPROBE, value = "The temperature probe to edit.")
+            })
     public final Response getTriggerEditForm() {
         Status status = Status.OK;
-        int position = Integer.parseInt(parameters.get("position"));
-        String tempProbeName = parameters.get("tempprobe");
+        int position = Integer.parseInt(this.parameters.get(POSITION));
+        String tempProbeName = this.parameters.get(TEMPPROBE);
         Temp tempProbe = LaunchControl.getInstance().findTemp(tempProbeName);
-        if (tempProbe == null)
-        {
+        if (tempProbe == null) {
             return null;
         }
         TriggerControl triggerControl = tempProbe.getTriggerControl();
         HtmlCanvas canvas = triggerControl.getEditTriggerForm(
-                position, new JSONObject(parameters));
+                position, new JSONObject(this.parameters));
         if (canvas != null) {
             return new Response(status, MIME_HTML, canvas.toHtml());
         }
@@ -2031,60 +1812,57 @@ public class UrlEndpoints {
 
     /**
      * Add a new Trigger to the incoming tempProbe object.
+     *
      * @return A response for the user.
      */
     @UrlEndpoint(url = "/addtriggertotemp", help = "Add a trigger to the temperature probe trigger control",
-    parameters = {
-            @Parameter(name = "position", value = "The position to add the trigger in"),
-            @Parameter(name = "type", value = "The type of trigger to add"),
-            @Parameter(name = "tempprobe", value = "The name of the temperature probe to add the trigger control to."),
-            @Parameter(name = "<Other Values", value = "The values specified by the trigger edit form.")
-    })
+            parameters = {
+                    @Parameter(name = POSITION, value = "The position to add the trigger in"),
+                    @Parameter(name = TYPE, value = "The type of trigger to add"),
+                    @Parameter(name = TEMPPROBE, value = "The name of the temperature probe to add the trigger control to."),
+                    @Parameter(name = "<Other Values>", value = "The values specified by the trigger edit form.")
+            })
     public final Response addNewTrigger() {
         Status status = Status.OK;
-        int position = Integer.parseInt(parameters.get("position"));
-        String type = parameters.get("type");
-        String tempProbeName = parameters.get("tempprobe");
+        int position = Integer.parseInt(this.parameters.get(POSITION));
+        String type = this.parameters.get(TYPE);
+        String tempProbeName = this.parameters.get(TEMPPROBE);
         Temp tempProbe = LaunchControl.getInstance().findTemp(tempProbeName);
-        if (tempProbe == null)
-        {
+        if (tempProbe == null) {
             return null;
         }
         TriggerControl triggerControl = tempProbe.getTriggerControl();
-        if (triggerControl == null)
-        {
+        if (triggerControl == null) {
             return null;
         }
-        triggerControl.addTrigger(position, type, new JSONObject(parameters));
+        triggerControl.addTrigger(position, type, new JSONObject(this.parameters));
         return new Response(status, MIME_HTML, "OK");
     }
 
     /**
      * Update the trigger.
+     *
      * @return The Edit form.
      */
     @UrlEndpoint(url = "/updatetrigger", help = "Update the trigger at the specified position",
-    parameters = {
-            @Parameter(name = "position", value = "The position to edit the trigger at."),
-            @Parameter(name = "tempprobe", value = "The temperature probe to edit the trigger on."),
-            @Parameter(name = "<Other Values>", value = "Other values requested by the trigger type.")
-    })
+            parameters = {
+                    @Parameter(name = POSITION, value = "The position to edit the trigger at."),
+                    @Parameter(name = TEMPPROBE, value = "The temperature probe to edit the trigger on."),
+                    @Parameter(name = "<Other Values>", value = "Other values requested by the trigger type.")
+            })
     public final Response updateTrigger() {
         Status status = Status.OK;
-        int position = Integer.parseInt(parameters.get("position"));
-        String tempProbeName = parameters.get("tempprobe");
+        int position = Integer.parseInt(this.parameters.get(POSITION));
+        String tempProbeName = this.parameters.get(TEMPPROBE);
         Temp tempProbe = LaunchControl.getInstance().findTemp(tempProbeName);
-        if (tempProbe == null)
-        {
+        if (tempProbe == null) {
             return null;
         }
         TriggerControl triggerControl = tempProbe.getTriggerControl();
-        if (triggerControl == null)
-        {
+        if (triggerControl == null) {
             return null;
         }
-        if (!triggerControl.updateTrigger(position, new JSONObject(parameters)))
-        {
+        if (!triggerControl.updateTrigger(position, new JSONObject(this.parameters))) {
             return null;
         }
 
@@ -2093,10 +1871,11 @@ public class UrlEndpoints {
 
     /**
      * Reorder the devices in the UI.
+     *
      * @return A response object.
      */
     @UrlEndpoint(url = "/reorderprobes", help = "Re-order the temperature probes",
-    parameters = {@Parameter(name = "<name of the device", value = "<New integer position of the device>")})
+            parameters = {@Parameter(name = "<name of the device>", value = "<New integer position of the device>")})
     public final Response reorderProbes() {
         Map<String, String> params = this.parameters;
         JSONObject usage = new JSONObject();
@@ -2104,7 +1883,7 @@ public class UrlEndpoints {
         usage.put(":name=:position", "The name and the new position");
 
         // Should be good to go, iterate and update!
-        for (Map.Entry<String, String> mEntry: params.entrySet()) {
+        for (Map.Entry<String, String> mEntry : params.entrySet()) {
             if (mEntry.getKey().equals("NanoHttpd.QUERY_STRING")) {
                 continue;
             }
@@ -2117,9 +1896,7 @@ public class UrlEndpoints {
                 }
             } catch (NumberFormatException nfe) {
                 LaunchControl.setMessage(
-                    "Failed to parse device reorder value,"
-                    + " things may get weird: "
-                    + mEntry.getKey() + ": " + mEntry.getValue());
+                        "Failed to parse device reorder value, things may get weird: " + mEntry.getKey() + ": " + mEntry.getValue());
             }
         }
         LaunchControl.getInstance().sortDevices();
@@ -2129,7 +1906,7 @@ public class UrlEndpoints {
 
     @SuppressWarnings("unchecked")
     @UrlEndpoint(url = "/uploadbeerxml", help = "Upload beerXML for parsing",
-    parameters = {@Parameter(name = "<files>", value = "Files to upload")})
+            parameters = {@Parameter(name = "<files>", value = "Files to upload")})
     public Response uploadBeerXML() {
 
         final Map<String, String> files = this.files;
@@ -2142,22 +1919,16 @@ public class UrlEndpoints {
                     String fileType = new Tika().detect(
                             uploadedFile);
 
-                    if (fileType.endsWith("/xml"))
-                    {
+                    if (fileType.endsWith("/xml")) {
                         BeerXMLReader.getInstance().readFile(uploadedFile);
                         ArrayList<String> recipeList = BeerXMLReader.getInstance().getListOfRecipes();
-                        BrewServer.setRecipeList(recipeList);
-                        if (recipeList == null)
-                        {
+                        setRecipeList(recipeList);
+                        if (recipeList == null) {
                             LaunchControl.setMessage("Couldn't read recipe file.");
-                        }
-                        else if (recipeList.size() == 1)
-                        {
-                            BrewServer.setCurrentRecipe(BeerXMLReader.getInstance().readRecipe(recipeList.get(0)));
-                            LaunchControl.setMessage("A single recipe has been read in and set: " + BrewServer.getCurrentRecipe().getName());
-                        }
-                        else
-                        {
+                        } else if (recipeList.size() == 1) {
+                            setCurrentRecipe(BeerXMLReader.getInstance().readRecipe(recipeList.get(0)));
+                            LaunchControl.setMessage("A single recipe has been read in and set: " + getCurrentRecipe().getName());
+                        } else {
                             LaunchControl.setMessage(recipeList.size() + " recipes read in.");
                         }
                     }
@@ -2172,7 +1943,7 @@ public class UrlEndpoints {
     }
 
     @UrlEndpoint(url = "/getrecipelist", help = "Get the list of recipes that Elsinore has read in",
-    parameters = {})
+            parameters = {})
     public Response getRecipeList() {
         HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
         try {
@@ -2185,11 +1956,11 @@ public class UrlEndpoints {
     }
 
     @UrlEndpoint(url = "/showrecipe", help = "Show the recipe HTML for a specified recipe",
-    parameters = {@Parameter(name = "recipeName", value = "The name of the recipe to show")})
-    public Response showRecipe(){
-        String recipeName = this.parameters.get("recipeName");
-        String renderSection = this.parameters.get("subset");
-        if (recipeName == null && BrewServer.getCurrentRecipe() == null) {
+            parameters = {@Parameter(name = RECIPE_NAME, value = "The name of the recipe to show")})
+    public Response showRecipe() {
+        String recipeName = this.parameters.get(RECIPE_NAME);
+        String renderSection = this.parameters.get(SUBSET);
+        if (recipeName == null && getCurrentRecipe() == null) {
             return new Response(Status.BAD_REQUEST, MIME_HTML, "No recipe name provided");
         }
 
@@ -2201,7 +1972,7 @@ public class UrlEndpoints {
                 e.printStackTrace();
             }
         } else {
-            recipe = BrewServer.getCurrentRecipe();
+            recipe = getCurrentRecipe();
         }
 
         if (recipe == null) {
@@ -2210,28 +1981,25 @@ public class UrlEndpoints {
         HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
         try {
             RecipeViewForm recipeForm = new RecipeViewForm(recipe);
-            if (renderSection != null)
-            {
+            if (renderSection != null) {
                 html.macros().stylesheet("/bootstrap-v4/css/bootstrap.min.css");
                 html.div(id("recipeView").class_("text-center"));
                 switch (renderSection) {
-                    case "mash":
+                    case MASH:
                         recipeForm.renderMash(html);
                         break;
-                    case "hops":
+                    case HOPS:
                         recipeForm.renderHops(html);
                         break;
-                    case "fermentation":
+                    case FERMENTATION:
                         recipeForm.renderFermentation(html);
                         break;
-                    case "dry":
+                    case DRY:
                         recipeForm.renderDryHops(html);
                         break;
                 }
                 html._div();
-            }
-            else
-            {
+            } else {
                 recipeForm.renderOn(html);
             }
         } catch (IOException e) {
@@ -2241,21 +2009,21 @@ public class UrlEndpoints {
         return new Response(Status.OK, MIME_HTML, html.toHtml());
     }
 
-    @UrlEndpoint(url="/setprofile", help = "Set the profile for a PID from the recipe, make sure the current recipe is set first.",
-    parameters = {
-        @Parameter(name = "profile", value = "The name of the profile to set from the recipe."),
-        @Parameter(name = "tempprobe", value = "The name of the temperature probe to set the profile for.")
-    }
+    @UrlEndpoint(url = "/setprofile", help = "Set the profile for a PID from the recipe, make sure the current recipe is set first.",
+            parameters = {
+                    @Parameter(name = PROFILE, value = "The name of the profile to set from the recipe."),
+                    @Parameter(name = TEMPPROBE, value = "The name of the temperature probe to set the profile for.")
+            }
     )
     public Response setProfile() {
-        String profile = parameters.get("profile");
-        if (profile == null || profile.equals("")) {
+        String profile = this.parameters.get(PROFILE);
+        if (isNullOrEmpty(profile)) {
             LaunchControl.setMessage("No profile provided");
             return null;
         }
 
-        String tempProbe = parameters.get("tempprobe");
-        if (tempProbe == null || tempProbe.equals("")) {
+        String tempProbe = this.parameters.get(TEMPPROBE);
+        if (isNullOrEmpty(tempProbe)) {
             LaunchControl.setMessage("No temperature probe provided");
             return null;
         }
@@ -2266,25 +2034,25 @@ public class UrlEndpoints {
             return null;
         }
 
-        if (BrewServer.getCurrentRecipe() == null) {
+        if (getCurrentRecipe() == null) {
             LaunchControl.setMessage("No recipe selected");
             return null;
         }
 
-        if (profile.equalsIgnoreCase("mash")) {
-            BrewServer.getCurrentRecipe().setMashProfile(temp);
+        if (profile.equalsIgnoreCase(MASH)) {
+            getCurrentRecipe().setMashProfile(temp);
         }
 
-        if (profile.equalsIgnoreCase("boil")) {
-            BrewServer.getCurrentRecipe().setBoilHops(temp);
+        if (profile.equalsIgnoreCase(BOIL)) {
+            getCurrentRecipe().setBoilHops(temp);
         }
 
-        if (profile.equalsIgnoreCase("ferm")) {
-            BrewServer.getCurrentRecipe().setFermProfile(temp);
+        if (profile.equalsIgnoreCase(FERM)) {
+            getCurrentRecipe().setFermProfile(temp);
         }
 
-        if (profile.equalsIgnoreCase("dry")) {
-            BrewServer.getCurrentRecipe().setDryHops(temp);
+        if (profile.equalsIgnoreCase(DRY)) {
+            getCurrentRecipe().setDryHops(temp);
         }
         LaunchControl.setMessage("Set " + profile + " profile for " + tempProbe);
         return new Response(Status.OK, MIME_HTML, "Set " + profile + " profile for " + tempProbe);
@@ -2292,47 +2060,47 @@ public class UrlEndpoints {
 
     /**
      * Clear the notification.
+     *
      * @return A response object indicating whether the notification is cleared OK.
      */
-    @UrlEndpoint(url="/clearnotification", help = "Clear the current notification",
-    parameters = {@Parameter(name = "notification", value = "The notification to clear.")})
+    @UrlEndpoint(url = "/clearnotification", help = "Clear the current notification",
+            parameters = {@Parameter(name = NOTIFICATION, value = "The notification to clear.")})
     public Response clearNotification() {
-        String rInt = parameters.get("notification");
-        if (rInt == null) {
-            BrewServer.LOG.warning("No notification position supplied to clear");
+        String rInt = this.parameters.get(NOTIFICATION);
+        if (isNullOrEmpty(rInt)) {
+            LOG.warning("No notification position supplied to clear");
             return null;
         }
 
         try {
             int position = Integer.parseInt(rInt);
             if (!Notifications.getInstance().clearNotification(position)) {
-                BrewServer.LOG.warning("Failed to clear notification: " + position);
+                LOG.warning("Failed to clear notification: " + position);
                 return null;
             }
         } catch (NumberFormatException ne) {
-            BrewServer.LOG.warning("No notification position supplied to clear: " + rInt);
+            LOG.warning("No notification position supplied to clear: " + rInt);
             return null;
         }
 
         return new Response(Status.OK, MIME_HTML, "Cleared notification: " + rInt);
     }
 
-    @UrlEndpoint(url="/resetrecorder", help = "Reset the recorder data, store the old data, and create a new start point.",
-    parameters = {})
+    @UrlEndpoint(url = "/resetrecorder", help = "Reset the recorder data, store the old data, and create a new start point.",
+            parameters = {})
     public Response resetRecorder() {
         LaunchControl.getInstance().disableRecorder();
         LaunchControl.getInstance().enableRecorder();
         return new Response(Status.OK, MIME_HTML, "Reset recorder.");
     }
 
-    @UrlEndpoint(url="/deletegraphdata", help = "Delete the current recorder data.",
-    parameters = {})
+    @UrlEndpoint(url = "/deletegraphdata", help = "Delete the current recorder data.",
+            parameters = {})
     public Response deleteGraphData() {
         LaunchControl lc = LaunchControl.getInstance();
         if (lc.recorderEnabled) {
             StatusRecorder temp = lc.disableRecorder();
-            if (temp == null)
-            {
+            if (temp == null) {
                 return null;
             }
             Response response = temp.deleteAllData();
@@ -2342,13 +2110,13 @@ public class UrlEndpoints {
         return new Response("Recorder not enabled");
     }
 
-    @UrlEndpoint(url="/deleteprobe", help = "Delete the PID/Temp probe specified",
-    parameters = {@Parameter(name = "probe", value = "The name of the device to delete")})
+    @UrlEndpoint(url = "/deleteprobe", help = "Delete the PID/Temp probe specified",
+            parameters = {@Parameter(name = PROBE, value = "The name of the device to delete")})
     public Response deleteTempProbe() {
         LaunchControl lc = LaunchControl.getInstance();
-        String probeName = parameters.get("probe");
+        String probeName = this.parameters.get(PROBE);
         Status status = Status.OK;
-        if (probeName == null) {
+        if (isNullOrEmpty(probeName)) {
             return null;
         } else {
             Temp tempProbe = lc.findTemp(probeName);
@@ -2356,8 +2124,7 @@ public class UrlEndpoints {
                 return null;
             } else {
                 PID pid = lc.findPID(probeName);
-                if (pid != null)
-                {
+                if (pid != null) {
                     lc.deleteTemp(pid);
                 }
                 lc.deleteTemp(tempProbe);
@@ -2368,12 +2135,12 @@ public class UrlEndpoints {
         return response;
     }
 
-    @UrlEndpoint(url="/shutdownSystem", help = "Shutdown Elsinore or turn off the system",
-    parameters = {@Parameter(name = "turnoff", value = "true: turn off the entire system, false: shutdown Elsinore only")})
+    @UrlEndpoint(url = "/shutdownSystem", help = "Shutdown Elsinore or turn off the system",
+            parameters = {@Parameter(name = TURNOFF, value = "true: turn off the entire system, false: shutdown Elsinore only")})
     public Response shutdownSystem() {
         try {
             LaunchControl.getInstance().saveEverything();
-            boolean shutdownEverything = Boolean.parseBoolean(parameters.get("turnoff"));
+            boolean shutdownEverything = Boolean.parseBoolean(this.parameters.get(TURNOFF));
             if (shutdownEverything) {
                 // Shutdown the system using shutdown now
                 Runtime runtime = Runtime.getRuntime();
@@ -2382,49 +2149,41 @@ public class UrlEndpoints {
             System.exit(0);
         } catch (Exception e) {
             e.printStackTrace();
-            BrewServer.LOG.warning("Failed to shutdown. " + e.getMessage());
+            LOG.warning("Failed to shutdown. " + e.getMessage());
         }
 
         return new Response("Shutdown called");
     }
 
-    @UrlEndpoint(url="/toggletimer", help="Start, stop or reset a timer",
-            parameters = {@Parameter(name="start", value="name of the timer to start/pause"),
-            @Parameter(name="reset", value = "name of the timer to reset")})
-    public Response toggleTimer()
-    {
+    @UrlEndpoint(url = "/toggletimer", help = "Start, stop or reset a timer",
+            parameters = {
+                    @Parameter(name = RESET, value = "name of the timer to reset"),
+                    @Parameter(name = TOGGLE, value = "name of the timer to toggle on/off")})
+    public Response toggleTimer() {
         LaunchControl lc = LaunchControl.getInstance();
         Status status = Status.BAD_REQUEST;
         String message = "Bad request";
-        if (parameters.containsKey("toggle"))
-        {
-            String name = parameters.get("toggle");
+        if (this.parameters.containsKey(TOGGLE)) {
+            String name = this.parameters.get(TOGGLE);
             Timer timer = lc.findTimer(name);
-            if (timer != null)
-            {
+            if (timer != null) {
                 timer.startTimer();
                 status = Status.OK;
                 message = "Timer started/paused";
-            }
-            else
-            {
+            } else {
                 status = Status.BAD_REQUEST;
                 message = "Couldn't find the timer " + name;
             }
 
         }
-        if (parameters.containsKey("reset"))
-        {
-            String name = parameters.get("reset");
+        if (this.parameters.containsKey(RESET)) {
+            String name = this.parameters.get(RESET);
             Timer timer = lc.findTimer(name);
-            if (timer != null)
-            {
+            if (timer != null) {
                 timer.resetTimer();
                 status = Status.OK;
                 message = "Timer reset";
-            }
-            else
-            {
+            } else {
                 status = Status.BAD_REQUEST;
                 message = "Couldn't find the timer " + name;
             }
@@ -2432,13 +2191,11 @@ public class UrlEndpoints {
         return new Response(status, MIME_TYPES.get("txt"), message);
     }
 
-    @UrlEndpoint(url="/getTimerSettings", help="Get the settings for the current timer.",
-            parameters = {@Parameter(name="timer", value="The name of the timer to get the settings for")})
-    public Response getTimerSettings()
-    {
-        String timerName = this.parameters.get("timer");
-        if (timerName == null || timerName.length() == 0)
-        {
+    @UrlEndpoint(url = "/getTimerSettings", help = "Get the settings for the current timer.",
+            parameters = {@Parameter(name = TIMER, value = "The name of the timer to get the settings for")})
+    public Response getTimerSettings() {
+        String timerName = this.parameters.get(TIMER);
+        if (isNullOrEmpty(timerName)) {
             return new Response(Status.BAD_REQUEST, MIME_TYPES.get("txt"), "No timer name provided.");
         }
 
@@ -2446,18 +2203,17 @@ public class UrlEndpoints {
 
         JSONObject timerSettings = new JSONObject();
         if (timer != null) {
-            timerSettings.put("name", timer.getName());
-            timerSettings.put("duration", timer.getTarget());
-            timerSettings.put("inverted", timer.getInverted());
+            timerSettings.put(NAME, timer.getName());
+            timerSettings.put(DURATION, timer.getTarget());
+            timerSettings.put(INVERTED, timer.getInverted());
         }
-        return  new Response(Status.OK, MIME_TYPES.get("json"), timerSettings.toJSONString());
+        return new Response(Status.OK, MIME_TYPES.get("json"), timerSettings.toJSONString());
     }
 
-    @UrlEndpoint(url="/clearbeerxml", help="Clear the currently loaded BeerXML", parameters = {})
-    public Response clearBeerXML()
-    {
+    @UrlEndpoint(url = "/clearbeerxml", help = "Clear the currently loaded BeerXML", parameters = {})
+    public Response clearBeerXML() {
         BrewServer.getRecipeList().clear();
-        BrewServer.setCurrentRecipe(null);
+        setCurrentRecipe(null);
         return new Response(Status.OK, MIME_TYPES.get("txt"), "Cleared BeerXML");
     }
 }

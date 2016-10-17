@@ -56,7 +56,6 @@ public class BrewServer extends NanoHTTPD {
          * The Serial UID.
          */
         public static final long serialVersionUID = 1L;
-
         {
             put("css", "text/css");
             put("htm", "text/html");

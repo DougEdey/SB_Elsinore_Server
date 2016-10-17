@@ -18,16 +18,20 @@
       <profile default="true" name="Default" enabled="false">
         <processorPath useClasspath="true" />
       </profile>
-      <profile default="false" name="Annotation profile for Elsinore" enabled="true">
+      <profile default="false" name="Maven default annotation processors profile" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
         <module name="Elsinore" />
+        <module name="jGPIO" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="Elsinore" target="1.7" />
+      <module name="Elsinore" target="1.8" />
+      <module name="jGPIO" target="1.6" />
+      <module name="StrangeBrewElsinore_main" target="1.8" />
+      <module name="StrangeBrewElsinore_test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

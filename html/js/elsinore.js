@@ -64,8 +64,7 @@ function parseVessels(vessels) {
                 probeCard = addProbeCard(vesselStatus.device, vesselStatus.position);
             }
             // Set card name
-            if ("name" in vesselStatus)
-            {
+            if ("name" in vesselStatus) {
                 setCardName(probeCard, decodeURI(vesselStatus.name));
             }
             loadTempProbeData(probeCard, vesselStatus);
@@ -383,7 +382,7 @@ function loadPIDData(card, pid) {
             auxSwitch.removeClass("btn-warning");
         }
     } else if (card.find("#aux").length != 0) {
-            card.find("#aux").remove();
+        card.find("#aux").remove();
     }
 
     var selected = pidmode.find(".btn-danger");
@@ -536,10 +535,10 @@ function appendSettings(pidsettings, type, piddata, scale) {
         + "</div>"
         + "</div>"
         + "<div class='form-group'>"
-        + "<label class='sr-only' for='i_input'>Differential</label>"
+        + "<label class='sr-only' for='d_input'>Differential</label>"
         + "<div class='input-group'>"
-        + "<div class='input-group-addon input-group-addon-label'>Differential</div>"
-        + "<input type='number' class='form-control form-control-minwidth' id='d_input' placeholder='Differential' >"
+        + "<div class='input-group-addon input-group-addon-label'>Derivative</div>"
+        + "<input type='number' class='form-control form-control-minwidth' id='d_input' placeholder='Derivative' >"
         + "<div class='input-group-addon input-group-addon-unit'>secs</div>"
         + "</div>"
         + "</div>"
@@ -910,18 +909,18 @@ function saveDevice(submitButton) {
 
     var heatdiv = form.parent().parent().find("#heat");
     if (heatdiv.length == 1) {
-        data["heat_p"] = heatdiv.find("#p_input").val();
-        data["heat_i"] = heatdiv.find("#i_input").val();
-        data["heat_d"] = heatdiv.find("#d_input").val();
-        data["heat_cycletime"] = heatdiv.find("#cycletime_input").val();
+        data["heat"]["p"] = heatdiv.find("#p_input").val();
+        data["heat"]["i"] = heatdiv.find("#i_input").val();
+        data["heat"]["d"] = heatdiv.find("#d_input").val();
+        data["heat"]["cycletime"] = heatdiv.find("#cycletime_input").val();
     }
 
     var cooldiv = form.parent().parent().find("#cool");
     if (cooldiv.length == 1) {
-        data["cool_p"] = cooldiv.find("#p_input").val();
-        data["cool_i"] = cooldiv.find("#i_input").val();
-        data["cool_d"] = cooldiv.find("#d_input").val();
-        data["cool_cycletime"] = cooldiv.find("#cycletime_input").val();
+        data["cool"]["p"] = cooldiv.find("#p_input").val();
+        data["cool"]["i"] = cooldiv.find("#i_input").val();
+        data["cool"]["d"] = cooldiv.find("#d_input").val();
+        data["cool"]["cycletime"] = cooldiv.find("#cycletime_input").val();
     }
 
     $.ajax({
@@ -1582,8 +1581,9 @@ function selectedInput(input) {
 function editHidden(element) {
 
     var option = $(element).find("option:selected");
-    if (option.val() == "")
-    {return;}
+    if (option.val() == "") {
+        return;
+    }
     showDeviceEdit(option, option.val(), option.text());
 }
 
@@ -1599,7 +1599,7 @@ function showDeviceEdit(element, addr, name) {
     var type = "general";
     htmlContent += "<li class='nav-item'><a class='nav-link active' aria-controls='" + type + "' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
     if (piddata != null) {
-        for(var pidtype of ["heat", "cool"]) {
+        for (var pidtype of ["heat", "cool"]) {
             if (pidtype in piddata && piddata[pidtype].gpio != "") {
                 htmlContent += "<li class='nav-item'><a class='nav-link' aria-controls='" + pidtype + "' href='#" + pidtype + "' role='tab' data-toggle='tab'>" + pidtype.capitalizeFirstLetter() + "</a></li>";
             }
@@ -1696,8 +1696,8 @@ function showDeviceEdit(element, addr, name) {
 
 
     if (piddata != undefined) {
-        for(var pidtype of ["heat", "cool", "aux"]) {
-            if(pidtype in piddata) {
+        for (var pidtype of ["heat", "cool", "aux"]) {
+            if (pidtype in piddata) {
                 editModalBody.find("#" + pidtype + "-gpio").val(piddata[pidtype].gpio);
                 if (piddata[pidtype].inverted) {
                     editModalBody.find("#invert-" + pidtype).parent().click();

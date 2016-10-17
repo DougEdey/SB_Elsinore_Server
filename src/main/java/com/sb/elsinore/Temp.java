@@ -23,6 +23,9 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.sb.elsinore.BrewServer.LOG;
+
 /**
  * Temp class is used to monitor temperature on the one wire system.
  * @author Doug Edey
@@ -54,7 +57,7 @@ public class Temp implements Comparable<Temp> {
     private static BigDecimal FREEZING = new BigDecimal(32);
     private static BigDecimal ERROR_TEMP = new BigDecimal(-999);
     private boolean badTemp = false;
-    private boolean keepalive = true;
+    private boolean keepAlive = true;
     private boolean isStarted = false;
     private String fileProbe = null;
     @Expose
@@ -95,7 +98,7 @@ public class Temp implements Comparable<Temp> {
     public Temp(String name, String inProbe) {
 
         device = inProbe;
-        BrewServer.LOG.info("Adding" + device);
+        LOG.info("Adding" + device);
         if (name.equalsIgnoreCase("system")) {
             device = "System";
             File tempFile = new File(rpiSystemTemp);
@@ -107,7 +110,7 @@ public class Temp implements Comparable<Temp> {
                 if (tempFile.exists()) {
                     fileProbe = bbbSystemTemp;
                 } else {
-                    BrewServer.LOG.warning(
+                    LOG.warning(
                             "Couldn't find a valid system temperature probe");
                     return;
                 }
@@ -137,7 +140,7 @@ public class Temp implements Comparable<Temp> {
                     String fixedAddress = devFamily + "-"
                         + devAddress.toLowerCase();
 
-                    BrewServer.LOG.info("Converted address: " + fixedAddress);
+                    LOG.info("Converted address: " + fixedAddress);
 
                     fileProbe = "/sys/bus/w1/devices/" + fixedAddress + "/w1_slave";
                     probePath = new File(fileProbe);
@@ -152,7 +155,7 @@ public class Temp implements Comparable<Temp> {
 
         this.probeName = device;
         this.name = name;
-        BrewServer.LOG.info(this.probeName + " added.");
+        LOG.info(this.probeName + " added.");
     }
 
     /**
@@ -160,7 +163,7 @@ public class Temp implements Comparable<Temp> {
 
     public void run() {
 
-        while (keepalive) {
+        while (keepAlive) {
             if (updateTemp().equals(ERROR_TEMP)) {
                 if (fProbe != null && fProbe.equals(
                         "/sys/class/thermal/thermal_zone0/temp")) {
@@ -212,6 +215,12 @@ public class Temp implements Comparable<Temp> {
      * @param cutoffInput String describing the temperature
      */
     void setCutoffTemp(final String cutoffInput) {
+        if (isNullOrEmpty(cutoffInput)) {
+            this.cutoffEnabled = false;
+            this.cutoffTemp = null;
+            LOG.warning("Disabling cut off temperature");
+            return;
+        }
 
         Matcher tempMatcher = tempRegexp.matcher(cutoffInput);
 
@@ -230,9 +239,9 @@ public class Temp implements Comparable<Temp> {
                 number += tempMatcher.group(3);
             }
             // Create the temp
-            this.cutoffTemp= new BigDecimal(number);
+            this.cutoffTemp = new BigDecimal(number);
         } else {
-            BrewServer.LOG.severe(cutoffTemp + " doesn't match "
+            LOG.severe(cutoffTemp + " doesn't match "
                     + tempRegexp.pattern());
         }
     }
@@ -320,7 +329,7 @@ public class Temp implements Comparable<Temp> {
      * @param s Value to set the temperature unit to.
      */
     public void setScale(final String s) {
-        BrewServer.LOG.warning("Cut off is: " + this.cutoffTemp);
+        LOG.warning("Cut off is: " + this.cutoffTemp);
 
         if (s.equalsIgnoreCase("F")) {
             // Do we need to convert the cutoff temp
@@ -343,7 +352,7 @@ public class Temp implements Comparable<Temp> {
             this.calibration = this.calibration.divide(new BigDecimal(1.8), context);
             this.scale = s;
         }
-        BrewServer.LOG.warning("Cut off is now: " + this.cutoffTemp);
+        LOG.warning("Cut off is now: " + this.cutoffTemp);
     }
 
     /**
@@ -407,7 +416,7 @@ public class Temp implements Comparable<Temp> {
         BigDecimal result;
 
         if (badTemp && currentError != null && currentError.equals("")) {
-            BrewServer.LOG.warning("Trying to recover " + this.getName());
+            LOG.warning("Trying to recover " + this.getName());
         }
         if (probeName == null) {
             result = updateTempFromOWFS();
@@ -422,7 +431,7 @@ public class Temp implements Comparable<Temp> {
 
         if (badTemp) {
             badTemp = false;
-            BrewServer.LOG.warning("Recovered temperature reading for " + this.getName());
+            LOG.warning("Recovered temperature reading for " + this.getName());
             if (this.currentError.startsWith("Could"))
             {
                 this.currentError = "";
@@ -440,7 +449,7 @@ public class Temp implements Comparable<Temp> {
 
         if (cutoffEnabled
                 && currentTemp.compareTo(cutoffTemp) >= 0) {
-            BrewServer.LOG.log(Level.SEVERE,
+            LOG.log(Level.SEVERE,
                 currentTemp + ": ****** CUT OFF TEMPERATURE ("
                 + cutoffTemp + ") EXCEEDED *****");
             System.exit(-1);
@@ -459,7 +468,7 @@ public class Temp implements Comparable<Temp> {
         try {
             rawTemp = LaunchControl.getInstance().readOWFSPath(probeName + "/temperature");
             if (rawTemp.equals("")) {
-                BrewServer.LOG.severe(
+                LOG.severe(
                     "Couldn't find the probe " + probeName + " for " + name);
                 LaunchControl.getInstance().setupOWFS();
             } else {
@@ -467,14 +476,14 @@ public class Temp implements Comparable<Temp> {
             }
         } catch (IOException e) {
             currentError = "Couldn't read " + probeName;
-            BrewServer.LOG.log(Level.SEVERE, currentError, e);
+            LOG.log(Level.SEVERE, currentError, e);
         } catch (OwfsException e) {
             currentError = "Couldn't read " + probeName;
-            BrewServer.LOG.log(Level.SEVERE, currentError, e);
+            LOG.log(Level.SEVERE, currentError, e);
             LaunchControl.getInstance().setupOWFS();
         } catch (NumberFormatException e) {
             currentError = "Couldn't parse" + rawTemp;
-            BrewServer.LOG.log(Level.SEVERE, currentError, e);
+            LOG.log(Level.SEVERE, currentError, e);
         }
 
         loggingOn = (!temp.equals(ERROR_TEMP));
@@ -513,7 +522,7 @@ public class Temp implements Comparable<Temp> {
         } catch (IOException ie) {
             if (loggingOn) {
                 this.currentError = "Couldn't find the device under: " + fileProbe;
-                BrewServer.LOG.warning(currentError);
+                LOG.warning(currentError);
                 if (fileProbe.equals(rpiSystemTemp)) {
                     fileProbe = bbbSystemTemp;
                 }
@@ -527,7 +536,7 @@ public class Temp implements Comparable<Temp> {
                 try {
                     br.close();
                 } catch (IOException ie) {
-                    BrewServer.LOG.warning(ie.getLocalizedMessage());
+                    LOG.warning(ie.getLocalizedMessage());
                 }
             }
         }
@@ -560,26 +569,26 @@ public class Temp implements Comparable<Temp> {
         this.volumeOffset = offset.toUpperCase();
 
         try {
-            BrewServer.LOG.log(Level.INFO,
+            LOG.log(Level.INFO,
                 "Volume ADC at: " + volumeAddress + " - " + offset);
             String temp =
                 LaunchControl.getInstance().readOWFSPath(volumeAddress + "/volt." + offset);
 
             // Check to make sure we can read OK
             if (temp.equals("")) {
-                BrewServer.LOG.severe(
+                LOG.severe(
                     "Couldn't read the Volume from " + volumeAddress
                     + "/volt." + offset);
                 return false;
             } else {
-                BrewServer.LOG.log(Level.INFO, "Volume reads " + temp);
+                LOG.log(Level.INFO, "Volume reads " + temp);
             }
         } catch (IOException e) {
-            BrewServer.LOG.log(Level.SEVERE,
+            LOG.log(Level.SEVERE,
                 "IOException when access the ADC over 1wire", e);
             return false;
         } catch (OwfsException e) {
-            BrewServer.LOG.log(Level.SEVERE,
+            LOG.log(Level.SEVERE,
                     "OWFSException when access the ADC over 1wire", e);
             return false;
         }
@@ -611,7 +620,7 @@ public class Temp implements Comparable<Temp> {
             this.volumePin = new InPin(analogPin, Direction.ANALOGUE);
         } catch (InvalidGPIOException e) {
             this.volumeMeasurement = false;
-            BrewServer.LOG.warning("Invalid Analog GPIO specified " + analogPin);
+            LOG.warning("Invalid Analog GPIO specified " + analogPin);
             throw(e);
         }
 
@@ -656,11 +665,11 @@ public class Temp implements Comparable<Temp> {
 
                 if (volumeMultiplier.compareTo(BigDecimal.ZERO) != 0) {
                     if (newMultiplier.equals(volumeMultiplier)) {
-                        BrewServer.LOG.info(
+                        LOG.info(
                             "The newMultiplier isn't the same as the old one,"
                             + " if this is a big difference, be careful!"
                             + " You may need a quadratic!");
-                        BrewServer.LOG.info("New: " + newMultiplier
+                        LOG.info("New: " + newMultiplier
                             + ". Old: " + volumeMultiplier);
                     }
                 } else {
@@ -669,11 +678,11 @@ public class Temp implements Comparable<Temp> {
 
                 if (volumeConstant.compareTo(BigDecimal.ZERO) != 0) {
                     if (newConstant.equals(volumeConstant)) {
-                        BrewServer.LOG.info("The new constant "
+                        LOG.info("The new constant "
                             + "isn't the same as the old one, if this is a big"
                             + " difference, be careful!"
                             + " You may need a quadratic!");
-                        BrewServer.LOG.info("New: " + newConstant
+                        LOG.info("New: " + newConstant
                             + ". Old: " + volumeConstant);
                     }
                 } else {
@@ -701,17 +710,17 @@ public class Temp implements Comparable<Temp> {
                         LaunchControl.getInstance().readOWFSPath(
                             volumeAddress + "/volt." + volumeOffset));
                     if (this.stopVolumeLogging) {
-                        BrewServer.LOG.log(Level.SEVERE,
+                        LOG.log(Level.SEVERE,
                             "Recovered volume level reading for " + this.name);
                         this.stopVolumeLogging = false;
                     }
                 } catch (Exception e) {
                     if (!this.stopVolumeLogging) {
-                        BrewServer.LOG.log(Level.SEVERE,
+                        LOG.log(Level.SEVERE,
                             "Could not update the volume reading from OWFS");
                         this.stopVolumeLogging = true;
                     }
-                    BrewServer.LOG.info("Reconnecting OWFS");
+                    LOG.info("Reconnecting OWFS");
                     LaunchControl.getInstance().setupOWFS();
 
                     return BigDecimal.ZERO;
@@ -732,7 +741,7 @@ public class Temp implements Comparable<Temp> {
                 // No VolumeBase setup, so we're probably calibrating
                 return pinValue;
             } catch (Exception e) {
-                BrewServer.LOG.log(Level.SEVERE,
+                LOG.log(Level.SEVERE,
                     "Uncaught exception when creating the volume set", e);
                 System.exit(-1);
             }
@@ -777,7 +786,7 @@ public class Temp implements Comparable<Temp> {
 
             } catch (NoSuchElementException e) {
                 // no more elements
-                BrewServer.LOG.info("Finished reading Volume Elements");
+                LOG.info("Finished reading Volume Elements");
             }
 
             if (tVolume == null) {
@@ -837,7 +846,7 @@ public class Temp implements Comparable<Temp> {
                     return false;
                 }
             } catch (NumberFormatException  e) {
-                BrewServer.LOG.warning("Bad Analog input value!");
+                LOG.warning("Bad Analog input value!");
                 return false;
             }
 
@@ -852,7 +861,7 @@ public class Temp implements Comparable<Temp> {
 
         // read in ten values
         BigDecimal avgValue = MathUtil.divide(total, maxReads);
-        BrewServer.LOG.info("Read " + avgValue + " for "
+        LOG.info("Read " + avgValue + " for "
                 + volume + " " + volumeUnit);
 
         this.addVolumeMeasurement(volume, avgValue);
@@ -867,7 +876,7 @@ public class Temp implements Comparable<Temp> {
      */
     private void addVolumeMeasurement(
             final BigDecimal key, final BigDecimal value) {
-        BrewServer.LOG.info("Adding " + key + " with value " + value);
+        LOG.info("Adding " + key + " with value " + value);
         if (volumeBase == null) {
             this.volumeBase = new ConcurrentHashMap<>();
         }
@@ -943,8 +952,8 @@ public class Temp implements Comparable<Temp> {
 
     public void shutdown() {
         // Graceful shutdown.
-        keepalive = false;
-        BrewServer.LOG.warning(this.getName() + " is shutting down");
+        keepAlive = false;
+        LOG.warning(this.getName() + " is shutting down");
         Thread.currentThread().interrupt();
     }
 
@@ -953,7 +962,7 @@ public class Temp implements Comparable<Temp> {
     }
 
     public boolean isRunning() {
-        return keepalive;
+        return keepAlive;
     }
 
     public void started() {
@@ -983,7 +992,7 @@ public class Temp implements Comparable<Temp> {
             BigDecimal temperature = new BigDecimal(number);
             this.calibration = temperature.setScale(2, BigDecimal.ROUND_DOWN);
         } else {
-            BrewServer.LOG.severe(calibration + " doesn't match "
+            LOG.severe(calibration + " doesn't match "
                     + tempRegexp.pattern());
         }
     }

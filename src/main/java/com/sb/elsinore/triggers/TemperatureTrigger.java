@@ -7,10 +7,12 @@ import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.tools.PrettyWriter;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import static com.sb.elsinore.UrlEndpoints.TEMPPROBE;
 import static org.rendersnake.HtmlAttributesFactory.*;
 
 /**
@@ -18,20 +20,19 @@ import static org.rendersnake.HtmlAttributesFactory.*;
  * temperature when active.
  * If a PID is associated with the temperature probe, the PID set point will
  * be set to the target temperature associated with this TemperatureTrigger.
- * @author Doug Edey
  *
+ * @author Doug Edey
  */
 @SuppressWarnings("unused")
 public class TemperatureTrigger implements TriggerInterface {
 
-    private static final String MODE = "mode";
-    private static final String METHOD = "method";
-    private static final String STEPTYPE = "stepType";
-    private static final String TEMPPROBE = "tempprobe";
-    private static final String EXIT_TEMP = "exitTemperature";
-    private static final String POSITION = "position";
-    private static final String TARGET_TEMP = "targetTemperature";
-    private static final String ACTIVE = "active";
+    public static final String MODE = "mode";
+    public static final String METHOD = "method";
+    public static final String STEPTYPE = "stepType";
+    public static final String EXIT_TEMP = "exitTemperature";
+    public static final String POSITION = "position";
+    public static final String TARGET_TEMP = "targetTemperature";
+    public static final String ACTIVE = "active";
 
     private BigDecimal targetTemp = null;
     private Temp temperatureProbe = null;
@@ -58,13 +59,14 @@ public class TemperatureTrigger implements TriggerInterface {
     public TemperatureTrigger(int position, String tempProbe, double targetTemp, String stepType, String stepMethod) {
         this.position = position;
         this.targetTemp = new BigDecimal(targetTemp);
-        this.temperatureProbe = LaunchControl.findTemp(tempProbe);
+        this.temperatureProbe = LaunchControl.getInstance().findTemp(tempProbe);
         this.type = stepType;
         this.method = stepMethod;
     }
 
     /**
      * Set the {@link java.util.Date} that this step is started.
+     *
      * @param inStart The Date that this step is started.
      */
     private void setStart(final Date inStart) {
@@ -76,11 +78,11 @@ public class TemperatureTrigger implements TriggerInterface {
      * Associated with this temperatureTrigger.
      */
     public final void setTargetTemperature() {
-        PID pid = LaunchControl.findPID(this.temperatureProbe.getName());
+        PID pid = LaunchControl.getInstance().findPID(this.temperatureProbe.getName());
         if (pid == null) {
-            LaunchControl.setMessage(temperatureProbe.getName()
-                + " is not associated with a PID. "
-                + "Trigger will wait for it to hit the target temperature.");
+            LaunchControl.setMessage(this.temperatureProbe.getName()
+                    + " is not associated with a PID. "
+                    + "Trigger will wait for it to hit the target temperature.");
         } else {
             pid.setTemp(this.targetTemp);
             pid.setMode("auto");
@@ -92,9 +94,9 @@ public class TemperatureTrigger implements TriggerInterface {
      * Associated with this temperatureTrigger.
      */
     public final void setExitTemperature() {
-        PID pid = LaunchControl.findPID(this.temperatureProbe.getName());
+        PID pid = LaunchControl.getInstance().findPID(this.temperatureProbe.getName());
         if (pid == null) {
-            LaunchControl.setMessage(temperatureProbe.getName()
+            LaunchControl.setMessage(this.temperatureProbe.getName()
                     + " is not associated with a PID. "
                     + "Trigger will wait for it to hit the target temperature.");
         } else {
@@ -104,23 +106,25 @@ public class TemperatureTrigger implements TriggerInterface {
 
     /**
      * Set the temperature probe to use for this trigger by name.
+     *
      * @param name The name of the probe to lookup.
      */
     public final void setTemperatureProbe(final String name) {
-        temperatureProbe = LaunchControl.findTemp(name);
+        this.temperatureProbe = LaunchControl.getInstance().findTemp(name);
     }
 
     /**
      * Creates a new TemperatureTrigger at a set position with parameters.
+     *
      * @param inPosition The position this Trigger is at.
      * @param parameters The Parameters to setup this TemperatureTrigger.
-     * "temp": The TargetTemperature for this step.
-     * "method": A string used to represent this trigger.
-     * "type": A String used to represent this trigger.
-     * "tempprobe": The name of the temperature probe to use.
+     *                   "temp": The TargetTemperature for this step.
+     *                   "method": A string used to represent this trigger.
+     *                   "type": A String used to represent this trigger.
+     *                   "tempprobe": The name of the temperature probe to use.
      */
     public TemperatureTrigger(final int inPosition,
-            final JSONObject parameters) {
+                              final JSONObject parameters) {
         this.position = inPosition;
 
         String inMethod = parameters.get(METHOD).toString();
@@ -128,7 +132,7 @@ public class TemperatureTrigger implements TriggerInterface {
         String inTempProbe = parameters.get(TEMPPROBE).toString();
         String inMode = parameters.get(MODE).toString();
 
-        this.temperatureProbe = LaunchControl.findTemp(inTempProbe);
+        this.temperatureProbe = LaunchControl.getInstance().findTemp(inTempProbe);
         this.method = inMethod;
         this.type = inType;
         this.mode = inMode;
@@ -147,12 +151,12 @@ public class TemperatureTrigger implements TriggerInterface {
     @Override
     public boolean updateTrigger(final JSONObject parameters) {
         BigDecimal tTemp = new BigDecimal(
-            parameters.get(TemperatureTrigger.TARGET_TEMP).toString().replace(",", "."));
+                parameters.get(TemperatureTrigger.TARGET_TEMP).toString().replace(",", "."));
 
         String newMode = parameters.get(TemperatureTrigger.MODE).toString();
         String newMethod = parameters.get(TemperatureTrigger.METHOD).toString();
         String newType = parameters.get(TemperatureTrigger.STEPTYPE).toString();
-        String newTempProbe = parameters.get(TemperatureTrigger.TEMPPROBE).toString();
+        String newTempProbe = parameters.get(TEMPPROBE).toString();
         String exitTemp = parameters.get(TemperatureTrigger.EXIT_TEMP).toString();
 
         this.targetTemp = tTemp;
@@ -161,7 +165,7 @@ public class TemperatureTrigger implements TriggerInterface {
         } else {
             this.exitTemp = new BigDecimal(exitTemp.replace(",", "."));
         }
-        this.temperatureProbe = LaunchControl.findTemp(newTempProbe);
+        this.temperatureProbe = LaunchControl.getInstance().findTemp(newTempProbe);
         this.method = newMethod;
         this.type = newType;
         this.mode = newMode;
@@ -179,25 +183,27 @@ public class TemperatureTrigger implements TriggerInterface {
     @Override
     public final void waitForTrigger() {
 
-        if (targetTemp == null) {
+        if (this.targetTemp == null) {
             BrewServer.LOG.warning("No Target Temperature Set");
             return;
         }
-        if (temperatureProbe == null) {
+        if (this.temperatureProbe == null) {
             BrewServer.LOG.warning("No Temperature Probe Set");
             return;
         }
 
         setTargetTemperature();
         setStart(new Date());
+        BigDecimal probeTempF = this.temperatureProbe.convertF(this.temperatureProbe.getTemp());
+        BigDecimal diff = this.targetTemp.subtract(probeTempF);
         if (this.mode == null) {
             // Just get to within 2F of the target Temp.
-            BrewServer.LOG.warning(String.format("Waiting to be within 2F of %.2f", targetTemp));
-            BrewServer.LOG.warning("Temp: " + temperatureProbe.convertF(temperatureProbe.getTemp().subtract(targetTemp).abs()));
-            while(temperatureProbe.convertF(temperatureProbe.getTemp().subtract(targetTemp).abs())
-                    .compareTo(new BigDecimal(2.0)) >= 0) {
+            BrewServer.LOG.info(String.format("Waiting to be within 2F of %.2f", this.targetTemp));
+
+            BrewServer.LOG.info("Probe temp: " + probeTempF);
+            while (diff.compareTo(new BigDecimal(2.0)) >= 0) {
                 try {
-                    BrewServer.LOG.warning("" + temperatureProbe.convertF(temperatureProbe.getTemp().subtract(targetTemp).abs()));
+                    BrewServer.LOG.info("" + diff);
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
                     BrewServer.LOG.warning("Temperature Trigger interrupted.");
@@ -225,9 +231,8 @@ public class TemperatureTrigger implements TriggerInterface {
             }
         } else {
             // Just get to within 2F of the target Temp.
-            BrewServer.LOG.warning("Waiting to be within 2F of " + targetTemp);
-            while(temperatureProbe.convertF(temperatureProbe.getTemp().subtract(targetTemp).abs())
-                    .compareTo(new BigDecimal(2.0)) >= 0) {
+            BrewServer.LOG.warning("Waiting to be within 2F of " + this.targetTemp);
+            while (diff.compareTo(new BigDecimal(2.0)) >= 0) {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
@@ -236,13 +241,14 @@ public class TemperatureTrigger implements TriggerInterface {
             }
         }
 
-        if (exitTemp != null && exitTemp.compareTo(targetTemp) != 0) {
+        if (this.exitTemp != null && this.exitTemp.compareTo(this.targetTemp) != 0) {
             setExitTemperature();
         }
     }
 
     /**
      * Return true if this TemperatureTrigger is activated.
+     *
      * @return True if active.
      */
     @Override
@@ -252,6 +258,7 @@ public class TemperatureTrigger implements TriggerInterface {
 
     /**
      * Get the current position of this TemperatureTrigger in the overall list.
+     *
      * @return The position of this TemperatureTrigger
      */
     @Override
@@ -261,6 +268,7 @@ public class TemperatureTrigger implements TriggerInterface {
 
     /**
      * Set the position of this step.
+     *
      * @param newPosition The new position.
      */
     @Override
@@ -274,20 +282,21 @@ public class TemperatureTrigger implements TriggerInterface {
     @Override
     public final void setActive() {
         this.active = true;
-        createNotifications(String.format(Messages.TARGET_TEMP_TRIGGER, targetTemp, temperatureProbe.getScale()));
+        createNotifications(String.format(Messages.TARGET_TEMP_TRIGGER, this.targetTemp, this.temperatureProbe.getScale()));
     }
 
     /**
      * Deactivate this TemperatureTrigger step.
+     *
      * @param fromUI
      */
     @Override
     public final void deactivate(boolean fromUI) {
         this.active = false;
         if (fromUI) {
-            PID pid = LaunchControl.findPID(this.temperatureProbe.getName());
+            PID pid = LaunchControl.getInstance().findPID(this.temperatureProbe.getName());
             if (pid == null) {
-                LaunchControl.setMessage(temperatureProbe.getName()
+                LaunchControl.setMessage(this.temperatureProbe.getName()
                         + " is not associated with a PID. "
                         + "Cannot deactivate the PID");
             } else {
@@ -299,6 +308,7 @@ public class TemperatureTrigger implements TriggerInterface {
 
     /**
      * Get the Form HTML Canvas representing a temperature trigger.
+     *
      * @return {@link org.rendersnake.HtmlCanvas} representing the input form.
      * @throws IOException when the HTMLCanvas could not be created.
      */
@@ -306,50 +316,52 @@ public class TemperatureTrigger implements TriggerInterface {
     public final HtmlCanvas getForm() throws IOException {
         HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
         html.div(id("NewTempTrigger").class_(""));
-            html.form(id("newTriggersForm"));
-                html.input(id("type").name("type").class_("form-control m-t")
-                        .hidden("true").value("Temperature"));
-                html.input(id("type").name("position").class_("form-control m-t")
-                        .hidden("position").value("" + this.position));
-                html.input(class_("inputBox temperature form-control m-t")
-                        .type("number").add("step", "any")
-                        .add("placeholder", Messages.SET_POINT)
-                        .name("targetTemperature").value(""));
-                html.input(class_("inputBox temperature form-control m-t")
-                    .type("number").add("step", "any")
-                    .add("placeholder", Messages.END_TEMP)
-                    .name("exitTemperature").value(""));
-                html.input(class_("inputBox form-control m-t")
-                        .name("method").value("")
-                        .add("placeholder", Messages.METHOD));
-                html.input(class_("inputBox form-control m-t")
-                        .name("stepType").value("")
-                        .add("placeholder", Messages.TYPE));
-             // Add the on/off values
-                html.select(class_("form-control m-t").name("mode")
-                        .id("mode"));
-                    html.option(value(""))
-                            .write("")
-                    ._option();
-                    html.option(value(TemperatureTrigger.INCREASE))
-                        .write(TemperatureTrigger.INCREASE)
-                    ._option();
-                    html.option(value(TemperatureTrigger.DECREASE))
-                        .write(TemperatureTrigger.DECREASE)
-                    ._option();
-                html._select();
-                html.button(name("submitTemperature")
-                        .class_("btn btn-primary m-t col-md-12")
-                        .add("data-toggle", "clickover")
-                        .onClick("submitNewTriggerStep(this);"))
-                    .write(Messages.ADD_TRIGGER)
+        html.form(id("newTriggersForm"));
+        html.input(id("type").name(TYPE).class_("form-control m-t")
+                .hidden("true").value("Temperature"));
+        html.input(id("type").name(POSITION).class_("form-control m-t")
+                .hidden("position").value("" + this.position));
+        html.input(class_("inputBox temperature form-control m-t")
+                .type("number").add("step", "any")
+                .add("placeholder", Messages.SET_POINT)
+                .name(TARGET_TEMP).value(""));
+        html.input(class_("inputBox temperature form-control m-t")
+                .type("number").add("step", "any")
+                .add("placeholder", Messages.END_TEMP)
+                .name(EXIT_TEMP).value(""));
+        html.input(class_("inputBox form-control m-t")
+                .name(METHOD).value("")
+                .add("placeholder", Messages.METHOD));
+        html.input(class_("inputBox form-control m-t")
+                .name(STEPTYPE).value("")
+                .add("placeholder", Messages.TYPE));
+        // Add the on/off values
+        html.select(class_("form-control m-t").name(MODE)
+                .id(MODE));
+        html.option(value(""))
+                .write("")
+                ._option();
+        html.option(value(TemperatureTrigger.INCREASE))
+                .write(TemperatureTrigger.INCREASE)
+                ._option();
+        html.option(value(TemperatureTrigger.DECREASE))
+                .write(TemperatureTrigger.DECREASE)
+                ._option();
+        html._select();
+        html.button(name("submitTemperature")
+                .class_("btn btn-primary m-t col-md-12")
+                .add("data-toggle", "clickover")
+                .onClick("submitNewTriggerStep(this);"))
+                .write(Messages.ADD_TRIGGER)
                 ._button();
-            html._form();
+        html._form();
         html._div();
         return html;
     }
+
     /**
      * Get the Form HTML Canvas representing a temperature trigger.
+     *
      * @return {@link org.rendersnake.HtmlCanvas} representing the input form.
      * @throws IOException when the HTMLCanvas could not be created.
      */
@@ -357,53 +369,52 @@ public class TemperatureTrigger implements TriggerInterface {
     public final HtmlCanvas getEditForm() throws IOException {
         HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
         html.div(id("EditTempTrigger").class_(""));
-            html.form(id("editTriggersForm"));
-                html.input(id("type").name("type")
-                            .hidden("true").value("Temperature"));
-                html.input(id("type").name("position")
-                    .hidden("position").value("" + this.position));
-                html.input(class_("inputBox temperature form-control")
-                    .type("number").add("step", "any")
-                    .add("placeholder", Messages.SET_POINT)
-                    .value(this.targetTemp.toPlainString())
-                    .name("targetTemperature"));
-                html.input(class_("inputBox temperature form-control")
-                    .type("number").add("step", "any")
-                    .add("placeholder", Messages.END_TEMP)
-                    .value(this.targetTemp.toPlainString())
-                    .name("exitTemperature"));
-                html.input(class_("inputBox form-control")
-                    .name("method").value("")
-                    .value(this.method)
-                    .add("placeholder", Messages.METHOD));
-                html.input(class_("inputBox form-control")
-                    .name("stepType").value("")
-                    .value(this.type)
-                    .add("placeholder", Messages.TYPE));
-                // Add the on/off values
-                html.select(class_("holo-spinner").name("mode")
-                        .id("mode"));
-                    html.option(value(""))
-                            .write("")
-                    ._option();
-                    html.option(value(TemperatureTrigger.INCREASE)
-                            .selected_if(
-                                this.mode.equals(TemperatureTrigger.INCREASE)))
-                        .write(TemperatureTrigger.INCREASE)
-                    ._option();
-                    html.option(value(TemperatureTrigger.DECREASE)
-                            .selected_if(
-                                this.mode.equals(TemperatureTrigger.DECREASE)))
-                        .write(TemperatureTrigger.DECREASE)
-                    ._option();
-                html._select();
-                html.button(name("submitTemperature")
-                        .class_("btn col-md-12")
-                        .add("data-toggle", "clickover")
-                        .onClick("updateTriggerStep(this);"))
-                    .write(Messages.ADD_TRIGGER)
+        html.form(id("editTriggersForm"));
+        html.input(id(TYPE).name(TYPE)
+                .hidden("true").value("Temperature"));
+        html.input(id("type").name(POSITION)
+                .hidden(POSITION).value("" + this.position));
+        html.input(class_("inputBox temperature form-control")
+                .type("number").add("step", "any")
+                .add("placeholder", Messages.SET_POINT)
+                .value(this.targetTemp.toPlainString())
+                .name(TARGET_TEMP));
+        html.input(class_("inputBox temperature form-control")
+                .type("number").add("step", "any")
+                .add("placeholder", Messages.END_TEMP)
+                .value(this.targetTemp.toPlainString())
+                .name(EXIT_TEMP));
+        html.input(class_("inputBox form-control")
+                .name(METHOD).value("")
+                .value(this.method)
+                .add("placeholder", Messages.METHOD));
+        html.input(class_("inputBox form-control")
+                .name(STEPTYPE).value("")
+                .value(this.type)
+                .add("placeholder", Messages.TYPE));
+        // Add the on/off values
+        html.select(class_("holo-spinner").name(MODE).id(MODE));
+        html.option(value(""))
+                .write("")
+                ._option();
+        html.option(value(TemperatureTrigger.INCREASE)
+                .selected_if(
+                        this.mode.equals(TemperatureTrigger.INCREASE)))
+                .write(TemperatureTrigger.INCREASE)
+                ._option();
+        html.option(value(TemperatureTrigger.DECREASE)
+                .selected_if(
+                        this.mode.equals(TemperatureTrigger.DECREASE)))
+                .write(TemperatureTrigger.DECREASE)
+                ._option();
+        html._select();
+        html.button(name("submitTemperature")
+                .class_("btn col-md-12")
+                .add("data-toggle", "clickover")
+                .onClick("updateTriggerStep(this);"))
+                .write(Messages.ADD_TRIGGER)
                 ._button();
-            html._form();
+        html._form();
         html._div();
         return html;
     }
@@ -415,6 +426,7 @@ public class TemperatureTrigger implements TriggerInterface {
 
     /**
      * Return the Position, startdate, target temperature, and description.
+     *
      * @return The current status as a JSONObject.
      */
     @Override
@@ -424,16 +436,18 @@ public class TemperatureTrigger implements TriggerInterface {
 
     /**
      * Compare by position.
+     *
      * @param o the TriggerInterface to compare to.
      * @return Compare.
      */
     @Override
-    public final int compareTo(final TriggerInterface o) {
+    public final int compareTo(@Nonnull final TriggerInterface o) {
         return (this.position - o.getPosition());
     }
 
     /**
      * This is for Any device.
+     *
      * @return any
      */
     @Override
@@ -450,24 +464,24 @@ public class TemperatureTrigger implements TriggerInterface {
     }
 
     public BigDecimal getExitTemp() {
-        return exitTemp;
+        return this.exitTemp;
     }
 
     private void createNotifications(String s) {
-        if (webNotification != null) {
+        if (this.webNotification != null) {
             //Clear the existing notifications
             clearNotifications();
         }
-        webNotification = new WebNotification();
-        webNotification.setMessage(s);
-        webNotification.sendNotification();
-        Notifications.getInstance().addNotification(webNotification);
+        this.webNotification = new WebNotification();
+        this.webNotification.setMessage(s);
+        this.webNotification.sendNotification();
+        Notifications.getInstance().addNotification(this.webNotification);
     }
 
     private void clearNotifications() {
-        if (webNotification == null) {
+        if (this.webNotification == null) {
             return;
         }
-        Notifications.getInstance().clearNotification(webNotification);
+        Notifications.getInstance().clearNotification(this.webNotification);
     }
 }

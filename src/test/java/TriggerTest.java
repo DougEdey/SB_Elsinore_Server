@@ -1,8 +1,11 @@
 import com.sb.elsinore.LaunchControl;
+import com.sb.elsinore.Temp;
 import com.sb.elsinore.TriggerControl;
+import com.sb.elsinore.triggers.TemperatureTrigger;
 import com.sb.elsinore.triggers.TriggerInterface;
 import com.sb.elsinore.triggers.WaitTrigger;
 import org.json.simple.JSONObject;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -10,11 +13,14 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
-import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 /**
  * Trigger creation tests
@@ -26,22 +32,25 @@ public class TriggerTest {
 
     private TriggerControl mTriggerControl;
     private LaunchControl launchControl;
-    @Test
-    public void testTriggerInterface()
-    {
 
-        //doNothing().when(mLaunchControl.saveSettings());//.saveSettings();
-        launchControl = mock(LaunchControl.class);
+    @Before
+    public void setup() {
+        this.launchControl = mock(LaunchControl.class);
         PowerMockito.mockStatic(LaunchControl.class);
         try {
-            Mockito.when(LaunchControl.getInstance()).thenReturn(launchControl);
-        }
-        catch (Exception e)
-        {
+            Mockito.when(LaunchControl.getInstance()).thenReturn(this.launchControl);
+        } catch (Exception e) {
             e.printStackTrace();
-            assert(false);
+            fail();
         }
-        mTriggerControl = new TriggerControl();
+        this.mTriggerControl = new TriggerControl();
+    }
+
+    @Test
+    public void testTriggerInterface() {
+
+        //doNothing().when(mLaunchControl.saveSettings());//.saveSettings();
+
         addTriggers();
         reorderTriggers();
         deleteSecondTrigger();
@@ -49,52 +58,50 @@ public class TriggerTest {
     }
 
     private void reorderTriggers() {
-        mTriggerControl.getTrigger(1).setPosition(2);
-        mTriggerControl.getTrigger(2).setPosition(1);
+        this.mTriggerControl.getTrigger(1).setPosition(2);
+        this.mTriggerControl.getTrigger(2).setPosition(1);
 
-        TriggerInterface triggerInterface = mTriggerControl.getTrigger(0);
-        assert(triggerInterface instanceof WaitTrigger);
-        assert("First".equals(((WaitTrigger) triggerInterface).getNote()));
+        TriggerInterface triggerInterface = this.mTriggerControl.getTrigger(0);
+        assert (triggerInterface instanceof WaitTrigger);
+        assert ("First".equals(((WaitTrigger) triggerInterface).getNote()));
 
-        triggerInterface = mTriggerControl.getTrigger(1);
-        assert(triggerInterface instanceof WaitTrigger);
-        assert("Third".equals(((WaitTrigger) triggerInterface).getNote()));
+        triggerInterface = this.mTriggerControl.getTrigger(1);
+        assert (triggerInterface instanceof WaitTrigger);
+        assert ("Third".equals(((WaitTrigger) triggerInterface).getNote()));
     }
 
     private void deleteSecondTrigger() {
-        mTriggerControl.delTriggerStep(1);
-        assert(2 == mTriggerControl.getTriggersSize());
+        this.mTriggerControl.delTriggerStep(1);
+        assert (2 == this.mTriggerControl.getTriggersSize());
 
-        TriggerInterface triggerInterface = mTriggerControl.getTrigger(0);
-        assert(triggerInterface instanceof WaitTrigger);
-        assert("First".equals(((WaitTrigger) triggerInterface).getNote()));
+        TriggerInterface triggerInterface = this.mTriggerControl.getTrigger(0);
+        assert (triggerInterface instanceof WaitTrigger);
+        assert ("First".equals(((WaitTrigger) triggerInterface).getNote()));
 
-        triggerInterface = mTriggerControl.getTrigger(1);
-        assert(triggerInterface instanceof WaitTrigger);
-        assert("Second".equals(((WaitTrigger) triggerInterface).getNote()));
+        triggerInterface = this.mTriggerControl.getTrigger(1);
+        assert (triggerInterface instanceof WaitTrigger);
+        assert ("Second".equals(((WaitTrigger) triggerInterface).getNote()));
     }
 
-    public void addTriggers()
-    {
+    public void addTriggers() {
         addTrigger("1", "1", "First");
         addTrigger("2", "2", "Second");
         addTrigger("3", "3", "Third");
         System.out.println("Checking for the trigger list size");
         // Make sure there's three triggers
-        assertEquals(3, mTriggerControl.getTriggersSize());
+        assertEquals(3, this.mTriggerControl.getTriggersSize());
         System.out.println("Checking complete");
-        TriggerInterface triggerInterface = mTriggerControl.getTrigger(0);
-        assert(triggerInterface instanceof WaitTrigger);
-        assert("First".equals(((WaitTrigger) triggerInterface).getNote()));
+        TriggerInterface triggerInterface = this.mTriggerControl.getTrigger(0);
+        assert (triggerInterface instanceof WaitTrigger);
+        assertEquals("First", ((WaitTrigger) triggerInterface).getNote());
 
-        triggerInterface = mTriggerControl.getTrigger(2);
-        assert(triggerInterface instanceof WaitTrigger);
-        assert("Third".equals(((WaitTrigger) triggerInterface).getNote()));
+        triggerInterface = this.mTriggerControl.getTrigger(2);
+        assert (triggerInterface instanceof WaitTrigger);
+        assertEquals("Third", ((WaitTrigger) triggerInterface).getNote());
     }
 
-    public void addTrigger(String m, String s, String n)
-    {
-        Map<String, String> jMap = new HashMap<>();
+    public void addTrigger(String m, String s, String n) {
+        HashMap<String, String> jMap = new HashMap<>();
         jMap.put(WaitTrigger.WAITTIMEMINS, m);
         jMap.put(WaitTrigger.WAITTIMESECS, s);
         jMap.put(WaitTrigger.NOTES, n);
@@ -102,6 +109,37 @@ public class TriggerTest {
         JSONObject j = new JSONObject();
         j.putAll(jMap);
 
-        mTriggerControl.addTrigger(0, "Wait", j);
+        this.mTriggerControl.addTrigger(0, "Wait", j);
+    }
+
+    @Test
+    public void testConversionOfTemp() throws InterruptedException {
+        Temp localTemp = new Temp("Blank", "Blank");
+        localTemp = spy(localTemp);
+        when(this.launchControl.findTemp("temp")).thenReturn(localTemp);
+        //doReturn(new BigDecimal(40)).when(localTemp).getTemp();
+        doReturn(new BigDecimal(40)).when(localTemp).updateTempFromFile();
+
+
+        TemperatureTrigger firstTemperatureTrigger = new TemperatureTrigger(0, "temp", 120, "Type A", "Method A");
+        TemperatureTrigger secondTemperatureTrigger = new TemperatureTrigger(1, "temp", 130, "Type B", "Method B");
+        this.mTriggerControl.addTrigger(firstTemperatureTrigger);
+        this.mTriggerControl.addTrigger(secondTemperatureTrigger);
+        this.mTriggerControl.activateTrigger(0);
+
+        assertTrue(firstTemperatureTrigger.isActive());
+
+        //doReturn(new BigDecimal(54.44)).when(localTemp).getTemp();
+        doReturn(new BigDecimal(54.44)).when(localTemp).updateTempFromFile();
+        firstTemperatureTrigger.waitForTrigger();
+        // Make sure this comes back fine.
+
+        localTemp.setScale("F");
+        this.mTriggerControl.activateTrigger(1);
+        assertTrue(secondTemperatureTrigger.isActive());
+
+        //doReturn(new BigDecimal(40)).when(localTemp).getTemp();
+        doReturn(new BigDecimal(56)).when(localTemp).updateTempFromFile();
+        secondTemperatureTrigger.waitForTrigger();
     }
 }

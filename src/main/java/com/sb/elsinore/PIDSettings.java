@@ -1,7 +1,11 @@
 package com.sb.elsinore;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.math.BigDecimal;
 import java.util.Observable;
+
+import static com.sb.elsinore.UrlEndpoints.*;
 
 /**
  * Hosts the setting specific to a PID profile
@@ -9,17 +13,18 @@ import java.util.Observable;
  */
 public class PIDSettings extends Observable {
 
-    public String getGPIO()
-    {
-        return gpio;
+    public static final String DELAY = "delay";
+
+    public String getGPIO() {
+        return this.gpio;
     }
 
-    public void setGPIO(String newGPIO)
-    {
-        gpio = newGPIO;
+    public void setGPIO(String newGPIO) {
+        this.gpio = newGPIO;
     }
+
     public BigDecimal getCycleTime() {
-        return cycle_time;
+        return this.cycle_time;
     }
 
     public void setCycleTime(BigDecimal cycle_time) {
@@ -29,7 +34,7 @@ public class PIDSettings extends Observable {
     }
 
     public BigDecimal getProportional() {
-        return proportional;
+        return this.proportional;
     }
 
     public void setProportional(BigDecimal proportional) {
@@ -39,7 +44,7 @@ public class PIDSettings extends Observable {
     }
 
     public BigDecimal getIntegral() {
-        return integral;
+        return this.integral;
     }
 
     public void setIntegral(BigDecimal integral) {
@@ -49,7 +54,7 @@ public class PIDSettings extends Observable {
     }
 
     public BigDecimal getDerivative() {
-        return derivative;
+        return this.derivative;
     }
 
     public void setDerivative(BigDecimal derivative) {
@@ -59,17 +64,17 @@ public class PIDSettings extends Observable {
     }
 
     public BigDecimal getDelay() {
-        return delay;
+        return this.delay;
     }
 
     public void setDelay(BigDecimal delay) {
         this.delay = delay;
         setChanged();
-        notifyObservers("delay");
+        notifyObservers(DELAY);
     }
 
     public PID_MODE getMode() {
-        return mode;
+        return this.mode;
     }
 
     public void setMode(PID_MODE mode) {
@@ -79,7 +84,7 @@ public class PIDSettings extends Observable {
     }
 
     public String getProfile() {
-        return profile;
+        return this.profile;
     }
 
     public void setProfile(String profile) {
@@ -89,7 +94,7 @@ public class PIDSettings extends Observable {
     }
 
     public boolean isInverted() {
-        return inverted;
+        return this.inverted;
     }
 
     public void setInverted(boolean inverted) {
@@ -109,22 +114,31 @@ public class PIDSettings extends Observable {
     /**
      * values to hold the settings.
      */
-    private BigDecimal
-            cycle_time = new BigDecimal(0),
-            proportional = new BigDecimal(0),
-            integral = new BigDecimal(0),
-            derivative = new BigDecimal(0),
-            delay = new BigDecimal(0);
+    @SerializedName(CYCLETIME)
+    private BigDecimal cycle_time = new BigDecimal(0);
+    @SerializedName(P)
+    private BigDecimal proportional = new BigDecimal(0);
+    @SerializedName(I)
+    private BigDecimal integral = new BigDecimal(0);
+    @SerializedName(D)
+    private BigDecimal derivative = new BigDecimal(0);
+    @SerializedName(DELAY)
+    private BigDecimal delay = new BigDecimal(0);
+    @SerializedName(MODE)
     private PID_MODE mode = PID_MODE.HEAT;
-    private String profile = "", gpio = null;
+    @SerializedName(PROFILE)
+    private String profile = "";
+    @SerializedName(GPIO)
+    private String gpio = null;
+    @SerializedName(INVERTED)
     private boolean inverted = false;
 
     /**
      * Default constructor.
      */
     PIDSettings() {
-        cycle_time = proportional =
-                integral = derivative = new BigDecimal(0.0);
+        this.cycle_time = this.proportional =
+                this.integral = this.derivative = new BigDecimal(0.0);
     }
 
 }
