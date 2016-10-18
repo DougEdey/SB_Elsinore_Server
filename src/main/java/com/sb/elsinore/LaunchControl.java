@@ -1,14 +1,12 @@
 package com.sb.elsinore;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.sb.common.CollectionsUtil;
 import com.sb.elsinore.devices.I2CDevice;
 import com.sb.elsinore.inputs.PhSensor;
 import io.gsonfire.GsonFireBuilder;
-import io.gsonfire.TypeSelector;
 import jGPIO.InvalidGPIOException;
 import org.apache.commons.cli.*;
 import org.owfs.jowfsclient.Enums.OwPersistence;
@@ -110,34 +108,28 @@ public class LaunchControl {
      */
     private static String configFileName = "elsinore.cfg";
 
-    /**
-     * The BrewServer runner object that'll be used.
-     */
-    private static ServerRunner sRunner = null;
-
     /* public fields to hold data for various functions */
 
     /**
      * One Wire File System Connection.
      */
-    OwfsConnection owfsConnection = null;
+    private OwfsConnection owfsConnection = null;
 
 
     /**
      * The accepted startup options.
      */
-    static Options startupOptions = null;
+    private static Options startupOptions = null;
     /**
      * The Command line used.
      */
-    static CommandLine startupCommand = null;
+    private static CommandLine startupCommand = null;
 
     public static String message = "";
     boolean recorderEnabled = false;
     String breweryName = null;
     String theme = "default";
 
-    private boolean initialized = false;
     private ProcessBuilder pb = null;
     private static LaunchControl instance;
 
@@ -292,27 +284,24 @@ public class LaunchControl {
         startup(port);
     }
 
-    public static Gson getGsonParser() {
+    private static Gson getGsonParser() {
         GsonFireBuilder builder = new GsonFireBuilder()
-                .registerTypeSelector(Device.class, new TypeSelector<Device>() {
-                    @Override
-                    public Class<? extends Device> getClassForElement(JsonElement jsonElement) {
-                        String kind = jsonElement.getAsJsonObject().get("type").getAsString();
-                        switch (kind) {
-                            case Temp.TYPE:
-                                return Temp.class; //This will cause Gson to deserialize the json mapping to A
-                            case PID.TYPE:
-                                return PID.class; //This will cause Gson to deserialize the json mapping to B
-                            default:
-                                return null; //returning null will trigger Gson's default behavior
-                        }
+                .registerTypeSelector(Device.class, jsonElement -> {
+                    String kind = jsonElement.getAsJsonObject().get("type").getAsString();
+                    switch (kind) {
+                        case Temp.TYPE:
+                            return Temp.class; //This will cause Gson to deserialize the json mapping to A
+                        case PID.TYPE:
+                            return PID.class; //This will cause Gson to deserialize the json mapping to B
+                        default:
+                            return null; //returning null will trigger Gson's default behavior
                     }
                 });
         return builder.createGsonBuilder().excludeFieldsWithoutExposeAnnotation()
                 .setPrettyPrinting().create();
     }
 
-    public void startup(int port) {
+    private void startup(int port) {
         this.systemSettings.server_port = port;
         updateDeviceList();
         // Create the shutdown hooks for all the threads
@@ -344,7 +333,10 @@ public class LaunchControl {
         // Debug info before launching the BrewServer itself
         LaunchControl.loadCompleted = true;
         BrewServer.LOG.log(Level.INFO, "CONFIG READ COMPLETED***********");
-        sRunner = new ServerRunner(BrewServer.class, this.systemSettings.server_port);
+        /*
+      The BrewServer runner object that'll be used.
+     */
+        ServerRunner sRunner = new ServerRunner(BrewServer.class, this.systemSettings.server_port);
         Thread sRunnerThread = new Thread(sRunner);
         sRunnerThread.run();
         sRunnerThread.setDaemon(false);
@@ -360,9 +352,6 @@ public class LaunchControl {
         return loadCompleted;
     }
 
-    void setInitialized(boolean initialized) {
-        this.initialized = initialized;
-    }
 
     void setRestore(boolean restore) {
         this.systemSettings.restoreState = restore;
@@ -671,7 +660,7 @@ public class LaunchControl {
     /**
      * List the one wire devices in /sys/bus/w1/devices.
      **/
-    void listOneWireSys() {
+    private void listOneWireSys() {
         // try to access the list of 1-wire devices
         File w1Folder = new File("/sys/bus/w1/devices/");
         if (!w1Folder.exists()) {
@@ -774,7 +763,7 @@ public class LaunchControl {
      * Setup the configuration. We get here if the configuration file doesn't
      * exist.
      */
-    void createConfig() {
+    private void createConfig() {
 
         if (startupCommand != null && startupCommand.hasOption("owfs")) {
             createOWFS();
@@ -1061,7 +1050,7 @@ public class LaunchControl {
      *
      * @return The current list of timers.
      */
-    public List<Timer> getTimerList() {
+    private List<Timer> getTimerList() {
         return this.timerList;
     }
 
@@ -1530,11 +1519,7 @@ public class LaunchControl {
         BrewServer.LOG.warning("Shutting down temperature probe threads.");
 
         BrewServer.LOG.warning("Shutting down PID threads.");
-        for (PIDRunner n : getPidRunners()) {
-            if (n != null) {
-                n.stop();
-            }
-        }
+        getPidRunners().stream().filter(n -> n != null).forEach(PIDRunner::stop);
 
         if (getTriggerControlList().size() > 0) {
             BrewServer.LOG.warning("Shutting down MashControl threads.");
@@ -1545,9 +1530,7 @@ public class LaunchControl {
 
         if (getSwitchList().size() > 0) {
             BrewServer.LOG.warning("Shutting down switchess.");
-            for (Switch p : getSwitchList()) {
-                p.shutdown();
-            }
+            getSwitchList().forEach(Switch::shutdown);
         }
 
         if (this.systemSettings.recorder != null) {
@@ -1566,49 +1549,49 @@ public class LaunchControl {
         return this.gson.toJson(o, o.getClass());
     }
 
-    public List<Switch> getSwitchList() {
+    private List<Switch> getSwitchList() {
         if (this.switchList == null) {
             this.switchList = new ArrayList<>();
         }
         return this.switchList;
     }
 
-    public List<Temp> getTempList() {
+    private List<Temp> getTempList() {
         if (this.tempList == null) {
             this.tempList = new ArrayList<>();
         }
         return this.tempList;
     }
 
-    public List<PIDRunner> getPidRunners() {
+    private List<PIDRunner> getPidRunners() {
         if (this.pidRunners == null) {
             this.pidRunners = new ArrayList<>();
         }
         return this.pidRunners;
     }
 
-    public List<Thread> getPidThreads() {
+    private List<Thread> getPidThreads() {
         if (this.pidThreads == null) {
             this.pidThreads = new ArrayList<>();
         }
         return this.pidThreads;
     }
 
-    public List<TriggerControl> getTriggerControlList() {
+    private List<TriggerControl> getTriggerControlList() {
         if (this.triggerControlList == null) {
             this.triggerControlList = new ArrayList<>();
         }
         return this.triggerControlList;
     }
 
-    public HashMap<String, I2CDevice> getI2cDeviceList() {
+    private HashMap<String, I2CDevice> getI2cDeviceList() {
         if (this.i2cDeviceList == null) {
             this.i2cDeviceList = new HashMap<>();
         }
         return this.i2cDeviceList;
     }
 
-    public CopyOnWriteArrayList<PhSensor> getPhSensorList() {
+    private CopyOnWriteArrayList<PhSensor> getPhSensorList() {
         if (this.phSensorList == null) {
             this.phSensorList = new CopyOnWriteArrayList<>();
         }
