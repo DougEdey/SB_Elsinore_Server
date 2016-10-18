@@ -60,27 +60,28 @@ public class TriggerTest {
     private void reorderTriggers() {
         this.mTriggerControl.getTrigger(1).setPosition(2);
         this.mTriggerControl.getTrigger(2).setPosition(1);
+        this.mTriggerControl.sortTriggers();
 
         TriggerInterface triggerInterface = this.mTriggerControl.getTrigger(0);
-        assert (triggerInterface instanceof WaitTrigger);
-        assert ("First".equals(((WaitTrigger) triggerInterface).getNote()));
+        assertTrue(triggerInterface instanceof WaitTrigger);
+        assertEquals("First", ((WaitTrigger) triggerInterface).getNote());
 
         triggerInterface = this.mTriggerControl.getTrigger(1);
-        assert (triggerInterface instanceof WaitTrigger);
-        assert ("Third".equals(((WaitTrigger) triggerInterface).getNote()));
+        assertTrue(triggerInterface instanceof WaitTrigger);
+        assertEquals("Third", ((WaitTrigger) triggerInterface).getNote());
     }
 
     private void deleteSecondTrigger() {
         this.mTriggerControl.delTriggerStep(1);
-        assert (2 == this.mTriggerControl.getTriggersSize());
+        assertEquals(2, this.mTriggerControl.getTriggersSize());
 
         TriggerInterface triggerInterface = this.mTriggerControl.getTrigger(0);
-        assert (triggerInterface instanceof WaitTrigger);
-        assert ("First".equals(((WaitTrigger) triggerInterface).getNote()));
+        assertTrue(triggerInterface instanceof WaitTrigger);
+        assertEquals("First", ((WaitTrigger) triggerInterface).getNote());
 
         triggerInterface = this.mTriggerControl.getTrigger(1);
-        assert (triggerInterface instanceof WaitTrigger);
-        assert ("Second".equals(((WaitTrigger) triggerInterface).getNote()));
+        assertTrue(triggerInterface instanceof WaitTrigger);
+        assertEquals("Second", ((WaitTrigger) triggerInterface).getNote());
     }
 
     public void addTriggers() {
@@ -92,11 +93,11 @@ public class TriggerTest {
         assertEquals(3, this.mTriggerControl.getTriggersSize());
         System.out.println("Checking complete");
         TriggerInterface triggerInterface = this.mTriggerControl.getTrigger(0);
-        assert (triggerInterface instanceof WaitTrigger);
+        assertTrue(triggerInterface instanceof WaitTrigger);
         assertEquals("First", ((WaitTrigger) triggerInterface).getNote());
 
         triggerInterface = this.mTriggerControl.getTrigger(2);
-        assert (triggerInterface instanceof WaitTrigger);
+        assertTrue(triggerInterface instanceof WaitTrigger);
         assertEquals("Third", ((WaitTrigger) triggerInterface).getNote());
     }
 
@@ -109,7 +110,7 @@ public class TriggerTest {
         JSONObject j = new JSONObject();
         j.putAll(jMap);
 
-        this.mTriggerControl.addTrigger(0, "Wait", j);
+        this.mTriggerControl.addTrigger(-1, "Wait", j);
     }
 
     @Test

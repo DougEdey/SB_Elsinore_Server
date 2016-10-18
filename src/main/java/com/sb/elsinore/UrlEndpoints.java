@@ -124,6 +124,17 @@ public class UrlEndpoints {
     public static final String START = "start";
     public static final String RESET = "reset";
     public static final String TIMER = "timer";
+    public static final String NEW_NAME = "new_name";
+    public static final String NEW_HEAT_GPIO = "new_heat_gpio";
+    public static final String NEW_COOL_GPIO = "new_cool_gpio";
+    public static final String HEAT_INVERT = "heat_invert";
+    public static final String COOL_INVERT = "cool_invert";
+    public static final String AUX_GPIO = "aux_gpio";
+    public static final String AUX_INVERT = "aux_invert";
+    public static final String CUTOFF = "cutoff";
+    public static final String CUTOFF_ENABLED = "cutoff_enabled";
+    public static final String SIZE = "size";
+    public static final String ADDRESS = "address";
 
     File rootDir;
     public Map<String, String> parameters = null;
@@ -457,7 +468,7 @@ public class UrlEndpoints {
             stepToUse = -1;
         }
 
-        if (stepToUse >= 0 && activate) {
+        if (stepToUse >= 0) {
             mObj.activateTrigger(stepToUse);
             LOG.warning(
                     "Activated " + tempProbe + " step at " + stepToUse);
@@ -481,14 +492,14 @@ public class UrlEndpoints {
     @SuppressWarnings("ConstantConditions")
     @UrlEndpoint(url = "/editdevice", help = "Edit the main settings for a device",
             parameters = {@Parameter(name = "form", value = "The Address of the temperature probe to update"),
-                    @Parameter(name = "new_name", value = "The new name of the probe"),
-                    @Parameter(name = "new_heat_gpio", value = "The Heat GPIO"),
-                    @Parameter(name = "new_cool_gpio", value = "The Cool GPIO"),
-                    @Parameter(name = "heat_invert", value = "\"on\" to enable inverted outputs for the heating pin"),
-                    @Parameter(name = "cool_invert", value = "\"on\" to enable inverted outputs for the cooling pin"),
-                    @Parameter(name = "aux_gpio", value = "A pin to use for auxilliary output"),
-                    @Parameter(name = "cutoff", value = "A temperature value at which to shutdown Elsinore as a safety measure"),
-                    @Parameter(name = "cutoff_enabled", value = "On to use the cutoff temperature"),
+                    @Parameter(name = NEW_NAME, value = "The new name of the probe"),
+                    @Parameter(name = NEW_HEAT_GPIO, value = "The Heat GPIO"),
+                    @Parameter(name = NEW_COOL_GPIO, value = "The Cool GPIO"),
+                    @Parameter(name = HEAT_INVERT, value = "\"on\" to enable inverted outputs for the heating pin"),
+                    @Parameter(name = COOL_INVERT, value = "\"on\" to enable inverted outputs for the cooling pin"),
+                    @Parameter(name = AUX_GPIO, value = "A pin to use for auxilliary output"),
+                    @Parameter(name = CUTOFF, value = "A temperature value at which to shutdown Elsinore as a safety measure"),
+                    @Parameter(name = CUTOFF_ENABLED, value = "On to use the cutoff temperature"),
                     @Parameter(name = CALIBRATION, value = "An offset for calibration")})
     public Response editVessel() {
         final Map<String, String> params = this.parameters;
@@ -534,25 +545,27 @@ public class UrlEndpoints {
         }
 
         // Fall back to the old style
-        newName = parms.get("new_name");
-        heatgpio = parms.get("new_heat_gpio");
-        coolgpio = parms.get("new_cool_gpio");
-        heatInvert = parms.get("heat_invert") != null && Boolean.parseBoolean(params.get("heat_invert"));
-        coolInvert = parms.get("cool_invert") != null && Boolean.parseBoolean(params.get("cool_invert"));
-        auxpin = parms.get("aux_gpio");
-        auxInvert = parms.get("aux_invert") != null && Boolean.parseBoolean(params.get("aux_invert"));
-        cutoff = parms.get("cutoff");
-        boolean cutoffEnabled = parms.get("cutoff_enabled") != null && Boolean.parseBoolean(parms.get("cutoff_enabled"));
+        newName = parms.get(NEW_NAME);
+        heatgpio = parms.get(NEW_HEAT_GPIO);
+        coolgpio = parms.get(NEW_COOL_GPIO);
+        heatInvert = parms.get(HEAT_INVERT) != null && Boolean.parseBoolean(params.get(HEAT_INVERT));
+        coolInvert = parms.get(COOL_INVERT) != null && Boolean.parseBoolean(params.get(COOL_INVERT));
+        auxpin = parms.get(AUX_GPIO);
+        auxInvert = parms.get(AUX_INVERT) != null && Boolean.parseBoolean(params.get(AUX_INVERT));
+        cutoff = parms.get(CUTOFF);
+        boolean cutoffEnabled = parms.get(CUTOFF_ENABLED) != null && Boolean.parseBoolean(parms.get(CUTOFF_ENABLED));
         calibration = parms.get(CALIBRATION);
 
-        try {
-            size = Integer.parseInt(parms.get("size"));
-        } catch (NumberFormatException nfe) {
-            LOG.warning("Couldn't parse: " + parms.get("size") + " as an int.");
+        if (parms.containsKey(SIZE)) {
+            try {
+                size = Integer.parseInt(parms.get(SIZE));
+            } catch (NumberFormatException nfe) {
+                LOG.warning("Couldn't parse: " + parms.get(SIZE) + " as an int.");
+            }
         }
 
-        if (inputUnit == null || inputUnit.equals("")) {
-            inputUnit = parms.get("address");
+        if (isNullOrEmpty(inputUnit)) {
+            inputUnit = parms.get(ADDRESS);
             if (inputUnit == null) {
                 LOG.warning("No Valid input unit");
             }
@@ -572,7 +585,7 @@ public class UrlEndpoints {
             return null;
         }
 
-        if (tProbe != null && !newName.equals("")) {
+        if (tProbe != null && !isNullOrEmpty(newName)) {
             tProbe.setName(newName);
             LOG.warning("Updated temp name " + newName);
         }
@@ -600,10 +613,10 @@ public class UrlEndpoints {
         }
         // HEATING GPIO
         if (isNullOrEmpty(heatgpio)) {
-            tPID.delHeatGPIO();
+            tPID.getSettings(HEAT).setGPIO(null);
         }
         if (isNullOrEmpty(coolgpio)) {
-            tPID.delCoolGPIO();
+            tPID.getSettings(COOL).setGPIO(null);
         }
 
         tPID.setAux(auxpin, auxInvert);
@@ -611,20 +624,27 @@ public class UrlEndpoints {
         LaunchControl lc = LaunchControl.getInstance();
 
         if (!isNullOrEmpty(heatgpio) || !isNullOrEmpty(coolgpio)) {
+            PIDSettings heatSettings = tPID.getSettings(HEAT);
             if (!heatgpio.equals(tPID.getHeatGPIO())) {
                 // We have a PID, set it to the new value
-                tPID.setHeatGPIO(heatgpio);
+                heatSettings.setGPIO(heatgpio);
+
             }
-            tPID.setHeatInverted(heatInvert);
+            heatSettings.setInverted(heatInvert);
+
+            PIDSettings coolSettings = tPID.getSettings(COOL);
             if (!coolgpio.equals(tPID.getCoolGPIO())) {
                 // We have a PID, set it to the new value
-                tPID.setCoolGPIO(coolgpio);
+                coolSettings.setGPIO(coolgpio);
             }
-            tPID.setCoolInverted(coolInvert);
+            coolSettings.setInverted(coolInvert);
             lc.addTemp(tPID);
         }
         if (heatgpio.equals("") && coolgpio.equals("")) {
             lc.deleteTemp(tPID);
+            // Downgrade to a temp probe
+            Temp temp = new Temp(tPID.getName(), tPID.getProbe());
+            lc.addTemp(temp);
         }
 
         // Update the heat settings
@@ -639,7 +659,7 @@ public class UrlEndpoints {
     }
 
     private void parseAndUpdatePidSettings(PID pid, Map<String, String> params, String type) {
-        String temp = params.get(type + "_" + P);
+        String temp = params.get(type + "[" + P + "]");
         BigDecimal newValue = stringToBigDecimal(temp);
         if (newValue != null) {
             pid.getSettings(type).setProportional(newValue);
@@ -647,7 +667,7 @@ public class UrlEndpoints {
             LOG.warning(String.format("Failed to parse %s Derivative as a number: %s", type, temp));
         }
 
-        temp = params.get(type + "_" + I);
+        temp = params.get(type + "[" + I + "]");
         newValue = stringToBigDecimal(temp);
         if (newValue != null) {
             pid.getSettings(type).setIntegral(newValue);
@@ -655,7 +675,7 @@ public class UrlEndpoints {
             LOG.warning(String.format("Failed to parse %s Integral as a number: %s", type, temp));
         }
 
-        temp = params.get(type + "_" + D);
+        temp = params.get(type + "[" + D + "]");
         newValue = stringToBigDecimal(temp);
         if (newValue != null) {
             pid.getSettings(type).setDerivative(newValue);
@@ -663,7 +683,7 @@ public class UrlEndpoints {
             LOG.warning(String.format("Failed to parse %s Derivative as a number: %s", type, temp));
         }
 
-        temp = params.get(type + "_" + CYCLETIME);
+        temp = params.get(type + "[" + CYCLETIME + "}");
         newValue = stringToBigDecimal(temp);
         if (newValue != null) {
             pid.getSettings(type).setCycleTime(newValue);
@@ -804,7 +824,7 @@ public class UrlEndpoints {
                     @Parameter(name = TIME, value = "The minimum amount of time to turn the cooling/heating output on or off for")})
     public Response updatePID() {
         String temp, mode = OFF_STRING;
-        BigDecimal dTemp, duty = null, setpoint = null,
+        BigDecimal duty = null, setpoint = null,
                 min = null, max = null, time = null, cycle = null;
 
         JSONObject sub_usage = new JSONObject();
@@ -934,6 +954,9 @@ public class UrlEndpoints {
     }
 
     private BigDecimal stringToBigDecimal(String temp) {
+        if (isNullOrEmpty(temp)) {
+            return null;
+        }
         try {
             return new BigDecimal(temp.replace(",", "."));
         } catch (NumberFormatException nfe) {

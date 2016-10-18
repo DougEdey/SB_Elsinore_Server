@@ -39,7 +39,7 @@ public class TemperatureTrigger implements TriggerInterface {
     private String method = null;
     private String type = null;
     private boolean active;
-    private int position = -1;
+    private Integer position = -1;
     public static String INCREASE = "INCREASE";
     public static String DECREASE = "DECREASE";
     private String mode = null;
@@ -262,7 +262,7 @@ public class TemperatureTrigger implements TriggerInterface {
      * @return The position of this TemperatureTrigger
      */
     @Override
-    public final int getPosition() {
+    public final Integer getPosition() {
         return this.position;
     }
 
@@ -272,7 +272,7 @@ public class TemperatureTrigger implements TriggerInterface {
      * @param newPosition The new position.
      */
     @Override
-    public final void setPosition(final int newPosition) {
+    public final void setPosition(Integer newPosition) {
         this.position = newPosition;
     }
 

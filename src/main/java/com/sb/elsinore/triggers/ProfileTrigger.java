@@ -15,7 +15,7 @@ public class ProfileTrigger implements TriggerInterface {
     private static final String ACTIVATE = "activate";
     private static final String DISABLE = "disable";
 
-    private int position = -1;
+    private Integer position = -1;
     private boolean activate = false;
     private boolean active = false;
     private String targetName = null;
@@ -100,7 +100,7 @@ public class ProfileTrigger implements TriggerInterface {
     }
 
     @Override
-    public int getPosition() {
+    public Integer getPosition() {
         return this.position;
     }
 
@@ -209,7 +209,7 @@ public class ProfileTrigger implements TriggerInterface {
     }
 
     @Override
-    public void setPosition(int newPos) {
+    public void setPosition(Integer newPos) {
         this.position = newPos;
     }
 

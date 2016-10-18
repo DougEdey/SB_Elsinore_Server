@@ -50,7 +50,7 @@ function parseVessels(vessels) {
                 }
             }
             vOption.data("temp", vesselStatus.tempprobe);
-            if ("piddata" in vesselStatus) {
+            if ("heat" in vesselStatus || "cool" in vesselStatus || "auxgpio" in vesselStatus) {
                 vOption.data("pid", vesselStatus);
             }
         }
@@ -68,7 +68,7 @@ function parseVessels(vessels) {
                 setCardName(probeCard, decodeURI(vesselStatus.name));
             }
             loadTempProbeData(probeCard, vesselStatus);
-            if ("pidstatus" in vesselStatus) {
+            if ("heat" in vesselStatus || "cool" in vesselStatus || "auxgpio" in vesselStatus) {
                 loadPIDData(probeCard, vesselStatus);
             }
         }
@@ -909,6 +909,7 @@ function saveDevice(submitButton) {
 
     var heatdiv = form.parent().parent().find("#heat");
     if (heatdiv.length == 1) {
+        data["heat"] = {};
         data["heat"]["p"] = heatdiv.find("#p_input").val();
         data["heat"]["i"] = heatdiv.find("#i_input").val();
         data["heat"]["d"] = heatdiv.find("#d_input").val();
@@ -917,6 +918,7 @@ function saveDevice(submitButton) {
 
     var cooldiv = form.parent().parent().find("#cool");
     if (cooldiv.length == 1) {
+        data["cool"] = {};
         data["cool"]["p"] = cooldiv.find("#p_input").val();
         data["cool"]["i"] = cooldiv.find("#i_input").val();
         data["cool"]["d"] = cooldiv.find("#d_input").val();
@@ -1600,7 +1602,7 @@ function showDeviceEdit(element, addr, name) {
     htmlContent += "<li class='nav-item'><a class='nav-link active' aria-controls='" + type + "' href='#" + type + "' role='tab' data-toggle='tab'>" + type.capitalizeFirstLetter() + "</a></li>";
     if (piddata != null) {
         for (var pidtype of ["heat", "cool"]) {
-            if (pidtype in piddata && piddata[pidtype].gpio != "") {
+            if (pidtype in piddata && piddata[pidtype].gpio != undefined && piddata[pidtype].gpio != "") {
                 htmlContent += "<li class='nav-item'><a class='nav-link' aria-controls='" + pidtype + "' href='#" + pidtype + "' role='tab' data-toggle='tab'>" + pidtype.capitalizeFirstLetter() + "</a></li>";
             }
         }

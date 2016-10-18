@@ -20,7 +20,7 @@ public class SwitchTrigger implements TriggerInterface {
 
     private static final String SWITCHNAME = "switchname";
     private static final String ACTIVATE = "activate";
-    private int position = -1;
+    private Integer position = -1;
     private String activate = null;
     private String switchName = null;
     private boolean active = false;
@@ -129,7 +129,7 @@ public class SwitchTrigger implements TriggerInterface {
      * @return The position of this step.
      */
     @Override
-    public final int getPosition() {
+    public final Integer getPosition() {
         return this.position;
     }
 
@@ -267,7 +267,7 @@ public class SwitchTrigger implements TriggerInterface {
      * @param newPos The position to set this step to.
      */
     @Override
-    public final void setPosition(final int newPos) {
+    public final void setPosition(final Integer newPos) {
         this.position = newPos;
     }
 

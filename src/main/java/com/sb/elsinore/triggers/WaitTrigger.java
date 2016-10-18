@@ -30,7 +30,7 @@ public class WaitTrigger implements TriggerInterface {
     public static final String NOTES = "notes";
     final Object lck = new Object();
     volatile boolean waitStatus = true;
-    private int position = -1;
+    private Integer position = -1;
     private BigDecimal waitTime = BigDecimal.ZERO;
     private Date startDate, endDate;
     private boolean active = false;
@@ -185,7 +185,7 @@ public class WaitTrigger implements TriggerInterface {
     }
 
     @Override
-    public int getPosition() {
+    public Integer getPosition() {
         return this.position;
     }
 
@@ -220,7 +220,7 @@ public class WaitTrigger implements TriggerInterface {
     }
 
     @Override
-    public void setPosition(int newPos) {
+    public void setPosition(Integer newPos) {
         this.position = newPos;
     }
 

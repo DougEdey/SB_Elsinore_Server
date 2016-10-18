@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 
+import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
@@ -17,46 +18,57 @@ import static com.sb.elsinore.UrlEndpoints.*;
  */
 public class PID extends Temp {
 
+    public static final String TYPE = "PID";
+
     public static final String HYSTERIA = "hysteria";
     public static final String AUTO = "auto";
     public static final String MANUAL = "manual";
     public static final String OFF = "off";
-
+    @Expose
     @SerializedName(INVERTED)
     private boolean invertAux = false;
-
+    @Expose
     @SerializedName(DUTYCYCLE)
     private BigDecimal duty_cycle = new BigDecimal(0);
+    @Expose
     @SerializedName(ACTUAL_DUTY)
     private BigDecimal calculatedDuty = new BigDecimal(0);
+    @Expose
     @SerializedName(SETPOINT)
     private BigDecimal set_point = new BigDecimal(0);
+    @Expose
     @SerializedName(MANUAL_DUTY)
     private BigDecimal manual_duty = new BigDecimal(0);
+    @Expose
     @SerializedName(MANUAL_TIME)
     private BigDecimal manual_time = new BigDecimal(0);
 
     /* Hysteria Settings */
+    @Expose
     @SerializedName(MAX)
     private BigDecimal max = new BigDecimal(0);
+    @Expose
     @SerializedName(MIN)
     private BigDecimal min = new BigDecimal(0);
+    @Expose
     @SerializedName(TIME)
     private BigDecimal minTime = new BigDecimal(0);
 
+    @Expose
+    @SerializedName("aux")
     private OutPin auxPin = null;
 
     /**
      * Settings for the heating and cooling.
      */
-    @SerializedName(HEAT)
-    private PIDSettings heatSetting = new PIDSettings();
-    @SerializedName(COOL)
-    private PIDSettings coolSetting = new PIDSettings();
 
-    void setHeatDelay(BigDecimal heatDelay) {
-        getHeatSetting().setDelay(heatDelay);
-    }
+    @Expose
+    @SerializedName(HEAT)
+    private PIDSettings heatSetting;
+
+    @Expose
+    @SerializedName(COOL)
+    private PIDSettings coolSetting;
 
     /**
      * Create a new PID with minimal information.
@@ -66,7 +78,8 @@ public class PID extends Temp {
      */
     public PID(String aName, String device, String gpio) {
         super(aName, device);
-        setHeatGPIO(gpio);
+        this.type = TYPE;
+        getSettings(HEAT).setGPIO(gpio);
         this.mode = OFF;
     }
 
@@ -77,6 +90,7 @@ public class PID extends Temp {
      */
     public PID(String aName, String device) {
         super(aName, device);
+        this.type = TYPE;
     }
 
     /**
@@ -287,54 +301,6 @@ public class PID extends Temp {
         return (this.auxPin != null);
     }
 
-    /******
-     * Set the proportional value.
-     * @param p the new proportional value
-     */
-    void setCoolP(final BigDecimal p) {
-        this.coolSetting.setProportional(p);
-    }
-
-    /******
-     * Set the integral value.
-     * @param i The new Integral.
-     */
-    void setCoolI(final BigDecimal i) {
-        this.coolSetting.setIntegral(i);
-    }
-
-    /******
-     * Set the Derivative value.
-     * @param d The new Derivative
-     */
-    void setCoolD(final BigDecimal d) {
-        this.coolSetting.setDerivative(d);
-    }
-
-    /******
-     * Set the proportional value.
-     * @param p the new proportional value
-     */
-    void setHeatP(final BigDecimal p) {
-        this.heatSetting.setProportional(p);
-    }
-
-    /******
-     * Set the integral value.
-     * @param i The new Integral.
-     */
-    void setHeatI(final BigDecimal i) {
-        this.heatSetting.setIntegral(i);
-    }
-
-    /******
-     * Set the Derivative value.
-     * @param d The new Derivative
-     */
-    void setHeatD(final BigDecimal d) {
-        this.heatSetting.setDerivative(d);
-    }
-
     /*******
      * Get the current mode.
      * @return The mode.
@@ -347,11 +313,11 @@ public class PID extends Temp {
      * @return Get the GPIO Pin
      */
     String getHeatGPIO() {
-        return this.heatSetting.getGPIO();
+        return getSettings(HEAT).getGPIO();
     }
 
     String getCoolGPIO() {
-        return this.coolSetting.getGPIO();
+        return getSettings(COOL).getGPIO();
     }
 
     /**
@@ -375,98 +341,6 @@ public class PID extends Temp {
         return this.set_point;
     }
 
-    /**
-     * @return Get the current Duty Cycle Time
-     */
-    BigDecimal getHeatCycle() {
-        return this.heatSetting.getCycleTime();
-    }
-
-    /**
-     * @return Get the current proportional value
-     */
-    BigDecimal getHeatP() {
-        return this.heatSetting.getProportional();
-    }
-
-    /**
-     * @return Get the current Integral value
-     */
-    BigDecimal getHeatI() {
-        return this.heatSetting.getIntegral();
-    }
-
-    /**
-     * @return Get the current Derivative value
-     */
-    BigDecimal getHeatD() {
-        return this.heatSetting.getDerivative();
-    }
-
-    BigDecimal getHeatDelay() {
-        return this.heatSetting.getDelay();
-    }
-
-    /**
-     * @return true if the heating output is inverted.
-     */
-    boolean isHeatInverted() {
-        return this.heatSetting.isInverted();
-    }
-
-    void setHeatInverted(boolean inverted) {
-        if (this.heatSetting != null) {
-            this.heatSetting.setInverted(inverted);
-        }
-    }
-
-    void setCoolInverted(boolean inverted) {
-        if (this.coolSetting != null) {
-            this.coolSetting.setInverted(inverted);
-        }
-    }
-
-    /**
-     * @return true if the cooling output is inverted.
-     */
-    boolean isCoolInverted() {
-        return this.coolSetting.isInverted();
-    }
-
-    /**
-     * @return Get the current Duty Cycle Time
-     */
-    BigDecimal getCoolCycle() {
-        return this.coolSetting.getCycleTime();
-    }
-
-
-    /**
-     * @return Get the current proportional value
-     */
-    BigDecimal getCoolP() {
-        return this.coolSetting.getProportional();
-    }
-
-    /**
-     * @return Get the current Integral value
-     */
-    BigDecimal getCoolI() {
-        return this.coolSetting.getIntegral();
-    }
-
-    /**
-     * @return Get the current Derivative value
-     */
-    BigDecimal getCoolD() {
-        return this.coolSetting.getDerivative();
-    }
-
-    BigDecimal getCoolDelay() {
-        return this.coolSetting.getDelay();
-    }
-
-
     //PRIVATE ///
     /**
      * Store the previous timestamp for the update.
@@ -481,7 +355,10 @@ public class PID extends Temp {
     /**
      * Various strings.
      */
-    private String mode = OFF, fName = null;
+    @Expose
+    @SerializedName(MODE)
+    private String mode = OFF;
+    private String fName = null;
 
     /**
      * @return Get the current temperature
@@ -506,93 +383,24 @@ public class PID extends Temp {
     public void setCool(final String gpio, final BigDecimal duty,
                         final BigDecimal delay, final BigDecimal cycle, final BigDecimal p,
                         final BigDecimal i, final BigDecimal d) {
-        setCoolGPIO(gpio);
+        getSettings(COOL).setGPIO(gpio);
 
         setDuty(duty);
-        setCoolDelay(delay);
-        setCoolCycle(cycle);
-        setCoolP(p);
-        setCoolI(i);
-        setCoolD(d);
+        getSettings(COOL).setDelay(delay);
+        getSettings(COOL).setCycleTime(cycle);
+        getSettings(COOL).setProportional(p);
+        getSettings(COOL).setIntegral(i);
+        getSettings(COOL).setDerivative(d);
     }
 
-    /**
-     * @return The current status as a map
-     * <p>
-     * public Map<String, Object> getMapStatus() {
-     * Map<String, Object> statusMap = new HashMap<>();
-     * statusMap.put("mode", getMode());
-     * // hack to get the real duty out
-     * if (getMode().contains("auto")) {
-     * statusMap.put("actualduty", calculatedDuty);
-     * }
-     * <p>
-     * // The Heat settings
-     * Map<String, Object> heatMap = new HashMap<>();
-     * heatMap.put("cycle", getHeatCycle());
-     * heatMap.put("p", getHeatP());
-     * heatMap.put("i", getHeatI());
-     * heatMap.put("d", getHeatD());
-     * heatMap.put("delay", getHeatDelay());
-     * heatMap.put("gpio", getHeatGPIO());
-     * heatMap.put("inverted", isHeatInverted());
-     * statusMap.put("heat", heatMap);
-     * <p>
-     * // The cool settings
-     * Map<String, Object> coolMap = new HashMap<>();
-     * coolMap.put("cycle", getCoolCycle());
-     * coolMap.put("p", getCoolP());
-     * coolMap.put("i", getCoolI());
-     * coolMap.put("d", getCoolD());
-     * coolMap.put("gpio", getCoolGPIO());
-     * coolMap.put("delay", getCoolDelay());
-     * coolMap.put("inverted", isCoolInverted());
-     * statusMap.put("cool", coolMap);
-     * <p>
-     * statusMap.put("duty", getDuty());
-     * statusMap.put("setpoint", getSetPoint());
-     * statusMap.put("manualduty", this.manual_duty);
-     * statusMap.put("manualtime", this.manual_time);
-     * statusMap.put("min", this.min);
-     * statusMap.put("max", this.max);
-     * statusMap.put("time", this.minTime);
-     * <p>
-     * statusMap.put("status", getStatus());
-     * <p>
-     * if (auxPin != null) {
-     * // This value should be cached
-     * // but I don't trust someone to hit it with a different application
-     * Map<String, Object> auxStatus = new HashMap<>();
-     * auxStatus.put("gpio", auxGPIO);
-     * auxStatus.put("inverted", isAuxInverted());
-     * auxStatus.put("status", getAuxStatus());
-     * statusMap.put("aux", auxStatus);
-     * }
-     * <p>
-     * return statusMap;
-     * }
+    /*****
+     * Helper function to return a map of the current status.
+     * @return The current status of the temperature probe.
      */
-
-    void delHeatGPIO() {
-        this.heatSetting.setGPIO(null);
+    String getJsonStatus() {
+        return LaunchControl.getInstance().toJsonString(this);
     }
 
-    void delCoolGPIO() {
-        this.coolSetting.setGPIO(null);
-    }
-
-    /**
-     * Set the GPIO to a new pin, shutdown the old one first.
-     *
-     * @param gpio The new GPIO to use
-     */
-    void setHeatGPIO(final String gpio) {
-        this.heatSetting.setGPIO(detectGPIO(gpio));
-    }
-
-    void setCoolGPIO(final String gpio) {
-        this.coolSetting.setGPIO(detectGPIO(gpio));
-    }
 
     public BigDecimal getMin() {
         return this.min;
@@ -606,25 +414,6 @@ public class PID extends Temp {
         return this.minTime;
     }
 
-    PIDSettings getHeatSetting() {
-        return this.heatSetting;
-    }
-
-    PIDSettings getCoolSetting() {
-        return this.coolSetting;
-    }
-
-    void setCoolDelay(BigDecimal coolDelay) {
-        this.coolSetting.setDelay(coolDelay);
-    }
-
-    void setCoolCycle(BigDecimal coolCycle) {
-        this.coolSetting.setCycleTime(coolCycle);
-    }
-
-    void setHeatCycle(BigDecimal heatCycle) {
-        this.heatSetting.setCycleTime(heatCycle);
-    }
 
     void setManualDuty(BigDecimal duty) {
         if (duty != null) {
@@ -672,8 +461,14 @@ public class PID extends Temp {
     public PIDSettings getSettings(String type) {
         switch (type) {
             case HEAT:
+                if (this.heatSetting == null) {
+                    this.heatSetting = new PIDSettings();
+                }
                 return this.heatSetting;
             case COOL:
+                if (this.coolSetting == null) {
+                    this.coolSetting = new PIDSettings();
+                }
                 return this.coolSetting;
         }
         return null;

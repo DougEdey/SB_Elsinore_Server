@@ -12,11 +12,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.sb.elsinore.UrlEndpoints.POSITION;
@@ -543,5 +540,14 @@ public class TriggerControl implements Runnable {
                 triggerInterface.deactivate(false);
             }
         }
+    }
+
+    public void sortTriggers() {
+        this.triggerList.sort(new Comparator<TriggerInterface>() {
+            @Override
+            public int compare(TriggerInterface o1, TriggerInterface o2) {
+                return o1.getPosition().compareTo(o2.getPosition());
+            }
+        });
     }
 }

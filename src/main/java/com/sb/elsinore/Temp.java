@@ -1,4 +1,5 @@
 package com.sb.elsinore;
+
 import com.google.gson.annotations.Expose;
 import com.sb.elsinore.devices.I2CDevice;
 import com.sb.util.MathUtil;
@@ -28,11 +29,12 @@ import static com.sb.elsinore.BrewServer.LOG;
 
 /**
  * Temp class is used to monitor temperature on the one wire system.
- * @author Doug Edey
  *
+ * @author Doug Edey
  */
-public class Temp implements Comparable<Temp> {
+public class Temp extends Device implements Comparable<Temp> {
 
+    public static final String TYPE = "temp";
     /**
      * Strings for the Nodes.
      */
@@ -78,7 +80,7 @@ public class Temp implements Comparable<Temp> {
     /**
      * Match the temperature regexp.
      */
-    private final Pattern tempRegexp = Pattern.compile("^(-?)([0-9]+)(.[0-9]{1,2})?$");
+    private Pattern tempRegexp = null;
     @Expose
     private int size = SIZE_LARGE;
     @Expose
@@ -91,24 +93,24 @@ public class Temp implements Comparable<Temp> {
 
     /**
      * Standard constructor.
-     * @param name The probe name or input name.
-     *  Use "system" to create a system temperature probe
+     *
+     * @param name    The probe name or input name.
+     *                Use "system" to create a system temperature probe
      * @param inProbe The address of this temperature probe.
      */
     public Temp(String name, String inProbe) {
-
-        device = inProbe;
-        LOG.info("Adding" + device);
+        super(TYPE);
+        this.device = inProbe;
+        LOG.info("Adding" + this.device);
         if (name.equalsIgnoreCase("system")) {
-            device = "System";
-            File tempFile = new File(rpiSystemTemp);
+            this.device = "System";
+            File tempFile = new File(this.rpiSystemTemp);
             if (tempFile.exists()) {
-                fileProbe = rpiSystemTemp;
-            }
-            else {
-                tempFile = new File(bbbSystemTemp);
+                this.fileProbe = this.rpiSystemTemp;
+            } else {
+                tempFile = new File(this.bbbSystemTemp);
                 if (tempFile.exists()) {
-                    fileProbe = bbbSystemTemp;
+                    this.fileProbe = this.bbbSystemTemp;
                 } else {
                     LOG.warning(
                             "Couldn't find a valid system temperature probe");
@@ -116,15 +118,14 @@ public class Temp implements Comparable<Temp> {
                 }
             }
 
-        }
-        else if (!name.equalsIgnoreCase("Blank")){
-            fileProbe = "/sys/bus/w1/devices/" + device + "/w1_slave";
+        } else if (!name.equalsIgnoreCase("Blank")) {
+            this.fileProbe = "/sys/bus/w1/devices/" + this.device + "/w1_slave";
             File probePath =
-                new File(fileProbe);
+                    new File(this.fileProbe);
 
             // Lets assume that OWFS has "." separated names
-            if (!probePath.exists() && device.contains(".")) {
-                String[] newAddress = device.split("\\.|-");
+            if (!probePath.exists() && this.device.contains(".")) {
+                String[] newAddress = this.device.split("\\.|-");
 
                 if (newAddress.length == 2) {
                     String devFamily = newAddress[0];
@@ -138,22 +139,21 @@ public class Temp implements Comparable<Temp> {
                     devAddress += newAddress[1].subSequence(0, 2);
 
                     String fixedAddress = devFamily + "-"
-                        + devAddress.toLowerCase();
+                            + devAddress.toLowerCase();
 
                     LOG.info("Converted address: " + fixedAddress);
 
-                    fileProbe = "/sys/bus/w1/devices/" + fixedAddress + "/w1_slave";
-                    probePath = new File(fileProbe);
-                    if (probePath.exists())
-                    {
-                        device = fixedAddress;
+                    this.fileProbe = "/sys/bus/w1/devices/" + fixedAddress + "/w1_slave";
+                    probePath = new File(this.fileProbe);
+                    if (probePath.exists()) {
+                        this.device = fixedAddress;
                     }
                 }
             }
 
         }
 
-        this.probeName = device;
+        this.probeName = this.device;
         this.name = name;
         LOG.info(this.probeName + " added.");
     }
@@ -161,32 +161,32 @@ public class Temp implements Comparable<Temp> {
     /**
      * The Runnable loop.
 
-    public void run() {
+     public void run() {
 
-        while (keepAlive) {
-            if (updateTemp().equals(ERROR_TEMP)) {
-                if (fProbe != null && fProbe.equals(
-                        "/sys/class/thermal/thermal_zone0/temp")) {
-                    return;
-                }
-                // Uh(oh no file found, disable output to prevent logging floods
+     while (keepAlive) {
+     if (updateTemp().equals(ERROR_TEMP)) {
+     if (fProbe != null && fProbe.equals(
+     "/sys/class/thermal/thermal_zone0/temp")) {
+     return;
+     }
+     // Uh(oh no file found, disable output to prevent logging floods
 
-            } else {
-                loggingOn = true;
-            }
+     } else {
+     loggingOn = true;
+     }
 
-            if (volumeMeasurement) {
-                updateVolume();
-            }
+     if (volumeMeasurement) {
+     updateVolume();
+     }
 
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-*/
+     try {
+     Thread.sleep(500);
+     } catch (InterruptedException e) {
+     e.printStackTrace();
+     }
+     }
+     }
+     */
     /**
      * @param n The name to set this Temp to.
      */
@@ -198,15 +198,18 @@ public class Temp implements Comparable<Temp> {
      * @return The name of this probe
      */
     public String getName() {
-        return name.replaceAll(" ", "_");
+        return this.name.replaceAll(" ", "_");
     }
 
-    public String getDevice() { return device; }
+    public String getDevice() {
+        return this.device;
+    }
+
     /**
      * @return The address of this probe
      */
     public String getProbe() {
-        return probeName;
+        return this.probeName;
     }
 
     /******
@@ -222,7 +225,7 @@ public class Temp implements Comparable<Temp> {
             return;
         }
 
-        Matcher tempMatcher = tempRegexp.matcher(cutoffInput);
+        Matcher tempMatcher = getTempRegexp().matcher(cutoffInput);
 
         if (tempMatcher.find()) {
             // We have matched against the TEMP_REGEXP
@@ -241,14 +244,15 @@ public class Temp implements Comparable<Temp> {
             // Create the temp
             this.cutoffTemp = new BigDecimal(number);
         } else {
-            LOG.severe(cutoffTemp + " doesn't match "
-                    + tempRegexp.pattern());
+            LOG.severe(this.cutoffTemp + " doesn't match "
+                    + getTempRegexp().pattern());
         }
     }
 
     // PRIVATE ////
     @Expose
     private String name;
+    @Expose
     private String probeName;
 
     /**
@@ -312,7 +316,7 @@ public class Temp implements Comparable<Temp> {
     public BigDecimal getTemp() {
         updateTemp();
         // set up the reader
-        if (scale.equals("F")) {
+        if (this.scale.equals("F")) {
             return getTempF();
         }
         return getTempC();
@@ -322,7 +326,7 @@ public class Temp implements Comparable<Temp> {
      * @return The temp unit/Scale
      */
     public String getScale() {
-        return scale;
+        return this.scale;
     }
 
     /**
@@ -333,9 +337,9 @@ public class Temp implements Comparable<Temp> {
 
         if (s.equalsIgnoreCase("F")) {
             // Do we need to convert the cutoff temp
-            if (cutoffTemp.compareTo(ERROR_TEMP) != 0
-                    && !scale.equalsIgnoreCase(s)) {
-                this.cutoffTemp = cToF(cutoffTemp);
+            if (this.cutoffTemp.compareTo(ERROR_TEMP) != 0
+                    && !this.scale.equalsIgnoreCase(s)) {
+                this.cutoffTemp = cToF(this.cutoffTemp);
             }
 
             this.calibration = this.calibration.multiply(new BigDecimal(1.8));
@@ -345,11 +349,11 @@ public class Temp implements Comparable<Temp> {
 
         if (s.equalsIgnoreCase("C")) {
             // Do we need to convert the cutoff temp
-            if (cutoffTemp.compareTo(ERROR_TEMP) != 0
-                    && !scale.equalsIgnoreCase(s)) {
-                this.cutoffTemp = fToC(cutoffTemp);
+            if (this.cutoffTemp.compareTo(ERROR_TEMP) != 0
+                    && !this.scale.equalsIgnoreCase(s)) {
+                this.cutoffTemp = fToC(this.cutoffTemp);
             }
-            this.calibration = this.calibration.divide(new BigDecimal(1.8), context);
+            this.calibration = this.calibration.divide(new BigDecimal(1.8), this.context);
             this.scale = s;
         }
         LOG.warning("Cut off is now: " + this.cutoffTemp);
@@ -359,20 +363,20 @@ public class Temp implements Comparable<Temp> {
      * @return The current temperature in fahrenheit.
      */
     BigDecimal getTempF() {
-        if (scale.equals("F")) {
-            return currentTemp.add(this.calibration);
+        if (this.scale.equals("F")) {
+            return this.currentTemp.add(this.calibration);
         }
-        return cToF(currentTemp.add(this.calibration));
+        return cToF(this.currentTemp.add(this.calibration));
     }
 
     /**
      * @return The current temperature in celsius.
      */
     BigDecimal getTempC() {
-        if (scale.equals("C")) {
-            return currentTemp.add(this.calibration);
+        if (this.scale.equals("C")) {
+            return this.currentTemp.add(this.calibration);
         }
-        return fToC(currentTemp.add(this.calibration));
+        return fToC(this.currentTemp.add(this.calibration));
     }
 
     /**
@@ -381,7 +385,7 @@ public class Temp implements Comparable<Temp> {
      */
     private static BigDecimal fToC(final BigDecimal currentTemp) {
         BigDecimal t = currentTemp.subtract(FREEZING);
-        t = MathUtil.divide(MathUtil.multiply(t, 5),9);
+        t = MathUtil.divide(MathUtil.multiply(t, 5), 9);
         return t;
     }
 
@@ -399,14 +403,14 @@ public class Temp implements Comparable<Temp> {
      * @return The current timestamp.
      */
     public long getTime() {
-        return currentTime;
+        return this.currentTime;
     }
-    
+
     /**
      * @return The current cutoff temp.
      */
     String getCutoff() {
-        return cutoffTemp.toPlainString();
+        return this.cutoffTemp.toPlainString();
     }
 
     /**
@@ -415,43 +419,42 @@ public class Temp implements Comparable<Temp> {
     public BigDecimal updateTemp() {
         BigDecimal result;
 
-        if (badTemp && currentError != null && currentError.equals("")) {
+        if (this.badTemp && this.currentError != null && this.currentError.equals("")) {
             LOG.warning("Trying to recover " + this.getName());
         }
-        if (probeName == null) {
+        if (this.probeName == null) {
             result = updateTempFromOWFS();
         } else {
             result = updateTempFromFile();
         }
 
         if (result.equals(ERROR_TEMP)) {
-            badTemp = true;
+            this.badTemp = true;
             return result;
         }
 
-        if (badTemp) {
-            badTemp = false;
+        if (this.badTemp) {
+            this.badTemp = false;
             LOG.warning("Recovered temperature reading for " + this.getName());
-            if (this.currentError.startsWith("Could"))
-            {
+            if (this.currentError.startsWith("Could")) {
                 this.currentError = "";
             }
         }
 
         // OWFS/One wire always uses Celsius
-        if (scale.equals("F")) {
+        if (this.scale.equals("F")) {
             result = cToF(result);
         }
 
-        currentTemp = result;
-        currentTime = System.currentTimeMillis();
-        currentError = null;
+        this.currentTemp = result;
+        this.currentTime = System.currentTimeMillis();
+        this.currentError = null;
 
-        if (cutoffEnabled
-                && currentTemp.compareTo(cutoffTemp) >= 0) {
+        if (this.cutoffEnabled
+                && this.currentTemp.compareTo(this.cutoffTemp) >= 0) {
             LOG.log(Level.SEVERE,
-                currentTemp + ": ****** CUT OFF TEMPERATURE ("
-                + cutoffTemp + ") EXCEEDED *****");
+                    this.currentTemp + ": ****** CUT OFF TEMPERATURE ("
+                            + this.cutoffTemp + ") EXCEEDED *****");
             System.exit(-1);
         }
         return result;
@@ -462,31 +465,33 @@ public class Temp implements Comparable<Temp> {
      */
     public BigDecimal updateTempFromOWFS() {
         // Use the OWFS connection
-        if (probeName.equals("Blank")) { return new BigDecimal(0.0);}
+        if (this.probeName.equals("Blank")) {
+            return new BigDecimal(0.0);
+        }
         BigDecimal temp = ERROR_TEMP;
         String rawTemp = "";
         try {
-            rawTemp = LaunchControl.getInstance().readOWFSPath(probeName + "/temperature");
+            rawTemp = LaunchControl.getInstance().readOWFSPath(this.probeName + "/temperature");
             if (rawTemp.equals("")) {
                 LOG.severe(
-                    "Couldn't find the probe " + probeName + " for " + name);
+                        "Couldn't find the probe " + this.probeName + " for " + this.name);
                 LaunchControl.getInstance().setupOWFS();
             } else {
                 temp = new BigDecimal(rawTemp);
             }
         } catch (IOException e) {
-            currentError = "Couldn't read " + probeName;
-            LOG.log(Level.SEVERE, currentError, e);
+            this.currentError = "Couldn't read " + this.probeName;
+            LOG.log(Level.SEVERE, this.currentError, e);
         } catch (OwfsException e) {
-            currentError = "Couldn't read " + probeName;
-            LOG.log(Level.SEVERE, currentError, e);
+            this.currentError = "Couldn't read " + this.probeName;
+            LOG.log(Level.SEVERE, this.currentError, e);
             LaunchControl.getInstance().setupOWFS();
         } catch (NumberFormatException e) {
-            currentError = "Couldn't parse" + rawTemp;
-            LOG.log(Level.SEVERE, currentError, e);
+            this.currentError = "Couldn't parse" + rawTemp;
+            LOG.log(Level.SEVERE, this.currentError, e);
         }
 
-        loggingOn = (!temp.equals(ERROR_TEMP));
+        this.loggingOn = (!temp.equals(ERROR_TEMP));
 
         return temp;
     }
@@ -494,16 +499,16 @@ public class Temp implements Comparable<Temp> {
     public BigDecimal updateTempFromFile() {
         BufferedReader br = null;
         String temp = null;
-        
+
         BigDecimal newTemperature = null;
 
         try {
-            br = new BufferedReader(new FileReader(fileProbe));
+            br = new BufferedReader(new FileReader(this.fileProbe));
             String line = br.readLine();
-            
+
             if (line == null || line.contains("NO")) {
                 // bad CRC, do nothing
-                this.currentError = "Bad CRC from " + fileProbe;
+                this.currentError = "Bad CRC from " + this.fileProbe;
             } else if (line.contains("YES")) {
                 // good CRC
                 line = br.readLine();
@@ -520,11 +525,11 @@ public class Temp implements Comparable<Temp> {
             }
 
         } catch (IOException ie) {
-            if (loggingOn) {
-                this.currentError = "Couldn't find the device under: " + fileProbe;
-                LOG.warning(currentError);
-                if (fileProbe.equals(rpiSystemTemp)) {
-                    fileProbe = bbbSystemTemp;
+            if (this.loggingOn) {
+                this.currentError = "Couldn't find the device under: " + this.fileProbe;
+                LOG.warning(this.currentError);
+                if (this.fileProbe.equals(this.rpiSystemTemp)) {
+                    this.fileProbe = this.bbbSystemTemp;
                 }
             }
             return ERROR_TEMP;
@@ -540,8 +545,7 @@ public class Temp implements Comparable<Temp> {
                 }
             }
         }
-        if( newTemperature == null )
-        {
+        if (newTemperature == null) {
             newTemperature = getTempC();
         }
         return newTemperature;
@@ -549,17 +553,18 @@ public class Temp implements Comparable<Temp> {
 
     /**
      * Setup the volume reading.
+     *
      * @param address One Wire device address.
-     * @param offset Device offset input.
-     * @param unit The volume unit to read as.
+     * @param offset  Device offset input.
+     * @param unit    The volume unit to read as.
      */
     boolean setupVolumes(final String address, final String offset,
                          final String unit) {
         // start a volume measurement at the same time
         if (unit == null
-            || (!unit.equals(VolumeUnits.LITRES)
-            && !unit.equals(VolumeUnits.UK_GALLONS)
-            && !unit.equals(VolumeUnits.US_GALLONS))) {
+                || (!unit.equals(VolumeUnits.LITRES)
+                && !unit.equals(VolumeUnits.UK_GALLONS)
+                && !unit.equals(VolumeUnits.US_GALLONS))) {
             return false;
         }
 
@@ -570,22 +575,22 @@ public class Temp implements Comparable<Temp> {
 
         try {
             LOG.log(Level.INFO,
-                "Volume ADC at: " + volumeAddress + " - " + offset);
+                    "Volume ADC at: " + this.volumeAddress + " - " + offset);
             String temp =
-                LaunchControl.getInstance().readOWFSPath(volumeAddress + "/volt." + offset);
+                    LaunchControl.getInstance().readOWFSPath(this.volumeAddress + "/volt." + offset);
 
             // Check to make sure we can read OK
             if (temp.equals("")) {
                 LOG.severe(
-                    "Couldn't read the Volume from " + volumeAddress
-                    + "/volt." + offset);
+                        "Couldn't read the Volume from " + this.volumeAddress
+                                + "/volt." + offset);
                 return false;
             } else {
                 LOG.log(Level.INFO, "Volume reads " + temp);
             }
         } catch (IOException e) {
             LOG.log(Level.SEVERE,
-                "IOException when access the ADC over 1wire", e);
+                    "IOException when access the ADC over 1wire", e);
             return false;
         } catch (OwfsException e) {
             LOG.log(Level.SEVERE,
@@ -598,8 +603,9 @@ public class Temp implements Comparable<Temp> {
 
     /**
      * Setup volumes for AIN pins.
+     *
      * @param analogPin The AIN pin number
-     * @param unit The volume unit
+     * @param unit      The volume unit
      * @return True is setup OK
      * @throws InvalidGPIOException If the Pin cannot be setup
      */
@@ -607,9 +613,9 @@ public class Temp implements Comparable<Temp> {
             throws InvalidGPIOException {
         // start a volume measurement at the same time
         if (unit == null
-            || (!unit.equals(VolumeUnits.LITRES)
-            && !unit.equals(VolumeUnits.UK_GALLONS)
-            && !unit.equals(VolumeUnits.US_GALLONS))) {
+                || (!unit.equals(VolumeUnits.LITRES)
+                && !unit.equals(VolumeUnits.UK_GALLONS)
+                && !unit.equals(VolumeUnits.US_GALLONS))) {
             return false;
         }
 
@@ -621,13 +627,13 @@ public class Temp implements Comparable<Temp> {
         } catch (InvalidGPIOException e) {
             this.volumeMeasurement = false;
             LOG.warning("Invalid Analog GPIO specified " + analogPin);
-            throw(e);
+            throw (e);
         }
 
         setupVolume();
 
-        if (volumeConstant.compareTo(BigDecimal.ZERO) >= 0
-                || volumeMultiplier.compareTo(BigDecimal.ZERO) >= 0) {
+        if (this.volumeConstant.compareTo(BigDecimal.ZERO) >= 0
+                || this.volumeMultiplier.compareTo(BigDecimal.ZERO) >= 0) {
             this.volumeMeasurement = false;
         }
 
@@ -639,7 +645,7 @@ public class Temp implements Comparable<Temp> {
      * Calculate volume reading maths.
      */
     private void setupVolume() {
-        if (volumeBase == null) {
+        if (this.volumeBase == null) {
             return;
         }
 
@@ -649,7 +655,7 @@ public class Temp implements Comparable<Temp> {
         this.volumeConstant = new BigDecimal(0);
 
         // for the rest of the values
-        Iterator<Entry<BigDecimal, BigDecimal>> it = volumeBase.entrySet().iterator();
+        Iterator<Entry<BigDecimal, BigDecimal>> it = this.volumeBase.entrySet().iterator();
         Entry<BigDecimal, BigDecimal> prevPair = null;
 
         while (it.hasNext()) {
@@ -663,27 +669,27 @@ public class Temp implements Comparable<Temp> {
                 BigDecimal newConstant =
                         pairs.getValue().subtract(valueDiff.multiply(keyDiff));
 
-                if (volumeMultiplier.compareTo(BigDecimal.ZERO) != 0) {
-                    if (newMultiplier.equals(volumeMultiplier)) {
+                if (this.volumeMultiplier.compareTo(BigDecimal.ZERO) != 0) {
+                    if (newMultiplier.equals(this.volumeMultiplier)) {
                         LOG.info(
-                            "The newMultiplier isn't the same as the old one,"
-                            + " if this is a big difference, be careful!"
-                            + " You may need a quadratic!");
+                                "The newMultiplier isn't the same as the old one,"
+                                        + " if this is a big difference, be careful!"
+                                        + " You may need a quadratic!");
                         LOG.info("New: " + newMultiplier
-                            + ". Old: " + volumeMultiplier);
+                                + ". Old: " + this.volumeMultiplier);
                     }
                 } else {
                     this.volumeMultiplier = newMultiplier;
                 }
 
-                if (volumeConstant.compareTo(BigDecimal.ZERO) != 0) {
-                    if (newConstant.equals(volumeConstant)) {
+                if (this.volumeConstant.compareTo(BigDecimal.ZERO) != 0) {
+                    if (newConstant.equals(this.volumeConstant)) {
                         LOG.info("The new constant "
-                            + "isn't the same as the old one, if this is a big"
-                            + " difference, be careful!"
-                            + " You may need a quadratic!");
+                                + "isn't the same as the old one, if this is a big"
+                                + " difference, be careful!"
+                                + " You may need a quadratic!");
                         LOG.info("New: " + newConstant
-                            + ". Old: " + volumeConstant);
+                                + ". Old: " + this.volumeConstant);
                     }
                 } else {
                     this.volumeConstant = newConstant;
@@ -702,22 +708,22 @@ public class Temp implements Comparable<Temp> {
     public BigDecimal updateVolume() {
         try {
             BigDecimal pinValue;
-            if (volumeAIN != -1) {
-                pinValue = new BigDecimal(volumePin.readValue());
-            } else if (volumeAddress != null && volumeOffset != null) {
+            if (this.volumeAIN != -1) {
+                pinValue = new BigDecimal(this.volumePin.readValue());
+            } else if (this.volumeAddress != null && this.volumeOffset != null) {
                 try {
                     pinValue = new BigDecimal(
-                        LaunchControl.getInstance().readOWFSPath(
-                            volumeAddress + "/volt." + volumeOffset));
+                            LaunchControl.getInstance().readOWFSPath(
+                                    this.volumeAddress + "/volt." + this.volumeOffset));
                     if (this.stopVolumeLogging) {
                         LOG.log(Level.SEVERE,
-                            "Recovered volume level reading for " + this.name);
+                                "Recovered volume level reading for " + this.name);
                         this.stopVolumeLogging = false;
                     }
                 } catch (Exception e) {
                     if (!this.stopVolumeLogging) {
                         LOG.log(Level.SEVERE,
-                            "Could not update the volume reading from OWFS");
+                                "Could not update the volume reading from OWFS");
                         this.stopVolumeLogging = true;
                     }
                     LOG.info("Reconnecting OWFS");
@@ -736,23 +742,23 @@ public class Temp implements Comparable<Temp> {
             SortedSet<BigDecimal> keys = null;
             try {
                 keys = Collections.synchronizedSortedSet(
-                    new TreeSet<>(volumeBase.keySet()));
+                        new TreeSet<>(this.volumeBase.keySet()));
             } catch (NullPointerException npe) {
                 // No VolumeBase setup, so we're probably calibrating
                 return pinValue;
             } catch (Exception e) {
                 LOG.log(Level.SEVERE,
-                    "Uncaught exception when creating the volume set", e);
+                        "Uncaught exception when creating the volume set", e);
                 System.exit(-1);
             }
 
             BigDecimal tVolume = null;
 
-            try  {
-                for (BigDecimal key: keys) {
+            try {
+                for (BigDecimal key : keys) {
                     if (prevKey == null) {
                         prevKey = key;
-                        prevValue = volumeBase.get(key);
+                        prevValue = this.volumeBase.get(key);
                         continue;
                     } else if (curKey != null) {
                         prevKey = curKey;
@@ -760,7 +766,7 @@ public class Temp implements Comparable<Temp> {
                     }
 
                     curKey = key;
-                    curValue = volumeBase.get(key);
+                    curValue = this.volumeBase.get(key);
 
                     if (pinValue.compareTo(prevValue) >= 0
                             && pinValue.compareTo(curValue) <= 0) {
@@ -768,7 +774,7 @@ public class Temp implements Comparable<Temp> {
                         // assume it's linear
                         BigDecimal volRange = curKey.subtract(prevKey);
                         BigDecimal readingRange = curValue.subtract(prevValue);
-                        BigDecimal ratio = MathUtil.divide(pinValue.subtract(prevValue),readingRange);
+                        BigDecimal ratio = MathUtil.divide(pinValue.subtract(prevValue), readingRange);
                         BigDecimal volDiff = ratio.multiply(volRange);
                         tVolume = volDiff.add(prevKey);
                     }
@@ -779,7 +785,7 @@ public class Temp implements Comparable<Temp> {
                     // Try to extrapolate
                     BigDecimal volRange = curKey.subtract(prevKey);
                     BigDecimal readingRange = curValue.subtract(prevValue);
-                    BigDecimal ratio = MathUtil.divide(pinValue.subtract(prevValue),readingRange);
+                    BigDecimal ratio = MathUtil.divide(pinValue.subtract(prevValue), readingRange);
                     BigDecimal volDiff = ratio.multiply(volRange);
                     tVolume = volDiff.add(prevKey);
                 }
@@ -791,8 +797,8 @@ public class Temp implements Comparable<Temp> {
 
             if (tVolume == null) {
                 // try to assume the value
-                this.currentVolume = pinValue.subtract(volumeConstant)
-                        .multiply(volumeMultiplier);
+                this.currentVolume = pinValue.subtract(this.volumeConstant)
+                        .multiply(this.volumeMultiplier);
             } else {
                 this.currentVolume = tVolume;
             }
@@ -816,6 +822,7 @@ public class Temp implements Comparable<Temp> {
 
     /**
      * Append a volume measurement to the current list of calibrated values.
+     *
      * @param volume Volume measurement to record.
      * @return True if added OK.
      */
@@ -828,12 +835,12 @@ public class Temp implements Comparable<Temp> {
                 try {
                     if (this.volumePin != null) {
                         total = total.add(new BigDecimal(
-                            this.volumePin.readValue()));
+                                this.volumePin.readValue()));
                     } else {
                         try {
                             total = total.add(new BigDecimal(
-                                LaunchControl.getInstance().readOWFSPath(
-                                    volumeAddress + "/volt." + volumeOffset)));
+                                    LaunchControl.getInstance().readOWFSPath(
+                                            this.volumeAddress + "/volt." + this.volumeOffset)));
                         } catch (OwfsException e) {
                             e.printStackTrace();
                         }
@@ -845,7 +852,7 @@ public class Temp implements Comparable<Temp> {
                     e.printStackTrace();
                     return false;
                 }
-            } catch (NumberFormatException  e) {
+            } catch (NumberFormatException e) {
                 LOG.warning("Bad Analog input value!");
                 return false;
             }
@@ -862,7 +869,7 @@ public class Temp implements Comparable<Temp> {
         // read in ten values
         BigDecimal avgValue = MathUtil.divide(total, maxReads);
         LOG.info("Read " + avgValue + " for "
-                + volume + " " + volumeUnit);
+                + volume + " " + this.volumeUnit);
 
         this.addVolumeMeasurement(volume, avgValue);
         System.out.println(this.name + ": Added volume data point " + volume);
@@ -871,13 +878,14 @@ public class Temp implements Comparable<Temp> {
 
     /**
      * Add a volume measurement at a specific key.
-     * @param key The key to overwrite/set
+     *
+     * @param key   The key to overwrite/set
      * @param value The value to overwrite/set
      */
     private void addVolumeMeasurement(
             final BigDecimal key, final BigDecimal value) {
         LOG.info("Adding " + key + " with value " + value);
-        if (volumeBase == null) {
+        if (this.volumeBase == null) {
             this.volumeBase = new ConcurrentHashMap<>();
         }
         this.volumeBase.put(key, value);
@@ -885,7 +893,7 @@ public class Temp implements Comparable<Temp> {
 
     /**
      * @return The current volume measurement,
-     *       -1.0 is there is no measurement enabled.
+     * -1.0 is there is no measurement enabled.
      */
     public BigDecimal getVolume() {
         if (this.volumeMeasurement) {
@@ -935,6 +943,7 @@ public class Temp implements Comparable<Temp> {
 
     /**
      * Check to see if this object has a valid volume input.
+     *
      * @return true if there's a valid volume input on this class
      */
     boolean hasVolume() {
@@ -952,17 +961,17 @@ public class Temp implements Comparable<Temp> {
 
     public void shutdown() {
         // Graceful shutdown.
-        keepAlive = false;
+        this.keepAlive = false;
         LOG.warning(this.getName() + " is shutting down");
         Thread.currentThread().interrupt();
     }
 
     public boolean isStarted() {
-        return isStarted;
+        return this.isStarted;
     }
 
     public boolean isRunning() {
-        return keepAlive;
+        return this.keepAlive;
     }
 
     public void started() {
@@ -972,7 +981,7 @@ public class Temp implements Comparable<Temp> {
     public void setCalibration(String calibration) {
         // Lock the calibration temp
         calibration = calibration.replace(",", ".");
-        Matcher tempMatcher = tempRegexp.matcher(calibration);
+        Matcher tempMatcher = getTempRegexp().matcher(calibration);
 
         if (tempMatcher.find()) {
             // We have matched against the TEMP_REGEXP
@@ -993,7 +1002,7 @@ public class Temp implements Comparable<Temp> {
             this.calibration = temperature.setScale(2, BigDecimal.ROUND_DOWN);
         } else {
             LOG.severe(calibration + " doesn't match "
-                    + tempRegexp.pattern());
+                    + getTempRegexp().pattern());
         }
     }
 
@@ -1042,6 +1051,7 @@ public class Temp implements Comparable<Temp> {
     /**
      * Get the current TriggerControl object, create a new one if it doesn't
      * exist.
+     *
      * @return the TriggerControl.
      */
     public TriggerControl getTriggerControl() {
@@ -1049,7 +1059,7 @@ public class Temp implements Comparable<Temp> {
             this.triggerControl = new TriggerControl();
             this.triggerControl.setOutputControl(this.getName());
         }
-        return triggerControl;
+        return this.triggerControl;
     }
 
     /**
@@ -1061,6 +1071,7 @@ public class Temp implements Comparable<Temp> {
 
     /**
      * Set the position of this temp probe.
+     *
      * @param newPos The new position.
      */
     public void setPosition(final int newPos) {
@@ -1088,53 +1099,51 @@ public class Temp implements Comparable<Temp> {
 
     /**
      * Get the current Size.
+     *
      * @return {@value #SIZE_SMALL} {@value #SIZE_MEDIUM} or {@value #SIZE_LARGE}
      */
     public int getSize() {
-        return size;
+        return this.size;
     }
 
     /**
      * Set the new size of this render.
+     *
      * @param newSize {@value #SIZE_SMALL} {@value #SIZE_MEDIUM} or {@value #SIZE_LARGE}
      */
     public void setSize(int newSize) {
-        if (size == -1) {
+        if (this.size == -1) {
             return;
         }
-        size = newSize;
+        this.size = newSize;
     }
 
     public String getI2CDevNumberString() {
-        if (i2cDevice == null)
-        {
+        if (this.i2cDevice == null) {
             return "";
         }
-        return i2cDevice.getDevNumberString();
+        return this.i2cDevice.getDevNumberString();
     }
 
     public String getI2CDevAddressString() {
-        if (i2cDevice == null)
-        {
+        if (this.i2cDevice == null) {
             return "";
         }
-        return Integer.toString(i2cDevice.getAddress());
+        return Integer.toString(this.i2cDevice.getAddress());
     }
 
     public String geti2cChannel() {
-        if (i2cChannel == -1)
-        {
+        if (this.i2cChannel == -1) {
             return "";
         }
-        return Integer.toString(i2cChannel);
+        return Integer.toString(this.i2cChannel);
     }
 
     public String getI2CDevType() {
-        if (i2cDevice == null)
-        {
+        if (this.i2cDevice == null) {
             return "";
         }
-        return i2cDevice.getDevName();
+        return this.i2cDevice.getDevName();
     }
 
     boolean setupVolumeI2C(String i2c_device, String i2c_address, String i2c_channel, String i2c_type, String units) {
@@ -1145,6 +1154,13 @@ public class Temp implements Comparable<Temp> {
         this.i2cDevice = i2c_device;
         this.i2cChannel = Integer.parseInt(i2c_channel);
         this.setVolumeUnit(volumeUnits);
-        return (i2cDevice != null);
+        return (this.i2cDevice != null);
+    }
+
+    public Pattern getTempRegexp() {
+        if (this.tempRegexp == null) {
+            this.tempRegexp = Pattern.compile("^(-?)([0-9]+)(.[0-9]{1,2})?$");
+        }
+        return this.tempRegexp;
     }
 }

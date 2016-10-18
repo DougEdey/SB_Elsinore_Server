@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 
+import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.math.BigDecimal;
@@ -114,22 +115,31 @@ public class PIDSettings extends Observable {
     /**
      * values to hold the settings.
      */
+    @Expose
     @SerializedName(CYCLETIME)
     private BigDecimal cycle_time = new BigDecimal(0);
+    @Expose
     @SerializedName(P)
     private BigDecimal proportional = new BigDecimal(0);
+    @Expose
     @SerializedName(I)
     private BigDecimal integral = new BigDecimal(0);
+    @Expose
     @SerializedName(D)
     private BigDecimal derivative = new BigDecimal(0);
+    @Expose
     @SerializedName(DELAY)
     private BigDecimal delay = new BigDecimal(0);
+    @Expose
     @SerializedName(MODE)
     private PID_MODE mode = PID_MODE.HEAT;
+    @Expose
     @SerializedName(PROFILE)
     private String profile = "";
+    @Expose
     @SerializedName(GPIO)
     private String gpio = null;
+    @Expose
     @SerializedName(INVERTED)
     private boolean inverted = false;
 
