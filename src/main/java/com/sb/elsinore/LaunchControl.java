@@ -227,23 +227,8 @@ public class LaunchControl {
                 System.exit(-1);
             }
         }
-        GsonFireBuilder builder = new GsonFireBuilder()
-                .registerTypeSelector(Device.class, new TypeSelector<Device>() {
-                    @Override
-                    public Class<? extends Device> getClassForElement(JsonElement jsonElement) {
-                        String kind = jsonElement.getAsJsonObject().get("type").getAsString();
-                        switch (kind) {
-                            case Temp.TYPE:
-                                return Temp.class; //This will cause Gson to deserialize the json mapping to A
-                            case PID.TYPE:
-                                return PID.class; //This will cause Gson to deserialize the json mapping to B
-                            default:
-                                return null; //returning null will trigger Gson's default behavior
-                        }
-                    }
-                });
-        Gson gson = builder.createGsonBuilder().excludeFieldsWithoutExposeAnnotation()
-                .setPrettyPrinting().create();
+
+        Gson gson = getGsonParser();
 
 
         try {
@@ -307,18 +292,7 @@ public class LaunchControl {
         startup(port);
     }
 
-    public void startup(int port) {
-        this.systemSettings.server_port = port;
-        updateDeviceList();
-        // Create the shutdown hooks for all the threads
-        // to make sure we close off the GPIO connections
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                saveEverything();
-                // Close off all the Switch GPIOs properly.
-            }
-        });
-
+    public static Gson getGsonParser() {
         GsonFireBuilder builder = new GsonFireBuilder()
                 .registerTypeSelector(Device.class, new TypeSelector<Device>() {
                     @Override
@@ -334,8 +308,23 @@ public class LaunchControl {
                         }
                     }
                 });
-        this.gson = builder.createGsonBuilder().excludeFieldsWithoutExposeAnnotation()
+        return builder.createGsonBuilder().excludeFieldsWithoutExposeAnnotation()
                 .setPrettyPrinting().create();
+    }
+
+    public void startup(int port) {
+        this.systemSettings.server_port = port;
+        updateDeviceList();
+        // Create the shutdown hooks for all the threads
+        // to make sure we close off the GPIO connections
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                saveEverything();
+                // Close off all the Switch GPIOs properly.
+            }
+        });
+
+        this.gson = getGsonParser();
 
         //Check to make sure we have a valid folder for one wire straight away.
         File w1Folder = new File("/sys/bus/w1/devices/");
