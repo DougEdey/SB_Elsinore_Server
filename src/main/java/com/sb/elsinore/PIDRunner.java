@@ -5,6 +5,7 @@ import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -21,10 +22,11 @@ class PIDRunner implements Runnable {
 
     PIDRunner(Temp p) {
         this.temp = p;
+        this.previousTime = new BigDecimal(System.currentTimeMillis());
     }
 
     public PID getPID() {
-        return (PID) this.temp;
+        return (PID) getTemp();
     }
 
     public Temp getTemp() {
@@ -32,7 +34,7 @@ class PIDRunner implements Runnable {
     }
 
     public void stop() {
-        BrewServer.LOG.warning("Shutting down " + this.temp.getName());
+        BrewServer.LOG.warning("Shutting down " + getTemp().getName());
         this.running = false;
         Thread.currentThread().interrupt();
     }
@@ -68,21 +70,12 @@ class PIDRunner implements Runnable {
     private BigDecimal currentTime, hysteriaStartTime
             = new BigDecimal(System.currentTimeMillis());
     private BigDecimal timeDiff = BigDecimal.ZERO;
-
-    private BigDecimal totalError = new BigDecimal(0.0);
-    private BigDecimal errorFactor = new BigDecimal(0.0);
     /**
      * Temp values for PID calculation.
      */
     private BigDecimal previousError = new BigDecimal(0.0);
-    /**
-     * Temp values for PID calculation.
-     */
-    private BigDecimal integralFactor = new BigDecimal(0.0);
-    /**
-     * Temp values for PID calculation.
-     */
-    private BigDecimal derivativeFactor = new BigDecimal(0.0);
+    private BigDecimal totalError = new BigDecimal(0.0);
+
 
     /**
      * Helper to check is a cooler is enabled correctly.
@@ -112,20 +105,21 @@ class PIDRunner implements Runnable {
      * Main loop for using a PID Thread.
      */
     public void run() {
-        this.temp.started();
-        BrewServer.LOG.info("Running " + this.temp.getName() + " PID.");
+        Temp temp = getTemp();
+        temp.started();
+        BrewServer.LOG.info("Running " + temp.getName() + " PID.");
         // setup the first time
         this.previousTime = new BigDecimal(System.currentTimeMillis());
 
 
         // Main loop
-        while (this.temp.isRunning()) {
+        while (temp.isRunning()) {
             try {
-                synchronized (this.temp.getTemp()) {
+                synchronized (temp.getTemp()) {
                     // do the bulk of the work here
-                    this.tempF = this.temp.getTempF();
-                    this.currentTime = new BigDecimal(this.temp.getTime());
-                    if (this.temp instanceof PID) {
+                    this.tempF = temp.getTempF();
+                    this.currentTime = new BigDecimal(temp.getTime());
+                    if (temp instanceof PID) {
                         setupPID();
                         runPIDCalculations();
                     }
@@ -134,7 +128,7 @@ class PIDRunner implements Runnable {
                 //pause execution for a second
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
-                BrewServer.LOG.warning("PID " + this.temp.getName() + " Interrupted.");
+                BrewServer.LOG.warning("PID " + temp.getName() + " Interrupted.");
                 ex.printStackTrace();
                 Thread.currentThread().interrupt();
             }
@@ -146,12 +140,12 @@ class PIDRunner implements Runnable {
      */
 
     private void setupPID() {
-        if (this.temp instanceof PID) {
-            PID pid = (PID) this.temp;
+        if (getTemp() instanceof PID) {
+            PID pid = (PID) getTemp();
             // create the Output if needed
             if (!isNullOrEmpty(pid.getHeatGPIO())) {
                 this.outputControl =
-                        new OutputControl(this.temp.getName(), pid.getSettings(HEAT));
+                        new OutputControl(pid.getName(), pid.getSettings(HEAT));
             }
             if (!isNullOrEmpty(pid.getCoolGPIO())) {
                 if (this.outputControl == null) {
@@ -207,14 +201,14 @@ class PIDRunner implements Runnable {
      * Runs the current PID iteration.
      */
     private void runPIDCalculations() {
-        PID pid = (PID) this.temp;
+        PID pid = (PID) getTemp();
         // if the GPIO is blank we do not need to do any of this;
         if (this.hasValidHeater()
                 || this.hasValidCooler()) {
-            if (this.tempList.size() >= 5) {
-                this.tempList.remove(0);
+            if (getTempList().size() >= 5) {
+                getTempList().remove(0);
             }
-            this.tempList.add(this.temp.getTemp());
+            getTempList().add(pid.getTemp());
             BigDecimal tempAvg = calcAverage();
             // we have the current temperature
             BrewServer.LOG.info(pid.getMode());
@@ -236,7 +230,7 @@ class PIDRunner implements Runnable {
                     this.outputThread.interrupt();
                     break;
             }
-            BrewServer.LOG.info(pid.getMode() + ": " + this.temp.getName() + " status: "
+            BrewServer.LOG.info(pid.getMode() + ": " + pid.getName() + " status: "
                     + this.tempF + " duty cycle: "
                     + this.outputControl.getDuty());
         }
@@ -247,48 +241,35 @@ class PIDRunner implements Runnable {
      * @param avgTemp The current average temperature
      * @return A Double of the duty cycle %
      */
-    private BigDecimal calculate(BigDecimal avgTemp) {
-        PID pid = (PID) this.temp;
-        this.currentTime = new BigDecimal(System.currentTimeMillis());
-        if (this.previousTime.compareTo(BigDecimal.ZERO) == 0) {
-            this.previousTime = this.currentTime;
-        }
-        BigDecimal dt = MathUtil.divide(
-                this.currentTime.subtract(this.previousTime), this.THOUSAND);
+    public BigDecimal calculate(BigDecimal avgTemp) {
+        PID pid = (PID) getTemp();
+
+        BigDecimal dt = calculateTimeDiff();
         if (dt.compareTo(BigDecimal.ZERO) == 0) {
             return this.outputControl.getDuty();
         }
 
         // Calculate the error
-        BigDecimal error = pid.getSetPoint().subtract(avgTemp);
+        PIDSettings heatSettings = pid.getSettings(HEAT);
+        PIDSettings coolSettings = pid.getSettings(COOL);
 
-        if ((this.totalError.add(error).multiply(
-                this.integralFactor).compareTo(new BigDecimal(100)) < 0)
-                && (this.totalError.add(error).multiply(
-                this.integralFactor).compareTo(new BigDecimal(0)) > 0)) {
-            this.totalError = this.totalError.add(error);
+        BigDecimal error = pid.getSetPoint().subtract(avgTemp);
+        BigDecimal output;
+        if (!isNullOrEmpty(heatSettings.getGPIO())) {
+            output = calculate(dt, error, heatSettings);
+        } else if (!isNullOrEmpty(coolSettings.getGPIO())) {
+            output = calculate(dt, error, coolSettings);
+        } else {
+            output = BigDecimal.ZERO;
         }
 
-        PIDSettings heatSettings = pid.getSettings(HEAT);
-        this.derivativeFactor = heatSettings.getProportional().multiply(error)
-                .add(heatSettings.getIntegral().multiply(this.totalError))
-                .add(heatSettings.getDerivative().multiply(error.subtract(this.previousError)));
-
-        BrewServer.LOG.info("DT: " + dt + " Error: " + this.errorFactor
-                + " integral: " + this.integralFactor
-                + " derivative: " + this.derivativeFactor);
-
-        BigDecimal output = heatSettings.getProportional().multiply(error)
-                .add(heatSettings.getIntegral().multiply(this.integralFactor))
-                .add(heatSettings.getDerivative().multiply(this.derivativeFactor));
-
-        this.previousError = error;
-
+        // If we're below 0 but there's no cooling, turn off.
         if (output.compareTo(BigDecimal.ZERO) < 0
-                && (pid.getCoolGPIO() == null)) {
+                && (pid.getSettings(COOL).getGPIO() == null)) {
             output = BigDecimal.ZERO;
+            // If we're above 0 but there's no heating, turn off.
         } else if (output.compareTo(BigDecimal.ZERO) > 0
-                && (pid.getHeatGPIO() == null)) {
+                && (pid.getSettings(HEAT).getGPIO() == null)) {
             output = BigDecimal.ZERO;
         }
 
@@ -299,7 +280,30 @@ class PIDRunner implements Runnable {
         }
 
         this.previousTime = this.currentTime;
+        this.previousError = output;
         return output;
+    }
+
+    public BigDecimal calculate(BigDecimal timeDiff, BigDecimal error, PIDSettings pidSettings) {
+        this.totalError = this.previousError.add(error.multiply(timeDiff));
+
+        BigDecimal currentError = error.subtract(this.previousError).divide(timeDiff, MathContext.DECIMAL32);
+
+        // proportional
+        BigDecimal proportionalOut = pidSettings.getProportional().multiply(error);
+        BigDecimal integralOut = pidSettings.getIntegral().multiply(this.totalError);
+        BigDecimal derivativeOut = pidSettings.getDerivative().multiply(currentError);
+
+        return proportionalOut.add(integralOut).add(derivativeOut);
+    }
+
+    BigDecimal calculateTimeDiff() {
+        this.currentTime = new BigDecimal(System.currentTimeMillis());
+        if (this.previousTime.compareTo(BigDecimal.ZERO) == 0) {
+            this.previousTime = this.currentTime;
+        }
+        return MathUtil.divide(
+                this.currentTime.subtract(this.previousTime), this.THOUSAND);
     }
 
     /**
@@ -317,11 +321,15 @@ class PIDRunner implements Runnable {
         }
     }
 
+    private List<BigDecimal> getTempList() {
+        return this.tempList;
+    }
+
     /**
      * @return Calculate the average of the current temp list
      */
     private BigDecimal calcAverage() {
-        int size = this.tempList.size();
+        int size = getTempList().size();
 
         if (size == 0) {
             return new BigDecimal(-999.0);
@@ -357,17 +365,17 @@ class PIDRunner implements Runnable {
         } catch (ArithmeticException e) {
             BrewServer.LOG.warning(e.getMessage());
         }
-        PID pid = (PID) this.temp;
+        PID pid = (PID) getTemp();
         BigDecimal minTempF = pid.getMin();
         BigDecimal maxTempF = pid.getMax();
 
-        if (this.temp.getScale().equalsIgnoreCase("C")) {
+        if (pid.getScale().equalsIgnoreCase("C")) {
             minTempF = Temp.cToF(minTempF);
             maxTempF = Temp.cToF(maxTempF);
         }
         BrewServer.LOG.info("Checking current temp against " + minTempF + " and " + maxTempF);
-        String state = "Min: " + minTempF + " (" + this.temp.getTemp() + ") " + maxTempF;
-        if (this.temp.getTempF().compareTo(minTempF) < 0) {
+        String state = "Min: " + minTempF + " (" + pid.getTemp() + ") " + maxTempF;
+        if (pid.getTempF().compareTo(minTempF) < 0) {
 
             if (this.hasValidHeater()
                     && pid.getDuty().compareTo(new BigDecimal(100)) != 0
@@ -383,7 +391,7 @@ class PIDRunner implements Runnable {
                 this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                 pid.setDuty(new BigDecimal(0));
             }
-        } else if (this.temp.getTempF().compareTo(maxTempF) >= 0) {
+        } else if (pid.getTempF().compareTo(maxTempF) >= 0) {
             // TimeDiff is now in minutes
             // Is the cooling output on?
             if (this.hasValidCooler()
@@ -402,22 +410,22 @@ class PIDRunner implements Runnable {
                 this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                 pid.setDuty(BigDecimal.ZERO);
             }
-        } else if (this.temp.getTempF().compareTo(minTempF) >= 0 && this.temp.getTempF().compareTo(maxTempF) <= 0
+        } else if (pid.getTempF().compareTo(minTempF) >= 0 && pid.getTempF().compareTo(maxTempF) <= 0
                 && pid.getDuty().compareTo(new BigDecimal(0)) != 0
                 && this.minTimePassed(state)) {
             this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
             pid.setDuty(BigDecimal.ZERO);
         } else {
-            BrewServer.LOG.info("Min: " + minTempF + " (" + this.temp.getTempF() + ") " + maxTempF);
+            BrewServer.LOG.info("Min: " + minTempF + " (" + pid.getTempF() + ") " + maxTempF);
         }
     }
 
     private boolean minTimePassed(String direction) {
-        PID pid = (PID) this.temp;
+        PID pid = (PID) getTemp();
         if (this.timeDiff.compareTo(pid.getMin()) <= 0) {
             BigDecimal remaining = pid.getMin().subtract(this.timeDiff);
             if (remaining.compareTo(new BigDecimal(10.0 / 60.0)) >= 0) {
-                this.temp.currentError =
+                pid.currentError =
                         "Waiting for minimum time before changing outputs,"
                                 + " less than "
                                 + remaining.setScale(0, BigDecimal.ROUND_UP)
@@ -426,8 +434,8 @@ class PIDRunner implements Runnable {
             }
             return false;
         } else {
-            if (this.temp.currentError == null || this.temp.currentError.startsWith("Waiting for minimum")) {
-                this.temp.currentError = "";
+            if (pid.currentError == null || pid.currentError.startsWith("Waiting for minimum")) {
+                pid.currentError = "";
             }
             return true;
         }

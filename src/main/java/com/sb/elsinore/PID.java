@@ -342,10 +342,6 @@ public class PID extends Temp {
     }
 
     //PRIVATE ///
-    /**
-     * Store the previous timestamp for the update.
-     */
-    private BigDecimal previousTime = new BigDecimal(0);
 
     /**
      * The GPIO String values.
