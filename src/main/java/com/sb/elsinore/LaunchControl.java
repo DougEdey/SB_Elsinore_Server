@@ -111,6 +111,11 @@ public class LaunchControl {
     /* public fields to hold data for various functions */
 
     /**
+     * The Default scale to be used.
+     */
+    public static String scale = "F";
+
+    /**
      * One Wire File System Connection.
      */
     private OwfsConnection owfsConnection = null;
