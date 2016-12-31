@@ -1,6 +1,5 @@
 package com.sb.elsinore;
 
-import Cosm.*;
 import com.sb.common.CollectionsUtil;
 import com.sb.elsinore.devices.I2CDevice;
 import com.sb.elsinore.inputs.PhSensor;
@@ -148,18 +147,6 @@ public class LaunchControl {
     public static StatusRecorder recorder = null;
 
     /* public fields to hold data for various functions */
-    /**
-     * COSM stuff, probably unused by most people.
-     */
-    public static Cosm cosm = null;
-    /**
-     * The actual feed that's in use by COSM.
-     */
-    public static Feed cosmFeed = null;
-    /**
-     * The list of available datastreams from COSM.
-     */
-    public static Datastream[] cosmStreams = null;
 
     /**
      * The Default scale to be used.
@@ -430,97 +417,6 @@ public class LaunchControl {
         LaunchControl.m_restore = restore;
     }
 
-    /************
-     * Start the COSM Connection.
-     *
-     * @param apiKey
-     *            User API Key from COSM
-     * @param feedID
-     *            The FeedID to get
-     */
-    public void startCosm(final String apiKey, final int feedID) {
-        BrewServer.LOG.info("API: " + apiKey + " Feed: " + feedID);
-        cosm = new Cosm(apiKey);
-
-        // get the data feed
-        try {
-            cosmFeed = cosm.getFeed(feedID, true);
-            BrewServer.LOG.info("Got " + cosmFeed.getTitle());
-        } catch (CosmException e) {
-            BrewServer.LOG.warning("Couldn't get the feed: " + e.getMessage());
-            return;
-        }
-
-        // get the list of feeds
-        cosmStreams = cosmFeed.getDatastreams();
-    }
-
-    /*****
-     * Create an image from a COSM Feed.
-     *
-     * @param startDate
-     *            The start date to get the image from
-     * @param endDate
-     *            The end date to get the image from
-     * @return A string indicating the image status
-     */
-    public String getCosmImages(final String startDate, final String endDate) {
-        try {
-            if (cosmFeed != null) {
-                for (Temp t : tempList) {
-                    Datastream tData = findDatastream(t.getName());
-                    if (tData != null) {
-                        if (startDate == null || endDate == null) {
-                            cosm.getDatastreamImage(cosmFeed.getId(),
-                                    t.getName());
-                        } else {
-                            cosm.getDatastreamImage(cosmFeed.getId(),
-                                    t.getName(), startDate, endDate);
-                        }
-                    }
-                }
-            }
-
-        } catch (CosmException e) {
-            return "Could not get the images";
-        }
-
-        return "Grabbed images";
-    }
-
-    /*********
-     * Get the XML from a COSM feed.
-     *
-     * @param startDate
-     *            The startdate to get data from
-     * @param endDate
-     *            The endDate to get data to.
-     * @return Returns the XML for the COSM Feed
-     */
-    public String getCosmXML(final String startDate, final String endDate) {
-        try {
-            if (cosmFeed != null) {
-                for (Temp t : tempList) {
-                    Datastream tData = findDatastream(t.getName());
-                    if (tData != null) {
-                        if (startDate == null || endDate == null) {
-                            cosm.getDatastreamXML(cosmFeed.getId(),
-                                    t.getName());
-                        } else {
-                            cosm.getDatastreamXML(cosmFeed.getId(),
-                                    t.getName(), startDate, endDate);
-                        }
-                    }
-                }
-            }
-
-        } catch (CosmException e) {
-            return "Could not get the images";
-        }
-
-        return "Grabbed images";
-    }
-
     /******
      * Get the JSON Output String. This is the current Status of the PIDs,
      * Temps, Switches, etc...
@@ -576,27 +472,6 @@ public class LaunchControl {
 
             // Add the JSON object with the PID Name
             vesselJSON.add(tJSON);
-
-            // update COSM
-            if (cosmFeed != null) {
-                Datastream tData = findDatastream(t.getName());
-                if (tData != null) {
-                    tData.setCurrentValue(t.getTemp().toString());
-                    Unit tUnit = new Unit();
-                    tUnit.setType("temp");
-                    tUnit.setSymbol(t.getScale());
-                    tUnit.setLabel("temperature");
-                    tData.setUnit(tUnit);
-                    try {
-                        cosm.updateDatastream(cosmFeed.getId(), t.getName(),
-                                tData);
-                    } catch (CosmException e) {
-                        BrewServer.LOG.info("Failed to update datastream: "
-                                + e.getMessage());
-                    }
-                }
-
-            }
 
             if (t.getTriggerControl() != null
                     && t.getTriggerControl().triggerCount() > 0) {
@@ -742,33 +617,6 @@ public class LaunchControl {
 
             StatusRecorder.THRESHOLD = Double.parseDouble(getTextForElement(config, StatusRecorder.RECORDER_DIFF, "0.15"));
             StatusRecorder.SLEEP = Long.parseLong(getTextForElement(config, StatusRecorder.RECORDER_TIME, "5000"));
-
-            String cosmAPIKey;
-            Integer cosmFeedID;
-
-            // Check for the COSM Feed details
-            cosmAPIKey = getTextForElement(config, LaunchControl.COSM_API_KEY, null);
-
-            cosmFeedID = Integer.parseInt(getTextForElement(config, LaunchControl.COSM_FEED_ID, "0"));
-            
-            // Try PACHube if the Cosm fields don't exist
-            if (cosmAPIKey == null)
-            {
-                cosmAPIKey = getTextForElement(config, LaunchControl.PACHUBE, null);
-            }
-
-            if (cosmFeedID == 0) {
-                try {
-                    cosmFeedID = Integer.parseInt(getTextForElement(config, LaunchControl.PACHUBE_FEED_ID, "0"));
-                } catch (NumberFormatException | NullPointerException e) {
-                    cosmFeedID = null;
-                }
-
-            }
-
-            if (cosmAPIKey != null && cosmFeedID != null) {
-                startCosm(cosmAPIKey, cosmFeedID);
-            }
 
             // Check for an OWFS configuration
             try {
@@ -1102,53 +950,6 @@ public class LaunchControl {
         }
 
         return tTemp;
-    }
-
-    /******
-     * Search for a Datastream in cosm based on a tag.
-     *
-     * @param tag
-     *            The tag to search for
-     * @return The found Datastream, or null if it doesn't find anything
-     */
-    public static Datastream findDatastream(final String tag) {
-        // iterate the list by tag
-        List<Datastream> cList = Arrays.asList(cosmStreams);
-        Iterator<Datastream> iterator = cList.iterator();
-        Datastream tData;
-        while (iterator.hasNext()) {
-            // Iteratre the datastreams
-            tData = iterator.next();
-
-            if (tData.getId().equalsIgnoreCase(tag)) {
-                return tData;
-            }
-        }
-
-        // couldn't find the tag, lets add it
-        tData = new Datastream();
-        // always setup for Fahrenheit
-
-        BrewServer.LOG.info("Creating new feed");
-        List<String> lTags = new ArrayList<>();
-
-        lTags.add("Elsinore");
-        lTags.add("temperature");
-
-        String[] aTags = new String[lTags.size()];
-        lTags.toArray(aTags);
-
-        tData.setTags(aTags);
-        tData.setId(tag);
-        try {
-            cosm.createDatastream(cosmFeed.getId(), tData);
-        } catch (CosmException e) {
-            BrewServer.LOG.info("Failed to create stream:" + e.getMessage()
-                    + " - " + cosmFeed.getId());
-
-            return null;
-        }
-        return tData;
     }
 
     /******

@@ -12,3 +12,5 @@ bin
 
 # Remove Idea directory
 .idea/
+.gradle/
+build/

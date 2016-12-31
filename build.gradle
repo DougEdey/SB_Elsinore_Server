@@ -16,17 +16,18 @@ repositories {
      mavenLocal()
      maven { url "http://repo.maven.apache.org/maven2" }
 }
+
 dependencies {
     compile(group: 'commons-logging', name: 'commons-logging', version:'1.1.1') {
-exclude(module: 'logkit')
-exclude(module: 'avalon-framework')
-exclude(module: 'servlet-api')
+		exclude(module: 'logkit')
+		exclude(module: 'avalon-framework')
+		exclude(module: 'servlet-api')
     }
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.2'
     compile group: 'org.ini4j', name: 'ini4j', version:'0.5.2'
     compile group: 'joda-time', name: 'joda-time', version:'2.2'
     compile(group: 'com.googlecode.json-simple', name: 'json-simple', version:'1.1.1') {
-exclude(module: 'junit')
+		exclude(module: 'junit')
     }
     compile group: 'jGPIO', name: 'jGPIO', version:'0.0.7'
     compile group: 'net.java.dev.jna', name: 'jna', version:'4.1.0'

@@ -80,11 +80,11 @@ public class TriggerTest {
         System.out.println("Checking complete");
         TriggerInterface triggerInterface = mTriggerControl.getTrigger(0);
         assert(triggerInterface instanceof WaitTrigger);
-        assert("First".equals(((WaitTrigger) triggerInterface).getNote()));
+        assertEquals("First", ((WaitTrigger) triggerInterface).getNote());
 
         triggerInterface = mTriggerControl.getTrigger(2);
         assert(triggerInterface instanceof WaitTrigger);
-        assert("Third".equals(((WaitTrigger) triggerInterface).getNote()));
+        assertEquals("Third", ((WaitTrigger) triggerInterface).getNote());
     }
 
     public void addTrigger(String m, String s, String n)
