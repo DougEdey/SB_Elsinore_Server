@@ -32,13 +32,11 @@ public final class OutputControl implements Runnable {
 
     /**
      * Constructor for a heat only pin.
-     * @param aName Name of this instance.
-     * @param fGPIO the heating GPIO pin.
-     * @param cycleTime the duty time for the heating output.
+     * @param name Name of this instance.
+     * @param settings The Pid Settings to created the heater output for
      */
    public OutputControl(final String name, PIDSettings settings) {
         heater = new OutputDevice(name, settings);
-
    }
 
    /**

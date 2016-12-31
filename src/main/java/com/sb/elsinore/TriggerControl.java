@@ -543,11 +543,6 @@ public class TriggerControl implements Runnable {
     }
 
     public void sortTriggers() {
-        this.triggerList.sort(new Comparator<TriggerInterface>() {
-            @Override
-            public int compare(TriggerInterface o1, TriggerInterface o2) {
-                return o1.getPosition().compareTo(o2.getPosition());
-            }
-        });
+        this.triggerList.sort(Comparator.comparing(TriggerInterface::getPosition));
     }
 }

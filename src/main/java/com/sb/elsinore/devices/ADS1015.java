@@ -93,8 +93,8 @@ public int ADS1015_REG_POINTER_MASK        = (0x03);
 
     /**
      * Read a single value from an ADS1015 device.
-     * @param channel
-     * @return
+     * @param channel The channel number to read on the Analogue input
+     * @return The float value read
      */
     public float readValue(int channel)
     {

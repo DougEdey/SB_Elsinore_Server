@@ -174,14 +174,9 @@ public abstract class I2CDevice {
         {
             ArrayList<String> list = new ArrayList<>();
             File devFile = new File("/dev/");
-            for(File f: devFile.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File file, String name) {
-                    return name.startsWith("i2c-");
-                }
-            }))
-            {
-                list.add(f.getName());
+            if (devFile.isDirectory()) {
+                File[] array = devFile.listFiles((file, name) -> name != null && name.startsWith("i2c-"));
+                Arrays.stream(array).forEach(f -> list.add(f.getName()));
             }
             available_devices = new String[list.size()];
             available_devices = list.toArray(available_devices);

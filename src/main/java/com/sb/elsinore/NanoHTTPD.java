@@ -678,7 +678,7 @@ public abstract class NanoHTTPD {
                 outputStream.write(buff, 0, read);
                 outputStream.write(CRLF);
             }
-            outputStream.write(String.format("0\r\n\r\n").getBytes());
+            outputStream.write("0\r\n\r\n".getBytes());
         }
 
         private void sendAsFixedLength(OutputStream outputStream, PrintWriter pw) throws IOException {
@@ -819,7 +819,7 @@ public abstract class NanoHTTPD {
 
         /**
          * Adds the files in the request body to the files map.
-         * @arg files - map to modify
+         * @param files - map to modify
          */
         void parseBody(Map<String, String> files) throws IOException, ResponseException;
     }
@@ -848,7 +848,7 @@ public abstract class NanoHTTPD {
             this.tempFileManager = tempFileManager;
             this.inputStream = inputStream;
             this.outputStream = outputStream;
-            String remoteIp = inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() ? "127.0.0.1" : inetAddress.getHostAddress().toString();
+            String remoteIp = inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() ? "127.0.0.1" : inetAddress.getHostAddress();
             headers = new HashMap<String, String>();
 
             headers.put("remote-addr", remoteIp);

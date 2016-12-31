@@ -80,19 +80,19 @@ public class Note {
 		    StringBuffer sb = new StringBuffer();
 		    sb.append( "    <ITEM>\n" );
 		    SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");		
-		    sb.append( "      <DATE>"+df.format(getDate())+"</DATE>\n" );
-		    sb.append( "      <TYPE>"+getType()+"</TYPE>\n" );
-		    sb.append( "      <NOTE>"+getNote()+"</NOTE>\n" );
+		    sb.append("      <DATE>").append(df.format(getDate())).append("</DATE>\n");
+		    sb.append("      <TYPE>").append(getType()).append("</TYPE>\n");
+		    sb.append("      <NOTE>").append(getNote()).append("</NOTE>\n");
 		    sb.append( "    </ITEM>\n" );
 		    return sb.toString();
 	}
 	
 	public String toString(){
 		StringBuffer sb = new StringBuffer();
-	    sb.append( getType()+": " );
+	    sb.append(getType()).append(": ");
 	    sb.append( getNote() );
 	    SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");		
-	    sb.append( " ("+df.format(getDate())+")\n" );
+	    sb.append(" (").append(df.format(getDate())).append(")\n");
 	    return sb.toString();
 	}
 	

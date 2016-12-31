@@ -1,3 +1,9 @@
+package ca.strangebrew.recipe;
+
+import com.sb.common.SBStringUtils;
+import com.sb.elsinore.BrewServer;
+
+import javax.annotation.Nonnull;
 /**
  * $Id: Hop.java,v 1.17 2012/06/02 19:40:58 dougedey Exp $
  * Created on Oct 5, 2004
@@ -5,14 +11,6 @@
  * Base class for hops.  This object doesn't do much except hold data and
  * get/set data.
  */
-
-package ca.strangebrew.recipe;
-
-import com.sb.common.SBStringUtils;
-import com.sb.elsinore.BrewServer;
-
-import javax.annotation.Nonnull;
-
 public class Hop extends Ingredient implements Comparable<Ingredient> {
 	private double alpha;
 	private String add;

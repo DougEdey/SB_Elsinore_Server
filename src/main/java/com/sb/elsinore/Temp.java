@@ -159,35 +159,6 @@ public class Temp extends Device implements Comparable<Temp> {
     }
 
     /**
-     * The Runnable loop.
-
-     public void run() {
-
-     while (keepAlive) {
-     if (updateTemp().equals(ERROR_TEMP)) {
-     if (fProbe != null && fProbe.equals(
-     "/sys/class/thermal/thermal_zone0/temp")) {
-     return;
-     }
-     // Uh(oh no file found, disable output to prevent logging floods
-
-     } else {
-     loggingOn = true;
-     }
-
-     if (volumeMeasurement) {
-     updateVolume();
-     }
-
-     try {
-     Thread.sleep(500);
-     } catch (InterruptedException e) {
-     e.printStackTrace();
-     }
-     }
-     }
-     */
-    /**
      * @param n The name to set this Temp to.
      */
     public void setName(final String n) {

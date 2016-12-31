@@ -257,7 +257,7 @@ public class Style implements Comparable<Style> {
 		int indent = 0;
 		sb.append(" <style>\n");
 		// this is the BJCP style dtd:
-		sb.append("  <subcategory id=\"" + catNum + "\">");
+		sb.append("  <subcategory id=\"").append(catNum).append("\">");
 		indent = 4;
 		sb.append(SBStringUtils.xmlElement("name", name, indent));
 		sb.append(SBStringUtils.xmlElement("aroma", aroma, indent));
@@ -268,24 +268,24 @@ public class Style implements Comparable<Style> {
 		sb.append(SBStringUtils.xmlElement("comments", comments, indent));
 		sb.append(SBStringUtils.xmlElement("ingredients", ingredients, indent));
 		sb.append(" <stats>\n");
-		sb.append("  <og flexible=\"" + ogFlexible + "\">\n");
+		sb.append("  <og flexible=\"").append(ogFlexible).append("\">\n");
 		indent = 6;
 		sb.append(SBStringUtils.xmlElement("low", "" + ogLow, indent));
 		sb.append(SBStringUtils.xmlElement("high", "" + ogHigh, indent));
 		sb.append("  </og>\n");
-		sb.append("  <fg flexible=\"" + fgFlexible + "\">\n");
+		sb.append("  <fg flexible=\"").append(fgFlexible).append("\">\n");
 		sb.append(SBStringUtils.xmlElement("low", "" + fgLow, indent));
 		sb.append(SBStringUtils.xmlElement("high", "" + fgHigh, indent));
 		sb.append("  </fg>\n");
-		sb.append("  <ibu flexible=\"" + ibuFlexible + "\">\n");
+		sb.append(String.format("  <ibu flexible=\"%s\">\n", ibuFlexible));
 		sb.append(SBStringUtils.xmlElement("low", "" + ibuLow, indent));
 		sb.append(SBStringUtils.xmlElement("high", "" + ibuHigh, indent));
 		sb.append("  </ibu>\n");
-		sb.append("  <srm flexible=\"" + srmFlexible + "\">\n");
+		sb.append("  <srm flexible=\"").append(srmFlexible).append("\">\n");
 		sb.append(SBStringUtils.xmlElement("low", "" + srmLow, indent));
 		sb.append(SBStringUtils.xmlElement("high", "" + srmHigh, indent));
 		sb.append("  </srm>\n");
-		sb.append("  <abv flexible=\"" + alcFlexible + "\">\n");
+		sb.append("  <abv flexible=\"").append(alcFlexible).append("\">\n");
 		sb.append(SBStringUtils.xmlElement("low", "" + alcLow, indent));
 		sb.append(SBStringUtils.xmlElement("high", "" + alcHigh, indent));
 		sb.append("  </abv>\n");
@@ -299,21 +299,21 @@ public class Style implements Comparable<Style> {
 
 	public String toText() {
 		StringBuffer sb = new StringBuffer();
-		sb.append("Name: " + catNum + ":" + getName() + "\n");
-		sb.append("Category: " + category + "\n");
-		sb.append("Class: " + type + "\n");
-		sb.append("OG: " + ogLow + "-" + ogHigh + "\n");
-		sb.append("IBU: " + ibuLow + "-" + ibuHigh + "\n");
-		sb.append("SRM: " + srmLow + "-" + srmHigh + "\n");
-		sb.append("Alc: " + alcLow + "-" + alcHigh + "\n");
-		sb.append("Aroma: " + aroma + "\n");
-		sb.append("Appearance: " + appearance + "\n");
-		sb.append("Flavour: " + flavour + "\n");
-		sb.append("Mouthfeel: " + mouthfeel + "\n");
-		sb.append("Impression: " + impression + "\n");
-		sb.append("Comments: " + comments + "\n");
-		sb.append("Ingredients: " + ingredients + "\n");
-		sb.append("Examples: " + examples + "\n");
+		sb.append("Name: ").append(catNum).append(":").append(getName()).append("\n");
+		sb.append("Category: ").append(category).append("\n");
+		sb.append("Class: ").append(type).append("\n");
+		sb.append("OG: ").append(ogLow).append("-").append(ogHigh).append("\n");
+		sb.append("IBU: ").append(ibuLow).append("-").append(ibuHigh).append("\n");
+		sb.append("SRM: ").append(srmLow).append("-").append(srmHigh).append("\n");
+		sb.append("Alc: ").append(alcLow).append("-").append(alcHigh).append("\n");
+		sb.append("Aroma: ").append(aroma).append("\n");
+		sb.append("Appearance: ").append(appearance).append("\n");
+		sb.append("Flavour: ").append(flavour).append("\n");
+		sb.append("Mouthfeel: ").append(mouthfeel).append("\n");
+		sb.append("Impression: ").append(impression).append("\n");
+		sb.append("Comments: ").append(comments).append("\n");
+		sb.append("Ingredients: ").append(ingredients).append("\n");
+		sb.append("Examples: ").append(examples).append("\n");
 		return sb.toString();
 	}
 

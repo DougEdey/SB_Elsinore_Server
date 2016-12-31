@@ -81,7 +81,7 @@ public class Yeast extends Ingredient {
 
     /**
      * Returns the min temperature of this Yeast in C.
-     * @return
+     * @return The minimum fermentation temperature of this yeast
      */
     public double getMinTemperature() {
         if (this.minTemperatureUnit != null && this.minTemperatureUnit.equals("F")) {
@@ -112,7 +112,7 @@ public class Yeast extends Ingredient {
 
     /**
      * Returns the max temperature of this Yeast in C.
-     * @return
+     * @return The maximum fermentation temperature of this yeast
      */
     public double getMaxTemperature() {
         if (this.maxTemperatureUnit != null && this.maxTemperatureUnit.equals("F")) {

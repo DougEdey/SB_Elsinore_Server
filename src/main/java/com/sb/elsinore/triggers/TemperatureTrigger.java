@@ -288,7 +288,7 @@ public class TemperatureTrigger implements TriggerInterface {
     /**
      * Deactivate this TemperatureTrigger step.
      *
-     * @param fromUI
+     * @param fromUI If this update came from the UI
      */
     @Override
     public final void deactivate(boolean fromUI) {

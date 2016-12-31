@@ -134,9 +134,9 @@ public class RecipeViewForm implements Renderable {
 
     /****
      * Render the hops values for a HTML form
-     * @param html
-     * @return
-     * @throws IOException
+     * @param html The HTML Canvas to add the values to
+     * @return The Updated HTML Canvas
+     * @throws IOException If we can't add the info
      */
 
     public HtmlCanvas renderHops(HtmlCanvas html) throws IOException

@@ -476,8 +476,8 @@ public class BeerXMLReader {
      * Parse the yeasts.
      * @param recipe The new Recipe.
      * @param yeasts The Yeast List.
-     * @throws XPathException
-     * @throws NumberFormatException
+     * @throws XPathException If we couldn't find the a value we expect
+     * @throws NumberFormatException If the yeast numbers are not numbers
      */
     private void parseYeasts(Recipe recipe, NodeList yeasts)
             throws XPathException, NumberFormatException {

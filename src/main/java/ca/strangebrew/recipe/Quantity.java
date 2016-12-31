@@ -157,7 +157,7 @@ public class Quantity {
 		type = t;
 
 		if (isAbrv(s)){
-			unit = getUnitFromAbrv(t, s);;
+			unit = getUnitFromAbrv(t, s);
 			abrv = s;
 		}
 		// it's a unit

@@ -1,26 +1,3 @@
-/*
- * $Id: Recipe.java,v 1.74 2012/06/03 19:29:17 dougedey Exp $
- * Created on Oct 4, 2004 @author aavis recipe class
- */
-
-/**
- *  StrangeBrew Java - a homebrew recipe calculator
- Copyright (C) 2005  Drew Avis
-
- This program is free software; you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation; either version 2 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program; if not, write to the Free Software
- Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- */
 
 package ca.strangebrew.recipe;
 
@@ -35,6 +12,26 @@ import com.sb.elsinore.triggers.WaitTrigger;
 import java.text.MessageFormat;
 import java.util.*;
 
+
+/**
+ * StrangeBrew Java - a homebrew recipe calculator
+ * Copyright (C) 2005  Drew Avis
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
 @SuppressWarnings("unused")
 public class Recipe {
 
@@ -900,21 +897,7 @@ public class Recipe {
 	public void setMaltAmount(final int i, final double a, final boolean sort) {
 		isDirty = true;
 		fermentables.get(i).setAmount(a);
-		Comparator<Fermentable> c = new Comparator<Fermentable>()  {
-			public int compare(Fermentable h1, Fermentable h2){
-				if(h1.getAmountAs(Quantity.LB) > h2.getAmountAs(Quantity.LB))
-					return 1;
-				if(h1.getAmountAs(Quantity.LB) < h2.getAmountAs(Quantity.LB))
-					return -1;
-				if(h1.getAmountAs(Quantity.LB) == h2.getAmountAs(Quantity.LB))
-					// same amount, check later
-					return 0;
-				return 0;
-				
-			}
-		
-		};
-	
+
 		if (sort) {
 		    calcMaltTotals();
 		}
@@ -1827,16 +1810,14 @@ public class Recipe {
 	/**
 	 * Implement a local comparator.
 	 */
-	Comparator<Fermentable> fermCompare = new Comparator<Fermentable>()  {
-        public int compare(Fermentable h1, Fermentable h2){
-            if (h1.getAmountAs(Quantity.LB) > h2.getAmountAs(Quantity.LB))
-                return 1;
-            if (h1.getAmountAs(Quantity.LB) < h2.getAmountAs(Quantity.LB))
-                return -1;
-            if (h1.getAmountAs(Quantity.LB) == h2.getAmountAs(Quantity.LB))
-                return 0;
+	Comparator<Fermentable> fermCompare = (h1, h2) -> {
+        if (h1.getAmountAs(Quantity.LB) > h2.getAmountAs(Quantity.LB))
+            return 1;
+        if (h1.getAmountAs(Quantity.LB) < h2.getAmountAs(Quantity.LB))
+            return -1;
+        if (h1.getAmountAs(Quantity.LB) == h2.getAmountAs(Quantity.LB))
             return 0;
-        }
+        return 0;
     };
 
     public List<Yeast> getYeasts() {

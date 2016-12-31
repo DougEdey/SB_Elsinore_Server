@@ -32,17 +32,16 @@ public class SBStringUtils {
 	 */
 	public static String multiLineToolTip(int len, String input) {
 		String s = "";
-		int length = len;
 		if (input == null)
 			return "";
-		if (input.length() < length)
+		if (input.length() < len)
 			return input;
 
 		int i = 0;
 		int lastSpace = 0;
 
-		while (i + length < input.length()) {
-			String temp = input.substring(i, i + length);
+		while (i + len < input.length()) {
+			String temp = input.substring(i, i + len);
 			lastSpace = temp.lastIndexOf(" ");
 			s += temp.substring(0, lastSpace) + "<br>";
 			i += lastSpace + 1;
@@ -149,9 +148,8 @@ public class SBStringUtils {
 				}
 			}
 		}
-		
-		String r = new String(buf);
-		return r;
+
+		return new String(buf);
 	}
 	
 	public static double round(double d, int decimalPlace){

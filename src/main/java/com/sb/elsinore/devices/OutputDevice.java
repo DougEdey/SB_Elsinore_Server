@@ -3,10 +3,8 @@ package com.sb.elsinore.devices;
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.PIDSettings;
 import com.sb.util.MathUtil;
-import com.sun.media.jfxmedia.logging.Logger;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
-import org.w3c.tidy.TidyMessage;
 
 import java.math.BigDecimal;
 import java.util.Observable;

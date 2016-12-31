@@ -300,7 +300,7 @@ public class BrewCalcs {
 
 		if (method == 1) {
 
-			int R = 0, G = 0, B = 0, A = aConst;
+			int R, G, B, A = aConst;
 
 			if (srm < 10) {
 				R = 255;

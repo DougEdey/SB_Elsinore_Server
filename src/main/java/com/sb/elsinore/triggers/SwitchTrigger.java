@@ -118,7 +118,7 @@ public class SwitchTrigger implements TriggerInterface {
     /**
      * Deactivate this step.
      *
-     * @param fromUI
+     * @param fromUI If this call came from the UI
      */
     @Override
     public final void deactivate(boolean fromUI) {
