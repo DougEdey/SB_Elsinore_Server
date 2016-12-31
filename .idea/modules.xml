@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Elsinore.iml" filepath="$PROJECT_DIR$/Elsinore.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Elsinore.iml" filepath="$PROJECT_DIR$/.idea/modules/Elsinore.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Elsinore_main.iml" filepath="$PROJECT_DIR$/.idea/modules/Elsinore_main.iml" group="Elsinore" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Elsinore_test.iml" filepath="$PROJECT_DIR$/.idea/modules/Elsinore_test.iml" group="Elsinore" />
     </modules>
   </component>
 </project>
