@@ -3,6 +3,11 @@ package com.sb.elsinore;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Observable;
 
@@ -12,7 +17,20 @@ import static com.sb.elsinore.UrlEndpoints.*;
  * Hosts the setting specific to a PID profile
  * Created by Douglas on 2016-05-15.
  */
-public class PIDSettings extends Observable {
+@Entity
+public class PIDSettings extends Observable implements Serializable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private int id;
+
+    public int getId() {
+        return this.id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public static final String DELAY = "delay";
 

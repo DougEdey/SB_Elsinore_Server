@@ -9,40 +9,61 @@ description = "Elsinore"
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
 
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.3.RELEASE")
+    }
+}
+apply plugin: 'org.springframework.boot'
 
 repositories {
-        
-     mavenLocal()
-     maven { url "http://repo.maven.apache.org/maven2" }
+    mavenLocal()
+    mavenCentral()
 }
 
+
 dependencies {
-    compile(group: 'com.google.code.gson', name: 'gson', version:'2.6.2')
-    compile(group: 'io.gsonfire', name: 'gson-fire', version:'1.7.2')
-    compile(group: 'commons-logging', name: 'commons-logging', version:'1.1.1') {
-		exclude(module: 'logkit')
-		exclude(module: 'avalon-framework')
-		exclude(module: 'servlet-api')
+    compile group: 'com.google.code.gson', name: 'gson', version: '2.6.2'
+    compile group: 'io.gsonfire', name: 'gson-fire', version: '1.7.2'
+
+    compile(group: 'commons-logging', name: 'commons-logging', version: '1.1.1') {
+        exclude(module: 'logkit')
+        exclude(module: 'avalon-framework')
+        exclude(module: 'servlet-api')
     }
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.2'
-    compile group: 'org.ini4j', name: 'ini4j', version:'0.5.2'
-    compile group: 'joda-time', name: 'joda-time', version:'2.2'
-    compile(group: 'com.googlecode.json-simple', name: 'json-simple', version:'1.1.1') {
-		exclude(module: 'junit')
+
+    compile("org.springframework.boot:spring-boot-starter-data-rest")
+    compile("org.springframework.boot:spring-boot-starter-data-jpa")
+    compile("org.springframework.boot:spring-boot-devtools")
+    compile("com.h2database:h2")
+    testCompile("org.springframework.boot:spring-boot-starter-test")
+
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.2'
+    compile group: 'org.ini4j', name: 'ini4j', version: '0.5.2'
+    compile group: 'joda-time', name: 'joda-time', version: '2.2'
+    compile(group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1') {
+        exclude(module: 'junit')
     }
-    compile group: 'jGPIO', name: 'jGPIO', version:'0.0.7'
-    compile group: 'net.java.dev.jna', name: 'jna', version:'4.1.0'
-    compile group: 'org.owfs', name: 'jowfsclient', version:'1.2.6'
-    compile group: 'commons-cli', name: 'commons-cli', version:'1.2'
-    compile group: 'org.apache.commons', name: 'commons-lang3', version:'3.3.2'
-    compile group: 'org.eclipse.osgi', name: 'org.eclipse.osgi', version:'3.7.1'
-    compile group: 'org.rendersnake', name: 'rendersnake', version:'1.9.0'
-    compile group: 'org.reflections', name: 'reflections', version:'0.9.9-RC1'
-    compile group: 'commons-io', name: 'commons-io', version:'2.4'
-    compile group: 'org.easymock', name: 'easymock', version:'3.2'
-    compile group: 'org.apache.tika', name: 'tika-core', version:'1.11'
-    testCompile group: 'junit', name: 'junit', version:'4.12'
-    testCompile group: 'org.powermock', name: 'powermock-module-junit4', version:'1.6.2'
-    testCompile group: 'org.powermock', name: 'powermock-api-mockito', version:'1.6.2'
+
+    compile group: 'jGPIO', name: 'jGPIO', version: '0.0.7'
+    compile group: 'net.java.dev.jna', name: 'jna', version: '4.1.0'
+    compile group: 'org.owfs', name: 'jowfsclient', version: '1.2.6'
+    compile group: 'commons-cli', name: 'commons-cli', version: '1.2'
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.2'
+    compile group: 'org.eclipse.osgi', name: 'org.eclipse.osgi', version: '3.7.1'
+    compile(group: 'org.rendersnake', name: 'rendersnake', version: '1.9.0') {
+        exclude(module: 'servlet-api')
+    }
+    compile group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
+    compile group: 'commons-io', name: 'commons-io', version: '2.4'
+    compile group: 'org.easymock', name: 'easymock', version: '3.2'
+    compile group: 'org.apache.tika', name: 'tika-core', version: '1.11'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile group: 'org.powermock', name: 'powermock-module-junit4', version: '1.6.2'
+    testCompile group: 'org.powermock', name: 'powermock-api-mockito', version: '1.6.2'
 }

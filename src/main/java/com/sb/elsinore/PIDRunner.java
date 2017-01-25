@@ -211,8 +211,8 @@ class PIDRunner implements Runnable {
             getTempList().add(pid.getTemp());
             BigDecimal tempAvg = calcAverage();
             // we have the current temperature
-            BrewServer.LOG.info(pid.getMode());
-            switch (pid.getMode()) {
+            BrewServer.LOG.info(pid.getPidMode());
+            switch (pid.getPidMode()) {
                 case "auto":
                     pid.setDuty(calculate(tempAvg));
                     BrewServer.LOG.info(
@@ -230,7 +230,7 @@ class PIDRunner implements Runnable {
                     this.outputThread.interrupt();
                     break;
             }
-            BrewServer.LOG.info(pid.getMode() + ": " + pid.getName() + " status: "
+            BrewServer.LOG.info(pid.getPidMode() + ": " + pid.getName() + " status: "
                     + this.tempF + " duty cycle: "
                     + this.outputControl.getDuty());
         }
@@ -366,8 +366,8 @@ class PIDRunner implements Runnable {
             BrewServer.LOG.warning(e.getMessage());
         }
         PID pid = (PID) getTemp();
-        BigDecimal minTempF = pid.getMin();
-        BigDecimal maxTempF = pid.getMax();
+        BigDecimal minTempF = pid.getMinTemp();
+        BigDecimal maxTempF = pid.getMaxTemp();
 
         if (pid.getScale().equalsIgnoreCase("C")) {
             minTempF = Temp.cToF(minTempF);
@@ -422,8 +422,8 @@ class PIDRunner implements Runnable {
 
     private boolean minTimePassed(String direction) {
         PID pid = (PID) getTemp();
-        if (this.timeDiff.compareTo(pid.getMin()) <= 0) {
-            BigDecimal remaining = pid.getMin().subtract(this.timeDiff);
+        if (this.timeDiff.compareTo(pid.getMinTemp()) <= 0) {
+            BigDecimal remaining = pid.getMinTemp().subtract(this.timeDiff);
             if (remaining.compareTo(new BigDecimal(10.0 / 60.0)) >= 0) {
                 pid.currentError =
                         "Waiting for minimum time before changing outputs,"

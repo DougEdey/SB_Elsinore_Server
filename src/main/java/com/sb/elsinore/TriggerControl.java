@@ -9,6 +9,7 @@ import org.rendersnake.HtmlCanvas;
 import org.rendersnake.tools.PrettyWriter;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -28,7 +29,7 @@ import static org.rendersnake.HtmlAttributesFactory.*;
  *
  */
 
-public class TriggerControl implements Runnable {
+public class TriggerControl implements Runnable, Serializable {
 
     public static final String NAME = "triggers";
     public static final String PID = "pid";

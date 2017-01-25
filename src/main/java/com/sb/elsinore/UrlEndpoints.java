@@ -934,7 +934,7 @@ public class UrlEndpoints {
             tPID.useHysteria();
         } else {
             LOG.info(mode + ":" + duty + ":" + setpoint);
-            tPID.setMode(mode);
+            tPID.setPidMode(mode);
             tPID.setDuty(duty);
             tPID.setTemp(setpoint);
             if (parms.containsKey(HEAT)) {

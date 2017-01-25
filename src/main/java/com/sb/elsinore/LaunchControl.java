@@ -8,12 +8,15 @@ import com.sb.elsinore.devices.I2CDevice;
 import com.sb.elsinore.inputs.PhSensor;
 import io.gsonfire.GsonFireBuilder;
 import jGPIO.InvalidGPIOException;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
 import org.owfs.jowfsclient.Enums.OwPersistence;
 import org.owfs.jowfsclient.OwfsConnection;
 import org.owfs.jowfsclient.OwfsConnectionConfig;
 import org.owfs.jowfsclient.OwfsConnectionFactory;
 import org.owfs.jowfsclient.OwfsException;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -42,6 +45,7 @@ import static com.sb.elsinore.UrlEndpoints.COOL;
  * @author doug
  */
 @SuppressWarnings("unused")
+@SpringBootApplication
 public class LaunchControl {
 
     private static boolean loadCompleted = false;
@@ -150,96 +154,96 @@ public class LaunchControl {
      */
     public static void main(final String... arguments) {
         BrewServer.LOG.info("Running Brewery Controller.");
+        SpringApplication.run(LaunchControl.class, arguments);
+//        int port = DEFAULT_PORT;
+//
+//        // Allow for the root directory to be overridden by environment variable
+//        // or set on the command line with the -root option
+//        String rootDir = System.getenv("ELSINORE_ROOT");
+//
+//        if (arguments.length > 0) {
+//            createOptions();
+//            CommandLineParser parser = new BasicParser();
+//            try {
+//                startupCommand = parser.parse(startupOptions, arguments);
+//
+//                // Do we need to print the help?
+//                if (startupCommand.hasOption("help")) {
+//                    HelpFormatter hF = new HelpFormatter();
+//                    hF.printHelp("java -jar Elsinore.jar", startupOptions);
+//                    return;
+//                }
+//
+//                // Check for a custom value
+//                if (startupCommand.hasOption("config")) {
+//                    configFileName = startupCommand.getOptionValue("config");
+//                }
+//
+//                if (startupCommand.hasOption("gpiodefinitions")) {
+//                    BrewServer.LOG.info("Setting property file to: "
+//                            + startupCommand.getOptionValue("gpiodefinitions"));
+//                    System.setProperty("gpiodefinitions",
+//                            startupCommand.getOptionValue("gpiodefinitions"));
+//                }
+//
+//                if (startupCommand.hasOption("port")) {
+//                    try {
+//                        port = Integer.parseInt(startupCommand
+//                                .getOptionValue("port"));
+//                    } catch (NumberFormatException e) {
+//                        BrewServer.LOG
+//                                .warning("Couldn't parse port value as an integer: "
+//                                        + startupCommand.getOptionValue("port"));
+//                        System.exit(-1);
+//                    }
+//                }
+//
+//                if (startupCommand.hasOption("d")) {
+//                    System.setProperty("debug", "INFO");
+//                }
+//
+//                if (startupCommand.hasOption("root")) {
+//                    rootDir = startupCommand.getOptionValue("root");
+//                }
+//
+//                if (startupCommand.hasOption("baseUser")) {
+//                    baseUser = startupCommand.getOptionValue("baseUser");
+//                }
+//
+//            } catch (ParseException e) {
+//                BrewServer.LOG.info("Error when parsing the command line");
+//                e.printStackTrace();
+//                return;
+//            }
+//        }
+//
+//        if (rootDir != null) {
+//            // Validate to make sure it's valid, otherwise things will go badly.
+//            File root = new File(rootDir);
+//            if (root.exists() && root.isDirectory()) {
+//                System.setProperty("root_override", rootDir);
+//            } else {
+//                BrewServer.LOG.warning("Invalid root directory provided: "
+//                        + rootDir);
+//                System.exit(-1);
+//            }
+//        }
+//
+//        Gson gson = getGsonParser();
 
-        int port = DEFAULT_PORT;
+//
+//        try {
+//            instance = gson.fromJson(new FileReader(configFileName), LaunchControl.class);
+//            instance.startup(port);
+//        } catch (Exception fnfe) {
+//            BrewServer.LOG.warning("Failed to load JSON");
+//            fnfe.printStackTrace();
+//        }
+//        if (instance == null) {
+//            instance = new LaunchControl(port);
+//        }
 
-        // Allow for the root directory to be overridden by environment variable
-        // or set on the command line with the -root option
-        String rootDir = System.getenv("ELSINORE_ROOT");
-
-        if (arguments.length > 0) {
-            createOptions();
-            CommandLineParser parser = new BasicParser();
-            try {
-                startupCommand = parser.parse(startupOptions, arguments);
-
-                // Do we need to print the help?
-                if (startupCommand.hasOption("help")) {
-                    HelpFormatter hF = new HelpFormatter();
-                    hF.printHelp("java -jar Elsinore.jar", startupOptions);
-                    return;
-                }
-
-                // Check for a custom value
-                if (startupCommand.hasOption("config")) {
-                    configFileName = startupCommand.getOptionValue("config");
-                }
-
-                if (startupCommand.hasOption("gpiodefinitions")) {
-                    BrewServer.LOG.info("Setting property file to: "
-                            + startupCommand.getOptionValue("gpiodefinitions"));
-                    System.setProperty("gpiodefinitions",
-                            startupCommand.getOptionValue("gpiodefinitions"));
-                }
-
-                if (startupCommand.hasOption("port")) {
-                    try {
-                        port = Integer.parseInt(startupCommand
-                                .getOptionValue("port"));
-                    } catch (NumberFormatException e) {
-                        BrewServer.LOG
-                                .warning("Couldn't parse port value as an integer: "
-                                        + startupCommand.getOptionValue("port"));
-                        System.exit(-1);
-                    }
-                }
-
-                if (startupCommand.hasOption("d")) {
-                    System.setProperty("debug", "INFO");
-                }
-
-                if (startupCommand.hasOption("root")) {
-                    rootDir = startupCommand.getOptionValue("root");
-                }
-
-                if (startupCommand.hasOption("baseUser")) {
-                    baseUser = startupCommand.getOptionValue("baseUser");
-                }
-
-            } catch (ParseException e) {
-                BrewServer.LOG.info("Error when parsing the command line");
-                e.printStackTrace();
-                return;
-            }
-        }
-
-        if (rootDir != null) {
-            // Validate to make sure it's valid, otherwise things will go badly.
-            File root = new File(rootDir);
-            if (root.exists() && root.isDirectory()) {
-                System.setProperty("root_override", rootDir);
-            } else {
-                BrewServer.LOG.warning("Invalid root directory provided: "
-                        + rootDir);
-                System.exit(-1);
-            }
-        }
-
-        Gson gson = getGsonParser();
-
-
-        try {
-            instance = gson.fromJson(new FileReader(configFileName), LaunchControl.class);
-            instance.startup(port);
-        } catch (Exception fnfe) {
-            BrewServer.LOG.warning("Failed to load JSON");
-            fnfe.printStackTrace();
-        }
-        if (instance == null) {
-            instance = new LaunchControl(port);
-        }
-
-        BrewServer.LOG.warning("Started LaunchControl: " + instance.toString());
+//        BrewServer.LOG.warning("Started LaunchControl: " + instance.toString());
     }
 
     /*******
@@ -276,6 +280,12 @@ public class LaunchControl {
         startupOptions.addOption("rdirectory",
                 StatusRecorder.DIRECTORY_PROPERTY, true,
                 "Set the recorder directory output, default: graph-data/");
+    }
+
+    public LaunchControl() {
+        instance = this;
+        createConfig();
+        startup(DEFAULT_PORT);
     }
 
     /**
@@ -338,19 +348,20 @@ public class LaunchControl {
         // Debug info before launching the BrewServer itself
         LaunchControl.loadCompleted = true;
         BrewServer.LOG.log(Level.INFO, "CONFIG READ COMPLETED***********");
+        return;
         /*
       The BrewServer runner object that'll be used.
      */
-        ServerRunner sRunner = new ServerRunner(BrewServer.class, this.systemSettings.server_port);
-        Thread sRunnerThread = new Thread(sRunner);
-        sRunnerThread.run();
-        sRunnerThread.setDaemon(false);
-        try {
-            sRunnerThread.join();
-        } catch (InterruptedException ie) {
-            BrewServer.LOG.warning("Shutdown initiated.");
-            ie.printStackTrace();
-        }
+//        ServerRunner sRunner = new ServerRunner(BrewServer.class, this.systemSettings.server_port);
+//        Thread sRunnerThread = new Thread(sRunner);
+//        sRunnerThread.run();
+//        sRunnerThread.setDaemon(false);
+//        try {
+//            sRunnerThread.join();
+//        } catch (InterruptedException ie) {
+//            BrewServer.LOG.warning("Shutdown initiated.");
+//            ie.printStackTrace();
+//        }
     }
 
     boolean isInitialized() {
@@ -1398,7 +1409,7 @@ public class LaunchControl {
                     // convert the target temp.
                     if (scale.equals("F")) {
                         p.setTemp(Temp.cToF(p.getSetPoint()));
-                        p.setHysteria(Temp.cToF(p.getMin()), Temp.cToF(p.getMax()), p.getMinTime());
+                        p.setHysteria(Temp.cToF(p.getMinTemp()), Temp.cToF(p.getMaxTemp()), p.getMinTime());
                     }
                 }
             }

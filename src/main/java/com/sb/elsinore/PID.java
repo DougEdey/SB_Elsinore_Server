@@ -5,6 +5,9 @@ import com.google.gson.annotations.SerializedName;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
 
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.Transient;
 import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,6 +19,8 @@ import static com.sb.elsinore.UrlEndpoints.*;
  *
  * @author Doug Edey
  */
+@Entity
+@DiscriminatorValue("P")
 public class PID extends Temp {
 
     public static final String TYPE = "PID";
@@ -24,6 +29,7 @@ public class PID extends Temp {
     public static final String AUTO = "auto";
     public static final String MANUAL = "manual";
     public static final String OFF = "off";
+
     @Expose
     @SerializedName(INVERTED)
     private boolean invertAux = false;
@@ -46,16 +52,17 @@ public class PID extends Temp {
     /* Hysteria Settings */
     @Expose
     @SerializedName(MAX)
-    private BigDecimal max = new BigDecimal(0);
+    private BigDecimal maxTemp = new BigDecimal(0);
     @Expose
     @SerializedName(MIN)
-    private BigDecimal min = new BigDecimal(0);
+    private BigDecimal minTemp = new BigDecimal(0);
     @Expose
     @SerializedName(TIME)
     private BigDecimal minTime = new BigDecimal(0);
 
     @Expose
     @SerializedName("aux")
+    @Transient
     private OutPin auxPin = null;
 
     /**
@@ -77,10 +84,10 @@ public class PID extends Temp {
      * @param gpio  The GPIO Pin to use.
      */
     public PID(String aName, String device, String gpio) {
-        super(aName, device);
-        this.type = TYPE;
+        this(aName, device);
+
         getSettings(HEAT).setGPIO(gpio);
-        this.mode = OFF;
+        this.pidMode = OFF;
     }
 
     /**
@@ -89,30 +96,29 @@ public class PID extends Temp {
      * @param aName The Name of this PID
      */
     public PID(String aName, String device) {
-        super(aName, device);
-        this.type = TYPE;
+        super(aName, device, TYPE);
     }
 
     /**
-     * Set the mode
+     * Set the pidMode
      *
-     * @param mode Must be "off", "auto", "manual", "hysteria"
+     * @param pidMode Must be "off", "auto", "manual", "hysteria"
      */
-    public void setMode(String mode) {
-        if (mode.equalsIgnoreCase(OFF)) {
-            this.mode = OFF;
+    public void setPidMode(String pidMode) {
+        if (pidMode.equalsIgnoreCase(OFF)) {
+            this.pidMode = OFF;
             return;
         }
-        if (mode.equalsIgnoreCase(MANUAL)) {
-            this.mode = MANUAL;
+        if (pidMode.equalsIgnoreCase(MANUAL)) {
+            this.pidMode = MANUAL;
             return;
         }
-        if (mode.equalsIgnoreCase(AUTO)) {
-            this.mode = AUTO;
+        if (pidMode.equalsIgnoreCase(AUTO)) {
+            this.pidMode = AUTO;
             return;
         }
-        if (mode.equalsIgnoreCase(HYSTERIA)) {
-            this.mode = HYSTERIA;
+        if (pidMode.equalsIgnoreCase(HYSTERIA)) {
+            this.pidMode = HYSTERIA;
         }
     }
 
@@ -152,10 +158,10 @@ public class PID extends Temp {
 
     /******
      * Update the current values of the PID.
-     * @param m String indicating mode (manual, auto, off)
+     * @param m String indicating pidMode (manual, auto, off)
      * @param duty Duty Cycle % being set
      * @param cycle Cycle Time in seconds
-     * @param setpoint Target temperature for auto mode
+     * @param setpoint Target temperature for auto pidMode
      * @param p Proportional value
      * @param i Integral Value
      * @param d Derivative value
@@ -163,8 +169,8 @@ public class PID extends Temp {
     void updateValues(final String m, final BigDecimal duty,
                       final BigDecimal cycle, final BigDecimal setpoint, final BigDecimal p,
                       final BigDecimal i, final BigDecimal d) {
-        this.mode = m;
-        if (this.mode.equals(MANUAL)) {
+        this.pidMode = m;
+        if (this.pidMode.equals(MANUAL)) {
             this.duty_cycle = duty;
         }
         this.heatSetting.setCycleTime(cycle);
@@ -174,13 +180,13 @@ public class PID extends Temp {
         this.heatSetting.setIntegral(i);
         this.heatSetting.setDerivative(d);
 
-        BrewServer.LOG.info("Mode " + this.mode + " " + this.heatSetting.getProportional() + ": "
+        BrewServer.LOG.info("Mode " + this.pidMode + " " + this.heatSetting.getProportional() + ": "
                 + this.heatSetting.getIntegral() + ": " + this.heatSetting.getDerivative());
         LaunchControl.getInstance().saveEverything();
     }
 
     /**
-     * Set the PID to hysteria mode.
+     * Set the PID to hysteria pidMode.
      *
      * @param newMax     The maximum value to disable heating at
      * @param newMin     The minimum value to start heating at
@@ -192,20 +198,20 @@ public class PID extends Temp {
         if (newMax.compareTo(BigDecimal.ZERO) <= 0
                 && newMax.compareTo(newMin) <= 0) {
             throw new NumberFormatException(
-                    "Min value is less than the max value");
+                    "Min value is less than the maxTemp value");
         }
 
         if (newMinTime.compareTo(BigDecimal.ZERO) < 0) {
             throw new NumberFormatException("Min Time is negative");
         }
 
-        this.max = newMax;
-        this.min = newMin;
+        this.maxTemp = newMax;
+        this.minTemp = newMin;
         this.minTime = newMinTime;
     }
 
     void useHysteria() {
-        this.mode = HYSTERIA;
+        this.pidMode = HYSTERIA;
     }
 
 
@@ -224,7 +230,7 @@ public class PID extends Temp {
     }
 
     /****
-     * Set the target temperature for the auto mode.
+     * Set the target temperature for the auto pidMode.
      * @param temp The new temperature in F.
      */
     public void setTemp(BigDecimal temp) {
@@ -302,11 +308,11 @@ public class PID extends Temp {
     }
 
     /*******
-     * Get the current mode.
-     * @return The mode.
+     * Get the current pidMode.
+     * @return The pidMode.
      */
-    public String getMode() {
-        return this.mode;
+    public String getPidMode() {
+        return this.pidMode;
     }
 
     /**
@@ -353,7 +359,7 @@ public class PID extends Temp {
      */
     @Expose
     @SerializedName(MODE)
-    private String mode = OFF;
+    private String pidMode = OFF;
     private String fName = null;
 
     /**
@@ -398,12 +404,12 @@ public class PID extends Temp {
     }
 
 
-    public BigDecimal getMin() {
-        return this.min;
+    public BigDecimal getMinTemp() {
+        return this.minTemp;
     }
 
-    public BigDecimal getMax() {
-        return this.max;
+    public BigDecimal getMaxTemp() {
+        return this.maxTemp;
     }
 
     public BigDecimal getMinTime() {

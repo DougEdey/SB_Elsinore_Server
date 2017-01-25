@@ -85,7 +85,7 @@ public class TemperatureTrigger implements TriggerInterface {
                     + "Trigger will wait for it to hit the target temperature.");
         } else {
             pid.setTemp(this.targetTemp);
-            pid.setMode("auto");
+            pid.setPidMode("auto");
         }
     }
 
@@ -300,7 +300,7 @@ public class TemperatureTrigger implements TriggerInterface {
                         + " is not associated with a PID. "
                         + "Cannot deactivate the PID");
             } else {
-                pid.setMode("off");
+                pid.setPidMode("off");
             }
         }
         clearNotifications();

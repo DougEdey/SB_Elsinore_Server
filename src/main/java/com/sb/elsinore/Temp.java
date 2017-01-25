@@ -1,5 +1,7 @@
 package com.sb.elsinore;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.Expose;
 import com.sb.elsinore.devices.I2CDevice;
 import com.sb.util.MathUtil;
@@ -9,6 +11,9 @@ import jGPIO.InvalidGPIOException;
 import org.owfs.jowfsclient.OwfsException;
 
 import javax.annotation.Nonnull;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.Transient;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -32,6 +37,8 @@ import static com.sb.elsinore.BrewServer.LOG;
  *
  * @author Doug Edey
  */
+@Entity
+@DiscriminatorValue("T")
 public class Temp extends Device implements Comparable<Temp> {
 
     public static final String TYPE = "temp";
@@ -55,12 +62,19 @@ public class Temp extends Device implements Comparable<Temp> {
      * C_TO_F_MULT: Multiplier to convert C to F.
      * FREEZING: The freezing point of Fahrenheit.
      */
+    @Transient
     public MathContext context = new MathContext(2, RoundingMode.HALF_DOWN);
+    @Transient
     private static BigDecimal FREEZING = new BigDecimal(32);
+    @Transient
     private static BigDecimal ERROR_TEMP = new BigDecimal(-999);
+    @Transient
     private boolean badTemp = false;
+    @Transient
     private boolean keepAlive = true;
+    @Transient
     private boolean isStarted = false;
+    @Transient
     private String fileProbe = null;
     @Expose
     private boolean hidden = false;
@@ -80,6 +94,7 @@ public class Temp extends Device implements Comparable<Temp> {
     /**
      * Match the temperature regexp.
      */
+    @Transient
     private Pattern tempRegexp = null;
     @Expose
     private int size = SIZE_LARGE;
@@ -89,7 +104,11 @@ public class Temp extends Device implements Comparable<Temp> {
     int i2cChannel = -1;
     @Expose
     String device = "";
+
     private boolean loggingOn = true;
+
+    public Temp() {
+    }
 
     /**
      * Standard constructor.
@@ -97,9 +116,10 @@ public class Temp extends Device implements Comparable<Temp> {
      * @param name    The probe name or input name.
      *                Use "system" to create a system temperature probe
      * @param inProbe The address of this temperature probe.
+     * @param type    The type of this device (Defaults to {@link #TYPE}
      */
-    public Temp(String name, String inProbe) {
-        super(TYPE);
+    public Temp(String name, String inProbe, String type) {
+        super(type);
         this.device = inProbe;
         LOG.info("Adding" + this.device);
         if (name.equalsIgnoreCase("system")) {
@@ -156,6 +176,18 @@ public class Temp extends Device implements Comparable<Temp> {
         this.probeName = this.device;
         this.name = name;
         LOG.info(this.probeName + " added.");
+    }
+
+    /**
+     * Standard constructor.
+     *
+     * @param name    The probe name or input name.
+     *                Use "system" to create a system temperature probe
+     * @param inProbe The address of this temperature probe.
+     */
+    @JsonCreator
+    public Temp(@JsonProperty("name") String name, @JsonProperty("inProbe") String inProbe) {
+        this(name, inProbe, TYPE);
     }
 
     /**
@@ -246,6 +278,7 @@ public class Temp extends Device implements Comparable<Temp> {
     /**
      * The current timestamp.
      */
+    @Transient
     private long currentTime = 0;
     /**
      * Other strings, obviously named.
@@ -273,6 +306,7 @@ public class Temp extends Device implements Comparable<Temp> {
      * The input pin to read.
      */
     @Expose
+    @Transient
     private InPin volumePin = null;
     private boolean stopVolumeLogging;
     @Expose
@@ -507,6 +541,9 @@ public class Temp extends Device implements Comparable<Temp> {
         } catch (NumberFormatException nfe) {
             this.currentError = "Couldn't parse " + temp + " as a double";
             nfe.printStackTrace();
+        } catch (Exception e) {
+            this.currentError = "Couldn't update temperature from file";
+            e.printStackTrace();
         } finally {
             if (br != null) {
                 try {
