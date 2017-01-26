@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
 
+import static com.sb.elsinore.Temp.POSITION;
 import static com.sb.elsinore.TriggerControl.PID;
-import static com.sb.elsinore.UrlEndpoints.*;
 import static com.sb.elsinore.triggers.TemperatureTrigger.METHOD;
 import static com.sb.elsinore.triggers.TriggerInterface.TYPE;
 
@@ -21,6 +21,9 @@ import static com.sb.elsinore.triggers.TriggerInterface.TYPE;
  */
 @SuppressWarnings("unused")
 public class Mash {
+    private static final String DURATION = "duration";
+    private static final String TEMP_UNIT = "temp_unit";
+    private static final String TEMP = "temp";
     private Recipe myRecipe;
 
 
@@ -1296,7 +1299,7 @@ public class Mash {
             JSONObject currentStep = new JSONObject();
             currentStep.put(TYPE, st.type);
             currentStep.put(METHOD, st.method);
-            currentStep.put(TEMP, st.getStartTemp());
+            currentStep.put("temp", st.getStartTemp());
             currentStep.put(DURATION, st.minutes);
             currentStep.put(TEMP_UNIT, this.tempUnits);
             currentStep.put(POSITION, i);

@@ -20,4 +20,7 @@ public interface DeviceRepository extends PagingAndSortingRepository<Device, Lon
      * @return The list of devices, may be empty
      */
     List<Device> findByType(@Param("type") String type);
+
+    @Override
+    void delete(Long uuid);
 }

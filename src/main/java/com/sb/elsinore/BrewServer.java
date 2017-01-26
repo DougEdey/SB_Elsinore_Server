@@ -2,10 +2,6 @@ package com.sb.elsinore;
 
 import ca.strangebrew.recipe.Recipe;
 import com.sb.elsinore.NanoHTTPD.Response.Status;
-import com.sb.elsinore.annotations.Parameter;
-import com.sb.elsinore.annotations.RestEndpoint;
-import com.sb.elsinore.annotations.UrlEndpoint;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.io.File;
@@ -24,7 +20,6 @@ import java.util.logging.Logger;
  * Designed to be very simple and lightweight.
  *
  * @author Doug Edey
- *
  */
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class BrewServer extends NanoHTTPD {
@@ -51,11 +46,12 @@ public class BrewServer extends NanoHTTPD {
      * Hashtable mapping (String)FILENAME_EXTENSION -> (String)MIME_TYPE.
      */
     static final Map<String, String> MIME_TYPES
-        = new HashMap<String, String>() {
+            = new HashMap<String, String>() {
         /**
          * The Serial UID.
          */
         public static final long serialVersionUID = 1L;
+
         {
             put("css", "text/css");
             put("htm", "text/html");
@@ -90,10 +86,8 @@ public class BrewServer extends NanoHTTPD {
     /**
      * Constructor to create the HTTP Server.
      *
-     * @param port
-     *            The port to run on
-     * @throws IOException
-     *             If there's an issue starting up
+     * @param port The port to run on
+     * @throws IOException If there's an issue starting up
      */
     public BrewServer(final int port) throws IOException {
 
@@ -103,8 +97,8 @@ public class BrewServer extends NanoHTTPD {
 
         Level logLevel = Level.WARNING;
         String newLevel = System.getProperty("debug") != null ?
-                                System.getProperty("debug"):
-                                System.getenv("ELSINORE_DEBUG");
+                System.getProperty("debug") :
+                System.getenv("ELSINORE_DEBUG");
         if ("INFO".equalsIgnoreCase(newLevel)) {
             logLevel = Level.INFO;
         }
@@ -119,47 +113,15 @@ public class BrewServer extends NanoHTTPD {
         if (System.getProperty("root_override") != null) {
             this.rootDir = new File(System.getProperty("root_override"));
             LOG.info("Overriding Root Directory from System Property: "
-                    + rootDir.getAbsolutePath());
+                    + this.rootDir.getAbsolutePath());
         }
 
-        LOG.info("Root Directory is: " + rootDir.toString());
+        LOG.info("Root Directory is: " + this.rootDir.toString());
 
-        if (rootDir.exists() && rootDir.isDirectory()) {
-            LOG.info("Root directory: " + rootDir.toString());
+        if (this.rootDir.exists() && this.rootDir.isDirectory()) {
+            LOG.info("Root directory: " + this.rootDir.toString());
         }
 
-        // Load the ANnotations
-        for (java.lang.reflect.Method m
-                : UrlEndpoints.class.getDeclaredMethods()) {
-            UrlEndpoint urlMethod = m.getAnnotation(UrlEndpoint.class);
-            if (urlMethod != null) {
-                m_endpoints.put(urlMethod.url().toLowerCase(), m);
-            }
-        }
-
-        for (java.lang.reflect.Method m
-                : RestEndpoints.class.getDeclaredMethods()) {
-            RestEndpoint urlMethod = m.getAnnotation(RestEndpoint.class);
-            if (urlMethod != null) {
-
-                switch (urlMethod.method())
-                {
-                    case PUT:
-                        putRestEndpoints.put(urlMethod.path().toLowerCase(), m);
-                        break;
-                    case GET:
-                        getRestEndpoints.put(urlMethod.path().toLowerCase(), m);
-                        break;
-                    case DELETE:
-                        deleteRestEndpoints.put(urlMethod.path().toLowerCase(), m);
-                        break;
-                    case POST:
-                        postRestEndpoints.put(urlMethod.path().toLowerCase(), m);
-                        break;
-
-                }
-            }
-        }
     }
 
     static void setRecipeList(ArrayList<String> recipeList) {
@@ -190,8 +152,7 @@ public class BrewServer extends NanoHTTPD {
      * Initialize the logger.  Look at the current logger and its parents to see
      * if it already has a handler setup.  If not, it adds one.
      *
-     * @param logger
-     *            The logger to initialize
+     * @param logger The logger to initialize
      */
     private void initializeLogger(final Logger logger) {
         if (logger.getHandlers().length == 0) {
@@ -236,15 +197,15 @@ public class BrewServer extends NanoHTTPD {
             String theme = LaunchControl.getInstance().theme;
             if (theme != null
                     && !theme.equals("")) {
-                if (new File(rootDir,
+                if (new File(this.rootDir,
                         "/logos/" + theme + ".ico").exists()) {
                     return serveFile("/logos/" + theme + ".ico",
-                            header, rootDir);
+                            header, this.rootDir);
                 }
             }
 
-            if (new File(rootDir, uri).exists()) {
-                return serveFile(uri, header, rootDir);
+            if (new File(this.rootDir, uri).exists()) {
+                return serveFile(uri, header, this.rootDir);
             }
 
         }
@@ -252,125 +213,19 @@ public class BrewServer extends NanoHTTPD {
         // NLS Support
         if (uri.startsWith("/nls/")) {
             return serveFile(uri.replace("/nls/", "/src/main/java/com/sb/elsinore/nls/"),
-                header, rootDir);
+                    header, this.rootDir);
         }
 
         if (uri.equalsIgnoreCase("/stop")) {
             System.exit(128);
         }
 
-        if (uri.equals("/help")) {
-            JSONObject helpJSON = new JSONObject();
-            for (Map.Entry<String, java.lang.reflect.Method> entry: m_endpoints.entrySet())
-            {
-                UrlEndpoint urlEndpoint = entry.getValue().getAnnotation(UrlEndpoint.class);
-                helpJSON.put(urlEndpoint.url(), urlEndpoint.help());
-            }
-
-            return new Response(Status.OK, MIME_TYPES.get("json"), helpJSON.toJSONString());
+        if (uri.equals("/")) {
+            return serveFile("html/index.html", header, this.rootDir);
         }
 
-
-        String endpointName = uri;
-        boolean help = false;
-        if (uri.endsWith("/help"))
-        {
-            endpointName = uri.substring(0, uri.indexOf("/help"));
-            help = true;
-        }
-        java.lang.reflect.Method urlMethod = m_endpoints.get(endpointName.toLowerCase());
-        if (urlMethod != null)
-        {
-            if (!help)
-            {
-                try {
-                    UrlEndpoints urlEndpoints = new UrlEndpoints();
-                    urlEndpoints.parameters = parms;
-                    urlEndpoints.files = files;
-                    urlEndpoints.header = header;
-                    urlEndpoints.rootDir = rootDir;
-                    return (Response) urlMethod.invoke(urlEndpoints);
-                } catch (Exception e) {
-                    LOG.warning("Couldn't access URL: " + uri);
-                    e.printStackTrace();
-                }
-            }
-
-            UrlEndpoint urlEndpoint= urlMethod.getAnnotation(UrlEndpoint.class);
-            JSONObject helpJSON = new JSONObject();
-
-            helpJSON.put(urlEndpoint.url(), urlEndpoint.help());
-            JSONArray paramsJSON = new JSONArray();
-
-            for (Parameter parameter: urlEndpoint.parameters())
-            {
-                JSONObject paramObj = new JSONObject();
-                paramObj.put(parameter.name(), parameter.value());
-                paramsJSON.add(paramObj);
-            }
-            Collections.sort(paramsJSON, new Comparator() {
-                @Override
-                public int compare(Object o, Object t1) {
-                    return o.toString().compareTo(t1.toString());
-                }
-            });
-            helpJSON.put("parameters", paramsJSON);
-            return new Response(Status.BAD_REQUEST, MIME_TYPES.get("json"), helpJSON.toJSONString());
-        }
-        else {
-            // Get the base name of the url request
-            String[] elements = endpointName.split("/");
-            if (elements.length == 0)
-            {
-
-            }
-            else{
-                String baseString = elements[0];
-                if (baseString.length()==0)
-                {
-                    baseString = elements[1];
-                }
-                switch(method)
-                {
-
-                    case GET:
-                        urlMethod = getRestEndpoints.get(baseString.toLowerCase());
-                        break;
-                    case PUT:
-                        urlMethod = putRestEndpoints.get(baseString.toLowerCase());
-                        break;
-                    case POST:
-                        urlMethod = postRestEndpoints.get(baseString.toLowerCase());
-                        break;
-                    case DELETE:
-                        urlMethod = deleteRestEndpoints.get(baseString.toLowerCase());
-                        break;
-                }
-
-                if (urlMethod != null)
-                {
-                    try {
-                        RestEndpoints restEndpoints = new RestEndpoints();
-                        restEndpoints.parameters = parms;
-                        restEndpoints.files = files;
-                        restEndpoints.header = header;
-                        restEndpoints.rootDir = rootDir;
-                        return (Response) urlMethod.invoke(restEndpoints);
-                    } catch (Exception e) {
-                        LOG.warning("Couldn't access URL: " + uri);
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-
-        if (uri.equals("/"))
-        {
-            return serveFile("html/index.html", header, rootDir);
-        }
-
-        if (!uri.equals("") && new File(rootDir, uri).exists()) {
-            return serveFile(uri, header, rootDir);
+        if (!uri.equals("") && new File(this.rootDir, uri).exists()) {
+            return serveFile(uri, header, this.rootDir);
         }
 
         BrewServer.LOG.warning("Failed to find URI: " + uri);
@@ -402,16 +257,13 @@ public class BrewServer extends NanoHTTPD {
      * Serves file from homeDir and its' subdirectories (only). Uses only URI,
      * ignores all headers and HTTP parameters.
      *
-     * @param incomingUri
-     *            The URI requested
-     * @param header
-     *            The headers coming in
-     * @param homeDir
-     *            The root directory.
+     * @param incomingUri The URI requested
+     * @param header      The headers coming in
+     * @param homeDir     The root directory.
      * @return A NanoHTTPD Response for the file
      */
     public static Response serveFile(final String incomingUri,
-            final Map<String, String> header, final File homeDir) {
+                                     final Map<String, String> header, final File homeDir) {
         Response res = null;
         String uri = incomingUri;
 
@@ -419,7 +271,7 @@ public class BrewServer extends NanoHTTPD {
         if (!homeDir.isDirectory()) {
             res = new Response(Response.Status.INTERNAL_ERROR,
                     NanoHTTPD.MIME_PLAINTEXT, "INTERNAL ERRROR: serveFile(): "
-                            + "given homeDir is not a directory.");
+                    + "given homeDir is not a directory.");
         }
 
         if (res == null) {
@@ -619,8 +471,8 @@ public class BrewServer extends NanoHTTPD {
     /**
      * URL-encodes everything between "/"-characters. Encodes spaces as '%20'
      * instead of '+'.
-     * @param uri
-     *            The URI to be encoded
+     *
+     * @param uri The URI to be encoded
      * @return The Encoded URI
      */
     public static String encodeUri(final String uri) {

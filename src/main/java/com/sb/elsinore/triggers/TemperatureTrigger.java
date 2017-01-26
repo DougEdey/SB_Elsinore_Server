@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
 
-import static com.sb.elsinore.UrlEndpoints.TEMPPROBE;
 import static org.rendersnake.HtmlAttributesFactory.*;
 
 /**
@@ -33,6 +32,7 @@ public class TemperatureTrigger implements TriggerInterface {
     public static final String POSITION = "position";
     public static final String TARGET_TEMP = "targetTemperature";
     public static final String ACTIVE = "active";
+    public static final String TEMPPROBE = "tempprobe";
 
     private BigDecimal targetTemp = null;
     private Temp temperatureProbe = null;

@@ -17,8 +17,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static com.sb.elsinore.UrlEndpoints.POSITION;
-import static com.sb.elsinore.UrlEndpoints.TEMP;
+import static com.sb.elsinore.Messages.TEMP;
+import static com.sb.elsinore.Temp.POSITION;
 import static org.rendersnake.HtmlAttributesFactory.*;
 
 /********************

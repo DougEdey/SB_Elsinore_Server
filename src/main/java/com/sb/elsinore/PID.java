@@ -12,7 +12,8 @@ import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.sb.elsinore.UrlEndpoints.*;
+import static com.sb.elsinore.PIDSettings.COOL;
+import static com.sb.elsinore.PIDSettings.HEAT;
 
 /**
  * The PID class calculates the Duty cycles and updates the output control.
@@ -30,38 +31,18 @@ public class PID extends Temp {
     public static final String MANUAL = "manual";
     public static final String OFF = "off";
 
-    @Expose
-    @SerializedName(INVERTED)
     private boolean invertAux = false;
-    @Expose
-    @SerializedName(DUTYCYCLE)
     private BigDecimal duty_cycle = new BigDecimal(0);
-    @Expose
-    @SerializedName(ACTUAL_DUTY)
     private BigDecimal calculatedDuty = new BigDecimal(0);
-    @Expose
-    @SerializedName(SETPOINT)
     private BigDecimal set_point = new BigDecimal(0);
-    @Expose
-    @SerializedName(MANUAL_DUTY)
     private BigDecimal manual_duty = new BigDecimal(0);
-    @Expose
-    @SerializedName(MANUAL_TIME)
     private BigDecimal manual_time = new BigDecimal(0);
 
     /* Hysteria Settings */
-    @Expose
-    @SerializedName(MAX)
     private BigDecimal maxTemp = new BigDecimal(0);
-    @Expose
-    @SerializedName(MIN)
     private BigDecimal minTemp = new BigDecimal(0);
-    @Expose
-    @SerializedName(TIME)
     private BigDecimal minTime = new BigDecimal(0);
 
-    @Expose
-    @SerializedName("aux")
     @Transient
     private OutPin auxPin = null;
 
@@ -357,8 +338,6 @@ public class PID extends Temp {
     /**
      * Various strings.
      */
-    @Expose
-    @SerializedName(MODE)
     private String pidMode = OFF;
     private String fName = null;
 

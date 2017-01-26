@@ -1,6 +1,8 @@
 package com.sb.elsinore.triggers;
 
 import com.sb.elsinore.*;
+import com.sb.elsinore.controller.DeviceRepository;
+import com.sb.elsinore.controller.TemperatureRepository;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 
@@ -20,6 +22,16 @@ public class ProfileTrigger implements TriggerInterface {
     private boolean active = false;
     private String targetName = null;
     private Date startDate = null;
+    private DeviceRepository deviceRepository;
+    private TemperatureRepository temperatureRepository;
+
+    public void setDeviceRepository(DeviceRepository deviceRepository) {
+        this.deviceRepository = deviceRepository;
+    }
+
+    public void setTemperatureRepository(TemperatureRepository temperatureRepository) {
+        this.temperatureRepository = temperatureRepository;
+    }
 
     public ProfileTrigger() {
     }
@@ -121,7 +133,11 @@ public class ProfileTrigger implements TriggerInterface {
         html.option(value(""))
                 .write("Target Probe")
                 ._option();
-        for (Temp tTemp : LaunchControl.getInstance().tempList) {
+        for (Device device : this.deviceRepository.findAll()) {
+            if (!(device instanceof Temp)) {
+                continue;
+            }
+            Temp tTemp = (Temp) device;
             String tName = tTemp.getName();
             html.option(value(tName))
                     .write(tName)
@@ -173,7 +189,11 @@ public class ProfileTrigger implements TriggerInterface {
         html.option(value(""))
                 .write("Target Probe")
                 ._option();
-        for (Temp tTemp : LaunchControl.getInstance().tempList) {
+        for (Device device : this.deviceRepository.findAll()) {
+            if (!(device instanceof Temp)) {
+                continue;
+            }
+            Temp tTemp = (Temp) device;
             String tName = tTemp.getName();
             html.option(value(tName))
                     .write(tName)
@@ -233,7 +253,7 @@ public class ProfileTrigger implements TriggerInterface {
         String target = (String) params.get(TARGET_NAME);
         String newAct = (String) params.get(ACTIVATE);
 
-        if (target != null && LaunchControl.getInstance().findTemp(target) != null) {
+        if (target != null && this.temperatureRepository.findByName(target) != null) {
             this.targetName = target;
         } else {
             return false;

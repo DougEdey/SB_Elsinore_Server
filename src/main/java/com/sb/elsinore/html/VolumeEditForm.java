@@ -9,11 +9,18 @@ import org.rendersnake.Renderable;
 
 import java.io.IOException;
 
-import static com.sb.elsinore.UrlEndpoints.*;
+import static ca.strangebrew.recipe.Quantity.VOLUME;
+import static com.sb.elsinore.TriggerControl.NAME;
+import static com.sb.elsinore.inputs.PhSensor.DS_ADDRESS;
+import static com.sb.elsinore.inputs.PhSensor.DS_OFFSET;
 import static org.rendersnake.HtmlAttributesFactory.*;
 
 public class VolumeEditForm implements Renderable {
 
+    private static final String I_2_C_DEVICE = "i2c_device";
+    private static final String I_2_C_ADDRESS = "i2c_address";
+    private static final String I_2_C_CHANNEL = "i2c_channel";
+    private static final String I_2_C_MODEL = "i2c_model";
     private Temp vessel = null;
 
     public VolumeEditForm(Temp inVessel) {
@@ -57,7 +64,7 @@ public class VolumeEditForm implements Renderable {
         html.div(id("ain_div").name("ain_div").style(styleString));
 
         html.input(type("text").class_("form-control")
-                .name(ADC_PIN).id(ADC_PIN)
+                .name("adc_pin").id("adc_pin")
                 .onInput("phAINChange(this);")
                 .add("pattern", "[0-7]{1}")
                 .title("Only 0-7 are accepted pins.")
@@ -135,7 +142,7 @@ public class VolumeEditForm implements Renderable {
         html.br().input(type("number").class_("form-control").add("step", "any")
                 .name(VOLUME).id(VOLUME).value("")
                 .add("placeholder", Messages.NEW_VOLUME));
-        html.select(class_("holo-spinner").name(UNITS).id(UNITS))
+        html.select(class_("holo-spinner").name("units").id("units"))
                 .option(value(Messages.LITRES)
                         .selected_if(Messages.LITRES
                                 .equals(this.vessel.getVolumeUnit())))

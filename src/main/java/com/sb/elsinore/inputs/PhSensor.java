@@ -301,7 +301,7 @@ public class PhSensor implements Serializable {
                         if (value.compareTo(BigDecimal.ZERO) > 0) {
                             this.phReading = value;
                             if (lc.systemSettings.recorder != null) {
-                                lc.systemSettings.recorder.saveReading(this.name, this.phReading);
+                                //lc.systemSettings.recorder.saveReading(this.name, this.phReading);
                             }
                         }
                     } catch (IllegalAccessException | InvocationTargetException e) {

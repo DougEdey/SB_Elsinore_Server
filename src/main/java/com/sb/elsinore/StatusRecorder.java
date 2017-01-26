@@ -5,15 +5,15 @@ import com.sb.common.SBStringUtils;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
-import java.io.*;
-import java.math.BigDecimal;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.sb.elsinore.UrlEndpoints.TEMPPROBE;
 
 /**
  *
@@ -72,16 +72,6 @@ public class StatusRecorder implements Runnable {
         }
     }
 
-    /**
-     * Save a specific value to the status recorder data files.
-     *
-     * @param name  The name to save to.
-     * @param value The value to store
-     */
-    public void saveReading(String name, BigDecimal value) {
-        File tempFile = new File(this.currentDirectory + name + "-manual.csv");
-        appendToLog(tempFile, new Date().getTime() + "," + value.toPlainString() + "\r\n");
-    }
 
     /**
      * Main runnable, updates the files every five seconds.
@@ -120,20 +110,6 @@ public class StatusRecorder implements Runnable {
             boolean continueRunning = true;
             while (continueRunning) {
                 //Just going to record when something changes
-                try {
-                    String status = LaunchControl.getInstance().getJSONStatus();
-                    JSONObject newStatus = (JSONObject) JSONValue.parse(status);
-                    if (this.lastStatus == null || isDifferent(this.lastStatus, newStatus)) {
-                        //For now just log the whole status
-                        //Eventually we may want multiple logs, etc.
-
-                        Date now = new Date();
-                        printJsonToCsv(now, newStatus, this.currentDirectory);
-                        this.lastStatus = newStatus;
-                    }
-                } catch (Exception ioe) {
-                    continueRunning = false;
-                }
                 Thread.sleep(this.sleep);
             }
         } catch (InterruptedException ex) {
@@ -144,202 +120,6 @@ public class StatusRecorder implements Runnable {
 
     private boolean checkInitialized() {
         return LaunchControl.getInstance().isInitialized();
-    }
-
-    /**
-     * Save the status to the directory.
-     *
-     * @param nowDate   The current date to save the datapoint for.
-     * @param newStatus The JSON Status object to dump
-     * @param directory The graph data directory.
-     */
-    private void printJsonToCsv(Date nowDate, JSONObject newStatus, String directory) {
-        //Now look for differences in the temperature and duty
-        long now = nowDate.getTime();
-        JSONArray vessels = (JSONArray) newStatus.get("vessels");
-        for (Object vessel1 : vessels) {
-            JSONObject vessel = (JSONObject) vessel1;
-            if (vessel.containsKey("name")) {
-                String name = vessel.get("name").toString();
-                Temp currentTemp = LaunchControl.getInstance().findTemp(name);
-                if (currentTemp != null) {
-                    name = currentTemp.getProbe();
-                }
-                if (vessel.containsKey(TEMPPROBE)) {
-                    String temp = ((JSONObject) vessel.get(TEMPPROBE))
-                            .get("temp").toString();
-
-
-                    Status lastStatus = this.temperatureMap.get(name);
-                    if (lastStatus == null) {
-                        lastStatus = new Status("-999", now);
-                    }
-
-                    if (lastStatus.isDifferentEnough(temp)) {
-                        File tempFile = new File(directory + name + "-temp.csv");
-                        if (now - lastStatus.timestamp > this.sleep * 1.5) {
-                            appendToLog(tempFile, now - this.sleep + "," + lastStatus.value + "\r\n");
-                        }
-                        appendToLog(tempFile, now + "," + temp + "\r\n");
-
-                        this.temperatureMap.put(name, new Status(temp, now));
-                    }
-                }
-
-                if (vessel.containsKey("pidstatus")) {
-                    JSONObject pid = (JSONObject) vessel.get("pidstatus");
-                    String duty = "0";
-                    if (pid.containsKey("actualduty")) {
-                        duty = pid.get("actualduty").toString();
-                    } else if (!pid.get("mode").equals("off")) {
-                        duty = pid.get("duty").toString();
-                    }
-
-                    Status lastStatus = this.dutyMap.get(name);
-                    if (lastStatus == null) {
-                        lastStatus = new Status("-999", now);
-                    }
-
-                    if (!duty.equals(lastStatus.value)) {
-                        File dutyFile = new File(directory + name + "-duty.csv");
-                        if (now - lastStatus.timestamp > this.sleep * 1.5) {
-                            appendToLog(dutyFile, now - this.sleep + "," + lastStatus.value + "\r\n");
-                        }
-                        appendToLog(dutyFile, now + "," + duty + "\r\n");
-                        this.dutyMap.put(name, new Status(duty, now));
-                    }
-                }
-
-            }
-        }
-    }
-
-    /**
-     * Save the string to the log file.
-     *
-     * @param file     The file object to save to
-     * @param toAppend The string to add to the file
-     */
-    private final void appendToLog(final File file, final String toAppend) {
-        FileWriter fileWriter = null;
-        try {
-            fileWriter = new FileWriter(file, true);
-            fileWriter.write(toAppend);
-        } catch (IOException ex) {
-            BrewServer.LOG.warning("Could not save to file: "
-                    + file.getAbsolutePath());
-        } finally {
-            try {
-                if (fileWriter != null) {
-                    fileWriter.close();
-                }
-            } catch (IOException ex) {
-                BrewServer.LOG.warning("Could not close filewriter: "
-                        + file.getAbsolutePath());
-            }
-        }
-    }
-
-    /**
-     * Write a JSON object to the log file.
-     *
-     * @param status     The JSON Object to log
-     * @param fileExists If the file exists, prepend a "," otherwise an open
-     *                   brace "["
-     */
-    protected final void writeToLog(final JSONObject status,
-                                    final boolean fileExists) {
-        String append = fileExists ? "," : "[" + status.toJSONString();
-        appendToLog(new File(this.logFile), append);
-    }
-
-    /**
-     * Check to see if the objects are different.
-     *
-     * @param previous The first object to check.
-     * @param current  The second object to check
-     * @return True if the objects are different
-     */
-    private boolean isDifferent(final JSONObject previous,
-                                final JSONObject current) {
-        if (previous.size() != current.size()) {
-            return true;
-        }
-
-        for (Object key : previous.keySet()) {
-            if (!"elapsed".equals(key)) {
-                Object previousValue = previous.get(key);
-                Object currentValue = current.get(key);
-
-                if (compare(previousValue, currentValue)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Check to see if the JSONArrays are different.
-     *
-     * @param previous The first JSONArray to check
-     * @param current  The second JSONArray to check.
-     * @return True if the JSONArrays are different
-     */
-    private boolean isDifferent(final JSONArray previous,
-                                final JSONArray current) {
-
-        if (previous.size() != current.size()) {
-            return true;
-        }
-
-        for (int x = 0; x < previous.size(); x++) {
-            Object previousValue = previous.get(x);
-            Object currentValue = current.get(x);
-
-            if (compare(previousValue, currentValue)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Compare two generic objects.
-     *
-     * @param previousValue First object to check
-     * @param currentValue  Second object to check
-     * @return True if the objects are different, false if the same.
-     */
-    protected final boolean compare(final Object previousValue,
-                                    final Object currentValue) {
-        if (previousValue == null && currentValue == null) {
-            return true;
-        }
-
-        if (previousValue == null || currentValue == null) {
-            return false;
-        }
-
-        if (previousValue instanceof JSONObject
-                && currentValue instanceof JSONObject) {
-            if (isDifferent((JSONObject) previousValue,
-                    (JSONObject) currentValue)) {
-                return true;
-            }
-        } else if (previousValue instanceof JSONArray
-                && currentValue instanceof JSONArray) {
-            if (isDifferent((JSONArray) previousValue,
-                    (JSONArray) currentValue)) {
-                return true;
-            }
-        } else {
-            if (!previousValue.equals(currentValue)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private class Status {

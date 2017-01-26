@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.logging.Level;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static com.sb.elsinore.UrlEndpoints.COOL;
-import static com.sb.elsinore.UrlEndpoints.HEAT;
+import static com.sb.elsinore.PIDSettings.COOL;
+import static com.sb.elsinore.PIDSettings.HEAT;
 
 /**
  * This provides a runnable implementation for the PID class

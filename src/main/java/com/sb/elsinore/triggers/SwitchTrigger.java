@@ -11,8 +11,6 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Date;
 
-import static com.sb.elsinore.UrlEndpoints.OFF_STRING;
-import static com.sb.elsinore.UrlEndpoints.ON_STRING;
 import static org.rendersnake.HtmlAttributesFactory.*;
 
 @SuppressWarnings("unused")
@@ -218,11 +216,11 @@ public class SwitchTrigger implements TriggerInterface {
                 .write("")
                 ._option();
         html.option(value(Messages.SWITCH_ON)
-                .selected_if(this.activate.equals(ON_STRING)))
+                .selected_if(this.activate.equals("ON")))
                 .write("On")
                 ._option();
         html.option(value(Messages.SWITCH_OFF)
-                .selected_if(this.activate.equals(OFF_STRING)))
+                .selected_if(this.activate.equals("OFF")))
                 .write("Off")
                 ._option();
         html._select();
