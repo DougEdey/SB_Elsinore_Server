@@ -1,19 +1,14 @@
 package com.sb.elsinore;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
-import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
+import org.hibernate.annotations.Cascade;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.sb.elsinore.PIDSettings.COOL;
-import static com.sb.elsinore.PIDSettings.HEAT;
+import static com.sb.elsinore.PID.PIDMode.OFF;
 
 /**
  * The PID class calculates the Duty cycles and updates the output control.
@@ -25,18 +20,40 @@ import static com.sb.elsinore.PIDSettings.HEAT;
 public class PID extends Temp {
 
     public static final String TYPE = "PID";
+    /**
+     * Aux -> The Aux PIN has changed
+     * Heat -> The heat settings have changed
+     * Cool -> The cool settings have changed
+     * Mode -> The PID mode (on/off/auto/hysteria) and temp has changed
+     */
+    @Transient
+    private boolean auxDirty, heatDirty, coolDirty, modeDirty;
 
-    public static final String HYSTERIA = "hysteria";
-    public static final String AUTO = "auto";
-    public static final String MANUAL = "manual";
-    public static final String OFF = "off";
+    public enum PIDMode {
+        HYSTERIA("Hysteria"),
+        AUTO("Auto"),
+        MANUAL("Manual"),
+        OFF("Off");
+
+        private String value;
+
+        PIDMode(String value) {
+            this.value = value;
+        }
+
+        public String toString() {
+            return this.value;
+        }
+
+
+    }
 
     private boolean invertAux = false;
-    private BigDecimal duty_cycle = new BigDecimal(0);
+    private BigDecimal dutyCycle = new BigDecimal(0);
     private BigDecimal calculatedDuty = new BigDecimal(0);
-    private BigDecimal set_point = new BigDecimal(0);
-    private BigDecimal manual_duty = new BigDecimal(0);
-    private BigDecimal manual_time = new BigDecimal(0);
+    private BigDecimal setPoint = new BigDecimal(0);
+    private BigDecimal manualDuty = new BigDecimal(0);
+    private BigDecimal manualTime = new BigDecimal(0);
 
     /* Hysteria Settings */
     private BigDecimal maxTemp = new BigDecimal(0);
@@ -50,12 +67,16 @@ public class PID extends Temp {
      * Settings for the heating and cooling.
      */
 
-    @Expose
-    @SerializedName(HEAT)
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "heatSettings_id")
+    @Cascade(org.hibernate.annotations.CascadeType.ALL)
+    //@RestResource(path = "pidSettings", rel = "pidSettings")
     private PIDSettings heatSetting;
 
-    @Expose
-    @SerializedName(COOL)
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "coolSettings_id")
+    @Cascade(org.hibernate.annotations.CascadeType.ALL)
+    //@RestResource(rel = "pidSettings")
     private PIDSettings coolSetting;
 
     /**
@@ -67,8 +88,12 @@ public class PID extends Temp {
     public PID(String aName, String device, String gpio) {
         this(aName, device);
 
-        getSettings(HEAT).setGPIO(gpio);
+        getCoolSetting().setGPIO(gpio);
         this.pidMode = OFF;
+    }
+
+    public PID() {
+
     }
 
     /**
@@ -80,27 +105,25 @@ public class PID extends Temp {
         super(aName, device, TYPE);
     }
 
+    public PID(Device device) {
+        super(device);
+        if (!(device instanceof PID)) {
+            return;
+        }
+        // do stuff to copy over from the PID
+        PID other = (PID) device;
+        this.heatSetting = other.heatSetting;
+        this.coolSetting = other.coolSetting;
+        this.auxGPIO = other.auxGPIO;
+    }
+
     /**
      * Set the pidMode
      *
      * @param pidMode Must be "off", "auto", "manual", "hysteria"
      */
-    public void setPidMode(String pidMode) {
-        if (pidMode.equalsIgnoreCase(OFF)) {
-            this.pidMode = OFF;
-            return;
-        }
-        if (pidMode.equalsIgnoreCase(MANUAL)) {
-            this.pidMode = MANUAL;
-            return;
-        }
-        if (pidMode.equalsIgnoreCase(AUTO)) {
-            this.pidMode = AUTO;
-            return;
-        }
-        if (pidMode.equalsIgnoreCase(HYSTERIA)) {
-            this.pidMode = HYSTERIA;
-        }
+    public void setPidMode(PIDMode pidMode) {
+        this.pidMode = pidMode;
     }
 
     /**
@@ -137,77 +160,23 @@ public class PID extends Temp {
         }
     }
 
-    /******
-     * Update the current values of the PID.
-     * @param m String indicating pidMode (manual, auto, off)
-     * @param duty Duty Cycle % being set
-     * @param cycle Cycle Time in seconds
-     * @param setpoint Target temperature for auto pidMode
-     * @param p Proportional value
-     * @param i Integral Value
-     * @param d Derivative value
-     */
-    void updateValues(final String m, final BigDecimal duty,
-                      final BigDecimal cycle, final BigDecimal setpoint, final BigDecimal p,
-                      final BigDecimal i, final BigDecimal d) {
-        this.pidMode = m;
-        if (this.pidMode.equals(MANUAL)) {
-            this.duty_cycle = duty;
-        }
-        this.heatSetting.setCycleTime(cycle);
-        this.set_point = setpoint;
-
-        this.heatSetting.setProportional(p);
-        this.heatSetting.setIntegral(i);
-        this.heatSetting.setDerivative(d);
-
-        BrewServer.LOG.info("Mode " + this.pidMode + " " + this.heatSetting.getProportional() + ": "
-                + this.heatSetting.getIntegral() + ": " + this.heatSetting.getDerivative());
-        LaunchControl.getInstance().saveEverything();
-    }
-
-    /**
-     * Set the PID to hysteria pidMode.
-     *
-     * @param newMax     The maximum value to disable heating at
-     * @param newMin     The minimum value to start heating at
-     * @param newMinTime The minimum amount of time to keep the burner on for
-     */
-    void setHysteria(final BigDecimal newMin,
-                     final BigDecimal newMax, final BigDecimal newMinTime) {
-
-        if (newMax.compareTo(BigDecimal.ZERO) <= 0
-                && newMax.compareTo(newMin) <= 0) {
-            throw new NumberFormatException(
-                    "Min value is less than the maxTemp value");
-        }
-
-        if (newMinTime.compareTo(BigDecimal.ZERO) < 0) {
-            throw new NumberFormatException("Min Time is negative");
-        }
-
-        this.maxTemp = newMax;
-        this.minTemp = newMin;
-        this.minTime = newMinTime;
-    }
-
-    void useHysteria() {
-        this.pidMode = HYSTERIA;
-    }
-
 
     /********
      * Set the duty time in %.
      * @param duty Duty Cycle percentage
      */
-    public void setDuty(BigDecimal duty) {
+    public void setDutyCycle(BigDecimal duty) {
         if (duty.doubleValue() > 100) {
             duty = new BigDecimal(100);
         } else if (duty.doubleValue() < -100) {
             duty = new BigDecimal(-100);
         }
+        if (this.dutyCycle.compareTo(duty) != 0) {
+            return;
+        }
 
-        this.duty_cycle = duty;
+        this.modeDirty = true;
+        this.dutyCycle = duty;
     }
 
     /****
@@ -218,43 +187,7 @@ public class PID extends Temp {
         if (temp.doubleValue() < 0) {
             temp = BigDecimal.ZERO;
         }
-        this.set_point = temp.setScale(2, BigDecimal.ROUND_CEILING);
-    }
-
-    /*******
-     * set an auxilliary manual GPIO (for dual element systems).
-     * @param gpio The GPIO to use as an aux
-     */
-    void setAux(String gpio, boolean invert) {
-        if (gpio == null || gpio.length() == 0) {
-            this.auxGPIO = "";
-
-            return;
-        }
-
-        // Only do this is the pin has changed
-        String newGPIO = detectGPIO(gpio);
-        if (newGPIO == null) {
-            if (this.auxPin != null) {
-                this.auxPin.close();
-                this.auxPin = null;
-            }
-        } else if (!newGPIO.equalsIgnoreCase(this.auxGPIO)) {
-            this.auxGPIO = newGPIO;
-            try {
-                this.auxPin = new OutPin(this.auxGPIO);
-            } catch (InvalidGPIOException i) {
-                if (this.auxPin != null) {
-                    this.auxPin.close();
-                    this.auxPin = null;
-                }
-                BrewServer.LOG.warning(String.format("Failed to setup GPIO for the aux Pin provided %s", i.getMessage()));
-            }
-        }
-
-
-        this.setAuxInverted(invert);
-        setAux(false);
+        this.setPoint = temp.setScale(2, BigDecimal.ROUND_CEILING);
     }
 
     /**
@@ -292,7 +225,7 @@ public class PID extends Temp {
      * Get the current pidMode.
      * @return The pidMode.
      */
-    public String getPidMode() {
+    public PIDMode getPidMode() {
         return this.pidMode;
     }
 
@@ -300,11 +233,11 @@ public class PID extends Temp {
      * @return Get the GPIO Pin
      */
     String getHeatGPIO() {
-        return getSettings(HEAT).getGPIO();
+        return getHeatSetting().getGPIO();
     }
 
     String getCoolGPIO() {
-        return getSettings(COOL).getGPIO();
+        return getCoolSetting().getGPIO();
     }
 
     /**
@@ -317,15 +250,23 @@ public class PID extends Temp {
     /**
      * @return Get the current duty cycle percentage
      */
-    public BigDecimal getDuty() {
-        return this.duty_cycle;
+    public BigDecimal getDutyCycle() {
+        return this.dutyCycle;
     }
 
     /**
      * @return Get the PID Target temperature
      */
-    BigDecimal getSetPoint() {
-        return this.set_point;
+    public BigDecimal getSetPoint() {
+        return this.setPoint;
+    }
+
+    public void setSetPoint(BigDecimal setPoint) {
+        if (setPoint == null || setPoint.compareTo(this.setPoint) == 0) {
+            return;
+        }
+        this.modeDirty = true;
+        this.setPoint = setPoint;
     }
 
     //PRIVATE ///
@@ -338,12 +279,13 @@ public class PID extends Temp {
     /**
      * Various strings.
      */
-    private String pidMode = OFF;
+    private PIDMode pidMode = OFF;
     private String fName = null;
 
     /**
      * @return Get the current temperature
      */
+    @Override
     public BigDecimal getTemp() {
         return super.getTemp();
     }
@@ -364,24 +306,39 @@ public class PID extends Temp {
     public void setCool(final String gpio, final BigDecimal duty,
                         final BigDecimal delay, final BigDecimal cycle, final BigDecimal p,
                         final BigDecimal i, final BigDecimal d) {
-        getSettings(COOL).setGPIO(gpio);
-
-        setDuty(duty);
-        getSettings(COOL).setDelay(delay);
-        getSettings(COOL).setCycleTime(cycle);
-        getSettings(COOL).setProportional(p);
-        getSettings(COOL).setIntegral(i);
-        getSettings(COOL).setDerivative(d);
+        PIDSettings coolSetting = getCoolSetting();
+        setDutyCycle(duty);
+        coolSetting.setGPIO(gpio);
+        coolSetting.setDelay(delay);
+        coolSetting.setCycleTime(cycle);
+        coolSetting.setProportional(p);
+        coolSetting.setIntegral(i);
+        coolSetting.setDerivative(d);
     }
 
-    /*****
-     * Helper function to return a map of the current status.
-     * @return The current status of the temperature probe.
-     */
-    String getJsonStatus() {
-        return LaunchControl.getInstance().toJsonString(this);
+    public void setMinTime(BigDecimal minTime) {
+        if (minTime == null || minTime.compareTo(this.minTime) == 0) {
+            return;
+        }
+        this.modeDirty = true;
+        this.minTime = minTime;
     }
 
+    public void setMinTemp(BigDecimal minTemp) {
+        if (minTemp == null || minTemp.compareTo(this.minTemp) == 0) {
+            return;
+        }
+        this.modeDirty = true;
+        this.minTemp = minTemp;
+    }
+
+    public void setMaxTemp(BigDecimal maxTemp) {
+        if (maxTemp == null || maxTemp.compareTo(this.maxTemp) == 0) {
+            return;
+        }
+        this.modeDirty = true;
+        this.maxTemp = maxTemp;
+    }
 
     public BigDecimal getMinTemp() {
         return this.minTemp;
@@ -397,15 +354,21 @@ public class PID extends Temp {
 
 
     void setManualDuty(BigDecimal duty) {
-        if (duty != null) {
-            this.manual_duty = duty;
+        if (duty == null || duty.compareTo(this.manualDuty) == 0) {
+            return;
         }
+        this.modeDirty = true;
+        this.manualDuty = duty;
+
     }
 
     void setManualTime(BigDecimal time) {
-        if (time != null) {
-            this.manual_time = time;
+        if (time == null || time.compareTo(this.manualTime) == 0) {
+            return;
         }
+        this.modeDirty = true;
+        this.manualTime = time;
+
     }
 
     /**
@@ -413,7 +376,12 @@ public class PID extends Temp {
      *
      * @param invert True to invert the outputs.
      */
-    void setAuxInverted(final boolean invert) {
+    void setInvertAux(final boolean invert) {
+        if (invert == this.invertAux) {
+            return;
+        }
+        this.auxDirty = true;
+
         this.invertAux = invert;
     }
 
@@ -431,27 +399,26 @@ public class PID extends Temp {
         return this.auxPin.getValue().equals("1");
     }
 
-    BigDecimal getManualCycle() {
-        return this.manual_duty;
+
+    public BigDecimal getManualDuty() {
+        return this.manualDuty;
     }
 
-    BigDecimal getManualTime() {
-        return this.manual_time;
+    public BigDecimal getManualTime() {
+        return this.manualTime;
     }
 
-    public PIDSettings getSettings(String type) {
-        switch (type) {
-            case HEAT:
-                if (this.heatSetting == null) {
-                    this.heatSetting = new PIDSettings();
-                }
-                return this.heatSetting;
-            case COOL:
-                if (this.coolSetting == null) {
-                    this.coolSetting = new PIDSettings();
-                }
-                return this.coolSetting;
+    public PIDSettings getHeatSetting() {
+        if (this.heatSetting == null) {
+            this.heatSetting = new PIDSettings();
         }
-        return null;
+        return this.heatSetting;
+    }
+
+    public PIDSettings getCoolSetting() {
+        if (this.coolSetting == null) {
+            this.coolSetting = new PIDSettings();
+        }
+        return this.coolSetting;
     }
 }

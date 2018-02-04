@@ -35,7 +35,7 @@ public class OutputDevice implements Observer {
 
             if (invOut != null) {
                 BrewServer.LOG.warning("Inverting outputs");
-                invertOutput = true;
+                this.invertOutput = true;
             }
         } catch (Exception e) {
             // Incase get property fails
@@ -53,10 +53,10 @@ public class OutputDevice implements Observer {
     }
 
     public void disable() {
-        if (ssr != null) {
-            synchronized (ssrLock) {
-                ssr.close();
-                ssr = null;
+        if (this.ssr != null) {
+            synchronized (this.ssrLock) {
+                this.ssr.close();
+                this.ssr = null;
             }
         }
     }
@@ -66,30 +66,33 @@ public class OutputDevice implements Observer {
     }
 
     void initializeSSR() throws InvalidGPIOException {
-        String gpio = settings.getGPIO();
-        if (ssr == null) {
+        String gpio = this.settings.getGPIO();
+        if (this.ssr == null) {
             if (gpio != null && gpio.length() > 0) {
-                synchronized (ssrLock) {
-                    ssr = new OutPin(gpio);
+                synchronized (this.ssrLock) {
+                    this.ssr = new OutPin(gpio);
                 }
                 turnOff();
             }
         }
 
-        if (gpio == null && ssr != null) {
+        if (gpio == null && this.ssr != null) {
             disable();
         }
     }
 
-    public String getGpio()
-    {
-        return ssr.getGPIOName();
+    public String getGpio() {
+        if (this.ssr == null) {
+            return null;
+        }
+        return this.ssr.getGPIOName();
     }
-    
+
     /**
      * Run through a cycle and turn the device on/off as appropriate based on the input duty.
+     *
      * @param duty The percentage of time / power to run.  This will only run if the duty
-     *              is between 0 and 100 and not null.
+     *             is between 0 and 100 and not null.
      */
     public void runCycle(BigDecimal duty) throws InterruptedException, InvalidGPIOException {
         // Run if the duty is not null and is between 0 and 100 inclusive.
@@ -99,8 +102,8 @@ public class OutputDevice implements Observer {
             initializeSSR();
 
             duty = MathUtil.divide(duty, HUNDRED);
-            BigDecimal onTime = duty.multiply(settings.getCycleTime());
-            BigDecimal offTime = settings.getCycleTime().subtract(onTime);
+            BigDecimal onTime = duty.multiply(this.settings.getCycleTime());
+            BigDecimal offTime = this.settings.getCycleTime().subtract(onTime);
             BrewServer.LOG.info("On: " + onTime
                     + " Off; " + offTime);
 
@@ -118,7 +121,7 @@ public class OutputDevice implements Observer {
 
     protected void setValue(boolean value) {
         if (this.ssr != null) {
-            synchronized (ssrLock) {
+            synchronized (this.ssrLock) {
                 // invert the output if needed
                 if (this.invertOutput) {
                     value = !value;
@@ -132,7 +135,7 @@ public class OutputDevice implements Observer {
      * @return the name
      */
     public String getName() {
-        return name;
+        return this.name;
     }
 
     /**
@@ -144,6 +147,7 @@ public class OutputDevice implements Observer {
 
     /**
      * Sets the outputs to be inverted for this device.
+     *
      * @param inverted True to invert the output.
      */
     public final void setInverted(final boolean inverted) {
@@ -152,11 +156,9 @@ public class OutputDevice implements Observer {
 
     @Override
     public void update(Observable o, Object arg) {
-        if (arg instanceof String)
-        {
+        if (arg instanceof String) {
             String propName = (String) arg;
-            switch (propName)
-            {
+            switch (propName) {
                 case "cycle_time":
                 case "proportional":
                 case "integral":
@@ -169,8 +171,7 @@ public class OutputDevice implements Observer {
                 case "gpio":
                     try {
                         initializeSSR();
-                    } catch (InvalidGPIOException e)
-                    {
+                    } catch (InvalidGPIOException e) {
                         BrewServer.LOG.log(Level.WARNING, "Failed to update GPIO.", e);
                     }
             }

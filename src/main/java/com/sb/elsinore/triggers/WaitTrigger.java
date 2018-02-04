@@ -2,7 +2,6 @@ package com.sb.elsinore.triggers;
 
 import com.sb.common.SBStringUtils;
 import com.sb.elsinore.BrewServer;
-import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Messages;
 import com.sb.elsinore.notificiations.Notifications;
 import com.sb.elsinore.notificiations.WebNotification;
@@ -151,12 +150,6 @@ public class WaitTrigger implements TriggerInterface {
     public void waitForTrigger() {
         // Time is in seconds, multiply by 1000 and wait.
         cooldown(MathUtil.multiply(this.waitTime, 1000).longValue());
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public String getJSONStatus() {
-        return LaunchControl.getInstance().toJsonString(this);
     }
 
     @Override

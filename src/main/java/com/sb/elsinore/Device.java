@@ -18,7 +18,7 @@ public class Device {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+    protected long id;
 
     @Expose
     @SerializedName("type")
@@ -32,10 +32,19 @@ public class Device {
 
     }
 
+    public Device(Device device) {
+        this.type = device.type;
+    }
+
     public Device(String type) {
         if (isNullOrEmpty(type)) {
             throw new IllegalArgumentException("Type cannot be null/empty");
         }
         this.type = type;
+    }
+
+
+    public Long getId() {
+        return this.id;
     }
 }

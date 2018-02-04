@@ -7,7 +7,6 @@ import org.mockito.Spy;
 
 import java.math.BigDecimal;
 
-import static com.sb.elsinore.UrlEndpoints.*;
 import static org.junit.Assert.assertEquals;
 import static org.powermock.api.mockito.PowerMockito.*;
 
@@ -34,14 +33,14 @@ public class PIDRunnerTest {
         this.heatSettings = spy(new PIDSettings());
         this.coolSettings = spy(new PIDSettings());
 
-        when(this.pidRunner.getTemp()).thenReturn(this.pid);
-        when(this.pid.getSettings(HEAT)).thenReturn(this.heatSettings);
-        when(this.pid.getSettings(COOL)).thenReturn(this.coolSettings);
+        when(this.pidRunner.getTempDevice()).thenReturn(this.pid);
+        when(this.pid.getHeatSetting()).thenReturn(this.heatSettings);
+        when(this.pid.getCoolSetting()).thenReturn(this.coolSettings);
     }
 
     @Test
     public void calculatePidFahrenheitReturnsZeroWithNoSettingsF() throws Exception {
-        this.pid.setScale(F);
+        this.pid.setScale("F");
         when(this.pid.getSetPoint()).thenReturn(new BigDecimal(100));
 
         BigDecimal timeDiff = new BigDecimal(10);
@@ -53,7 +52,7 @@ public class PIDRunnerTest {
 
     @Test
     public void calculatePidFahrenheitReturnsZeroWithNoSettingsC() throws Exception {
-        this.pid.setScale(C);
+        this.pid.setScale("C");
         when(this.pid.getSetPoint()).thenReturn(new BigDecimal(100));
 
         BigDecimal timeDiff = new BigDecimal(10);
@@ -65,7 +64,7 @@ public class PIDRunnerTest {
 
     @Test
     public void calculatePidFahrenheitReturnsZeroNoHeatGPIO() throws Exception {
-        this.pid.setScale(C);
+        this.pid.setScale("C");
         BigDecimal timeDiff = new BigDecimal(10);
         when(this.heatSettings.getProportional()).thenReturn(new BigDecimal(60));
         when(this.pid.getSetPoint()).thenReturn(new BigDecimal(100));
@@ -78,7 +77,7 @@ public class PIDRunnerTest {
 
     @Test
     public void calculatePidFahrenheitReturns100WithHeatGPIO() throws Exception {
-        this.pid.setScale(C);
+        this.pid.setScale("C");
         BigDecimal timeDiff = new BigDecimal(10);
         when(this.pid.getSetPoint()).thenReturn(new BigDecimal(100));
         when(this.heatSettings.getProportional()).thenReturn(new BigDecimal(60));
@@ -91,7 +90,7 @@ public class PIDRunnerTest {
 
     @Test
     public void calculatePidFahrenheitReturnsNeg100WithCoolGPIO() throws Exception {
-        this.pid.setScale(C);
+        this.pid.setScale("C");
         BigDecimal timeDiff = new BigDecimal(10);
         when(this.pid.getSetPoint()).thenReturn(new BigDecimal(-100));
         when(this.coolSettings.getProportional()).thenReturn(new BigDecimal(60));

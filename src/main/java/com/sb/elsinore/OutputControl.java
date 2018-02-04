@@ -1,17 +1,17 @@
 package com.sb.elsinore;
+
 import com.sb.elsinore.devices.CompressorDevice;
 import com.sb.elsinore.devices.OutputDevice;
+import jGPIO.InvalidGPIOException;
 
 import java.math.BigDecimal;
-
-import jGPIO.InvalidGPIOException;
 
 /**
  * OutputControl controls multiple output GPIOs.
  * Heat_SSR is a GPIO pin that represents a heating output.
  * Cool_SSR is a GPIO pin that represents a cooling output.
- * @author Doug Edey
  *
+ * @author Doug Edey
  */
 public final class OutputControl implements Runnable {
 
@@ -32,17 +32,18 @@ public final class OutputControl implements Runnable {
 
     /**
      * Constructor for a heat only pin.
-     * @param name Name of this instance.
+     *
+     * @param name     Name of this instance.
      * @param settings The Pid Settings to created the heater output for
      */
-   public OutputControl(final String name, PIDSettings settings) {
-        heater = new OutputDevice(name, settings);
-   }
+    public OutputControl(final String name, PIDSettings settings) {
+        this.heater = new OutputDevice(name, settings);
+    }
 
-   /**
-    * Set the current cooling information.
-    */
-   public void setCool(PIDSettings settings) {
+    /**
+     * Set the current cooling information.
+     */
+    public void setCool(PIDSettings settings) {
 
         //If there is a cooling delay between cycles,
         //then assume this is a compressor device
@@ -50,76 +51,75 @@ public final class OutputControl implements Runnable {
             CompressorDevice coolDevice =
                     new CompressorDevice("cooler", settings);
             setCooler(coolDevice);
-        }
-        else {
+        } else {
             setCooler(new OutputDevice("cooler", settings));
         }
-        
-   }
+
+    }
 
 
-   /**
-    * The main loop that checks and activates the outputs.
-    * Based on the duty cycle and time.
-    */
-   @Override
-   public void run() {
+    /**
+     * The main loop that checks and activates the outputs.
+     * Based on the duty cycle and time.
+     */
+    @Override
+    public void run() {
         try {
-             while (true) {
+            while (true) {
 
-                 try {
-                     BrewServer.LOG.info("Fduty: " + this.fDuty);
-                     if (fDuty.compareTo(BigDecimal.ZERO) == 0) {
-                         status = "off";
-                         if (getHeater() != null) {
-                             getHeater().turnOff();
-                         }
-                         if (getCooler() != null) {
-                             getCooler().turnOff();
-                         }
-                         //Need to sleep because we're not running a cycle
-                         Thread.sleep(1000);
-                     } else if (fDuty.compareTo(BigDecimal.ZERO) < 0) {
-                         status = "cooling";
-                         if (getHeater() != null) {
-                             getHeater().turnOff();
-                         }
-                         if (getCooler() != null) {
-                             getCooler().runCycle(fDuty.abs());
-                         }
-                     } else {
-                         status = "heating";
-                         if (getCooler() != null) {
-                             getCooler().turnOff();
-                         }
-                         if (getHeater() != null) {
-                             getHeater().runCycle(fDuty);
-                         }
-                     }
-                 } catch (InterruptedException e) {
-                     // Sleep interrupted, why did we wakeup
-                     if (this.shuttingDown) {
-                         return;
-                     }
-                 }
-             } // end the while loop
+                try {
 
-         } catch (RuntimeException e) {
-             BrewServer.LOG.warning(
-                 "Could not control the GPIO Pin during loop."
-                 + " Did you start as root?");
-             e.printStackTrace();
+                    if (this.fDuty.compareTo(BigDecimal.ZERO) == 0) {
+                        this.status = "off";
+                        if (getHeater() != null) {
+                            getHeater().turnOff();
+                        }
+                        if (getCooler() != null) {
+                            getCooler().turnOff();
+                        }
+                        //Need to sleep because we're not running a cycle
+                        Thread.sleep(1000);
+                    } else if (this.fDuty.compareTo(BigDecimal.ZERO) < 0) {
+                        this.status = "cooling";
+                        if (getHeater() != null) {
+                            getHeater().turnOff();
+                        }
+                        if (getCooler() != null) {
+                            getCooler().runCycle(this.fDuty.abs());
+                        }
+                    } else {
+                        this.status = "heating";
+                        if (getCooler() != null) {
+                            getCooler().turnOff();
+                        }
+                        if (getHeater() != null) {
+                            getHeater().runCycle(this.fDuty);
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    // Sleep interrupted, why did we wakeup
+                    if (this.shuttingDown) {
+                        return;
+                    }
+                }
+            } // end the while loop
+
+        } catch (RuntimeException e) {
+            BrewServer.LOG.warning(
+                    "Could not control the GPIO Pin during loop."
+                            + " Did you start as root?");
+            e.printStackTrace();
         } catch (InvalidGPIOException e1) {
-             BrewServer.LOG.warning(e1.getMessage());
-             e1.printStackTrace();
-         } finally {
-             BrewServer.LOG.warning("Output Control turning off outputs");
-             if (getHeater() != null) {
-                 getHeater().turnOff();
-             }
-             if (getCooler() != null) {
-                 getCooler().turnOff();
-             }
+            BrewServer.LOG.warning(e1.getMessage());
+            e1.printStackTrace();
+        } finally {
+            BrewServer.LOG.warning("Output Control turning off outputs");
+            if (getHeater() != null) {
+                getHeater().turnOff();
+            }
+            if (getCooler() != null) {
+                getCooler().turnOff();
+            }
         }
     }
 
@@ -141,13 +141,13 @@ public final class OutputControl implements Runnable {
     /**
      * @return The current status of this object.
      */
-   public String getStatus() {
-        return status;
-   }
+    public String getStatus() {
+        return this.status;
+    }
 
-   /**
-    * @param duty The duty to set this control with.
-    */
+    /**
+     * @param duty The duty to set this control with.
+     */
     public synchronized boolean setDuty(BigDecimal duty) {
         // Fix Defect #28: Cap the duty as positive or negative.
         if (this.cooler == null && duty.compareTo(BigDecimal.ZERO) < 0) {
@@ -157,11 +157,11 @@ public final class OutputControl implements Runnable {
         if (this.heater == null && duty.compareTo(BigDecimal.ZERO) > 0) {
             duty = BigDecimal.ZERO;
         }
-        if (fDuty.compareTo(duty) == 0) {
+        if (this.fDuty.compareTo(duty) == 0) {
             return false;
         }
         this.fDuty = duty;
-        BrewServer.LOG.info("IN: " + duty + " OUT: " + fDuty);
+        BrewServer.LOG.info("IN: " + duty + " OUT: " + this.fDuty);
         return true;
     }
 
@@ -169,14 +169,14 @@ public final class OutputControl implements Runnable {
      * @return The current duty cycle
      */
     public synchronized BigDecimal getDuty() {
-        return fDuty;
+        return this.fDuty;
     }
 
     /**
      * @return the cooler
      */
     public OutputDevice getCooler() {
-        return cooler;
+        return this.cooler;
     }
 
     /**
@@ -190,7 +190,7 @@ public final class OutputControl implements Runnable {
      * @return the heater
      */
     public OutputDevice getHeater() {
-        return heater;
+        return this.heater;
     }
 
     /**

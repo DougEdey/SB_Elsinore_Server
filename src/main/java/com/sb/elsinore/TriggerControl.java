@@ -2,7 +2,6 @@ package com.sb.elsinore;
 
 import com.sb.common.CollectionsUtil;
 import com.sb.elsinore.triggers.TriggerInterface;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.reflections.Reflections;
 import org.rendersnake.HtmlCanvas;
@@ -10,7 +9,6 @@ import org.rendersnake.tools.PrettyWriter;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -81,7 +79,7 @@ public class TriggerControl implements Runnable, Serializable {
             e.printStackTrace();
         }
 
-        LaunchControl.getInstance().saveEverything();
+        LaunchControl.getInstance().shutdown();
         return triggerStep;
     }
 
@@ -154,7 +152,7 @@ public class TriggerControl implements Runnable, Serializable {
     final boolean updateTrigger(final int position,
                                 final JSONObject params) {
         TriggerInterface trigger = this.triggerList.get(position);
-        LaunchControl.getInstance().saveEverything();
+        LaunchControl.getInstance().shutdown();
         return trigger.updateTrigger(params);
     }
 
@@ -331,24 +329,8 @@ public class TriggerControl implements Runnable, Serializable {
         }
 
         triggerEntry.setActive();
-        LaunchControl.getInstance().saveEverything();
+        LaunchControl.getInstance().shutdown();
         return true;
-    }
-
-    /**
-     * Return the current state of this MashControl as a JSON string.
-     *
-     * @return The String representing the current state.
-     */
-    public final String getJSONDataString() {
-        StringWriter out = new StringWriter();
-        try {
-            getJSONData().writeJSONString(out);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return out.toString();
     }
 
     /**
@@ -386,22 +368,8 @@ public class TriggerControl implements Runnable, Serializable {
                 mEntry.deactivate(fromUI);
             }
         }
-        LaunchControl.getInstance().saveEverything();
+        LaunchControl.getInstance().shutdown();
         return true;
-    }
-
-    /**
-     * Get the current status as a JSONObject.
-     *
-     * @return The JSONObject representing the current state.
-     */
-    @SuppressWarnings("unchecked")
-    private JSONArray getJSONData() {
-        JSONArray masterArray = new JSONArray();
-        for (TriggerInterface e : this.triggerList) {
-            masterArray.add(e.getJSONStatus());
-        }
-        return masterArray;
     }
 
     /**
@@ -463,7 +431,7 @@ public class TriggerControl implements Runnable, Serializable {
             setShutdownFlag(true);
             Thread.currentThread().interrupt();
         }
-        LaunchControl.getInstance().saveEverything();
+        LaunchControl.getInstance().shutdown();
     }
 
     /**
@@ -518,12 +486,12 @@ public class TriggerControl implements Runnable, Serializable {
 
     public void clear() {
         this.triggerList.clear();
-        LaunchControl.getInstance().saveEverything();
+        LaunchControl.getInstance().shutdown();
     }
 
     public void addTrigger(TriggerInterface newTrigger) {
         this.triggerList.add(newTrigger);
-        LaunchControl.getInstance().saveEverything();
+        LaunchControl.getInstance().shutdown();
     }
 
     public boolean isActive() {

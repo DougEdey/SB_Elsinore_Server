@@ -270,14 +270,6 @@ public class SwitchTrigger implements TriggerInterface {
     }
 
     /**
-     * @return The JSON Status.
-     */
-    @Override
-    public String getJSONStatus() {
-        return LaunchControl.getInstance().toJsonString(this);
-    }
-
-    /**
      * @param inType The type of the device to check against.
      * @return true if at least one switch is setup.
      */

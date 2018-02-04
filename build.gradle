@@ -1,5 +1,20 @@
+buildscript {
+    repositories {
+        maven { url "http://repo.maven.apache.org/maven2" }
+        maven { url 'https://mvnrepository.com/' }
+        mavenLocal()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.3.RELEASE")
+    }
+}
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'idea'
 apply plugin: 'java'
-apply plugin: 'maven'
+
 
 group = 'com.sb.elsinore'
 version = '1.0.0-SNAPSHOT'
@@ -9,19 +24,20 @@ description = "Elsinore"
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.5'
+}
 
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.3.RELEASE")
+idea {
+    module {
+        downloadJavadoc = true
+        downloadSources = true
     }
 }
-apply plugin: 'org.springframework.boot'
 
 repositories {
+    maven { url "http://repo.maven.apache.org/maven2" }
+
     mavenLocal()
     mavenCentral()
 }
@@ -40,6 +56,7 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-data-rest")
     compile("org.springframework.boot:spring-boot-starter-data-jpa")
     compile("org.springframework.boot:spring-boot-devtools")
+    compile("org.springframework.data:spring-data-rest-hal-browser")
     compile("com.h2database:h2")
     testCompile("org.springframework.boot:spring-boot-starter-test")
 
@@ -63,6 +80,7 @@ dependencies {
     compile group: 'commons-io', name: 'commons-io', version: '2.4'
     compile group: 'org.easymock', name: 'easymock', version: '3.2'
     compile group: 'org.apache.tika', name: 'tika-core', version: '1.11'
+
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: 'org.powermock', name: 'powermock-module-junit4', version: '1.6.2'
     testCompile group: 'org.powermock', name: 'powermock-api-mockito', version: '1.6.2'

@@ -72,13 +72,6 @@ public interface TriggerInterface extends Comparable<TriggerInterface> {
     void setPosition(Integer newPos);
 
     /**
-     * Get the current status of this object as a JSONObject.
-     *
-     * @return the current status.
-     */
-    String getJSONStatus();
-
-    /**
      * Get the type of device this trigger is intended for.
      * pid, temp, any.
      *

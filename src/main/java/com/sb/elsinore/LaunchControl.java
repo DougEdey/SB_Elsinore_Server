@@ -21,10 +21,10 @@ import org.owfs.jowfsclient.OwfsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 
+import javax.annotation.PreDestroy;
 import java.io.*;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -47,15 +47,15 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("unused")
 @SpringBootApplication
+@ComponentScan("com.sb.elsinore")
 public class LaunchControl {
 
-
     private DeviceRepository deviceRepository;
-    private TemperatureRepository tempRepository;
+    private TemperatureRepository temperatureRepository;
     private PIDRepository pidRepository;
 
     private static boolean loadCompleted = false;
-    private Gson gson;
+
 
     @Expose
     @SerializedName("general")
@@ -104,11 +104,6 @@ public class LaunchControl {
     private List<PIDRunner> pidRunners = null;
     private List<Thread> pidThreads;
 
-    /**
-     * Default config filename. Can be overridden with -c <filename>
-     */
-    private static String configFileName = "elsinore.cfg";
-
     /* public fields to hold data for various functions */
 
     /**
@@ -126,6 +121,7 @@ public class LaunchControl {
      * The accepted startup options.
      */
     private static Options startupOptions = null;
+
     /**
      * The Command line used.
      */
@@ -139,15 +135,23 @@ public class LaunchControl {
     private ProcessBuilder pb = null;
     private static LaunchControl instance;
 
+    @Autowired
+    public LaunchControl(DeviceRepository deviceRepository, TemperatureRepository temperatureRepository, PIDRepository pidRepository) {
+        this.deviceRepository = deviceRepository;
+        this.temperatureRepository = temperatureRepository;
+        this.pidRepository = pidRepository;
+        instance = this;
+        startup(DEFAULT_PORT);
+    }
+
     public static LaunchControl getInstance() {
         return instance;
     }
 
-    /*****
+    /**
      * Main method to launch the brewery.
      *
-     * @param arguments
-     *            List of arguments from the command line
+     * @param arguments List of arguments from the command line
      */
     public static void main(final String... arguments) {
         BrewServer.LOG.info("Running Brewery Controller.");
@@ -155,7 +159,7 @@ public class LaunchControl {
 
     }
 
-    /*******
+    /**
      * Used to setup the options for the command line parser.
      */
     private static void createOptions() {
@@ -198,29 +202,12 @@ public class LaunchControl {
 
     @Autowired
     public void setTemperatureRepository(TemperatureRepository temperatureRepository) {
-        this.tempRepository = temperatureRepository;
+        this.temperatureRepository = temperatureRepository;
     }
 
     @Autowired
     public void setPIDRepository(PIDRepository pidRepository) {
         this.pidRepository = pidRepository;
-    }
-
-    public LaunchControl() {
-        instance = this;
-        createConfig();
-        startup(DEFAULT_PORT);
-    }
-
-    /**
-     * Constructor for launch control.
-     *
-     * @param port The port to start the server on.
-     */
-    public LaunchControl(final int port) {
-        instance = this;
-        createConfig();
-        startup(port);
     }
 
     private static Gson getGsonParser() {
@@ -242,13 +229,11 @@ public class LaunchControl {
 
     private void startup(int port) {
         this.systemSettings.server_port = port;
-        updateDeviceList();
+
         // Create the shutdown hooks for all the threads
         // to make sure we close off the GPIO connections
         // Close off all the Switch GPIOs properly.
-        Runtime.getRuntime().addShutdownHook(new Thread(this::saveEverything));
-
-        this.gson = getGsonParser();
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
 
         //Check to make sure we have a valid folder for one wire straight away.
         File w1Folder = new File("/sys/bus/w1/devices/");
@@ -262,10 +247,11 @@ public class LaunchControl {
 
         // Load the System probe if it's not configured
         if (this.deviceRepository != null) {
-            List<Temp> probes = this.tempRepository.findByName("System");
+            List<Temp> probes = this.temperatureRepository.findByName("System");
             if (probes.size() == 0) {
                 addSystemTemp();
             }
+            this.temperatureRepository.findAll().forEach(this::addTemp);
         }
         // Debug info before launching the BrewServer itself
         LaunchControl.loadCompleted = true;
@@ -279,29 +265,6 @@ public class LaunchControl {
 
     void setRestore(boolean restore) {
         this.systemSettings.restoreState = restore;
-    }
-
-    /**
-     * Get the system status.
-     *
-     * @return a JSON Object representing the current system status
-     */
-    @SuppressWarnings("unchecked")
-    String getSystemStatus() {
-        return this.gson.toJson(this.systemSettings, SystemSettings.class);
-    }
-
-    /**
-     * Parse the general section of the XML Configuration.
-     *
-     * @param config The General element to be parsed.
-     */
-    private void parseGeneral(String config) {
-        if (config == null) {
-            return;
-        }
-        this.systemSettings = this.gson.fromJson(config, SystemSettings.class);
-
     }
 
     /**
@@ -335,8 +298,10 @@ public class LaunchControl {
         return p;
     }
 
-    // Add the system temperature
-    void addSystemTemp() {
+    /**
+     * Add the system temperature
+     */
+    private void addSystemTemp() {
         Temp tTemp = new Temp("System", "System");
         this.deviceRepository.save(tTemp);
         BrewServer.LOG.info("Adding " + tTemp.getName());
@@ -345,7 +310,7 @@ public class LaunchControl {
     }
 
     void delSystemTemp() {
-        List<Temp> devices = this.tempRepository.findByName("System");
+        List<Temp> devices = this.temperatureRepository.findByName("System");
         // Do we have anything to delete?
         if (devices.size() == 0) {
             return;
@@ -353,7 +318,7 @@ public class LaunchControl {
         Temp tTemp = devices.get(0);
         tTemp.shutdown();
         this.deviceRepository.delete(tTemp);
-        getPidRunners().removeIf(pidRunner -> pidRunner.getTemp() == tTemp);
+        getPidRunners().removeIf(pidRunner -> pidRunner.getTempDevice() == tTemp);
 
     }
 
@@ -397,11 +362,11 @@ public class LaunchControl {
      * @param newTemp PID to add.
      */
     public void addTemp(Temp newTemp) {
-        if (getPidRunners().stream().noneMatch(pRunner -> pRunner.getTemp() == newTemp)) {
+        if (getPidRunners().stream().noneMatch(pRunner -> pRunner.getTempDevice() == newTemp)) {
             PIDRunner pidRunner = new PIDRunner(newTemp);
             getPidRunners().add(pidRunner);
             Thread pThread = new Thread(pidRunner);
-            pThread.setName(pidRunner.getTemp().getName());
+            pThread.setName(pidRunner.getTempDevice().getName());
             getPidThreads().add(pThread);
             pThread.start();
         }
@@ -447,7 +412,7 @@ public class LaunchControl {
      *            The timer to find
      * @return return the Timer object
      */
-    Timer findTimer(final String name) {
+    private Timer findTimer(final String name) {
         // search based on the input name
         Iterator<Timer> iterator = getTimerList().iterator();
         Timer tTimer;
@@ -471,74 +436,6 @@ public class LaunchControl {
         // search based on the input name
         Timer tTimer = findTimer(name);
         getTimerList().remove(tTimer);
-    }
-
-    /**
-     * List the one wire devices in /sys/bus/w1/devices.
-     **/
-    private void listOneWireSys() {
-        // try to access the list of 1-wire devices
-        File w1Folder = new File("/sys/bus/w1/devices/");
-        if (!w1Folder.exists()) {
-            BrewServer.LOG.warning("Couldn't read the one wire devices directory!");
-            BrewServer.LOG.warning("Did you set up One Wire?");
-            BrewServer.LOG.warning("http://dougedey.github.io/2014/11/12/Setting_Up_One_Wire/");
-            return;
-        }
-
-        File[] listOfFiles = w1Folder.listFiles();
-
-        assert listOfFiles != null;
-        if (listOfFiles.length == 0) {
-            BrewServer.LOG.warning("No 1Wire probes found! Please check your system!");
-            BrewServer.LOG.warning("http://dougedey.github.io/2014/11/24/Why_Cant_I_Use_Elsinore_Without_Temperature_Probes/");
-        }
-
-        // Display what we found
-        for (File currentFile : listOfFiles) {
-            if (currentFile.isDirectory()
-                    && !currentFile.getName().startsWith("w1_bus_master")) {
-
-                // Check to see if this probe exists
-                if (probeExists(currentFile.getName()) || !currentFile.getName().startsWith("28")) {
-                    continue;
-                }
-                BrewServer.LOG.info("Checking for " + currentFile.getName());
-                Temp currentTemp = new Temp(currentFile.getName(),
-                        currentFile.getName());
-                addTemp(currentTemp);
-                // setup the scale for each temp probe
-                currentTemp.setScale(this.systemSettings.scale);
-            }
-        }
-    }
-
-    /**
-     * If the OWFS connection is setup, use this to
-     * read the OWFS server for the temperature probes
-     */
-    void listOWFSTemps() {
-        if (this.owfsConnection == null) {
-            return;
-        }
-
-        List<String> owfsTemps = getOneWireDevices("/28");
-        for (String temp : owfsTemps) {
-            if (temp.startsWith("/")) {
-                temp = temp.replace("/", "");
-            }
-
-            if (probeExists(temp)) {
-                // We already have this one read in from the FS.
-                continue;
-            }
-            BrewServer.LOG.info("Checking for " + temp);
-            Temp currentTemp = new Temp(temp,
-                    temp);
-            addTemp(currentTemp);
-            // setup the scale for each temp probe
-            currentTemp.setScale(this.systemSettings.scale);
-        }
     }
 
     private static String convertAddress(String oldAddress) {
@@ -565,61 +462,6 @@ public class LaunchControl {
             return fixedAddress;
         }
         return oldAddress;
-    }
-
-    /**
-     * update the device list.
-     */
-    private void updateDeviceList() {
-        listOneWireSys();
-        listOWFSTemps();
-    }
-
-    /**********
-     * Setup the configuration. We get here if the configuration file doesn't
-     * exist.
-     */
-    private void createConfig() {
-
-        if (startupCommand != null && startupCommand.hasOption("owfs")) {
-            createOWFS();
-        }
-
-        updateDeviceList();
-
-        if (this.deviceRepository != null && this.deviceRepository.count() == 0) {
-            BrewServer.LOG.warning("Could not find any one wire devices\n"
-                    + "Please check you have the correct modules setup");
-            BrewServer.LOG.warning("http://dougedey.github.io/2014/11/24/Why_Cant_I_Use_Elsinore_Without_Temperature_Probes/");
-        }
-
-        InetAddress addr;
-        try {
-            addr = InetAddress.getLocalHost();
-            String webURL = "http://" + addr.getHostName() + ":"
-                    + this.systemSettings.server_port + "/controller";
-            BrewServer.LOG.warning("Please go to the Web UI to the web UI "
-                    + webURL);
-        } catch (UnknownHostException e) {
-            BrewServer.LOG.warning("Couldn't get localhost information.");
-        }
-    }
-
-    /**
-     * Save the configuration file to the default config filename as xml.
-     */
-    void saveConfigFile() {
-        if (!LaunchControl.loadCompleted) {
-            return;
-        }
-        File configOut = new File(configFileName);
-        setFileOwner(configOut);
-
-        try (Writer writer = new FileWriter(configFileName)) {
-            this.gson.toJson(this, writer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -677,7 +519,7 @@ public class LaunchControl {
                 this.systemSettings.owfsPort = DEFAULT_OWFS_PORT;
             }
         }
-        saveConfigFile();
+
         // Create the connection
         setupOWFS();
     }
@@ -690,8 +532,8 @@ public class LaunchControl {
      */
     private boolean probeExists(String address) {
         String owfsAddress = convertAddress(address);
-        return this.tempRepository.findByDevice(address).size() == 1
-                || this.tempRepository.findByDevice(owfsAddress).size() == 1;
+        return this.temperatureRepository.findByDevice(address).size() == 1
+                || this.temperatureRepository.findByDevice(owfsAddress).size() == 1;
     }
 
     /***********
@@ -745,32 +587,6 @@ public class LaunchControl {
         return input.trim();
     }
 
-    /******
-     * Helper method to initialize the configuration.
-     */
-    private void initializeConfig() {
-        File existingConfig = new File(configFileName);
-        if (!existingConfig.exists()) {
-            return;
-        }
-
-        try {
-            BrewServer.LOG.info("Backing up config to " + configFileName
-                    + ".original");
-            File originalFile = new File(configFileName + ".original");
-            File sourceFile = new File(configFileName);
-            copyFile(sourceFile, originalFile);
-
-            setFileOwner(originalFile);
-            setFileOwner(sourceFile);
-
-            BrewServer.LOG.info("Created configCfg");
-        } catch (IOException e) {
-            BrewServer.LOG.info("Config file at: " + configFileName
-                    + " doesn't exist");
-        }
-    }
-
     /**
      * Copy a file helper, used for backing data the config file.
      *
@@ -778,7 +594,7 @@ public class LaunchControl {
      * @param destFile   The file name to copy to
      * @throws IOException If there's an issue with copying the file
      */
-    static void copyFile(final File sourceFile, final File destFile)
+    private static void copyFile(final File sourceFile, final File destFile)
             throws IOException {
 
         if (!destFile.exists() && !destFile.createNewFile()) {
@@ -841,9 +657,9 @@ public class LaunchControl {
      * @return The MashControl for the PID.
      */
     public TriggerControl findTriggerControl(final String pid) {
-        List<Temp> devices = this.tempRepository.findByName(pid);
+        List<Temp> devices = this.temperatureRepository.findByName(pid);
         if (devices.size() == 1) {
-            Temp tTemp = (Temp) devices.get(0);
+            Temp tTemp = devices.get(0);
             return tTemp.getTriggerControl();
         }
         return null;
@@ -1136,12 +952,12 @@ public class LaunchControl {
      * @param tTemp The Temp object to delete.
      */
     public void deleteTemp(Temp tTemp) {
-        List<Temp> devices = this.tempRepository.findByName(tTemp.getName());
+        List<Temp> devices = this.temperatureRepository.findByName(tTemp.getName());
         if (devices.size() == 0) {
             return;
         }
 
-        getPidRunners().removeIf(pidRunner -> pidRunner.getTemp().getName().equals(tTemp.getName()));
+        getPidRunners().removeIf(pidRunner -> pidRunner.getTempDevice().getName().equals(tTemp.getName()));
         getPidThreads().removeIf(pidThread -> pidThread.getName().equalsIgnoreCase(tTemp.getName()));
     }
 
@@ -1150,7 +966,7 @@ public class LaunchControl {
      *
      * @return The system temperature scale.
      */
-    public String getScale() {
+    private String getScale() {
         return this.systemSettings.scale;
     }
 
@@ -1185,7 +1001,7 @@ public class LaunchControl {
         }
     }
 
-    boolean setTempScales(String scale) {
+    private boolean setTempScales(String scale) {
         if (scale == null) {
             if (getScale().equals("C")) {
                 scale = "F";
@@ -1200,14 +1016,6 @@ public class LaunchControl {
         for (Device device : this.deviceRepository.findAll()) {
             if (device instanceof Temp) {
                 Temp t = (Temp) device;
-                if (!t.getScale().equals(scale)) {
-                    // convert the target temp.
-                    if (t instanceof PID && scale.equals("F")) {
-                        PID p = (PID) t;
-                        p.setTemp(Temp.cToF(p.getSetPoint()));
-                        p.setHysteria(Temp.cToF(p.getMinTemp()), Temp.cToF(p.getMaxTemp()), p.getMinTime());
-                    }
-                }
                 t.setScale(scale);
             }
         }
@@ -1319,14 +1127,9 @@ public class LaunchControl {
         Collections.sort(getTimerList());
     }
 
-    void saveEverything() {
-        BrewServer.LOG.warning("Shutting down. Saving configuration");
-        saveConfigFile();
-        BrewServer.LOG.warning("Configuration saved.");
+    void shutdown() {
 
-        BrewServer.LOG.warning("Shutting down temperature probe threads.");
-
-        BrewServer.LOG.warning("Shutting down PID threads.");
+        BrewServer.LOG.warning("Shutting down PID threads...");
         getPidRunners().stream().filter(Objects::nonNull).forEach(PIDRunner::stop);
 
         if (getTriggerControlList().size() > 0) {
@@ -1351,10 +1154,6 @@ public class LaunchControl {
 
     public boolean shouldRestore() {
         return this.systemSettings.restoreState;
-    }
-
-    public String toJsonString(Object o) {
-        return this.gson.toJson(o, o.getClass());
     }
 
     private List<Switch> getSwitchList() {
@@ -1400,7 +1199,7 @@ public class LaunchControl {
     }
 
     public Temp findTemp(String name) {
-        List<Temp> deviceList = this.tempRepository.findByName(name);
+        List<Temp> deviceList = this.temperatureRepository.findByName(name);
         if (deviceList.size() == 1) {
             return deviceList.get(0);
         }
@@ -1413,5 +1212,11 @@ public class LaunchControl {
             return deviceList.get(0);
         }
         return null;
+    }
+
+    @PreDestroy
+    public void preDestroy() {
+        BrewServer.LOG.info("Shutting down! ");
+        shutdown();
     }
 }

@@ -1,6 +1,5 @@
 package com.sb.elsinore;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.Expose;
 import com.sb.elsinore.devices.I2CDevice;
@@ -12,9 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.owfs.jowfsclient.OwfsException;
 
 import javax.annotation.Nonnull;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.Transient;
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -39,24 +37,19 @@ import static com.google.common.base.Strings.isNullOrEmpty;
  * @author Doug Edey
  */
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"name"}))
 @DiscriminatorValue("T")
+@EntityListeners(TemperatureListeners.class)
 public class Temp extends Device implements Comparable<Temp> {
+
     private static final Logger log = Logger.getLogger(Temp.class.getCanonicalName());
 
     public static final String TYPE = "temp";
     /**
      * Strings for the Nodes.
      */
-    public static final String PROBE_SIZE = "ProbeSize";
     public static final String PROBE_ELEMENT = "probe";
     public static final String POSITION = "position";
-
-    /**
-     * Valid sizes for the probes
-     */
-    public static int SIZE_SMALL = 0;
-    public static int SIZE_MEDIUM = 1;
-    public static int SIZE_LARGE = 2;
 
     /**
      * Magic numbers.
@@ -82,6 +75,8 @@ public class Temp extends Device implements Comparable<Temp> {
     private boolean hidden = false;
     @Expose
     boolean cutoffEnabled = false;
+    @Transient
+    boolean initialized = false;
 
     /**
      * Base path for BBB System Temp.
@@ -92,24 +87,37 @@ public class Temp extends Device implements Comparable<Temp> {
      * Base path for RPi System Temp.
      */
     private final String rpiSystemTemp =
-            "/sys/class/thermal/thermal_zone0/temp";
+            "/sys/class/thermal/thermal_zone1/temp";
     /**
      * Match the temperature regexp.
      */
     @Transient
     private Pattern tempRegexp = null;
-    @JsonProperty("size")
-    private int size = SIZE_LARGE;
+
     @JsonProperty("i2c_device")
     I2CDevice i2cDevice = null;
     @JsonProperty("i2c_channel")
     int i2cChannel = -1;
     @JsonProperty("device")
+    @NotNull
+    @javax.validation.constraints.Size(min = 1)
     String device = "";
 
     private boolean loggingOn = true;
 
     public Temp() {
+    }
+
+    public Temp(Device device) {
+        super(device);
+
+        if (!(device instanceof Temp)) {
+            return;
+        }
+        Temp other = (Temp) device;
+        this.name = other.name;
+        this.scale = other.scale;
+        this.device = other.device;
     }
 
     /**
@@ -124,7 +132,34 @@ public class Temp extends Device implements Comparable<Temp> {
         super(type);
         this.device = inProbe;
         log.info("Adding " + this.device);
-        if (name.equalsIgnoreCase("system")) {
+
+
+        setName(name);
+        this.probeName = this.device;
+        log.info(this.probeName + " added.");
+        LaunchControl.getInstance().addTemp(this);
+    }
+
+    /**
+     * Standard constructor.
+     *
+     * @param name    The probe name or input name.
+     *                Use "system" to create a system temperature probe
+     * @param inProbe The address of this temperature probe.
+     */
+    public Temp(String name, String inProbe) {
+        this(name, inProbe, TYPE);
+    }
+
+    /**
+     * @param n The name to set this Temp to.
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    private void initialize() {
+        if (this.name.equalsIgnoreCase("system")) {
             this.device = "System";
             File tempFile = new File(this.rpiSystemTemp);
             if (tempFile.exists()) {
@@ -140,7 +175,7 @@ public class Temp extends Device implements Comparable<Temp> {
                 }
             }
 
-        } else if (!name.equalsIgnoreCase("Blank")) {
+        } else if (!this.name.equalsIgnoreCase("Blank")) {
             this.fileProbe = "/sys/bus/w1/devices/" + this.device + "/w1_slave";
             File probePath =
                     new File(this.fileProbe);
@@ -172,43 +207,29 @@ public class Temp extends Device implements Comparable<Temp> {
                     }
                 }
             }
-
         }
-
         this.probeName = this.device;
-        this.name = name;
-        log.info(this.probeName + " added.");
-        LaunchControl.getInstance().addTemp(this);
-    }
-
-    /**
-     * Standard constructor.
-     *
-     * @param name    The probe name or input name.
-     *                Use "system" to create a system temperature probe
-     * @param inProbe The address of this temperature probe.
-     */
-    @JsonCreator
-    public Temp(@JsonProperty("name") String name, @JsonProperty("inProbe") String inProbe) {
-        this(name, inProbe, TYPE);
-    }
-
-    /**
-     * @param n The name to set this Temp to.
-     */
-    public void setName(final String n) {
-        this.name = n;
+        log.info(this.probeName + " initialized.");
+        this.initialized = true;
     }
 
     /**
      * @return The name of this probe
      */
     public String getName() {
-        return this.name.replaceAll(" ", "_");
+        return this.name;
     }
 
     public String getDevice() {
         return this.device;
+    }
+
+    public void setDevice(String device) {
+        if (isNullOrEmpty(device)) {
+            this.device = null;
+        } else {
+            this.device = device;
+        }
     }
 
     /**
@@ -282,7 +303,7 @@ public class Temp extends Device implements Comparable<Temp> {
      * The current timestamp.
      */
     @Transient
-    private long currentTime = 0;
+    private Long currentTime = 0L;
     /**
      * Other strings, obviously named.
      */
@@ -424,6 +445,10 @@ public class Temp extends Device implements Comparable<Temp> {
     public BigDecimal updateTemp() {
         BigDecimal result;
 
+        if (!this.initialized) {
+            initialize();
+        }
+
         if (this.badTemp && this.currentError != null && this.currentError.equals("")) {
             log.warning("Trying to recover " + this.getName());
         }
@@ -470,11 +495,13 @@ public class Temp extends Device implements Comparable<Temp> {
      */
     public BigDecimal updateTempFromOWFS() {
         // Use the OWFS connection
-        if (this.probeName.equals("Blank")) {
+        if (isNullOrEmpty(this.probeName) || this.probeName.equals("Blank")) {
             return new BigDecimal(0.0);
         }
+
         BigDecimal temp = ERROR_TEMP;
         String rawTemp = "";
+
         try {
             rawTemp = LaunchControl.getInstance().readOWFSPath(this.probeName + "/temperature");
             if (rawTemp.equals("")) {
@@ -964,18 +991,10 @@ public class Temp extends Device implements Comparable<Temp> {
                 && this.volumeOffset != null && !this.volumeOffset.equals("")) || (this.volumeAIN != -1);
     }
 
-    /*****
-     * Helper function to return a map of the current status.
-     * @return The current status of the temperature probe.
-     */
-    String getJsonStatus() {
-        return LaunchControl.getInstance().toJsonString(this);
-    }
-
     public void shutdown() {
         // Graceful shutdown.
         this.keepAlive = false;
-        log.warning(this.getName() + " is shutting down");
+        log.warning(this.getName() + " is shutting down.");
         Thread.currentThread().interrupt();
     }
 
@@ -1110,26 +1129,6 @@ public class Temp extends Device implements Comparable<Temp> {
         return temp;
     }
 
-    /**
-     * Get the current Size.
-     *
-     * @return {@value #SIZE_SMALL} {@value #SIZE_MEDIUM} or {@value #SIZE_LARGE}
-     */
-    public int getSize() {
-        return this.size;
-    }
-
-    /**
-     * Set the new size of this render.
-     *
-     * @param newSize {@value #SIZE_SMALL} {@value #SIZE_MEDIUM} or {@value #SIZE_LARGE}
-     */
-    public void setSize(int newSize) {
-        if (this.size == -1) {
-            return;
-        }
-        this.size = newSize;
-    }
 
     public String getI2CDevNumberString() {
         if (this.i2cDevice == null) {
@@ -1176,4 +1175,5 @@ public class Temp extends Device implements Comparable<Temp> {
         }
         return this.tempRegexp;
     }
+
 }

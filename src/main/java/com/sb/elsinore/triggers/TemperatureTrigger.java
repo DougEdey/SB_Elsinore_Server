@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import static com.sb.elsinore.PID.PIDMode.OFF;
 import static org.rendersnake.HtmlAttributesFactory.*;
 
 /**
@@ -85,7 +86,7 @@ public class TemperatureTrigger implements TriggerInterface {
                     + "Trigger will wait for it to hit the target temperature.");
         } else {
             pid.setTemp(this.targetTemp);
-            pid.setPidMode("auto");
+            pid.setPidMode(PID.PIDMode.AUTO);
         }
     }
 
@@ -300,7 +301,7 @@ public class TemperatureTrigger implements TriggerInterface {
                         + " is not associated with a PID. "
                         + "Cannot deactivate the PID");
             } else {
-                pid.setPidMode("off");
+                pid.setPidMode(OFF);
             }
         }
         clearNotifications();
@@ -423,17 +424,7 @@ public class TemperatureTrigger implements TriggerInterface {
     public String getName() {
         return "Temperature";
     }
-
-    /**
-     * Return the Position, startdate, target temperature, and description.
-     *
-     * @return The current status as a JSONObject.
-     */
-    @Override
-    public String getJSONStatus() {
-        return LaunchControl.getInstance().toJsonString(this);
-    }
-
+    
     /**
      * Compare by position.
      *

@@ -7,6 +7,8 @@ import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.StreamSupport;
 
@@ -24,6 +26,7 @@ public class TemperatureController {
         logger.warning("Started Temperature controller");
         this.temperatureRepository = temperatureRepository;
     }
+
 
     @RequestMapping(value = "/temperatures", method = RequestMethod.POST)
     @ResponseBody
@@ -44,6 +47,20 @@ public class TemperatureController {
             this.temperatureRepository.delete(id);
             LaunchControl.getInstance().deleteTemp(temp);
         }
+    }
+
+    @RequestMapping(value = "addresses", method = RequestMethod.GET)
+    @ResponseBody
+    public List<String> getAddresses() {
+        ArrayList<String> addresses = new ArrayList<>();
+
+        addresses.addAll(LaunchControl.getInstance().getOneWireDevices("28"));
+        addresses.add("System");
+
+        Iterable<Temp> tempIterator = this.temperatureRepository.findAll();
+        tempIterator.forEach(t -> addresses.remove(t.getDevice()));
+        
+        return addresses;
     }
 
 }

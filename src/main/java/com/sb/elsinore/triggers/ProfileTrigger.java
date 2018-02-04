@@ -234,11 +234,6 @@ public class ProfileTrigger implements TriggerInterface {
     }
 
     @Override
-    public String getJSONStatus() {
-        return LaunchControl.getInstance().toJsonString(this);
-    }
-
-    @Override
     public boolean getTriggerType(String inType) {
         return true;
     }

@@ -16,4 +16,5 @@ public interface TemperatureRepository extends PagingAndSortingRepository<Temp, 
     List<Temp> findByName(@Param("name") String name);
 
     List<Temp> findByDevice(@Param("device") String device);
+    
 }
