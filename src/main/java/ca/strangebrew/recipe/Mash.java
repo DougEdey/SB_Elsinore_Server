@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
 
-import static com.sb.elsinore.devices.TempProbe.POSITION;
 import static com.sb.elsinore.TriggerControl.PID;
 import static com.sb.elsinore.triggers.TemperatureTrigger.METHOD;
 import static com.sb.elsinore.triggers.TriggerInterface.TYPE;
+import static com.sb.elsinore.wrappers.TempRunner.POSITION;
 
 /**
  * $Id: Mash.java,v 1.37 2008/01/16 17:55:04 jimcdiver Exp $

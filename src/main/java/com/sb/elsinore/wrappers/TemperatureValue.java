@@ -100,7 +100,7 @@ public class TemperatureValue {
      * @param currentTemp temperature to convert in Celsius
      * @return Temperature in Fahrenheit
      */
-    static BigDecimal cToF(final BigDecimal currentTemp) {
+    public static BigDecimal cToF(final BigDecimal currentTemp) {
         BigDecimal t = MathUtil.divide(MathUtil.multiply(currentTemp, 9), 5);
         t = t.add(FREEZING);
         return t;

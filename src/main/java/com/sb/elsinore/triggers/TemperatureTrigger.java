@@ -4,7 +4,7 @@ import com.sb.elsinore.*;
 import com.sb.elsinore.devices.PID;
 import com.sb.elsinore.notificiations.Notifications;
 import com.sb.elsinore.notificiations.WebNotification;
-import com.sb.elsinore.wrappers.TempWrapper;
+import com.sb.elsinore.wrappers.TempRunner;
 import com.sb.elsinore.wrappers.TemperatureValue;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
@@ -39,7 +39,7 @@ public class TemperatureTrigger implements TriggerInterface {
     public static final String TEMPPROBE = "tempprobe";
 
     private BigDecimal targetTemp = null;
-    private TempWrapper temperatureProbe = null;
+    private TempRunner temperatureProbe = null;
     private String method = null;
     private String type = null;
     private boolean active;
@@ -69,9 +69,9 @@ public class TemperatureTrigger implements TriggerInterface {
     }
 
     /**
-     * Set the {@link java.util.Date} that this step is started.
+     * Set the {@link java.util.Date} that this step is startRunning.
      *
-     * @param inStart The Date that this step is started.
+     * @param inStart The Date that this step is startRunning.
      */
     private void setStart(final Date inStart) {
         this.startDate = inStart;
@@ -199,12 +199,17 @@ public class TemperatureTrigger implements TriggerInterface {
         setTargetTemperature();
         setStart(new Date());
         BigDecimal probeTempF = this.temperatureProbe.getTempF();
+
+        if (probeTempF == null) {
+            return;
+        }
+
         BigDecimal diff = this.targetTemp.subtract(probeTempF);
         if (this.mode == null) {
             // Just get to within 2F of the target TempProbe.
             BrewServer.LOG.info(String.format("Waiting to be within 2F of %.2f", this.targetTemp));
 
-            BrewServer.LOG.info("Probe temp: " + probeTempF);
+            BrewServer.LOG.info("Probe temp: " + probeTempF.toPlainString());
             while (diff.compareTo(new BigDecimal(2.0)) >= 0) {
                 try {
                     BrewServer.LOG.info("" + diff);

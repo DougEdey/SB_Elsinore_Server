@@ -34,7 +34,7 @@ public class PIDRunnerTest {
         this.heatSettings = spy(new PIDSettings());
         this.coolSettings = spy(new PIDSettings());
 
-        when(this.pidRunner.getTempProbeDevice()).thenReturn(this.pid);
+        when(this.pidRunner.getTempProbe()).thenReturn(this.pid);
         when(this.pid.getHeatSetting()).thenReturn(this.heatSettings);
         when(this.pid.getCoolSetting()).thenReturn(this.coolSettings);
     }

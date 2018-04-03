@@ -209,7 +209,7 @@ public class PID extends TempProbe {
         }
     }
 
-    void setAux(boolean on) {
+    public void setAux(boolean on) {
         if (this.invertAux) {
             this.auxPin.setValue(!on);
         } else {
@@ -235,18 +235,18 @@ public class PID extends TempProbe {
     /**
      * @return Get the GPIO Pin
      */
-    String getHeatGPIO() {
+    public String getHeatGPIO() {
         return getHeatSetting().getGPIO();
     }
 
-    String getCoolGPIO() {
+    public String getCoolGPIO() {
         return getCoolSetting().getGPIO();
     }
 
     /**
      * @return Get the Aux GPIO Pin
      */
-    String getAuxGPIO() {
+    public String getAuxGPIO() {
         return this.auxGPIO;
     }
 

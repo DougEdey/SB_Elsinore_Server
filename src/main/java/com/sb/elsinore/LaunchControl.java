@@ -10,7 +10,7 @@ import com.sb.elsinore.devices.I2CDevice;
 import com.sb.elsinore.devices.PID;
 import com.sb.elsinore.devices.TempProbe;
 import com.sb.elsinore.inputs.PhSensor;
-import com.sb.elsinore.wrappers.TempWrapper;
+import com.sb.elsinore.wrappers.TempRunner;
 import jGPIO.InvalidGPIOException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -102,7 +102,7 @@ public class LaunchControl {
     /**
      * PID Thread List.
      */
-    private List<PIDRunner> pidRunners = null;
+    private List<TempRunner> tempRunners = null;
     private List<Thread> pidThreads;
 
     /* public fields to hold data for various functions */
@@ -135,7 +135,7 @@ public class LaunchControl {
 
     private ProcessBuilder pb = null;
     private static LaunchControl instance;
-    private HashMap<String, TempWrapper> deviceMap = new HashMap<>();
+    private HashMap<String, TempRunner> deviceMap = new HashMap<>();
 
     @Autowired
     public LaunchControl(DeviceRepository deviceRepository, TemperatureRepository temperatureRepository, PIDRepository pidRepository) {
@@ -295,15 +295,15 @@ public class LaunchControl {
     }
 
     void delSystemTemp() {
-        TempWrapper tempWrapper = this.deviceMap.get("System");
+        TempRunner tempRunner = this.deviceMap.get("System");
         // Do we have anything to delete?
-        if (tempWrapper == null) {
+        if (tempRunner == null) {
             return;
         }
 
-        tempWrapper.shutdown();
-        this.deviceRepository.delete(tempWrapper.getTempProbe());
-        getPidRunners().removeIf(pidRunner -> pidRunner.getTempProbeDevice() == tempWrapper.getTempProbe());
+        tempRunner.shutdown();
+        this.deviceRepository.delete(tempRunner.getTempProbe());
+        getTempRunners().removeIf(tr -> tr.getTempProbe() == tempRunner.getTempProbe());
 
     }
 
@@ -347,12 +347,12 @@ public class LaunchControl {
      * @param newTempProbe PID to add.
      */
     public void addTemp(TempProbe newTempProbe) {
-        if (getPidRunners().stream().noneMatch(pRunner -> pRunner.getTempProbeDevice() == newTempProbe)) {
+        if (getTempRunners().stream().noneMatch(pRunner -> pRunner.getTempProbe() == newTempProbe)) {
             PIDRunner pidRunner = new PIDRunner(newTempProbe);
-            getPidRunners().add(pidRunner);
+            getTempRunners().add(pidRunner);
             Thread pThread = new Thread(pidRunner);
-            pThread.setName(pidRunner.getTempProbeDevice().getName());
-            getPidThreads().add(pThread);
+            pThread.setName(pidRunner.getTempProbe().getName());
+            getTempThreads().add(pThread);
             pThread.start();
         }
     }
@@ -942,8 +942,8 @@ public class LaunchControl {
             return;
         }
 
-        getPidRunners().removeIf(pidRunner -> pidRunner.getTempProbeDevice().getName().equals(tTempProbe.getName()));
-        getPidThreads().removeIf(pidThread -> pidThread.getName().equalsIgnoreCase(tTempProbe.getName()));
+        getTempRunners().removeIf(tempRunner -> tempRunner.getTempProbe().getName().equals(tTempProbe.getName()));
+        getTempThreads().removeIf(tempThread -> tempThread.getName().equalsIgnoreCase(tTempProbe.getName()));
     }
 
     /**
@@ -1115,7 +1115,7 @@ public class LaunchControl {
     void shutdown() {
 
         BrewServer.LOG.warning("Shutting down PID threads...");
-        getPidRunners().stream().filter(Objects::nonNull).forEach(PIDRunner::stop);
+        getTempRunners().stream().filter(Objects::nonNull).forEach(TempRunner::stop);
 
         if (getTriggerControlList().size() > 0) {
             BrewServer.LOG.warning("Shutting down MashControl threads.");
@@ -1148,14 +1148,14 @@ public class LaunchControl {
         return this.switchList;
     }
 
-    private List<PIDRunner> getPidRunners() {
-        if (this.pidRunners == null) {
-            this.pidRunners = new ArrayList<>();
+    private List<TempRunner> getTempRunners() {
+        if (this.tempRunners == null) {
+            this.tempRunners = new ArrayList<>();
         }
-        return this.pidRunners;
+        return this.tempRunners;
     }
 
-    private List<Thread> getPidThreads() {
+    private List<Thread> getTempThreads() {
         if (this.pidThreads == null) {
             this.pidThreads = new ArrayList<>();
         }
@@ -1183,16 +1183,16 @@ public class LaunchControl {
         return this.phSensorList;
     }
 
-    public TempWrapper findTemp(String name) {
-        TempWrapper tempWrapper = this.deviceMap.get(name);
+    public TempRunner findTemp(String name) {
+        TempRunner tempRunner = this.deviceMap.get(name);
         List<TempProbe> deviceList = this.temperatureRepository.findByName(name);
         if (deviceList.size() == 1) {
-            tempWrapper = new TempWrapper(deviceList.get(0));
+            tempRunner = new TempRunner(deviceList.get(0));
         } else {
             // log an error
         }
 
-        return tempWrapper;
+        return tempRunner;
     }
 
     public PID findPID(String name) {

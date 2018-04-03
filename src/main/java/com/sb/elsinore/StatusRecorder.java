@@ -2,8 +2,7 @@ package com.sb.elsinore;
 
 import com.google.gson.annotations.Expose;
 import com.sb.common.SBStringUtils;
-import com.sb.elsinore.devices.TempProbe;
-import com.sb.elsinore.wrappers.TempWrapper;
+import com.sb.elsinore.wrappers.TempRunner;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -193,7 +192,7 @@ public class StatusRecorder implements Runnable {
             vessel = params.get("vessel");
         }
         String vesselName = vessel;
-        TempWrapper tempProbe = LaunchControl.getInstance().findTemp(vessel);
+        TempRunner tempProbe = LaunchControl.getInstance().findTemp(vessel);
         if (tempProbe != null) {
             vesselName = tempProbe.getTempProbe().getProbe();
         }
@@ -262,7 +261,7 @@ public class StatusRecorder implements Runnable {
                 name = name.substring(0, name.length() - 4);
                 localName = name.substring(0, name.lastIndexOf("-"));
                 String type = name.substring(name.lastIndexOf("-") + 1);
-                TempWrapper localTempProbe = LaunchControl.getInstance().findTemp(localName);
+                TempRunner localTempProbe = LaunchControl.getInstance().findTemp(localName);
                 if (localTempProbe != null) {
                     localName = localTempProbe.getName();
                 } else {

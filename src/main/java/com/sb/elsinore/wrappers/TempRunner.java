@@ -1,6 +1,7 @@
 package com.sb.elsinore.wrappers;
 
 
+import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.devices.TempProbe;
 import com.sb.util.MathUtil;
@@ -19,7 +20,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.sb.elsinore.wrappers.TemperatureValue.cToF;
 
 
-public class TempWrapper {
+public class TempRunner implements Runnable {
 
     public static final String TYPE = "tempProbe";
     /**
@@ -27,7 +28,7 @@ public class TempWrapper {
      */
     public static final String PROBE_ELEMENT = "probe";
     public static final String POSITION = "position";
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(TempWrapper.class);
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(TempRunner.class);
     private static BigDecimal ERROR_TEMP = new BigDecimal(-999);
     /**
      * Base path for BBB System TempProbe.
@@ -39,21 +40,25 @@ public class TempWrapper {
      */
     private final String rpiSystemTemp =
             "/sys/class/thermal/thermal_zone1/tempProbe";
-    private String currentError = null;
-    private TemperatureValue currentTemp = new TemperatureValue();
-    private TempProbe tempProbe = null;
-    private boolean badTemp = false;
-    private boolean keepAlive = true;
-    private boolean isStarted = false;
-    private String fileProbe = null;
-    private boolean initialized = false;
-    private boolean loggingOn = true;
+    String currentError = null;
+    TemperatureValue currentTemp = new TemperatureValue();
+    TempProbe tempProbe = null;
+    boolean badTemp = false;
+    boolean keepAlive = true;
+    boolean isStarted = false;
+    String fileProbe = null;
+    boolean initialized = false;
+    boolean loggingOn = true;
+
     /**
      * Match the temperature regexp.
      */
     private Pattern tempRegexp = null;
+    private BigDecimal previousTime = null;
+    private BigDecimal tempF = null;
+    private BigDecimal currentTime = null;
 
-    public TempWrapper(TempProbe tempProbe) {
+    public TempRunner(TempProbe tempProbe) {
         this.tempProbe = tempProbe;
     }
 
@@ -272,14 +277,22 @@ public class TempWrapper {
      * @return The current temperature in fahrenheit.
      */
     public BigDecimal getTempF() {
-        return this.currentTemp.getValue(TemperatureValue.Scale.F).add(this.tempProbe.getCalibration());
+        BigDecimal temp = this.currentTemp.getValue(TemperatureValue.Scale.F);
+        if (temp == null) {
+            return null;
+        }
+        return temp.add(this.tempProbe.getCalibration());
     }
 
     /**
      * @return The current temperature in celsius.
      */
     BigDecimal getTempC() {
-        return this.currentTemp.getValue(TemperatureValue.Scale.C).add(this.tempProbe.getCalibration());
+        BigDecimal temp = this.currentTemp.getValue(TemperatureValue.Scale.C);
+        if (temp == null) {
+            return null;
+        }
+        return temp.add(this.tempProbe.getCalibration());
     }
 
 
@@ -307,7 +320,7 @@ public class TempWrapper {
         return this.keepAlive;
     }
 
-    public void started() {
+    public void startRunning() {
         this.isStarted = true;
     }
 
@@ -318,5 +331,49 @@ public class TempWrapper {
 
     public String getName() {
         return this.tempProbe.getName();
+    }
+
+    /***
+     * Main loop for using a PID Thread.
+     */
+    @Override
+    public void run() {
+        startRunning();
+        BrewServer.LOG.info("Running " + tempProbe.getName() + ".");
+        // setup the first time
+        this.previousTime = new BigDecimal(System.currentTimeMillis());
+
+
+        // Main loop
+        while (isRunning()) {
+            try {
+                synchronized (this.tempF = getTempF()) {
+                    // do the bulk of the work here
+                    this.currentTime = new BigDecimal(System.currentTimeMillis());
+                    loopRun();
+
+                }
+
+                //pause execution for a second
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                BrewServer.LOG.warning("PID " + tempProbe.getName() + " Interrupted.");
+                ex.printStackTrace();
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        shutdown();
+    }
+
+    protected void loopRun() {
+        // nothing extra for the default temp wrapper
+    }
+
+
+    public void stop() {
+        BrewServer.LOG.warning("Shutting down " + getTempProbe().getName());
+        shutdown();
+        Thread.currentThread().interrupt();
     }
 }
