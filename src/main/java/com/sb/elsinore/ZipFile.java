@@ -25,8 +25,8 @@ public class ZipFile {
      * @throws FileNotFoundException If the file could not be created.
      */
     public ZipFile(final String filename) throws FileNotFoundException {
-        fos = new FileOutputStream(filename);
-        zos = new ZipOutputStream(fos);
+        this.fos = new FileOutputStream(filename);
+        this.zos = new ZipOutputStream(this.fos);
     }
 
     /**
@@ -37,7 +37,7 @@ public class ZipFile {
      */
     public final void addToZipFile(final String fileName)
             throws IOException {
-        if (zos == null) {
+        if (this.zos == null) {
             throw new IOException("Zip file has not been opened");
         }
 
@@ -46,15 +46,15 @@ public class ZipFile {
         File file = new File(fileName);
         FileInputStream fis = new FileInputStream(file);
         ZipEntry zipEntry = new ZipEntry(file.getName());
-        zos.putNextEntry(zipEntry);
+        this.zos.putNextEntry(zipEntry);
 
         byte[] bytes = new byte[1024];
         int length;
         while ((length = fis.read(bytes)) >= 0) {
-            zos.write(bytes, 0, length);
+            this.zos.write(bytes, 0, length);
         }
 
-        zos.closeEntry();
+        this.zos.closeEntry();
         fis.close();
     }
 
@@ -63,7 +63,7 @@ public class ZipFile {
      * @throws IOException If the archive couldn't be closed.
      */
     public final void closeZip() throws IOException {
-        zos.close();
-        fos.close();
+        this.zos.close();
+        this.fos.close();
     }
 }

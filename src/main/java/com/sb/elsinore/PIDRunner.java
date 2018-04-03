@@ -1,5 +1,7 @@
 package com.sb.elsinore;
 
+import com.sb.elsinore.devices.PID;
+import com.sb.elsinore.devices.TempProbe;
 import com.sb.util.MathUtil;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
@@ -18,22 +20,22 @@ import static com.google.common.base.Strings.isNullOrEmpty;
  */
 class PIDRunner implements Runnable {
 
-    PIDRunner(Temp p) {
-        this.tempDevice = p;
+    PIDRunner(TempProbe p) {
+        this.tempProbeDevice = p;
         this.previousTime = new BigDecimal(System.currentTimeMillis());
     }
 
     public PID getPID() {
-        return (PID) getTempDevice();
+        return (PID) getTempProbeDevice();
     }
 
-    public Temp getTempDevice() {
-        return this.tempDevice;
+    public TempProbe getTempProbeDevice() {
+        return this.tempProbeDevice;
     }
 
     public void stop() {
-        BrewServer.LOG.warning("Shutting down " + getTempDevice().getName());
-        this.tempDevice.shutdown();
+        BrewServer.LOG.warning("Shutting down " + getTempProbeDevice().getName());
+        this.tempProbeDevice.shutdown();
         Thread.currentThread().interrupt();
     }
 
@@ -42,7 +44,7 @@ class PIDRunner implements Runnable {
      */
     private BigDecimal tempF;
 
-    private Temp tempDevice = null;
+    private TempProbe tempProbeDevice = null;
     /**
      * The previous five temperature readings.
      */
@@ -68,7 +70,7 @@ class PIDRunner implements Runnable {
             = new BigDecimal(System.currentTimeMillis());
     private BigDecimal timeDiff = BigDecimal.ZERO;
     /**
-     * Temp values for PID calculation.
+     * TempProbe values for PID calculation.
      */
     private BigDecimal previousError = new BigDecimal(0.0);
     private BigDecimal totalError = new BigDecimal(0.0);
@@ -103,21 +105,21 @@ class PIDRunner implements Runnable {
      */
     @Override
     public void run() {
-        Temp temp = getTempDevice();
-        temp.started();
-        BrewServer.LOG.info("Running " + temp.getName() + " PID.");
+        TempProbe tempProbe = getTempProbeDevice();
+        tempProbe.started();
+        BrewServer.LOG.info("Running " + tempProbe.getName() + " PID.");
         // setup the first time
         this.previousTime = new BigDecimal(System.currentTimeMillis());
 
 
         // Main loop
-        while (temp.isRunning()) {
+        while (tempProbe.isRunning()) {
             try {
-                synchronized (temp.getTemp()) {
+                synchronized (tempProbe.getTemp()) {
                     // do the bulk of the work here
-                    this.tempF = temp.getTempF();
-                    this.currentTime = new BigDecimal(temp.getTime());
-                    if (temp instanceof PID) {
+                    this.tempF = tempProbe.getTempF();
+                    this.currentTime = new BigDecimal(tempProbe.getTime());
+                    if (tempProbe instanceof PID) {
                         setupPID();
                         runPIDCalculations();
                     }
@@ -127,7 +129,7 @@ class PIDRunner implements Runnable {
                 //pause execution for a second
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
-                BrewServer.LOG.warning("PID " + temp.getName() + " Interrupted.");
+                BrewServer.LOG.warning("PID " + tempProbe.getName() + " Interrupted.");
                 ex.printStackTrace();
                 Thread.currentThread().interrupt();
             }
@@ -141,13 +143,13 @@ class PIDRunner implements Runnable {
      */
 
     private void setupPID() {
-        if (!(getTempDevice() instanceof PID)) {
+        if (!(getTempProbeDevice() instanceof PID)) {
             deleteAuxPin();
             deleteOutput();
             return;
         }
 
-        PID pid = (PID) getTempDevice();
+        PID pid = (PID) getTempProbeDevice();
         // create the Output if needed
         if (!isNullOrEmpty(pid.getHeatGPIO()) && this.outputControl == null) {
             this.outputControl =
@@ -203,7 +205,7 @@ class PIDRunner implements Runnable {
      * Runs the current PID iteration.
      */
     private void runPIDCalculations() {
-        PID pid = (PID) getTempDevice();
+        PID pid = (PID) getTempProbeDevice();
         // if the GPIO is blank we do not need to do any of this;
         if (this.hasValidHeater()
                 || this.hasValidCooler()) {
@@ -243,7 +245,7 @@ class PIDRunner implements Runnable {
      * @return A Double of the duty cycle %
      */
     public BigDecimal calculate(BigDecimal avgTemp) {
-        PID pid = (PID) getTempDevice();
+        PID pid = (PID) getTempProbeDevice();
 
         BigDecimal dt = calculateTimeDiff();
         if (dt.compareTo(BigDecimal.ZERO) == 0) {
@@ -327,7 +329,7 @@ class PIDRunner implements Runnable {
     }
 
     /**
-     * @return Calculate the average of the current tempDevice list
+     * @return Calculate the average of the current tempProbeDevice list
      */
     private BigDecimal calcAverage() {
         int size = getTempList().size();
@@ -347,12 +349,12 @@ class PIDRunner implements Runnable {
     private void setHysteria() {
         /*
          * New logic
-         * 1) If we're below the minimum tempDevice
+         * 1) If we're below the minimum tempProbeDevice
          *      AND we have a heating output
          *      AND we have been on for the minimum time
          *      AND we have been off for the minimum delay
          *      THEN turn on the heating output
-         * 2) If we're above the maximum tempDevice
+         * 2) If we're above the maximum tempProbeDevice
          *      AND we have a cooling output
          *      AND we have been on for the minimum time
          *      AND we have been off for the minimum delay
@@ -366,22 +368,22 @@ class PIDRunner implements Runnable {
         } catch (ArithmeticException e) {
             BrewServer.LOG.warning(e.getMessage());
         }
-        PID pid = (PID) getTempDevice();
+        PID pid = (PID) getTempProbeDevice();
         BigDecimal minTempF = pid.getMinTemp();
         BigDecimal maxTempF = pid.getMaxTemp();
 
         if (pid.getScale().equalsIgnoreCase("C")) {
-            minTempF = Temp.cToF(minTempF);
-            maxTempF = Temp.cToF(maxTempF);
+            minTempF = TempProbe.cToF(minTempF);
+            maxTempF = TempProbe.cToF(maxTempF);
         }
-        BrewServer.LOG.info("Checking current tempDevice against " + minTempF + " and " + maxTempF);
+        BrewServer.LOG.info("Checking current tempProbeDevice against " + minTempF + " and " + maxTempF);
         String state = "Min: " + minTempF + " (" + pid.getTemp() + ") " + maxTempF;
         if (pid.getTempF().compareTo(minTempF) < 0) {
 
             if (this.hasValidHeater()
                     && pid.getDutyCycle().compareTo(new BigDecimal(100)) != 0
                     && this.minTimePassed(state)) {
-                BrewServer.LOG.info("Current tempDevice is less than the minimum tempDevice, turning on 100");
+                BrewServer.LOG.info("Current tempProbeDevice is less than the minimum tempProbeDevice, turning on 100");
                 this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                 pid.setDutyCycle(new BigDecimal(100));
             } else if (this.hasValidCooler()
@@ -398,14 +400,14 @@ class PIDRunner implements Runnable {
             if (this.hasValidCooler()
                     && pid.getDutyCycle().compareTo(new BigDecimal(-100)) != 0
                     && this.minTimePassed(state)) {
-                BrewServer.LOG.info("Current tempDevice is greater than the max tempDevice, turning on -100");
+                BrewServer.LOG.info("Current tempProbeDevice is greater than the max tempProbeDevice, turning on -100");
                 this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                 pid.setDutyCycle(new BigDecimal(-100));
 
             } else if (this.hasValidHeater()
                     && pid.getDutyCycle().compareTo(new BigDecimal(-100)) > 0
                     && this.minTimePassed(state)) {
-                BrewServer.LOG.info("Current tempDevice is more than the max tempDevice");
+                BrewServer.LOG.info("Current tempProbeDevice is more than the max tempProbeDevice");
                 BrewServer.LOG.info("Slept for long enough, turning off");
                 // Make sure the thread wakes up for the new settings
                 this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
@@ -422,7 +424,7 @@ class PIDRunner implements Runnable {
     }
 
     private boolean minTimePassed(String direction) {
-        PID pid = (PID) getTempDevice();
+        PID pid = (PID) getTempProbeDevice();
         if (this.timeDiff.compareTo(pid.getMinTemp()) <= 0) {
             BigDecimal remaining = pid.getMinTemp().subtract(this.timeDiff);
             if (remaining.compareTo(new BigDecimal(10.0 / 60.0)) >= 0) {

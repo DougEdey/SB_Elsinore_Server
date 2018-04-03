@@ -67,8 +67,8 @@ public class ServerRunner implements Runnable {
     public final void run() {
          try {
             executeInstance((NanoHTTPD)
-                serverClass.getDeclaredConstructor(int.class)
-                .newInstance(port));
+                    this.serverClass.getDeclaredConstructor(int.class)
+                .newInstance(this.port));
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -1,18 +1,20 @@
 package com.sb.elsinore;
 
 
+import com.sb.elsinore.devices.TempProbe;
+
 import javax.persistence.PostPersist;
 import javax.persistence.PreRemove;
 
 
 public class TemperatureListeners {
     @PreRemove
-    public void tempRemoved(Temp temp) {
-        LaunchControl.getInstance().deleteTemp(temp);
+    public void tempRemoved(TempProbe tempProbe) {
+        LaunchControl.getInstance().deleteTemp(tempProbe);
     }
 
     @PostPersist
-    public void tempAdded(Temp temp) {
-        LaunchControl.getInstance().addTemp(temp);
+    public void tempAdded(TempProbe tempProbe) {
+        LaunchControl.getInstance().addTemp(tempProbe);
     }
 }

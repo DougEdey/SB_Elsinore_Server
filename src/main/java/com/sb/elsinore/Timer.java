@@ -55,7 +55,7 @@ public class Timer implements Comparable<Timer> {
     }
 
     public String getMode() {
-        return mode;
+        return this.mode;
     }
 
     public void setTarget(String target) {
@@ -79,7 +79,7 @@ public class Timer implements Comparable<Timer> {
         if (this.startTime == null && this.currentValue == 0)
         {
             // Start the timer
-            startTime = new Date();
+            this.startTime = new Date();
             this.currentValue = 0;
         }
         else if (this.startTime != null && this.currentValue != 0)
@@ -90,7 +90,7 @@ public class Timer implements Comparable<Timer> {
         }
         else {
             // pause the timer
-            this.currentValue = new Date().getTime() - startTime.getTime();
+            this.currentValue = new Date().getTime() - this.startTime.getTime();
         }
     }
 
@@ -103,13 +103,13 @@ public class Timer implements Comparable<Timer> {
     public JSONObject getStatus() {
         JSONObject status = new JSONObject();
         status.put("invert", Boolean.toString(this.inverted));
-        long elapsedms = currentValue;
-        if (this.currentValue == 0 && startTime != null) {
-            elapsedms = new Date().getTime() - startTime.getTime();
+        long elapsedms = this.currentValue;
+        if (this.currentValue == 0 && this.startTime != null) {
+            elapsedms = new Date().getTime() - this.startTime.getTime();
         }
         status.put("elapsedms", elapsedms);
         status.put("durationms", this.target_mins*1000*60);
-        status.put("position", position);
+        status.put("position", this.position);
         String active = "off";
         if (this.currentValue == 0 && this.startTime == null)
         {

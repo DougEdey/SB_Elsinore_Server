@@ -1,5 +1,8 @@
-package com.sb.elsinore;
+package com.sb.elsinore.devices;
 
+import com.sb.elsinore.BrewServer;
+import com.sb.elsinore.Device;
+import com.sb.elsinore.PIDSettings;
 import jGPIO.OutPin;
 import org.hibernate.annotations.Cascade;
 
@@ -8,7 +11,7 @@ import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.sb.elsinore.PID.PIDMode.OFF;
+import static com.sb.elsinore.devices.PID.PIDMode.OFF;
 
 /**
  * The PID class calculates the Duty cycles and updates the output control.
@@ -17,7 +20,7 @@ import static com.sb.elsinore.PID.PIDMode.OFF;
  */
 @Entity
 @DiscriminatorValue("P")
-public class PID extends Temp {
+public class PID extends TempProbe {
 
     public static final String TYPE = "PID";
     /**
@@ -102,7 +105,7 @@ public class PID extends Temp {
      * @param aName The Name of this PID
      */
     public PID(String aName, String device) {
-        super(aName, device, TYPE);
+        super(aName, device);
     }
 
     public PID(Device device) {
@@ -281,15 +284,6 @@ public class PID extends Temp {
      */
     private PIDMode pidMode = OFF;
     private String fName = null;
-
-    /**
-     * @return Get the current temperature
-     */
-    @Override
-    public BigDecimal getTemp() {
-        return super.getTemp();
-    }
-
 
     /**
      * Set the cooling values.

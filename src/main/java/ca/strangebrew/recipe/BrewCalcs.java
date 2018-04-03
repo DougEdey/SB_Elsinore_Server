@@ -157,7 +157,7 @@ public class BrewCalcs {
 
 	public static double  KegPSI(double Temp, double VolsCO2)
 	{
-	  // returns the PSI needed to carbonate beer at Temp at VolsCO2
+	  // returns the PSI needed to carbonate beer at TempProbe at VolsCO2
         return -16.6999 - (0.0101059 * Temp) + (0.00116512 * Math.pow(Temp,2)) + (0.173354 * Temp * VolsCO2)
 + (4.24267 * VolsCO2) - (0.0684226 * Math.pow(VolsCO2,2));
 	}

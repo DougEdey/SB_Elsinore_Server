@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 
+import com.sb.elsinore.devices.PID;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -33,7 +34,7 @@ public class PIDRunnerTest {
         this.heatSettings = spy(new PIDSettings());
         this.coolSettings = spy(new PIDSettings());
 
-        when(this.pidRunner.getTempDevice()).thenReturn(this.pid);
+        when(this.pidRunner.getTempProbeDevice()).thenReturn(this.pid);
         when(this.pid.getHeatSetting()).thenReturn(this.heatSettings);
         when(this.pid.getCoolSetting()).thenReturn(this.coolSettings);
     }

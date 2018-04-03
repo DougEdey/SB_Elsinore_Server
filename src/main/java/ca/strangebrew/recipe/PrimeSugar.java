@@ -6,11 +6,11 @@ public class PrimeSugar extends Ingredient {
 	private double yield; 
 	
 	public PrimeSugar(){
-		yield = 1.0;
+        this.yield = 1.0;
 	}
 
 	public double getYield() {
-		return yield;
+		return this.yield;
 	}
 
 	public void setYield(double attenuation) {

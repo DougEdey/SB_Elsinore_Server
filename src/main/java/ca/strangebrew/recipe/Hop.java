@@ -56,45 +56,45 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
 
 	// get methods:
 	public String getAdd() {
-		return add;
+		return this.add;
 	}
 
 	public double getAlpha() {
-		return alpha;
+		return this.alpha;
 	}
 
 	public double getIBU() {
-		return IBU;
+		return this.IBU;
 	}
 
 	public int getMinutes() {
-		return minutes;
+		return this.minutes;
 	}
 
 	public double getStorage() {
-		return storage;
+		return this.storage;
 	}
 
 	// Setter methods:
 	public void setAdd(String a) {
-		add = a;
+        this.add = a;
 	}
 
 	public void setAlpha(double a) {
-		alpha = a;
+        this.alpha = a;
 	}
 
 	// public void setForm(String f){ form = f; }
 	public void setIBU(double i) {
-		IBU = i;
+        this.IBU = i;
 	}
 
 	public void setMinutes(int m) {
-		minutes = m;
+        this.minutes = m;
 	}
 
 	public void setStorage(double s) {
-		storage = s;
+        this.storage = s;
 	}
 
 	public String toXML() {
@@ -110,7 +110,7 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
 						"      <DATE>%s</DATE>" +
 						"    </ITEM>\n",
 						getName(), getAmountAs(getUnits()), getUnitsAbrv(),
-						getType(), alpha, getCostPerU(), add,
+						getType(), this.alpha, getCostPerU(), this.add,
 				SBStringUtils.subEntities(getDescription()),
 						getDate());
 	}
@@ -169,7 +169,7 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
     }
 
     public double getMyrcene() {
-        return myrcene;
+        return this.myrcene;
     }
 
     public void setCohumulone(double cohumulone) {
@@ -177,7 +177,7 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
     }
 
     public double getCohumulone() {
-        return cohumulone;
+        return this.cohumulone;
     }
 
     public void setCaryophyllene(double caryophyllene) {
@@ -185,7 +185,7 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
     }
 
     public double getCaryophyllene() {
-        return caryophyllene;
+        return this.caryophyllene;
     }
 
     public void setHumulene(double humulene) {
@@ -193,7 +193,7 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
     }
 
     public double getHumulene() {
-        return humulene;
+        return this.humulene;
     }
 
     public void setSubstitutes(String substitutes) {
@@ -201,7 +201,7 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
     }
 
     public String getSubstitutes() {
-        return substitutes;
+        return this.substitutes;
     }
 
     public void setHsi(double hsi) {
@@ -209,7 +209,7 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
     }
 
     public double getHsi() {
-        return hsi;
+        return this.hsi;
     }
 
     public void setBeta(double beta) {
@@ -217,7 +217,7 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
     }
 
     public double getBeta() {
-        return beta;
+        return this.beta;
     }
 
     public void setForm(String form) {
@@ -225,6 +225,6 @@ public class Hop extends Ingredient implements Comparable<Ingredient> {
     }
 
     public String getForm() {
-        return form;
+        return this.form;
     }
 }

@@ -66,7 +66,7 @@ public class BeerXMLReader {
         }
 
         try {
-            recipeDocument = dBuilder.parse(inputFile);
+            this.recipeDocument = dBuilder.parse(inputFile);
         } catch (Exception e) {
             String output = String.format(
                 "Couldn't read beerXML File at: %1s",
@@ -85,7 +85,7 @@ public class BeerXMLReader {
             xp = XPathFactory.newInstance().newXPath();
             NodeList recipeList =
                 (NodeList) xp.evaluate(
-                    "/RECIPES/RECIPE", recipeDocument, XPathConstants.NODESET);
+                    "/RECIPES/RECIPE", this.recipeDocument, XPathConstants.NODESET);
             if (recipeList.getLength() == 0) {
                 LaunchControl.setMessage("No Recipes found in file");
                 return null;

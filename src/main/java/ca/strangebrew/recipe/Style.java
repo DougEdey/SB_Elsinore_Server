@@ -66,18 +66,18 @@ public class Style implements Comparable<Style> {
 
 	// get methods:
 	public String getName() {
-		if (name != null)
-			return name;
+		if (this.name != null)
+			return this.name;
 		else
 			return "";
 	}
 
 	public String getDescription() {
 		String s = "";
-		if (impression != null)
-			s = "<b>Impression:</b> " + impression + "\n";
-		if (comments != null)
-			s = s + "<b>Comments:</b> " + comments;
+		if (this.impression != null)
+			s = "<b>Impression:</b> " + this.impression + "\n";
+		if (this.comments != null)
+			s = s + "<b>Comments:</b> " + this.comments;
 
 		return s;
 	}
@@ -86,88 +86,88 @@ public class Style implements Comparable<Style> {
 	 * @return Returns the alcHigh.
 	 */
 	public double getAlcHigh() {
-		return alcHigh;
+		return this.alcHigh;
 	}
 	/**
 	 * @return Returns the alcLow.
 	 */
 	public double getAlcLow() {
-		return alcLow;
+		return this.alcLow;
 	}
 	/**
 	 * @return Returns the category.
 	 */
 	public String getCategory() {
-		return category;
+		return this.category;
 	}
 	/**
 	 * @return Returns the catNum.
 	 */
 	public String getCatNum() {
-		return catNum;
+		return this.catNum;
 	}
 	/**
 	 * @return Returns the examples.
 	 */
 	public String getExamples() {
-		return examples;
+		return this.examples;
 	}
 
 	/**
 	 * @return Returns the ibuHigh.
 	 */
 	public double getIbuHigh() {
-		return ibuHigh;
+		return this.ibuHigh;
 	}
 	/**
 	 * @return Returns the ibuLow.
 	 */
 	public double getIbuLow() {
-		return ibuLow;
+		return this.ibuLow;
 	}
 	/**
 	 * @return Returns the srmHigh.
 	 */
 	public double getSrmHigh() {
-		return srmHigh;
+		return this.srmHigh;
 	}
 	/**
 	 * @return Returns the srmLow.
 	 */
 	public double getSrmLow() {
-		return srmLow;
+		return this.srmLow;
 	}
 	/**
 	 * @return Returns the ogHigh.
 	 */
 	public double getOgHigh() {
-		return ogHigh;
+		return this.ogHigh;
 	}
 	/**
 	 * @return Returns the ogLow.
 	 */
 	public double getOgLow() {
-		return ogLow;
+		return this.ogLow;
 	}
 	/**
      * @return Returns the fgHigh.
      */
     public double getFgHigh() {
-        return fgHigh;
+        return this.fgHigh;
     }
     /**
      * @return Returns the fgLow.
      */
     public double getFgLow() {
-        return fgLow;
+        return this.fgLow;
     }
 	
 	public String getYear() {
-		return year;
+		return this.year;
 	}
 	// set methods:
 	public void setName(String n) {
-		name = n;
+        this.name = n;
 	}
 
 	/**
@@ -257,41 +257,41 @@ public class Style implements Comparable<Style> {
 		int indent = 0;
 		sb.append(" <style>\n");
 		// this is the BJCP style dtd:
-		sb.append("  <subcategory id=\"").append(catNum).append("\">");
+		sb.append("  <subcategory id=\"").append(this.catNum).append("\">");
 		indent = 4;
-		sb.append(SBStringUtils.xmlElement("name", name, indent));
-		sb.append(SBStringUtils.xmlElement("aroma", aroma, indent));
-		sb.append(SBStringUtils.xmlElement("appearance", appearance, indent));
-		sb.append(SBStringUtils.xmlElement("flavor", flavour, indent));
-		sb.append(SBStringUtils.xmlElement("mouthfeel", mouthfeel, indent));
-		sb.append(SBStringUtils.xmlElement("impression", impression, indent));
-		sb.append(SBStringUtils.xmlElement("comments", comments, indent));
-		sb.append(SBStringUtils.xmlElement("ingredients", ingredients, indent));
+		sb.append(SBStringUtils.xmlElement("name", this.name, indent));
+		sb.append(SBStringUtils.xmlElement("aroma", this.aroma, indent));
+		sb.append(SBStringUtils.xmlElement("appearance", this.appearance, indent));
+		sb.append(SBStringUtils.xmlElement("flavor", this.flavour, indent));
+		sb.append(SBStringUtils.xmlElement("mouthfeel", this.mouthfeel, indent));
+		sb.append(SBStringUtils.xmlElement("impression", this.impression, indent));
+		sb.append(SBStringUtils.xmlElement("comments", this.comments, indent));
+		sb.append(SBStringUtils.xmlElement("ingredients", this.ingredients, indent));
 		sb.append(" <stats>\n");
-		sb.append("  <og flexible=\"").append(ogFlexible).append("\">\n");
+		sb.append("  <og flexible=\"").append(this.ogFlexible).append("\">\n");
 		indent = 6;
-		sb.append(SBStringUtils.xmlElement("low", "" + ogLow, indent));
-		sb.append(SBStringUtils.xmlElement("high", "" + ogHigh, indent));
+		sb.append(SBStringUtils.xmlElement("low", "" + this.ogLow, indent));
+		sb.append(SBStringUtils.xmlElement("high", "" + this.ogHigh, indent));
 		sb.append("  </og>\n");
-		sb.append("  <fg flexible=\"").append(fgFlexible).append("\">\n");
-		sb.append(SBStringUtils.xmlElement("low", "" + fgLow, indent));
-		sb.append(SBStringUtils.xmlElement("high", "" + fgHigh, indent));
+		sb.append("  <fg flexible=\"").append(this.fgFlexible).append("\">\n");
+		sb.append(SBStringUtils.xmlElement("low", "" + this.fgLow, indent));
+		sb.append(SBStringUtils.xmlElement("high", "" + this.fgHigh, indent));
 		sb.append("  </fg>\n");
-		sb.append(String.format("  <ibu flexible=\"%s\">\n", ibuFlexible));
-		sb.append(SBStringUtils.xmlElement("low", "" + ibuLow, indent));
-		sb.append(SBStringUtils.xmlElement("high", "" + ibuHigh, indent));
+		sb.append(String.format("  <ibu flexible=\"%s\">\n", this.ibuFlexible));
+		sb.append(SBStringUtils.xmlElement("low", "" + this.ibuLow, indent));
+		sb.append(SBStringUtils.xmlElement("high", "" + this.ibuHigh, indent));
 		sb.append("  </ibu>\n");
-		sb.append("  <srm flexible=\"").append(srmFlexible).append("\">\n");
-		sb.append(SBStringUtils.xmlElement("low", "" + srmLow, indent));
-		sb.append(SBStringUtils.xmlElement("high", "" + srmHigh, indent));
+		sb.append("  <srm flexible=\"").append(this.srmFlexible).append("\">\n");
+		sb.append(SBStringUtils.xmlElement("low", "" + this.srmLow, indent));
+		sb.append(SBStringUtils.xmlElement("high", "" + this.srmHigh, indent));
 		sb.append("  </srm>\n");
-		sb.append("  <abv flexible=\"").append(alcFlexible).append("\">\n");
-		sb.append(SBStringUtils.xmlElement("low", "" + alcLow, indent));
-		sb.append(SBStringUtils.xmlElement("high", "" + alcHigh, indent));
+		sb.append("  <abv flexible=\"").append(this.alcFlexible).append("\">\n");
+		sb.append(SBStringUtils.xmlElement("low", "" + this.alcLow, indent));
+		sb.append(SBStringUtils.xmlElement("high", "" + this.alcHigh, indent));
 		sb.append("  </abv>\n");
 		sb.append("</stats>\n");
 		indent = 4;
-		sb.append(SBStringUtils.xmlElement("examples", examples, indent));
+		sb.append(SBStringUtils.xmlElement("examples", this.examples, indent));
 		sb.append("  </subcategory>\n");
 		sb.append(" </style>\n");
 		return sb.toString();
@@ -299,21 +299,21 @@ public class Style implements Comparable<Style> {
 
 	public String toText() {
 		StringBuffer sb = new StringBuffer();
-		sb.append("Name: ").append(catNum).append(":").append(getName()).append("\n");
-		sb.append("Category: ").append(category).append("\n");
-		sb.append("Class: ").append(type).append("\n");
-		sb.append("OG: ").append(ogLow).append("-").append(ogHigh).append("\n");
-		sb.append("IBU: ").append(ibuLow).append("-").append(ibuHigh).append("\n");
-		sb.append("SRM: ").append(srmLow).append("-").append(srmHigh).append("\n");
-		sb.append("Alc: ").append(alcLow).append("-").append(alcHigh).append("\n");
-		sb.append("Aroma: ").append(aroma).append("\n");
-		sb.append("Appearance: ").append(appearance).append("\n");
-		sb.append("Flavour: ").append(flavour).append("\n");
-		sb.append("Mouthfeel: ").append(mouthfeel).append("\n");
-		sb.append("Impression: ").append(impression).append("\n");
-		sb.append("Comments: ").append(comments).append("\n");
-		sb.append("Ingredients: ").append(ingredients).append("\n");
-		sb.append("Examples: ").append(examples).append("\n");
+		sb.append("Name: ").append(this.catNum).append(":").append(getName()).append("\n");
+		sb.append("Category: ").append(this.category).append("\n");
+		sb.append("Class: ").append(this.type).append("\n");
+		sb.append("OG: ").append(this.ogLow).append("-").append(this.ogHigh).append("\n");
+		sb.append("IBU: ").append(this.ibuLow).append("-").append(this.ibuHigh).append("\n");
+		sb.append("SRM: ").append(this.srmLow).append("-").append(this.srmHigh).append("\n");
+		sb.append("Alc: ").append(this.alcLow).append("-").append(this.alcHigh).append("\n");
+		sb.append("Aroma: ").append(this.aroma).append("\n");
+		sb.append("Appearance: ").append(this.appearance).append("\n");
+		sb.append("Flavour: ").append(this.flavour).append("\n");
+		sb.append("Mouthfeel: ").append(this.mouthfeel).append("\n");
+		sb.append("Impression: ").append(this.impression).append("\n");
+		sb.append("Comments: ").append(this.comments).append("\n");
+		sb.append("Ingredients: ").append(this.ingredients).append("\n");
+		sb.append("Examples: ").append(this.examples).append("\n");
 		return sb.toString();
 	}
 
@@ -332,28 +332,28 @@ public class Style implements Comparable<Style> {
 	public void setComplete() {
 		double temp = 0.0;
 		// Check the IBU
-		if (ibuHigh < ibuLow) {
-			temp = ibuHigh;
-			ibuHigh = ibuLow;
-			ibuLow = temp;
+		if (this.ibuHigh < this.ibuLow) {
+			temp = this.ibuHigh;
+            this.ibuHigh = this.ibuLow;
+            this.ibuLow = temp;
 		}
 		// check the SRM
-		if (srmHigh < srmLow) {
-			temp = srmHigh;
-			srmHigh = srmLow;
-			srmLow = temp;
+		if (this.srmHigh < this.srmLow) {
+			temp = this.srmHigh;
+            this.srmHigh = this.srmLow;
+            this.srmLow = temp;
 		}
 		// check the OG
-		if (ogHigh < ogLow) {
-			temp = ogHigh;
-			ogHigh = ogLow;
-			ogLow = temp;
+		if (this.ogHigh < this.ogLow) {
+			temp = this.ogHigh;
+            this.ogHigh = this.ogLow;
+            this.ogLow = temp;
 		}
 		// check the ALC
-		if (alcHigh < alcLow) {
-			temp = alcHigh;
-			alcHigh = alcLow;
-			alcLow = temp;
+		if (this.alcHigh < this.alcLow) {
+			temp = this.alcHigh;
+            this.alcHigh = this.alcLow;
+            this.alcLow = temp;
 		}
 	}
 

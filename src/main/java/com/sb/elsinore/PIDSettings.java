@@ -144,7 +144,7 @@ public class PIDSettings extends Observable implements Serializable {
     /**
      * Default constructor.
      */
-    PIDSettings() {
+    public PIDSettings() {
         this.cycle_time = this.proportional =
                 this.integral = this.derivative = new BigDecimal(0.0);
     }

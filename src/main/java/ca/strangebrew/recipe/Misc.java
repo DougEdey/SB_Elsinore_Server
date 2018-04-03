@@ -33,14 +33,17 @@ public class Misc extends Ingredient {
 	}
 	
 	// get methods
-	public String getComments(){ return comments; }
-	public String getStage(){ return stage; }
-	public int getTime(){ return time; }
+	public String getComments(){ return this.comments; }
+	public String getStage(){ return this.stage; }
+	public int getTime(){ return this.time; }
 	
 	// set methods
-	public void setComments(String c){ comments = c; }
-	public void setStage(String s){ stage = s; }
-	public void setTime(int t){ time = t; }
+	public void setComments(String c){
+        this.comments = c; }
+	public void setStage(String s){
+        this.stage = s; }
+	public void setTime(int t){
+        this.time = t; }
 
 	public String toXML(){
 	    StringBuilder sb = new StringBuilder();
@@ -55,9 +58,9 @@ public class Misc extends Ingredient {
             sb.append("      <UNITS>" + Quantity.LITRES + "</UNITS>\n" );
             sb.append("      <AMOUNT_IS_WEIGHT>false</AMOUNT_IS_WEIGHT>\n");
         }
-	    sb.append("      <STAGE>").append(stage).append("</STAGE>\n");
-	    sb.append("      <TIME>").append(time).append("</TIME>\n");
-	    sb.append("      <COMMENTS>").append(SBStringUtils.subEntities(comments)).append("</COMMENTS>\n");
+	    sb.append("      <STAGE>").append(this.stage).append("</STAGE>\n");
+	    sb.append("      <TIME>").append(this.time).append("</TIME>\n");
+	    sb.append("      <COMMENTS>").append(SBStringUtils.subEntities(this.comments)).append("</COMMENTS>\n");
 	    sb.append("    </ITEM>\n");
 	    return sb.toString();
 	}
@@ -119,7 +122,7 @@ public class Misc extends Ingredient {
     }
 
     public String getUse() {
-        return use;
+        return this.use;
     }
 
     public void setUseFor(String useFor) {
@@ -127,6 +130,6 @@ public class Misc extends Ingredient {
     }
 
     public String getUseFor() {
-        return useFor;
+        return this.useFor;
     }
 }

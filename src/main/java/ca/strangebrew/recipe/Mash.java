@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
 
-import static com.sb.elsinore.Temp.POSITION;
+import static com.sb.elsinore.devices.TempProbe.POSITION;
 import static com.sb.elsinore.TriggerControl.PID;
 import static com.sb.elsinore.triggers.TemperatureTrigger.METHOD;
 import static com.sb.elsinore.triggers.TriggerInterface.TYPE;

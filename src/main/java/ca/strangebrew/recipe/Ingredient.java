@@ -29,7 +29,7 @@ public class Ingredient implements Comparable<Ingredient> {
 
 
     public Ingredient() {
-		modified = true;
+        this.modified = true;
 	}
 	// override the equals so we can compare:
 	public boolean equals(Object obj)                                    
@@ -51,32 +51,33 @@ public class Ingredient implements Comparable<Ingredient> {
             return tmp.name.equalsIgnoreCase(this.name);
 	    }                                                                                                                            
 	  }
-	public double getAmountAs(String s){ return amount.getValueAs(s); }
-	public double getStockAs(String s) { return stock.getValueAs(s); }
-	public double getStock() { return stock.getValue(); }
+	public double getAmountAs(String s){ return this.amount.getValueAs(s); }
+	public double getStockAs(String s) { return this.stock.getValueAs(s); }
+	public double getStock() { return this.stock.getValue(); }
 	// Get methods:
-	public double getCostPerU(){ return costPerU; }
-	public Date getDate(){ return dateBought; }
-	public String getDescription(){ return description; }
-	public boolean getModified(){ return modified; }
-	public String getName(){ return name; }	
-	public String getType(){ return type; }
-	public String getUnits(){ return amount.getUnits(); }
+	public double getCostPerU(){ return this.costPerU; }
+	public Date getDate(){ return this.dateBought; }
+	public String getDescription(){ return this.description; }
+	public boolean getModified(){ return this.modified; }
+	public String getName(){ return this.name; }
+	public String getType(){ return this.type; }
+	public String getUnits(){ return this.amount.getUnits(); }
 
     @SuppressWarnings("unused")
 	public double getCostPerUAs(String to){
 		// current value / new value * cost
-		return costPerU;
+		return this.costPerU;
 	}
 	
-	public String getUnitsAbrv(){ return amount.getAbrv(); }
+	public String getUnitsAbrv(){ return this.amount.getAbrv(); }
 	
-	public void setAmount(double a){ amount.setAmount(a); }
+	public void setAmount(double a){
+        this.amount.setAmount(a); }
 	public void setStock(double a){ 
-		if(a < 0.00) 
-			stock.setAmount(0);
+		if(a < 0.00)
+            this.stock.setAmount(0);
 		else
-			stock.setAmount(a); 
+            this.stock.setAmount(a);
 	}
 	/**
 	 * Handles a string of the form "d u", where d is a double
@@ -98,15 +99,16 @@ public class Ingredient implements Comparable<Ingredient> {
 		} catch (NumberFormatException | ParseException m) {
 			return;
 		}
-        amount.setAmount(dAmount);
-		amount.setUnits(u.trim());
+        this.amount.setAmount(dAmount);
+        this.amount.setUnits(u.trim());
 	}
 
 	public void setAmountAs(double a, String u) {
-		double converted = Quantity.convertUnit(u, amount.getUnits(), a);
-		amount.setAmount(converted);
+		double converted = Quantity.convertUnit(u, this.amount.getUnits(), a);
+        this.amount.setAmount(converted);
 	}
-	public void setCost(double c){ costPerU = c; }
+	public void setCost(double c){
+        this.costPerU = c; }
 	public void setCost(String c){
 		if (c.substring(0,1).equals("$")) {
 			c = c.substring(1, c.length()); // trim leading "$"
@@ -114,7 +116,7 @@ public class Ingredient implements Comparable<Ingredient> {
 		try {
 			NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
 			Number number = format.parse(c.trim());
-		    costPerU = number.doubleValue();
+            this.costPerU = number.doubleValue();
 			
 		} catch (NumberFormatException | ParseException ignored) {
 		}
@@ -122,29 +124,34 @@ public class Ingredient implements Comparable<Ingredient> {
 	public void setDate(String d){ 
 		SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
 		try{
-		    dateBought = df.parse(d);
+            this.dateBought = df.parse(d);
 		}catch (ParseException ignored){
 		}
 		
 	}
 	
-	public void setDescription(String d){ description = d; }
+	public void setDescription(String d){
+        this.description = d; }
 	
 	// Setter methods:
-	public void setModified(boolean b){ modified = b; }
-	public void setName(String n){ name = n; }
-	public void setType(String t){ type = t; }
-	public void setUnits(String a){ amount.setUnits(a); }
+	public void setModified(boolean b){
+        this.modified = b; }
+	public void setName(String n){
+        this.name = n; }
+	public void setType(String t){
+        this.type = t; }
+	public void setUnits(String a){
+        this.amount.setUnits(a); }
 	
 	public void convertTo(String newUnits){
-		setCost(Quantity.convertUnit(newUnits, getUnits(), getCostPerU()));		
-		
-		amount.convertTo(newUnits);		
+		setCost(Quantity.convertUnit(newUnits, getUnits(), getCostPerU()));
+
+        this.amount.convertTo(newUnits);
 	}
 	
 	// implement to support comboboxes in Swing:
 	public String toString(){
-		return name;
+		return this.name;
 	}
 
 	public int compareTo(@Nonnull Ingredient i) {
@@ -169,11 +176,11 @@ public class Ingredient implements Comparable<Ingredient> {
     }
 
     public Quantity getInventory() {
-        return inventory;
+        return this.inventory;
     }
 
     public Quantity getAmount() {
-        return amount;
+        return this.amount;
     }
 
     public void setOrigin(String origin) {
@@ -181,6 +188,6 @@ public class Ingredient implements Comparable<Ingredient> {
     }
 
     public String getOrigin() {
-        return origin;
+        return this.origin;
     }
 }

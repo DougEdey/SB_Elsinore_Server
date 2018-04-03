@@ -1,7 +1,7 @@
 package com.sb.elsinore.controller;
 
 import com.sb.elsinore.LaunchControl;
-import com.sb.elsinore.Temp;
+import com.sb.elsinore.devices.TempProbe;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
 import org.springframework.ui.Model;
@@ -30,22 +30,22 @@ public class TemperatureController {
 
     @RequestMapping(value = "/temperatures", method = RequestMethod.POST)
     @ResponseBody
-    public void create(@RequestBody Temp temp, Model model) {
-        logger.info("Created " + temp.getName());
-        this.temperatureRepository.save(temp);
+    public void create(@RequestBody TempProbe tempProbe, Model model) {
+        logger.info("Created " + tempProbe.getName());
+        this.temperatureRepository.save(tempProbe);
         if (StreamSupport.stream(this.temperatureRepository.findAll().spliterator(), true)
-                .anyMatch(t -> t.getName().equals(temp.getName()))) {
-            LaunchControl.getInstance().addTemp(temp);
+                .anyMatch(t -> t.getName().equals(tempProbe.getName()))) {
+            LaunchControl.getInstance().addTemp(tempProbe);
         }
     }
 
     @RequestMapping(value = "/temperatures/{id}", method = RequestMethod.DELETE)
     @ResponseBody
     public void delete(@PathVariable Long id) {
-        Temp temp = this.temperatureRepository.findOne(id);
-        if (temp != null) {
+        TempProbe tempProbe = this.temperatureRepository.findOne(id);
+        if (tempProbe != null) {
             this.temperatureRepository.delete(id);
-            LaunchControl.getInstance().deleteTemp(temp);
+            LaunchControl.getInstance().deleteTemp(tempProbe);
         }
     }
 
@@ -57,7 +57,7 @@ public class TemperatureController {
         addresses.addAll(LaunchControl.getInstance().getOneWireDevices("28"));
         addresses.add("System");
 
-        Iterable<Temp> tempIterator = this.temperatureRepository.findAll();
+        Iterable<TempProbe> tempIterator = this.temperatureRepository.findAll();
         tempIterator.forEach(t -> addresses.remove(t.getDevice()));
         
         return addresses;

@@ -66,9 +66,9 @@ public class Quantity {
 		public double toBase;
 
 		public Converter(String n, String a, double t) {
-			unit = n;
-			abrv = a;
-			toBase = t;
+            this.unit = n;
+            this.abrv = a;
+            this.toBase = t;
 		}
 	}
 
@@ -134,9 +134,9 @@ public class Quantity {
 	// Get/Set:
 
 	public Quantity() {
-		unit = "";
-		type = "";
-		abrv = "";		
+        this.unit = "";
+        this.type = "";
+        this.abrv = "";
 	}
 
 	public Quantity(String u, double am){
@@ -154,27 +154,27 @@ public class Quantity {
 	// This sets a quantity's unit, abrv, and type:
 	public void setUnits(String s){
 		String t = getTypeFromUnit(s);
-		type = t;
+        this.type = t;
 
 		if (isAbrv(s)){
-			unit = getUnitFromAbrv(t, s);
-			abrv = s;
+            this.unit = getUnitFromAbrv(t, s);
+            this.abrv = s;
 		}
 		// it's a unit
 		else {
-			unit = s;			
-			abrv = getAbrvFromUnit(t, s);
+            this.unit = s;
+            this.abrv = getAbrvFromUnit(t, s);
 		}
 	}
 
 	// set the amount only:
 	public void setAmount(double am){
-		value = am;
+        this.value = am;
 	}
 
-	public double getValue(){ return value;	}
-	public String getUnits(){ return unit; }
-	public String getAbrv(){ return abrv; }
+	public double getValue(){ return this.value;	}
+	public String getUnits(){ return this.unit; }
+	public String getAbrv(){ return this.abrv; }
 
 	public double getValueAs(String to){
 		double fromBase ;
@@ -182,10 +182,10 @@ public class Quantity {
 		Converter[] u;
 
 		// don't do any work if we're converting to ourselves
-		if (to.equals(unit) || type.equals(abrv))
-			return value;
+		if (to.equals(this.unit) || this.type.equals(this.abrv))
+			return this.value;
 
-		switch (type) {
+		switch (this.type) {
 			case Quantity.VOLUME:
 				u = volUnits;
 				break;
@@ -196,10 +196,10 @@ public class Quantity {
 				u = weightUnits;
 				break;
 		}
-		fromBase = getBaseValue(u, unit);
+		fromBase = getBaseValue(u, this.unit);
 		toBase = getBaseValue(u, to);
 
-		return value * (toBase / fromBase);
+		return this.value * (toBase / fromBase);
 	}
 
 
@@ -208,19 +208,19 @@ public class Quantity {
 		// then add it
 		Quantity q = new Quantity(u,v);
 		double v2 = q.getValueAs(getUnits());
-		value += v2;
+        this.value += v2;
 	}
 
 	public void convertTo(String to){
 		if(!Objects.equals(to, this.unit)) {
-			value = Quantity.convertUnit(unit, to, value);
+            this.value = Quantity.convertUnit(this.unit, to, this.value);
 			setUnits(to);
 		}
 	}
 
 	//	 implement to support comboboxes in Swing:
 	public String getName(){
-		return unit;
+		return this.unit;
 	}	
 
 	// private functions:	

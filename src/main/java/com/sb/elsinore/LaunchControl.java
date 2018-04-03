@@ -1,6 +1,5 @@
 package com.sb.elsinore;
 
-import com.google.gson.Gson;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.sb.common.CollectionsUtil;
@@ -8,8 +7,10 @@ import com.sb.elsinore.controller.DeviceRepository;
 import com.sb.elsinore.controller.PIDRepository;
 import com.sb.elsinore.controller.TemperatureRepository;
 import com.sb.elsinore.devices.I2CDevice;
+import com.sb.elsinore.devices.PID;
+import com.sb.elsinore.devices.TempProbe;
 import com.sb.elsinore.inputs.PhSensor;
-import io.gsonfire.GsonFireBuilder;
+import com.sb.elsinore.wrappers.TempWrapper;
 import jGPIO.InvalidGPIOException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -134,6 +135,7 @@ public class LaunchControl {
 
     private ProcessBuilder pb = null;
     private static LaunchControl instance;
+    private HashMap<String, TempWrapper> deviceMap = new HashMap<>();
 
     @Autowired
     public LaunchControl(DeviceRepository deviceRepository, TemperatureRepository temperatureRepository, PIDRepository pidRepository) {
@@ -210,23 +212,6 @@ public class LaunchControl {
         this.pidRepository = pidRepository;
     }
 
-    private static Gson getGsonParser() {
-        GsonFireBuilder builder = new GsonFireBuilder()
-                .registerTypeSelector(Device.class, jsonElement -> {
-                    String kind = jsonElement.getAsJsonObject().get("type").getAsString();
-                    switch (kind) {
-                        case Temp.TYPE:
-                            return Temp.class; //This will cause Gson to deserialize the json mapping to A
-                        case PID.TYPE:
-                            return PID.class; //This will cause Gson to deserialize the json mapping to B
-                        default:
-                            return null; //returning null will trigger Gson's default behavior
-                    }
-                });
-        return builder.createGsonBuilder().excludeFieldsWithoutExposeAnnotation()
-                .setPrettyPrinting().create();
-    }
-
     private void startup(int port) {
         this.systemSettings.server_port = port;
 
@@ -247,7 +232,7 @@ public class LaunchControl {
 
         // Load the System probe if it's not configured
         if (this.deviceRepository != null) {
-            List<Temp> probes = this.temperatureRepository.findByName("System");
+            List<TempProbe> probes = this.temperatureRepository.findByName("System");
             if (probes.size() == 0) {
                 addSystemTemp();
             }
@@ -302,23 +287,23 @@ public class LaunchControl {
      * Add the system temperature
      */
     private void addSystemTemp() {
-        Temp tTemp = new Temp("System", "System");
-        this.deviceRepository.save(tTemp);
-        BrewServer.LOG.info("Adding " + tTemp.getName());
+        TempProbe tTempProbe = new TempProbe("System", "System");
+        this.deviceRepository.save(tTempProbe);
+        BrewServer.LOG.info("Adding " + tTempProbe.getName());
         // setup the scale for each temp probe
-        tTemp.setScale(this.systemSettings.scale);
+        tTempProbe.setScale(this.systemSettings.scale);
     }
 
     void delSystemTemp() {
-        List<Temp> devices = this.temperatureRepository.findByName("System");
+        TempWrapper tempWrapper = this.deviceMap.get("System");
         // Do we have anything to delete?
-        if (devices.size() == 0) {
+        if (tempWrapper == null) {
             return;
         }
-        Temp tTemp = devices.get(0);
-        tTemp.shutdown();
-        this.deviceRepository.delete(tTemp);
-        getPidRunners().removeIf(pidRunner -> pidRunner.getTempDevice() == tTemp);
+
+        tempWrapper.shutdown();
+        this.deviceRepository.delete(tempWrapper.getTempProbe());
+        getPidRunners().removeIf(pidRunner -> pidRunner.getTempProbeDevice() == tempWrapper.getTempProbe());
 
     }
 
@@ -359,14 +344,14 @@ public class LaunchControl {
     /**
      * Add a PID to the list.
      *
-     * @param newTemp PID to add.
+     * @param newTempProbe PID to add.
      */
-    public void addTemp(Temp newTemp) {
-        if (getPidRunners().stream().noneMatch(pRunner -> pRunner.getTempDevice() == newTemp)) {
-            PIDRunner pidRunner = new PIDRunner(newTemp);
+    public void addTemp(TempProbe newTempProbe) {
+        if (getPidRunners().stream().noneMatch(pRunner -> pRunner.getTempProbeDevice() == newTempProbe)) {
+            PIDRunner pidRunner = new PIDRunner(newTempProbe);
             getPidRunners().add(pidRunner);
             Thread pThread = new Thread(pidRunner);
-            pThread.setName(pidRunner.getTempDevice().getName());
+            pThread.setName(pidRunner.getTempProbeDevice().getName());
             getPidThreads().add(pThread);
             pThread.start();
         }
@@ -657,10 +642,10 @@ public class LaunchControl {
      * @return The MashControl for the PID.
      */
     public TriggerControl findTriggerControl(final String pid) {
-        List<Temp> devices = this.temperatureRepository.findByName(pid);
+        List<TempProbe> devices = this.temperatureRepository.findByName(pid);
         if (devices.size() == 1) {
-            Temp tTemp = devices.get(0);
-            return tTemp.getTriggerControl();
+            TempProbe tTempProbe = devices.get(0);
+            return tTempProbe.getTriggerControl();
         }
         return null;
     }
@@ -947,18 +932,18 @@ public class LaunchControl {
     }
 
     /**
-     * Delete the Temp/PID from the list.
+     * Delete the TempProbe/PID from the list.
      *
-     * @param tTemp The Temp object to delete.
+     * @param tTempProbe The TempProbe object to delete.
      */
-    public void deleteTemp(Temp tTemp) {
-        List<Temp> devices = this.temperatureRepository.findByName(tTemp.getName());
+    public void deleteTemp(TempProbe tTempProbe) {
+        List<TempProbe> devices = this.temperatureRepository.findByName(tTempProbe.getName());
         if (devices.size() == 0) {
             return;
         }
 
-        getPidRunners().removeIf(pidRunner -> pidRunner.getTempDevice().getName().equals(tTemp.getName()));
-        getPidThreads().removeIf(pidThread -> pidThread.getName().equalsIgnoreCase(tTemp.getName()));
+        getPidRunners().removeIf(pidRunner -> pidRunner.getTempProbeDevice().getName().equals(tTempProbe.getName()));
+        getPidThreads().removeIf(pidThread -> pidThread.getName().equalsIgnoreCase(tTempProbe.getName()));
     }
 
     /**
@@ -1014,8 +999,8 @@ public class LaunchControl {
         }
         // Change the temperature probes
         for (Device device : this.deviceRepository.findAll()) {
-            if (device instanceof Temp) {
-                Temp t = (Temp) device;
+            if (device instanceof TempProbe) {
+                TempProbe t = (TempProbe) device;
                 t.setScale(scale);
             }
         }
@@ -1041,7 +1026,7 @@ public class LaunchControl {
         this.systemSettings.recorder.start();
     }
 
-    I2CDevice getI2CDevice(String devNumber, String devAddress, String devType) {
+    public I2CDevice getI2CDevice(String devNumber, String devAddress, String devType) {
         String devKey = String.format("%s_%s", devNumber, devAddress);
         I2CDevice i2CDevice = getI2cDeviceList().get(devKey);
         if (i2CDevice == null) {
@@ -1198,12 +1183,16 @@ public class LaunchControl {
         return this.phSensorList;
     }
 
-    public Temp findTemp(String name) {
-        List<Temp> deviceList = this.temperatureRepository.findByName(name);
+    public TempWrapper findTemp(String name) {
+        TempWrapper tempWrapper = this.deviceMap.get(name);
+        List<TempProbe> deviceList = this.temperatureRepository.findByName(name);
         if (deviceList.size() == 1) {
-            return deviceList.get(0);
+            tempWrapper = new TempWrapper(deviceList.get(0));
+        } else {
+            // log an error
         }
-        return null;
+
+        return tempWrapper;
     }
 
     public PID findPID(String name) {

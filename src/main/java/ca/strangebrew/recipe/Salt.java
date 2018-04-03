@@ -95,27 +95,27 @@ public class Salt {
 	}
 
 	public double getAmount() {
-		return amount;
+		return this.amount;
 	}
 
 	public String getAmountU() {
-		return amountU;
+		return this.amountU;
 	}
 
 	public String getChemicalName() {
-		return chemicalName;
+		return this.chemicalName;
 	}
 
 	public String getCommonName() {
-		return commonName;
+		return this.commonName;
 	}
 
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	public ChemicalEffect[] getChemicalEffects() {
-		return chemicalEffects;
+		return this.chemicalEffects;
 	}
 	
 	public void setAmount(double amount) {
@@ -125,8 +125,8 @@ public class Salt {
 	public String toString() {
 		MessageFormat mf;
 		
-		mf = new MessageFormat(name + "(" + commonName + ") {0,number,0.000}" + amountU);		
-		Object[] objs = {new Double(amount)};
+		mf = new MessageFormat(this.name + "(" + this.commonName + ") {0,number,0.000}" + this.amountU);
+		Object[] objs = {new Double(this.amount)};
 				
 		return mf.format(objs);
 	}
@@ -134,11 +134,11 @@ public class Salt {
 	public String toXML(int indent) {
 		String xml = "";
 		
-		xml += SBStringUtils.xmlElement("NAME", name, indent);
-		xml += SBStringUtils.xmlElement("COMMONNAME", commonName, indent);
-		xml += SBStringUtils.xmlElement("CHEM", chemicalName, indent);
-		xml += SBStringUtils.xmlElement("AMOUNT", SBStringUtils.format(amount, 2), indent);
-		xml += SBStringUtils.xmlElement("AMOUNTU", amountU, indent);		
+		xml += SBStringUtils.xmlElement("NAME", this.name, indent);
+		xml += SBStringUtils.xmlElement("COMMONNAME", this.commonName, indent);
+		xml += SBStringUtils.xmlElement("CHEM", this.chemicalName, indent);
+		xml += SBStringUtils.xmlElement("AMOUNT", SBStringUtils.format(this.amount, 2), indent);
+		xml += SBStringUtils.xmlElement("AMOUNTU", this.amountU, indent);
 			
 		return xml;
 	}
@@ -175,19 +175,19 @@ public class Salt {
 		}
 
 		public double getEffect() {
-			return effect;
+			return this.effect;
 		}
 
 		public String getElem() {
-			return elem;
+			return this.elem;
 		}
 	}
 
 
 	public double getEffectByChem(String chem) {
-		for (int i = 0; i < chemicalEffects.length; i++) {
-			if (chemicalEffects[i].getElem().equals(chem)) {
-				return chemicalEffects[i].getEffect();
+		for (int i = 0; i < this.chemicalEffects.length; i++) {
+			if (this.chemicalEffects[i].getElem().equals(chem)) {
+				return this.chemicalEffects[i].getEffect();
 			}
 		}
 		
@@ -205,7 +205,7 @@ public class Salt {
 	}
 
 	public double getGramsPerTsp() {
-		return gramsPerTsp;
+		return this.gramsPerTsp;
 	}
 
 	public void setGramsPerTsp(double gramsPerTsp) {

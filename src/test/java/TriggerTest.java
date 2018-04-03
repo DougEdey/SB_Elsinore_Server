@@ -1,5 +1,5 @@
 import com.sb.elsinore.LaunchControl;
-import com.sb.elsinore.Temp;
+import com.sb.elsinore.devices.TempProbe;
 import com.sb.elsinore.TriggerControl;
 import com.sb.elsinore.triggers.TemperatureTrigger;
 import com.sb.elsinore.triggers.TriggerInterface;
@@ -115,11 +115,11 @@ public class TriggerTest {
 
     @Test
     public void testConversionOfTemp() throws InterruptedException {
-        Temp localTemp = new Temp("Blank", "Blank");
-        localTemp = spy(localTemp);
-        when(this.launchControl.findTemp("temp")).thenReturn(localTemp);
-        //doReturn(new BigDecimal(40)).when(localTemp).getTemp();
-        doReturn(new BigDecimal(40)).when(localTemp).updateTempFromFile();
+        TempProbe localTempProbe = new TempProbe("Blank", "Blank");
+        localTempProbe = spy(localTempProbe);
+        when(this.launchControl.findTemp("temp")).thenReturn(localTempProbe);
+        //doReturn(new BigDecimal(40)).when(localTempProbe).getTempProbe();
+        doReturn(new BigDecimal(40)).when(localTempProbe).updateTempFromFile();
 
 
         TemperatureTrigger firstTemperatureTrigger = new TemperatureTrigger(0, "temp", 120, "Type A", "Method A");
@@ -130,17 +130,17 @@ public class TriggerTest {
 
         assertTrue(firstTemperatureTrigger.isActive());
 
-        //doReturn(new BigDecimal(54.44)).when(localTemp).getTemp();
-        doReturn(new BigDecimal(54.44)).when(localTemp).updateTempFromFile();
+        //doReturn(new BigDecimal(54.44)).when(localTempProbe).getTempProbe();
+        doReturn(new BigDecimal(54.44)).when(localTempProbe).updateTempFromFile();
         firstTemperatureTrigger.waitForTrigger();
         // Make sure this comes back fine.
 
-        localTemp.setScale("F");
+        localTempProbe.setScale("F");
         this.mTriggerControl.activateTrigger(1);
         assertTrue(secondTemperatureTrigger.isActive());
 
-        //doReturn(new BigDecimal(40)).when(localTemp).getTemp();
-        doReturn(new BigDecimal(56)).when(localTemp).updateTempFromFile();
+        //doReturn(new BigDecimal(40)).when(localTempProbe).getTempProbe();
+        doReturn(new BigDecimal(56)).when(localTempProbe).updateTempFromFile();
         secondTemperatureTrigger.waitForTrigger();
     }
 }

@@ -37,31 +37,31 @@ public class Acid {
 	}
 
 	public double getMolWt() {
-		return molWt;
+		return this.molWt;
 	}
 
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	public double getPK1() {
-		return pK1;
+		return this.pK1;
 	}
 
 	public double getPK2() {
-		return pK2;
+		return this.pK2;
 	}
 
 	public double getPK3() {
-		return pK3;
+		return this.pK3;
 	}
 
 	public double getMgPerL() {
-		return mgPerML;
+		return this.mgPerML;
 	}
 	
 	public boolean isLiquid() {
-		return mgPerML != 0;
+		return this.mgPerML != 0;
 	}
 	
 	public String getAcidUnit() {

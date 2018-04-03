@@ -1,8 +1,11 @@
 package com.sb.elsinore.triggers;
 
 import com.sb.elsinore.*;
+import com.sb.elsinore.devices.PID;
 import com.sb.elsinore.notificiations.Notifications;
 import com.sb.elsinore.notificiations.WebNotification;
+import com.sb.elsinore.wrappers.TempWrapper;
+import com.sb.elsinore.wrappers.TemperatureValue;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.tools.PrettyWriter;
@@ -12,7 +15,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
 
-import static com.sb.elsinore.PID.PIDMode.OFF;
+import static com.sb.elsinore.devices.PID.PIDMode.OFF;
 import static org.rendersnake.HtmlAttributesFactory.*;
 
 /**
@@ -36,7 +39,7 @@ public class TemperatureTrigger implements TriggerInterface {
     public static final String TEMPPROBE = "tempprobe";
 
     private BigDecimal targetTemp = null;
-    private Temp temperatureProbe = null;
+    private TempWrapper temperatureProbe = null;
     private String method = null;
     private String type = null;
     private boolean active;
@@ -140,10 +143,10 @@ public class TemperatureTrigger implements TriggerInterface {
 
         this.targetTemp = new BigDecimal(
                 parameters.get(TemperatureTrigger.TARGET_TEMP).toString().replace(",", "."),
-                this.temperatureProbe.context);
+                TemperatureValue.context);
         this.exitTemp = new BigDecimal(
                 parameters.get(TemperatureTrigger.EXIT_TEMP).toString().replace(",", "."),
-                this.temperatureProbe.context);
+                TemperatureValue.context);
     }
 
     /**
@@ -195,10 +198,10 @@ public class TemperatureTrigger implements TriggerInterface {
 
         setTargetTemperature();
         setStart(new Date());
-        BigDecimal probeTempF = this.temperatureProbe.convertF(this.temperatureProbe.getTemp());
+        BigDecimal probeTempF = this.temperatureProbe.getTempF();
         BigDecimal diff = this.targetTemp.subtract(probeTempF);
         if (this.mode == null) {
-            // Just get to within 2F of the target Temp.
+            // Just get to within 2F of the target TempProbe.
             BrewServer.LOG.info(String.format("Waiting to be within 2F of %.2f", this.targetTemp));
 
             BrewServer.LOG.info("Probe temp: " + probeTempF);
@@ -211,8 +214,7 @@ public class TemperatureTrigger implements TriggerInterface {
                 }
             }
         } else if (this.mode.equals(TemperatureTrigger.INCREASE)) {
-            while (this.temperatureProbe.getTemp().compareTo(
-                    this.targetTemp) <= 0) {
+            while (this.temperatureProbe.getTempF().compareTo(this.targetTemp) <= 0) {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
@@ -221,8 +223,7 @@ public class TemperatureTrigger implements TriggerInterface {
                 }
             }
         } else if (this.mode.equals(TemperatureTrigger.DECREASE)) {
-            while (this.temperatureProbe.getTemp().compareTo(
-                    this.targetTemp) >= 0) {
+            while (this.temperatureProbe.getTempF().compareTo(this.targetTemp) >= 0) {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
@@ -231,7 +232,7 @@ public class TemperatureTrigger implements TriggerInterface {
                 }
             }
         } else {
-            // Just get to within 2F of the target Temp.
+            // Just get to within 2F of the target TempProbe.
             BrewServer.LOG.warning("Waiting to be within 2F of " + this.targetTemp);
             while (diff.compareTo(new BigDecimal(2.0)) >= 0) {
                 try {
@@ -283,7 +284,8 @@ public class TemperatureTrigger implements TriggerInterface {
     @Override
     public final void setActive() {
         this.active = true;
-        createNotifications(String.format(Messages.TARGET_TEMP_TRIGGER, this.targetTemp, this.temperatureProbe.getScale()));
+        createNotifications(String.format(Messages.TARGET_TEMP_TRIGGER, this.targetTemp,
+                this.temperatureProbe.getTempProbe().getScale()));
     }
 
     /**

@@ -3,7 +3,7 @@ package com.sb.elsinore;
 /**
  * Volume Units here are to be used in the future for conversion.
  */
-final class VolumeUnits {
+public final class VolumeUnits {
     /**
      * The US Gallon Measurement, 3.8 Litres.
      */

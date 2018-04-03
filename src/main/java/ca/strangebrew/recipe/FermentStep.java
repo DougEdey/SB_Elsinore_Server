@@ -30,10 +30,10 @@ public class FermentStep implements Comparable<FermentStep> {
 	
 	public String toXML() {
 		String out = "      <ITEM>\n";
-		out += "          <TYPE>" + type + "</TYPE>\n";
-		out += "          <TIME>" + Integer.toString(time) + "</TIME>\n";
-		out += "          <TEMP>" + Double.toString(temp) + "</TEMP>\n";
-		out += "          <TEMPU>" + tempU + "</TEMPU>\n";
+		out += "          <TYPE>" + this.type + "</TYPE>\n";
+		out += "          <TIME>" + Integer.toString(this.time) + "</TIME>\n";
+		out += "          <TEMP>" + Double.toString(this.temp) + "</TEMP>\n";
+		out += "          <TEMPU>" + this.tempU + "</TEMPU>\n";
    		out += "      </ITEM>\n";
 		return out;
 	}
@@ -41,16 +41,16 @@ public class FermentStep implements Comparable<FermentStep> {
 	
 	// Getters and Setters
 	public double getTemp() {
-		return temp;
+		return this.temp;
 	}
 	public String getTempU() {
-		return tempU;
+		return this.tempU;
 	}
 	public int getTime() {
-		return time;
+		return this.time;
 	}
 	public String getType() {
-		return type;
+		return this.type;
 	}
 	public void setTemp(double temp) {
 		this.temp = temp;
@@ -91,6 +91,6 @@ public class FermentStep implements Comparable<FermentStep> {
     }
 
     public double getTimeMins() {
-        return time*24*60;
+        return this.time *24*60;
     }
 }

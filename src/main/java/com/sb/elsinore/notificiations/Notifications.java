@@ -42,13 +42,13 @@ public class Notifications {
             new RuntimeException().printStackTrace();
             return -1;
         }
-        notificationsList.add(newNotification);
+        this.notificationsList.add(newNotification);
         if (newNotification.getMessage() != null) {
             BrewServer.LOG.info("Notification added with message: " + newNotification.getMessage());
         } else {
             BrewServer.LOG.info("Notification added with no message");
         }
-        return  notificationsList.indexOf(newNotification);
+        return this.notificationsList.indexOf(newNotification);
     }
 
     /**
@@ -57,7 +57,7 @@ public class Notifications {
      * @return True if the notifcation was cleared, or false if there was an issue.
      */
     public boolean clearNotification(int index) {
-        Notification toDelete = notificationsList.get(index);
+        Notification toDelete = this.notificationsList.get(index);
         if (toDelete == null) {
             BrewServer.LOG.warning("Could not find notification: " + index + " to clear.");
             BrewServer.LOG.warning(this.getNotificationStatus().toString());
@@ -65,7 +65,7 @@ public class Notifications {
         }
 
         toDelete.clearNotification();
-        notificationsList.remove(index);
+        this.notificationsList.remove(index);
         BrewServer.LOG.info("Cleared notification: " + index);
         return true;
     }
@@ -77,8 +77,8 @@ public class Notifications {
         JSONArray nStatus = new JSONArray();
         JSONObject nObject = new JSONObject();
 
-        for (int i = 0; i < notificationsList.size(); i++) {
-            Notification n = notificationsList.get(i);
+        for (int i = 0; i < this.notificationsList.size(); i++) {
+            Notification n = this.notificationsList.get(i);
             if (n.getNotification() == null) {
                 continue;
             }
@@ -90,9 +90,9 @@ public class Notifications {
     }
 
     public void clearNotification(Notification notification) {
-        if (notification == null || notificationsList.indexOf(notification) == -1) {
+        if (notification == null || this.notificationsList.indexOf(notification) == -1) {
             return;
         }
-        clearNotification(notificationsList.indexOf(notification));
+        clearNotification(this.notificationsList.indexOf(notification));
     }
 }

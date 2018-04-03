@@ -37,34 +37,34 @@ public class CompressorDevice extends OutputDevice {
             initializeSSR();
 
             if (duty.compareTo(HUNDRED) == 0) {
-                if (System.currentTimeMillis() - lastStopTime > delayBetweenRuns) {
-                    if (!running) {
+                if (System.currentTimeMillis() - this.lastStopTime > this.delayBetweenRuns) {
+                    if (!this.running) {
                         BrewServer.LOG.warning("Starting compressor device.");
-                        lastStartTime = System.currentTimeMillis();
+                        this.lastStartTime = System.currentTimeMillis();
                     }
-                    running = true;
+                    this.running = true;
                     setValue(true);
                 } else {
-                    BrewServer.LOG.warning("Need to wait before starting compressor again.: "+(delayBetweenRuns - (System.currentTimeMillis() - lastStopTime)));
+                    BrewServer.LOG.warning("Need to wait before starting compressor again.: "+(this.delayBetweenRuns - (System.currentTimeMillis() - this.lastStopTime)));
                 }
             }
-            Thread.sleep(settings.getCycleTime().intValue());
+            Thread.sleep(this.settings.getCycleTime().intValue());
         }
     }
 
     @Override
     public void turnOff() {
-        if (running) {
-            lastStopTime = System.currentTimeMillis();
+        if (this.running) {
+            this.lastStopTime = System.currentTimeMillis();
             BrewServer.LOG.warning("Stopping compressor device.");
-            BrewServer.LOG.warning("Ran for " + (lastStopTime - lastStartTime) / 60000f + " minutes");
+            BrewServer.LOG.warning("Ran for " + (this.lastStopTime - this.lastStartTime) / 60000f + " minutes");
         }
-        running = false;
+        this.running = false;
         setValue(false);
     }
     
     public void setDelay(BigDecimal delay)
     {
-        delayBetweenRuns = delay.longValue() * 1000 * 60;
+        this.delayBetweenRuns = delay.longValue() * 1000 * 60;
     }
 }

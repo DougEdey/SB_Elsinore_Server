@@ -98,51 +98,51 @@ public int ADS1015_REG_POINTER_MASK        = (0x03);
      */
     public float readValue(int channel)
     {
-        error = ads1015error.ADS1015_ERROR_OK;
+        this.error = ads1015error.ADS1015_ERROR_OK;
 
-        if (!(_adsInitialised)) {
+        if (!(this._adsInitialised)) {
             ads1015Init();
         }
 
         if (channel > 3) {
-            error = ads1015error.ADS1015_ERROR_INVALIDCHANNEL;
+            this.error = ads1015error.ADS1015_ERROR_INVALIDCHANNEL;
             return -1f;
         }
 
         // Start with default values
-        int config = ADS1015_REG_CONFIG_CQUE_NONE    | // Disable the comparator (default val)
-                ADS1015_REG_CONFIG_CLAT_NONLAT  | // Non-latching (default val)
-                ADS1015_REG_CONFIG_CPOL_ACTVLOW | // Alert/Rdy active low   (default val)
-                ADS1015_REG_CONFIG_CMODE_TRAD   | // Traditional comparator (default val)
-                ADS1015_REG_CONFIG_DR_1600SPS   | // 1600 samples per second (default)
-                ADS1015_REG_CONFIG_MODE_SINGLE;   // Single-shot mode (default)
+        int config = this.ADS1015_REG_CONFIG_CQUE_NONE | // Disable the comparator (default val)
+                this.ADS1015_REG_CONFIG_CLAT_NONLAT | // Non-latching (default val)
+                this.ADS1015_REG_CONFIG_CPOL_ACTVLOW | // Alert/Rdy active low   (default val)
+                this.ADS1015_REG_CONFIG_CMODE_TRAD | // Traditional comparator (default val)
+                this.ADS1015_REG_CONFIG_DR_1600SPS | // 1600 samples per second (default)
+                this.ADS1015_REG_CONFIG_MODE_SINGLE;   // Single-shot mode (default)
 
         // Set PGA/voltage range
-        config |= ADS1015_REG_CONFIG_PGA_6_144V;            // +/- 6.144V range (limited to VDD +0.3V max!)
+        config |= this.ADS1015_REG_CONFIG_PGA_6_144V;            // +/- 6.144V range (limited to VDD +0.3V max!)
 
         // Set single-ended input channel
         switch (channel)
         {
             case (0):
-                config |= ADS1015_REG_CONFIG_MUX_SINGLE_0;
+                config |= this.ADS1015_REG_CONFIG_MUX_SINGLE_0;
                 break;
             case (1):
-                config |= ADS1015_REG_CONFIG_MUX_SINGLE_1;
+                config |= this.ADS1015_REG_CONFIG_MUX_SINGLE_1;
                 break;
             case (2):
-                config |= ADS1015_REG_CONFIG_MUX_SINGLE_2;
+                config |= this.ADS1015_REG_CONFIG_MUX_SINGLE_2;
                 break;
             case (3):
-                config |= ADS1015_REG_CONFIG_MUX_SINGLE_3;
+                config |= this.ADS1015_REG_CONFIG_MUX_SINGLE_3;
                 break;
         }
 
         // Set 'start single-conversion' bit
-        config |= ADS1015_REG_CONFIG_OS_SINGLE;
+        config |= this.ADS1015_REG_CONFIG_OS_SINGLE;
 
         // Write config register to the ADC
-        error = ads1015WriteRegister(ADS1015_REG_POINTER_CONFIG, config);
-        if (error != ads1015error.ADS1015_ERROR_OK) return -1f;
+        this.error = ads1015WriteRegister(this.ADS1015_REG_POINTER_CONFIG, config);
+        if (this.error != ads1015error.ADS1015_ERROR_OK) return -1f;
 
         // Wait for the conversion to complete
         try {
@@ -153,7 +153,7 @@ public int ADS1015_REG_POINTER_MASK        = (0x03);
 
         // Read the conversion results
 
-        int value = ina219Read16(ADS1015_REG_POINTER_CONVERT);
+        int value = ina219Read16(this.ADS1015_REG_POINTER_CONVERT);
         if (value == -1) {
             BrewServer.LOG.warning("Failed to read ADS1015");
             return -1f;

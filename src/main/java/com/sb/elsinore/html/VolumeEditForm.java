@@ -2,7 +2,7 @@ package com.sb.elsinore.html;
 
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Messages;
-import com.sb.elsinore.Temp;
+import com.sb.elsinore.devices.TempProbe;
 import com.sb.elsinore.devices.I2CDevice;
 import org.rendersnake.HtmlCanvas;
 import org.rendersnake.Renderable;
@@ -21,9 +21,9 @@ public class VolumeEditForm implements Renderable {
     private static final String I_2_C_ADDRESS = "i2c_address";
     private static final String I_2_C_CHANNEL = "i2c_channel";
     private static final String I_2_C_MODEL = "i2c_model";
-    private Temp vessel = null;
+    private TempProbe vessel = null;
 
-    public VolumeEditForm(Temp inVessel) {
+    public VolumeEditForm(TempProbe inVessel) {
         this.vessel = inVessel;
     }
 

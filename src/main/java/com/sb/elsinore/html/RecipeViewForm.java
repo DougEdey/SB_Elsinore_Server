@@ -104,7 +104,7 @@ public class RecipeViewForm implements Renderable {
             for (int i = 0; i < this.currentRecipe.getFermentStepSize(); i++) {
                 html.tr(id("fermStep-" + i));
                 html.td(id("ferm-Name")).write(this.currentRecipe.getFermentStepType(i))._td();
-                html.td(id("ferm-Temp")).write(String.format("%.2f", this.currentRecipe.getFermentStepTemp(i)) + this.currentRecipe.getFermentStepTempU(i))._td();
+                html.td(id("ferm-TempProbe")).write(String.format("%.2f", this.currentRecipe.getFermentStepTemp(i)) + this.currentRecipe.getFermentStepTempU(i))._td();
                 html.td(id("ferm-Time")).write(this.currentRecipe.getFermentStepTime(i) + " days")._td();
                 html._tr();
             }
@@ -113,7 +113,7 @@ public class RecipeViewForm implements Renderable {
             html.option(value("").selected_if(true))
                     .write("Select Probe")
                     ._option();
-//            for (Temp entry : LaunchControl.getInstance().tempList) {
+//            for (TempProbe entry : LaunchControl.getInstance().tempList) {
 //                if (entry instanceof PID) {
 //                    html.option(value(entry.getName()))
 //                            .write(entry.getName())
@@ -168,7 +168,7 @@ public class RecipeViewForm implements Renderable {
             html.option(value("").selected_if(true))
                     .write("Select Probe")
                     ._option();
-//            for (Temp entry : LaunchControl.getInstance().tempList) {
+//            for (TempProbe entry : LaunchControl.getInstance().tempList) {
 //                html.option(value(entry.getName()))
 //                        .write(entry.getName())
 //                        ._option();
@@ -213,7 +213,7 @@ public class RecipeViewForm implements Renderable {
             html.option(value("").selected_if(true))
                     .write("Select Probe")
                     ._option();
-//            for (Temp entry : LaunchControl.getInstance().tempList) {
+//            for (TempProbe entry : LaunchControl.getInstance().tempList) {
 //                if (entry instanceof PID) {
 //                    html.option(value(entry.getName()))
 //                            .write(entry.getName())

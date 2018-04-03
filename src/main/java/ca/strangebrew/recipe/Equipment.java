@@ -23,7 +23,7 @@ public class Equipment {
     private double chillPercent;
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public void setName(String name) {
@@ -31,7 +31,7 @@ public class Equipment {
     }
 
     public Quantity getBoilSize() {
-        return boilSize;
+        return this.boilSize;
     }
 
     public void setBoilSize(double boilSize) {
@@ -40,7 +40,7 @@ public class Equipment {
     }
 
     public Quantity getBatchSize() {
-        return batchSize;
+        return this.batchSize;
     }
 
     public void setBatchSize(double batchSize) {
@@ -49,7 +49,7 @@ public class Equipment {
     }
 
     public Quantity getTunVolume() {
-        return tunVolume;
+        return this.tunVolume;
     }
 
     public void setTunVolume(double tunVolume) {
@@ -58,7 +58,7 @@ public class Equipment {
     }
 
     public Quantity getTunWeight() {
-        return tunWeight;
+        return this.tunWeight;
     }
 
     public void setTunWeight(double tunWeight) {
@@ -67,7 +67,7 @@ public class Equipment {
     }
 
     public double getTunSpecificHeat() {
-        return tunSpecificHeat;
+        return this.tunSpecificHeat;
     }
 
     public void setTunSpecificHeat(double tunSpecificHeat) {
@@ -75,7 +75,7 @@ public class Equipment {
     }
 
     public Quantity getTopupWater() {
-        return topupWater;
+        return this.topupWater;
     }
 
     public void setTopupWater(double topupWater) {
@@ -84,7 +84,7 @@ public class Equipment {
     }
 
     public Quantity getTrubChillerLoss() {
-        return trubChillerLoss;
+        return this.trubChillerLoss;
     }
 
     public void setTrubChillerLoss(double trubChillerLoss) {
@@ -93,7 +93,7 @@ public class Equipment {
     }
 
     public double getEvapRate() {
-        return evapRate;
+        return this.evapRate;
     }
 
     public void setEvapRate(double evapRate) {
@@ -101,7 +101,7 @@ public class Equipment {
     }
 
     public double getBoilTime() {
-        return boilTime;
+        return this.boilTime;
     }
 
     public void setBoilTime(double boilTime) {
@@ -109,7 +109,7 @@ public class Equipment {
     }
 
     public boolean isCalcBoilVol() {
-        return calcBoilVol;
+        return this.calcBoilVol;
     }
 
     public void setCalcBoilVol(boolean calcBoilVol) {
@@ -117,7 +117,7 @@ public class Equipment {
     }
 
     public Quantity getLauterDeadspace() {
-        return lauterDeadspace;
+        return this.lauterDeadspace;
     }
 
     public void setLauterDeadspace(double lauterDeadspace) {
@@ -126,7 +126,7 @@ public class Equipment {
     }
 
     public double getTopupKettle() {
-        return topupKettle;
+        return this.topupKettle;
     }
 
     public void setTopupKettle(double topupKettle) {
@@ -134,7 +134,7 @@ public class Equipment {
     }
 
     public double getHopUtilization() {
-        return hopUtilization;
+        return this.hopUtilization;
     }
 
     public void setHopUtilization(double hopUtilization) {
@@ -142,7 +142,7 @@ public class Equipment {
     }
 
     public String getNotes() {
-        return notes;
+        return this.notes;
     }
 
     public void setNotes(String notes) {
@@ -154,6 +154,6 @@ public class Equipment {
     }
 
     public double getChillPercent() {
-        return chillPercent;
+        return this.chillPercent;
     }
 }

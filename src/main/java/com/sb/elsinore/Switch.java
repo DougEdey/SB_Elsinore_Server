@@ -75,9 +75,9 @@ public class Switch implements Comparable<Switch> {
     public final boolean getStatus() {
         try {
             if (this.invertOutput) {
-                return output.getValue().equals("0");
+                return this.output.getValue().equals("0");
             } else {
-                return output.getValue().equals("1");
+                return this.output.getValue().equals("1");
             }
         } catch (Exception e) {
             BrewServer.LOG.warning("Couldn't toggle switch: " + e);
@@ -90,9 +90,9 @@ public class Switch implements Comparable<Switch> {
      */
     public final void turnOn() {
         if (this.invertOutput) {
-            output.setValue(false);
+            this.output.setValue(false);
         } else {
-            output.setValue(true);
+            this.output.setValue(true);
         }
     }
 
@@ -101,9 +101,9 @@ public class Switch implements Comparable<Switch> {
      */
     public final void turnOff() {
         if (this.invertOutput) {
-            output.setValue(true);
+            this.output.setValue(true);
         } else {
-            output.setValue(false);
+            this.output.setValue(false);
         }
     }
 
@@ -111,14 +111,14 @@ public class Switch implements Comparable<Switch> {
      * @return The name of this switch
      */
     public final String getName() {
-        return name;
+        return this.name;
     }
 
     /**
      * @return The current GPIO Pin.
      */
     public final String getGPIO() {
-        return output.getGPIOName();
+        return this.output.getGPIOName();
     }
 
     /**
@@ -126,7 +126,7 @@ public class Switch implements Comparable<Switch> {
      */
     public final String getNodeName() {
 
-        return "_" + name.replace(" ", "_");
+        return "_" + this.name.replace(" ", "_");
     }
 
     /**
@@ -147,8 +147,8 @@ public class Switch implements Comparable<Switch> {
     }
     
     public void shutdown() {
-        if (output != null) {
-            output.close();
+        if (this.output != null) {
+            this.output.close();
         }
     }
     

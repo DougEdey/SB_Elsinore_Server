@@ -3,6 +3,7 @@ package com.sb.elsinore.triggers;
 import com.sb.elsinore.*;
 import com.sb.elsinore.controller.DeviceRepository;
 import com.sb.elsinore.controller.TemperatureRepository;
+import com.sb.elsinore.devices.TempProbe;
 import org.json.simple.JSONObject;
 import org.rendersnake.HtmlCanvas;
 
@@ -134,11 +135,11 @@ public class ProfileTrigger implements TriggerInterface {
                 .write("Target Probe")
                 ._option();
         for (Device device : this.deviceRepository.findAll()) {
-            if (!(device instanceof Temp)) {
+            if (!(device instanceof TempProbe)) {
                 continue;
             }
-            Temp tTemp = (Temp) device;
-            String tName = tTemp.getName();
+            TempProbe tTempProbe = (TempProbe) device;
+            String tName = tTempProbe.getName();
             html.option(value(tName))
                     .write(tName)
                     ._option();
@@ -190,11 +191,11 @@ public class ProfileTrigger implements TriggerInterface {
                 .write("Target Probe")
                 ._option();
         for (Device device : this.deviceRepository.findAll()) {
-            if (!(device instanceof Temp)) {
+            if (!(device instanceof TempProbe)) {
                 continue;
             }
-            Temp tTemp = (Temp) device;
-            String tName = tTemp.getName();
+            TempProbe tTempProbe = (TempProbe) device;
+            String tName = tTempProbe.getName();
             html.option(value(tName))
                     .write(tName)
                     ._option();

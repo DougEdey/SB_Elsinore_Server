@@ -16,7 +16,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.sb.elsinore.Messages.TEMP;
-import static com.sb.elsinore.Temp.POSITION;
+import static com.sb.elsinore.devices.TempProbe.POSITION;
 import static org.rendersnake.HtmlAttributesFactory.*;
 
 /********************
@@ -396,7 +396,7 @@ public class TriggerControl implements Runnable, Serializable {
     /**
      * @param newControl the outputControl to set
      */
-    void setOutputControl(final String newControl) {
+    public void setOutputControl(final String newControl) {
         this.outputControl = newControl;
     }
 

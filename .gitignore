@@ -4,7 +4,7 @@
 target
 bin
 
-# Hide any swap/temp files
+# Hide any swap/tempProbe files
 *.swp
 /graph-data/
 ~*

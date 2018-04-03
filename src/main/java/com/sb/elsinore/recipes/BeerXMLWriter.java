@@ -66,7 +66,7 @@ public class BeerXMLWriter {
         Element recipesElement = recipeDocument.createElement("RECIPES");
 
         int success = 0;
-        for (Recipe recipe: recipes) {
+        for (Recipe recipe: this.recipes) {
             try {
                 Element recipeElement = writeRecipe(recipe, recipeDocument);
                 if (recipeElement != null) {

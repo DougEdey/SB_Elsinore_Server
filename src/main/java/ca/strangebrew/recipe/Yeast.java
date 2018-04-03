@@ -52,7 +52,7 @@ public class Yeast extends Ingredient {
     }
 
     public String getLaboratory() {
-        return laboratory;
+        return this.laboratory;
     }
 
     public void setProductId(String productId) {
@@ -60,7 +60,7 @@ public class Yeast extends Ingredient {
     }
 
     public String getProductId() {
-        return productId;
+        return this.productId;
     }
 
     public void setMinTemperature(double newMinTemperature) {
@@ -85,9 +85,9 @@ public class Yeast extends Ingredient {
      */
     public double getMinTemperature() {
         if (this.minTemperatureUnit != null && this.minTemperatureUnit.equals("F")) {
-            return BrewCalcs.fToC(minTemperature);
+            return BrewCalcs.fToC(this.minTemperature);
         }
-        return minTemperature;
+        return this.minTemperature;
     }
 
     public String getMinTemperatureString() {
@@ -116,9 +116,9 @@ public class Yeast extends Ingredient {
      */
     public double getMaxTemperature() {
         if (this.maxTemperatureUnit != null && this.maxTemperatureUnit.equals("F")) {
-            return BrewCalcs.fToC(minTemperature);
+            return BrewCalcs.fToC(this.minTemperature);
         }
-        return maxTemperature;
+        return this.maxTemperature;
     }
 
     public String getMaxTemperatureString() {
@@ -130,7 +130,7 @@ public class Yeast extends Ingredient {
     }
 
     public String getFlocculation() {
-        return flocculation;
+        return this.flocculation;
     }
 
     public void setBestFor(String bestFor) {
@@ -138,7 +138,7 @@ public class Yeast extends Ingredient {
     }
 
     public String getBestFor() {
-        return bestFor;
+        return this.bestFor;
     }
 
     public void setTimesCultured(int timesCultured) {
@@ -146,7 +146,7 @@ public class Yeast extends Ingredient {
     }
 
     public int getTimesCultured() {
-        return timesCultured;
+        return this.timesCultured;
     }
 
     public void setMaxReuse(int maxReuse) {
@@ -154,7 +154,7 @@ public class Yeast extends Ingredient {
     }
 
     public int getMaxReuse() {
-        return maxReuse;
+        return this.maxReuse;
     }
 
     public void addToSecondary(boolean addToSecondary) {
@@ -162,7 +162,7 @@ public class Yeast extends Ingredient {
     }
 
     public boolean isAddToSecondary() {
-        return addToSecondary;
+        return this.addToSecondary;
     }
 
     public void setCultureDate(String cultureDate) {
@@ -170,6 +170,6 @@ public class Yeast extends Ingredient {
     }
 
     public String getCultureDate() {
-        return cultureDate;
+        return this.cultureDate;
     }
 }

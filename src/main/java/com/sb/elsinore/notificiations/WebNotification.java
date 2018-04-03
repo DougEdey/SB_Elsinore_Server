@@ -11,18 +11,18 @@ public class WebNotification implements Notification {
 
     @Override
     public void sendNotification() {
-        showNotification = true;
+        this.showNotification = true;
     }
 
     @Override
     public void clearNotification() {
-        showNotification = false;
+        this.showNotification = false;
     }
 
     @Override
     public String getNotification() {
-        if (showNotification) {
-            return notificationMessage;
+        if (this.showNotification) {
+            return this.notificationMessage;
         }
         return null;
     }
@@ -34,6 +34,6 @@ public class WebNotification implements Notification {
 
     @Override
     public String getMessage() {
-        return notificationMessage;
+        return this.notificationMessage;
     }
 }

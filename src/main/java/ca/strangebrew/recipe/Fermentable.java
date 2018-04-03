@@ -37,40 +37,40 @@ public class Fermentable extends Ingredient  {
     // constructors:
 	public Fermentable(String n, double p, double l, double a, String u) {
 		setName(n);
-		pppg = p;
-		lov = l;
+        this.pppg = p;
+        this.lov = l;
 		setAmount(a);
 		setUnits(u);
-		mashed = true;
-		prime = false;
+        this.mashed = true;
+        this.prime = false;
 	}
 	
 	public Fermentable(Fermentable f) {
 		setName(f.getName());
-		pppg = f.getPppg();
-		lov = f.getLov();
+        this.pppg = f.getPppg();
+        this.lov = f.getLov();
 		setAmount(f.getAmountAs(f.getUnits()));
 		setUnits(f.getUnits());
-		mashed = f.getMashed();
-		prime = f.getPrime();
-		percent = f.getPercent();
+        this.mashed = f.getMashed();
+        this.prime = f.getPrime();
+        this.percent = f.getPercent();
 	}
 
 	public Fermentable(String u) {
 		setName("");
-		pppg = 1.000;
+        this.pppg = 1.000;
 		setUnits(u);
 	}
 
 	public Fermentable(){
 		// default constructor
 		setName("");
-		pppg = 0;
-		lov = 0;
+        this.pppg = 0;
+        this.lov = 0;
 		setAmount(1.0);
 		setUnits("");
-		mashed = true;
-		prime = false;
+        this.mashed = true;
+        this.prime = false;
 	}
 
 	static public double getBasePppg() {
@@ -78,25 +78,31 @@ public class Fermentable extends Ingredient  {
 	}
 
 	// getter methods:
-	public double getLov(){ return lov; }
-	public boolean getMashed(){ return mashed; }
-	public double getPercent() { return percent; }
-	public double getPppg(){ return pppg; }
-	public boolean getSteep(){return steeped; }
-	public boolean getPrime() { return prime; }
-	public boolean ferments() { return fermentable; } 
+	public double getLov(){ return this.lov; }
+	public boolean getMashed(){ return this.mashed; }
+	public double getPercent() { return this.percent; }
+	public double getPppg(){ return this.pppg; }
+	public boolean getSteep(){return this.steeped; }
+	public boolean getPrime() { return this.prime; }
+	public boolean ferments() { return this.fermentable; }
 
 	// setter methods:	
 	public void setLov(double l){
-		
-		lov = l; 
+
+        this.lov = l;
 	}
-	public void setMashed(boolean m){ mashed = m; }
-	public void setPercent(double p){ percent = p; }
-	public void setPppg(double p){ pppg = p; }
-	public void setSteep(boolean s){ steeped = s; }
-	public void setPrime(boolean b) { prime = b; }
-	public void ferments(boolean f) { fermentable = f; }
+	public void setMashed(boolean m){
+        this.mashed = m; }
+	public void setPercent(double p){
+        this.percent = p; }
+	public void setPppg(double p){
+        this.pppg = p; }
+	public void setSteep(boolean s){
+        this.steeped = s; }
+	public void setPrime(boolean b) {
+        this.prime = b; }
+	public void ferments(boolean f) {
+        this.fermentable = f; }
 	
 	// Need to add the spaces and type attributes to make this
 	// backwards-compatible with SB1.8:
@@ -105,13 +111,13 @@ public class Fermentable extends Ingredient  {
 	    sb.append( "    <ITEM>\n" );
 	    sb.append("      <MALT>").append(getName()).append("</MALT>\n");
 	    sb.append("      <AMOUNT>").append(getAmountAs(getUnits())).append("</AMOUNT>\n");
-	    sb.append("      <PERCENT>").append(SBStringUtils.format(percent, 1)).append("</PERCENT>\n");
+	    sb.append("      <PERCENT>").append(SBStringUtils.format(this.percent, 1)).append("</PERCENT>\n");
 	    sb.append("      <UNITS>").append(getUnitsAbrv()).append("</UNITS>\n");
-	    sb.append("      <POINTS>").append(pppg).append("</POINTS>\n");
-	    sb.append("      <LOV>").append(lov).append("</LOV>\n");
-	    sb.append("      <MASHED>").append(mashed).append("</MASHED>\n");
-	    sb.append("      <STEEPED>").append(steeped).append("</STEEPED>\n");
-	    sb.append("      <FERMENTS>").append(fermentable).append("</FERMENTS>\n");
+	    sb.append("      <POINTS>").append(this.pppg).append("</POINTS>\n");
+	    sb.append("      <LOV>").append(this.lov).append("</LOV>\n");
+	    sb.append("      <MASHED>").append(this.mashed).append("</MASHED>\n");
+	    sb.append("      <STEEPED>").append(this.steeped).append("</STEEPED>\n");
+	    sb.append("      <FERMENTS>").append(this.fermentable).append("</FERMENTS>\n");
 	    sb.append("      <COSTLB>").append(getCostPerU()).append("</COSTLB>\n");
 	    sb.append("      <DESCRIPTION>").append(SBStringUtils.subEntities(getDescription())).append("</DESCRIPTION>\n");
 	    sb.append( "    </ITEM>\n" );
@@ -127,7 +133,7 @@ public class Fermentable extends Ingredient  {
     }
 
     public String getOrigin() {
-        return origin;
+        return this.origin;
     }
 
     public void setSupplier(String supplier) {
@@ -135,7 +141,7 @@ public class Fermentable extends Ingredient  {
     }
 
     public String getSupplier() {
-        return supplier;
+        return this.supplier;
     }
 
     public void setCoarseFineDiff(double coarseFineDiff) {
@@ -143,7 +149,7 @@ public class Fermentable extends Ingredient  {
     }
 
     public double getCoarseFineDiff() {
-        return coarseFineDiff;
+        return this.coarseFineDiff;
     }
 
     public void setMoisture(double moisture) {
@@ -151,7 +157,7 @@ public class Fermentable extends Ingredient  {
     }
 
     public double getMoisture() {
-        return moisture;
+        return this.moisture;
     }
 
     public void setDiastaticPower(double diastaticPower) {
@@ -159,7 +165,7 @@ public class Fermentable extends Ingredient  {
     }
 
     public double getDiastaticPower() {
-        return diastaticPower;
+        return this.diastaticPower;
     }
 
     public void setIbuGalPerLb(double ibuGalPerLb) {
@@ -167,7 +173,7 @@ public class Fermentable extends Ingredient  {
     }
 
     public double getIbuGalPerLb() {
-        return ibuGalPerLb;
+        return this.ibuGalPerLb;
     }
 
     public void setMaxInBatch(double maxInBatch) {
@@ -175,7 +181,7 @@ public class Fermentable extends Ingredient  {
     }
 
     public double getMaxInBatch() {
-        return maxInBatch;
+        return this.maxInBatch;
     }
 
     public void setProtein(double protein) {
@@ -183,10 +189,10 @@ public class Fermentable extends Ingredient  {
     }
 
     public double getProtein() {
-        return protein;
+        return this.protein;
     }
 
     public boolean addAfterBoil() {
-        return addAfterBoil;
+        return this.addAfterBoil;
     }
 }

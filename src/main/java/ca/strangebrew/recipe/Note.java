@@ -34,16 +34,16 @@ public class Note {
 	static final public String[] types = {PLANNING, BREWED, FERMENTATION, RACKED, CONDITIONED, KEGGED, BOTTLED, TASTING, CONTEST};
 	
 	public Note() {
-		date = new Date();
-		type = PLANNING;
-		note = "";
+        this.date = new Date();
+        this.type = PLANNING;
+        this.note = "";
 	}
 	
 	/**
 	 * @return Returns the date.
 	 */
 	public Date getDate() {
-		return date;
+		return this.date;
 	}
 	/**
 	 * @param date The date to set.
@@ -67,7 +67,7 @@ public class Note {
 	 * @return Returns the type.
 	 */
 	public String getType() {
-		return type;
+		return this.type;
 	}
 	/**
 	 * @param type The type to set.

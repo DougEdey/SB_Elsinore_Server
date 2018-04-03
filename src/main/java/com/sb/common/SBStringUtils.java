@@ -15,12 +15,15 @@ import java.net.URLDecoder;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.regex.Pattern;
 
 /**
  * @author aavis
  *
  */
 public class SBStringUtils {
+
+	private static Pattern tempRegexp = null;
 
 	/**
 	 * Returns a multi-line tooltip by wrapping
@@ -184,4 +187,12 @@ public class SBStringUtils {
         time = time/7;
         return time + " " + Messages.WEEKS;
     }
+
+
+	public static Pattern getTempRegexp() {
+		if (tempRegexp == null) {
+			tempRegexp = Pattern.compile("^(-?)([0-9]+)(.[0-9]{1,2})?$");
+		}
+		return tempRegexp;
+	}
 }

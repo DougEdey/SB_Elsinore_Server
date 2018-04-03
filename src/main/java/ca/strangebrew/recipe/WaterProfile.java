@@ -25,8 +25,8 @@ public class WaterProfile implements Comparable<WaterProfile> {
     private Quantity amount;
 
     public WaterProfile() {
-		name = "Distilled/RO";
-		ph = 5.80000019073486;
+        this.name = "Distilled/RO";
+        this.ph = 5.80000019073486;
 	}
 	
 	public WaterProfile(String name) {
@@ -34,51 +34,51 @@ public class WaterProfile implements Comparable<WaterProfile> {
 	}
 
 	public double getAlkalinity() {
-		return alkalinity;
+		return this.alkalinity;
 	}
 
 	public double getCa() {
-		return ca;
+		return this.ca;
 	}
 
 	public double getCl() {
-		return cl;
+		return this.cl;
 	}
 
 	public String getDescription() {
-		return description;
+		return this.description;
 	}
 
 	public double getHardness() {
-		return hardness;
+		return this.hardness;
 	}
 
 	public double getHco3() {
-		return hco3;
+		return this.hco3;
 	}
 
 	public double getMg() {
-		return mg;
+		return this.mg;
 	}
 
 	public double getNa() {
-		return na;
+		return this.na;
 	}
 
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	public double getPh() {
-		return ph;
+		return this.ph;
 	}
 
 	public double getSo4() {
-		return so4;
+		return this.so4;
 	}
 
 	public double getTds() {
-		return tds;
+		return this.tds;
 	}
 
 	public void setAlkalinity(double alkalinity) {
@@ -132,23 +132,23 @@ public class WaterProfile implements Comparable<WaterProfile> {
 	public String toString() {		
 		
 		return String.format("%s => %3.1fCa %3.1fMg %3.1fNa %3.1fSo4 %3.1fHCO3 %3.1fCl %3.1fHardness %3.1fTDS %3.1fpH %3.1fAlk",
-                name, ca, mg, na, so4, hco3, cl, hardness, tds, ph, alkalinity);
+                this.name, this.ca, this.mg, this.na, this.so4, this.hco3, this.cl, this.hardness, this.tds, this.ph, this.alkalinity);
 	}
 	
 	public String toXML(int indent) {
 		String xml = "";
 
-		xml += SBStringUtils.xmlElement("NAME", name, indent);
-		xml += SBStringUtils.xmlElement("CA", Double.toString(ca), indent);
-		xml += SBStringUtils.xmlElement("MG", Double.toString(mg), indent);
-		xml += SBStringUtils.xmlElement("NA", Double.toString(na), indent);
-		xml += SBStringUtils.xmlElement("SO4", Double.toString(so4), indent);
-		xml += SBStringUtils.xmlElement("HCO3", Double.toString(hco3), indent);
-		xml += SBStringUtils.xmlElement("CL", Double.toString(cl), indent);
-		xml += SBStringUtils.xmlElement("HARDNESS", Double.toString(hardness), indent);
-		xml += SBStringUtils.xmlElement("TDS", Double.toString(tds), indent);
-		xml += SBStringUtils.xmlElement("PH", Double.toString(ph), indent);
-		xml += SBStringUtils.xmlElement("ALKALINITY", Double.toString(alkalinity), indent);
+		xml += SBStringUtils.xmlElement("NAME", this.name, indent);
+		xml += SBStringUtils.xmlElement("CA", Double.toString(this.ca), indent);
+		xml += SBStringUtils.xmlElement("MG", Double.toString(this.mg), indent);
+		xml += SBStringUtils.xmlElement("NA", Double.toString(this.na), indent);
+		xml += SBStringUtils.xmlElement("SO4", Double.toString(this.so4), indent);
+		xml += SBStringUtils.xmlElement("HCO3", Double.toString(this.hco3), indent);
+		xml += SBStringUtils.xmlElement("CL", Double.toString(this.cl), indent);
+		xml += SBStringUtils.xmlElement("HARDNESS", Double.toString(this.hardness), indent);
+		xml += SBStringUtils.xmlElement("TDS", Double.toString(this.tds), indent);
+		xml += SBStringUtils.xmlElement("PH", Double.toString(this.ph), indent);
+		xml += SBStringUtils.xmlElement("ALKALINITY", Double.toString(this.alkalinity), indent);
 
 		return xml;
 	}
@@ -228,11 +228,11 @@ public class WaterProfile implements Comparable<WaterProfile> {
         } catch (ParseException e) {
             return;
         }
-        amount.setAmount(dAmount);
-        amount.setUnits(u.trim());
+        this.amount.setAmount(dAmount);
+        this.amount.setUnits(u.trim());
     }
 
     public Quantity getAmount() {
-        return amount;
+        return this.amount;
     }
 }
