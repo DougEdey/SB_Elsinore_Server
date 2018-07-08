@@ -48,23 +48,6 @@ public interface TriggerInterface extends Comparable<TriggerInterface> {
     Integer getPosition();
 
     /**
-     * Get the input form for this trigger.
-     *
-     * @return The {@link org.rendersnake.HtmlCanvas} object that
-     * represents this trigger.
-     * @throws IOException If the HtmlCanvas creation causes an exception.
-     */
-    HtmlCanvas getForm() throws IOException;
-
-    /**
-     * Get the Edit form for this trigger.
-     *
-     * @return The Edit Form as a HTML Canvas
-     * @throws IOException If the form could not be created.
-     */
-    HtmlCanvas getEditForm() throws IOException;
-
-    /**
      * Set the position of this Trigger.
      *
      * @param newPos The new position.

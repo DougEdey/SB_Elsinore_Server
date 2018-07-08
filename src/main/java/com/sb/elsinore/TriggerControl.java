@@ -84,66 +84,6 @@ public class TriggerControl implements Runnable, Serializable {
     }
 
     /**
-     * Get the input trigger form for the specified type.
-     *
-     * @param position The position to add the new trigger at.
-     * @param type     The Type of the Trigger interface to get.
-     * @return The HtmlCanvas representing the form.
-     */
-    static HtmlCanvas getNewTriggerForm(final int position,
-                                        final String type) {
-        TriggerInterface triggerStep;
-        Class<? extends TriggerInterface> triggerClass = getTriggerOfName(type);
-        if (triggerClass == null) {
-            LaunchControl.setMessage(
-                    "Couldn't find the Trigger Class for " + type);
-            return null;
-        }
-
-        // Find the constructor.
-        try {
-            Constructor<? extends TriggerInterface> triggerConstructor
-                    = triggerClass.getConstructor(
-                    int.class);
-            if (triggerConstructor == null) {
-                LaunchControl.setMessage(
-                        "Couldn't find the basic constructor for " + type);
-                return null;
-            }
-            triggerStep = triggerConstructor.newInstance(
-                    position);
-            return triggerStep.getForm();
-        } catch (InstantiationException | IllegalAccessException
-                | IllegalArgumentException | InvocationTargetException
-                | NoSuchMethodException | SecurityException | IOException e) {
-            LaunchControl.setMessage(e.getMessage());
-            e.printStackTrace();
-        }
-        LaunchControl.setMessage("Failed to create trigger form for " + type);
-        return null;
-    }
-
-    /**
-     * Get the input trigger form for the specified type.
-     *
-     * @param position The position to add the new trigger at.
-     * @param params   The incoming params.
-     * @return The HtmlCanvas representing the form.
-     */
-    @SuppressWarnings("unused")
-    final HtmlCanvas getEditTriggerForm(final int position,
-                                        final JSONObject params) {
-        TriggerInterface trigger = this.triggerList.get(position);
-        // Try to get the form.
-        try {
-            return trigger.getEditForm();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
      * Update the trigger.
      *
      * @param position The position to update the new trigger at.

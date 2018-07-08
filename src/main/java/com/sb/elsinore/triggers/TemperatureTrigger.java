@@ -205,20 +205,8 @@ public class TemperatureTrigger implements TriggerInterface {
         }
 
         BigDecimal diff = this.targetTemp.subtract(probeTempF);
-        if (this.mode == null) {
-            // Just get to within 2F of the target TempProbe.
-            BrewServer.LOG.info(String.format("Waiting to be within 2F of %.2f", this.targetTemp));
 
-            BrewServer.LOG.info("Probe temp: " + probeTempF.toPlainString());
-            while (diff.compareTo(new BigDecimal(2.0)) >= 0) {
-                try {
-                    BrewServer.LOG.info("" + diff);
-                    Thread.sleep(500);
-                } catch (InterruptedException ie) {
-                    BrewServer.LOG.warning("Temperature Trigger interrupted.");
-                }
-            }
-        } else if (this.mode.equals(TemperatureTrigger.INCREASE)) {
+        if (this.mode.equals(TemperatureTrigger.INCREASE)) {
             while (this.temperatureProbe.getTempF().compareTo(this.targetTemp) <= 0) {
                 try {
                     Thread.sleep(500);
@@ -238,9 +226,12 @@ public class TemperatureTrigger implements TriggerInterface {
             }
         } else {
             // Just get to within 2F of the target TempProbe.
-            BrewServer.LOG.warning("Waiting to be within 2F of " + this.targetTemp);
+            BrewServer.LOG.info(String.format("Waiting to be within 2F of %.2f", this.targetTemp));
+
+            BrewServer.LOG.info("Probe temp: " + probeTempF.toPlainString());
             while (diff.compareTo(new BigDecimal(2.0)) >= 0) {
                 try {
+                    BrewServer.LOG.info("" + diff);
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
                     BrewServer.LOG.warning("Temperature Trigger interrupted.");
@@ -313,120 +304,7 @@ public class TemperatureTrigger implements TriggerInterface {
         }
         clearNotifications();
     }
-
-    /**
-     * Get the Form HTML Canvas representing a temperature trigger.
-     *
-     * @return {@link org.rendersnake.HtmlCanvas} representing the input form.
-     * @throws IOException when the HTMLCanvas could not be created.
-     */
-    @Override
-    public final HtmlCanvas getForm() throws IOException {
-        HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
-        html.div(id("NewTempTrigger").class_(""));
-        html.form(id("newTriggersForm"));
-        html.input(id("type").name(TYPE).class_("form-control m-t")
-                .hidden("true").value("Temperature"));
-        html.input(id("type").name(POSITION).class_("form-control m-t")
-                .hidden("position").value("" + this.position));
-        html.input(class_("inputBox temperature form-control m-t")
-                .type("number").add("step", "any")
-                .add("placeholder", Messages.SET_POINT)
-                .name(TARGET_TEMP).value(""));
-        html.input(class_("inputBox temperature form-control m-t")
-                .type("number").add("step", "any")
-                .add("placeholder", Messages.END_TEMP)
-                .name(EXIT_TEMP).value(""));
-        html.input(class_("inputBox form-control m-t")
-                .name(METHOD).value("")
-                .add("placeholder", Messages.METHOD));
-        html.input(class_("inputBox form-control m-t")
-                .name(STEPTYPE).value("")
-                .add("placeholder", Messages.TYPE));
-        // Add the on/off values
-        html.select(class_("form-control m-t").name(MODE)
-                .id(MODE));
-        html.option(value(""))
-                .write("")
-                ._option();
-        html.option(value(TemperatureTrigger.INCREASE))
-                .write(TemperatureTrigger.INCREASE)
-                ._option();
-        html.option(value(TemperatureTrigger.DECREASE))
-                .write(TemperatureTrigger.DECREASE)
-                ._option();
-        html._select();
-        html.button(name("submitTemperature")
-                .class_("btn btn-primary m-t col-md-12")
-                .add("data-toggle", "clickover")
-                .onClick("submitNewTriggerStep(this);"))
-                .write(Messages.ADD_TRIGGER)
-                ._button();
-        html._form();
-        html._div();
-        return html;
-    }
-
-    /**
-     * Get the Form HTML Canvas representing a temperature trigger.
-     *
-     * @return {@link org.rendersnake.HtmlCanvas} representing the input form.
-     * @throws IOException when the HTMLCanvas could not be created.
-     */
-    @Override
-    public final HtmlCanvas getEditForm() throws IOException {
-        HtmlCanvas html = new HtmlCanvas(new PrettyWriter());
-        html.div(id("EditTempTrigger").class_(""));
-        html.form(id("editTriggersForm"));
-        html.input(id(TYPE).name(TYPE)
-                .hidden("true").value("Temperature"));
-        html.input(id("type").name(POSITION)
-                .hidden(POSITION).value("" + this.position));
-        html.input(class_("inputBox temperature form-control")
-                .type("number").add("step", "any")
-                .add("placeholder", Messages.SET_POINT)
-                .value(this.targetTemp.toPlainString())
-                .name(TARGET_TEMP));
-        html.input(class_("inputBox temperature form-control")
-                .type("number").add("step", "any")
-                .add("placeholder", Messages.END_TEMP)
-                .value(this.targetTemp.toPlainString())
-                .name(EXIT_TEMP));
-        html.input(class_("inputBox form-control")
-                .name(METHOD).value("")
-                .value(this.method)
-                .add("placeholder", Messages.METHOD));
-        html.input(class_("inputBox form-control")
-                .name(STEPTYPE).value("")
-                .value(this.type)
-                .add("placeholder", Messages.TYPE));
-        // Add the on/off values
-        html.select(class_("holo-spinner").name(MODE).id(MODE));
-        html.option(value(""))
-                .write("")
-                ._option();
-        html.option(value(TemperatureTrigger.INCREASE)
-                .selected_if(
-                        this.mode.equals(TemperatureTrigger.INCREASE)))
-                .write(TemperatureTrigger.INCREASE)
-                ._option();
-        html.option(value(TemperatureTrigger.DECREASE)
-                .selected_if(
-                        this.mode.equals(TemperatureTrigger.DECREASE)))
-                .write(TemperatureTrigger.DECREASE)
-                ._option();
-        html._select();
-        html.button(name("submitTemperature")
-                .class_("btn col-md-12")
-                .add("data-toggle", "clickover")
-                .onClick("updateTriggerStep(this);"))
-                .write(Messages.ADD_TRIGGER)
-                ._button();
-        html._form();
-        html._div();
-        return html;
-    }
-
+    
     @Override
     public String getName() {
         return "Temperature";

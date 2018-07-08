@@ -793,6 +793,6 @@ public class TempProbe extends Device implements Comparable<TempProbe> {
     }
 
     public BigDecimal getCutoffTemp() {
-        return this.getCutoffTemp();
+        return this.cutoffTemp;
     }
 }

@@ -183,72 +183,8 @@ public class WaitTrigger implements TriggerInterface {
     }
 
     @Override
-    public HtmlCanvas getForm() throws IOException {
-        HtmlCanvas html = new HtmlCanvas();
-        html.div(id("NewWaitTrigger").class_(""));
-        html.form(id("newTriggersForm"));
-        html.input(id(TYPE).name(TYPE).class_("form-control m-t")
-                .hidden("true").value("Wait"));
-        html.input(class_("inputBox temperature form-control m-t")
-                .type("number").add("step", "any")
-                .add("placeholder", Messages.MINUTES)
-                .name(WAITTIMEMINS).value(""));
-        html.input(class_("inputBox temperature form-control m-t")
-                .type("number").add("step", "any")
-                .add("placeholder", Messages.SECS)
-                .name(WAITTIMESECS).value(""));
-        html.input(class_("inputBox form-control m-t")
-                .name(NOTES).value("")
-                .add("placeholder", Messages.NOTES)
-                .value(this.note));
-        html.button(name("submitWait")
-                .class_("btn btn-primary col-md-12")
-                .add("data-toggle", "clickover")
-                .onClick("submitNewTriggerStep(this);"))
-                .write(Messages.ADD_TRIGGER)
-                ._button();
-        html._form();
-        html._div();
-        return html;
-    }
-
-    @Override
     public void setPosition(Integer newPos) {
         this.position = newPos;
-    }
-
-    @Override
-    public HtmlCanvas getEditForm() throws IOException {
-        HtmlCanvas html = new HtmlCanvas();
-        html.div(id("EditWaitTrigger").class_(""));
-        html.form(id("editTriggersForm"));
-        html.input(id(TYPE).name(TYPE)
-                .hidden("true").value("Wait"));
-        html.input(id(POSITION).name(POSITION)
-                .hidden("position").value("" + this.position));
-        html.input(class_("inputBox temperature form-control")
-                .type("number").add("step", "any")
-                .add("placeholder", Messages.MINUTES)
-                .name(WAITTIMEMINS)
-                .value(Double.toString(this.minutes)));
-        html.input(class_("inputBox temperature form-control")
-                .type("number").add("step", "any")
-                .add("placeholder", Messages.SECS)
-                .name(WAITTIMESECS)
-                .value(Double.toString(this.seconds)));
-        html.input(class_("inputBox form-control")
-                .name(NOTES).value("")
-                .add("placeholder", Messages.NOTES)
-                .value(this.note));
-        html.button(name("submitWait")
-                .class_("btn col-md-12")
-                .add("data-toggle", "clickover")
-                .onClick("updateTriggerStep(this);"))
-                .write(Messages.ADD_TRIGGER)
-                ._button();
-        html._form();
-        html._div();
-        return html;
     }
 
     /**
