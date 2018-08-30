@@ -67,22 +67,22 @@ public class TemperatureValue {
     }
 
     /**
-     * Set the current value of this temperature with the scale of the new value
-     * This will not change the scale, but convert the incoming value appropriately
-     * @param value The new value
-     * @param scale The scale of the value
+     * Set the current newValue of this temperature with the scale of the new newValue
+     * This will not change the scale, but convert the incoming newValue appropriately
+     * @param newValue The new newValue
+     * @param scale The scale of the newValue
      */
-    public void setValue(BigDecimal value, Scale scale) {
+    public void setValue(BigDecimal newValue, Scale scale) {
         if (this.scale == null) {
             this.scale = scale;
         } else {
             if (this.scale == Scale.F && scale == Scale.C) {
-                value = fToC(value);
+                newValue = fToC(newValue);
             } else if (this.scale == Scale.C && scale == Scale.F) {
-                value = cToF(value);
+                newValue = cToF(newValue);
             }
         }
-        this.value = value;
+        this.value = newValue.setScale(2, RoundingMode.HALF_UP);
         this.time = System.currentTimeMillis();
     }
 

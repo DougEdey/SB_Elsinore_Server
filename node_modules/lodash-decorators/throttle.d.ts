@@ -1,0 +1,10 @@
+import { LodashMethodDecorator } from './factory';
+import { ThrottleOptions } from './shared';
+declare const decorator: (...args: any[]) => MethodDecorator & PropertyDecorator;
+export declare function Throttle(wait?: number, options?: ThrottleOptions): LodashMethodDecorator;
+export declare function ThrottleGetter(wait?: number, options?: ThrottleOptions): LodashMethodDecorator;
+export declare function ThrottleSetter(wait?: number, options?: ThrottleOptions): LodashMethodDecorator;
+export { Throttle as throttle };
+export { ThrottleGetter as throttleGetter };
+export { ThrottleSetter as throttleSetter };
+export default decorator;

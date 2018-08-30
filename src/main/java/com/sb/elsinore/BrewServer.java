@@ -21,27 +21,12 @@ import java.util.logging.Logger;
  *
  * @author Doug Edey
  */
-@SuppressWarnings("ResultOfMethodCallIgnored")
 public class BrewServer extends NanoHTTPD {
-
-    static String SHA = "";
-    static String SHA_DATE = "";
-    private static Recipe currentRecipe;
-    private final TreeMap<String, java.lang.reflect.Method> m_endpoints = new TreeMap<>();
-    private final TreeMap<String, java.lang.reflect.Method> getRestEndpoints = new TreeMap<>();
-    private final TreeMap<String, java.lang.reflect.Method> putRestEndpoints = new TreeMap<>();
-    private final TreeMap<String, java.lang.reflect.Method> deleteRestEndpoints = new TreeMap<>();
-    private final TreeMap<String, java.lang.reflect.Method> postRestEndpoints = new TreeMap<>();
-    /**
-     * The Root Directory of the files to be served.
-     */
-    private File rootDir;
 
     /**
      * The Logger object.
      */
     public static final Logger LOG = Logger.getLogger("com.sb.manager.Server");
-
     /**
      * Hashtable mapping (String)FILENAME_EXTENSION -> (String)MIME_TYPE.
      */
@@ -81,7 +66,19 @@ public class BrewServer extends NanoHTTPD {
             put("json", "application/json");
         }
     };
+    static String SHA = "";
+    static String SHA_DATE = "";
+    private static Recipe currentRecipe;
     private static ArrayList<String> recipeList;
+    private final TreeMap<String, java.lang.reflect.Method> m_endpoints = new TreeMap<>();
+    private final TreeMap<String, java.lang.reflect.Method> getRestEndpoints = new TreeMap<>();
+    private final TreeMap<String, java.lang.reflect.Method> putRestEndpoints = new TreeMap<>();
+    private final TreeMap<String, java.lang.reflect.Method> deleteRestEndpoints = new TreeMap<>();
+    private final TreeMap<String, java.lang.reflect.Method> postRestEndpoints = new TreeMap<>();
+    /**
+     * The Root Directory of the files to be served.
+     */
+    private File rootDir;
 
     /**
      * Constructor to create the HTTP Server.
@@ -124,133 +121,27 @@ public class BrewServer extends NanoHTTPD {
 
     }
 
-    static void setRecipeList(ArrayList<String> recipeList) {
-        BrewServer.recipeList = recipeList;
-    }
-
     public static ArrayList<String> getRecipeList() {
         return recipeList;
     }
 
-    static void setCurrentRecipe(Recipe recipe) {
-        BrewServer.currentRecipe = recipe;
+    static void setRecipeList(ArrayList<String> recipeList) {
+        BrewServer.recipeList = recipeList;
     }
 
     static Recipe getCurrentRecipe() {
         return BrewServer.currentRecipe;
     }
 
-    @SuppressWarnings("unchecked")
+    static void setCurrentRecipe(Recipe recipe) {
+        BrewServer.currentRecipe = recipe;
+    }
+
     static JSONObject getVersionStatus() {
         JSONObject verStatus = new JSONObject();
         verStatus.put("sha", BrewServer.SHA);
         verStatus.put("date", BrewServer.SHA_DATE);
         return verStatus;
-    }
-
-    /**
-     * Initialize the logger.  Look at the current logger and its parents to see
-     * if it already has a handler setup.  If not, it adds one.
-     *
-     * @param logger The logger to initialize
-     */
-    private void initializeLogger(final Logger logger) {
-        if (logger.getHandlers().length == 0) {
-            if (logger.getParent() != null
-                    && logger.getUseParentHandlers()) {
-                initializeLogger(LOG.getParent());
-            } else {
-                Handler newHandler = new ConsoleHandler();
-                logger.addHandler(newHandler);
-            }
-        }
-    }
-
-    /**
-     * The main method that checks the data coming into the server.
-     *
-     * @param session The HTTP Session object.
-     * @return A NanoHTTPD Response Object
-     */
-    @SuppressWarnings("unchecked")
-    public final Response serve(IHTTPSession session) {
-        String uri = session.getUri();
-        Method method = session.getMethod();
-        Map<String, String> header = session.getHeaders();
-        Map<String, String> parms = session.getParms();
-        Map<String, String> files = new HashMap<>();
-        if (Method.PUT.equals(method) || Method.POST.equals(method)) {
-            try {
-                session.parseBody(files);
-            } catch (IOException ioe) {
-                return new Response(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
-            } catch (ResponseException re) {
-                return new Response(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
-            }
-        }
-
-        BrewServer.LOG.info("URL : " + uri + " method: " + method);
-
-        if (uri.equalsIgnoreCase("/favicon.ico")) {
-            // Has the favicon been overridden?
-            // Check to see if there's a theme set.
-            String theme = LaunchControl.getInstance().theme;
-            if (theme != null
-                    && !theme.equals("")) {
-                if (new File(this.rootDir,
-                        "/logos/" + theme + ".ico").exists()) {
-                    return serveFile("/logos/" + theme + ".ico",
-                            header, this.rootDir);
-                }
-            }
-
-            if (new File(this.rootDir, uri).exists()) {
-                return serveFile(uri, header, this.rootDir);
-            }
-
-        }
-
-        // NLS Support
-        if (uri.startsWith("/nls/")) {
-            return serveFile(uri.replace("/nls/", "/src/main/java/com/sb/elsinore/nls/"),
-                    header, this.rootDir);
-        }
-
-        if (uri.equalsIgnoreCase("/stop")) {
-            System.exit(128);
-        }
-
-        if (uri.equals("/")) {
-            return serveFile("html/index.html", header, this.rootDir);
-        }
-
-        if (!uri.equals("") && new File(this.rootDir, uri).exists()) {
-            return serveFile(uri, header, this.rootDir);
-        }
-
-        BrewServer.LOG.warning("Failed to find URI: " + uri);
-
-        BrewServer.LOG.info("Unidentified URL: " + uri);
-        JSONObject usage = new JSONObject();
-        usage.put("controller", "Get the main controller page");
-        usage.put("getstatus", "Get the current status as a JSON object");
-        usage.put("timers", "Get the current timer status");
-
-        usage.put("addswitch", "Add a new switch");
-        usage.put("addtimer", "Add a new timer");
-        usage.put("addvolpoint", "Add a new volume point");
-
-        usage.put("toggleaux", "toggle an aux output");
-        usage.put("mashprofile", "Set a mash profile for the output");
-        usage.put("editdevice", "Edit the settings on a device");
-
-        usage.put("updatepid", "Update the PID Settings");
-        usage.put("updateday", "Update the brewday information");
-        usage.put("updateswitch", "Change the switch status off/on");
-
-        BrewServer.LOG.info("Invalid URI: " + uri);
-        return new NanoHTTPD.Response(Status.NOT_FOUND, MIME_TYPES.get("json"),
-                usage.toJSONString());
     }
 
     /**
@@ -493,5 +384,110 @@ public class BrewServer extends NanoHTTPD {
             }
         }
         return newUri;
+    }
+
+    /**
+     * Initialize the logger.  Look at the current logger and its parents to see
+     * if it already has a handler setup.  If not, it adds one.
+     *
+     * @param logger The logger to initialize
+     */
+    private void initializeLogger(final Logger logger) {
+        if (logger.getHandlers().length == 0) {
+            if (logger.getParent() != null
+                    && logger.getUseParentHandlers()) {
+                initializeLogger(LOG.getParent());
+            } else {
+                Handler newHandler = new ConsoleHandler();
+                logger.addHandler(newHandler);
+            }
+        }
+    }
+
+    /**
+     * The main method that checks the data coming into the server.
+     *
+     * @param session The HTTP Session object.
+     * @return A NanoHTTPD Response Object
+     */
+    @Override
+    public final Response serve(IHTTPSession session) {
+        String uri = session.getUri();
+        Method method = session.getMethod();
+        Map<String, String> header = session.getHeaders();
+        Map<String, String> parms = session.getParms();
+        Map<String, String> files = new HashMap<>();
+        if (Method.PUT.equals(method) || Method.POST.equals(method)) {
+            try {
+                session.parseBody(files);
+            } catch (IOException ioe) {
+                return new Response(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
+            } catch (ResponseException re) {
+                return new Response(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
+            }
+        }
+
+        BrewServer.LOG.info("URL : " + uri + " method: " + method);
+
+        if (uri.equalsIgnoreCase("/favicon.ico")) {
+            // Has the favicon been overridden?
+            // Check to see if there's a theme set.
+            String theme = LaunchControl.getInstance().theme;
+            if (theme != null
+                    && !theme.equals("")) {
+                if (new File(this.rootDir,
+                        "/logos/" + theme + ".ico").exists()) {
+                    return serveFile("/logos/" + theme + ".ico",
+                            header, this.rootDir);
+                }
+            }
+
+            if (new File(this.rootDir, uri).exists()) {
+                return serveFile(uri, header, this.rootDir);
+            }
+
+        }
+
+        // NLS Support
+        if (uri.startsWith("/nls/")) {
+            return serveFile(uri.replace("/nls/", "/src/main/java/com/sb/elsinore/nls/"),
+                    header, this.rootDir);
+        }
+
+        if (uri.equalsIgnoreCase("/stop")) {
+            System.exit(128);
+        }
+
+        if (uri.equals("/")) {
+            return serveFile("html/index.html", header, this.rootDir);
+        }
+
+        if (!uri.equals("") && new File(this.rootDir, uri).exists()) {
+            return serveFile(uri, header, this.rootDir);
+        }
+
+        BrewServer.LOG.warning("Failed to find URI: " + uri);
+
+        BrewServer.LOG.info("Unidentified URL: " + uri);
+        JSONObject usage = new JSONObject();
+        usage.put("controller", "Get the main controller page");
+        usage.put("getstatus", "Get the current status as a JSON object");
+        usage.put("timers", "Get the current timer status");
+
+        usage.put("addswitch", "Add a new switch");
+        usage.put("addtimer", "Add a new timer");
+        usage.put("addvolpoint", "Add a new volume point");
+
+        usage.put("toggleaux", "toggle an aux output");
+        usage.put("mashprofile", "Set a mash profile for the output");
+        usage.put("editdevice", "Edit the settings on a device");
+
+        usage.put("updatepid", "Update the PIDModel Settings");
+        usage.put("updateday", "Update the brewday information");
+        usage.put("updateswitch", "Change the switch status off/on");
+
+        BrewServer.LOG.info("Invalid URI: " + uri);
+        return new NanoHTTPD.Response(Status.NOT_FOUND, MIME_TYPES.get("json"),
+                usage.toJSONString());
     }
 }

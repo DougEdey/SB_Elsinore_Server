@@ -11,6 +11,7 @@ import com.sb.elsinore.Messages;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URLDecoder;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -156,10 +157,8 @@ public class SBStringUtils {
 	}
 	
 	public static double round(double d, int decimalPlace){
-		// see the Javadoc about why we use a String in the constructor
-		// http://java.sun.com/j2se/1.5.0/docs/api/java/math/BigDecimal.html#BigDecimal(double)
 		BigDecimal bd = new BigDecimal(Double.toString(d));
-		bd = bd.setScale(decimalPlace,BigDecimal.ROUND_HALF_UP);
+		bd = bd.setScale(decimalPlace, RoundingMode.HALF_UP);
 		return bd.doubleValue();
 	}
 

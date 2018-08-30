@@ -1,0 +1,9 @@
+type TempProbe {
+    id: ID!
+    name: String!
+}
+
+# The Root Query for the application
+type Query {
+    getTempProbes(count: Int, offset: Int): [TempProbe]!
+}

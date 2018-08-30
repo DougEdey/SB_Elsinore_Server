@@ -1,6 +1,6 @@
 package ca.strangebrew.recipe;
 
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -154,7 +154,7 @@ public class Ingredient implements Comparable<Ingredient> {
 		return this.name;
 	}
 
-	public int compareTo(@Nonnull Ingredient i) {
+	public int compareTo(@NotNull Ingredient i) {
         return this.getName().compareToIgnoreCase(i.getName());
 	}
 

@@ -1,7 +1,7 @@
 package com.sb.elsinore.devices;
 
 import com.sb.elsinore.BrewServer;
-import com.sb.elsinore.PIDSettings;
+import com.sb.elsinore.models.PIDSettings;
 import com.sb.util.MathUtil;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
@@ -19,14 +19,13 @@ import java.util.logging.Level;
  */
 public class OutputDevice implements Observer {
 
-    private boolean invertOutput = false;
     static BigDecimal HUNDRED = new BigDecimal(100);
     private static BigDecimal THOUSAND = new BigDecimal(1000);
-
-    private OutPin ssr = null;    //The output pin.
     private final Object ssrLock = new Object();
     protected String name;    //The name of this device
     protected PIDSettings settings = null;
+    private boolean invertOutput = false;
+    private OutPin ssr = null;    //The output pin.
 
     public OutputDevice(String name, PIDSettings settings) {
         // Check for inverted outputs using a property.

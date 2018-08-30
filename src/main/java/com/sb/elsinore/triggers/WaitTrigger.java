@@ -7,14 +7,10 @@ import com.sb.elsinore.notificiations.Notifications;
 import com.sb.elsinore.notificiations.WebNotification;
 import com.sb.util.MathUtil;
 import org.json.simple.JSONObject;
-import org.rendersnake.HtmlCanvas;
 
-import javax.annotation.Nonnull;
-import java.io.IOException;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Date;
-
-import static org.rendersnake.HtmlAttributesFactory.*;
 
 /**
  * A trigger that waits for a certain period of time before continuing.
@@ -127,7 +123,7 @@ public class WaitTrigger implements TriggerInterface {
      * @return Compare.
      */
     @Override
-    public final int compareTo(@Nonnull final TriggerInterface o) {
+    public final int compareTo(@NotNull final TriggerInterface o) {
         return (this.position - o.getPosition());
     }
 

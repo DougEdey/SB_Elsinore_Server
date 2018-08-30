@@ -22,21 +22,20 @@ import java.util.Map;
  */
 public class StatusRecorder implements Runnable {
 
+    static String defaultDirectory = "graph-data/";
+    static String DIRECTORY_PROPERTY = "recorder_directory";
+    static String RECORDER_ENABLED = "recorder_enabled";
     @Expose
     double diff = .15d;
     @Expose
     long sleep = 1000 * 5; // 5 seconds - is this too fast?
-
+    @Expose
+    String recorderDirectory = StatusRecorder.defaultDirectory;
     private JSONObject lastStatus = null;
     private String logFile = null;
     private Thread thread;
-    @Expose
-    String recorderDirectory = StatusRecorder.defaultDirectory;
     private HashMap<String, Status> temperatureMap;
     private HashMap<String, Status> dutyMap;
-    static String defaultDirectory = "graph-data/";
-    static String DIRECTORY_PROPERTY = "recorder_directory";
-    static String RECORDER_ENABLED = "recorder_enabled";
     private String currentDirectory = null;
 
     StatusRecorder(String recorderDirectory) {
@@ -123,41 +122,16 @@ public class StatusRecorder implements Runnable {
         return LaunchControl.getInstance().isInitialized();
     }
 
-    private class Status {
-
-        long timestamp;
-        public String value;
-
-        Status(String value, long timestamp) {
-            this.value = value;
-            this.timestamp = timestamp;
-        }
-
-        boolean isDifferentEnough(String newValue) {
-            boolean retVal = false;
-
-            try {
-                double oldVal = Double.valueOf(this.value);
-                double newVal = Double.valueOf(newValue);
-                retVal = Math.abs(oldVal - newVal) > StatusRecorder.this.diff;
-            } catch (Throwable ignored) {
-            }
-
-            return retVal;
-
-        }
-    }
-
     public double getDiff() {
         return this.diff;
     }
 
-    public double getTime() {
-        return this.sleep;
-    }
-
     public void setDiff(double threshold) {
         this.diff = threshold;
+    }
+
+    public double getTime() {
+        return this.sleep;
     }
 
     public void setTime(long time) {
@@ -194,7 +168,7 @@ public class StatusRecorder implements Runnable {
         String vesselName = vessel;
         TempRunner tempProbe = LaunchControl.getInstance().findTemp(vessel);
         if (tempProbe != null) {
-            vesselName = tempProbe.getTempProbe().getProbe();
+            vesselName = tempProbe.getTempInterface().getProbe();
         }
 
         File[] contents = new File(getCurrentDir()).listFiles();
@@ -461,6 +435,31 @@ public class StatusRecorder implements Runnable {
             }
         }
         return file.delete();
+    }
+
+    private class Status {
+
+        public String value;
+        long timestamp;
+
+        Status(String value, long timestamp) {
+            this.value = value;
+            this.timestamp = timestamp;
+        }
+
+        boolean isDifferentEnough(String newValue) {
+            boolean retVal = false;
+
+            try {
+                double oldVal = Double.valueOf(this.value);
+                double newVal = Double.valueOf(newValue);
+                retVal = Math.abs(oldVal - newVal) > StatusRecorder.this.diff;
+            } catch (Throwable ignored) {
+            }
+
+            return retVal;
+
+        }
     }
 
 }

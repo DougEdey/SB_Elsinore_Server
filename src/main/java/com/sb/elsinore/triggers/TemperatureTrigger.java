@@ -1,32 +1,30 @@
 package com.sb.elsinore.triggers;
 
-import com.sb.elsinore.*;
+import com.sb.elsinore.BrewServer;
+import com.sb.elsinore.LaunchControl;
+import com.sb.elsinore.Messages;
 import com.sb.elsinore.devices.PID;
+import com.sb.elsinore.models.PIDInterface;
 import com.sb.elsinore.notificiations.Notifications;
 import com.sb.elsinore.notificiations.WebNotification;
 import com.sb.elsinore.wrappers.TempRunner;
 import com.sb.elsinore.wrappers.TemperatureValue;
 import org.json.simple.JSONObject;
-import org.rendersnake.HtmlCanvas;
-import org.rendersnake.tools.PrettyWriter;
 
-import javax.annotation.Nonnull;
-import java.io.IOException;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Date;
 
 import static com.sb.elsinore.devices.PID.PIDMode.OFF;
-import static org.rendersnake.HtmlAttributesFactory.*;
 
 /**
  * A TemperatureTrigger will hold until the specified probe hits the target
  * temperature when active.
- * If a PID is associated with the temperature probe, the PID set point will
+ * If a PIDModel is associated with the temperature probe, the PIDModel set point will
  * be set to the target temperature associated with this TemperatureTrigger.
  *
  * @author Doug Edey
  */
-@SuppressWarnings("unused")
 public class TemperatureTrigger implements TriggerInterface {
 
     public static final String MODE = "mode";
@@ -37,15 +35,14 @@ public class TemperatureTrigger implements TriggerInterface {
     public static final String TARGET_TEMP = "targetTemperature";
     public static final String ACTIVE = "active";
     public static final String TEMPPROBE = "tempprobe";
-
+    public static String INCREASE = "INCREASE";
+    public static String DECREASE = "DECREASE";
     private BigDecimal targetTemp = null;
     private TempRunner temperatureProbe = null;
     private String method = null;
     private String type = null;
     private boolean active;
     private Integer position = -1;
-    public static String INCREASE = "INCREASE";
-    public static String DECREASE = "DECREASE";
     private String mode = null;
     private Date startDate = null;
     private BigDecimal exitTemp;
@@ -66,55 +63,6 @@ public class TemperatureTrigger implements TriggerInterface {
         this.temperatureProbe = LaunchControl.getInstance().findTemp(tempProbe);
         this.type = stepType;
         this.method = stepMethod;
-    }
-
-    /**
-     * Set the {@link java.util.Date} that this step is startRunning.
-     *
-     * @param inStart The Date that this step is startRunning.
-     */
-    private void setStart(final Date inStart) {
-        this.startDate = inStart;
-    }
-
-    /**
-     * Set The Target temperature of the PID
-     * Associated with this temperatureTrigger.
-     */
-    public final void setTargetTemperature() {
-        PID pid = LaunchControl.getInstance().findPID(this.temperatureProbe.getName());
-        if (pid == null) {
-            LaunchControl.setMessage(this.temperatureProbe.getName()
-                    + " is not associated with a PID. "
-                    + "Trigger will wait for it to hit the target temperature.");
-        } else {
-            pid.setTemp(this.targetTemp);
-            pid.setPidMode(PID.PIDMode.AUTO);
-        }
-    }
-
-    /**
-     * Set The Target temperature of the PID
-     * Associated with this temperatureTrigger.
-     */
-    public final void setExitTemperature() {
-        PID pid = LaunchControl.getInstance().findPID(this.temperatureProbe.getName());
-        if (pid == null) {
-            LaunchControl.setMessage(this.temperatureProbe.getName()
-                    + " is not associated with a PID. "
-                    + "Trigger will wait for it to hit the target temperature.");
-        } else {
-            pid.setTemp(this.exitTemp);
-        }
-    }
-
-    /**
-     * Set the temperature probe to use for this trigger by name.
-     *
-     * @param name The name of the probe to lookup.
-     */
-    public final void setTemperatureProbe(final String name) {
-        this.temperatureProbe = LaunchControl.getInstance().findTemp(name);
     }
 
     /**
@@ -147,6 +95,55 @@ public class TemperatureTrigger implements TriggerInterface {
         this.exitTemp = new BigDecimal(
                 parameters.get(TemperatureTrigger.EXIT_TEMP).toString().replace(",", "."),
                 TemperatureValue.context);
+    }
+
+    /**
+     * Set the {@link java.util.Date} that this step is startRunning.
+     *
+     * @param inStart The Date that this step is startRunning.
+     */
+    private void setStart(final Date inStart) {
+        this.startDate = inStart;
+    }
+
+    /**
+     * Set The Target temperature of the PIDModel
+     * Associated with this temperatureTrigger.
+     */
+    public final void setTargetTemperature() {
+        PIDInterface pid = LaunchControl.getInstance().findPID(this.temperatureProbe.getName());
+        if (pid == null) {
+            LaunchControl.setMessage(this.temperatureProbe.getName()
+                    + " is not associated with a PIDModel. "
+                    + "Trigger will wait for it to hit the target temperature.");
+        } else {
+            pid.setSetPoint(this.targetTemp);
+            pid.setPidMode(PID.PIDMode.AUTO);
+        }
+    }
+
+    /**
+     * Set The Target temperature of the PIDModel
+     * Associated with this temperatureTrigger.
+     */
+    public final void setExitTemperature() {
+        PIDInterface pid = LaunchControl.getInstance().findPID(this.temperatureProbe.getName());
+        if (pid == null) {
+            LaunchControl.setMessage(this.temperatureProbe.getName()
+                    + " is not associated with a PIDModel. "
+                    + "Trigger will wait for it to hit the target temperature.");
+        } else {
+            pid.setSetPoint(this.exitTemp);
+        }
+    }
+
+    /**
+     * Set the temperature probe to use for this trigger by name.
+     *
+     * @param name The name of the probe to lookup.
+     */
+    public final void setTemperatureProbe(final String name) {
+        this.temperatureProbe = LaunchControl.getInstance().findTemp(name);
     }
 
     /**
@@ -206,7 +203,7 @@ public class TemperatureTrigger implements TriggerInterface {
 
         BigDecimal diff = this.targetTemp.subtract(probeTempF);
 
-        if (this.mode.equals(TemperatureTrigger.INCREASE)) {
+        if (TemperatureTrigger.INCREASE.equals(this.mode)) {
             while (this.temperatureProbe.getTempF().compareTo(this.targetTemp) <= 0) {
                 try {
                     Thread.sleep(500);
@@ -215,7 +212,7 @@ public class TemperatureTrigger implements TriggerInterface {
                     return;
                 }
             }
-        } else if (this.mode.equals(TemperatureTrigger.DECREASE)) {
+        } else if (TemperatureTrigger.DECREASE.equals(this.mode)) {
             while (this.temperatureProbe.getTempF().compareTo(this.targetTemp) >= 0) {
                 try {
                     Thread.sleep(500);
@@ -228,7 +225,7 @@ public class TemperatureTrigger implements TriggerInterface {
             // Just get to within 2F of the target TempProbe.
             BrewServer.LOG.info(String.format("Waiting to be within 2F of %.2f", this.targetTemp));
 
-            BrewServer.LOG.info("Probe temp: " + probeTempF.toPlainString());
+            BrewServer.LOG.info(String.format("Probe temp: %.2f", probeTempF));
             while (diff.compareTo(new BigDecimal(2.0)) >= 0) {
                 try {
                     BrewServer.LOG.info("" + diff);
@@ -281,7 +278,7 @@ public class TemperatureTrigger implements TriggerInterface {
     public final void setActive() {
         this.active = true;
         createNotifications(String.format(Messages.TARGET_TEMP_TRIGGER, this.targetTemp,
-                this.temperatureProbe.getTempProbe().getScale()));
+                this.temperatureProbe.getTempInterface().getScale()));
     }
 
     /**
@@ -293,23 +290,23 @@ public class TemperatureTrigger implements TriggerInterface {
     public final void deactivate(boolean fromUI) {
         this.active = false;
         if (fromUI) {
-            PID pid = LaunchControl.getInstance().findPID(this.temperatureProbe.getName());
+            PIDInterface pid = LaunchControl.getInstance().findPID(this.temperatureProbe.getName());
             if (pid == null) {
                 LaunchControl.setMessage(this.temperatureProbe.getName()
-                        + " is not associated with a PID. "
-                        + "Cannot deactivate the PID");
+                        + " is not associated with a PIDModel. "
+                        + "Cannot deactivate the PIDModel");
             } else {
                 pid.setPidMode(OFF);
             }
         }
         clearNotifications();
     }
-    
+
     @Override
     public String getName() {
         return "Temperature";
     }
-    
+
     /**
      * Compare by position.
      *
@@ -317,7 +314,7 @@ public class TemperatureTrigger implements TriggerInterface {
      * @return Compare.
      */
     @Override
-    public final int compareTo(@Nonnull final TriggerInterface o) {
+    public final int compareTo(@NotNull final TriggerInterface o) {
         return (this.position - o.getPosition());
     }
 
@@ -335,12 +332,12 @@ public class TemperatureTrigger implements TriggerInterface {
         this.targetTemp = new BigDecimal(stepStartTemp);
     }
 
-    public void setExitTemp(double exitTemp) {
-        this.exitTemp = new BigDecimal(exitTemp);
-    }
-
     public BigDecimal getExitTemp() {
         return this.exitTemp;
+    }
+
+    public void setExitTemp(double exitTemp) {
+        this.exitTemp = new BigDecimal(exitTemp);
     }
 
     private void createNotifications(String s) {

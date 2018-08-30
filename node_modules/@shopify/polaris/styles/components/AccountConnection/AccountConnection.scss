@@ -1,0 +1,10 @@
+.Polaris-AccountConnection__TermsOfService {
+  margin-top: spacing(loose);
+}
+
+.Polaris-AccountConnection__Content {
+  // stylelint-disable-next-line selector-max-combinators
+  > * + * {
+    margin-top: spacing(tight);
+  }
+}

@@ -1,0 +1,13 @@
+.Polaris-Modal-Footer {
+  display: flex;
+  align-self: flex-end;
+  align-items: center;
+  width: 100%;
+  min-height: spacing() * 4;
+  padding: spacing();
+  border-top: border();
+}
+
+.Polaris-Modal-Footer__FooterContent {
+  width: 100%;
+}

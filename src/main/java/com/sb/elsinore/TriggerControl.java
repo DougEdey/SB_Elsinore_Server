@@ -32,69 +32,18 @@ public class TriggerControl implements Runnable, Serializable {
     public static final String NAME = "triggers";
     public static final String PID = "pid";
     /**
-     * The output PID to be controlled & read from.
-     */
-    private String outputControl = "";
-
-    /**
-     * A flag to tell the thread to shutdown.
-     */
-    private boolean shutdownFlag = false;
-
-    /**
      * The list of mash steps, position -> Step.
      */
     private final List<TriggerInterface> triggerList =
             new CopyOnWriteArrayList<>();
-
     /**
-     * Add a mashstep at a position, overriding the old one.
-     *
-     * @param position   The position to add the mashstep at
-     * @param type       The Type of the Trigger to add.
-     * @param parameters The Incoming parameter JSONObject
-     *                   to use to setup the trigger
-     * @return The new Mash Step
+     * The output PIDModel to be controlled & read from.
      */
-    public final TriggerInterface addTrigger(int position,
-                                             final String type, final JSONObject parameters) {
-        TriggerInterface triggerStep = null;
-        Class<? extends TriggerInterface> triggerClass = getTriggerOfName(type);
-        if (triggerClass == null) {
-            return null;
-        }
-
-        if (position < 0) {
-            position = this.triggerList.size();
-        }
-
-        // Find the constructor.
-        try {
-            Constructor<? extends TriggerInterface> triggerConstructor = triggerClass.getConstructor(int.class, JSONObject.class);
-            triggerStep = triggerConstructor.newInstance(position, parameters);
-            CollectionsUtil.addInOrder(this.triggerList, triggerStep);
-        } catch (InstantiationException | IllegalAccessException
-                | IllegalArgumentException | InvocationTargetException
-                | NoSuchMethodException | SecurityException e) {
-            e.printStackTrace();
-        }
-
-        LaunchControl.getInstance().shutdown();
-        return triggerStep;
-    }
-
+    private String outputControl = "";
     /**
-     * Update the trigger.
-     *
-     * @param position The position to update the new trigger at.
-     * @param params   The new parameters
+     * A flag to tell the thread to shutdown.
      */
-    final boolean updateTrigger(final int position,
-                                final JSONObject params) {
-        TriggerInterface trigger = this.triggerList.get(position);
-        LaunchControl.getInstance().shutdown();
-        return trigger.updateTrigger(params);
-    }
+    private boolean shutdownFlag = false;
 
     /**
      * Get the Trigger Class that matches the incoming name.
@@ -153,6 +102,96 @@ public class TriggerControl implements Runnable, Serializable {
         }
 
         return typeMap;
+    }
+
+    /**
+     * Get the new triggers form for display.
+     *
+     * @param probe The name of the probe to attach to.
+     * @return The new triggers canvas
+     * @throws IOException If the form couldn't be created.
+     */
+    static HtmlCanvas getNewTriggersForm(final String probe)
+            throws IOException {
+        String probeType;
+        if (LaunchControl.getInstance().findPID(probe) != null) {
+            probeType = PID;
+        } else {
+            probeType = TEMP;
+        }
+
+        HtmlCanvas htmlCanvas = new HtmlCanvas(new PrettyWriter());
+        htmlCanvas.div(id("newTriggersForm"))
+                .form()
+                .select(name("type").class_("form-control m-t")
+                        .onClick("newTrigger(this, '" + probe + "');"));
+        htmlCanvas.option(value("").selected_if(true))
+                .write("Select Trigger Type")
+                ._option();
+        Map<String, String> triggers = getTriggerTypes(probeType);
+        for (Entry<String, String> entry : triggers.entrySet()) {
+            htmlCanvas.option(value(entry.getKey()))
+                    .write(entry.getValue())
+                    ._option();
+        }
+        htmlCanvas._select();
+        htmlCanvas.input(id(TEMP).name(TEMP)
+                .hidden("true").value(probe));
+        htmlCanvas.input(id(POSITION).name(POSITION)
+                .hidden("true").value("-1"))
+                ._form()
+                ._div()
+                .div(id("childInput"))._div();
+        return htmlCanvas;
+    }
+
+    /**
+     * Add a mashstep at a position, overriding the old one.
+     *
+     * @param position   The position to add the mashstep at
+     * @param type       The Type of the Trigger to add.
+     * @param parameters The Incoming parameter JSONObject
+     *                   to use to setup the trigger
+     * @return The new Mash Step
+     */
+    public final TriggerInterface addTrigger(int position,
+                                             final String type, final JSONObject parameters) {
+        TriggerInterface triggerStep = null;
+        Class<? extends TriggerInterface> triggerClass = getTriggerOfName(type);
+        if (triggerClass == null) {
+            return null;
+        }
+
+        if (position < 0) {
+            position = this.triggerList.size();
+        }
+
+        // Find the constructor.
+        try {
+            Constructor<? extends TriggerInterface> triggerConstructor = triggerClass.getConstructor(int.class, JSONObject.class);
+            triggerStep = triggerConstructor.newInstance(position, parameters);
+            CollectionsUtil.addInOrder(this.triggerList, triggerStep);
+        } catch (InstantiationException | IllegalAccessException
+                | IllegalArgumentException | InvocationTargetException
+                | NoSuchMethodException | SecurityException e) {
+            e.printStackTrace();
+        }
+
+        LaunchControl.getInstance().shutdown();
+        return triggerStep;
+    }
+
+    /**
+     * Update the trigger.
+     *
+     * @param position The position to update the new trigger at.
+     * @param params   The new parameters
+     */
+    final boolean updateTrigger(final int position,
+                                final JSONObject params) {
+        TriggerInterface trigger = this.triggerList.get(position);
+        LaunchControl.getInstance().shutdown();
+        return trigger.updateTrigger(params);
     }
 
     /**
@@ -372,47 +411,6 @@ public class TriggerControl implements Runnable, Serializable {
             Thread.currentThread().interrupt();
         }
         LaunchControl.getInstance().shutdown();
-    }
-
-    /**
-     * Get the new triggers form for display.
-     *
-     * @param probe The name of the probe to attach to.
-     * @return The new triggers canvas
-     * @throws IOException If the form couldn't be created.
-     */
-    static HtmlCanvas getNewTriggersForm(final String probe)
-            throws IOException {
-        String probeType;
-        if (LaunchControl.getInstance().findPID(probe) != null) {
-            probeType = PID;
-        } else {
-            probeType = TEMP;
-        }
-
-        HtmlCanvas htmlCanvas = new HtmlCanvas(new PrettyWriter());
-        htmlCanvas.div(id("newTriggersForm"))
-                .form()
-                .select(name("type").class_("form-control m-t")
-                        .onClick("newTrigger(this, '" + probe + "');"));
-        htmlCanvas.option(value("").selected_if(true))
-                .write("Select Trigger Type")
-                ._option();
-        Map<String, String> triggers = getTriggerTypes(probeType);
-        for (Entry<String, String> entry : triggers.entrySet()) {
-            htmlCanvas.option(value(entry.getKey()))
-                    .write(entry.getValue())
-                    ._option();
-        }
-        htmlCanvas._select();
-        htmlCanvas.input(id(TEMP).name(TEMP)
-                .hidden("true").value(probe));
-        htmlCanvas.input(id(POSITION).name(POSITION)
-                .hidden("true").value("-1"))
-                ._form()
-                ._div()
-                .div(id("childInput"))._div();
-        return htmlCanvas;
     }
 
     /**

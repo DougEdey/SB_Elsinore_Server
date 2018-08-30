@@ -1,6 +1,6 @@
 package ca.strangebrew.recipe;
 
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 
 @SuppressWarnings("unused")
 public class FermentStep implements Comparable<FermentStep> {
@@ -65,7 +65,7 @@ public class FermentStep implements Comparable<FermentStep> {
 		this.type = type;
 	}
 	
-	public int compareTo(@Nonnull FermentStep f) {
+	public int compareTo(@NotNull FermentStep f) {
 		return 0;
 // Broken for some reason.. causes weirdness with UI
 //				// Sort by type then by time

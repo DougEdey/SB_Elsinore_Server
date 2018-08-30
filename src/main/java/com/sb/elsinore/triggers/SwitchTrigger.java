@@ -2,18 +2,12 @@ package com.sb.elsinore.triggers;
 
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
-import com.sb.elsinore.Messages;
-import com.sb.elsinore.Switch;
+import com.sb.elsinore.models.Switch;
 import org.json.simple.JSONObject;
-import org.rendersnake.HtmlCanvas;
 
-import javax.annotation.Nonnull;
-import java.io.IOException;
+import javax.validation.constraints.NotNull;
 import java.util.Date;
 
-import static org.rendersnake.HtmlAttributesFactory.*;
-
-@SuppressWarnings("unused")
 public class SwitchTrigger implements TriggerInterface {
 
     private static final String SWITCHNAME = "switchname";
@@ -59,7 +53,7 @@ public class SwitchTrigger implements TriggerInterface {
      * @return Compare.
      */
     @Override
-    public final int compareTo(@Nonnull TriggerInterface o) {
+    public final int compareTo(@NotNull TriggerInterface o) {
         return (this.position - o.getPosition());
     }
 
@@ -132,6 +126,14 @@ public class SwitchTrigger implements TriggerInterface {
     }
 
     /**
+     * @param newPos The position to set this step to.
+     */
+    @Override
+    public final void setPosition(final Integer newPos) {
+        this.position = newPos;
+    }
+
+    /**
      * Update this trigger.
      *
      * @param params The parameters to update with.
@@ -153,15 +155,6 @@ public class SwitchTrigger implements TriggerInterface {
             }
         }
         return false;
-    }
-
-
-    /**
-     * @param newPos The position to set this step to.
-     */
-    @Override
-    public final void setPosition(final Integer newPos) {
-        this.position = newPos;
     }
 
     /**

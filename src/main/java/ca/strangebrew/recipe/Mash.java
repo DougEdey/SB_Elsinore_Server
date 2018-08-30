@@ -4,7 +4,7 @@ import com.sb.common.SBStringUtils;
 import com.sb.elsinore.BrewServer;
 import org.json.simple.JSONObject;
 
-import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
@@ -338,8 +338,8 @@ public class Mash {
             this.type = s;
         }
 
-        public int compareTo(@Nonnull MashStep m) {
-            int result = ((Double) this.getStartTemp()).compareTo(m.getStartTemp());
+        public int compareTo(@NotNull MashStep m) {
+            int result = Double.compare(this.getStartTemp(), m.getStartTemp());
             return (result == 0 ? -1 : result);
         }
 

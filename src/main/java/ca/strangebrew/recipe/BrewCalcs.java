@@ -305,14 +305,14 @@ public class BrewCalcs {
 			if (srm < 10) {
 				R = 255;
 			} else {
-				R = new Double(255 - ((srm - rConst) * 10)).intValue();
+				R = Double.valueOf(255 - ((srm - rConst) * 10)).intValue();
 			}
 
 			if (gConst != 0)
-				G = new Double(250 - ((srm / gConst) * 250)).intValue();
+				G = Double.valueOf(250 - ((srm / gConst) * 250)).intValue();
 			else
-				G = new Double((250 - ((srm / 30) * 250))).intValue();
-			B = new Double(200 - (srm * bConst)).intValue();
+				G = Double.valueOf((250 - ((srm / 30) * 250))).intValue();
+			B = Double.valueOf(200 - (srm * bConst)).intValue();
 
 			if (R < 0)
 				R = 1;
@@ -341,9 +341,9 @@ public class BrewCalcs {
 				B = 50.75 + -1.33 * srm;
 			}
 
-			int r = new Double(R).intValue();
-			int b = new Double(B).intValue();
-			int g = new Double(G).intValue();
+			int r = Double.valueOf(R).intValue();
+			int b = Double.valueOf(B).intValue();
+			int g = Double.valueOf(G).intValue();
 			if (r < 0)
 				r = 0;
 			if (r > 255)

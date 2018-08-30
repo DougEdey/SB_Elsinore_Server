@@ -126,7 +126,7 @@ public class Salt {
 		MessageFormat mf;
 		
 		mf = new MessageFormat(this.name + "(" + this.commonName + ") {0,number,0.000}" + this.amountU);
-		Object[] objs = {new Double(this.amount)};
+		Object[] objs = {this.amount};
 				
 		return mf.format(objs);
 	}

@@ -3,13 +3,13 @@ package com.sb.elsinore;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.sb.common.CollectionsUtil;
-import com.sb.elsinore.controller.DeviceRepository;
-import com.sb.elsinore.controller.PIDRepository;
-import com.sb.elsinore.controller.TemperatureRepository;
 import com.sb.elsinore.devices.I2CDevice;
-import com.sb.elsinore.devices.PID;
 import com.sb.elsinore.devices.TempProbe;
 import com.sb.elsinore.inputs.PhSensor;
+import com.sb.elsinore.models.*;
+import com.sb.elsinore.models.Timer;
+import com.sb.elsinore.repositories.PIDRepository;
+import com.sb.elsinore.repositories.TemperatureRepository;
 import com.sb.elsinore.wrappers.TempRunner;
 import jGPIO.InvalidGPIOException;
 import org.apache.commons.cli.CommandLine;
@@ -20,9 +20,6 @@ import org.owfs.jowfsclient.OwfsConnectionConfig;
 import org.owfs.jowfsclient.OwfsConnectionFactory;
 import org.owfs.jowfsclient.OwfsException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
 
 import javax.annotation.PreDestroy;
 import java.io.*;
@@ -46,119 +43,88 @@ import java.util.regex.Pattern;
  *
  * @author doug
  */
-@SuppressWarnings("unused")
-@SpringBootApplication
-@ComponentScan("com.sb.elsinore")
 public class LaunchControl {
-
-    private DeviceRepository deviceRepository;
-    private TemperatureRepository temperatureRepository;
-    private PIDRepository pidRepository;
-
-    private static boolean loadCompleted = false;
-
-
-    @Expose
-    @SerializedName("general")
-    public SystemSettings systemSettings = new SystemSettings();
-
+    public static final Object timerLock = new Object();
+    public static final String RepoURL = "http://dougedey.github.io/SB_Elsinore_Server/";
+    /**
+     * The default port to serve on, can be overridden with -p <port>.
+     */
+    static final int DEFAULT_PORT = 8080;
+    /**
+     * The Minimum number of volume data points.
+     */
+    static final int MIN_VOLUME_SIZE = 3;
     /**
      * The default OWFS Port.
      */
     private static final int DEFAULT_OWFS_PORT = 4304;
     /**
-     * The default port to serve on, can be overridden with -p <port>.
+     * The Default scale to be used.
      */
-    static final int DEFAULT_PORT = 8080;
-    public static final Object timerLock = new Object();
-
-    /**
-     * The Minimum number of volume data points.
-     */
-    static final int MIN_VOLUME_SIZE = 3;
-    public static final String RepoURL = "http://dougedey.github.io/SB_Elsinore_Server/";
+    public static String scale = "F";
+    private static boolean loadCompleted = false;
     private static String baseUser = null;
-
+    /**
+     * The accepted startup options.
+     */
+    private static Options startupOptions = null;
+    /**
+     * The Command line used.
+     */
+    private static CommandLine startupCommand = null;
+    private static String message = "";
+    private static LaunchControl instance;
+    @Expose
+    @SerializedName("general")
+    public SystemSettings systemSettings = new SystemSettings();
     /**
      * List of Switches.
      */
     public List<Switch> switchList = new CopyOnWriteArrayList<>();
+    boolean recorderEnabled = false;
+    String breweryName = null;
+    String theme = "default";
+    private TemperatureRepository temperatureRepository;
+    private PIDRepository pidRepository;
     /**
      * List of Timers.
      */
     @Expose
     @SerializedName("timers")
-    private List<Timer> timerList = new CopyOnWriteArrayList<>();
+    private List<com.sb.elsinore.models.Timer> timerList = new CopyOnWriteArrayList<>();
     /**
      * List of MashControl profiles.
      */
     private List<TriggerControl> triggerControlList;
+
+    /* public fields to hold data for various functions */
     /**
      * List of pH Sensors.
      */
     private CopyOnWriteArrayList<PhSensor> phSensorList;
     private HashMap<String, I2CDevice> i2cDeviceList;
-
     /**
-     * PID Thread List.
+     * PIDModel Thread List.
      */
     private List<TempRunner> tempRunners = null;
     private List<Thread> pidThreads;
-
-    /* public fields to hold data for various functions */
-
-    /**
-     * The Default scale to be used.
-     */
-    public static String scale = "F";
-
     /**
      * One Wire File System Connection.
      */
     private OwfsConnection owfsConnection = null;
-
-
-    /**
-     * The accepted startup options.
-     */
-    private static Options startupOptions = null;
-
-    /**
-     * The Command line used.
-     */
-    private static CommandLine startupCommand = null;
-
-    private static String message = "";
-    boolean recorderEnabled = false;
-    String breweryName = null;
-    String theme = "default";
-
     private ProcessBuilder pb = null;
-    private static LaunchControl instance;
     private HashMap<String, TempRunner> deviceMap = new HashMap<>();
+    private HashMap<String, TempProbe> tempProbes = new HashMap<>();
 
-    @Autowired
-    public LaunchControl(DeviceRepository deviceRepository, TemperatureRepository temperatureRepository, PIDRepository pidRepository) {
-        this.deviceRepository = deviceRepository;
-        this.temperatureRepository = temperatureRepository;
-        this.pidRepository = pidRepository;
-        instance = this;
+    public LaunchControl() {
         startup(DEFAULT_PORT);
     }
 
     public static LaunchControl getInstance() {
+        if (instance == null) {
+            instance = new LaunchControl();
+        }
         return instance;
-    }
-
-    /**
-     * Main method to launch the brewery.
-     *
-     * @param arguments List of arguments from the command line
-     */
-    public static void main(final String... arguments) {
-        BrewServer.LOG.info("Running Brewery Controller.");
-        SpringApplication.run(LaunchControl.class, arguments);
-
     }
 
     /**
@@ -197,10 +163,135 @@ public class LaunchControl {
                 "Set the recorder directory output, default: graph-data/");
     }
 
-    @Autowired
-    public void setDeviceRepository(DeviceRepository deviceRepository) {
-        this.deviceRepository = deviceRepository;
+    private static String convertAddress(String oldAddress) {
+        String[] newAddress = oldAddress.split("[.\\-]");
+        boolean oldIsOwfs = (oldAddress.contains("."));
+        String sep = oldIsOwfs ? "-" : ".";
+
+        if (newAddress.length == 2) {
+            String devFamily = newAddress[0];
+            String devAddress = "";
+            // Byte swap!
+            devAddress += newAddress[1].subSequence(10, 12);
+            devAddress += newAddress[1].subSequence(8, 10);
+            devAddress += newAddress[1].subSequence(6, 8);
+            devAddress += newAddress[1].subSequence(4, 6);
+            devAddress += newAddress[1].subSequence(2, 4);
+            devAddress += newAddress[1].subSequence(0, 2);
+
+            String fixedAddress = devFamily + sep
+                    + devAddress.toLowerCase();
+
+            BrewServer.LOG.info("Converted address: " + fixedAddress);
+
+            return fixedAddress;
+        }
+        return oldAddress;
     }
+
+    /**
+     * Copy a file helper, used for backing data the config file.
+     *
+     * @param sourceFile The file to copy from
+     * @param destFile   The file name to copy to
+     * @throws IOException If there's an issue with copying the file
+     */
+    private static void copyFile(final File sourceFile, final File destFile)
+            throws IOException {
+
+        if (!destFile.exists() && !destFile.createNewFile()) {
+            BrewServer.LOG.warning("Couldn't create " + destFile.getName());
+            return;
+        }
+
+        try (FileChannel source = new FileInputStream(sourceFile).getChannel();
+             FileChannel destination = new FileOutputStream(destFile).getChannel()) {
+            destination.transferFrom(source, 0, source.size());
+        } catch (IOException e) {
+            BrewServer.LOG.warning("Failed to copy file: "
+                    + e.getLocalizedMessage());
+            throw e;
+        }
+    }
+
+    /**
+     * Update from GIT and restart.
+     */
+    static void updateFromGit() {
+        // Build command
+        File jarLocation;
+
+        jarLocation = new File(LaunchControl.class.getProtectionDomain()
+                .getCodeSource().getLocation().getPath()).getParentFile();
+
+        BrewServer.LOG.info("Updating from Head");
+        List<String> commands = new ArrayList<>();
+        commands.add("git");
+        commands.add("pull");
+        ProcessBuilder pb = new ProcessBuilder(commands);
+        pb.directory(jarLocation);
+        pb.redirectErrorStream(true);
+        Process process;
+        try {
+            process = pb.start();
+        } catch (IOException e3) {
+            BrewServer.LOG.info("Couldn't check remote git SHA");
+            e3.printStackTrace();
+            LaunchControl.setMessage("Failed to update from Git");
+            return;
+        }
+
+        StringBuilder out = new StringBuilder();
+        BufferedReader br = new BufferedReader(new InputStreamReader(
+                process.getInputStream()));
+        String line, previous = null;
+
+        try {
+            while ((line = br.readLine()) != null) {
+                if (!line.equals(previous)) {
+                    previous = line;
+                    out.append(line).append('\n');
+                }
+            }
+        } catch (IOException e2) {
+            BrewServer.LOG.warning("Couldn't update from GIT");
+            e2.printStackTrace();
+            LaunchControl.setMessage(out.toString());
+            return;
+        }
+        LaunchControl.setMessage(out.toString());
+        BrewServer.LOG.warning(out.toString());
+        int EXIT_UPDATE = 128;
+        System.exit(EXIT_UPDATE);
+    }
+
+    /**
+     * Add a message to the current one.
+     *
+     * @param newMessage The message to append.
+     */
+    static void addMessage(final String newMessage) {
+        LaunchControl.message += "\n" + newMessage;
+    }
+
+    /**
+     * Get the current message.
+     *
+     * @return The current message.
+     */
+    public static String getMessage() {
+        return LaunchControl.message;
+    }
+
+    /**
+     * Set the system message for the UI.
+     *
+     * @param newMessage The message to set.
+     */
+    public static void setMessage(final String newMessage) {
+        LaunchControl.message = newMessage;
+    }
+
 
     @Autowired
     public void setTemperatureRepository(TemperatureRepository temperatureRepository) {
@@ -231,9 +322,9 @@ public class LaunchControl {
         }
 
         // Load the System probe if it's not configured
-        if (this.deviceRepository != null) {
-            List<TempProbe> probes = this.temperatureRepository.findByName("System");
-            if (probes.size() == 0) {
+        if (this.temperatureRepository != null) {
+            Temperature probe = this.temperatureRepository.findByName("System");
+            if (probe == null) {
                 addSystemTemp();
             }
             this.temperatureRepository.findAll().forEach(this::addTemp);
@@ -246,7 +337,6 @@ public class LaunchControl {
     boolean isInitialized() {
         return loadCompleted;
     }
-
 
     void setRestore(boolean restore) {
         this.systemSettings.restoreState = restore;
@@ -288,7 +378,7 @@ public class LaunchControl {
      */
     private void addSystemTemp() {
         TempProbe tTempProbe = new TempProbe("System", "System");
-        this.deviceRepository.save(tTempProbe);
+        this.temperatureRepository.save(tTempProbe.getModel());
         BrewServer.LOG.info("Adding " + tTempProbe.getName());
         // setup the scale for each temp probe
         tTempProbe.setScale(this.systemSettings.scale);
@@ -302,8 +392,9 @@ public class LaunchControl {
         }
 
         tempRunner.shutdown();
-        this.deviceRepository.delete(tempRunner.getTempProbe());
-        getTempRunners().removeIf(tr -> tr.getTempProbe() == tempRunner.getTempProbe());
+        TemperatureInterface temperatureInterface = tempRunner.getTempInterface();
+        this.temperatureRepository.delete(temperatureInterface.getModel());
+        getTempRunners().removeIf(tr -> tr.getTempInterface() == temperatureInterface);
 
     }
 
@@ -334,7 +425,7 @@ public class LaunchControl {
         if (findTimer(name) != null) {
             return false;
         }
-        Timer tTimer = new Timer(name);
+        com.sb.elsinore.models.Timer tTimer = new com.sb.elsinore.models.Timer(name);
         tTimer.setTarget(target);
         CollectionsUtil.addInOrder(getTimerList(), tTimer);
 
@@ -342,21 +433,31 @@ public class LaunchControl {
     }
 
     /**
-     * Add a PID to the list.
+     * Add a PIDModel to the list.
      *
-     * @param newTempProbe PID to add.
+     * @param newTempProbe PIDModel to add.
      */
-    public void addTemp(TempProbe newTempProbe) {
-        if (getTempRunners().stream().noneMatch(pRunner -> pRunner.getTempProbe() == newTempProbe)) {
-            PIDRunner pidRunner = new PIDRunner(newTempProbe);
-            getTempRunners().add(pidRunner);
-            Thread pThread = new Thread(pidRunner);
-            pThread.setName(pidRunner.getTempProbe().getName());
+    public void addTemp(TemperatureInterface newTempProbe) {
+        if (getTempRunners().stream().noneMatch(pRunner -> pRunner.getTempInterface() == newTempProbe)) {
+            TempRunner tempRunner = new TempRunner(newTempProbe);
+            getTempRunners().add(tempRunner);
+            Thread pThread = new Thread(tempRunner);
+            pThread.setName(tempRunner.getTempInterface().getName());
             getTempThreads().add(pThread);
             pThread.start();
         }
-    }
 
+        TempProbe tempProbe = null;
+        if (newTempProbe instanceof TempProbe) {
+            tempProbe = (TempProbe) newTempProbe;
+        } else {
+            tempProbe = new TempProbe(newTempProbe);
+        }
+
+        if (!this.tempProbes.containsKey(newTempProbe.getName())) {
+            this.tempProbes.put(newTempProbe.getName(), tempProbe);
+        }
+    }
 
     /**************
      * Find the Switch in the server..
@@ -397,10 +498,10 @@ public class LaunchControl {
      *            The timer to find
      * @return return the Timer object
      */
-    private Timer findTimer(final String name) {
+    private com.sb.elsinore.models.Timer findTimer(final String name) {
         // search based on the input name
-        Iterator<Timer> iterator = getTimerList().iterator();
-        Timer tTimer;
+        Iterator<com.sb.elsinore.models.Timer> iterator = getTimerList().iterator();
+        com.sb.elsinore.models.Timer tTimer;
         while (iterator.hasNext()) {
             tTimer = iterator.next();
             if (tTimer.getName().equalsIgnoreCase(name)
@@ -419,34 +520,8 @@ public class LaunchControl {
      */
     void deleteTimer(final String name) {
         // search based on the input name
-        Timer tTimer = findTimer(name);
+        com.sb.elsinore.models.Timer tTimer = findTimer(name);
         getTimerList().remove(tTimer);
-    }
-
-    private static String convertAddress(String oldAddress) {
-        String[] newAddress = oldAddress.split("\\.|-");
-        boolean oldIsOwfs = (oldAddress.contains("."));
-        String sep = oldIsOwfs ? "-" : ".";
-
-        if (newAddress.length == 2) {
-            String devFamily = newAddress[0];
-            String devAddress = "";
-            // Byte swap!
-            devAddress += newAddress[1].subSequence(10, 12);
-            devAddress += newAddress[1].subSequence(8, 10);
-            devAddress += newAddress[1].subSequence(6, 8);
-            devAddress += newAddress[1].subSequence(4, 6);
-            devAddress += newAddress[1].subSequence(2, 4);
-            devAddress += newAddress[1].subSequence(0, 2);
-
-            String fixedAddress = devFamily + sep
-                    + devAddress.toLowerCase();
-
-            BrewServer.LOG.info("Converted address: " + fixedAddress);
-
-            return fixedAddress;
-        }
-        return oldAddress;
     }
 
     /**
@@ -517,8 +592,8 @@ public class LaunchControl {
      */
     private boolean probeExists(String address) {
         String owfsAddress = convertAddress(address);
-        return this.temperatureRepository.findByDevice(address).size() == 1
-                || this.temperatureRepository.findByDevice(owfsAddress).size() == 1;
+        return this.temperatureRepository.findByDevice(address) != null
+                || this.temperatureRepository.findByDevice(owfsAddress) != null;
     }
 
     /***********
@@ -573,42 +648,6 @@ public class LaunchControl {
     }
 
     /**
-     * Copy a file helper, used for backing data the config file.
-     *
-     * @param sourceFile The file to copy from
-     * @param destFile   The file name to copy to
-     * @throws IOException If there's an issue with copying the file
-     */
-    private static void copyFile(final File sourceFile, final File destFile)
-            throws IOException {
-
-        if (!destFile.exists() && !destFile.createNewFile()) {
-            BrewServer.LOG.warning("Couldn't create " + destFile.getName());
-            return;
-        }
-
-        FileChannel source = null;
-        FileChannel destination = null;
-
-        try {
-            source = new FileInputStream(sourceFile).getChannel();
-            destination = new FileOutputStream(destFile).getChannel();
-            destination.transferFrom(source, 0, source.size());
-        } catch (IOException e) {
-            BrewServer.LOG.warning("Failed to copy file: "
-                    + e.getLocalizedMessage());
-            throw e;
-        } finally {
-            if (source != null) {
-                source.close();
-            }
-            if (destination != null) {
-                destination.close();
-            }
-        }
-    }
-
-    /**
      * Add a MashControl object to the master mash control list.
      *
      * @param mControl The new mashControl to add
@@ -624,9 +663,9 @@ public class LaunchControl {
     }
 
     /**
-     * Start the mashControl thread associated with the PID.
+     * Start the mashControl thread associated with the PIDModel.
      *
-     * @param pid The PID to find the mash control thread for.
+     * @param pid The PIDModel to find the mash control thread for.
      */
     public void startMashControl(final String pid) {
         TriggerControl mControl = findTriggerControl(pid);
@@ -636,16 +675,14 @@ public class LaunchControl {
     }
 
     /**
-     * Look for the TriggerControl for the specified PID.
+     * Look for the TriggerControl for the specified PIDModel.
      *
-     * @param pid The PID string to search for.
-     * @return The MashControl for the PID.
+     * @param pid The PIDModel string to search for.
+     * @return The MashControl for the PIDModel.
      */
     public TriggerControl findTriggerControl(final String pid) {
-        List<TempProbe> devices = this.temperatureRepository.findByName(pid);
-        if (devices.size() == 1) {
-            TempProbe tTempProbe = devices.get(0);
-            return tTempProbe.getTriggerControl();
+        if (this.tempProbes.containsKey(pid)) {
+            return this.tempProbes.get(pid).getTriggerControl();
         }
         return null;
     }
@@ -836,84 +873,6 @@ public class LaunchControl {
     }
 
     /**
-     * Update from GIT and restart.
-     */
-    static void updateFromGit() {
-        // Build command
-        File jarLocation;
-
-        jarLocation = new File(LaunchControl.class.getProtectionDomain()
-                .getCodeSource().getLocation().getPath()).getParentFile();
-
-        BrewServer.LOG.info("Updating from Head");
-        List<String> commands = new ArrayList<>();
-        commands.add("git");
-        commands.add("pull");
-        ProcessBuilder pb = new ProcessBuilder(commands);
-        pb.directory(jarLocation);
-        pb.redirectErrorStream(true);
-        Process process;
-        try {
-            process = pb.start();
-        } catch (IOException e3) {
-            BrewServer.LOG.info("Couldn't check remote git SHA");
-            e3.printStackTrace();
-            LaunchControl.setMessage("Failed to update from Git");
-            return;
-        }
-
-        StringBuilder out = new StringBuilder();
-        BufferedReader br = new BufferedReader(new InputStreamReader(
-                process.getInputStream()));
-        String line, previous = null;
-
-        try {
-            while ((line = br.readLine()) != null) {
-                if (!line.equals(previous)) {
-                    previous = line;
-                    out.append(line).append('\n');
-                }
-            }
-        } catch (IOException e2) {
-            BrewServer.LOG.warning("Couldn't update from GIT");
-            e2.printStackTrace();
-            LaunchControl.setMessage(out.toString());
-            return;
-        }
-        LaunchControl.setMessage(out.toString());
-        BrewServer.LOG.warning(out.toString());
-        int EXIT_UPDATE = 128;
-        System.exit(EXIT_UPDATE);
-    }
-
-    /**
-     * Set the system message for the UI.
-     *
-     * @param newMessage The message to set.
-     */
-    public static void setMessage(final String newMessage) {
-        LaunchControl.message = newMessage;
-    }
-
-    /**
-     * Add a message to the current one.
-     *
-     * @param newMessage The message to append.
-     */
-    static void addMessage(final String newMessage) {
-        LaunchControl.message += "\n" + newMessage;
-    }
-
-    /**
-     * Get the current message.
-     *
-     * @return The current message.
-     */
-    public static String getMessage() {
-        return LaunchControl.message;
-    }
-
-    /**
      * @return The brewery name.
      */
     public String getName() {
@@ -932,17 +891,12 @@ public class LaunchControl {
     }
 
     /**
-     * Delete the TempProbe/PID from the list.
+     * Delete the TempProbe/PIDModel from the list.
      *
      * @param tTempProbe The TempProbe object to delete.
      */
-    public void deleteTemp(TempProbe tTempProbe) {
-        List<TempProbe> devices = this.temperatureRepository.findByName(tTempProbe.getName());
-        if (devices.size() == 0) {
-            return;
-        }
-
-        getTempRunners().removeIf(tempRunner -> tempRunner.getTempProbe().getName().equals(tTempProbe.getName()));
+    public void deleteTemp(Temperature tTempProbe) {
+        getTempRunners().removeIf(tempRunner -> tempRunner.getTempInterface().getName().equals(tTempProbe.getName()));
         getTempThreads().removeIf(tempThread -> tempThread.getName().equalsIgnoreCase(tTempProbe.getName()));
     }
 
@@ -986,7 +940,7 @@ public class LaunchControl {
         }
     }
 
-    private boolean setTempScales(String scale) {
+    private void setTempScales(String scale) {
         if (scale == null) {
             if (getScale().equals("C")) {
                 scale = "F";
@@ -995,17 +949,14 @@ public class LaunchControl {
             }
         }
         if (!scale.equals("C") && !scale.equals("F")) {
-            return false;
+            return;
         }
+
         // Change the temperature probes
-        for (Device device : this.deviceRepository.findAll()) {
-            if (device instanceof TempProbe) {
-                TempProbe t = (TempProbe) device;
-                t.setScale(scale);
-            }
+        for (Temperature tempProbe : this.temperatureRepository.findAll()) {
+            tempProbe.setScale(scale);
         }
         setTempScales(scale);
-        return true;
     }
 
     boolean recorderEnabled() {
@@ -1078,7 +1029,7 @@ public class LaunchControl {
         return devices;
     }
 
-    PhSensor findPhSensor(String string) {
+    private PhSensor findPhSensor(String string) {
         string = string.replace(" ", "_");
         Iterator<PhSensor> iterator = getPhSensorList().iterator();
         PhSensor tPh;
@@ -1114,7 +1065,7 @@ public class LaunchControl {
 
     void shutdown() {
 
-        BrewServer.LOG.warning("Shutting down PID threads...");
+        BrewServer.LOG.warning("Shutting down PIDModel threads...");
         getTempRunners().stream().filter(Objects::nonNull).forEach(TempRunner::stop);
 
         if (getTriggerControlList().size() > 0) {
@@ -1185,18 +1136,18 @@ public class LaunchControl {
 
     public TempRunner findTemp(String name) {
         TempRunner tempRunner = this.deviceMap.get(name);
-        List<TempProbe> deviceList = this.temperatureRepository.findByName(name);
-        if (deviceList.size() == 1) {
-            tempRunner = new TempRunner(deviceList.get(0));
+        Temperature device = this.temperatureRepository.findByName(name);
+        if (device != null) {
+            tempRunner = new TempRunner(device);
         } else {
-            // log an error
+            BrewServer.LOG.warning("Failed to find temperature probe with name: " + name);
         }
 
         return tempRunner;
     }
 
-    public PID findPID(String name) {
-        List<PID> deviceList = this.pidRepository.findByName(name);
+    public PIDModel findPID(String name) {
+        List<PIDModel> deviceList = this.pidRepository.findByTemperatureName(name);
         if (deviceList.size() == 1) {
             return deviceList.get(0);
         }
@@ -1208,4 +1159,9 @@ public class LaunchControl {
         BrewServer.LOG.info("Shutting down! ");
         shutdown();
     }
+
+    public List<TempProbe> getTempProbes() {
+        return (List<TempProbe>) this.tempProbes.values();
+    }
+
 }

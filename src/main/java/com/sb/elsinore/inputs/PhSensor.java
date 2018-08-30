@@ -14,6 +14,7 @@ import javax.persistence.Transient;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -297,7 +298,7 @@ public class PhSensor implements Serializable {
                 if (calcMethod.model().equalsIgnoreCase(this.model)) {
                     try {
                         value = (BigDecimal) m.invoke(this);
-                        value = value.setScale(2, BigDecimal.ROUND_CEILING);
+                        value = value.setScale(2, RoundingMode.CEILING);
                         if (value.compareTo(BigDecimal.ZERO) > 0) {
                             this.phReading = value;
                             if (lc.systemSettings.recorder != null) {

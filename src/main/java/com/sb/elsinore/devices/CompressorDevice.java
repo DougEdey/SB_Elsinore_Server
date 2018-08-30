@@ -1,8 +1,9 @@
 package com.sb.elsinore.devices;
 
 import com.sb.elsinore.BrewServer;
-import com.sb.elsinore.PIDSettings;
+import com.sb.elsinore.models.PIDSettings;
 import jGPIO.InvalidGPIOException;
+
 import java.math.BigDecimal;
 
 /**
@@ -22,18 +23,19 @@ public class CompressorDevice extends OutputDevice {
         super(name, settings);
     }
 
-    
+
     /**
      * Run through a cycle and turn the device on/off as appropriate based on the input duty.
+     *
      * @param duty The percentage of time / power to run.  This will only run if the duty
-     *              is between 0 and 100 and not null.
+     *             is between 0 and 100 and not null.
      */
     @Override
     public void runCycle(BigDecimal duty) throws InterruptedException, InvalidGPIOException {
         // Run if the duty is not null and is between 0 and 100 inclusive.
-        if (duty != null && 
-            duty.compareTo(BigDecimal.ZERO) > -1 &&
-            duty.compareTo(HUNDRED) < 1) {
+        if (duty != null &&
+                duty.compareTo(BigDecimal.ZERO) > -1 &&
+                duty.compareTo(HUNDRED) < 1) {
             initializeSSR();
 
             if (duty.compareTo(HUNDRED) == 0) {
@@ -45,7 +47,7 @@ public class CompressorDevice extends OutputDevice {
                     this.running = true;
                     setValue(true);
                 } else {
-                    BrewServer.LOG.warning("Need to wait before starting compressor again.: "+(this.delayBetweenRuns - (System.currentTimeMillis() - this.lastStopTime)));
+                    BrewServer.LOG.warning("Need to wait before starting compressor again.: " + (this.delayBetweenRuns - (System.currentTimeMillis() - this.lastStopTime)));
                 }
             }
             Thread.sleep(this.settings.getCycleTime().intValue());
@@ -62,9 +64,8 @@ public class CompressorDevice extends OutputDevice {
         this.running = false;
         setValue(false);
     }
-    
-    public void setDelay(BigDecimal delay)
-    {
+
+    public void setDelay(BigDecimal delay) {
         this.delayBetweenRuns = delay.longValue() * 1000 * 60;
     }
 }

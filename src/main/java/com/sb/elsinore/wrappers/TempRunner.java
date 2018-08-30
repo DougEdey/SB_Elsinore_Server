@@ -3,7 +3,7 @@ package com.sb.elsinore.wrappers;
 
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
-import com.sb.elsinore.devices.TempProbe;
+import com.sb.elsinore.models.TemperatureInterface;
 import com.sb.util.MathUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.owfs.jowfsclient.OwfsException;
@@ -42,7 +42,7 @@ public class TempRunner implements Runnable {
             "/sys/class/thermal/thermal_zone1/tempProbe";
     String currentError = null;
     TemperatureValue currentTemp = new TemperatureValue();
-    TempProbe tempProbe = null;
+    TemperatureInterface temperature = null;
     boolean badTemp = false;
     boolean keepAlive = true;
     boolean isStarted = false;
@@ -58,13 +58,13 @@ public class TempRunner implements Runnable {
     private BigDecimal tempF = null;
     private BigDecimal currentTime = null;
 
-    public TempRunner(TempProbe tempProbe) {
-        this.tempProbe = tempProbe;
+    public TempRunner(TemperatureInterface temperature) {
+        this.temperature = temperature;
     }
 
     private void initialize() {
-        if ("system".equalsIgnoreCase(this.tempProbe.getName())) {
-            this.tempProbe.setDevice("System");
+        if ("system".equalsIgnoreCase(this.temperature.getName())) {
+            this.temperature.setDevice("System");
             File tempFile = new File(this.rpiSystemTemp);
             if (tempFile.exists()) {
                 this.fileProbe = this.rpiSystemTemp;
@@ -78,14 +78,14 @@ public class TempRunner implements Runnable {
                 }
             }
 
-        } else if (!"blank".equalsIgnoreCase(this.tempProbe.getName())) {
-            this.fileProbe = "/sys/bus/w1/devices/" + this.tempProbe.getDevice() + "/w1_slave";
+        } else if (!"blank".equalsIgnoreCase(this.temperature.getName())) {
+            this.fileProbe = "/sys/bus/w1/devices/" + this.temperature.getDevice() + "/w1_slave";
             File probePath =
                     new File(this.fileProbe);
 
             // Lets assume that OWFS has "." separated names
-            if (!probePath.exists() && this.tempProbe.getDevice().contains(".")) {
-                String[] newAddress = this.tempProbe.getDevice().split("\\.|-");
+            if (!probePath.exists() && this.temperature.getDevice().contains(".")) {
+                String[] newAddress = this.temperature.getDevice().split("[.\\-]");
 
                 if (newAddress.length == 2) {
                     String devFamily = newAddress[0];
@@ -105,14 +105,18 @@ public class TempRunner implements Runnable {
                     this.fileProbe = "/sys/bus/w1/devices/" + fixedAddress + "/w1_slave";
                     probePath = new File(this.fileProbe);
                     if (probePath.exists()) {
-                        this.tempProbe.setDevice(fixedAddress);
+                        this.temperature.setDevice(fixedAddress);
                     }
                 }
             }
         }
 
-        log.info("{} initialized.", this.tempProbe.getProbe());
+        log.info("{} initialized.", this.temperature.getProbe());
         this.initialized = true;
+    }
+
+    public TemperatureInterface getTempInterface() {
+        return this.temperature;
     }
 
     /**
@@ -126,9 +130,9 @@ public class TempRunner implements Runnable {
         }
 
         if (this.badTemp && this.currentError != null && this.currentError.equals("")) {
-            log.warn("Trying to recover {}", this.tempProbe.getName());
+            log.warn("Trying to recover {}", this.temperature.getName());
         }
-        if (this.tempProbe.getProbe() == null) {
+        if (this.temperature.getProbe() == null) {
             result = updateTempFromOWFS();
         } else {
             result = updateTempFromFile();
@@ -141,7 +145,7 @@ public class TempRunner implements Runnable {
 
         if (this.badTemp) {
             this.badTemp = false;
-            log.warn("Recovered temperature reading for {}", this.tempProbe.getName());
+            log.warn("Recovered temperature reading for {}", this.temperature.getName());
             if (this.currentError.startsWith("Could")) {
                 this.currentError = "";
             }
@@ -152,9 +156,10 @@ public class TempRunner implements Runnable {
 
         this.currentError = null;
 
-        if (this.tempProbe.getCutoffEnabled()
-                && this.currentTemp.getValue().compareTo(this.tempProbe.getCutoffTemp()) >= 0) {
-            log.error("{}: ****** CUT OFF TEMPERATURE ({}) EXCEEDED *****", this.currentTemp, this.tempProbe.getCutoffTemp());
+        if (
+                this.temperature.getCutoffTemp() != null &&
+                        this.currentTemp.getValue().compareTo(this.temperature.getCutoffTemp()) >= 0) {
+            log.error("{}: ****** CUT OFF TEMPERATURE ({}) EXCEEDED *****", this.currentTemp, this.temperature.getCutoffTemp());
             System.exit(-1);
         }
         return result;
@@ -165,7 +170,7 @@ public class TempRunner implements Runnable {
      */
     public BigDecimal updateTempFromOWFS() {
         // Use the OWFS connection
-        if (isNullOrEmpty(this.tempProbe.getProbe()) || this.tempProbe.getProbe().equals("Blank")) {
+        if (isNullOrEmpty(this.temperature.getProbe()) || this.temperature.getProbe().equals("Blank")) {
             return new BigDecimal(0.0);
         }
 
@@ -173,18 +178,18 @@ public class TempRunner implements Runnable {
         String rawTemp = "";
 
         try {
-            rawTemp = LaunchControl.getInstance().readOWFSPath(this.tempProbe.getProbe() + "/temperature");
+            rawTemp = LaunchControl.getInstance().readOWFSPath(this.temperature.getProbe() + "/temperature");
             if (rawTemp.equals("")) {
-                log.error("Couldn't find the probe {} for {}", this.tempProbe.getProbe() , this.tempProbe.getName());
+                log.error("Couldn't find the probe {} for {}", this.temperature.getProbe(), this.temperature.getName());
                 LaunchControl.getInstance().setupOWFS();
             } else {
                 temp = new BigDecimal(rawTemp);
             }
         } catch (IOException e) {
-            this.currentError = "Couldn't read " + this.tempProbe.getProbe();
+            this.currentError = "Couldn't read " + this.temperature.getProbe();
             log.error(this.currentError, e);
         } catch (OwfsException e) {
-            this.currentError = "Couldn't read " + this.tempProbe.getProbe();
+            this.currentError = "Couldn't read " + this.temperature.getProbe();
             log.error(this.currentError, e);
             LaunchControl.getInstance().setupOWFS();
         } catch (NumberFormatException e) {
@@ -267,21 +272,26 @@ public class TempRunner implements Runnable {
     public BigDecimal getTemperature() {
         updateTemp();
         // set up the reader
-        if (this.tempProbe.getScale().equals("F")) {
+        if (getScale().equals("F")) {
             return getTempF();
         }
         return getTempC();
+    }
+
+    public String getScale() {
+        return this.temperature.getScale();
     }
 
     /**
      * @return The current temperature in fahrenheit.
      */
     public BigDecimal getTempF() {
+
         BigDecimal temp = this.currentTemp.getValue(TemperatureValue.Scale.F);
         if (temp == null) {
             return null;
         }
-        return temp.add(this.tempProbe.getCalibration());
+        return temp.add(this.temperature.getCalibration());
     }
 
     /**
@@ -292,12 +302,12 @@ public class TempRunner implements Runnable {
         if (temp == null) {
             return null;
         }
-        return temp.add(this.tempProbe.getCalibration());
+        return temp.add(this.temperature.getCalibration());
     }
 
 
     public BigDecimal convertF(BigDecimal temperature) {
-        if (this.tempProbe.getScale().equals("C")) {
+        if (this.temperature.getScale().equals("C")) {
             return cToF(temperature);
         }
 
@@ -308,7 +318,7 @@ public class TempRunner implements Runnable {
     public void shutdown() {
         // Graceful shutdown.
         this.keepAlive = false;
-        log.warn("{} is shutting down.", this.tempProbe.getName());
+        log.warn("{} is shutting down.", this.temperature.getName());
         Thread.currentThread().interrupt();
     }
 
@@ -324,22 +334,17 @@ public class TempRunner implements Runnable {
         this.isStarted = true;
     }
 
-
-    public TempProbe getTempProbe() {
-        return this.tempProbe;
-    }
-
     public String getName() {
-        return this.tempProbe.getName();
+        return this.temperature.getName();
     }
 
     /***
-     * Main loop for using a PID Thread.
+     * Main loop for using a PIDModel Thread.
      */
     @Override
     public void run() {
         startRunning();
-        BrewServer.LOG.info("Running " + tempProbe.getName() + ".");
+        BrewServer.LOG.info("Running " + this.temperature.getName() + ".");
         // setup the first time
         this.previousTime = new BigDecimal(System.currentTimeMillis());
 
@@ -347,17 +352,15 @@ public class TempRunner implements Runnable {
         // Main loop
         while (isRunning()) {
             try {
-                synchronized (this.tempF = getTempF()) {
-                    // do the bulk of the work here
-                    this.currentTime = new BigDecimal(System.currentTimeMillis());
-                    loopRun();
-
-                }
+                this.tempF = getTempF();
+                // do the bulk of the work here
+                this.currentTime = new BigDecimal(System.currentTimeMillis());
+                loopRun();
 
                 //pause execution for a second
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
-                BrewServer.LOG.warning("PID " + tempProbe.getName() + " Interrupted.");
+                BrewServer.LOG.warning("PIDModel " + this.temperature.getName() + " Interrupted.");
                 ex.printStackTrace();
                 Thread.currentThread().interrupt();
             }
@@ -372,7 +375,7 @@ public class TempRunner implements Runnable {
 
 
     public void stop() {
-        BrewServer.LOG.warning("Shutting down " + getTempProbe().getName());
+        BrewServer.LOG.warning("Shutting down " + this.temperature.getName());
         shutdown();
         Thread.currentThread().interrupt();
     }

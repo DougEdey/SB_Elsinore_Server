@@ -1,16 +1,10 @@
 package com.sb.elsinore.triggers;
 
 import com.sb.elsinore.*;
-import com.sb.elsinore.controller.DeviceRepository;
-import com.sb.elsinore.controller.TemperatureRepository;
-import com.sb.elsinore.devices.TempProbe;
+import com.sb.elsinore.repositories.TemperatureRepository;
 import org.json.simple.JSONObject;
-import org.rendersnake.HtmlCanvas;
 
-import java.io.IOException;
 import java.util.Date;
-
-import static org.rendersnake.HtmlAttributesFactory.*;
 
 public class ProfileTrigger implements TriggerInterface {
 
@@ -23,12 +17,7 @@ public class ProfileTrigger implements TriggerInterface {
     private boolean active = false;
     private String targetName = null;
     private Date startDate = null;
-    private DeviceRepository deviceRepository;
     private TemperatureRepository temperatureRepository;
-
-    public void setDeviceRepository(DeviceRepository deviceRepository) {
-        this.deviceRepository = deviceRepository;
-    }
 
     public void setTemperatureRepository(TemperatureRepository temperatureRepository) {
         this.temperatureRepository = temperatureRepository;

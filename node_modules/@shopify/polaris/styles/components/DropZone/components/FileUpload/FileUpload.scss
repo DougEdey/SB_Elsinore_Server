@@ -1,0 +1,16 @@
+$fileupload-padding: rem(15px);
+
+.Polaris-DropZone-FileUpload {
+  padding: $fileupload-padding;
+  text-align: center;
+}
+
+.Polaris-DropZone-FileUpload__Image {
+  &.Polaris-DropZone-FileUpload--sizeExtraLarge {
+    width: 90px;
+  }
+
+  &.Polaris-DropZone-FileUpload--sizeLarge {
+    width: 60px;
+  }
+}

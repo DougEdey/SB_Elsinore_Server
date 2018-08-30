@@ -2,6 +2,7 @@ package com.sb.elsinore;
 
 import com.sb.elsinore.devices.CompressorDevice;
 import com.sb.elsinore.devices.OutputDevice;
+import com.sb.elsinore.models.PIDSettings;
 import jGPIO.InvalidGPIOException;
 
 import java.math.BigDecimal;
