@@ -15,3 +15,6 @@ bin
 .gradle/
 build/
 out/
+
+# Node Shit
+node_modules/
