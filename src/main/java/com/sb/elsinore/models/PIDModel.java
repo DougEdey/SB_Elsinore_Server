@@ -82,9 +82,18 @@ public class PIDModel implements PIDInterface {
         this.temperature = new Temperature(aName, device);
     }
 
+    public PIDModel(Temperature temperature) {
+        this.temperature = temperature;
+    }
+
     @Override
     public TemperatureInterface getTemperature() {
         return this.temperature;
+    }
+
+    @Override
+    public void setTemperature(Temperature temperature) {
+        this.temperature = temperature;
     }
 
     /**
@@ -310,5 +319,10 @@ public class PIDModel implements PIDInterface {
             this.coolSetting = new PIDSettings();
         }
         return this.coolSetting;
+    }
+
+    @Override
+    public Long getId() {
+        return this.id;
     }
 }

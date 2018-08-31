@@ -5,6 +5,8 @@ import java.math.BigDecimal;
 public interface PIDInterface {
     TemperatureInterface getTemperature();
 
+    void setTemperature(Temperature temperature);
+
     String getName();
 
     com.sb.elsinore.devices.PID.PIDMode getPidMode();
@@ -56,4 +58,6 @@ public interface PIDInterface {
     PIDSettings getHeatSetting();
 
     PIDSettings getCoolSetting();
+
+    Long getId();
 }

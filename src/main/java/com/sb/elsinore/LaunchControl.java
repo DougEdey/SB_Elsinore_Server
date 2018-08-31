@@ -1147,11 +1147,7 @@ public class LaunchControl {
     }
 
     public PIDModel findPID(String name) {
-        List<PIDModel> deviceList = this.pidRepository.findByTemperatureName(name);
-        if (deviceList.size() == 1) {
-            return deviceList.get(0);
-        }
-        return null;
+        return this.pidRepository.findByTemperatureName(name);
     }
 
     @PreDestroy
