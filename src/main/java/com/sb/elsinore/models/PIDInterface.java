@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 public interface PIDInterface {
     TemperatureInterface getTemperature();
 
-    void setTemperature(Temperature temperature);
+    void setTemperature(TemperatureModel temperature);
 
     String getName();
 

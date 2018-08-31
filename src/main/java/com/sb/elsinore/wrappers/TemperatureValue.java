@@ -1,6 +1,5 @@
 package com.sb.elsinore.wrappers;
 
-import ca.strangebrew.recipe.Quantity;
 import com.sb.util.MathUtil;
 
 import java.math.BigDecimal;
@@ -18,7 +17,18 @@ public class TemperatureValue {
     public static MathContext context = new MathContext(2, RoundingMode.HALF_DOWN);
     private static BigDecimal FREEZING = new BigDecimal(32);
     private Long time = null;
+    private Scale scale = null;
+    private BigDecimal value = null;
 
+    /**
+     * @param currentTemp temperature to convert in Celsius
+     * @return TemperatureModel in Fahrenheit
+     */
+    public static BigDecimal cToF(final BigDecimal currentTemp) {
+        BigDecimal t = MathUtil.divide(MathUtil.multiply(currentTemp, 9), 5);
+        t = t.add(FREEZING);
+        return t;
+    }
 
     public Long getTime() {
         return this.time;
@@ -30,6 +40,7 @@ public class TemperatureValue {
 
     /**
      * Get the current value in the specified scale
+     *
      * @param scale The scale to get the value in
      * @return The current value in the specified scale, may be null
      */
@@ -47,14 +58,6 @@ public class TemperatureValue {
         return convertedValue;
     }
 
-    public enum Scale {
-        C, F
-    }
-
-    private Scale scale = null;
-
-    private BigDecimal value = null;
-
     public void setScale(Scale scale) {
         if (this.scale != null && this.value != null) {
             if (this.scale == Scale.F && scale == Scale.C) {
@@ -69,8 +72,9 @@ public class TemperatureValue {
     /**
      * Set the current newValue of this temperature with the scale of the new newValue
      * This will not change the scale, but convert the incoming newValue appropriately
+     *
      * @param newValue The new newValue
-     * @param scale The scale of the newValue
+     * @param scale    The scale of the newValue
      */
     public void setValue(BigDecimal newValue, Scale scale) {
         if (this.scale == null) {
@@ -88,7 +92,7 @@ public class TemperatureValue {
 
     /**
      * @param currentTemp temperature to convert in Fahrenheit
-     * @return Temperature in celsius
+     * @return TemperatureModel in celsius
      */
     private BigDecimal fToC(final BigDecimal currentTemp) {
         BigDecimal t = currentTemp.subtract(FREEZING);
@@ -96,14 +100,8 @@ public class TemperatureValue {
         return t;
     }
 
-    /**
-     * @param currentTemp temperature to convert in Celsius
-     * @return Temperature in Fahrenheit
-     */
-    public static BigDecimal cToF(final BigDecimal currentTemp) {
-        BigDecimal t = MathUtil.divide(MathUtil.multiply(currentTemp, 9), 5);
-        t = t.add(FREEZING);
-        return t;
+    public enum Scale {
+        C, F
     }
 
 }

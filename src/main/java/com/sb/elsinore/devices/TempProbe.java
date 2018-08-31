@@ -3,8 +3,8 @@ package com.sb.elsinore.devices;
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.TriggerControl;
 import com.sb.elsinore.VolumeUnits;
-import com.sb.elsinore.models.Temperature;
 import com.sb.elsinore.models.TemperatureInterface;
+import com.sb.elsinore.models.TemperatureModel;
 import com.sb.util.MathUtil;
 import jGPIO.GPIO.Direction;
 import jGPIO.InPin;
@@ -58,10 +58,9 @@ public class TempProbe implements TemperatureInterface {
      * The input pin to read.
      */
     private InPin volumePin = null;
-    private Boolean stopVolumeLogging;
     private TriggerControl triggerControl = null;
     private TemperatureInterface temperatureInterface;
-    private boolean stopVolumelogging = false;
+    private boolean stopVolumeLogging = false;
 
     private TempProbe() {
     }
@@ -79,10 +78,15 @@ public class TempProbe implements TemperatureInterface {
      */
     public TempProbe(String name, String device) {
         log.info("Adding " + device);
-        this.temperatureInterface = new Temperature(name, device);
+        this.temperatureInterface = new TemperatureModel(name, device);
         LaunchControl.getInstance().addTemp(this);
     }
 
+
+    @Override
+    public Long getId() {
+        return this.temperatureInterface.getId();
+    }
 
     @Override
     public String getName() {
@@ -102,11 +106,6 @@ public class TempProbe implements TemperatureInterface {
     @Override
     public void setDevice(String device) {
         this.temperatureInterface.setDevice(device);
-    }
-
-    @Override
-    public String getProbe() {
-        return this.temperatureInterface.getProbe();
     }
 
     @Override
@@ -492,14 +491,14 @@ public class TempProbe implements TemperatureInterface {
                     pinValue = new BigDecimal(
                             LaunchControl.getInstance().readOWFSPath(
                                     getVolumeAddress() + "/volt." + getVolumeOffset()));
-                    if (this.stopVolumelogging) {
+                    if (this.stopVolumeLogging) {
                         log.error("Recovered volume level reading for {}", getName());
-                        this.stopVolumelogging = false;
+                        this.stopVolumeLogging = false;
                     }
                 } catch (Exception e) {
-                    if (!this.stopVolumelogging) {
+                    if (!this.stopVolumeLogging) {
                         log.error("Could not update the volume reading from OWFS");
-                        this.stopVolumelogging = true;
+                        this.stopVolumeLogging = true;
                     }
                     log.info("Reconnecting OWFS");
                     LaunchControl.getInstance().setupOWFS();
@@ -662,7 +661,7 @@ public class TempProbe implements TemperatureInterface {
     }
 
     public boolean isSetup() {
-        return !getName().equals(getProbe());
+        return true;
     }
 
     public void toggleVisibility() {
@@ -734,9 +733,9 @@ public class TempProbe implements TemperatureInterface {
     }
 
     @Override
-    public Temperature getModel() {
-        if (this.temperatureInterface instanceof Temperature) {
-            return (Temperature) this.temperatureInterface;
+    public TemperatureModel getModel() {
+        if (this.temperatureInterface instanceof TemperatureModel) {
+            return (TemperatureModel) this.temperatureInterface;
         }
         return null;
     }

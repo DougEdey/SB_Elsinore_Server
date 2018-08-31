@@ -1,8 +1,8 @@
 package com.sb.elsinore.controller;
 
 import com.sb.elsinore.LaunchControl;
-import com.sb.elsinore.models.Temperature;
 import com.sb.elsinore.models.TemperatureInterface;
+import com.sb.elsinore.models.TemperatureModel;
 import com.sb.elsinore.repositories.TemperatureRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.rest.webmvc.RepositoryRestController;
@@ -25,7 +25,7 @@ public class TemperatureController {
 
     @Autowired
     public TemperatureController(TemperatureRepository temperatureRepository) {
-        logger.warning("Started Temperature controller");
+        logger.warning("Started TemperatureModel controller");
         this.temperatureRepository = temperatureRepository;
     }
 
@@ -44,7 +44,7 @@ public class TemperatureController {
     @RequestMapping(value = "/temperatures/{id}", method = RequestMethod.DELETE)
     @ResponseBody
     public void delete(@PathVariable Long id) {
-        Optional<Temperature> tempProbe = this.temperatureRepository.findById(id);
+        Optional<TemperatureModel> tempProbe = this.temperatureRepository.findById(id);
         if (tempProbe.isPresent()) {
             this.temperatureRepository.deleteById(id);
             LaunchControl.getInstance().deleteTemp(tempProbe.get());
@@ -58,7 +58,7 @@ public class TemperatureController {
         ArrayList<String> addresses = new ArrayList<>(LaunchControl.getInstance().getOneWireDevices("28"));
         addresses.add("System");
 
-        Iterable<Temperature> tempIterator = this.temperatureRepository.findAll();
+        Iterable<TemperatureModel> tempIterator = this.temperatureRepository.findAll();
         tempIterator.forEach(t -> addresses.remove(t.getDevice()));
 
         return addresses;

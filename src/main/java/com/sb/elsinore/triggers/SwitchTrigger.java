@@ -2,7 +2,7 @@ package com.sb.elsinore.triggers;
 
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
-import com.sb.elsinore.models.Switch;
+import com.sb.elsinore.devices.Switch;
 import org.json.simple.JSONObject;
 
 import javax.validation.constraints.NotNull;

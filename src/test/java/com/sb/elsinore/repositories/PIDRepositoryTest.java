@@ -4,7 +4,7 @@ import com.sb.elsinore.configuration.JpaDataConfiguration;
 import com.sb.elsinore.configuration.TestJpaConfiguration;
 import com.sb.elsinore.configuration.TestRestConfiguration;
 import com.sb.elsinore.models.PIDModel;
-import com.sb.elsinore.models.Temperature;
+import com.sb.elsinore.models.TemperatureModel;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 
@@ -32,16 +33,14 @@ public class PIDRepositoryTest extends AbstractTransactionalJUnit4SpringContextT
     @Autowired
     private TestEntityManager entityManager;
     @Autowired
-    private TemperatureRepository temperatureRepository;
-    @Autowired
     private PIDRepository pidRepository;
 
-    private Temperature temperature;
+    private TemperatureModel temperature;
 
     @Before
     public void setup() {
         initMocks(this);
-        this.temperature = new Temperature();
+        this.temperature = new TemperatureModel();
         this.temperature.setName("Test");
         this.temperature.setDevice("Device");
 
@@ -61,6 +60,23 @@ public class PIDRepositoryTest extends AbstractTransactionalJUnit4SpringContextT
 
         //then
         assertEquals(this.temperature.getName(), found.getTemperature().getName());
+    }
+
+    @Test
+    public void canDeletePID() {
+        // given
+        PIDModel pidModel = new PIDModel();
+        pidModel.setTemperature(this.temperature);
+
+        this.entityManager.persistAndFlush(pidModel);
+        Long id = pidModel.getId();
+
+        // when
+        this.pidRepository.delete(pidModel);
+
+        //then
+        this.thrown.expect(JpaObjectRetrievalFailureException.class);
+        this.pidRepository.getOne(id);
     }
 
     @Test

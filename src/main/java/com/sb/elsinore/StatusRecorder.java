@@ -142,7 +142,6 @@ public class StatusRecorder implements Runnable {
         return this.currentDirectory;
     }
 
-    @SuppressWarnings("unchecked")
     NanoHTTPD.Response getData(Map<String, String> params) {
         String rootPath;
         try {
@@ -168,7 +167,7 @@ public class StatusRecorder implements Runnable {
         String vesselName = vessel;
         TempRunner tempProbe = LaunchControl.getInstance().findTemp(vessel);
         if (tempProbe != null) {
-            vesselName = tempProbe.getTempInterface().getProbe();
+            vesselName = tempProbe.getTempInterface().getDevice();
         }
 
         File[] contents = new File(getCurrentDir()).listFiles();
@@ -356,7 +355,7 @@ public class StatusRecorder implements Runnable {
 
 
         JSONObject y1Label = new JSONObject();
-        y1Label.put("text", "Temperature");
+        y1Label.put("text", "TemperatureModel");
         y1Label.put("position", "outer-middle");
         JSONObject y1 = new JSONObject();
         y1.put("show", "true");

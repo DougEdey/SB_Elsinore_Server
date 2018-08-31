@@ -111,7 +111,7 @@ public class TempRunner implements Runnable {
             }
         }
 
-        log.info("{} initialized.", this.temperature.getProbe());
+        log.info("{} initialized.", this.temperature.getName());
         this.initialized = true;
     }
 
@@ -132,7 +132,7 @@ public class TempRunner implements Runnable {
         if (this.badTemp && this.currentError != null && this.currentError.equals("")) {
             log.warn("Trying to recover {}", this.temperature.getName());
         }
-        if (this.temperature.getProbe() == null) {
+        if (this.temperature.getDevice() == null) {
             result = updateTempFromOWFS();
         } else {
             result = updateTempFromFile();
@@ -170,7 +170,7 @@ public class TempRunner implements Runnable {
      */
     public BigDecimal updateTempFromOWFS() {
         // Use the OWFS connection
-        if (isNullOrEmpty(this.temperature.getProbe()) || this.temperature.getProbe().equals("Blank")) {
+        if (isNullOrEmpty(this.temperature.getDevice()) || this.temperature.getDevice().equals("Blank")) {
             return new BigDecimal(0.0);
         }
 
@@ -178,18 +178,18 @@ public class TempRunner implements Runnable {
         String rawTemp = "";
 
         try {
-            rawTemp = LaunchControl.getInstance().readOWFSPath(this.temperature.getProbe() + "/temperature");
+            rawTemp = LaunchControl.getInstance().readOWFSPath(this.temperature.getDevice() + "/temperature");
             if (rawTemp.equals("")) {
-                log.error("Couldn't find the probe {} for {}", this.temperature.getProbe(), this.temperature.getName());
+                log.error("Couldn't find the probe {} for {}", this.temperature.getDevice(), this.temperature.getName());
                 LaunchControl.getInstance().setupOWFS();
             } else {
                 temp = new BigDecimal(rawTemp);
             }
         } catch (IOException e) {
-            this.currentError = "Couldn't read " + this.temperature.getProbe();
+            this.currentError = "Couldn't read " + this.temperature.getDevice();
             log.error(this.currentError, e);
         } catch (OwfsException e) {
-            this.currentError = "Couldn't read " + this.temperature.getProbe();
+            this.currentError = "Couldn't read " + this.temperature.getDevice();
             log.error(this.currentError, e);
             LaunchControl.getInstance().setupOWFS();
         } catch (NumberFormatException e) {
@@ -230,7 +230,7 @@ public class TempRunner implements Runnable {
                 newTemperature = MathUtil.divide(tTemp, 1000);
                 this.currentError = null;
             } else {
-                // System Temperature
+                // System TemperatureModel
                 BigDecimal tTemp = new BigDecimal(line);
                 newTemperature = MathUtil.divide(tTemp, 1000);
             }

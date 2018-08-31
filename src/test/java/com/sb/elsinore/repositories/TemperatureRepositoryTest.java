@@ -3,7 +3,7 @@ package com.sb.elsinore.repositories;
 import com.sb.elsinore.configuration.JpaDataConfiguration;
 import com.sb.elsinore.configuration.TestJpaConfiguration;
 import com.sb.elsinore.configuration.TestRestConfiguration;
-import com.sb.elsinore.models.Temperature;
+import com.sb.elsinore.models.TemperatureModel;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,6 +15,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
+
+import javax.validation.ConstraintViolationException;
 
 import static org.junit.Assert.*;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -42,7 +44,7 @@ public class TemperatureRepositoryTest extends AbstractTransactionalJUnit4Spring
     @Test
     public void canCreateTemperature() {
         // given
-        Temperature temperature = new Temperature();
+        TemperatureModel temperature = new TemperatureModel();
         temperature.setName("Test");
         temperature.setDevice("Device");
 
@@ -50,16 +52,37 @@ public class TemperatureRepositoryTest extends AbstractTransactionalJUnit4Spring
         this.entityManager.flush();
 
         // when
-        Temperature found = this.temperatureRepository.findByName("Test");
+        TemperatureModel found = this.temperatureRepository.findByName("Test");
 
         //then
         assertEquals(temperature.getName(), found.getName());
     }
 
     @Test
+    public void nameIsRequired() {
+        TemperatureModel temperature = new TemperatureModel();
+        temperature.setName("");
+        temperature.setDevice("Device");
+
+        this.thrown.expect(ConstraintViolationException.class);
+        this.temperatureRepository.saveAndFlush(temperature);
+    }
+
+
+    @Test
+    public void deviceIsRequired() {
+        TemperatureModel temperature = new TemperatureModel();
+        temperature.setName("Name");
+        temperature.setDevice("");
+
+        this.thrown.expect(ConstraintViolationException.class);
+        this.temperatureRepository.saveAndFlush(temperature);
+    }
+
+    @Test
     public void canDeleteTemperature() {
         // Given
-        Temperature temperature = new Temperature();
+        TemperatureModel temperature = new TemperatureModel();
         temperature.setName("Test");
         temperature.setDevice("Device");
 
@@ -76,7 +99,7 @@ public class TemperatureRepositoryTest extends AbstractTransactionalJUnit4Spring
     @Test
     public void canSaveTemperatureViaRepository() {
         // Given
-        Temperature temperature = new Temperature();
+        TemperatureModel temperature = new TemperatureModel();
         temperature.setName("Test");
         temperature.setDevice("Device");
 
@@ -90,7 +113,7 @@ public class TemperatureRepositoryTest extends AbstractTransactionalJUnit4Spring
     @Test
     public void canUpdateTemperatureName() {
         // Given
-        Temperature temperature = new Temperature();
+        TemperatureModel temperature = new TemperatureModel();
         temperature.setName("Test");
         temperature.setDevice("Device");
 
@@ -115,11 +138,11 @@ public class TemperatureRepositoryTest extends AbstractTransactionalJUnit4Spring
     @Test
     public void temperatureNameMustBeUnique() {
         // Given
-        Temperature temperature = new Temperature();
+        TemperatureModel temperature = new TemperatureModel();
         temperature.setName("Test");
         temperature.setDevice("Device");
 
-        Temperature copyTemperature = new Temperature(temperature);
+        TemperatureModel copyTemperature = new TemperatureModel(temperature);
 
         // when
         this.temperatureRepository.saveAndFlush(temperature);

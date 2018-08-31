@@ -4,15 +4,15 @@ import com.sb.elsinore.BrewServer;
 
 /**
  * $Id: Yeast.java,v 1.1 2006/04/07 13:59:14 andrew_avis Exp $
+ *
  * @author aavis
  * Created on Oct 21, 2004
- *
  */
 public class Yeast extends Ingredient {
-	// I'm not sure what else needs to be added to yeast,
-	// but if we need to, we can add it here
-	private double attenuation = 80.0;
-	private String form = "dry";
+    // I'm not sure what else needs to be added to yeast,
+    // but if we need to, we can add it here
+    private double attenuation = 80.0;
+    private String form = "dry";
     private String laboratory;
     private String productId;
     private double minTemperature = 0.0;
@@ -27,44 +27,56 @@ public class Yeast extends Ingredient {
     private String cultureDate;
 
     // should handle defaults here:
-	public Yeast(){
-		// setName("A yeast");
-	}
-	
-	public void setAttenuation(double inAttenuation) {
-	    this.attenuation = inAttenuation;
-	}
-	
-	public double getAttenuation() {
-	    return this.attenuation;
-	}
+    public Yeast() {
+        // setName("A yeast");
+    }
 
-	public void setForm(String inForm) {
-	    this.form = inForm;
-	}
-	
-	public String getForm() {
-	    return this.form;
-	}
+    public double getAttenuation() {
+        return this.attenuation;
+    }
 
-    public void setLaboratory(String laboratory) {
-        this.laboratory = laboratory;
+    public void setAttenuation(double inAttenuation) {
+        this.attenuation = inAttenuation;
+    }
+
+    public String getForm() {
+        return this.form;
+    }
+
+    public void setForm(String inForm) {
+        this.form = inForm;
     }
 
     public String getLaboratory() {
         return this.laboratory;
     }
 
-    public void setProductId(String productId) {
-        this.productId = productId;
+    public void setLaboratory(String laboratory) {
+        this.laboratory = laboratory;
     }
 
     public String getProductId() {
         return this.productId;
     }
 
+    public void setProductId(String productId) {
+        this.productId = productId;
+    }
+
     public void setMinTemperature(double newMinTemperature) {
         this.minTemperature = newMinTemperature;
+    }
+
+    /**
+     * Returns the min temperature of this Yeast in C.
+     *
+     * @return The minimum fermentation temperature of this yeast
+     */
+    public double getMinTemperature() {
+        if (this.minTemperatureUnit != null && this.minTemperatureUnit.equals("F")) {
+            return BrewCalcs.fToC(this.minTemperature);
+        }
+        return this.minTemperature;
     }
 
     public void setMinTemperature(String newMinTemperature) {
@@ -75,19 +87,8 @@ public class Yeast extends Ingredient {
                 this.minTemperatureUnit = exploded[1];
             }
         } catch (NumberFormatException nfe) {
-            BrewServer.LOG.warning("Couldn't parse Min Temperature: " + newMinTemperature);
+            BrewServer.LOG.warning("Couldn't parse Min TemperatureModel: " + newMinTemperature);
         }
-    }
-
-    /**
-     * Returns the min temperature of this Yeast in C.
-     * @return The minimum fermentation temperature of this yeast
-     */
-    public double getMinTemperature() {
-        if (this.minTemperatureUnit != null && this.minTemperatureUnit.equals("F")) {
-            return BrewCalcs.fToC(this.minTemperature);
-        }
-        return this.minTemperature;
     }
 
     public String getMinTemperatureString() {
@@ -98,20 +99,9 @@ public class Yeast extends Ingredient {
         this.maxTemperature = maxTemperature;
     }
 
-    public void setMaxTemperature(String newMaxTemperature) {
-        try {
-            String[] exploded = newMaxTemperature.split(" ");
-            if (exploded.length == 2) {
-                this.maxTemperature = Double.parseDouble(exploded[0].trim());
-                this.maxTemperatureUnit = exploded[1];
-            }
-        } catch (NumberFormatException nfe) {
-            BrewServer.LOG.warning("Couldn't parse Min Temperature: " + newMaxTemperature);
-        }
-    }
-
     /**
      * Returns the max temperature of this Yeast in C.
+     *
      * @return The maximum fermentation temperature of this yeast
      */
     public double getMaxTemperature() {
@@ -121,40 +111,52 @@ public class Yeast extends Ingredient {
         return this.maxTemperature;
     }
 
-    public String getMaxTemperatureString() {
-        return this.maxTemperature + " " + this.maxTemperatureUnit;
+    public void setMaxTemperature(String newMaxTemperature) {
+        try {
+            String[] exploded = newMaxTemperature.split(" ");
+            if (exploded.length == 2) {
+                this.maxTemperature = Double.parseDouble(exploded[0].trim());
+                this.maxTemperatureUnit = exploded[1];
+            }
+        } catch (NumberFormatException nfe) {
+            BrewServer.LOG.warning("Couldn't parse Min TemperatureModel: " + newMaxTemperature);
+        }
     }
 
-    public void setFlocculation(String flocculation) {
-        this.flocculation = flocculation;
+    public String getMaxTemperatureString() {
+        return this.maxTemperature + " " + this.maxTemperatureUnit;
     }
 
     public String getFlocculation() {
         return this.flocculation;
     }
 
-    public void setBestFor(String bestFor) {
-        this.bestFor = bestFor;
+    public void setFlocculation(String flocculation) {
+        this.flocculation = flocculation;
     }
 
     public String getBestFor() {
         return this.bestFor;
     }
 
-    public void setTimesCultured(int timesCultured) {
-        this.timesCultured = timesCultured;
+    public void setBestFor(String bestFor) {
+        this.bestFor = bestFor;
     }
 
     public int getTimesCultured() {
         return this.timesCultured;
     }
 
-    public void setMaxReuse(int maxReuse) {
-        this.maxReuse = maxReuse;
+    public void setTimesCultured(int timesCultured) {
+        this.timesCultured = timesCultured;
     }
 
     public int getMaxReuse() {
         return this.maxReuse;
+    }
+
+    public void setMaxReuse(int maxReuse) {
+        this.maxReuse = maxReuse;
     }
 
     public void addToSecondary(boolean addToSecondary) {
@@ -165,11 +167,11 @@ public class Yeast extends Ingredient {
         return this.addToSecondary;
     }
 
-    public void setCultureDate(String cultureDate) {
-        this.cultureDate = cultureDate;
-    }
-
     public String getCultureDate() {
         return this.cultureDate;
+    }
+
+    public void setCultureDate(String cultureDate) {
+        this.cultureDate = cultureDate;
     }
 }

@@ -3,8 +3,8 @@ package com.sb.elsinore.devices;
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.models.PIDInterface;
 import com.sb.elsinore.models.PIDSettings;
-import com.sb.elsinore.models.Temperature;
 import com.sb.elsinore.models.TemperatureInterface;
+import com.sb.elsinore.models.TemperatureModel;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
 import org.apache.commons.lang3.StringUtils;
@@ -40,7 +40,7 @@ public class PID implements PIDInterface {
     }
 
     @Override
-    public void setTemperature(Temperature temperature) {
+    public void setTemperature(TemperatureModel temperature) {
         this.pidInterface.setTemperature(temperature);
     }
 

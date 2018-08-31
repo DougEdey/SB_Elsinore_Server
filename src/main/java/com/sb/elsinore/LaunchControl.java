@@ -4,14 +4,16 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.sb.common.CollectionsUtil;
 import com.sb.elsinore.devices.I2CDevice;
+import com.sb.elsinore.devices.Switch;
 import com.sb.elsinore.devices.TempProbe;
 import com.sb.elsinore.inputs.PhSensor;
-import com.sb.elsinore.models.*;
+import com.sb.elsinore.models.PIDModel;
+import com.sb.elsinore.models.TemperatureInterface;
+import com.sb.elsinore.models.TemperatureModel;
 import com.sb.elsinore.models.Timer;
 import com.sb.elsinore.repositories.PIDRepository;
 import com.sb.elsinore.repositories.TemperatureRepository;
 import com.sb.elsinore.wrappers.TempRunner;
-import jGPIO.InvalidGPIOException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.owfs.jowfsclient.Enums.OwPersistence;
@@ -38,7 +40,7 @@ import java.util.regex.Pattern;
 /**
  * LaunchControl is the core class of Elsinore. It reads the config file,
  * determining whether to run setup or not It launches the threads for the PIDs,
- * Temperature, and Mash It write the config file on shutdown. It sets up the
+ * TemperatureModel, and Mash It write the config file on shutdown. It sets up the
  * OWFS connection
  *
  * @author doug
@@ -323,7 +325,7 @@ public class LaunchControl {
 
         // Load the System probe if it's not configured
         if (this.temperatureRepository != null) {
-            Temperature probe = this.temperatureRepository.findByName("System");
+            TemperatureModel probe = this.temperatureRepository.findByName("System");
             if (probe == null) {
                 addSystemTemp();
             }
@@ -356,19 +358,14 @@ public class LaunchControl {
         Switch p = findSwitch(name);
         if (p == null) {
             try {
-                p = new Switch(name, gpio);
+                //p = new Switch(name, gpio);
                 getSwitchList().add(p);
             } catch (Exception g) {
                 BrewServer.LOG.warning("Could not add switch: " + g.getMessage());
                 g.printStackTrace();
             }
         } else {
-            try {
-                p.setGPIO(gpio);
-            } catch (InvalidGPIOException g) {
-                BrewServer.LOG.warning("Could not add switch: " + g.getMessage());
-                g.printStackTrace();
-            }
+            p.setGPIOName(gpio);
         }
         return p;
     }
@@ -472,8 +469,7 @@ public class LaunchControl {
         Switch tSwitch;
         while (iterator.hasNext()) {
             tSwitch = iterator.next();
-            if (tSwitch.getName().equalsIgnoreCase(name)
-                    || tSwitch.getNodeName().equalsIgnoreCase(name)) {
+            if (tSwitch.getName().equalsIgnoreCase(name)) {
                 return tSwitch;
             }
         }
@@ -895,7 +891,7 @@ public class LaunchControl {
      *
      * @param tTempProbe The TempProbe object to delete.
      */
-    public void deleteTemp(Temperature tTempProbe) {
+    public void deleteTemp(TemperatureModel tTempProbe) {
         getTempRunners().removeIf(tempRunner -> tempRunner.getTempInterface().getName().equals(tTempProbe.getName()));
         getTempThreads().removeIf(tempThread -> tempThread.getName().equalsIgnoreCase(tTempProbe.getName()));
     }
@@ -953,7 +949,7 @@ public class LaunchControl {
         }
 
         // Change the temperature probes
-        for (Temperature tempProbe : this.temperatureRepository.findAll()) {
+        for (TemperatureModel tempProbe : this.temperatureRepository.findAll()) {
             tempProbe.setScale(scale);
         }
         setTempScales(scale);
@@ -1136,7 +1132,7 @@ public class LaunchControl {
 
     public TempRunner findTemp(String name) {
         TempRunner tempRunner = this.deviceMap.get(name);
-        Temperature device = this.temperatureRepository.findByName(name);
+        TemperatureModel device = this.temperatureRepository.findByName(name);
         if (device != null) {
             tempRunner = new TempRunner(device);
         } else {

@@ -49,11 +49,11 @@ public class TemperatureTrigger implements TriggerInterface {
     private WebNotification webNotification = null;
 
     public TemperatureTrigger() {
-        BrewServer.LOG.info("Created an empty Temperature Trigger");
+        BrewServer.LOG.info("Created an empty TemperatureModel Trigger");
     }
 
     public TemperatureTrigger(int newPosition) {
-        BrewServer.LOG.info("Created a Temperature Trigger at" + newPosition);
+        BrewServer.LOG.info("Created a TemperatureModel Trigger at" + newPosition);
         this.position = newPosition;
     }
 
@@ -185,11 +185,11 @@ public class TemperatureTrigger implements TriggerInterface {
     public final void waitForTrigger() {
 
         if (this.targetTemp == null) {
-            BrewServer.LOG.warning("No Target Temperature Set");
+            BrewServer.LOG.warning("No Target TemperatureModel Set");
             return;
         }
         if (this.temperatureProbe == null) {
-            BrewServer.LOG.warning("No Temperature Probe Set");
+            BrewServer.LOG.warning("No TemperatureModel Probe Set");
             return;
         }
 
@@ -208,7 +208,7 @@ public class TemperatureTrigger implements TriggerInterface {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
-                    BrewServer.LOG.warning("Temperature Trigger interrupted");
+                    BrewServer.LOG.warning("TemperatureModel Trigger interrupted");
                     return;
                 }
             }
@@ -217,7 +217,7 @@ public class TemperatureTrigger implements TriggerInterface {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
-                    BrewServer.LOG.warning("Temperature Trigger interrupted");
+                    BrewServer.LOG.warning("TemperatureModel Trigger interrupted");
                     return;
                 }
             }
@@ -231,7 +231,7 @@ public class TemperatureTrigger implements TriggerInterface {
                     BrewServer.LOG.info("" + diff);
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
-                    BrewServer.LOG.warning("Temperature Trigger interrupted.");
+                    BrewServer.LOG.warning("TemperatureModel Trigger interrupted.");
                 }
             }
         }
@@ -304,7 +304,7 @@ public class TemperatureTrigger implements TriggerInterface {
 
     @Override
     public String getName() {
-        return "Temperature";
+        return "TemperatureModel";
     }
 
     /**

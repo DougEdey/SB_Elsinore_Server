@@ -3,18 +3,40 @@ package com.sb.elsinore.models;
 import java.math.BigDecimal;
 
 public interface TemperatureInterface {
+
+    /**
+     * @return The Id of this Temperature object
+     */
+    Long getId();
+
+    /**
+     * @return The name of this temperature probe
+     */
     String getName();
 
+    /**
+     * @param name The new name of this temperature probe
+     */
     void setName(String name);
 
+    /**
+     * @return The device probe to use to reading temperatures
+     */
     String getDevice();
 
+    /**
+     * @param device The new device probe to use for reading temperatures
+     */
     void setDevice(String device);
 
-    String getProbe();
-
+    /**
+     * @return The scale of temperature readings
+     */
     String getScale();
 
+    /**
+     * @param scale The new scale for temperature readings
+     */
     void setScale(String scale);
 
     String getVolumeUnit();
@@ -73,5 +95,5 @@ public interface TemperatureInterface {
 
     void setVolumeMeasurementEnabled(boolean enabled);
 
-    Temperature getModel();
+    TemperatureModel getModel();
 }

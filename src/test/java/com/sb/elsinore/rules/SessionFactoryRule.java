@@ -1,7 +1,7 @@
 package com.sb.elsinore.rules;
 
 import com.sb.elsinore.models.PIDModel;
-import com.sb.elsinore.models.Temperature;
+import com.sb.elsinore.models.TemperatureModel;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -53,7 +53,7 @@ public class SessionFactoryRule implements MethodRule {
 
     private SessionFactory createSessionFactory() {
         Configuration configuration = new Configuration();
-        configuration.addAnnotatedClass(Temperature.class)
+        configuration.addAnnotatedClass(TemperatureModel.class)
                 .addAnnotatedClass(PIDModel.class);
         configuration.setProperty("hibernate.dialect",
                 "org.hibernate.dialect.H2Dialect");

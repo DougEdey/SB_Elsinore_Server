@@ -21,8 +21,8 @@ public class PIDModel implements PIDInterface {
     private Long id;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @ElementCollection(targetClass = Temperature.class)
-    private Temperature temperature;
+    @ElementCollection(targetClass = TemperatureModel.class)
+    private TemperatureModel temperature;
 
     private boolean invertAux = false;
     private BigDecimal dutyCycle = new BigDecimal(0);
@@ -79,10 +79,10 @@ public class PIDModel implements PIDInterface {
      * @param aName The Name of this PIDModel
      */
     public PIDModel(String aName, String device) {
-        this.temperature = new Temperature(aName, device);
+        this.temperature = new TemperatureModel(aName, device);
     }
 
-    public PIDModel(Temperature temperature) {
+    public PIDModel(TemperatureModel temperature) {
         this.temperature = temperature;
     }
 
@@ -92,7 +92,7 @@ public class PIDModel implements PIDInterface {
     }
 
     @Override
-    public void setTemperature(Temperature temperature) {
+    public void setTemperature(TemperatureModel temperature) {
         this.temperature = temperature;
     }
 

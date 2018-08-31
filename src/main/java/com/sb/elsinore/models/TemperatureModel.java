@@ -1,7 +1,6 @@
 package com.sb.elsinore.models;
 
 import com.sb.elsinore.TemperatureListeners;
-import io.leangen.graphql.annotations.GraphQLQuery;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -10,23 +9,26 @@ import java.math.BigDecimal;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 @Entity
-@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"name"}))
+@Table(uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"name"}),
+        @UniqueConstraint(columnNames = {"device"})
+})
 @EntityListeners(TemperatureListeners.class)
-public class Temperature implements TemperatureInterface {
+public class TemperatureModel implements TemperatureInterface {
 
     @NotNull
     @javax.validation.constraints.Size(min = 1)
-    @GraphQLQuery(name = "device", description = "A temp probes device")
-    String device = "";
+    private String device = "";
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @GraphQLQuery(name = "id", description = "A temp probe's id")
     private Long id;
     private boolean hidden = false;
 
+
+    @NotNull
+    @javax.validation.constraints.Size(min = 1)
     private String name;
-    private String probeName;
     private BigDecimal cutoffTemp = null;
 
     /**
@@ -51,21 +53,25 @@ public class Temperature implements TemperatureInterface {
     private String i2cDevNumber = null;
     private String i2cDevType = null;
 
-    public Temperature() {
+    public TemperatureModel() {
     }
 
-    public Temperature(String name, String device) {
+    public TemperatureModel(String name, @NotNull String device) {
         this.device = device;
 
 
         setName(name);
-        this.probeName = this.device;
     }
 
-    public Temperature(Temperature other) {
+    public TemperatureModel(TemperatureModel other) {
         this.name = other.name;
         this.scale = other.scale;
         this.device = other.device;
+    }
+
+    @Override
+    public Long getId() {
+        return this.id;
     }
 
     /**
@@ -92,18 +98,10 @@ public class Temperature implements TemperatureInterface {
     @Override
     public void setDevice(String device) {
         if (isNullOrEmpty(device)) {
-            this.device = null;
+            this.device = "";
         } else {
             this.device = device;
         }
-    }
-
-    /**
-     * @return The address of this probe
-     */
-    @Override
-    public String getProbe() {
-        return this.probeName;
     }
 
     /**
@@ -302,7 +300,7 @@ public class Temperature implements TemperatureInterface {
     }
 
     @Override
-    public Temperature getModel() {
+    public TemperatureModel getModel() {
         return this;
     }
 }

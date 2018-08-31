@@ -9,11 +9,11 @@ import static org.junit.Assert.*;
 
 public class TemperatureTest {
 
-    private Temperature temperature = null;
+    private TemperatureModel temperature = null;
 
     @Before
     public void before() {
-        this.temperature = new Temperature();
+        this.temperature = new TemperatureModel();
     }
 
     @Test
@@ -111,7 +111,7 @@ public class TemperatureTest {
         this.temperature.setI2CChannel("Channel");
         assertEquals("", this.temperature.getI2CChannel());
     }
-    
+
     @Test
     public void canReadAndWriteI2CChannelToInteger() {
         this.temperature.setI2CChannel("12");
