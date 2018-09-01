@@ -19,6 +19,7 @@ public final class OutputControl implements Runnable {
     public boolean shuttingDown = false;
     private OutputDevice cooler = null;
     private OutputDevice heater = null;
+    private String name;
 
     /**
      * The Duty cycle.
@@ -35,10 +36,11 @@ public final class OutputControl implements Runnable {
      * Constructor for a heat only pin.
      *
      * @param name     Name of this instance.
-     * @param settings The Pid Settings to created the heater output for
+     * @param settings The PID Settings to created the heater output for
      */
     public OutputControl(final String name, PIDSettingsInterface settings) {
-        this.heater = new OutputDevice(name, settings);
+        this.name = name;
+        this.heater = new OutputDevice(name + "_heater", "HEATER", settings);
     }
 
     /**
@@ -48,12 +50,12 @@ public final class OutputControl implements Runnable {
 
         //If there is a cooling delay between cycles,
         //then assume this is a compressor device
-        if (BigDecimal.ZERO.compareTo(settings.getCycleTime()) == -1) {
+        if (BigDecimal.ZERO.compareTo(settings.getCycleTime()) < 0) {
             CompressorDevice coolDevice =
-                    new CompressorDevice("cooler", settings);
+                    new CompressorDevice(this.name + "cooler", settings);
             setCooler(coolDevice);
         } else {
-            setCooler(new OutputDevice("cooler", settings));
+            setCooler(new OutputDevice(this.name + "cooler", "COOLER", settings));
         }
 
     }

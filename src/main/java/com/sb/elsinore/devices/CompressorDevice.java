@@ -14,13 +14,14 @@ import java.math.BigDecimal;
  */
 public class CompressorDevice extends OutputDevice {
 
+    public static String TYPE = "compressor";
     protected long lastStopTime = -1L;
     protected long lastStartTime = -1L;
     protected boolean running = false;
     protected long delayBetweenRuns = 1000 * 60 * 3; // 3 Minutes
 
     public CompressorDevice(String name, PIDSettingsInterface settings) {
-        super(name, settings);
+        super(name, TYPE, settings);
     }
 
 

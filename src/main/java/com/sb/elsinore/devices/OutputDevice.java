@@ -1,15 +1,14 @@
 package com.sb.elsinore.devices;
 
 import com.sb.elsinore.BrewServer;
+import com.sb.elsinore.interfaces.OutputDeviceInterface;
 import com.sb.elsinore.interfaces.PIDSettingsInterface;
+import com.sb.elsinore.models.OutputDeviceModel;
 import com.sb.util.MathUtil;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
 
 import java.math.BigDecimal;
-import java.util.Observable;
-import java.util.Observer;
-import java.util.logging.Level;
 
 /**
  * This class represents a single heating/cooling device that can have a duty
@@ -17,17 +16,25 @@ import java.util.logging.Level;
  *
  * @author Andy
  */
-public class OutputDevice implements Observer {
+public class OutputDevice {
 
     static BigDecimal HUNDRED = new BigDecimal(100);
-    private static BigDecimal THOUSAND = new BigDecimal(1000);
     private final Object ssrLock = new Object();
-    protected String name;    //The name of this device
     protected PIDSettingsInterface settings = null;
     private boolean invertOutput = false;
     private OutPin ssr = null;    //The output pin.
 
-    public OutputDevice(String name, PIDSettingsInterface settings) {
+    private OutputDeviceInterface outputDeviceInterface;
+
+    public OutputDevice(String name, String type, PIDSettingsInterface pidSettings) {
+        this.outputDeviceInterface = new OutputDeviceModel();
+        this.outputDeviceInterface.setName(name);
+        this.outputDeviceInterface.setType(type);
+        this.outputDeviceInterface.setPIDSettings(pidSettings);
+    }
+
+    public OutputDevice(OutputDeviceInterface outputDeviceInterface) {
+        this.outputDeviceInterface = outputDeviceInterface;
         // Check for inverted outputs using a property.
         try {
             String invOut = System.getProperty("invert_outputs");
@@ -39,9 +46,6 @@ public class OutputDevice implements Observer {
         } catch (Exception e) {
             // Incase get property fails
         }
-
-        this.name = name;
-        this.settings = settings;
 
         try {
             initializeSSR();
@@ -133,14 +137,14 @@ public class OutputDevice implements Observer {
      * @return the name
      */
     public String getName() {
-        return this.name;
+        return this.outputDeviceInterface.getName();
     }
 
     /**
      * @param name the name to set
      */
     public void setName(String name) {
-        this.name = name;
+        this.outputDeviceInterface.setName(name);
     }
 
     /**
@@ -150,29 +154,5 @@ public class OutputDevice implements Observer {
      */
     public final void setInverted(final boolean inverted) {
         this.invertOutput = inverted;
-    }
-
-    @Override
-    public void update(Observable o, Object arg) {
-        if (arg instanceof String) {
-            String propName = (String) arg;
-            switch (propName) {
-                case "cycle_time":
-                case "proportional":
-                case "integral":
-                case "derivative":
-                case "delay":
-                case "mode":
-                case "inverted":
-                    Thread.currentThread().interrupt();
-                    break;
-                case "gpio":
-                    try {
-                        initializeSSR();
-                    } catch (InvalidGPIOException e) {
-                        BrewServer.LOG.log(Level.WARNING, "Failed to update GPIO.", e);
-                    }
-            }
-        }
     }
 }
