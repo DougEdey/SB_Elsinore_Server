@@ -8,7 +8,7 @@ import com.sun.jna.Native;
  */
 public class ADS1115 extends ADS1015 {
 
-    public static String DEV_NAME = "ADS1115";
+    static String DEV_NAME = "ADS1115";
     /*
      * =========================================================================
      * CONFIG REGISTER
@@ -102,7 +102,7 @@ public class ADS1115 extends ADS1015 {
     private static int ADS1015_REG_CONFIG_CQUE_4CONV = 0x0002; // Assert
 
     public ADS1115(int deviceNo, int address) {
-        super(deviceNo, address);
+        super(deviceNo, address, DEV_NAME);
     }
 
     @Override
@@ -118,7 +118,7 @@ public class ADS1115 extends ADS1015 {
         int ADS1015_REG_CONFIG_CMODE_TRAD = 0x0000;
         int ADS1015_REG_CONFIG_DR_920SPS = 0x0060;
         int ADS1015_REG_CONFIG_MODE_SINGLE = 0x0100;
-        Integer config = ADS1015_REG_CONFIG_CQUE_NONE | // Disable the
+        int config = ADS1015_REG_CONFIG_CQUE_NONE | // Disable the
                 // comparator
                 // (default
                 // val)

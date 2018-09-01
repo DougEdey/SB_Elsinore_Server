@@ -42,17 +42,18 @@ public class I2CSettingsRepositoryTest extends AbstractTransactionalJUnit4Spring
 
     @Test
     public void canCreateI2CSettings() {
-        I2CSettings i2CSettings = new I2CSettings();
-        i2CSettings.setAddress(1);
-        i2CSettings.setDeviceNumber(2);
+        I2CSettings i2cSettings = new I2CSettings();
+        i2cSettings.setAddress(1);
+        i2cSettings.setDeviceNumber(2);
+        i2cSettings.setDeviceType("ADS1015");
 
-        Long i2cSettingsId = this.entityManager.persistAndFlush(i2CSettings).getId();
+        Long i2cSettingsId = this.entityManager.persistAndFlush(i2cSettings).getId();
 
         Optional<I2CSettings> optional = this.i2CSettingsRepository.findById(i2cSettingsId);
 
         assertTrue(optional.isPresent());
-        assertEquals(i2CSettings.getAddress(), optional.get().getAddress());
-        assertEquals(i2CSettings.getDeviceNumber(), optional.get().getDeviceNumber());
+        assertEquals(i2cSettings.getAddress(), optional.get().getAddress());
+        assertEquals(i2cSettings.getDeviceNumber(), optional.get().getDeviceNumber());
     }
 
     @Test
@@ -60,6 +61,7 @@ public class I2CSettingsRepositoryTest extends AbstractTransactionalJUnit4Spring
         I2CSettings i2cSettings = new I2CSettings();
         i2cSettings.setAddress(1);
         i2cSettings.setDeviceNumber(2);
+        i2cSettings.setDeviceType("ADS1015");
 
         Long i2cSettingsId = this.entityManager.persistAndFlush(i2cSettings).getId();
 
@@ -73,7 +75,8 @@ public class I2CSettingsRepositoryTest extends AbstractTransactionalJUnit4Spring
     public void i2cSettingsMustHaveAddress() {
         I2CSettings i2cSettings = new I2CSettings();
         i2cSettings.setDeviceNumber(2);
-        
+        i2cSettings.setDeviceType("ADS1015");
+
         this.thrown.expect(ConstraintViolationException.class);
         this.i2CSettingsRepository.saveAndFlush(i2cSettings);
     }
@@ -82,6 +85,17 @@ public class I2CSettingsRepositoryTest extends AbstractTransactionalJUnit4Spring
     public void i2cSettingsMustHaveDeviceNumber() {
         I2CSettings i2cSettings = new I2CSettings();
         i2cSettings.setAddress(1);
+        i2cSettings.setDeviceType("ADS1015");
+
+        this.thrown.expect(ConstraintViolationException.class);
+        this.i2CSettingsRepository.saveAndFlush(i2cSettings);
+    }
+
+    @Test
+    public void i2cSettingsMustHaveDeviceType() {
+        I2CSettings i2cSettings = new I2CSettings();
+        i2cSettings.setAddress(1);
+        i2cSettings.setDeviceNumber(2);
 
         this.thrown.expect(ConstraintViolationException.class);
         this.i2CSettingsRepository.saveAndFlush(i2cSettings);

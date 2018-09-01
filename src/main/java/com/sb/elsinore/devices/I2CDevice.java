@@ -56,10 +56,11 @@ public abstract class I2CDevice implements Serializable {
         init();
     }
 
-    I2CDevice(int deviceNumber, int address) {
+    I2CDevice(int deviceNumber, int address, String type) {
         this.i2cSettings = new I2CSettings();
         this.i2cSettings.setDeviceNumber(deviceNumber);
         this.i2cSettings.setAddress(address);
+        this.i2cSettings.setDeviceType(type);
         init();
     }
 
@@ -168,6 +169,9 @@ public abstract class I2CDevice implements Serializable {
             File devFile = new File("/dev/");
             if (devFile.isDirectory()) {
                 File[] array = devFile.listFiles((file, name) -> name != null && name.startsWith("i2c-"));
+                if (array == null) {
+                    return null;
+                }
                 Arrays.stream(array).forEach(f -> list.add(f.getName()));
             }
             available_devices = new String[list.size()];
