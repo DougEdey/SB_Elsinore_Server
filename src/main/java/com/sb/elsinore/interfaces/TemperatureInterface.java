@@ -1,4 +1,6 @@
-package com.sb.elsinore.models;
+package com.sb.elsinore.interfaces;
+
+import com.sb.elsinore.models.TemperatureModel;
 
 import java.math.BigDecimal;
 

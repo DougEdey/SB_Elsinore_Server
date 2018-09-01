@@ -3,7 +3,7 @@ package com.sb.elsinore.devices;
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.TriggerControl;
 import com.sb.elsinore.VolumeUnits;
-import com.sb.elsinore.models.TemperatureInterface;
+import com.sb.elsinore.interfaces.TemperatureInterface;
 import com.sb.elsinore.models.TemperatureModel;
 import com.sb.util.MathUtil;
 import jGPIO.GPIO.Direction;
@@ -232,11 +232,6 @@ public class TempProbe implements TemperatureInterface {
         return this.temperatureInterface.getCalibration();
     }
 
-    @Override
-    public void setCalibration(BigDecimal calibration) {
-        this.temperatureInterface.setCalibration(calibration);
-    }
-
     public void setCalibration(String calibration) {
         // Lock the calibration temp
         calibration = calibration.replace(",", ".");
@@ -263,6 +258,11 @@ public class TempProbe implements TemperatureInterface {
         } else {
             log.error("{} doesn't match {}", calibration, getTempRegexp().pattern());
         }
+    }
+
+    @Override
+    public void setCalibration(BigDecimal calibration) {
+        this.temperatureInterface.setCalibration(calibration);
     }
 
     @Override
@@ -339,6 +339,11 @@ public class TempProbe implements TemperatureInterface {
         return this.temperatureInterface.getCutoffTemp();
     }
 
+    @Override
+    public void setCutoffTemp(BigDecimal cutoffTemp) {
+        this.temperatureInterface.setCutoffTemp(cutoffTemp);
+    }
+
     /******
      * Method to take a cutoff value, parse it to the correct scale
      *  and then update the cutoffTemp.
@@ -372,11 +377,6 @@ public class TempProbe implements TemperatureInterface {
         } else {
             log.error("{} doesn't match {}", getCutoffTemp(), getTempRegexp().pattern());
         }
-    }
-
-    @Override
-    public void setCutoffTemp(BigDecimal cutoffTemp) {
-        this.temperatureInterface.setCutoffTemp(cutoffTemp);
     }
 
     /**

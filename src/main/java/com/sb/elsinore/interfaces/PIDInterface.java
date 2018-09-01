@@ -1,4 +1,6 @@
-package com.sb.elsinore.models;
+package com.sb.elsinore.interfaces;
+
+import com.sb.elsinore.models.TemperatureModel;
 
 import java.math.BigDecimal;
 
@@ -55,9 +57,9 @@ public interface PIDInterface {
 
     void setManualTime(BigDecimal time);
 
-    PIDSettings getHeatSetting();
+    PIDSettingsInterface getHeatSetting();
 
-    PIDSettings getCoolSetting();
+    PIDSettingsInterface getCoolSetting();
 
     Long getId();
 }

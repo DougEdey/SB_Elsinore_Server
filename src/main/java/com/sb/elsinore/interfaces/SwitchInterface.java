@@ -1,4 +1,4 @@
-package com.sb.elsinore.models;
+package com.sb.elsinore.interfaces;
 
 public interface SwitchInterface {
 

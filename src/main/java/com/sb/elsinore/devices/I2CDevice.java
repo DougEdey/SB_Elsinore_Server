@@ -1,6 +1,7 @@
 package com.sb.elsinore.devices;
 
 import com.sb.elsinore.BrewServer;
+import com.sb.elsinore.models.I2CSettings;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Structure;
@@ -15,48 +16,52 @@ import java.util.List;
  * Created by doug on 11/07/15.
  */
 public abstract class I2CDevice implements Serializable {
-    public static String DEV_NUMBER = "Number";
-    public static String DEV_ADDRESS = "Address";
-    public static String DEV_CHANNEL = "Channel";
-    public static String DEV_TYPE = "Type";
-    public static String I2C_NODE = "I2C";
-    public static String DEV_NAME = "BASE";
 
-    public static int I2C_BUFSIZE = 64;
-    public static String BASE_PATH = "/dev/i2c-%s";
-    public static int O_RDWR = 0x02;
     /* /dev/i2c-X ioctl commands.  The ioctl's parameter is always an
- * unsigned long, except for:
- *  - I2C_FUNCS, takes pointer to an unsigned long
- *  - I2C_RDWR, takes pointer to struct i2c_rdwr_ioctl_data
- *  - I2C_SMBUS, takes pointer to struct i2c_smbus_ioctl_data
- */
+     * unsigned long, except for:
+     *  - I2C_FUNCS, takes pointer to an unsigned long
+     *  - I2C_RDWR, takes pointer to struct i2c_rdwr_ioctl_data
+     *  - I2C_SMBUS, takes pointer to struct i2c_smbus_ioctl_data
+     */
     public static int I2C_RETRIES = 0x0701;  /* number of times a device address should
                    be polled when not acknowledging */
     public static int I2C_TIMEOUT = 0x0702;  /* set timeout in units of 10 ms */
-
-    /* NOTE: Slave address is 7 or 10 bits, but 10-bit addresses
-     * are NOT supported! (due to code brokenness)
-     */
-    public static int I2C_SLAVE = 0x0703;  /* Use this slave address */
     public static int I2C_SLAVE_FORCE = 0x0706;  /* Use this slave address, even if it
                    is already in use by a driver! */
     public static int I2C_TENBIT = 0x0704;  /* 0 for 7 bit addrs, != 0 for 10 bit */
-
     public static int I2C_FUNCS = 0x0705;  /* Get the adapter functionality mask */
-
     public static int I2C_RDWR = 0x0707;  /* Combined R/W transfer (one STOP only) */
-
     public static int I2C_PEC = 0x0708;  /* != 0 to use PEC with SMBus */
     public static int I2C_SMBUS = 0x0720;  /* SMBus transfer */
-
-    protected int device_number = -1;
-    protected String device_path = "";
+    static String BASE_PATH = "/dev/i2c-%s";
+    static int O_RDWR = 0x02;
+    /* NOTE: Slave address is 7 or 10 bits, but 10-bit addresses
+     * are NOT supported! (due to code brokenness)
+     */
+    static int I2C_SLAVE = 0x0703;  /* Use this slave address */
+    private static int I2C_BUFSIZE = 64;
     private static String[] available_devices = null;
-    protected int address = 0x00;
+    public ads1015error error = ads1015error.ADS1015_ERROR_OK;
+    Linux_C_lib libC = new Linux_C_lib_DirectMapping();
+    boolean _adsInitialised = false;
+    int fd = -1;
+    private I2CSettings i2cSettings;
+    private String device_path;
+    private byte[] I2CMasterBuffer = new byte[I2C_BUFSIZE];
+    private byte[] I2CSlaveBuffer = new byte[I2C_BUFSIZE];
+    private int I2CReadLength, I2CWriteLength;
 
-    protected Linux_C_lib libC = new Linux_C_lib_DirectMapping();
+    I2CDevice(I2CSettings i2cSettings) {
+        this.i2cSettings = i2cSettings;
+        init();
+    }
 
+    I2CDevice(int deviceNumber, int address) {
+        this.i2cSettings = new I2CSettings();
+        this.i2cSettings.setDeviceNumber(deviceNumber);
+        this.i2cSettings.setAddress(address);
+        init();
+    }
 
     public static ArrayList<String> getAvailableAddresses(String device_path) {
         int devNo;
@@ -84,7 +89,7 @@ public abstract class I2CDevice implements Serializable {
      * @param device The I2C device to use
      * @return A list of available addresses on the bus
      */
-    public static ArrayList<String> getAvailableAddresses(int device) {
+    private static ArrayList<String> getAvailableAddresses(int device) {
 
         List<String> commands = new ArrayList<>();
         commands.add("i2cdetect");
@@ -171,14 +176,148 @@ public abstract class I2CDevice implements Serializable {
         return available_devices;
     }
 
+    private void init() {
+        this.device_path = String.format(I2CDevice.BASE_PATH, this.i2cSettings.getDeviceNumber());
+    }
+
     public abstract String getDevName();
 
     public String getDevNumberString() {
-        if (this.device_number != -1) {
-            return Integer.toString(this.device_number);
+        if (getDeviceNumber() != -1) {
+            return Integer.toString(getDeviceNumber());
         }
         return "";
     }
+
+    public void setDevice(String dev) {
+        this.device_path = dev;
+    }
+
+    public String getDevicePath() {
+        return this.device_path;
+    }
+
+    public void close() {
+        if (this.fd > -1) {
+            if (this.libC.close(this.fd) != 0) {
+                BrewServer.LOG.warning(String.format("Failed to close: %s", Native.getLastError()));
+            }
+        }
+        this.fd = -1;
+    }
+
+    ads1015error ads1015WriteRegister(int reg, int value) {
+        ads1015error error = ads1015error.ADS1015_ERROR_OK;
+
+        // Clear write buffers
+        int i;
+        for (i = 0; i < I2C_BUFSIZE; i++) {
+            this.I2CMasterBuffer[i] = 0x00;
+        }
+
+        this.I2CWriteLength = 3;
+        this.I2CReadLength = 0;
+        this.I2CMasterBuffer[0] = (byte) reg;                   // Register
+        System.out.println(String.format("value: 0x%02x", (byte) (value >> 8)));
+        System.out.println(String.format("value: 0x%02x", (byte) (value & 0xFF)));
+        this.I2CMasterBuffer[1] = (byte) (value >> 8); //0xC3;            // Upper 8-bits
+        this.I2CMasterBuffer[2] = (byte) (value & 0xFF); //0x03;          // Lower 8-bits
+
+        int ret = this.libC.write(this.fd, this.I2CMasterBuffer, this.I2CWriteLength);
+        if (ret != this.I2CWriteLength) {
+            BrewServer.LOG.warning(String.format("Failed to write to I2C Device %s. Error %s", ret, Native.getLastError()));
+            error = ads1015error.ADS1015_ERROR_I2CBUSY;
+        }
+        // ToDo: Add in proper I2C error-checking
+        return error;
+    }
+
+    ads1015error ads1015Init() {
+        ads1015error error = ads1015error.ADS1015_ERROR_OK;
+
+        // Initialise I2C
+        if (!i2cInit()) {
+            return ads1015error.ADS1015_ERROR_I2CINIT;    /* Fatal error */
+        }
+
+        this._adsInitialised = true;
+        return error;
+
+    }
+
+    int ina219Read16(int reg) {
+
+        // Clear write buffers
+        for (int i = 0; i < I2C_BUFSIZE; i++) {
+            this.I2CMasterBuffer[i] = 0x00;
+        }
+
+        this.I2CWriteLength = 2;
+        this.I2CReadLength = 2;
+        this.I2CSlaveBuffer[0] = (byte) 0x0;           // I2C device address
+        this.I2CSlaveBuffer[1] = (byte) 0x0;                       // Command register
+
+        while ((this.I2CSlaveBuffer[0] & 0x80) == 0) {
+            this.libC.read(this.fd, this.I2CSlaveBuffer, this.I2CReadLength);
+        }
+        this.I2CMasterBuffer[0] = 0x0;
+        this.libC.write(this.fd, this.I2CMasterBuffer, 1);
+
+        if (this.I2CReadLength != this.libC.read(this.fd, this.I2CMasterBuffer, this.I2CReadLength)) {
+            BrewServer.LOG.warning(String.format("Error reading %s", Native.getLastError()));
+        }
+
+        int msb = this.I2CMasterBuffer[0];
+        int lsb = this.I2CMasterBuffer[1];
+        if (lsb < 0) {
+            lsb = 256 + lsb;
+        }
+
+        return ((msb << 8) + lsb);
+        // Shift values to create properly formed integer
+        //return (short) ((I2CMasterBuffer[0] << 8) | I2CMasterBuffer[1]);
+    }
+
+    public boolean i2cInit() {
+        this.fd = this.libC.open(this.device_path, O_RDWR);
+        if (this.fd < 0) {
+            BrewServer.LOG.warning(String.format("Failed to read from %s. Error %s", this.device_path, Native.getLastError()));
+            return false;
+        } else {
+            BrewServer.LOG.warning(String.format("Opened fd %s", this.fd));
+        }
+
+        int iovalue = this.libC.ioctl(this.fd, I2CDevice.I2C_SLAVE, getAddress());
+
+        if (iovalue < 0) {
+            BrewServer.LOG.warning(String.format("Failed to open slave device at address %s, wrote %s",
+                    getAddress(), iovalue));
+            BrewServer.LOG.warning(String.format("Error %s", Native.getLastError()));
+            return false;
+        } else {
+            BrewServer.LOG.warning(String.format("I2C Slave %s opened %s", getAddress(), iovalue));
+        }
+        return true;
+    }
+
+    public abstract float readValue(int devChannel);
+
+    public int getAddress() {
+        return this.i2cSettings.getAddress();
+    }
+
+    public int getDeviceNumber() {
+        return this.i2cSettings.getDeviceNumber();
+    }
+
+    enum ads1015error {
+        ADS1015_ERROR_OK,                // Everything executed normally
+        ADS1015_ERROR_I2CINIT,               // Unable to initialise I2C
+        ADS1015_ERROR_I2CBUSY,               // I2C already in use
+        ADS1015_ERROR_INVALIDCHANNEL,        // Invalid channel specified
+        ADS1015_ERROR_LAST
+    }
+
 
     public interface Linux_C_lib extends com.sun.jna.Library {
 
@@ -234,40 +373,6 @@ public abstract class I2CDevice implements Serializable {
 
     public static class Linux_C_lib_DirectMapping implements Linux_C_lib {
 
-        native public long memcpy(int[] dst, short[] src, long n);
-
-        native public int memcpy(int[] dst, short[] src, int n);
-
-        native public int pipe(int[] fds);
-
-        native public int tcdrain(int fd);
-
-        native public int fcntl(int fd, int cmd, int arg);
-
-        native public int ioctl(int fd, int cmd, int arg);
-
-        native public int open(String path, int flags);
-
-        native public int close(int fd);
-
-        native public int write(int fd, byte[] buffer, int count);
-
-        native public int read(int fd, byte[] buffer, int count);
-
-        native public long write(int fd, byte[] buffer, long count);
-
-        native public long read(int fd, byte[] buffer, long count);
-
-        native public int select(int n, int[] read, int[] write, int[] error, timeval timeout);
-
-        native public int poll(int[] fds, int nfds, int timeout);
-
-        native public int tcflush(int fd, int qs);
-
-        native public void perror(String msg);
-
-        native public int tcsendbreak(int fd, int duration);
-
         static {
             try {
                 Native.register("c");
@@ -277,148 +382,56 @@ public abstract class I2CDevice implements Serializable {
                 BrewServer.LOG.warning("BAD: Failed to load CLibrary");
             }
         }
-    }
 
-    public I2CDevice(int deviceNo, int address) {
-        this.device_number = deviceNo;
-        this.address = address;
-        this.device_path = String.format(I2CDevice.BASE_PATH, this.device_number);
-    }
+        @Override
+        native public long memcpy(int[] dst, short[] src, long n);
 
-    public void setDevice(String dev) {
-        this.device_path = dev;
-    }
+        @Override
+        native public int memcpy(int[] dst, short[] src, int n);
 
-    public String getDevicePath() {
-        return this.device_path;
-    }
+        @Override
+        native public int pipe(int[] fds);
 
-    protected boolean _adsInitialised = false;
-    protected int fd = -1;
+        @Override
+        native public int tcdrain(int fd);
 
-    public ads1015error error = ads1015error.ADS1015_ERROR_OK;
+        @Override
+        native public int fcntl(int fd, int cmd, int arg);
 
-    enum ads1015error {
-        ADS1015_ERROR_OK,                // Everything executed normally
-        ADS1015_ERROR_I2CINIT,               // Unable to initialise I2C
-        ADS1015_ERROR_I2CBUSY,               // I2C already in use
-        ADS1015_ERROR_INVALIDCHANNEL,        // Invalid channel specified
-        ADS1015_ERROR_LAST
-    }
+        @Override
+        native public int ioctl(int fd, int cmd, int arg);
 
-    public byte[] I2CMasterBuffer = new byte[I2C_BUFSIZE];
-    public byte[] I2CSlaveBuffer = new byte[I2C_BUFSIZE];
-    public int I2CReadLength, I2CWriteLength;
+        @Override
+        native public int open(String path, int flags);
 
-    public void close() {
-        if (this.fd > -1) {
-            if (this.libC.close(this.fd) != 0) {
-                BrewServer.LOG.warning(String.format("Failed to close: %s", Native.getLastError()));
-            }
-        }
-        this.fd = -1;
-    }
+        @Override
+        native public int close(int fd);
 
-    public ads1015error ads1015WriteRegister(int reg, int value) {
-        ads1015error error = ads1015error.ADS1015_ERROR_OK;
+        @Override
+        native public int write(int fd, byte[] buffer, int count);
 
-        // Clear write buffers
-        int i;
-        for (i = 0; i < I2C_BUFSIZE; i++) {
-            this.I2CMasterBuffer[i] = 0x00;
-        }
+        @Override
+        native public int read(int fd, byte[] buffer, int count);
 
-        this.I2CWriteLength = 3;
-        this.I2CReadLength = 0;
-        this.I2CMasterBuffer[0] = (byte) reg;                   // Register
-        System.out.println(String.format("value: 0x%02x", (byte) (value >> 8)));
-        System.out.println(String.format("value: 0x%02x", (byte) (value & 0xFF)));
-        this.I2CMasterBuffer[1] = (byte) (value >> 8); //0xC3;            // Upper 8-bits
-        this.I2CMasterBuffer[2] = (byte) (value & 0xFF); //0x03;          // Lower 8-bits
+        @Override
+        native public long write(int fd, byte[] buffer, long count);
 
-        int ret = this.libC.write(this.fd, this.I2CMasterBuffer, this.I2CWriteLength);
-        if (ret != this.I2CWriteLength) {
-            BrewServer.LOG.warning(String.format("Failed to write to I2C Device %s. Error %s", ret, Native.getLastError()));
-            error = ads1015error.ADS1015_ERROR_I2CBUSY;
-        }
-        // ToDo: Add in proper I2C error-checking
-        return error;
-    }
+        @Override
+        native public long read(int fd, byte[] buffer, long count);
 
-    public ads1015error ads1015Init() {
-        ads1015error error = ads1015error.ADS1015_ERROR_OK;
+        @Override
+        native public int select(int n, int[] read, int[] write, int[] error, timeval timeout);
 
-        // Initialise I2C
-        if (!i2cInit()) {
-            return ads1015error.ADS1015_ERROR_I2CINIT;    /* Fatal error */
-        }
+        @Override
+        native public int poll(int[] fds, int nfds, int timeout);
 
-        this._adsInitialised = true;
-        return error;
+        @Override
+        native public int tcflush(int fd, int qs);
 
-    }
+        @Override
+        native public void perror(String msg);
 
-    public int ina219Read16(int reg) {
-
-        // Clear write buffers
-        for (int i = 0; i < I2C_BUFSIZE; i++) {
-            this.I2CMasterBuffer[i] = 0x00;
-        }
-
-        this.I2CWriteLength = 2;
-        this.I2CReadLength = 2;
-        this.I2CSlaveBuffer[0] = (byte) 0x0;           // I2C device address
-        this.I2CSlaveBuffer[1] = (byte) 0x0;                       // Command register
-
-        while ((this.I2CSlaveBuffer[0] & 0x80) == 0) {
-            this.libC.read(this.fd, this.I2CSlaveBuffer, this.I2CReadLength);
-        }
-        this.I2CMasterBuffer[0] = 0x0;
-        this.libC.write(this.fd, this.I2CMasterBuffer, 1);
-
-        if (this.I2CReadLength != this.libC.read(this.fd, this.I2CMasterBuffer, this.I2CReadLength)) {
-            BrewServer.LOG.warning(String.format("Error reading %s", Native.getLastError()));
-        }
-
-        int msb = this.I2CMasterBuffer[0];
-        int lsb = this.I2CMasterBuffer[1];
-        if (lsb < 0)
-            lsb = 256 + lsb;
-
-        return ((msb << 8) + lsb);
-        // Shift values to create properly formed integer
-        //return (short) ((I2CMasterBuffer[0] << 8) | I2CMasterBuffer[1]);
-    }
-
-    public boolean i2cInit() {
-        this.fd = this.libC.open(this.device_path, O_RDWR);
-        if (this.fd < 0) {
-            BrewServer.LOG.warning(String.format("Failed to read from %s. Error %s", this.device_path, Native.getLastError()));
-            return false;
-        } else {
-            BrewServer.LOG.warning(String.format("Opened fd %s", this.fd));
-        }
-
-        int iovalue = this.libC.ioctl(this.fd, I2CDevice.I2C_SLAVE, this.address);
-
-        if (iovalue < 0) {
-            BrewServer.LOG.warning(String.format("Failed to open slave device at address %s, wrote %s", this.address, iovalue));
-            BrewServer.LOG.warning(String.format("Error %s", Native.getLastError()));
-            return false;
-        } else {
-            BrewServer.LOG.warning(String.format("I2C Slave %s opened %s", this.address, iovalue));
-        }
-        return true;
-    }
-
-    public abstract float readValue(int devChannel);
-
-
-    public int getAddress() {
-        return this.address;
-    }
-
-    public int getDevNumber() {
-        return this.device_number;
+        @Override
+        native public int tcsendbreak(int fd, int duration);
     }
 }

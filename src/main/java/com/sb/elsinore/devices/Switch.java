@@ -1,7 +1,7 @@
 package com.sb.elsinore.devices;
 
 import com.sb.elsinore.BrewServer;
-import com.sb.elsinore.models.SwitchInterface;
+import com.sb.elsinore.interfaces.SwitchInterface;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
 

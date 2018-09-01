@@ -1,9 +1,9 @@
 package com.sb.elsinore.devices;
 
 import com.sb.elsinore.BrewServer;
-import com.sb.elsinore.models.PIDInterface;
-import com.sb.elsinore.models.PIDSettings;
-import com.sb.elsinore.models.TemperatureInterface;
+import com.sb.elsinore.interfaces.PIDInterface;
+import com.sb.elsinore.interfaces.PIDSettingsInterface;
+import com.sb.elsinore.interfaces.TemperatureInterface;
 import com.sb.elsinore.models.TemperatureModel;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
@@ -161,12 +161,12 @@ public class PID implements PIDInterface {
     }
 
     @Override
-    public PIDSettings getHeatSetting() {
+    public PIDSettingsInterface getHeatSetting() {
         return this.pidInterface.getHeatSetting();
     }
 
     @Override
-    public PIDSettings getCoolSetting() {
+    public PIDSettingsInterface getCoolSetting() {
         return this.pidInterface.getCoolSetting();
     }
 

@@ -1,7 +1,7 @@
 package com.sb.elsinore.devices;
 
 import com.sb.elsinore.BrewServer;
-import com.sb.elsinore.models.PIDSettings;
+import com.sb.elsinore.interfaces.PIDSettingsInterface;
 import jGPIO.InvalidGPIOException;
 
 import java.math.BigDecimal;
@@ -19,7 +19,7 @@ public class CompressorDevice extends OutputDevice {
     protected boolean running = false;
     protected long delayBetweenRuns = 1000 * 60 * 3; // 3 Minutes
 
-    public CompressorDevice(String name, PIDSettings settings) {
+    public CompressorDevice(String name, PIDSettingsInterface settings) {
         super(name, settings);
     }
 

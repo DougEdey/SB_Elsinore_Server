@@ -1,5 +1,7 @@
 package com.sb.elsinore.models;
 
+import com.sb.elsinore.interfaces.SwitchInterface;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 

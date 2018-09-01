@@ -1,6 +1,9 @@
 package com.sb.elsinore.models;
 
 
+import com.sb.elsinore.interfaces.PIDInterface;
+import com.sb.elsinore.interfaces.PIDSettingsInterface;
+import com.sb.elsinore.interfaces.TemperatureInterface;
 import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
@@ -216,7 +219,7 @@ public class PIDModel implements PIDInterface {
     public void setCool(final String gpio, final BigDecimal duty,
                         final BigDecimal delay, final BigDecimal cycle, final BigDecimal p,
                         final BigDecimal i, final BigDecimal d) {
-        PIDSettings coolSetting = getCoolSetting();
+        PIDSettingsInterface coolSetting = getCoolSetting();
         setDutyCycle(duty);
         coolSetting.setGPIO(gpio);
         coolSetting.setDelay(delay);
@@ -306,7 +309,7 @@ public class PIDModel implements PIDInterface {
     }
 
     @Override
-    public PIDSettings getHeatSetting() {
+    public PIDSettingsInterface getHeatSetting() {
         if (this.heatSetting == null) {
             this.heatSetting = new PIDSettings();
         }
@@ -314,7 +317,7 @@ public class PIDModel implements PIDInterface {
     }
 
     @Override
-    public PIDSettings getCoolSetting() {
+    public PIDSettingsInterface getCoolSetting() {
         if (this.coolSetting == null) {
             this.coolSetting = new PIDSettings();
         }

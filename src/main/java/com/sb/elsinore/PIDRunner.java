@@ -1,7 +1,7 @@
 package com.sb.elsinore;
 
 import com.sb.elsinore.devices.PID;
-import com.sb.elsinore.models.PIDSettings;
+import com.sb.elsinore.interfaces.PIDSettingsInterface;
 import com.sb.elsinore.wrappers.TempRunner;
 import com.sb.util.MathUtil;
 import jGPIO.InvalidGPIOException;
@@ -199,8 +199,8 @@ class PIDRunner extends TempRunner {
         }
 
         // Calculate the error
-        PIDSettings heatSettings = this.pid.getCoolSetting();
-        PIDSettings coolSettings = this.pid.getHeatSetting();
+        PIDSettingsInterface heatSettings = this.pid.getCoolSetting();
+        PIDSettingsInterface coolSettings = this.pid.getHeatSetting();
 
         BigDecimal error = this.pid.getSetPoint().subtract(avgTemp);
         BigDecimal output;
@@ -233,7 +233,7 @@ class PIDRunner extends TempRunner {
         return output;
     }
 
-    public BigDecimal calculate(BigDecimal timeDiff, BigDecimal error, PIDSettings pidSettings) {
+    public BigDecimal calculate(BigDecimal timeDiff, BigDecimal error, PIDSettingsInterface pidSettings) {
         this.totalError = this.previousError.add(error.multiply(timeDiff));
 
         BigDecimal currentError = error.subtract(this.previousError).divide(timeDiff, MathContext.DECIMAL32);

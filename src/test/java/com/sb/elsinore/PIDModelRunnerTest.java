@@ -2,7 +2,7 @@ package com.sb.elsinore;
 
 import com.sb.elsinore.devices.PID;
 import com.sb.elsinore.devices.TempProbe;
-import com.sb.elsinore.models.PIDSettings;
+import com.sb.elsinore.interfaces.PIDSettingsInterface;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -27,9 +27,9 @@ public class PIDModelRunnerTest {
     private TempProbe tempProbe;
 
     @Spy
-    private PIDSettings heatSettings;
+    private PIDSettingsInterface heatSettings;
     @Spy
-    private PIDSettings coolSettings;
+    private PIDSettingsInterface coolSettings;
 
 
     @Before
@@ -85,6 +85,8 @@ public class PIDModelRunnerTest {
         BigDecimal timeDiff = new BigDecimal(10);
         when(this.pid.getSetPoint()).thenReturn(new BigDecimal(100));
         when(this.heatSettings.getProportional()).thenReturn(new BigDecimal(60));
+        when(this.heatSettings.getIntegral()).thenReturn(new BigDecimal(0));
+        when(this.heatSettings.getDerivative()).thenReturn(new BigDecimal(0));
         when(this.heatSettings.getGPIO()).thenReturn("GPIO_7");
         when(this.pidRunner.calculateTimeDiff()).thenReturn(timeDiff);
         BigDecimal avgTemp = new BigDecimal(10);
@@ -98,6 +100,8 @@ public class PIDModelRunnerTest {
         BigDecimal timeDiff = new BigDecimal(10);
         when(this.pid.getSetPoint()).thenReturn(new BigDecimal(-100));
         when(this.coolSettings.getProportional()).thenReturn(new BigDecimal(60));
+        when(this.coolSettings.getIntegral()).thenReturn(new BigDecimal(0));
+        when(this.coolSettings.getDerivative()).thenReturn(new BigDecimal(0));
         when(this.coolSettings.getGPIO()).thenReturn("GPIO_7");
         when(this.pidRunner.calculateTimeDiff()).thenReturn(timeDiff);
         BigDecimal avgTemp = new BigDecimal(10);
@@ -111,6 +115,8 @@ public class PIDModelRunnerTest {
         BigDecimal timeDiff = new BigDecimal(10);
         when(this.pid.getSetPoint()).thenReturn(new BigDecimal(100));
         when(this.heatSettings.getProportional()).thenReturn(new BigDecimal(10));
+        when(this.heatSettings.getIntegral()).thenReturn(new BigDecimal(0));
+        when(this.heatSettings.getDerivative()).thenReturn(new BigDecimal(0));
         when(this.heatSettings.getGPIO()).thenReturn("GPIO_7");
         when(this.pidRunner.calculateTimeDiff()).thenReturn(timeDiff);
         BigDecimal result = this.pidRunner.calculate(avgTemp);
@@ -123,6 +129,8 @@ public class PIDModelRunnerTest {
         BigDecimal timeDiff = new BigDecimal(10);
         when(this.pid.getSetPoint()).thenReturn(new BigDecimal(99));
         when(this.coolSettings.getProportional()).thenReturn(new BigDecimal(10));
+        when(this.coolSettings.getIntegral()).thenReturn(new BigDecimal(0));
+        when(this.coolSettings.getDerivative()).thenReturn(new BigDecimal(0));
         when(this.coolSettings.getGPIO()).thenReturn("GPIO_7");
         when(this.pidRunner.calculateTimeDiff()).thenReturn(timeDiff);
         BigDecimal result = this.pidRunner.calculate(avgTemp);
@@ -136,6 +144,8 @@ public class PIDModelRunnerTest {
 
         when(this.pid.getSetPoint()).thenReturn(new BigDecimal(100));
         when(this.heatSettings.getProportional()).thenReturn(new BigDecimal(10));
+        when(this.heatSettings.getIntegral()).thenReturn(new BigDecimal(0));
+        when(this.heatSettings.getDerivative()).thenReturn(new BigDecimal(0));
         when(this.heatSettings.getGPIO()).thenReturn("GPIO_7");
         when(this.pidRunner.calculateTimeDiff()).thenReturn(timeDiff);
 
@@ -150,6 +160,8 @@ public class PIDModelRunnerTest {
 
         when(this.pid.getSetPoint()).thenReturn(new BigDecimal(90));
         when(this.coolSettings.getProportional()).thenReturn(new BigDecimal(10));
+        when(this.coolSettings.getIntegral()).thenReturn(new BigDecimal(0));
+        when(this.coolSettings.getDerivative()).thenReturn(new BigDecimal(0));
         when(this.coolSettings.getGPIO()).thenReturn("GPIO_7");
         when(this.pidRunner.calculateTimeDiff()).thenReturn(timeDiff);
 

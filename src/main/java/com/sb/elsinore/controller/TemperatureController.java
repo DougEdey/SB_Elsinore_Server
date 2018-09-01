@@ -1,7 +1,7 @@
 package com.sb.elsinore.controller;
 
 import com.sb.elsinore.LaunchControl;
-import com.sb.elsinore.models.TemperatureInterface;
+import com.sb.elsinore.interfaces.TemperatureInterface;
 import com.sb.elsinore.models.TemperatureModel;
 import com.sb.elsinore.repositories.TemperatureRepository;
 import org.springframework.beans.factory.annotation.Autowired;

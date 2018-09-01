@@ -3,7 +3,7 @@ package com.sb.elsinore.wrappers;
 
 import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
-import com.sb.elsinore.models.TemperatureInterface;
+import com.sb.elsinore.interfaces.TemperatureInterface;
 import com.sb.util.MathUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.owfs.jowfsclient.OwfsException;

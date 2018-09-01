@@ -1,6 +1,7 @@
 package com.sb.elsinore.models;
 
 import com.sb.elsinore.TemperatureListeners;
+import com.sb.elsinore.interfaces.TemperatureInterface;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;

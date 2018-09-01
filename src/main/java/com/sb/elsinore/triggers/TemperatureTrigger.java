@@ -4,7 +4,7 @@ import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Messages;
 import com.sb.elsinore.devices.PID;
-import com.sb.elsinore.models.PIDInterface;
+import com.sb.elsinore.interfaces.PIDInterface;
 import com.sb.elsinore.notificiations.Notifications;
 import com.sb.elsinore.notificiations.WebNotification;
 import com.sb.elsinore.wrappers.TempRunner;
