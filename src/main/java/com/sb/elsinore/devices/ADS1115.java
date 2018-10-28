@@ -1,13 +1,11 @@
 package com.sb.elsinore.devices;
 
-import com.sb.elsinore.BrewServer;
 import com.sun.jna.Native;
 
 /**
  * Created by doug on 18/07/15.
  */
 public class ADS1115 extends ADS1015 {
-
     static String DEV_NAME = "ADS1115";
     /*
      * =========================================================================
@@ -101,6 +99,7 @@ public class ADS1115 extends ADS1015 {
     // conversions
     private static int ADS1015_REG_CONFIG_CQUE_4CONV = 0x0002; // Assert
 
+
     public ADS1115(int deviceNo, int address) {
         super(deviceNo, address, DEV_NAME);
     }
@@ -183,7 +182,7 @@ public class ADS1115 extends ADS1015 {
         close();
 
         float value = (((float) v) * 4096 / 32767);
-        BrewServer.LOG.warning("Read value: " + value);
+        this.logger.warn("Read value: {}", value);
 
         return value;
     }
@@ -193,20 +192,20 @@ public class ADS1115 extends ADS1015 {
         String devpath = String.format(I2CDevice.BASE_PATH, getDeviceNumber());
         this.fd = this.libC.open(devpath, O_RDWR);
         if (this.fd < 0) {
-            BrewServer.LOG.warning(String.format("Failed to read from %s. Error %s", devpath, Native.getLastError()));
+            this.logger.warn("Failed to read from {}. Error {}.", devpath, Native.getLastError());
             return false;
         } else {
-            BrewServer.LOG.warning(String.format("Opened fd %s", this.fd));
+            this.logger.warn("Opened fd {}", this.fd);
         }
 
         int iovalue = this.libC.ioctl(this.fd, I2CDevice.I2C_SLAVE, getAddress());
 
         if (iovalue < 0) {
-            BrewServer.LOG.warning(String.format("Failed to open slave device at address %s, wrote %s", getAddress(), iovalue));
-            BrewServer.LOG.warning(String.format("Error %s", Native.getLastError()));
+            this.logger.warn("Failed to open slave device at address {}, wrote {}", getAddress(), iovalue);
+            this.logger.warn("Error {}", Native.getLastError());
             return false;
         } else {
-            BrewServer.LOG.warning(String.format("I2C Slave %s opened %s", getAddress(), iovalue));
+            this.logger.warn("I2C Slave {} opened {}", getAddress(), iovalue);
         }
         return true;
     }

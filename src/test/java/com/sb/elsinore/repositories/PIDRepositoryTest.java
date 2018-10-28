@@ -56,7 +56,7 @@ public class PIDRepositoryTest extends AbstractTransactionalJUnit4SpringContextT
         this.entityManager.persistAndFlush(pidModel);
 
         // when
-        PIDModel found = this.pidRepository.findByTemperatureName("Test");
+        PIDModel found = this.pidRepository.findByTemperatureNameIgnoreCase("Test");
 
         //then
         assertEquals(this.temperature.getName(), found.getTemperature().getName());
@@ -103,7 +103,7 @@ public class PIDRepositoryTest extends AbstractTransactionalJUnit4SpringContextT
         this.pidRepository.saveAndFlush(pidModel);
 
         // when
-        PIDModel found = this.pidRepository.findByTemperatureName("Test");
+        PIDModel found = this.pidRepository.findByTemperatureNameIgnoreCase("Test");
 
         //then
         assertEquals(this.temperature.getName(), found.getTemperature().getName());

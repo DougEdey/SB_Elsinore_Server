@@ -7,7 +7,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.0.3.RELEASE")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.0.6.RELEASE")
     }
 }
 
@@ -26,8 +26,8 @@ description = "Elsinore"
 sourceCompatibility = "10.0.1"
 targetCompatibility = "10.0.1"
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.5'
+wrapper {
+    gradleVersion = '4.10.2'
 }
 
 idea {
@@ -48,6 +48,7 @@ repositories {
 dependencies {
     compile group: 'com.google.code.gson', name: 'gson', version: '2.6.2'
     compile group: 'io.gsonfire', name: 'gson-fire', version: '1.7.2'
+    compile group: 'org.javassist', name: 'javassist', version: '3.23.1-GA'
 
     compile(group: 'commons-logging', name: 'commons-logging', version: '1.1.1') {
         exclude(module: 'logkit')
@@ -58,6 +59,7 @@ dependencies {
     compile(group: 'com.graphql-java', name: 'graphiql-spring-boot-starter', version: '5.0.2')
     compile(group: 'com.graphql-java', name: 'graphql-java-tools', version: '5.2.3')
     compile('io.leangen.graphql:spqr:0.9.8')
+    compile("org.springframework.boot:spring-boot-starter-tomcat")
     compile("org.springframework.boot:spring-boot-starter-data-rest")
     compile("org.springframework.boot:spring-boot-starter-data-jpa")
     compile("org.springframework.boot:spring-boot-devtools")

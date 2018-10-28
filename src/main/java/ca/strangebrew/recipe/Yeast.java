@@ -1,7 +1,5 @@
 package ca.strangebrew.recipe;
 
-import com.sb.elsinore.BrewServer;
-
 /**
  * $Id: Yeast.java,v 1.1 2006/04/07 13:59:14 andrew_avis Exp $
  *
@@ -63,10 +61,6 @@ public class Yeast extends Ingredient {
         this.productId = productId;
     }
 
-    public void setMinTemperature(double newMinTemperature) {
-        this.minTemperature = newMinTemperature;
-    }
-
     /**
      * Returns the min temperature of this Yeast in C.
      *
@@ -79,6 +73,10 @@ public class Yeast extends Ingredient {
         return this.minTemperature;
     }
 
+    public void setMinTemperature(double newMinTemperature) {
+        this.minTemperature = newMinTemperature;
+    }
+
     public void setMinTemperature(String newMinTemperature) {
         try {
             String[] exploded = newMinTemperature.split(" ");
@@ -87,16 +85,12 @@ public class Yeast extends Ingredient {
                 this.minTemperatureUnit = exploded[1];
             }
         } catch (NumberFormatException nfe) {
-            BrewServer.LOG.warning("Couldn't parse Min TemperatureModel: " + newMinTemperature);
+            this.logger.warn("Couldn't parse Min TemperatureModel: {}", newMinTemperature);
         }
     }
 
     public String getMinTemperatureString() {
         return this.minTemperature + " " + this.minTemperatureUnit;
-    }
-
-    public void setMaxTemperature(double maxTemperature) {
-        this.maxTemperature = maxTemperature;
     }
 
     /**
@@ -111,6 +105,10 @@ public class Yeast extends Ingredient {
         return this.maxTemperature;
     }
 
+    public void setMaxTemperature(double maxTemperature) {
+        this.maxTemperature = maxTemperature;
+    }
+
     public void setMaxTemperature(String newMaxTemperature) {
         try {
             String[] exploded = newMaxTemperature.split(" ");
@@ -119,7 +117,7 @@ public class Yeast extends Ingredient {
                 this.maxTemperatureUnit = exploded[1];
             }
         } catch (NumberFormatException nfe) {
-            BrewServer.LOG.warning("Couldn't parse Min TemperatureModel: " + newMaxTemperature);
+            this.logger.warn("Couldn't parse Min TemperatureModel: {}", newMaxTemperature);
         }
     }
 

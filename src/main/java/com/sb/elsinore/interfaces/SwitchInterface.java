@@ -7,6 +7,8 @@ public interface SwitchInterface {
      */
     Long getId();
 
+    void setId(Long id);
+
     /**
      * @return The name of this switch, must be unique
      */
@@ -20,12 +22,12 @@ public interface SwitchInterface {
     /**
      * @return The GPIO Name of this switch, must be unique
      */
-    String getGPIOName();
+    String getGpio();
 
     /**
      * @param gpioName The new GPIO name for this switch, must be unique
      */
-    void setGPIOName(String gpioName);
+    void setGpio(String gpioName);
 
     /**
      * @return True if the output is HIGH for off, LOW for on

@@ -38,7 +38,7 @@ public class TriggerTest {
         this.launchControl = mock(LaunchControl.class);
         PowerMockito.mockStatic(LaunchControl.class);
         try {
-            Mockito.when(LaunchControl.getInstance()).thenReturn(this.launchControl);
+            Mockito.when(this.launchControl).thenReturn(this.launchControl);
         } catch (Exception e) {
             e.printStackTrace();
             fail();

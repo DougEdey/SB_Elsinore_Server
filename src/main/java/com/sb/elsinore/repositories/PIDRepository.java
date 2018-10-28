@@ -11,5 +11,5 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
  */
 @RepositoryRestResource(collectionResourceRel = "pids", path = "pids")
 public interface PIDRepository extends JpaRepository<PIDModel, Long> {
-    PIDModel findByTemperatureName(@Param("name") String name);
+    PIDModel findByTemperatureNameIgnoreCase(@Param("name") String name);
 }

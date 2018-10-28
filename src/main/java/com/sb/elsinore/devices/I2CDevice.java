@@ -1,10 +1,11 @@
 package com.sb.elsinore.devices;
 
-import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.models.I2CSettings;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Structure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -16,7 +17,6 @@ import java.util.List;
  * Created by doug on 11/07/15.
  */
 public abstract class I2CDevice implements Serializable {
-
     /* /dev/i2c-X ioctl commands.  The ioctl's parameter is always an
      * unsigned long, except for:
      *  - I2C_FUNCS, takes pointer to an unsigned long
@@ -41,6 +41,7 @@ public abstract class I2CDevice implements Serializable {
     static int I2C_SLAVE = 0x0703;  /* Use this slave address */
     private static int I2C_BUFSIZE = 64;
     private static String[] available_devices = null;
+    private static Logger logger = LoggerFactory.getLogger(I2CDevice.class);
     public ads1015error error = ads1015error.ADS1015_ERROR_OK;
     Linux_C_lib libC = new Linux_C_lib_DirectMapping();
     boolean _adsInitialised = false;
@@ -77,7 +78,7 @@ public abstract class I2CDevice implements Serializable {
         try {
             devNo = Integer.parseInt(device_path);
         } catch (NumberFormatException nfe) {
-            BrewServer.LOG.warning(String.format("Failed to get a device number from %s", device_path));
+            logger.warn("Failed to get a device number from {}", device_path);
             return new ArrayList<>();
         }
 
@@ -105,9 +106,9 @@ public abstract class I2CDevice implements Serializable {
         try {
             process = pb.start();
             process.waitFor();
-            BrewServer.LOG.info(process.getOutputStream().toString());
+            logger.info(process.getOutputStream().toString());
         } catch (IOException | InterruptedException e3) {
-            BrewServer.LOG.info("Couldn't check for devices on the I2C bus");
+            logger.info("Couldn't check for devices on the I2C bus");
             e3.printStackTrace();
             return new ArrayList<>();
         }
@@ -129,7 +130,7 @@ public abstract class I2CDevice implements Serializable {
                 }
             }
         } catch (IOException e2) {
-            BrewServer.LOG.info("Couldn't read a line when checking SHA");
+            logger.info("Couldn't read a line when checking SHA");
             e2.printStackTrace();
             process.destroy();
         }
@@ -204,7 +205,7 @@ public abstract class I2CDevice implements Serializable {
     public void close() {
         if (this.fd > -1) {
             if (this.libC.close(this.fd) != 0) {
-                BrewServer.LOG.warning(String.format("Failed to close: %s", Native.getLastError()));
+                logger.warn("Failed to close: {}", Native.getLastError());
             }
         }
         this.fd = -1;
@@ -229,7 +230,7 @@ public abstract class I2CDevice implements Serializable {
 
         int ret = this.libC.write(this.fd, this.I2CMasterBuffer, this.I2CWriteLength);
         if (ret != this.I2CWriteLength) {
-            BrewServer.LOG.warning(String.format("Failed to write to I2C Device %s. Error %s", ret, Native.getLastError()));
+            logger.warn("Failed to write to I2C Device {}. Error {}", ret, Native.getLastError());
             error = ads1015error.ADS1015_ERROR_I2CBUSY;
         }
         // ToDo: Add in proper I2C error-checking
@@ -268,7 +269,7 @@ public abstract class I2CDevice implements Serializable {
         this.libC.write(this.fd, this.I2CMasterBuffer, 1);
 
         if (this.I2CReadLength != this.libC.read(this.fd, this.I2CMasterBuffer, this.I2CReadLength)) {
-            BrewServer.LOG.warning(String.format("Error reading %s", Native.getLastError()));
+            logger.warn("Error reading {}", Native.getLastError());
         }
 
         int msb = this.I2CMasterBuffer[0];
@@ -285,21 +286,21 @@ public abstract class I2CDevice implements Serializable {
     public boolean i2cInit() {
         this.fd = this.libC.open(this.device_path, O_RDWR);
         if (this.fd < 0) {
-            BrewServer.LOG.warning(String.format("Failed to read from %s. Error %s", this.device_path, Native.getLastError()));
+            logger.warn("Failed to read from {}. Error {}", this.device_path, Native.getLastError());
             return false;
         } else {
-            BrewServer.LOG.warning(String.format("Opened fd %s", this.fd));
+            logger.warn("Opened fd {}", this.fd);
         }
 
         int iovalue = this.libC.ioctl(this.fd, I2CDevice.I2C_SLAVE, getAddress());
 
         if (iovalue < 0) {
-            BrewServer.LOG.warning(String.format("Failed to open slave device at address %s, wrote %s",
-                    getAddress(), iovalue));
-            BrewServer.LOG.warning(String.format("Error %s", Native.getLastError()));
+            logger.warn("Failed to open slave device at address {}, wrote {}",
+                    getAddress(), iovalue);
+            logger.warn("Error {}", Native.getLastError());
             return false;
         } else {
-            BrewServer.LOG.warning(String.format("I2C Slave %s opened %s", getAddress(), iovalue));
+            logger.warn("I2C Slave {} opened {}", getAddress(), iovalue);
         }
         return true;
     }
@@ -380,10 +381,10 @@ public abstract class I2CDevice implements Serializable {
         static {
             try {
                 Native.register("c");
-                BrewServer.LOG.warning("OK: Managed to load CLibrary");
+                logger.warn("OK: Managed to load CLibrary");
             } catch (Exception e) {
                 e.printStackTrace();
-                BrewServer.LOG.warning("BAD: Failed to load CLibrary");
+                logger.warn("BAD: Failed to load CLibrary");
             }
         }
 

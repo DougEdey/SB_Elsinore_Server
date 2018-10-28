@@ -4,20 +4,16 @@ import com.sb.common.CollectionsUtil;
 import com.sb.elsinore.triggers.TriggerInterface;
 import org.json.simple.JSONObject;
 import org.reflections.Reflections;
-import org.rendersnake.HtmlCanvas;
-import org.rendersnake.tools.PrettyWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import static com.sb.elsinore.Messages.TEMP;
-import static com.sb.elsinore.triggers.TriggerInterface.POSITION;
-import static org.rendersnake.HtmlAttributesFactory.*;
 
 /********************
  * This class is for storing the mash steps.
@@ -36,6 +32,9 @@ public class TriggerControl implements Runnable, Serializable {
      */
     private final List<TriggerInterface> triggerList =
             new CopyOnWriteArrayList<>();
+    private Logger logger = LoggerFactory.getLogger(TriggerControl.class);
+    @Autowired
+    private LaunchControl launchControl;
     /**
      * The output PIDModel to be controlled & read from.
      */
@@ -77,7 +76,7 @@ public class TriggerControl implements Runnable, Serializable {
         return interfaceMap;
     }
 
-    private static Map<String, String> getTriggerTypes(final String inType) {
+    private Map<String, String> getTriggerTypes(final String inType) {
         Map<String, Class<? extends TriggerInterface>> interfaceMap =
                 getTriggerList();
         Map<String, String> typeMap = new HashMap<>();
@@ -96,7 +95,7 @@ public class TriggerControl implements Runnable, Serializable {
             } catch (NoSuchMethodException | SecurityException |
                     InstantiationException | IllegalAccessException |
                     IllegalArgumentException | InvocationTargetException e) {
-                BrewServer.LOG.warning("Couldn't get the default constructor for: "
+                this.logger.warn("Couldn't get the default constructor for: "
                         + entry.getKey() + ". " + e.getLocalizedMessage());
             }
         }
@@ -104,45 +103,9 @@ public class TriggerControl implements Runnable, Serializable {
         return typeMap;
     }
 
-    /**
-     * Get the new triggers form for display.
-     *
-     * @param probe The name of the probe to attach to.
-     * @return The new triggers canvas
-     * @throws IOException If the form couldn't be created.
-     */
-    static HtmlCanvas getNewTriggersForm(final String probe)
-            throws IOException {
-        String probeType;
-        if (LaunchControl.getInstance().findPID(probe) != null) {
-            probeType = PID;
-        } else {
-            probeType = TEMP;
-        }
-
-        HtmlCanvas htmlCanvas = new HtmlCanvas(new PrettyWriter());
-        htmlCanvas.div(id("newTriggersForm"))
-                .form()
-                .select(name("type").class_("form-control m-t")
-                        .onClick("newTrigger(this, '" + probe + "');"));
-        htmlCanvas.option(value("").selected_if(true))
-                .write("Select Trigger Type")
-                ._option();
-        Map<String, String> triggers = getTriggerTypes(probeType);
-        for (Entry<String, String> entry : triggers.entrySet()) {
-            htmlCanvas.option(value(entry.getKey()))
-                    .write(entry.getValue())
-                    ._option();
-        }
-        htmlCanvas._select();
-        htmlCanvas.input(id(TEMP).name(TEMP)
-                .hidden("true").value(probe));
-        htmlCanvas.input(id(POSITION).name(POSITION)
-                .hidden("true").value("-1"))
-                ._form()
-                ._div()
-                .div(id("childInput"))._div();
-        return htmlCanvas;
+    @Autowired
+    public void setLaunchControl(LaunchControl launchControl) {
+        this.launchControl = launchControl;
     }
 
     /**
@@ -177,7 +140,7 @@ public class TriggerControl implements Runnable, Serializable {
             e.printStackTrace();
         }
 
-        LaunchControl.getInstance().shutdown();
+        //this.launchControl.shutdown();
         return triggerStep;
     }
 
@@ -190,7 +153,7 @@ public class TriggerControl implements Runnable, Serializable {
     final boolean updateTrigger(final int position,
                                 final JSONObject params) {
         TriggerInterface trigger = this.triggerList.get(position);
-        LaunchControl.getInstance().shutdown();
+        this.launchControl.shutdown();
         return trigger.updateTrigger(params);
     }
 
@@ -232,7 +195,7 @@ public class TriggerControl implements Runnable, Serializable {
      */
     @Override
     public final void run() {
-        if (!LaunchControl.getInstance().systemSettings.restoreState) {
+        if (!this.launchControl.getSystemSettings().isRestoreState()) {
             this.triggerList.forEach(trigger -> trigger.deactivate(true));
         }
         // Run through and update the times based on the currently active step
@@ -256,7 +219,7 @@ public class TriggerControl implements Runnable, Serializable {
                 if (triggerEntry != null) {
                     currentTrigger = triggerEntry;
                     currentTriggerPosition = triggerEntry.getPosition();
-                    BrewServer.LOG.warning("Found an active mash step: "
+                    this.logger.warn("Found an active mash step: "
                             + currentTriggerPosition);
                 }
             }
@@ -297,18 +260,18 @@ public class TriggerControl implements Runnable, Serializable {
 
         // Do we have a value
         if (triggerEntry == null) {
-            BrewServer.LOG.warning("Index out of bounds");
+            this.logger.warn("Index out of bounds");
             return false;
         }
 
         // Now we can reset the others
         if (!deactivateTrigger(-1)) {
-            BrewServer.LOG.warning("Couldn't disable all the mash steps");
+            this.logger.warn("Couldn't disable all the mash steps");
             return false;
         }
 
         triggerEntry.setActive();
-        LaunchControl.getInstance().shutdown();
+        this.launchControl.shutdown();
         return true;
     }
 
@@ -337,7 +300,7 @@ public class TriggerControl implements Runnable, Serializable {
 
             // Do we have a value
             if (triggerEntry == null) {
-                BrewServer.LOG.warning("Index out of bounds");
+                this.logger.warn("Index out of bounds");
                 return false;
             }
             triggerEntry.deactivate(fromUI);
@@ -347,7 +310,7 @@ public class TriggerControl implements Runnable, Serializable {
                 mEntry.deactivate(fromUI);
             }
         }
-        LaunchControl.getInstance().shutdown();
+        this.launchControl.shutdown();
         return true;
     }
 
@@ -410,7 +373,7 @@ public class TriggerControl implements Runnable, Serializable {
             setShutdownFlag(true);
             Thread.currentThread().interrupt();
         }
-        LaunchControl.getInstance().shutdown();
+        this.launchControl.shutdown();
     }
 
     /**
@@ -424,12 +387,12 @@ public class TriggerControl implements Runnable, Serializable {
 
     public void clear() {
         this.triggerList.clear();
-        LaunchControl.getInstance().shutdown();
+        this.launchControl.shutdown();
     }
 
     public void addTrigger(TriggerInterface newTrigger) {
         this.triggerList.add(newTrigger);
-        LaunchControl.getInstance().shutdown();
+        this.launchControl.shutdown();
     }
 
     public boolean isActive() {

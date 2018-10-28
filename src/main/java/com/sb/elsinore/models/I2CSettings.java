@@ -28,6 +28,10 @@ public class I2CSettings {
         return this.id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public int getAddress() {
         return this.address;
     }

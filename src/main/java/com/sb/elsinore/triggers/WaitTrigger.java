@@ -1,12 +1,13 @@
 package com.sb.elsinore.triggers;
 
 import com.sb.common.SBStringUtils;
-import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.Messages;
 import com.sb.elsinore.notificiations.Notifications;
 import com.sb.elsinore.notificiations.WebNotification;
 import com.sb.util.MathUtil;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -33,9 +34,11 @@ public class WaitTrigger implements TriggerInterface {
     private double seconds = 0.0;
     private String note;
     private WebNotification webNotification = null;
+    private Logger logger = LoggerFactory.getLogger(WaitTrigger.class);
+
 
     public WaitTrigger() {
-        BrewServer.LOG.info("Created an empty wait trigger");
+        logger.info("Created an empty wait trigger");
     }
 
     public WaitTrigger(final int newPos) {
@@ -193,12 +196,12 @@ public class WaitTrigger implements TriggerInterface {
         return updateParams(params);
     }
 
-    public void setNote(String note) {
-        this.note = note;
-    }
-
     public String getNote() {
         return this.note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
     private void createNotifications(String s) {

@@ -11,6 +11,8 @@ public interface TemperatureInterface {
      */
     Long getId();
 
+    void setId(Long id);
+
     /**
      * @return The name of this temperature probe
      */
@@ -69,25 +71,27 @@ public interface TemperatureInterface {
 
     boolean isHidden();
 
+    void setHidden(boolean hidden);
+
     int getPosition();
 
     void setPosition(int position);
 
-    String getI2CNumber();
+    String getI2cNumber();
 
-    void setI2CNumber(String number);
+    void setI2cNumber(String number);
 
-    String getI2CAddress();
+    String getI2cAddress();
 
-    void setI2CAddress(String address);
+    void setI2cAddress(String address);
 
-    String getI2CChannel();
+    String getI2cChannel();
 
-    void setI2CChannel(String channel);
+    void setI2cChannel(String channel);
 
-    String getI2CDevType();
+    String getI2cType();
 
-    void setI2CDevType(String type);
+    void setI2cType(String type);
 
     BigDecimal getCutoffTemp();
 

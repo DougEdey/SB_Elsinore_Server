@@ -1,13 +1,14 @@
 package com.sb.elsinore.wrappers;
 
 
-import com.sb.elsinore.BrewServer;
-import com.sb.elsinore.LaunchControl;
+import com.sb.elsinore.OWFSController;
 import com.sb.elsinore.interfaces.TemperatureInterface;
 import com.sb.util.MathUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.owfs.jowfsclient.OwfsException;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,9 +27,7 @@ public class TempRunner implements Runnable {
     /**
      * Strings for the Nodes.
      */
-    public static final String PROBE_ELEMENT = "probe";
     public static final String POSITION = "position";
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(TempRunner.class);
     private static BigDecimal ERROR_TEMP = new BigDecimal(-999);
     /**
      * Base path for BBB System TempProbe.
@@ -49,7 +48,7 @@ public class TempRunner implements Runnable {
     String fileProbe = null;
     boolean initialized = false;
     boolean loggingOn = true;
-
+    private Logger logger = LoggerFactory.getLogger(TempRunner.class);
     /**
      * Match the temperature regexp.
      */
@@ -57,6 +56,9 @@ public class TempRunner implements Runnable {
     private BigDecimal previousTime = null;
     private BigDecimal tempF = null;
     private BigDecimal currentTime = null;
+
+    @Autowired
+    private OWFSController owfsController;
 
     public TempRunner(TemperatureInterface temperature) {
         this.temperature = temperature;
@@ -73,7 +75,7 @@ public class TempRunner implements Runnable {
                 if (tempFile.exists()) {
                     this.fileProbe = this.bbbSystemTemp;
                 } else {
-                    log.warn("Couldn't find a valid system temperature probe");
+                    this.logger.warn("Couldn't find a valid system temperature probe");
                     return;
                 }
             }
@@ -100,7 +102,7 @@ public class TempRunner implements Runnable {
 
                     String fixedAddress = devFamily + "-" + devAddress.toLowerCase();
 
-                    log.info("Converted address: " + fixedAddress);
+                    this.logger.info("Converted address: " + fixedAddress);
 
                     this.fileProbe = "/sys/bus/w1/devices/" + fixedAddress + "/w1_slave";
                     probePath = new File(this.fileProbe);
@@ -111,7 +113,7 @@ public class TempRunner implements Runnable {
             }
         }
 
-        log.info("{} initialized.", this.temperature.getName());
+        this.logger.info("{} initialized.", this.temperature.getName());
         this.initialized = true;
     }
 
@@ -130,7 +132,7 @@ public class TempRunner implements Runnable {
         }
 
         if (this.badTemp && this.currentError != null && this.currentError.equals("")) {
-            log.warn("Trying to recover {}", this.temperature.getName());
+            this.logger.warn("Trying to recover {}", this.temperature.getName());
         }
         if (this.temperature.getDevice() == null) {
             result = updateTempFromOWFS();
@@ -145,7 +147,7 @@ public class TempRunner implements Runnable {
 
         if (this.badTemp) {
             this.badTemp = false;
-            log.warn("Recovered temperature reading for {}", this.temperature.getName());
+            this.logger.warn("Recovered temperature reading for {}", this.temperature.getName());
             if (this.currentError.startsWith("Could")) {
                 this.currentError = "";
             }
@@ -159,7 +161,7 @@ public class TempRunner implements Runnable {
         if (
                 this.temperature.getCutoffTemp() != null &&
                         this.currentTemp.getValue().compareTo(this.temperature.getCutoffTemp()) >= 0) {
-            log.error("{}: ****** CUT OFF TEMPERATURE ({}) EXCEEDED *****", this.currentTemp, this.temperature.getCutoffTemp());
+            this.logger.error("{}: ****** CUT OFF TEMPERATURE ({}) EXCEEDED *****", this.currentTemp, this.temperature.getCutoffTemp());
             System.exit(-1);
         }
         return result;
@@ -178,23 +180,23 @@ public class TempRunner implements Runnable {
         String rawTemp = "";
 
         try {
-            rawTemp = LaunchControl.getInstance().readOWFSPath(this.temperature.getDevice() + "/temperature");
+            rawTemp = this.owfsController.readOWFSPath(this.temperature.getDevice() + "/temperature");
             if (rawTemp.equals("")) {
-                log.error("Couldn't find the probe {} for {}", this.temperature.getDevice(), this.temperature.getName());
-                LaunchControl.getInstance().setupOWFS();
+                this.logger.error("Couldn't find the probe {} for {}", this.temperature.getDevice(), this.temperature.getName());
+                this.owfsController.setupOWFS();
             } else {
                 temp = new BigDecimal(rawTemp);
             }
         } catch (IOException e) {
             this.currentError = "Couldn't read " + this.temperature.getDevice();
-            log.error(this.currentError, e);
+            this.logger.error(this.currentError, e);
         } catch (OwfsException e) {
             this.currentError = "Couldn't read " + this.temperature.getDevice();
-            log.error(this.currentError, e);
-            LaunchControl.getInstance().setupOWFS();
+            this.logger.error(this.currentError, e);
+            this.owfsController.setupOWFS();
         } catch (NumberFormatException e) {
             this.currentError = "Couldn't parse" + rawTemp;
-            log.error(this.currentError, e);
+            this.logger.error(this.currentError, e);
         }
 
         this.loggingOn = (!temp.equals(ERROR_TEMP));
@@ -204,7 +206,7 @@ public class TempRunner implements Runnable {
 
     public BigDecimal updateTempFromFile() {
         if (StringUtils.isEmpty(this.fileProbe)) {
-            log.warn("No File to probe");
+            this.logger.warn("No File to probe");
             return BigDecimal.ZERO;
         }
 
@@ -238,7 +240,7 @@ public class TempRunner implements Runnable {
         } catch (IOException ie) {
             if (this.loggingOn) {
                 this.currentError = "Couldn't find the device under: " + this.fileProbe;
-                log.warn(this.currentError);
+                this.logger.warn(this.currentError);
                 if (this.fileProbe.equals(this.rpiSystemTemp)) {
                     this.fileProbe = this.bbbSystemTemp;
                 }
@@ -255,7 +257,7 @@ public class TempRunner implements Runnable {
                 try {
                     br.close();
                 } catch (IOException ie) {
-                    log.warn(ie.getLocalizedMessage());
+                    this.logger.warn(ie.getLocalizedMessage());
                 }
             }
         }
@@ -318,7 +320,7 @@ public class TempRunner implements Runnable {
     public void shutdown() {
         // Graceful shutdown.
         this.keepAlive = false;
-        log.warn("{} is shutting down.", this.temperature.getName());
+        this.logger.warn("{} is shutting down.", this.temperature.getName());
         Thread.currentThread().interrupt();
     }
 
@@ -344,7 +346,7 @@ public class TempRunner implements Runnable {
     @Override
     public void run() {
         startRunning();
-        BrewServer.LOG.info("Running " + this.temperature.getName() + ".");
+        this.logger.info("Running " + this.temperature.getName() + ".");
         // setup the first time
         this.previousTime = new BigDecimal(System.currentTimeMillis());
 
@@ -360,7 +362,7 @@ public class TempRunner implements Runnable {
                 //pause execution for a second
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
-                BrewServer.LOG.warning("PIDModel " + this.temperature.getName() + " Interrupted.");
+                this.logger.warn("PIDModel {} interrupted.", this.temperature.getName());
                 ex.printStackTrace();
                 Thread.currentThread().interrupt();
             }
@@ -375,7 +377,7 @@ public class TempRunner implements Runnable {
 
 
     public void stop() {
-        BrewServer.LOG.warning("Shutting down " + this.temperature.getName());
+        this.logger.warn("Shutting down {}", this.temperature.getName());
         shutdown();
         Thread.currentThread().interrupt();
     }

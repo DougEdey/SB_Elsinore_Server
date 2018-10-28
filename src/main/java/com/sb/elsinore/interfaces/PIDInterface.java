@@ -21,6 +21,8 @@ public interface PIDInterface {
 
     String getAuxGPIO();
 
+    void setAuxGPIO(String auxGPIO);
+
     BigDecimal getDutyCycle();
 
     void setDutyCycle(BigDecimal duty);
@@ -59,7 +61,13 @@ public interface PIDInterface {
 
     PIDSettingsInterface getHeatSetting();
 
+    void setHeatSetting(PIDSettingsInterface heatSetting);
+
     PIDSettingsInterface getCoolSetting();
 
+    void setCoolSetting(PIDSettingsInterface coolSetting);
+
     Long getId();
+
+    void setId(Long id);
 }

@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Table(uniqueConstraints = {
         @UniqueConstraint(columnNames = {"name"}),
-        @UniqueConstraint(columnNames = {"gpioName"})
+        @UniqueConstraint(columnNames = {"gpio"})
 }
 )
 public class SwitchModel implements SwitchInterface {
@@ -23,15 +23,20 @@ public class SwitchModel implements SwitchInterface {
 
     @NotNull
     @javax.validation.constraints.Size(min = 1)
-    private String gpioName = "";
+    private String gpio = "";
 
 
-    private boolean invertOutput = false;
+    private boolean outputInverted = false;
     private int position = -1;
 
     @Override
     public Long getId() {
         return this.id;
+    }
+
+    @Override
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @Override
@@ -45,23 +50,23 @@ public class SwitchModel implements SwitchInterface {
     }
 
     @Override
-    public String getGPIOName() {
-        return this.gpioName;
+    public String getGpio() {
+        return this.gpio;
     }
 
     @Override
-    public void setGPIOName(String gpioName) {
-        this.gpioName = gpioName;
+    public void setGpio(String gpio) {
+        this.gpio = gpio;
     }
 
     @Override
     public boolean isOutputInverted() {
-        return this.invertOutput;
+        return this.outputInverted;
     }
 
     @Override
     public void setOutputInverted(boolean inverted) {
-        this.invertOutput = inverted;
+        this.outputInverted = inverted;
     }
 
     @Override

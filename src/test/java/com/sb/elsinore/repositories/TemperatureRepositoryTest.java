@@ -52,7 +52,7 @@ public class TemperatureRepositoryTest extends AbstractTransactionalJUnit4Spring
         this.entityManager.flush();
 
         // when
-        TemperatureModel found = this.temperatureRepository.findByName("Test");
+        TemperatureModel found = this.temperatureRepository.findByNameIgnoreCase("Test");
 
         //then
         assertEquals(temperature.getName(), found.getName());
@@ -93,7 +93,7 @@ public class TemperatureRepositoryTest extends AbstractTransactionalJUnit4Spring
         this.temperatureRepository.delete(temperature);
 
         // then
-        assertNull(this.temperatureRepository.findByName(temperature.getName()));
+        assertNull(this.temperatureRepository.findByNameIgnoreCase(temperature.getName()));
     }
 
     @Test
@@ -107,7 +107,7 @@ public class TemperatureRepositoryTest extends AbstractTransactionalJUnit4Spring
         this.temperatureRepository.save(temperature);
 
         // then
-        assertEquals(temperature, this.temperatureRepository.findByName(temperature.getName()));
+        assertEquals(temperature, this.temperatureRepository.findByNameIgnoreCase(temperature.getName()));
     }
 
     @Test
@@ -121,8 +121,8 @@ public class TemperatureRepositoryTest extends AbstractTransactionalJUnit4Spring
         this.temperatureRepository.save(temperature);
 
         // then
-        assertNotNull(this.temperatureRepository.findByName("Test"));
-        assertNull(this.temperatureRepository.findByName("Test Updated"));
+        assertNotNull(this.temperatureRepository.findByNameIgnoreCase("Test"));
+        assertNull(this.temperatureRepository.findByNameIgnoreCase("Test Updated"));
 
         // given
         temperature.setName("Test Updated");
@@ -131,8 +131,8 @@ public class TemperatureRepositoryTest extends AbstractTransactionalJUnit4Spring
         this.temperatureRepository.save(temperature);
 
         // then
-        assertNull(this.temperatureRepository.findByName("Test"));
-        assertNotNull(this.temperatureRepository.findByName("Test Updated"));
+        assertNull(this.temperatureRepository.findByNameIgnoreCase("Test"));
+        assertNotNull(this.temperatureRepository.findByNameIgnoreCase("Test Updated"));
     }
 
     @Test

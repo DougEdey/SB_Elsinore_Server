@@ -150,6 +150,11 @@ public class PIDModel implements PIDInterface {
         return this.auxGPIO;
     }
 
+    @Override
+    public void setAuxGPIO(String auxGPIO) {
+        this.auxGPIO = auxGPIO;
+    }
+
     /**
      * @return Get the current duty cycle percentage
      */
@@ -317,6 +322,11 @@ public class PIDModel implements PIDInterface {
     }
 
     @Override
+    public void setHeatSetting(PIDSettingsInterface heatSetting) {
+        this.heatSetting = (PIDSettings) heatSetting;
+    }
+
+    @Override
     public PIDSettingsInterface getCoolSetting() {
         if (this.coolSetting == null) {
             this.coolSetting = new PIDSettings();
@@ -324,8 +334,19 @@ public class PIDModel implements PIDInterface {
         return this.coolSetting;
     }
 
+
+    @Override
+    public void setCoolSetting(PIDSettingsInterface coolSetting) {
+        this.coolSetting = (PIDSettings) coolSetting;
+    }
+
     @Override
     public Long getId() {
         return this.id;
+    }
+
+    @Override
+    public void setId(Long id) {
+        this.id = id;
     }
 }

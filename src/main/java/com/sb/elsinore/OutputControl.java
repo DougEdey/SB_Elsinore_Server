@@ -4,6 +4,8 @@ import com.sb.elsinore.devices.CompressorDevice;
 import com.sb.elsinore.devices.OutputDevice;
 import com.sb.elsinore.interfaces.PIDSettingsInterface;
 import jGPIO.InvalidGPIOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 
@@ -17,6 +19,7 @@ import java.math.BigDecimal;
 public final class OutputControl implements Runnable {
 
     public boolean shuttingDown = false;
+    private Logger logger = LoggerFactory.getLogger(OutputControl.class);
     private OutputDevice cooler = null;
     private OutputDevice heater = null;
     private String name;
@@ -108,15 +111,11 @@ public final class OutputControl implements Runnable {
             } // end the while loop
 
         } catch (RuntimeException e) {
-            BrewServer.LOG.warning(
-                    "Could not control the GPIO Pin during loop."
-                            + " Did you start as root?");
-            e.printStackTrace();
+            this.logger.warn("Could not control the GPIO Pin during loop. Did you start as root?", e);
         } catch (InvalidGPIOException e1) {
-            BrewServer.LOG.warning(e1.getMessage());
-            e1.printStackTrace();
+            this.logger.warn("Invalid GPIO", e1);
         } finally {
-            BrewServer.LOG.warning("Output Control turning off outputs");
+            this.logger.warn("Output Control turning off outputs");
             if (getHeater() != null) {
                 getHeater().turnOff();
             }
@@ -130,7 +129,7 @@ public final class OutputControl implements Runnable {
      * Shutdown the thread.
      */
     public void shutdown() {
-        BrewServer.LOG.info("Shutting down OC");
+        this.logger.info("Shutting down OC");
         if (getHeater() != null) {
             getHeater().turnOff();
             getHeater().disable();
@@ -164,7 +163,7 @@ public final class OutputControl implements Runnable {
             return false;
         }
         this.fDuty = duty;
-        BrewServer.LOG.info("IN: " + duty + " OUT: " + this.fDuty);
+        this.logger.info("IN: {}, OUT: {}", duty, this.fDuty);
         return true;
     }
 

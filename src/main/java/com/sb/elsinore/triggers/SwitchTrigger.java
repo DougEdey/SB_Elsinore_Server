@@ -1,28 +1,33 @@
 package com.sb.elsinore.triggers;
 
-import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.devices.Switch;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 
+
 public class SwitchTrigger implements TriggerInterface {
 
-    private static final String SWITCHNAME = "switchname";
     private static final String ACTIVATE = "activate";
+    private static final String SWITCHNAME = "switchname";
+    private Logger logger = LoggerFactory.getLogger(SwitchTrigger.class);
     private Integer position = -1;
     private String activate = null;
     private String switchName = null;
     private boolean active = false;
     private Date startDate = null;
 
+    private LaunchControl launchControl;
+
     /**
      * Create a blank switch trigger.
      */
     public SwitchTrigger() {
-        BrewServer.LOG.info("Creating an empty Switch Trigger");
+        this.logger.info("Creating an empty Switch Trigger");
     }
 
     /**
@@ -81,7 +86,7 @@ public class SwitchTrigger implements TriggerInterface {
      * Trigger the switch.
      */
     private void triggerSwitch() {
-        Switch aSwitch = LaunchControl.getInstance().findSwitch(this.switchName);
+        Switch aSwitch = this.launchControl.findSwitch(this.switchName);
         if (aSwitch != null) {
             if (this.activate.equals("on")) {
                 aSwitch.turnOn();
@@ -147,7 +152,7 @@ public class SwitchTrigger implements TriggerInterface {
         if (tActivate != null) {
             this.activate = tActivate;
         }
-        if (tName != null && LaunchControl.getInstance().findSwitch(tName) != null) {
+        if (tName != null && this.launchControl.findSwitch(tName) != null) {
             this.switchName = tName;
             if (this.active) {
                 triggerSwitch();
@@ -163,7 +168,7 @@ public class SwitchTrigger implements TriggerInterface {
      */
     @Override
     public final boolean getTriggerType(final String inType) {
-        return (LaunchControl.getInstance().switchList.size() > 0);
+        return (this.launchControl.switchList.size() > 0);
     }
 
 }

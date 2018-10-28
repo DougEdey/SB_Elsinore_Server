@@ -1,8 +1,9 @@
 package com.sb.elsinore.devices;
 
-import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.interfaces.PIDSettingsInterface;
 import jGPIO.InvalidGPIOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 
@@ -19,6 +20,7 @@ public class CompressorDevice extends OutputDevice {
     protected long lastStartTime = -1L;
     protected boolean running = false;
     protected long delayBetweenRuns = 1000 * 60 * 3; // 3 Minutes
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public CompressorDevice(String name, PIDSettingsInterface settings) {
         super(name, TYPE, settings);
@@ -42,13 +44,13 @@ public class CompressorDevice extends OutputDevice {
             if (duty.compareTo(HUNDRED) == 0) {
                 if (System.currentTimeMillis() - this.lastStopTime > this.delayBetweenRuns) {
                     if (!this.running) {
-                        BrewServer.LOG.warning("Starting compressor device.");
+                        this.logger.warn("Starting compressor device.");
                         this.lastStartTime = System.currentTimeMillis();
                     }
                     this.running = true;
                     setValue(true);
                 } else {
-                    BrewServer.LOG.warning("Need to wait before starting compressor again.: " + (this.delayBetweenRuns - (System.currentTimeMillis() - this.lastStopTime)));
+                    this.logger.warn("Need to wait before starting compressor again: {}", (this.delayBetweenRuns - (System.currentTimeMillis() - this.lastStopTime)));
                 }
             }
             Thread.sleep(this.settings.getCycleTime().intValue());
@@ -59,8 +61,8 @@ public class CompressorDevice extends OutputDevice {
     public void turnOff() {
         if (this.running) {
             this.lastStopTime = System.currentTimeMillis();
-            BrewServer.LOG.warning("Stopping compressor device.");
-            BrewServer.LOG.warning("Ran for " + (this.lastStopTime - this.lastStartTime) / 60000f + " minutes");
+            this.logger.warn("Stopping compressor device.");
+            this.logger.warn("Ran for {} minutes", (this.lastStopTime - this.lastStartTime) / 60000f);
         }
         this.running = false;
         setValue(false);

@@ -48,7 +48,7 @@ public class SwitchRepositoryTest extends AbstractTransactionalJUnit4SpringConte
         // given
         SwitchModel switchModel = new SwitchModel();
         switchModel.setName("TestSwitch");
-        switchModel.setGPIOName("GPIOName");
+        switchModel.setGpio("GPIOName");
 
         Long switchId = this.entityManager.persistAndFlush(switchModel).getId();
 
@@ -66,7 +66,7 @@ public class SwitchRepositoryTest extends AbstractTransactionalJUnit4SpringConte
         // given
         SwitchModel switchModel = new SwitchModel();
         switchModel.setName("TestSwitch");
-        switchModel.setGPIOName("GPIOName");
+        switchModel.setGpio("GPIOName");
 
         Long switchId = this.entityManager.persistAndFlush(switchModel).getId();
 
@@ -83,13 +83,13 @@ public class SwitchRepositoryTest extends AbstractTransactionalJUnit4SpringConte
         // given
         SwitchModel switchModel = new SwitchModel();
         switchModel.setName("TestSwitch");
-        switchModel.setGPIOName("GPIOName");
+        switchModel.setGpio("GPIOName");
 
         this.entityManager.persistAndFlush(switchModel);
 
         switchModel = new SwitchModel();
         switchModel.setName("TestSwitch");
-        switchModel.setGPIOName("GPIOName2");
+        switchModel.setGpio("GPIOName2");
 
         this.thrown.expect(DataIntegrityViolationException.class);
         this.switchRepository.saveAndFlush(switchModel);
@@ -102,7 +102,7 @@ public class SwitchRepositoryTest extends AbstractTransactionalJUnit4SpringConte
         // given
         SwitchModel switchModel = new SwitchModel();
         switchModel.setName("");
-        switchModel.setGPIOName("GPIOName");
+        switchModel.setGpio("GPIOName");
 
         this.thrown.expect(ConstraintViolationException.class);
         this.switchRepository.saveAndFlush(switchModel);
@@ -114,7 +114,7 @@ public class SwitchRepositoryTest extends AbstractTransactionalJUnit4SpringConte
         // given
         SwitchModel switchModel = new SwitchModel();
         switchModel.setName("Test");
-        switchModel.setGPIOName("");
+        switchModel.setGpio("");
 
         this.thrown.expect(ConstraintViolationException.class);
         this.switchRepository.saveAndFlush(switchModel);

@@ -10,7 +10,7 @@ import java.math.BigDecimal;
  */
 @Entity
 @Table(uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"gpio"})
+        @UniqueConstraint(columnNames = {"GPIO"})
 }
 )
 public class PIDSettings implements com.sb.elsinore.interfaces.PIDSettingsInterface {
@@ -25,14 +25,14 @@ public class PIDSettings implements com.sb.elsinore.interfaces.PIDSettingsInterf
     /**
      * values to hold the settings.
      */
-    private BigDecimal cycle_time = new BigDecimal(0);
+    private BigDecimal cycleTime = new BigDecimal(0);
     private BigDecimal proportional = new BigDecimal(0);
     private BigDecimal integral = new BigDecimal(0);
     private BigDecimal derivative = new BigDecimal(0);
     private BigDecimal delay = new BigDecimal(0);
     private PID_MODE mode = PID_MODE.HEAT;
     private String profile = "";
-    private String gpio = null;
+    private String GPIO = null;
     private boolean inverted = false;
 
     /**
@@ -47,23 +47,29 @@ public class PIDSettings implements com.sb.elsinore.interfaces.PIDSettingsInterf
     }
 
     @Override
-    public String getGPIO() {
-        return this.gpio;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @Override
+    public String getGPIO() {
+        return this.GPIO;
+    }
+
+    @Override
+
     public void setGPIO(String newGPIO) {
-        this.gpio = newGPIO;
+        this.GPIO = newGPIO;
     }
 
     @Override
     public BigDecimal getCycleTime() {
-        return this.cycle_time;
+        return this.cycleTime;
     }
 
     @Override
     public void setCycleTime(BigDecimal cycle_time) {
-        this.cycle_time = cycle_time;
+        this.cycleTime = cycle_time;
     }
 
     @Override

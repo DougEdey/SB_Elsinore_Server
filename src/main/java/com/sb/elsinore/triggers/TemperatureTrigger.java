@@ -1,6 +1,5 @@
 package com.sb.elsinore.triggers;
 
-import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.Messages;
 import com.sb.elsinore.devices.PID;
@@ -10,6 +9,9 @@ import com.sb.elsinore.notificiations.WebNotification;
 import com.sb.elsinore.wrappers.TempRunner;
 import com.sb.elsinore.wrappers.TemperatureValue;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -47,20 +49,24 @@ public class TemperatureTrigger implements TriggerInterface {
     private Date startDate = null;
     private BigDecimal exitTemp;
     private WebNotification webNotification = null;
+    private Logger logger = LoggerFactory.getLogger(TemperatureTrigger.class);
+
+    @Autowired
+    private LaunchControl launchControl;
 
     public TemperatureTrigger() {
-        BrewServer.LOG.info("Created an empty TemperatureModel Trigger");
+        this.logger.info("Created an empty TemperatureModel Trigger");
     }
 
     public TemperatureTrigger(int newPosition) {
-        BrewServer.LOG.info("Created a TemperatureModel Trigger at" + newPosition);
+        this.logger.info("Created a TemperatureModel Trigger at" + newPosition);
         this.position = newPosition;
     }
 
     public TemperatureTrigger(int position, String tempProbe, double targetTemp, String stepType, String stepMethod) {
         this.position = position;
         this.targetTemp = new BigDecimal(targetTemp);
-        this.temperatureProbe = LaunchControl.getInstance().findTemp(tempProbe);
+        this.temperatureProbe = this.launchControl.findTemp(tempProbe);
         this.type = stepType;
         this.method = stepMethod;
     }
@@ -84,7 +90,7 @@ public class TemperatureTrigger implements TriggerInterface {
         String inTempProbe = parameters.get(TEMPPROBE).toString();
         String inMode = parameters.get(MODE).toString();
 
-        this.temperatureProbe = LaunchControl.getInstance().findTemp(inTempProbe);
+        this.temperatureProbe = this.launchControl.findTemp(inTempProbe);
         this.method = inMethod;
         this.type = inType;
         this.mode = inMode;
@@ -111,7 +117,7 @@ public class TemperatureTrigger implements TriggerInterface {
      * Associated with this temperatureTrigger.
      */
     public final void setTargetTemperature() {
-        PIDInterface pid = LaunchControl.getInstance().findPID(this.temperatureProbe.getName());
+        PIDInterface pid = this.launchControl.findPID(this.temperatureProbe.getName());
         if (pid == null) {
             LaunchControl.setMessage(this.temperatureProbe.getName()
                     + " is not associated with a PIDModel. "
@@ -127,7 +133,7 @@ public class TemperatureTrigger implements TriggerInterface {
      * Associated with this temperatureTrigger.
      */
     public final void setExitTemperature() {
-        PIDInterface pid = LaunchControl.getInstance().findPID(this.temperatureProbe.getName());
+        PIDInterface pid = this.launchControl.findPID(this.temperatureProbe.getName());
         if (pid == null) {
             LaunchControl.setMessage(this.temperatureProbe.getName()
                     + " is not associated with a PIDModel. "
@@ -143,7 +149,7 @@ public class TemperatureTrigger implements TriggerInterface {
      * @param name The name of the probe to lookup.
      */
     public final void setTemperatureProbe(final String name) {
-        this.temperatureProbe = LaunchControl.getInstance().findTemp(name);
+        this.temperatureProbe = this.launchControl.findTemp(name);
     }
 
     /**
@@ -166,7 +172,7 @@ public class TemperatureTrigger implements TriggerInterface {
         } else {
             this.exitTemp = new BigDecimal(exitTemp.replace(",", "."));
         }
-        this.temperatureProbe = LaunchControl.getInstance().findTemp(newTempProbe);
+        this.temperatureProbe = this.launchControl.findTemp(newTempProbe);
         this.method = newMethod;
         this.type = newType;
         this.mode = newMode;
@@ -185,11 +191,11 @@ public class TemperatureTrigger implements TriggerInterface {
     public final void waitForTrigger() {
 
         if (this.targetTemp == null) {
-            BrewServer.LOG.warning("No Target TemperatureModel Set");
+            this.logger.warn("No Target TemperatureModel Set");
             return;
         }
         if (this.temperatureProbe == null) {
-            BrewServer.LOG.warning("No TemperatureModel Probe Set");
+            this.logger.warn("No TemperatureModel Probe Set");
             return;
         }
 
@@ -208,7 +214,7 @@ public class TemperatureTrigger implements TriggerInterface {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
-                    BrewServer.LOG.warning("TemperatureModel Trigger interrupted");
+                    this.logger.warn("TemperatureModel Trigger interrupted");
                     return;
                 }
             }
@@ -217,21 +223,21 @@ public class TemperatureTrigger implements TriggerInterface {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
-                    BrewServer.LOG.warning("TemperatureModel Trigger interrupted");
+                    this.logger.warn("TemperatureModel Trigger interrupted");
                     return;
                 }
             }
         } else {
             // Just get to within 2F of the target TempProbe.
-            BrewServer.LOG.info(String.format("Waiting to be within 2F of %.2f", this.targetTemp));
+            this.logger.info(String.format("Waiting to be within 2F of %.2f", this.targetTemp));
 
-            BrewServer.LOG.info(String.format("Probe temp: %.2f", probeTempF));
+            this.logger.info(String.format("Probe temp: %.2f", probeTempF));
             while (diff.compareTo(new BigDecimal(2.0)) >= 0) {
                 try {
-                    BrewServer.LOG.info("" + diff);
+                    this.logger.info("" + diff);
                     Thread.sleep(500);
                 } catch (InterruptedException ie) {
-                    BrewServer.LOG.warning("TemperatureModel Trigger interrupted.");
+                    this.logger.warn("TemperatureModel Trigger interrupted.");
                 }
             }
         }
@@ -290,7 +296,7 @@ public class TemperatureTrigger implements TriggerInterface {
     public final void deactivate(boolean fromUI) {
         this.active = false;
         if (fromUI) {
-            PIDInterface pid = LaunchControl.getInstance().findPID(this.temperatureProbe.getName());
+            PIDInterface pid = this.launchControl.findPID(this.temperatureProbe.getName());
             if (pid == null) {
                 LaunchControl.setMessage(this.temperatureProbe.getName()
                         + " is not associated with a PIDModel. "

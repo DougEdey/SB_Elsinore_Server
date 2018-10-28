@@ -1,12 +1,13 @@
 package com.sb.elsinore.devices;
 
-import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.interfaces.OutputDeviceInterface;
 import com.sb.elsinore.interfaces.PIDSettingsInterface;
 import com.sb.elsinore.models.OutputDeviceModel;
 import com.sb.util.MathUtil;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 
@@ -17,10 +18,10 @@ import java.math.BigDecimal;
  * @author Andy
  */
 public class OutputDevice {
-
     static BigDecimal HUNDRED = new BigDecimal(100);
     private final Object ssrLock = new Object();
     protected PIDSettingsInterface settings = null;
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
     private boolean invertOutput = false;
     private OutPin ssr = null;    //The output pin.
 
@@ -30,7 +31,7 @@ public class OutputDevice {
         this.outputDeviceInterface = new OutputDeviceModel();
         this.outputDeviceInterface.setName(name);
         this.outputDeviceInterface.setType(type);
-        this.outputDeviceInterface.setPIDSettings(pidSettings);
+        this.outputDeviceInterface.setPidSettings(pidSettings);
     }
 
     public OutputDevice(OutputDeviceInterface outputDeviceInterface) {
@@ -40,7 +41,7 @@ public class OutputDevice {
             String invOut = System.getProperty("invert_outputs");
 
             if (invOut != null) {
-                BrewServer.LOG.warning("Inverting outputs");
+                this.logger.warn("Inverting outputs");
                 this.invertOutput = true;
             }
         } catch (Exception e) {
@@ -50,7 +51,7 @@ public class OutputDevice {
         try {
             initializeSSR();
         } catch (Exception e) {
-            BrewServer.LOG.warning("Unable to initialize the SSR: " + e.getMessage());
+            this.logger.warn("Unable to initialize the SSR", e);
         }
     }
 
@@ -106,7 +107,7 @@ public class OutputDevice {
             duty = MathUtil.divide(duty, HUNDRED);
             BigDecimal onTime = duty.multiply(this.settings.getCycleTime());
             BigDecimal offTime = this.settings.getCycleTime().subtract(onTime);
-            BrewServer.LOG.info("On: " + onTime
+            this.logger.info("On: " + onTime
                     + " Off; " + offTime);
 
             if (onTime.intValue() > 0) {

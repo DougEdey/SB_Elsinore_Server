@@ -6,12 +6,13 @@ import com.sb.elsinore.wrappers.TempRunner;
 import com.sb.util.MathUtil;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.sb.elsinore.wrappers.TemperatureValue.cToF;
@@ -22,6 +23,7 @@ import static com.sb.elsinore.wrappers.TemperatureValue.cToF;
  */
 class PIDRunner extends TempRunner {
     private PID pid;
+    private Logger logger = LoggerFactory.getLogger(PIDRunner.class);
     /**
      * The previous five temperature readings.
      */
@@ -123,12 +125,10 @@ class PIDRunner extends TempRunner {
                 this.auxPin = new OutPin(this.pid.getAuxGPIO());
                 this.pid.setAux(false);
             } catch (InvalidGPIOException e) {
-                BrewServer.LOG.log(Level.SEVERE,
-                        "Couldn't parse " + this.pid.getAuxGPIO() + " as a valid GPIO");
+                this.logger.error("Couldn't parse {} as a valid GPIO", this.pid.getAuxGPIO());
                 System.exit(-1);
             } catch (RuntimeException e) {
-                BrewServer.LOG.log(Level.SEVERE,
-                        "Couldn't setup " + this.pid.getAuxGPIO() + " as a valid GPIO");
+                this.logger.error("Couldn't setup {} as a valid GPIO", this.pid.getAuxGPIO());
                 System.exit(-1);
             }
         }
@@ -163,11 +163,11 @@ class PIDRunner extends TempRunner {
             getTempList().add(getTemperature());
             BigDecimal tempAvg = calcAverage();
             // we have the current temperature
-            BrewServer.LOG.info("Running PIDModel Cycle: " + this.pid.getPidMode());
+            this.logger.info("Running PIDModel Cycle: {}", this.pid.getPidMode());
             switch (this.pid.getPidMode()) {
                 case AUTO:
                     this.pid.setDutyCycle(calculate(tempAvg));
-                    BrewServer.LOG.info("Calculated: " + this.pid.getDutyCycle());
+                    this.logger.info("Calculated: {}", this.pid.getDutyCycle());
                     break;
                 case MANUAL:
                     this.outputControl.setDuty(this.pid.getManualDuty());
@@ -181,9 +181,8 @@ class PIDRunner extends TempRunner {
                     this.outputThread.interrupt();
                     break;
             }
-            BrewServer.LOG.info(this.pid.getPidMode() + ": " + getName() + " status: "
-                    + getTempF() + " duty cycle: "
-                    + this.outputControl.getDuty());
+            this.logger.info("{}, mode: {},  status: {}, duty cycle: {}",
+                    getName(), this.pid.getPidMode(), getTempF(), this.outputControl.getDuty());
         }
     }
 
@@ -313,7 +312,7 @@ class PIDRunner extends TempRunner {
             this.timeDiff = this.currentTime.subtract(this.hysteriaStartTime);
             this.timeDiff = MathUtil.divide(MathUtil.divide(this.timeDiff, this.THOUSAND), 60);
         } catch (ArithmeticException e) {
-            BrewServer.LOG.warning(e.getMessage());
+            this.logger.warn("Couldn't calculate time difference", e);
         }
 
         BigDecimal minTempF = this.pid.getMinTemp();
@@ -324,20 +323,20 @@ class PIDRunner extends TempRunner {
             maxTempF = cToF(maxTempF);
         }
 
-        BrewServer.LOG.info("Checking current tempProbeDevice against " + minTempF + " and " + maxTempF);
+        this.logger.info("Checking current tempProbeDevice against {} and {}", minTempF, maxTempF);
         String state = "Min: " + minTempF + " (" + getTemperature() + ") " + maxTempF;
         if (getTempF().compareTo(minTempF) < 0) {
 
             if (this.hasValidHeater()
                     && this.pid.getDutyCycle().compareTo(new BigDecimal(100)) != 0
                     && this.minTimePassed(state)) {
-                BrewServer.LOG.info("Current tempProbeDevice is less than the minimum tempProbeDevice, turning on 100");
+                this.logger.info("Current tempProbeDevice is less than the minimum tempProbeDevice, turning on 100");
                 this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                 this.pid.setDutyCycle(new BigDecimal(100));
             } else if (this.hasValidCooler()
                     && this.pid.getDutyCycle().compareTo(new BigDecimal(100)) < 0
                     && this.minTimePassed(state)) {
-                BrewServer.LOG.info("Slept for long enough, turning off");
+                this.logger.info("Slept for long enough, turning off");
                 // Make sure the thread wakes up for the new settings
                 this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                 this.pid.setDutyCycle(new BigDecimal(0));
@@ -348,15 +347,15 @@ class PIDRunner extends TempRunner {
             if (this.hasValidCooler()
                     && this.pid.getDutyCycle().compareTo(new BigDecimal(-100)) != 0
                     && this.minTimePassed(state)) {
-                BrewServer.LOG.info("Current tempProbeDevice is greater than the max tempProbeDevice, turning on -100");
+                this.logger.info("Current tempProbeDevice is greater than the max tempProbeDevice, turning on -100");
                 this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                 this.pid.setDutyCycle(new BigDecimal(-100));
 
             } else if (this.hasValidHeater()
                     && this.pid.getDutyCycle().compareTo(new BigDecimal(-100)) > 0
                     && this.minTimePassed(state)) {
-                BrewServer.LOG.info("Current tempProbeDevice is more than the max tempProbeDevice");
-                BrewServer.LOG.info("Slept for long enough, turning off");
+                this.logger.info("Current tempProbeDevice is more than the max tempProbeDevice");
+                this.logger.info("Slept for long enough, turning off");
                 // Make sure the thread wakes up for the new settings
                 this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
                 this.pid.setDutyCycle(BigDecimal.ZERO);
@@ -367,7 +366,7 @@ class PIDRunner extends TempRunner {
             this.hysteriaStartTime = new BigDecimal(System.currentTimeMillis());
             this.pid.setDutyCycle(BigDecimal.ZERO);
         } else {
-            BrewServer.LOG.info("Min: " + minTempF + " (" + getTempF() + ") " + maxTempF);
+            this.logger.info("Min: {}, current: {}, max: {}", minTempF, getTempF(), maxTempF);
         }
     }
 

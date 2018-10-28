@@ -1,7 +1,9 @@
 package com.sb.elsinore;
 
-import org.springframework.boot.SpringApplication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -13,11 +15,12 @@ import org.springframework.web.servlet.view.script.ScriptTemplateViewResolver;
 
 @SpringBootApplication
 @EnableWebMvc
-public class CoreApplication implements WebMvcConfigurer {
+public class Elsinore implements WebMvcConfigurer {
 
     private static final String[] CLASSPATH_RESOURCE_LOCATIONS = {
             "classpath:/META-INF/resources/", "classpath:/resources/",
             "classpath:/static/", "classpath:/public/"};
+    private Logger logger = LoggerFactory.getLogger(Elsinore.class);
 
     /**
      * Main method to launch the brewery.
@@ -25,8 +28,7 @@ public class CoreApplication implements WebMvcConfigurer {
      * @param arguments List of arguments from the command line
      */
     public static void main(final String... arguments) {
-        BrewServer.LOG.info("Running Brewery Controller.");
-        SpringApplication.run(LaunchControl.class, arguments);
+        new SpringApplicationBuilder(Elsinore.class).run(arguments);
     }
 
     @Override

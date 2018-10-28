@@ -1,7 +1,7 @@
 package com.sb.elsinore.inputs;
 
-import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.LaunchControl;
+import com.sb.elsinore.OWFSController;
 import com.sb.elsinore.annotations.PhSensorType;
 import com.sb.elsinore.devices.I2CDevice;
 import com.sb.util.MathUtil;
@@ -9,24 +9,28 @@ import jGPIO.GPIO.Direction;
 import jGPIO.InPin;
 import jGPIO.InvalidGPIOException;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.Transient;
-import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
-public class PhSensor implements Serializable {
+public class PhSensor {
 
-    private static final java.math.BigDecimal BIGDEC_THOUSAND = new BigDecimal(1000);
     public static final String DS_ADDRESS = "dsAddress";
     public static final String DS_OFFSET = "dsOffset";
     public static final String AIN_PIN = "ainPin";
     public static final String OFFSET = "offset";
     public static final String MODEL = "model";
+    private static final java.math.BigDecimal BIGDEC_THOUSAND = new BigDecimal(1000);
+    public I2CDevice i2cDevice = null;
+    public int i2cChannel = -1;
+    private Logger logger = LoggerFactory.getLogger(PhSensor.class);
     private int ainPin = -1;
     private String dsAddress = "";
     private String dsOffset = "";
@@ -37,8 +41,8 @@ public class PhSensor implements Serializable {
     @Transient
     private InPin ainGPIO = null;
     private boolean stopLogging = false;
-    public I2CDevice i2cDevice = null;
-    public int i2cChannel = -1;
+    @Autowired
+    private OWFSController owfsController;
 
     /**
      * Create a blank pH Sensor.
@@ -58,15 +62,6 @@ public class PhSensor implements Serializable {
     }
 
     /**
-     * Override the ToString.
-     *
-     * @return The name of the PhSensor
-     */
-    public final String toString() {
-        return this.name;
-    }
-
-    /**
      * Setup a pH Sensor using a DS2450 based Analog input.
      *
      * @param address   The DS2450 Address
@@ -77,13 +72,19 @@ public class PhSensor implements Serializable {
         this.dsOffset = newOffset;
     }
 
+    @Autowired
+    public void setOWFSController(OWFSController owfsController) {
+        this.owfsController = owfsController;
+    }
+
     /**
-     * Set the pH Sensor Type.
+     * Override the ToString.
      *
-     * @param type The type of the sensor.
+     * @return The name of the PhSensor
      */
-    public final void setModel(final String type) {
-        this.model = type;
+    @Override
+    public final String toString() {
+        return this.name;
     }
 
     /**
@@ -110,24 +111,6 @@ public class PhSensor implements Serializable {
      */
     public final void setAinPin(final int newPin) {
         this.ainPin = newPin;
-    }
-
-    /**
-     * Set the DS2450 Address.
-     *
-     * @param address The address of the DS2450.
-     */
-    public final void setDsAddress(final String address) {
-        this.dsAddress = address;
-    }
-
-    /**
-     * Set the DS2450 Offset.
-     *
-     * @param newoffset The Offset of the DS2450.
-     */
-    public final void setDsOffset(final String newoffset) {
-        this.dsOffset = newoffset;
     }
 
     /**
@@ -175,50 +158,46 @@ public class PhSensor implements Serializable {
      */
     public final BigDecimal updateReading() {
         BigDecimal pinValue = new BigDecimal(0);
-        LaunchControl lc = LaunchControl.getInstance();
+        LaunchControl lc = null;
         if (this.ainGPIO != null) {
             try {
                 pinValue = new BigDecimal(this.ainGPIO.readValue());
                 if (this.stopLogging) {
-                    BrewServer.LOG.log(Level.SEVERE,
-                            "Recovered pH level reading for " + this.name);
+                    this.logger.warn("Recovered pH level reading for {}", this.name);
                     this.stopLogging = false;
                 }
             } catch (Exception e) {
                 if (!this.stopLogging) {
-                    BrewServer.LOG.log(Level.SEVERE,
-                            "Could not update the pH reading from Analogue", e);
+                    this.logger.warn("Could not update the pH reading from Analogue", e);
                     this.stopLogging = true;
                 }
-                BrewServer.LOG.info("Reconnecting OWFS");
-                lc.setupOWFS();
+                this.logger.info("Reconnecting OWFS");
+                this.owfsController.setupOWFS();
             }
         } else if (this.dsAddress != null && this.dsAddress.length() > 0
                 && this.dsOffset != null && this.dsOffset.length() > 0) {
             try {
                 pinValue = new BigDecimal(
-                        lc.readOWFSPath(
+                        this.owfsController.readOWFSPath(
                                 this.dsAddress + "/volt." + this.dsOffset));
                 if (this.stopLogging) {
-                    BrewServer.LOG.log(Level.SEVERE,
-                            "Recovered pH level reading for " + this.name);
+                    this.logger.warn("Recovered pH level reading for {}", this.name);
                     this.stopLogging = false;
                 }
             } catch (Exception e) {
                 if (!this.stopLogging) {
-                    BrewServer.LOG.log(Level.SEVERE,
-                            "Could not update the pH reading from OWFS", e);
+                    this.logger.warn("Could not update the pH reading from OWFS", e);
                     this.stopLogging = true;
                 }
-                BrewServer.LOG.info("Reconnecting OWFS");
-                lc.setupOWFS();
+                this.logger.info("Reconnecting OWFS");
+                this.owfsController.setupOWFS();
             }
         } else if (this.i2cDevice != null && this.i2cChannel > -1) {
-            BrewServer.LOG.warning(String.format("Reading from %s channel %s", getI2CDevAddressString(), this.i2cChannel));
+            this.logger.warn("Reading from {} channel {}", getI2CDevAddressString(), this.i2cChannel);
             pinValue = new BigDecimal(this.i2cDevice.readValue(this.i2cChannel)).divide(BIGDEC_THOUSAND);
         }
 
-        BrewServer.LOG.warning("Read: " + pinValue);
+        this.logger.warn("Read: {}", pinValue);
         return pinValue;
     }
 
@@ -232,6 +211,15 @@ public class PhSensor implements Serializable {
             this.name = "<unknown>";
         }
         return this.name.replaceAll(" ", "_");
+    }
+
+    /**
+     * Set the name of this pH Sensor.
+     *
+     * @param newName The new name.
+     */
+    public final void setName(final String newName) {
+        this.name = newName;
     }
 
     /**
@@ -256,12 +244,41 @@ public class PhSensor implements Serializable {
     }
 
     /**
+     * Set the calibration offset.
+     *
+     * @param attribute The Calibration offset
+     */
+    public final void setOffset(final BigDecimal attribute) {
+        this.offset = attribute;
+    }
+
+    /**
+     * Set the calibration offset.
+     *
+     * @param attribute The Calibration offset
+     */
+    public final void setOffset(final String attribute) {
+        if (attribute != null && attribute.length() > 0) {
+            setOffset(new BigDecimal(attribute));
+        }
+    }
+
+    /**
      * Return the current DS2450 Offset.
      *
      * @return DS2450 Offset
      */
     public final String getDsOffset() {
         return this.dsOffset;
+    }
+
+    /**
+     * Set the DS2450 Offset.
+     *
+     * @param newoffset The Offset of the DS2450.
+     */
+    public final void setDsOffset(final String newoffset) {
+        this.dsOffset = newoffset;
     }
 
     /**
@@ -274,6 +291,15 @@ public class PhSensor implements Serializable {
     }
 
     /**
+     * Set the DS2450 Address.
+     *
+     * @param address The address of the DS2450.
+     */
+    public final void setDsAddress(final String address) {
+        this.dsAddress = address;
+    }
+
+    /**
      * Get the current pH Sensor Model.
      *
      * @return The Model.
@@ -283,13 +309,22 @@ public class PhSensor implements Serializable {
     }
 
     /**
+     * Set the pH Sensor Type.
+     *
+     * @param type The type of the sensor.
+     */
+    public final void setModel(final String type) {
+        this.model = type;
+    }
+
+    /**
      * Calculate the current PH Value based off the current pH Sensor type.
      *
      * @return The value of the pH Probe.
      */
     public final BigDecimal calcPhValue() {
         BigDecimal value = new BigDecimal(0);
-        LaunchControl lc = LaunchControl.getInstance();
+        LaunchControl lc = null;
         for (java.lang.reflect.Method m
                 : PhSensor.class.getDeclaredMethods()) {
             PhSensorType calcMethod =
@@ -301,9 +336,6 @@ public class PhSensor implements Serializable {
                         value = value.setScale(2, RoundingMode.CEILING);
                         if (value.compareTo(BigDecimal.ZERO) > 0) {
                             this.phReading = value;
-                            if (lc.systemSettings.recorder != null) {
-                                //lc.systemSettings.recorder.saveReading(this.name, this.phReading);
-                            }
                         }
                     } catch (IllegalAccessException | InvocationTargetException e) {
                         e.printStackTrace();
@@ -374,35 +406,6 @@ public class PhSensor implements Serializable {
         }
 
         return MathUtil.divide(readValue, new BigDecimal(i));
-    }
-
-    /**
-     * Set the name of this pH Sensor.
-     *
-     * @param newName The new name.
-     */
-    public final void setName(final String newName) {
-        this.name = newName;
-    }
-
-    /**
-     * Set the calibration offset.
-     *
-     * @param attribute The Calibration offset
-     */
-    public final void setOffset(final String attribute) {
-        if (attribute != null && attribute.length() > 0) {
-            setOffset(new BigDecimal(attribute));
-        }
-    }
-
-    /**
-     * Set the calibration offset.
-     *
-     * @param attribute The Calibration offset
-     */
-    public final void setOffset(final BigDecimal attribute) {
-        this.offset = attribute;
     }
 
     public String getI2CDevNumberString() {

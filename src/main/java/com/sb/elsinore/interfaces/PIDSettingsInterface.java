@@ -7,6 +7,8 @@ import java.math.BigDecimal;
 public interface PIDSettingsInterface {
     Long getId();
 
+    void setId(Long id);
+
     String getGPIO();
 
     void setGPIO(String newGPIO);

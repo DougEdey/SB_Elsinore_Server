@@ -13,8 +13,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TemperatureRepository extends JpaRepository<TemperatureModel, Long> {
 
-    TemperatureModel findByName(@Param("name") String name);
+    TemperatureModel findByNameIgnoreCase(@Param("name") String name);
 
-    TemperatureModel findByDevice(@Param("device") String device);
+    TemperatureModel findByDeviceIgnoreCase(@Param("device") String device);
 
 }

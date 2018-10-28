@@ -1,36 +1,32 @@
 package com.sb.elsinore.recipes;
 
-import java.io.File;
-import java.text.ParseException;
-import java.util.ArrayList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathException;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
 import ca.strangebrew.recipe.*;
+import com.sb.elsinore.LaunchControl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.sb.elsinore.BrewServer;
-import com.sb.elsinore.LaunchControl;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.*;
+import java.io.File;
+import java.text.ParseException;
+import java.util.ArrayList;
 
 /**
  * Read in a BeerXML file and provide a UI form to the user.
+ *
  * @author Doug Edey
  */
 public class BeerXMLReader {
-
     /**
      * A static reference to the beerXML Instance.
      */
     private static BeerXMLReader instance = null;
+    private Logger logger = LoggerFactory.getLogger(BeerXMLReader.class);
     /**
      * The Document object that has been read in.
      **/
@@ -38,6 +34,7 @@ public class BeerXMLReader {
 
     /**
      * Get the singleton instance of this reader.
+     *
      * @return The current BeerXMLReader instance.
      */
     public static BeerXMLReader getInstance() {
@@ -50,6 +47,7 @@ public class BeerXMLReader {
 
     /**
      * Set the file to read, and read it.
+     *
      * @param inputFile The file to read in.
      * @return True if file is read OK.
      */
@@ -61,7 +59,7 @@ public class BeerXMLReader {
         try {
             dBuilder = dbFactory.newDocumentBuilder();
         } catch (ParserConfigurationException e1) {
-            BrewServer.LOG.warning("Couldn't create Doc Builder");
+            this.logger.warn("Couldn't create Doc Builder");
             return false;
         }
 
@@ -69,9 +67,9 @@ public class BeerXMLReader {
             this.recipeDocument = dBuilder.parse(inputFile);
         } catch (Exception e) {
             String output = String.format(
-                "Couldn't read beerXML File at: %1s",
-                inputFile.getAbsolutePath());
-            BrewServer.LOG.warning(output);
+                    "Couldn't read beerXML File at: %1s",
+                    inputFile.getAbsolutePath());
+            this.logger.warn(output);
             LaunchControl.setMessage(output);
             return false;
         }
@@ -84,8 +82,8 @@ public class BeerXMLReader {
         try {
             xp = XPathFactory.newInstance().newXPath();
             NodeList recipeList =
-                (NodeList) xp.evaluate(
-                    "/RECIPES/RECIPE", this.recipeDocument, XPathConstants.NODESET);
+                    (NodeList) xp.evaluate(
+                            "/RECIPES/RECIPE", this.recipeDocument, XPathConstants.NODESET);
             if (recipeList.getLength() == 0) {
                 LaunchControl.setMessage("No Recipes found in file");
                 return null;
@@ -98,7 +96,7 @@ public class BeerXMLReader {
                 nameList.add(recipeName);
             }
         } catch (XPathException xpe) {
-            BrewServer.LOG.warning("Couldn't run XPATH: " + xpe.getMessage());
+            this.logger.warn("Couldn't run XPATH: " + xpe.getMessage());
             return null;
         }
         return nameList;
@@ -122,11 +120,11 @@ public class BeerXMLReader {
             try {
                 recipeList[i] = readSingleRecipe(recipeData.item(i));
             } catch (XPathException xpe) {
-                BrewServer.LOG.warning("Couldn't read the recipe at index "
+                this.logger.warn("Couldn't read the recipe at index "
                         + i + " - " + xpe.getMessage());
                 xpe.printStackTrace();
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Couldn't read the recipe at index "
+                this.logger.warn("Couldn't read the recipe at index "
                         + i + " due to a bad number " + nfe.getMessage());
                 nfe.printStackTrace();
             }
@@ -236,7 +234,7 @@ public class BeerXMLReader {
         }
 
         if (recipe.getFermentStepSize() != fermentationStages) {
-            BrewServer.LOG.warning("Fermentation Steps invalid! Expected to find: " + fermentationStages
+            this.logger.warn("Fermentation Steps invalid! Expected to find: " + fermentationStages
                     + " but the recipe has: " + recipe.getFermentStepSize());
         }
         recipe.setDateBrewed(dateBrewed);
@@ -300,9 +298,10 @@ public class BeerXMLReader {
 
     /**
      * Read in the hops.
+     *
      * @param recipe The Recipe being used.
-     * @param hops The Hops NodeList
-     * @throws XPathException If there's an XPAth issue.
+     * @param hops   The Hops NodeList
+     * @throws XPathException        If there's an XPAth issue.
      * @throws NumberFormatException if there's a bad number
      */
     private void parseHops(Recipe recipe, NodeList hops)
@@ -359,8 +358,7 @@ public class BeerXMLReader {
             // Not all of these are used by beerxml 1.0
             if (use == null) {
                 // Do nothing here
-            }
-            else if (use.equalsIgnoreCase("boil") || use.equalsIgnoreCase("aroma")
+            } else if (use.equalsIgnoreCase("boil") || use.equalsIgnoreCase("aroma")
                     || use.equalsIgnoreCase("whirlpool")) {
                 hopObject.setAdd(Hop.BOIL);
                 hopObject.setMinutes(time);
@@ -389,9 +387,10 @@ public class BeerXMLReader {
 
     /**
      * Get the list of malts into the recipe object.
+     *
      * @param recipe The recipe to add the malts to
-     * @param malts The NodeList of the malts.
-     * @throws XPathException If there's an XPath issue
+     * @param malts  The NodeList of the malts.
+     * @throws XPathException        If there's an XPath issue
      * @throws NumberFormatException If there's a bad number.
      */
     private void parseMalts(Recipe recipe, NodeList malts)
@@ -459,14 +458,14 @@ public class BeerXMLReader {
 
                 recipe.addMalt(malt);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Couldn't parse a number: "
+                this.logger.warn("Couldn't parse a number: "
                         + nfe.getMessage());
             } catch (Exception e) {
                 if (e instanceof XPathException) {
                     throw (XPathException) e;
                 } else {
-                    BrewServer.LOG.warning(
-                        "Couldn't read the weight for a malt" + e.getMessage());
+                    this.logger.warn(
+                            "Couldn't read the weight for a malt" + e.getMessage());
                 }
             }
         }
@@ -474,9 +473,10 @@ public class BeerXMLReader {
 
     /**
      * Parse the yeasts.
+     *
      * @param recipe The new Recipe.
      * @param yeasts The Yeast List.
-     * @throws XPathException If we couldn't find the a value we expect
+     * @throws XPathException        If we couldn't find the a value we expect
      * @throws NumberFormatException If the yeast numbers are not numbers
      */
     private void parseYeasts(Recipe recipe, NodeList yeasts)
@@ -543,10 +543,10 @@ public class BeerXMLReader {
                 yeast.setAmountAndUnits(displayAmount);
                 yeast.setCultureDate(cultureDate);
             } catch (NumberFormatException nfe) {
-                BrewServer.LOG.warning("Couldn't parse a number: "
+                this.logger.warn("Couldn't parse a number: "
                         + nfe.getMessage());
             } catch (Exception e) {
-                BrewServer.LOG.warning(e.getMessage());
+                this.logger.warn(e.getMessage());
             }
         }
     }
@@ -562,6 +562,7 @@ public class BeerXMLReader {
             parseStyleDetail(recipe, styleList.item(i));
         }
     }
+
     private void parseStyleDetail(Recipe recipe, Node style) throws XPathExpressionException {
         if (style == null) {
             return;
@@ -736,15 +737,16 @@ public class BeerXMLReader {
         equipProfile.setLauterDeadspace(lauterDeadspace);
         equipProfile.setHopUtilization(hopUtilization);
         equipProfile.setNotes(notes);
-        equipProfile.setChillPercent(chillPercent/100);
+        equipProfile.setChillPercent(chillPercent / 100);
         recipe.setEquipmentProfile(equipProfile);
     }
 
     /**
      * Add a mash Profile to a recipe.
-     * @param recipe The @{Recipe} object to add the mash profile to.
+     *
+     * @param recipe      The @{Recipe} object to add the mash profile to.
      * @param mashProfile The node containing the beerXML Mash element.
-     * @param xp an XPath object to use to run XPath expressions.
+     * @param xp          an XPath object to use to run XPath expressions.
      * @throws XPathException If an XPath expression could not be run.
      */
     private void parseMashProfile(Recipe recipe, Node mashProfile, XPath xp) throws XPathException {
@@ -783,9 +785,10 @@ public class BeerXMLReader {
 
     /**
      * Iterate a node containing mash steps to add them to a recipe.
-     * @param mash The Mash object to add steps to.
+     *
+     * @param mash      The Mash object to add steps to.
      * @param mashSteps The Node containing multiple child MASH_STEP elements.
-     * @param xp An XPath object.
+     * @param xp        An XPath object.
      * @throws XPathExpressionException If an XPath couldn't be run.
      */
     private void parseMashSteps(Mash mash, Node mashSteps, XPath xp) throws XPathExpressionException {
@@ -810,8 +813,7 @@ public class BeerXMLReader {
             newStep.setInVol(infuseAmount);
             newStep.setDirections(getString(step, "DESCRIPTION", xp));
             if (type != null &&
-                    (type.equals(Mash.DECOCTION) || type.equals(Mash.DECOCTION_THICK) || type.equals(Mash.DECOCTION_THIN)))
-            {
+                    (type.equals(Mash.DECOCTION) || type.equals(Mash.DECOCTION_THICK) || type.equals(Mash.DECOCTION_THIN))) {
                 String decoctionAmount = getString(step, "DECOCTION_AMT", xp);
                 newStep.setInVol(new Quantity(decoctionAmount));
             } else {
@@ -822,7 +824,7 @@ public class BeerXMLReader {
                 }
             }
             String waterRatio = getString(step, "WATER_GRAIN_RATIO", xp);
-            if (waterRatio!= null) {
+            if (waterRatio != null) {
                 String[] mashRatio = waterRatio.split(" ");
                 newStep.setMashRatio(mashRatio[0]);
                 newStep.setMashRatioU(Mash.QT_PER_LB);
@@ -891,7 +893,7 @@ public class BeerXMLReader {
     public Recipe readRecipe(String name) throws XPathException {
         Recipe[] recipes = readRecipe(this.recipeDocument, name);
         if (recipes != null && recipes.length > 0) {
-            return  recipes[0];
+            return recipes[0];
         }
         return null;
     }

@@ -1,5 +1,6 @@
 package com.sb.elsinore.controller;
 
+import com.sb.elsinore.graphql.SystemSettingsService;
 import com.sb.elsinore.graphql.TempProbeService;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
@@ -21,12 +22,13 @@ import java.util.Map;
 public class GraphQLController {
     private final GraphQL graphQL;
 
-    public GraphQLController(TempProbeService tempProbeService) {
+    public GraphQLController(TempProbeService tempProbeService, SystemSettingsService systemSettingsService) {
         GraphQLSchema schema = new GraphQLSchemaGenerator()
                 .withResolverBuilders(
                         //Resolve by annotations
                         new AnnotatedResolverBuilder())
                 .withOperationsFromSingleton(tempProbeService)
+                .withOperationsFromSingleton(systemSettingsService)
                 .withValueMapperFactory(new JacksonValueMapperFactory())
                 .generate();
         this.graphQL = GraphQL.newGraphQL(schema).build();

@@ -5,13 +5,15 @@ import javax.validation.constraints.NotNull;
 public interface OutputDeviceInterface {
     Long getId();
 
+    void setId(Long id);
+
     @NotNull String getName();
 
     void setName(@NotNull String name);
 
-    PIDSettingsInterface getPIDSettings();
+    PIDSettingsInterface getPidSettings();
 
-    void setPIDSettings(PIDSettingsInterface pidSettings);
+    void setPidSettings(PIDSettingsInterface pidSettings);
 
     @NotNull String getType();
 

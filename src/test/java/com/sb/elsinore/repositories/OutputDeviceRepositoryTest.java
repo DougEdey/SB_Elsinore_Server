@@ -49,7 +49,7 @@ public class OutputDeviceRepositoryTest extends AbstractTransactionalJUnit4Sprin
         OutputDeviceModel outputDeviceModel = new OutputDeviceModel();
         outputDeviceModel.setName("Device");
         outputDeviceModel.setType("Type");
-        outputDeviceModel.setPIDSettings(new PIDSettings());
+        outputDeviceModel.setPidSettings(new PIDSettings());
 
         Long id = this.entityManager.persistAndFlush(outputDeviceModel).getId();
 
@@ -58,7 +58,7 @@ public class OutputDeviceRepositoryTest extends AbstractTransactionalJUnit4Sprin
         assertTrue(outputDevice.isPresent());
         assertEquals(outputDeviceModel.getName(), outputDevice.get().getName());
         assertEquals(outputDeviceModel.getType(), outputDevice.get().getType());
-        assertEquals(outputDeviceModel.getPIDSettings(), outputDevice.get().getPIDSettings());
+        assertEquals(outputDeviceModel.getPidSettings(), outputDevice.get().getPidSettings());
     }
 
     @Test
@@ -66,7 +66,7 @@ public class OutputDeviceRepositoryTest extends AbstractTransactionalJUnit4Sprin
         OutputDeviceModel outputDeviceModel = new OutputDeviceModel();
 
         outputDeviceModel.setType("Type");
-        outputDeviceModel.setPIDSettings(new PIDSettings());
+        outputDeviceModel.setPidSettings(new PIDSettings());
 
         this.thrown.expect(ConstraintViolationException.class);
         this.outputDeviceRepository.saveAndFlush(outputDeviceModel);
@@ -77,7 +77,7 @@ public class OutputDeviceRepositoryTest extends AbstractTransactionalJUnit4Sprin
         OutputDeviceModel outputDeviceModel = new OutputDeviceModel();
 
         outputDeviceModel.setName("Name");
-        outputDeviceModel.setPIDSettings(new PIDSettings());
+        outputDeviceModel.setPidSettings(new PIDSettings());
 
         this.thrown.expect(ConstraintViolationException.class);
         this.outputDeviceRepository.saveAndFlush(outputDeviceModel);

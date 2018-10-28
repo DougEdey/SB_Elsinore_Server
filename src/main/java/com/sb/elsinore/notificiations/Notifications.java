@@ -1,8 +1,9 @@
 package com.sb.elsinore.notificiations;
 
-import com.sb.elsinore.BrewServer;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 
@@ -13,14 +14,17 @@ import java.util.ArrayList;
 public class Notifications {
     private static Notifications notificationsInstance = null;
     private ArrayList<Notification> notificationsList = new ArrayList<>();
+    private Logger logger = LoggerFactory.getLogger(Notifications.class);
 
     /**
      * The private constructor. This is a singleton.
      */
-    private Notifications() {}
+    private Notifications() {
+    }
 
     /**
      * Get the current instance of this notifications list.
+     *
      * @return The current instance.
      */
     public static Notifications getInstance() {
@@ -33,40 +37,41 @@ public class Notifications {
 
     /**
      * Add a notification to the list, return its index.
+     *
      * @param newNotification The new notification object to add.
      * @return THe index of the new notification, or -1 if there was an error.
      */
     public int addNotification(Notification newNotification) {
         if (newNotification == null) {
-            BrewServer.LOG.warning("Null notification supplied.");
+            this.logger.warn("Null notification supplied.");
             new RuntimeException().printStackTrace();
             return -1;
         }
         this.notificationsList.add(newNotification);
         if (newNotification.getMessage() != null) {
-            BrewServer.LOG.info("Notification added with message: " + newNotification.getMessage());
+            this.logger.info("Notification added with message: " + newNotification.getMessage());
         } else {
-            BrewServer.LOG.info("Notification added with no message");
+            this.logger.info("Notification added with no message");
         }
         return this.notificationsList.indexOf(newNotification);
     }
 
     /**
      * Clear the notification at the specified index.
+     *
      * @param index The index of the notifcation to clear.
      * @return True if the notifcation was cleared, or false if there was an issue.
      */
     public boolean clearNotification(int index) {
         Notification toDelete = this.notificationsList.get(index);
         if (toDelete == null) {
-            BrewServer.LOG.warning("Could not find notification: " + index + " to clear.");
-            BrewServer.LOG.warning(this.getNotificationStatus().toString());
+            this.logger.warn("Could not find notification: {} to clear. {}", index, getNotificationStatus().toString());
             return false;
         }
 
         toDelete.clearNotification();
         this.notificationsList.remove(index);
-        BrewServer.LOG.info("Cleared notification: " + index);
+        this.logger.info("Cleared notification: " + index);
         return true;
     }
 

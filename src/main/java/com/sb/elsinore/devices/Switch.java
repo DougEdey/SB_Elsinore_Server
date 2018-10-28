@@ -1,9 +1,10 @@
 package com.sb.elsinore.devices;
 
-import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.interfaces.SwitchInterface;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A helper class for switch control. not very complex. Designed to control a
@@ -12,7 +13,7 @@ import jGPIO.OutPin;
  * @author Doug Edey
  */
 public class Switch implements Comparable<Switch>, SwitchInterface {
-
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
     /**
      * the outpin for the switch.
      */
@@ -22,7 +23,7 @@ public class Switch implements Comparable<Switch>, SwitchInterface {
 
     public Switch(SwitchInterface switchInterface) throws InvalidGPIOException {
         this.switchInterface = switchInterface;
-        this.output = new OutPin(switchInterface.getGPIOName());
+        this.output = new OutPin(switchInterface.getGpio());
         turnOff();
     }
 
@@ -37,7 +38,7 @@ public class Switch implements Comparable<Switch>, SwitchInterface {
                 return this.output.getValue().equals("1");
             }
         } catch (Exception e) {
-            BrewServer.LOG.warning("Couldn't toggle switch: " + e);
+            this.logger.warn("Couldn't toggle switch", e);
             return false;
         }
     }
@@ -92,6 +93,11 @@ public class Switch implements Comparable<Switch>, SwitchInterface {
     }
 
     @Override
+    public void setId(Long id) {
+        this.switchInterface.setId(id);
+    }
+
+    @Override
     public String getName() {
         return this.switchInterface.getName();
     }
@@ -102,19 +108,19 @@ public class Switch implements Comparable<Switch>, SwitchInterface {
     }
 
     @Override
-    public String getGPIOName() {
-        return this.switchInterface.getGPIOName();
+    public String getGpio() {
+        return this.switchInterface.getGpio();
     }
 
     @Override
-    public void setGPIOName(String gpioName) {
+    public void setGpio(String gpioName) {
         if (!this.output.getGPIOName().equalsIgnoreCase(gpioName)) {
             this.output.close();
             try {
                 this.output = new OutPin(gpioName);
-                this.switchInterface.setGPIOName(gpioName);
+                this.switchInterface.setGpio(gpioName);
             } catch (InvalidGPIOException e) {
-                BrewServer.LOG.warning("Failed to start Switch GPIO: " + e.getMessage());
+                this.logger.warn("Failed to start Switch GPIO", e);
             }
         }
     }

@@ -1,6 +1,5 @@
 package com.sb.elsinore.devices;
 
-import com.sb.elsinore.BrewServer;
 import com.sb.elsinore.interfaces.PIDInterface;
 import com.sb.elsinore.interfaces.PIDSettingsInterface;
 import com.sb.elsinore.interfaces.TemperatureInterface;
@@ -8,6 +7,8 @@ import com.sb.elsinore.models.TemperatureModel;
 import jGPIO.InvalidGPIOException;
 import jGPIO.OutPin;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.regex.Matcher;
@@ -22,6 +23,7 @@ public class PID implements PIDInterface {
     private PIDInterface pidInterface = null;
     private BigDecimal calculatedDuty = new BigDecimal(0);
     private OutPin auxPin = null;
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public PID(PIDInterface pidInterface) throws InvalidGPIOException {
         this.pidInterface = pidInterface;
@@ -72,6 +74,11 @@ public class PID implements PIDInterface {
     @Override
     public String getAuxGPIO() {
         return this.pidInterface.getAuxGPIO();
+    }
+
+    @Override
+    public void setAuxGPIO(String auxGPIO) {
+        this.pidInterface.setAuxGPIO(auxGPIO);
     }
 
     @Override
@@ -166,13 +173,28 @@ public class PID implements PIDInterface {
     }
 
     @Override
+    public void setHeatSetting(PIDSettingsInterface heatSetting) {
+        this.pidInterface.setHeatSetting(heatSetting);
+    }
+
+    @Override
     public PIDSettingsInterface getCoolSetting() {
         return this.pidInterface.getCoolSetting();
     }
 
     @Override
+    public void setCoolSetting(PIDSettingsInterface coolSetting) {
+        this.pidInterface.setCoolSetting(coolSetting);
+    }
+
+    @Override
     public Long getId() {
         return this.pidInterface.getId();
+    }
+
+    @Override
+    public void setId(Long id) {
+        this.pidInterface.setId(id);
     }
 
     /**
@@ -188,22 +210,22 @@ public class PID implements PIDInterface {
 
         Matcher pinMatcher = pinPattern.matcher(gpio);
 
-        BrewServer.LOG.info(gpio + " Matches: " + pinMatcher.groupCount());
+        this.logger.info(gpio + " Matches: " + pinMatcher.groupCount());
 
         if (pinMatcher.matches()) {
             // Beagleboard style input
-            BrewServer.LOG.info("Matched GPIO pinout for Beagleboard: "
+            this.logger.info("Matched GPIO pinout for Beagleboard: "
                     + gpio + ". OS: " + System.getProperty("os.level"));
             return gpio;
         } else {
             pinMatcher = pinPatternAlt.matcher(gpio);
             if (pinMatcher.matches()) {
-                BrewServer.LOG.info("Direct GPIO Pinout detected. OS: "
+                this.logger.info("Direct GPIO Pinout detected. OS: "
                         + System.getProperty("os.level"));
                 // The last group gives us the GPIO number
                 return gpio;
             } else {
-                BrewServer.LOG.info("Could not match the GPIO!");
+                this.logger.info("Could not match the GPIO!");
                 return null;
             }
         }
@@ -217,10 +239,10 @@ public class PID implements PIDInterface {
         if (this.auxPin != null) {
             // If the value if "1" we set it to false
             // If the value is not "1" we set it to true
-            BrewServer.LOG.info("Aux Pin is being set to: " + !this.auxPin.getValue().equals("1"));
+            this.logger.info("Aux Pin is being set to: {}", !this.auxPin.getValue().equals("1"));
             setAux(!getAuxStatus());
         } else {
-            BrewServer.LOG.info("Aux Pin is not set for " + this.pidInterface.getName());
+            this.logger.info("Aux Pin is not set for {}", this.pidInterface.getName());
         }
     }
 

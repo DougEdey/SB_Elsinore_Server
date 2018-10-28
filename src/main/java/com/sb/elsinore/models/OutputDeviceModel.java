@@ -35,6 +35,11 @@ public class OutputDeviceModel implements OutputDeviceInterface {
         return this.id;
     }
 
+    @Override
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     @NotNull
     @Override
     public String getName() {
@@ -47,12 +52,12 @@ public class OutputDeviceModel implements OutputDeviceInterface {
     }
 
     @Override
-    public PIDSettingsInterface getPIDSettings() {
+    public PIDSettingsInterface getPidSettings() {
         return this.pidSettings;
     }
 
     @Override
-    public void setPIDSettings(PIDSettingsInterface pidSettings) {
+    public void setPidSettings(PIDSettingsInterface pidSettings) {
         this.pidSettings = pidSettings;
     }
 

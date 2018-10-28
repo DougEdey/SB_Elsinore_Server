@@ -1,8 +1,12 @@
 package com.sb.elsinore.triggers;
 
-import com.sb.elsinore.*;
+import com.sb.elsinore.LaunchControl;
+import com.sb.elsinore.TriggerControl;
 import com.sb.elsinore.repositories.TemperatureRepository;
 import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 
@@ -11,17 +15,14 @@ public class ProfileTrigger implements TriggerInterface {
     private static final String TARGET_NAME = "targetname";
     private static final String ACTIVATE = "activate";
     private static final String DISABLE = "disable";
-
+    private Logger logger = LoggerFactory.getLogger(ProfileTrigger.class);
     private Integer position = -1;
     private boolean activate = false;
     private boolean active = false;
     private String targetName = null;
     private Date startDate = null;
     private TemperatureRepository temperatureRepository;
-
-    public void setTemperatureRepository(TemperatureRepository temperatureRepository) {
-        this.temperatureRepository = temperatureRepository;
-    }
+    private LaunchControl launchControl;
 
     public ProfileTrigger() {
     }
@@ -33,6 +34,16 @@ public class ProfileTrigger implements TriggerInterface {
     public ProfileTrigger(final int newPos, final JSONObject jsonObject) {
         this.position = newPos;
         updateTrigger(jsonObject);
+    }
+
+    @Autowired
+    public void setLaunchControl(LaunchControl launchControl) {
+        this.launchControl = launchControl;
+    }
+
+    @Autowired
+    public void setTemperatureRepository(TemperatureRepository temperatureRepository) {
+        this.temperatureRepository = temperatureRepository;
     }
 
     @Override
@@ -52,7 +63,7 @@ public class ProfileTrigger implements TriggerInterface {
             return;
         }
 
-        TriggerControl triggerControl = LaunchControl.getInstance().findTriggerControl(
+        TriggerControl triggerControl = this.launchControl.findTriggerControl(
                 this.targetName);
         TriggerInterface triggerEntry = triggerControl != null ? triggerControl.getCurrentTrigger() : null;
         if (triggerControl == null) {
@@ -75,15 +86,13 @@ public class ProfileTrigger implements TriggerInterface {
 
         if (stepToUse >= 0 && this.activate) {
             triggerControl.activateTrigger(stepToUse);
-            BrewServer.LOG.warning(
-                    "Activated " + this.targetName + " step at " + stepToUse);
+            this.logger.info("Activated {} step at {}", this.targetName, stepToUse);
         } else {
             triggerControl.deactivateTrigger(stepToUse);
-            BrewServer.LOG.warning("Deactivated " + this.targetName + " step at "
-                    + stepToUse);
+            this.logger.info("Deactivated {} step at {}", this.targetName, stepToUse);
         }
 
-        LaunchControl.getInstance().startMashControl(this.targetName);
+        this.launchControl.startMashControl(this.targetName);
     }
 
     @Override
@@ -126,7 +135,7 @@ public class ProfileTrigger implements TriggerInterface {
         String target = (String) params.get(TARGET_NAME);
         String newAct = (String) params.get(ACTIVATE);
 
-        if (target != null && this.temperatureRepository.findByName(target) != null) {
+        if (target != null && this.temperatureRepository.findByNameIgnoreCase(target) != null) {
             this.targetName = target;
         } else {
             return false;

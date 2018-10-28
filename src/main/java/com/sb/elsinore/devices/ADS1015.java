@@ -1,13 +1,13 @@
 package com.sb.elsinore.devices;
 
-import com.sb.elsinore.BrewServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Read from an ADS1015 device on a specific channel
  * Created by doug on 12/07/15.
  */
 public class ADS1015 extends I2CDevice {
-
     public static String DEV_NAME = "ADS1015";
     public int ADS1015_READBIT = 0x01;
     /*=========================================================================
@@ -68,6 +68,7 @@ public class ADS1015 extends I2CDevice {
     public int ADS1015_REG_CONFIG_CQUE_2CONV = 0x0001;  // Assert ALERT/RDY after two conversions
     public int ADS1015_REG_CONFIG_CQUE_4CONV = 0x0002;  // Assert ALERT/RDY after four conversions
     public int ADS1015_REG_CONFIG_CQUE_NONE = 0x0003;  // Disable the comparator and put ALERT/RDY in high state (default)
+    protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public ADS1015(int deviceNo, int address) {
         super(deviceNo, address, DEV_NAME);
@@ -149,7 +150,7 @@ public class ADS1015 extends I2CDevice {
 
         int value = ina219Read16(this.ADS1015_REG_POINTER_CONVERT);
         if (value == -1) {
-            BrewServer.LOG.warning("Failed to read ADS1015");
+            this.logger.warn("Failed to read ADS1015");
             return -1f;
         }
 

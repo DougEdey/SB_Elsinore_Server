@@ -96,32 +96,32 @@ public class TemperatureTest {
 
     @Test
     public void canReadAndWriteI2CNumber() {
-        this.temperature.setI2CNumber("1");
-        assertEquals("1", this.temperature.getI2CNumber());
+        this.temperature.setI2cNumber("1");
+        assertEquals("1", this.temperature.getI2cNumber());
     }
 
     @Test
     public void canReadAndWriteI2CAddress() {
-        this.temperature.setI2CAddress("I2C_Address");
-        assertEquals("I2C_Address", this.temperature.getI2CAddress());
+        this.temperature.setI2cAddress("I2C_Address");
+        assertEquals("I2C_Address", this.temperature.getI2cAddress());
     }
 
     @Test
     public void canReadAndWriteI2CChannelToNull() {
-        this.temperature.setI2CChannel("Channel");
-        assertEquals("", this.temperature.getI2CChannel());
+        this.temperature.setI2cChannel("Channel");
+        assertEquals("", this.temperature.getI2cChannel());
     }
 
     @Test
     public void canReadAndWriteI2CChannelToInteger() {
-        this.temperature.setI2CChannel("12");
-        assertEquals("12", this.temperature.getI2CChannel());
+        this.temperature.setI2cChannel("12");
+        assertEquals("12", this.temperature.getI2cChannel());
     }
 
     @Test
     public void canReadAndWriteI2CDevType() {
-        this.temperature.setI2CDevType("Dev_Type");
-        assertEquals("Dev_Type", this.temperature.getI2CDevType());
+        this.temperature.setI2cType("Dev_Type");
+        assertEquals("Dev_Type", this.temperature.getI2cType());
     }
 
     @Test

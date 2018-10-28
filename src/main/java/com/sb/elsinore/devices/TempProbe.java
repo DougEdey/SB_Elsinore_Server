@@ -1,6 +1,6 @@
 package com.sb.elsinore.devices;
 
-import com.sb.elsinore.LaunchControl;
+import com.sb.elsinore.OWFSController;
 import com.sb.elsinore.TriggerControl;
 import com.sb.elsinore.VolumeUnits;
 import com.sb.elsinore.interfaces.TemperatureInterface;
@@ -11,6 +11,8 @@ import jGPIO.InPin;
 import jGPIO.InvalidGPIOException;
 import org.owfs.jowfsclient.OwfsException;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -30,13 +32,14 @@ import static com.sb.common.SBStringUtils.getTempRegexp;
  * @author Doug Edey
  */
 public class TempProbe implements TemperatureInterface {
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(TempProbe.class);
     /**
      * Hold the current error string.
      */
     public String currentError = null;
-
     I2CDevice i2cDevice = null;
+    private Logger logger = LoggerFactory.getLogger(TempProbe.class);
+    @Autowired
+    private OWFSController owfsController;
     /**
      * The current temp.
      */
@@ -77,15 +80,23 @@ public class TempProbe implements TemperatureInterface {
      * @param device The address of this temperature probe.
      */
     public TempProbe(String name, String device) {
-        log.info("Adding " + device);
+        this.logger.info("Adding {}", device);
         this.temperatureInterface = new TemperatureModel(name, device);
-        LaunchControl.getInstance().addTemp(this);
     }
 
+    @Autowired
+    public void setOWFSController(OWFSController owfsController) {
+        this.owfsController = owfsController;
+    }
 
     @Override
     public Long getId() {
         return this.temperatureInterface.getId();
+    }
+
+    @Override
+    public void setId(Long id) {
+        this.temperatureInterface.setId(id);
     }
 
     @Override
@@ -151,24 +162,24 @@ public class TempProbe implements TemperatureInterface {
 
 
         try {
-            log.info("Volume ADC at: {} - {}", volumeAddress, offset);
+            this.logger.info("Volume ADC at: {} - {}", volumeAddress, offset);
             String owfsPath = volumeAddress + "/volt." + offset;
             String temp =
-                    LaunchControl.getInstance().readOWFSPath(owfsPath);
+                    this.owfsController.readOWFSPath(owfsPath);
 
             // Check to make sure we can read OK
             if (temp.equals("")) {
-                log.error(
+                this.logger.error(
                         "Couldn't read the Volume from {}", owfsPath);
                 return false;
             } else {
-                log.info("Volume reads {}", temp);
+                this.logger.info("Volume reads {}", temp);
             }
         } catch (IOException e) {
-            log.error("IOException when access the ADC over 1wire", e);
+            this.logger.error("IOException when access the ADC over 1wire", e);
             return false;
         } catch (OwfsException e) {
-            log.error("OWFSException when access the ADC over 1wire", e);
+            this.logger.error("OWFSException when access the ADC over 1wire", e);
             return false;
         }
 
@@ -256,7 +267,7 @@ public class TempProbe implements TemperatureInterface {
 
             setCalibration(temperature.setScale(2, RoundingMode.HALF_DOWN));
         } else {
-            log.error("{} doesn't match {}", calibration, getTempRegexp().pattern());
+            this.logger.error("{} doesn't match {}", calibration, getTempRegexp().pattern());
         }
     }
 
@@ -281,6 +292,11 @@ public class TempProbe implements TemperatureInterface {
     }
 
     @Override
+    public void setHidden(boolean hidden) {
+        this.temperatureInterface.setHidden(hidden);
+    }
+
+    @Override
     public int getPosition() {
         return this.temperatureInterface.getPosition();
     }
@@ -291,43 +307,43 @@ public class TempProbe implements TemperatureInterface {
     }
 
     @Override
-    public String getI2CNumber() {
-        return this.temperatureInterface.getI2CNumber();
+    public String getI2cNumber() {
+        return this.temperatureInterface.getI2cNumber();
     }
 
     @Override
-    public void setI2CNumber(String number) {
-
-    }
-
-    @Override
-    public String getI2CAddress() {
-        return this.temperatureInterface.getI2CAddress();
-    }
-
-    @Override
-    public void setI2CAddress(String address) {
+    public void setI2cNumber(String number) {
 
     }
 
     @Override
-    public String getI2CChannel() {
-        return this.temperatureInterface.getI2CChannel();
+    public String getI2cAddress() {
+        return this.temperatureInterface.getI2cAddress();
     }
 
     @Override
-    public void setI2CChannel(String channel) {
-        this.temperatureInterface.setI2CChannel(channel);
+    public void setI2cAddress(String address) {
+
     }
 
     @Override
-    public String getI2CDevType() {
-        return this.temperatureInterface.getI2CDevType();
+    public String getI2cChannel() {
+        return this.temperatureInterface.getI2cChannel();
     }
 
     @Override
-    public void setI2CDevType(String type) {
-        this.temperatureInterface.setI2CDevType(type);
+    public void setI2cChannel(String channel) {
+        this.temperatureInterface.setI2cChannel(channel);
+    }
+
+    @Override
+    public String getI2cType() {
+        return this.temperatureInterface.getI2cType();
+    }
+
+    @Override
+    public void setI2cType(String type) {
+        this.temperatureInterface.setI2cType(type);
     }
 
     public boolean isCutoffEnabled() {
@@ -352,7 +368,7 @@ public class TempProbe implements TemperatureInterface {
     void setCutoffTemp(String cutoffInput) {
         if (isNullOrEmpty(cutoffInput)) {
             setCutoffTemp((BigDecimal) null);
-            log.warn("Disabling cut off temperature");
+            this.logger.warn("Disabling cut off temperature");
             return;
         }
 
@@ -375,7 +391,7 @@ public class TempProbe implements TemperatureInterface {
             // Create the temp
             setCutoffTemp(new BigDecimal(number));
         } else {
-            log.error("{} doesn't match {}", getCutoffTemp(), getTempRegexp().pattern());
+            this.logger.error("{} doesn't match {}", getCutoffTemp(), getTempRegexp().pattern());
         }
     }
 
@@ -399,7 +415,7 @@ public class TempProbe implements TemperatureInterface {
         try {
             this.volumePin = new InPin(analogPin, Direction.ANALOGUE);
         } catch (InvalidGPIOException e) {
-            log.warn("Invalid Analog GPIO specified {}", analogPin);
+            this.logger.warn("Invalid Analog GPIO specified {}", analogPin);
             throw (e);
         }
 
@@ -448,11 +464,11 @@ public class TempProbe implements TemperatureInterface {
 
                 if (this.volumeMultiplier.compareTo(BigDecimal.ZERO) != 0) {
                     if (newMultiplier.equals(this.volumeMultiplier)) {
-                        log.info(
+                        this.logger.info(
                                 "The newMultiplier isn't the same as the old one,"
                                         + " if this is a big difference, be careful!"
                                         + " You may need a quadratic!");
-                        log.info("New: " + newMultiplier
+                        this.logger.info("New: " + newMultiplier
                                 + ". Old: " + this.volumeMultiplier);
                     }
                 } else {
@@ -461,11 +477,11 @@ public class TempProbe implements TemperatureInterface {
 
                 if (this.volumeConstant.compareTo(BigDecimal.ZERO) != 0) {
                     if (newConstant.equals(this.volumeConstant)) {
-                        log.info("The new constant "
+                        this.logger.info("The new constant "
                                 + "isn't the same as the old one, if this is a big"
                                 + " difference, be careful!"
                                 + " You may need a quadratic!");
-                        log.info("New: " + newConstant
+                        this.logger.info("New: " + newConstant
                                 + ". Old: " + this.volumeConstant);
                     }
                 } else {
@@ -489,19 +505,19 @@ public class TempProbe implements TemperatureInterface {
             } else if (getVolumeAddress() != null && getVolumeOffset() != null) {
                 try {
                     pinValue = new BigDecimal(
-                            LaunchControl.getInstance().readOWFSPath(
+                            this.owfsController.readOWFSPath(
                                     getVolumeAddress() + "/volt." + getVolumeOffset()));
                     if (this.stopVolumeLogging) {
-                        log.error("Recovered volume level reading for {}", getName());
+                        this.logger.error("Recovered volume level reading for {}", getName());
                         this.stopVolumeLogging = false;
                     }
                 } catch (Exception e) {
                     if (!this.stopVolumeLogging) {
-                        log.error("Could not update the volume reading from OWFS");
+                        this.logger.error("Could not update the volume reading from OWFS");
                         this.stopVolumeLogging = true;
                     }
-                    log.info("Reconnecting OWFS");
-                    LaunchControl.getInstance().setupOWFS();
+                    this.logger.info("Reconnecting OWFS");
+                    this.owfsController.setupOWFS();
 
                     return BigDecimal.ZERO;
                 }
@@ -521,7 +537,7 @@ public class TempProbe implements TemperatureInterface {
                 // No VolumeBase setup, so we're probably calibrating
                 return pinValue;
             } catch (Exception e) {
-                log.error("Uncaught exception when creating the volume set", e);
+                this.logger.error("Uncaught exception when creating the volume set", e);
                 System.exit(-1);
             }
 
@@ -565,7 +581,7 @@ public class TempProbe implements TemperatureInterface {
 
             } catch (NoSuchElementException e) {
                 // no more elements
-                log.info("Finished reading Volume Elements");
+                this.logger.info("Finished reading Volume Elements");
             }
 
             if (tVolume == null) {
@@ -604,7 +620,7 @@ public class TempProbe implements TemperatureInterface {
                     } else {
                         try {
                             total = total.add(new BigDecimal(
-                                    LaunchControl.getInstance().readOWFSPath(
+                                    this.owfsController.readOWFSPath(
                                             getVolumeAddress() + "/volt." + getVolumeOffset())));
                         } catch (OwfsException e) {
                             e.printStackTrace();
@@ -615,7 +631,7 @@ public class TempProbe implements TemperatureInterface {
                     return false;
                 }
             } catch (NumberFormatException e) {
-                log.warn("Bad Analog input value!");
+                this.logger.warn("Bad Analog input value!");
                 return false;
             }
 
@@ -630,7 +646,7 @@ public class TempProbe implements TemperatureInterface {
 
         // read in ten values
         BigDecimal avgValue = MathUtil.divide(total, maxReads);
-        log.info("Read " + avgValue + " for "
+        this.logger.info("Read " + avgValue + " for "
                 + volume + " " + getVolumeUnit());
 
         this.addVolumeMeasurement(volume, avgValue);
@@ -646,7 +662,7 @@ public class TempProbe implements TemperatureInterface {
      */
     private void addVolumeMeasurement(
             final BigDecimal key, final BigDecimal value) {
-        log.info("Adding " + key + " with value " + value);
+        this.logger.info("Adding " + key + " with value " + value);
         if (this.volumeBase == null) {
             this.volumeBase = new ConcurrentHashMap<>();
         }
@@ -700,12 +716,13 @@ public class TempProbe implements TemperatureInterface {
     }
 
     boolean setupVolumeI2C(String i2c_device, String i2c_address, String i2c_channel, String i2c_type, String units) {
-        return setupVolumeI2C(LaunchControl.getInstance().getI2CDevice(i2c_device, i2c_address, i2c_type), i2c_channel, units);
+        //return setupVolumeI2C(this.owfsController.getI2CDevice(i2c_device, i2c_address, i2c_type), i2c_channel, units);
+        return true;
     }
 
     private boolean setupVolumeI2C(I2CDevice i2c_device, String i2c_channel, String volumeUnits) {
         this.i2cDevice = i2c_device;
-        setI2CChannel(i2c_channel);
+        setI2cChannel(i2c_channel);
         setVolumeUnit(volumeUnits);
         return (this.i2cDevice != null);
     }

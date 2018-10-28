@@ -11,33 +11,28 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 
 @Entity
 @Table(uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"name"}),
+        @UniqueConstraint(columnNames = {"nameLowercased"}),
         @UniqueConstraint(columnNames = {"device"})
 })
 @EntityListeners(TemperatureListeners.class)
 public class TemperatureModel implements TemperatureInterface {
-
     @NotNull
     @javax.validation.constraints.Size(min = 1)
     private String device = "";
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private boolean hidden = false;
-
-
     @NotNull
     @javax.validation.constraints.Size(min = 1)
     private String name;
+    private String nameLowercased;
     private BigDecimal cutoffTemp = null;
-
     /**
      * Other strings, obviously named.
      */
     private String scale = "C", volumeAddress = "", volumeOffset = "",
             volumeUnit = "";
-
     /**
      * Are we measuring volume?
      */
@@ -48,11 +43,10 @@ public class TemperatureModel implements TemperatureInterface {
     private int volumeAIN = -1;
     private BigDecimal calibration = BigDecimal.ZERO;
     private Integer position = -1;
-
     private int i2cChannel = -1;
-    private String i2cDevAddress = null;
-    private String i2cDevNumber = null;
-    private String i2cDevType = null;
+    private String i2cAddress = null;
+    private String i2cNumber = null;
+    private String i2cType = null;
 
     public TemperatureModel() {
     }
@@ -70,9 +64,20 @@ public class TemperatureModel implements TemperatureInterface {
         this.device = other.device;
     }
 
+    @PrePersist
+    @PreUpdate
+    private void prepare() {
+        this.nameLowercased = this.name.toLowerCase();
+    }
+
     @Override
     public Long getId() {
         return this.id;
+    }
+
+    @Override
+    public void setId(Long id) {
+        this.id = id;
     }
 
     /**
@@ -89,6 +94,14 @@ public class TemperatureModel implements TemperatureInterface {
     @Override
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getNameLowercased() {
+        return this.nameLowercased;
+    }
+    
+    public void setNameLowercased(String nameLowercased) {
+        this.nameLowercased = nameLowercased;
     }
 
     @Override
@@ -215,6 +228,11 @@ public class TemperatureModel implements TemperatureInterface {
         return this.hidden;
     }
 
+    @Override
+    public void setHidden(boolean hidden) {
+        this.hidden = hidden;
+    }
+
     /**
      * @return The position of this temp probe in the list.
      */
@@ -234,27 +252,27 @@ public class TemperatureModel implements TemperatureInterface {
     }
 
     @Override
-    public String getI2CNumber() {
-        return this.i2cDevNumber;
+    public String getI2cNumber() {
+        return this.i2cNumber;
     }
 
     @Override
-    public void setI2CNumber(String number) {
-        this.i2cDevNumber = number;
+    public void setI2cNumber(String number) {
+        this.i2cNumber = number;
     }
 
     @Override
-    public String getI2CAddress() {
-        return this.i2cDevAddress;
+    public String getI2cAddress() {
+        return this.i2cAddress;
     }
 
     @Override
-    public void setI2CAddress(String address) {
-        this.i2cDevAddress = address;
+    public void setI2cAddress(String address) {
+        this.i2cAddress = address;
     }
 
     @Override
-    public String getI2CChannel() {
+    public String getI2cChannel() {
         if (this.i2cChannel == -1) {
             return "";
         }
@@ -262,7 +280,7 @@ public class TemperatureModel implements TemperatureInterface {
     }
 
     @Override
-    public void setI2CChannel(String channel) {
+    public void setI2cChannel(String channel) {
         try {
             this.i2cChannel = Integer.parseInt(channel);
         } catch (NumberFormatException nfe) {
@@ -271,13 +289,13 @@ public class TemperatureModel implements TemperatureInterface {
     }
 
     @Override
-    public String getI2CDevType() {
-        return this.i2cDevType;
+    public String getI2cType() {
+        return this.i2cType;
     }
 
     @Override
-    public void setI2CDevType(String devType) {
-        this.i2cDevType = devType;
+    public void setI2cType(String devType) {
+        this.i2cType = devType;
     }
 
     @Override

@@ -1,10 +1,9 @@
 package com.sb.elsinore;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -12,6 +11,7 @@ public class ZipFile {
 
     private ZipOutputStream zos = null;
     private FileOutputStream fos = null;
+    private Logger logger = LoggerFactory.getLogger(ZipFile.class);
 
     /**
      * Protected constructor, use {@link #ZipFile(String) String Constructor}.
@@ -21,6 +21,7 @@ public class ZipFile {
 
     /**
      * Create a new Zip file with the specified name.
+     *
      * @param filename The zip filename.
      * @throws FileNotFoundException If the file could not be created.
      */
@@ -31,9 +32,10 @@ public class ZipFile {
 
     /**
      * Add a file to the zipfile specified by this ZipFile object.
+     *
      * @param fileName The file to add to the archive.
      * @throws FileNotFoundException If the input file could not be found.
-     * @throws IOException If the Zipfile hasn't been opened.
+     * @throws IOException           If the Zipfile hasn't been opened.
      */
     public final void addToZipFile(final String fileName)
             throws IOException {
@@ -41,7 +43,7 @@ public class ZipFile {
             throw new IOException("Zip file has not been opened");
         }
 
-        BrewServer.LOG.info("Writing '" + fileName + "' to zip file");
+        this.logger.info("Writing '{}' to zip file", fileName);
 
         File file = new File(fileName);
         FileInputStream fis = new FileInputStream(file);
@@ -60,6 +62,7 @@ public class ZipFile {
 
     /**
      * Close the archive.
+     *
      * @throws IOException If the archive couldn't be closed.
      */
     public final void closeZip() throws IOException {

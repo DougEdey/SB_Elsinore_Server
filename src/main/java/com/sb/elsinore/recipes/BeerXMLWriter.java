@@ -1,41 +1,36 @@
 package com.sb.elsinore.recipes;
 
 import ca.strangebrew.recipe.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.sb.elsinore.BrewServer;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * Write a BeerXML 1.0 format file.
- * @author Doug Edey
  *
+ * @author Doug Edey
  */
 public class BeerXMLWriter {
-
     Recipe[] recipes;
+    private Logger logger = LoggerFactory.getLogger(BeerXMLWriter.class);
     //String TAG = BeerXMLWriter.class.getName();
 
     public BeerXMLWriter(Recipe[] recipes) {
@@ -52,21 +47,19 @@ public class BeerXMLWriter {
         DocumentBuilder dBuilder;
         try {
             dBuilder = dbFactory.newDocumentBuilder();
-        } catch (ParserConfigurationException e1) {
-            BrewServer.LOG.warning(
-                "Couldn't create DocumentBuilderFactory when writing XML File.");
-            e1.printStackTrace();
+        } catch (ParserConfigurationException e) {
+            this.logger.warn("Couldn't create DocumentBuilderFactory when writing XML File.", e);
             return -1;
         }
 
         Document recipeDocument;
-        XPath xp ;
+        XPath xp;
         // Create the Recipe Node
         recipeDocument = dBuilder.newDocument();
         Element recipesElement = recipeDocument.createElement("RECIPES");
 
         int success = 0;
-        for (Recipe recipe: this.recipes) {
+        for (Recipe recipe : this.recipes) {
             try {
                 Element recipeElement = writeRecipe(recipe, recipeDocument);
                 if (recipeElement != null) {
@@ -74,13 +67,12 @@ public class BeerXMLWriter {
                 }
                 success++;
             } catch (IOException ioe) {
-                BrewServer.LOG.info("Couldn't add recipe");
-                ioe.printStackTrace();
+                this.logger.info("Couldn't add recipe", ioe);
             }
         }
 
         recipeDocument.appendChild(recipesElement);
-        try {
+        try (recipeOutputStream) {
             TransformerFactory transformerFactory = TransformerFactory
                     .newInstance();
             Transformer transformer = transformerFactory.newTransformer();
@@ -102,28 +94,25 @@ public class BeerXMLWriter {
             StreamResult configResult = new StreamResult(recipeOutputStream);
             transformer.transform(source, configResult);
         } catch (TransformerConfigurationException e) {
-            BrewServer.LOG.info("Could not transform config file");
-            e.printStackTrace();
+            this.logger.warn("Could not transform config file", e);
         } catch (TransformerException e) {
-            BrewServer.LOG.info("Could not transformer file");
-            e.printStackTrace();
+            this.logger.info("Could not transformer file", e);
         } catch (XPathExpressionException e) {
-            e.printStackTrace();
-        } finally {
-            recipeOutputStream.close();
+            this.logger.info("Xpath error", e);
         }
         return success;
     }
 
     /**
      * Write the recipe to the XML Document.
-     * @param recipe The recipe to output.
+     *
+     * @param recipe         The recipe to output.
      * @param recipeDocument The XMLDocument to append the recipe to.
      * @return The Element that represents the recipe.
      * @throws IOException If an element could not be added.
      */
     public final Element writeRecipe(final Recipe recipe,
-            final Document recipeDocument)
+                                     final Document recipeDocument)
             throws IOException {
         Element recipeElement = recipeDocument.createElement("RECIPE");
 
@@ -373,12 +362,13 @@ public class BeerXMLWriter {
 
     /**
      * Create a hop element.
-     * @param hopAddition The hop to create an element for.
+     *
+     * @param hopAddition    The hop to create an element for.
      * @param recipeDocument The base document to create the element for.
      * @return The Hop XML Element.
      */
     private Element createHopElement(final Hop hopAddition,
-            final Document recipeDocument) {
+                                     final Document recipeDocument) {
         Element hopElement = recipeDocument.createElement("HOP");
 
         Element tElement = recipeDocument.createElement("NAME");
@@ -476,12 +466,13 @@ public class BeerXMLWriter {
 
     /**
      * Create a new Fermentable Element.
-     * @param maltAddition The Fermentable to add.
+     *
+     * @param maltAddition   The Fermentable to add.
      * @param recipeDocument The Base document.
      * @return The Fermentable Element.
      */
     private Element createFermentableElement(final Fermentable maltAddition,
-            final Document recipeDocument) {
+                                             final Document recipeDocument) {
         Element fermentableElement = recipeDocument.createElement(
                 "FERMENTABLE");
 
@@ -568,12 +559,13 @@ public class BeerXMLWriter {
 
     /**
      * Create a yeast Element.
-     * @param yeast The yeast object to make into an XML Element.
+     *
+     * @param yeast          The yeast object to make into an XML Element.
      * @param recipeDocument The Document to create elements for.
      * @return The Yeast Object as an XML Element.
      */
     private Element createYeastElement(final Yeast yeast,
-            final Document recipeDocument) {
+                                       final Document recipeDocument) {
         Element yeastElement = recipeDocument.createElement("YEAST");
 
         Element tElement = recipeDocument.createElement("VERSION");
@@ -661,7 +653,7 @@ public class BeerXMLWriter {
             tElement.setTextContent(Integer.toString(yeast.getMaxReuse()));
             yeastElement.appendChild(tElement);
         }
-        
+
         tElement = recipeDocument.createElement("ADD_TO_SECONDARY");
         tElement.setTextContent(Boolean.toString(yeast.isAddToSecondary()));
         yeastElement.appendChild(tElement);
