@@ -1,0 +1,38 @@
+{
+  "name": "app",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@shopify/polaris": "^2.12.1",
+    "apollo-boost": "^0.1.19",
+    "bootstrap": "4.1.2",
+    "graphql": "^14.0.2",
+    "react": "^16.6.0",
+    "react-apollo": "^2.2.4",
+    "react-app-rewire-postcss": "^3.0.2",
+    "react-app-rewired": "^1.6.2",
+    "react-bootstrap": "^0.32.4",
+    "react-bootstrap-navbar-offcanvas": "^1.0.3",
+    "react-cookie": "2.2.0",
+    "react-dom": "^16.6.0",
+    "react-router-dom": "4.3.1",
+    "react-scripts": "2.0.5",
+    "reactstrap": "6.3.0"
+  },
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-app-rewired eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
+  "proxy": "http://localhost:8080"
+}

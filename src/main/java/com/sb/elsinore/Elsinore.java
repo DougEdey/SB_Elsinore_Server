@@ -62,7 +62,7 @@ public class Elsinore implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addViewController("/graphiql").setViewName(
-                "forward:/graphiql/index.html");
+        registry.addViewController("/graphiql")
+                .setViewName("forward:/graphiql/index.html");
     }
 }
