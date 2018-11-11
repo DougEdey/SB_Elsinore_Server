@@ -3,32 +3,35 @@ package com.sb.elsinore;
 
 import com.sb.elsinore.models.TemperatureModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.PostPersist;
 import javax.persistence.PreRemove;
 
 @Component
+@Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class TemperatureListeners {
 
     @Autowired
-    private LaunchControl launchControl;
+    static private LaunchControl launchControl;
 
     public TemperatureListeners() {
     }
 
     @Autowired
     public TemperatureListeners(LaunchControl launchControl) {
-        this.launchControl = launchControl;
+        TemperatureListeners.launchControl = launchControl;
     }
 
     @PreRemove
     public void tempRemoved(TemperatureModel tempProbe) {
-        this.launchControl.deleteTemp(tempProbe);
+        launchControl.deleteTemp(tempProbe);
     }
 
     @PostPersist
     public void tempAdded(TemperatureModel tempProbe) {
-        this.launchControl.addTemp(tempProbe);
+        launchControl.addTemp(tempProbe);
     }
 }

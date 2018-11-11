@@ -6,6 +6,7 @@ import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.schema.GraphQLSchema;
+import graphql.schema.idl.SchemaPrinter;
 import io.leangen.graphql.GraphQLSchemaGenerator;
 import io.leangen.graphql.metadata.strategy.query.AnnotatedResolverBuilder;
 import io.leangen.graphql.metadata.strategy.value.jackson.JacksonValueMapperFactory;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -31,6 +34,8 @@ public class GraphQLController {
                 .withOperationsFromSingleton(systemSettingsService)
                 .withValueMapperFactory(new JacksonValueMapperFactory())
                 .generate();
+
+        updateGraphQLSchema(schema);
         this.graphQL = GraphQL.newGraphQL(schema).build();
     }
 
@@ -43,5 +48,27 @@ public class GraphQLController {
                 .context(raw)
                 .build());
         return executionResult.toSpecification();
+    }
+
+    private void updateGraphQLSchema(GraphQLSchema schema) {
+
+        String schemaString = new SchemaPrinter(
+                // Tweak the options accordingly
+                SchemaPrinter.Options.defaultOptions()
+                        .includeScalarTypes(true)
+                        .includeExtendedScalarTypes(true)
+                        .includeIntrospectionTypes(true)
+                        .includeSchemaDefintion(true)
+        ).print(schema);
+
+        try {
+            FileWriter fileWriter = new FileWriter("graphql.schema.json");
+            fileWriter.write(schemaString);
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
     }
 }

@@ -557,6 +557,8 @@ public class LaunchControl {
     public void deleteTemp(TemperatureModel tTempProbe) {
         getTempRunners().removeIf(tempRunner -> tempRunner.getTempInterface().getName().equals(tTempProbe.getName()));
         getTempThreads().removeIf(tempThread -> tempThread.getName().equalsIgnoreCase(tTempProbe.getName()));
+        tempProbes.remove(tTempProbe.getName());
+        this.temperatureRepository.flush();
     }
 
     /**
@@ -724,7 +726,7 @@ public class LaunchControl {
         return this.switchList;
     }
 
-    private List<TempRunner> getTempRunners() {
+    public List<TempRunner> getTempRunners() {
         if (this.tempRunners == null) {
             this.tempRunners = new ArrayList<>();
         }

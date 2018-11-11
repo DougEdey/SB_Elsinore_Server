@@ -11,7 +11,7 @@ import {InMemoryCache} from 'apollo-cache-inmemory'
 import {AppProvider} from "@shopify/polaris";
 
 const httpLink = createHttpLink({
-    uri: 'http://localhost:8080'
+    uri: 'http://localhost:8080/graphql'
 });
 
 const client = new ApolloClient({

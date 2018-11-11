@@ -2,6 +2,7 @@ package com.sb.elsinore.graphql;
 
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.devices.TempProbe;
+import com.sb.elsinore.interfaces.TemperatureInterface;
 import com.sb.elsinore.models.TemperatureModel;
 import com.sb.elsinore.repositories.TemperatureRepository;
 import com.sb.elsinore.wrappers.TempRunner;
@@ -28,6 +29,11 @@ public class TempProbeService {
         return this.launchControl.findTemp(name);
     }
 
+    @GraphQLQuery(name = "tempRunners")
+    public List<TempRunner> tempRunners() {
+        return this.launchControl.getTempRunners();
+    }
+
     @GraphQLQuery(name = "temperatureModels")
     public List<TemperatureModel> getTemperatures() {
         return this.temperatureRepository.findAll();
@@ -43,6 +49,17 @@ public class TempProbeService {
         this.temperatureRepository.save(new TemperatureModel(name, device));
         return findTempRunnerByName(name);
 
+    }
+
+    @GraphQLMutation(name = "deleteProbe")
+    public Long deleteProbe(Long id) {
+        TemperatureModel toDelete = this.temperatureRepository.findById(id).orElse(null);
+
+        if (toDelete == null) {
+            throw new RuntimeException("No Probe with Id " + id);
+        }
+        this.temperatureRepository.delete(toDelete);
+        return id;
     }
 
 }

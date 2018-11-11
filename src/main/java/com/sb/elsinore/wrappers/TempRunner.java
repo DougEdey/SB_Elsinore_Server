@@ -381,4 +381,8 @@ public class TempRunner implements Runnable {
         shutdown();
         Thread.currentThread().interrupt();
     }
+
+    public Long getId() {
+        return this.temperature.getId();
+    }
 }

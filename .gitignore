@@ -18,3 +18,6 @@ out/
 
 # Node Shit
 node_modules/
+
+# DB Shit
+testdb.*
