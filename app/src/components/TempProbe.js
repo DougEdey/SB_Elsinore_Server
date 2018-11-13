@@ -5,22 +5,25 @@ import TempProbeModal from "./TempProbeModal";
 
 class TempProbe extends Component {
 
+    state = { active: false};
+
     render() {
         return (
             <Col xs={12} md={3}>
-            <Card title={this.props.probe.name} actions={[{content: "Edit", onAction: this.showEditDialog}]}>
+            <Card title={this.props.probe.name} actions={[{content: "Edit", onAction: this.toggleEditDialog}]}>
                 <Card.Section>
                     {this.props.probe.temperature} {this.props.probe.scale}
                 </Card.Section>
             </Card>
-                <TempProbeModal ref={(modal) => { this._modal = modal; }} probe={this.props.probe}/>
+                <TempProbeModal probe={this.props.probe} active={this.state.active}
+                    toggleEditDialog={this.toggleEditDialog}/>
             </Col>
         )
     }
 
-    showEditDialog = () => {
+    toggleEditDialog = () => {
         console.log(this);
-        this._modal.handleChange();
+        this.setState({active: !this.state.active});
     }
 }
 

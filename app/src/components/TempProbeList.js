@@ -22,7 +22,7 @@ class TempProbeList extends Component {
 
 
         return (
-            <Query query={FEED_QUERY} variables={"foo"}>
+            <Query query={FEED_QUERY}>
                 {({ loading, error, data }) => {
                     if (loading) return <p>Loading...</p>;
                     if (error) return <p>Error :(</p>;
