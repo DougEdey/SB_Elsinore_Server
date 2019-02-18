@@ -36,14 +36,14 @@ public class TemperatureModel implements TemperatureInterface {
     /**
      * Are we measuring volume?
      */
-    private boolean volumeMeasurementEnabled = false;
+    private Boolean volumeMeasurementEnabled = false;
     /**
      * Volume analog input number.
      */
-    private int volumeAIN = -1;
+    private Integer volumeAIN = -1;
     private BigDecimal calibration = BigDecimal.ZERO;
     private Integer position = -1;
-    private int i2cChannel = -1;
+    private Integer i2cChannel = -1;
     private String i2cAddress = null;
     private String i2cNumber = null;
     private String i2cType = null;
@@ -172,7 +172,7 @@ public class TemperatureModel implements TemperatureInterface {
     }
 
     @Override
-    public void setVolumeAIN(int volumeAIN) {
+    public void setVolumeAIN(Integer volumeAIN) {
         this.volumeAIN = volumeAIN;
     }
 
@@ -224,12 +224,12 @@ public class TemperatureModel implements TemperatureInterface {
     }
 
     @Override
-    public boolean isHidden() {
+    public Boolean isHidden() {
         return this.hidden;
     }
 
     @Override
-    public void setHidden(boolean hidden) {
+    public void setHidden(Boolean hidden) {
         this.hidden = hidden;
     }
 
@@ -237,7 +237,7 @@ public class TemperatureModel implements TemperatureInterface {
      * @return The position of this temp probe in the list.
      */
     @Override
-    public int getPosition() {
+    public Integer getPosition() {
         return this.position;
     }
 
@@ -247,7 +247,7 @@ public class TemperatureModel implements TemperatureInterface {
      * @param newPos The new position.
      */
     @Override
-    public void setPosition(final int newPos) {
+    public void setPosition(final Integer newPos) {
         this.position = newPos;
     }
 
@@ -309,12 +309,12 @@ public class TemperatureModel implements TemperatureInterface {
     }
 
     @Override
-    public boolean getVolumeMeasurementEnabled() {
+    public Boolean getVolumeMeasurementEnabled() {
         return this.volumeMeasurementEnabled;
     }
 
     @Override
-    public void setVolumeMeasurementEnabled(boolean enabled) {
+    public void setVolumeMeasurementEnabled(Boolean enabled) {
         this.volumeMeasurementEnabled = enabled;
     }
 

@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Spy;
+import com.sb.elsinore.hardware.OneWireController;
 
 import java.math.BigDecimal;
 
@@ -25,6 +26,9 @@ public class PIDModelRunnerTest {
     private PID pid;
     @Mock
     private TempProbe tempProbe;
+    @Mock
+    private OneWireController oneWireController;
+
 
     @Spy
     private PIDSettingsInterface heatSettings;
@@ -35,7 +39,7 @@ public class PIDModelRunnerTest {
     @Before
     public void setup() throws Exception {
         initMocks(this);
-        this.pidRunner = spy(new PIDRunner(this.pid));
+        this.pidRunner = spy(new PIDRunner(this.pid, this.oneWireController));
 
         when(this.pidRunner.getTempInterface()).thenReturn(this.tempProbe);
         when(this.pid.getHeatSetting()).thenReturn(this.heatSettings);

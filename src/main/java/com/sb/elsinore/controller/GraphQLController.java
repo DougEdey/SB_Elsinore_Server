@@ -1,15 +1,15 @@
 package com.sb.elsinore.controller;
 
-import com.sb.elsinore.graphql.SystemSettingsService;
+import com.sb.elsinore.graphql.SystemSettingsQueries;
 import com.sb.elsinore.graphql.TempProbeService;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.SchemaPrinter;
-import graphql.servlet.internal.GraphQLRequest;
 import io.leangen.graphql.GraphQLSchemaGenerator;
 import io.leangen.graphql.metadata.strategy.query.AnnotatedResolverBuilder;
+import io.leangen.graphql.metadata.strategy.query.PublicResolverBuilder;
 import io.leangen.graphql.metadata.strategy.value.jackson.JacksonValueMapperFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,17 +48,17 @@ public class GraphQLController {
         public Map<String, Object> variables = null;
     }
 
-    public GraphQLController(TempProbeService tempProbeService, SystemSettingsService systemSettingsService) {
+    public GraphQLController(TempProbeService tempProbeService, SystemSettingsQueries systemSettingsService) {
         GraphQLSchema schema = new GraphQLSchemaGenerator()
                 .withResolverBuilders(
                         //Resolve by annotations
-                        new AnnotatedResolverBuilder())
+                        new AnnotatedResolverBuilder(),
+                        new PublicResolverBuilder("io.leangen.spqr.samples.demo"))
                 .withOperationsFromSingleton(tempProbeService)
                 .withOperationsFromSingleton(systemSettingsService)
                 .withValueMapperFactory(new JacksonValueMapperFactory())
                 .generate();
 
-        updateGraphQLSchema(schema);
         this.graphQL = GraphQL.newGraphQL(schema).build();
     }
 
@@ -74,27 +74,5 @@ public class GraphQLController {
                 .context(raw)
                 .build());
         return executionResult.toSpecification();
-    }
-
-    private void updateGraphQLSchema(GraphQLSchema schema) {
-
-        String schemaString = new SchemaPrinter(
-                // Tweak the options accordingly
-                SchemaPrinter.Options.defaultOptions()
-                        .includeScalarTypes(true)
-                        .includeExtendedScalarTypes(true)
-                        .includeIntrospectionTypes(true)
-                        .includeSchemaDefintion(true)
-        ).print(schema);
-
-        try {
-            FileWriter fileWriter = new FileWriter("graphql.schema.json");
-            fileWriter.write(schemaString);
-            fileWriter.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(-1);
-        }
-
     }
 }

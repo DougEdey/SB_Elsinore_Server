@@ -55,10 +55,11 @@ dependencies {
         exclude(module: 'avalon-framework')
         exclude(module: 'servlet-api')
     }
-    compile(group: 'com.graphql-java', name: 'graphql-spring-boot-starter', version: '5.0.2')
-    compile(group: 'com.graphql-java', name: 'graphiql-spring-boot-starter', version: '5.0.2')
-    compile(group: 'com.graphql-java', name: 'graphql-java-tools', version: '5.2.3')
-    compile('io.leangen.graphql:spqr:0.9.8')
+    compile 'com.graphql-java-kickstart:graphql-spring-boot-starter:5.3.1'
+    compile 'com.graphql-java-kickstart:graphiql-spring-boot-starter:5.3.1'
+    compile 'com.graphql-java-kickstart:graphql-java-tools:5.4.1'
+
+    compile('io.leangen.graphql:spqr:0.9.9')
     compile("org.springframework.boot:spring-boot-starter-tomcat")
     compile("org.springframework.boot:spring-boot-starter-data-rest")
     compile("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -84,7 +85,7 @@ dependencies {
         exclude module: 'servlet-api'
     }
     compile group: 'org.reflections', name: 'reflections', version: '0.9.9-RC1'
-    compile group: 'commons-io', name: 'commons-io', version: '2.4'
+    
     compile group: 'org.easymock', name: 'easymock', version: '3.5'
     compile group: 'org.apache.tika', name: 'tika-core', version: '1.11'
     compile group: 'javax.xml.bind', name: 'jaxb-api', version: '2.2.11'

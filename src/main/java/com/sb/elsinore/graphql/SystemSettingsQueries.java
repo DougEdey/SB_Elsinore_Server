@@ -7,12 +7,13 @@ import io.leangen.graphql.annotations.GraphQLQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+
 @Service
-public class SystemSettingsService {
+public class SystemSettingsQueries {
     private SystemSettingsRepository systemSettingsRepository;
 
     @Autowired
-    public SystemSettingsService(SystemSettingsRepository systemSettingsRepository) {
+    public SystemSettingsQueries(SystemSettingsRepository systemSettingsRepository) {
         this.systemSettingsRepository = systemSettingsRepository;
     }
 

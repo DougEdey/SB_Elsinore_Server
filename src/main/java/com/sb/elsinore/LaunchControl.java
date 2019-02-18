@@ -3,6 +3,8 @@ package com.sb.elsinore;
 import com.sb.elsinore.devices.I2CDevice;
 import com.sb.elsinore.devices.Switch;
 import com.sb.elsinore.devices.TempProbe;
+import com.sb.elsinore.hardware.DeviceType;
+import com.sb.elsinore.hardware.OneWireController;
 import com.sb.elsinore.inputs.PhSensor;
 import com.sb.elsinore.interfaces.TemperatureInterface;
 import com.sb.elsinore.models.PIDModel;
@@ -43,17 +45,10 @@ import java.util.regex.Pattern;
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class LaunchControl {
-    public static final String RepoURL = "http://dougedey.github.io/SB_Elsinore_Server/";
-
-    /**
-     * The Minimum number of volume data points.
-     */
-    static final int MIN_VOLUME_SIZE = 3;
-
 
     private static String baseUser = null;
 
-    private static String message = "";
+    private final OneWireController oneWireController;
     /**
      * List of Switches.
      */
@@ -89,31 +84,16 @@ public class LaunchControl {
     @Autowired
     public LaunchControl(SystemSettingsRepository systemSettingsRepository,
                          TemperatureRepository temperatureRepository,
-                         PIDRepository pidRepository) {
+                         PIDRepository pidRepository,
+                         OneWireController oneWireController) {
         this.systemSettingsRepository = systemSettingsRepository;
         this.temperatureRepository = temperatureRepository;
         this.pidRepository = pidRepository;
+        this.oneWireController = oneWireController;
 
         loadAllModels();
     }
 
-    /**
-     * Get the current message.
-     *
-     * @return The current message.
-     */
-    public static String getMessage() {
-        return LaunchControl.message;
-    }
-
-    /**
-     * Set the system message for the UI.
-     *
-     * @param newMessage The message to set.
-     */
-    public static void setMessage(final String newMessage) {
-        LaunchControl.message = newMessage;
-    }
 
     /**
      * Update from GIT and restart.
@@ -138,7 +118,6 @@ public class LaunchControl {
         } catch (IOException e3) {
             this.logger.info("Couldn't check remote git SHA");
             e3.printStackTrace();
-            LaunchControl.setMessage("Failed to update from Git");
             return;
         }
 
@@ -157,10 +136,8 @@ public class LaunchControl {
         } catch (IOException e2) {
             this.logger.warn("Couldn't update from GIT");
             e2.printStackTrace();
-            LaunchControl.setMessage(out.toString());
             return;
         }
-        LaunchControl.setMessage(out.toString());
         this.logger.warn(out.toString());
         int EXIT_UPDATE = 128;
         System.exit(EXIT_UPDATE);
@@ -176,43 +153,6 @@ public class LaunchControl {
         this.pidRepository = pidRepository;
     }
 
-    /**
-     * Add a new switch to the server.
-     *
-     * @param name The name of the switch to add.
-     * @param gpio The GPIO to add
-     * @return True if added OK
-     */
-    Switch addSwitch(final String name, final String gpio) {
-        if (name.equals("") || gpio.equals("")) {
-            return null;
-        }
-        Switch p = findSwitch(name);
-        if (p == null) {
-            try {
-                //p = new Switch(name, gpio);
-                getSwitchList().add(p);
-            } catch (Exception g) {
-                this.logger.warn("Could not add switch: " + g.getMessage());
-                g.printStackTrace();
-            }
-        } else {
-            p.setGpio(gpio);
-        }
-        return p;
-    }
-
-    /**
-     * Add the system temperature
-     */
-    private void addSystemTemp() {
-        TempProbe tTempProbe = new TempProbe("System", "System");
-        this.temperatureRepository.save(tTempProbe.getModel());
-        this.logger.info("Adding " + tTempProbe.getName());
-        // setup the scale for each temp probe
-        tTempProbe.setScale(getSystemSettings().getScale());
-    }
-
     protected SystemSettings getSystemSettings() {
         if (this.systemSettings == null) {
             if (this.systemSettingsRepository.findAll().size() == 1) {
@@ -225,44 +165,16 @@ public class LaunchControl {
         return this.systemSettings;
     }
 
-    void delSystemTemp() {
-        TempRunner tempRunner = this.deviceMap.get("System");
-        // Do we have anything to delete?
-        if (tempRunner == null) {
-            return;
-        }
-
-        tempRunner.shutdown();
-        TemperatureInterface temperatureInterface = tempRunner.getTempInterface();
-        this.temperatureRepository.delete(temperatureInterface.getModel());
-        getTempRunners().removeIf(tr -> tr.getTempInterface() == temperatureInterface);
-
-    }
-
-    /**
-     * Check to see if a switch with the given name exists.
-     *
-     * @param name The name of the switch to check
-     * @return True if the switch exists.
-     */
-    public boolean switchExists(final String name) {
-        for (Switch p : getSwitchList()) {
-            if (p.getName().equals(name)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     /**
      * Add a PIDModel to the list.
      *
      * @param newTempProbe PIDModel to add.
      */
-    public Optional<TempRunner> addTemp(TemperatureInterface newTempProbe) {
+    Optional<TempRunner> addTemp(TemperatureInterface newTempProbe) {
         Optional<TempRunner> tempRunnerOpt = findTempRunner(newTempProbe);
         if (tempRunnerOpt.isEmpty()) {
-            TempRunner tempRunner = new TempRunner(newTempProbe);
+            TempRunner tempRunner = new TempRunner(newTempProbe, oneWireController);
             getTempRunners().add(tempRunner);
             Thread pThread = new Thread(tempRunner);
             pThread.setName(tempRunner.getTempInterface().getName());
@@ -299,48 +211,6 @@ public class LaunchControl {
                 .orElse(null);
     }
 
-    /**
-     * Delete the specified switch.
-     *
-     * @param name The switch to delete.
-     */
-    void deleteSwitch(final String name) {
-        // search based on the input name
-        Switch tSwitch = findSwitch(name);
-        getSwitchList().remove(tSwitch);
-    }
-
-
-    /*******
-     * Helper function to read the user input and tidy it up.
-     *
-     * @return Trimmed String representing the UserInput
-     */
-    private String readInput() {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        String input = "";
-        try {
-            input = br.readLine();
-        } catch (IOException ioe) {
-            System.out.println("IO error trying to read your input: " + input);
-        }
-        return input.trim();
-    }
-
-    /**
-     * Add a MashControl object to the master mash control list.
-     *
-     * @param mControl The new mashControl to add
-     */
-    public void addMashControl(final TriggerControl mControl) {
-        if (findTriggerControl(mControl.getOutputControl()) != null) {
-            this.logger
-                    .warn("Duplicate Mash Profile detected! Not adding: "
-                            + mControl.getOutputControl());
-            return;
-        }
-        getTriggerControlList().add(mControl);
-    }
 
     /**
      * Start the mashControl thread associated with the PIDModel.
@@ -399,74 +269,13 @@ public class LaunchControl {
         String headSha = getShaFor("origin");
 
         if (headSha != null && !headSha.equals(currentSha)) {
-            LaunchControl.setMessage("Update Available. "
-                    + "<span class='btn' id=\"UpdatesFromGit\""
-                    + " type=\"submit\"" + " onClick='updateElsinore();'>"
-                    + "Click here to update</span>");
+            // TODO: Add notification to UX
         } else {
-            LaunchControl.setMessage("No updates available!");
+            // TODO: Add notification to UX
         }
         this.pb = null;
     }
 
-    private String getLastLogDate() {
-        File jarLocation = new File(LaunchControl.class.getProtectionDomain()
-                .getCodeSource().getLocation().getPath()).getParentFile();
-
-        ArrayList<String> commands = new ArrayList<>();
-        commands.add("git");
-        // Add arguments
-        commands.add("log");
-        commands.add("-1");
-        this.logger.info("Checking for last log date");
-
-        // Run macro on target
-        Process process = null;
-        this.pb = new ProcessBuilder(commands);
-        this.pb.directory(jarLocation);
-        this.pb.redirectErrorStream(true);
-        try {
-            process = this.pb.start();
-            process.waitFor();
-        } catch (IOException | InterruptedException e3) {
-            this.logger.info("Couldn't check remote git SHA");
-            e3.printStackTrace();
-            if (process != null) {
-                process.destroy();
-            }
-            this.pb = null;
-            return null;
-        }
-
-        // Read output
-        StringBuilder out = new StringBuilder();
-        BufferedReader br = new BufferedReader(new InputStreamReader(
-                process.getInputStream()));
-        String line, previous = null;
-        String currentSha = null;
-
-        try {
-            while ((line = br.readLine()) != null) {
-                if (!line.equals(previous)) {
-                    previous = line;
-                    if (line.startsWith("Date:")) {
-                        line = line.substring(5).trim();
-                        out.append(line).append('\n');
-                    }
-
-                    this.logger.info(line);
-                }
-            }
-        } catch (IOException e2) {
-            this.logger.info("Couldn't read a line when checking SHA");
-            e2.printStackTrace();
-            process.destroy();
-            this.pb = null;
-            return null;
-        }
-        this.pb = null;
-        return out.toString();
-    }
 
     private String getShaFor(String target) {
         File jarLocation = new File(LaunchControl.class.getProtectionDomain()
@@ -523,7 +332,7 @@ public class LaunchControl {
 
         if (currentSha == null) {
             this.logger.info("Couldn't check " + target + " revision");
-            LaunchControl.setMessage("Couldn't check " + target + " revision");
+            // TODO: Add notification to UX
             process.destroy();
             this.pb = null;
             return null;
@@ -557,7 +366,7 @@ public class LaunchControl {
     public void deleteTemp(TemperatureModel tTempProbe) {
         getTempRunners().removeIf(tempRunner -> tempRunner.getTempInterface().getName().equals(tTempProbe.getName()));
         getTempThreads().removeIf(tempThread -> tempThread.getName().equalsIgnoreCase(tTempProbe.getName()));
-        tempProbes.remove(tTempProbe.getName());
+        this.tempProbes.remove(tTempProbe.getName());
         this.temperatureRepository.flush();
     }
 
@@ -601,66 +410,6 @@ public class LaunchControl {
         }
     }
 
-    private void setTempScales(String scale) {
-        if (scale == null) {
-            if (getScale().equals("C")) {
-                scale = "F";
-            } else {
-                scale = "C";
-            }
-        }
-        if (!scale.equals("C") && !scale.equals("F")) {
-            return;
-        }
-
-        // Change the temperature probes
-        for (TemperatureModel tempProbe : this.temperatureRepository.findAll()) {
-            tempProbe.setScale(scale);
-        }
-        setTempScales(scale);
-    }
-
-    boolean recorderEnabled() {
-        return getSystemSettings().isRecorderEnabled();
-    }
-
-    StatusRecorder getRecorder() {
-        return this.recorder;
-    }
-
-    void enableRecorder() {
-        if (this.recorder != null) {
-            return;
-        }
-        this.logger.info("Enabling the recorder");
-        getSystemSettings().setRecorderEnabled(true);
-        this.recorder = new StatusRecorder(StatusRecorder.defaultDirectory);
-        this.recorder.start();
-    }
-
-    public I2CDevice getI2CDevice(String devNumber, String devAddress, String devType) {
-        String devKey = String.format("%s_%s", devNumber, devAddress);
-        I2CDevice i2CDevice = getI2cDeviceList().get(devKey);
-        if (i2CDevice == null) {
-            i2CDevice = I2CDevice.create(devNumber, devAddress, devType);
-        }
-
-        return i2CDevice;
-    }
-
-    StatusRecorder disableRecorder() {
-        if (this.recorder == null) {
-            return null;
-        }
-        this.logger.info("Disabling the recorder");
-        getSystemSettings().setRecorderEnabled(false);
-        this.recorder.stop();
-        StatusRecorder temp = this.recorder;
-        this.recorder = null;
-        return temp;
-    }
-
-
     private PhSensor findPhSensor(String string) {
         string = string.replace(" ", "_");
         Iterator<PhSensor> iterator = getPhSensorList().iterator();
@@ -672,23 +421,6 @@ public class LaunchControl {
             }
         }
         return null;
-    }
-
-    /**
-     * Delete the specified pH Sensor.
-     *
-     * @param name The sensor to delete.
-     * @return true if the sensor is deleted.
-     */
-    boolean deletePhSensor(final String name) {
-        // search based on the input name
-        String realName = name.replace(" ", "_");
-        PhSensor tSensor = findPhSensor(realName);
-        return tSensor != null && getPhSensorList().remove(tSensor);
-    }
-
-    void addPhSensor(PhSensor sensor) {
-        getPhSensorList().add(sensor);
     }
 
     void shutdown() {
@@ -794,5 +526,12 @@ public class LaunchControl {
 
     public Collection<TempProbe> getTempProbes() {
         return this.tempProbes.values();
+    }
+
+    public List<TempProbe> availableProbes() {
+
+        List<TempProbe> allDevices = this.oneWireController.getAvailableDevices(DeviceType.TEMPERATURE);
+        allDevices.removeIf(d-> getTempProbes().stream().anyMatch(p -> p.getDevice().equals(p.getDevice())));
+        return allDevices;
     }
 }

@@ -21,3 +21,10 @@ node_modules/
 
 # DB Shit
 testdb.*
+
+.vscode/
+.settings/
+
+app/.cache
+app/.postcssrc
+app/dist

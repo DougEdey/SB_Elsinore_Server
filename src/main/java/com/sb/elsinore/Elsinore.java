@@ -1,5 +1,6 @@
 package com.sb.elsinore;
 
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,7 +18,7 @@ public class Elsinore implements WebMvcConfigurer {
     private static final String[] CLASSPATH_RESOURCE_LOCATIONS = {
             "classpath:/META-INF/resources/", "classpath:/resources/",
             "classpath:/static/", "classpath:/public/"};
-    private Logger logger = LoggerFactory.getLogger(Elsinore.class);
+    private static Logger logger = LoggerFactory.getLogger(Elsinore.class);
 
     /**
      * Main method to launch the brewery.
@@ -25,6 +26,7 @@ public class Elsinore implements WebMvcConfigurer {
      * @param arguments List of arguments from the command line
      */
     public static void main(final String... arguments) {
+        logger.info("Launch", "Launching elsinore with %s", Arrays.toString(arguments));
         new SpringApplicationBuilder(Elsinore.class).run(arguments);
     }
 

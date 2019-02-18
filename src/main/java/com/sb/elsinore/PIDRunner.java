@@ -1,6 +1,7 @@
 package com.sb.elsinore;
 
 import com.sb.elsinore.devices.PID;
+import com.sb.elsinore.hardware.OneWireController;
 import com.sb.elsinore.interfaces.PIDSettingsInterface;
 import com.sb.elsinore.wrappers.TempRunner;
 import com.sb.util.MathUtil;
@@ -54,8 +55,8 @@ class PIDRunner extends TempRunner {
     private BigDecimal previousError = new BigDecimal(0.0);
     private BigDecimal totalError = new BigDecimal(0.0);
 
-    public PIDRunner(PID pid) {
-        super(pid.getTemperature());
+    public PIDRunner(PID pid, OneWireController oneWireController) {
+        super(pid.getTemperature(), oneWireController);
         this.pid = pid;
     }
 

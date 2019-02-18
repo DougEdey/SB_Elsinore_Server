@@ -117,12 +117,12 @@ public class TriggerTest {
     public void testConversionOfTemp() throws InterruptedException {
         TempProbe localTempProbe = new TempProbe("Blank", "Blank");
         localTempProbe = spy(localTempProbe);
-        TempRunner tempRunner = new TempRunner(localTempProbe);
+        TempRunner tempRunner = new TempRunner(localTempProbe, null);
         tempRunner = spy(tempRunner);
 
         when(this.launchControl.findTemp("temp")).thenReturn(tempRunner);
 
-        when(tempRunner.updateTempFromFile()).thenReturn(new BigDecimal(40)).thenReturn(new BigDecimal(54.44));
+        when(tempRunner.updateTemp()).thenReturn(new BigDecimal(40)).thenReturn(new BigDecimal(54.44));
 
 
         TemperatureTrigger firstTemperatureTrigger = new TemperatureTrigger(0, "temp", 120, "Type A", "Method A");
@@ -141,7 +141,7 @@ public class TriggerTest {
         this.mTriggerControl.activateTrigger(1);
         assertTrue(secondTemperatureTrigger.isActive());
 
-        doReturn(new BigDecimal(56)).when(tempRunner).updateTempFromFile();
+        doReturn(new BigDecimal(56)).when(tempRunner).updateTemp();
         secondTemperatureTrigger.waitForTrigger();
     }
 }

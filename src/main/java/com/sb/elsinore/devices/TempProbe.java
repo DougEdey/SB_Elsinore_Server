@@ -209,7 +209,7 @@ public class TempProbe implements TemperatureInterface {
     }
 
     @Override
-    public void setVolumeAIN(int volumeAIN) {
+    public void setVolumeAIN(Integer volumeAIN) {
         this.temperatureInterface.setVolumeAIN(volumeAIN);
     }
 
@@ -287,22 +287,22 @@ public class TempProbe implements TemperatureInterface {
     }
 
     @Override
-    public boolean isHidden() {
+    public Boolean isHidden() {
         return this.temperatureInterface.isHidden();
     }
 
     @Override
-    public void setHidden(boolean hidden) {
+    public void setHidden(Boolean hidden) {
         this.temperatureInterface.setHidden(hidden);
     }
 
     @Override
-    public int getPosition() {
+    public Integer getPosition() {
         return this.temperatureInterface.getPosition();
     }
 
     @Override
-    public void setPosition(int position) {
+    public void setPosition(Integer position) {
         this.temperatureInterface.setPosition(position);
     }
 
@@ -729,23 +729,23 @@ public class TempProbe implements TemperatureInterface {
 
     /**
      * @return The current volume measurement,
-     * -1.0 is there is no measurement enabled.
+     * null if there is no measurement enabled.
      */
     public BigDecimal getVolume() {
         if (getVolumeMeasurementEnabled()) {
             return this.currentVolume;
         }
 
-        return BigDecimal.ONE.negate();
+        return null;
     }
 
     @Override
-    public boolean getVolumeMeasurementEnabled() {
+    public Boolean getVolumeMeasurementEnabled() {
         return this.temperatureInterface.getVolumeMeasurementEnabled();
     }
 
     @Override
-    public void setVolumeMeasurementEnabled(boolean enabled) {
+    public void setVolumeMeasurementEnabled(Boolean enabled) {
         this.temperatureInterface.setVolumeMeasurementEnabled(enabled);
     }
 

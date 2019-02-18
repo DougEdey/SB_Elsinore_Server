@@ -93,7 +93,7 @@ public class Timer implements Comparable<Timer> {
         this.targetMins = Integer.parseInt(target.replace(",", "."));
     }
 
-    public boolean getInverted() {
+    public Boolean getInverted() {
         return this.inverted;
     }
 

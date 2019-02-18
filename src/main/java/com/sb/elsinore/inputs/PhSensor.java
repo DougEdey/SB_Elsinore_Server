@@ -132,8 +132,7 @@ public class PhSensor {
         currentValue = this.calcPhValue();
         if (currentValue.subtract(targetRead).plus()
                 .compareTo(tolerance) > 0) {
-            LaunchControl.setMessage("Failed to calibrate. Difference is: "
-                    + currentValue.subtract(targetRead));
+            //LaunchControl.setMessage(String.format("Failed to calibrate. Difference is: %s", currentValue.subtract(targetRead)));
         }
     }
 

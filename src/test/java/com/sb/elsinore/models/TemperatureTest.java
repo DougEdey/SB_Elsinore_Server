@@ -91,7 +91,7 @@ public class TemperatureTest {
     @Test
     public void canReadAndWritePosition() {
         this.temperature.setPosition(23);
-        assertEquals(23, this.temperature.getPosition());
+        assertEquals((Integer) 23, this.temperature.getPosition());
     }
 
     @Test

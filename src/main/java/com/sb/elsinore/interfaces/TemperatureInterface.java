@@ -49,7 +49,7 @@ public interface TemperatureInterface {
 
     String getVolumeAIN();
 
-    void setVolumeAIN(int volumeAIN);
+    void setVolumeAIN(Integer volumeAIN);
 
     String getVolumeAddress();
 
@@ -69,13 +69,13 @@ public interface TemperatureInterface {
 
     void show();
 
-    boolean isHidden();
+    Boolean isHidden();
 
-    void setHidden(boolean hidden);
+    void setHidden(Boolean hidden);
 
-    int getPosition();
+    Integer getPosition();
 
-    void setPosition(int position);
+    void setPosition(Integer position);
 
     String getI2cNumber();
 
@@ -97,9 +97,9 @@ public interface TemperatureInterface {
 
     void setCutoffTemp(BigDecimal cutoffTemp);
 
-    boolean getVolumeMeasurementEnabled();
+    Boolean getVolumeMeasurementEnabled();
 
-    void setVolumeMeasurementEnabled(boolean enabled);
+    void setVolumeMeasurementEnabled(Boolean enabled);
 
     TemperatureModel getModel();
 }

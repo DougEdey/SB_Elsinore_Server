@@ -119,9 +119,9 @@ public class TemperatureTrigger implements TriggerInterface {
     public final void setTargetTemperature() {
         PIDInterface pid = this.launchControl.findPID(this.temperatureProbe.getName());
         if (pid == null) {
-            LaunchControl.setMessage(this.temperatureProbe.getName()
-                    + " is not associated with a PIDModel. "
-                    + "Trigger will wait for it to hit the target temperature.");
+//            LaunchControl.setMessage(this.temperatureProbe.getName()
+//                    + " is not associated with a PIDModel. "
+//                    + "Trigger will wait for it to hit the target temperature.");
         } else {
             pid.setSetPoint(this.targetTemp);
             pid.setPidMode(PID.PIDMode.AUTO);
@@ -135,9 +135,9 @@ public class TemperatureTrigger implements TriggerInterface {
     public final void setExitTemperature() {
         PIDInterface pid = this.launchControl.findPID(this.temperatureProbe.getName());
         if (pid == null) {
-            LaunchControl.setMessage(this.temperatureProbe.getName()
-                    + " is not associated with a PIDModel. "
-                    + "Trigger will wait for it to hit the target temperature.");
+//            LaunchControl.setMessage(this.temperatureProbe.getName()
+//                    + " is not associated with a PIDModel. "
+//                    + "Trigger will wait for it to hit the target temperature.");
         } else {
             pid.setSetPoint(this.exitTemp);
         }
@@ -298,9 +298,9 @@ public class TemperatureTrigger implements TriggerInterface {
         if (fromUI) {
             PIDInterface pid = this.launchControl.findPID(this.temperatureProbe.getName());
             if (pid == null) {
-                LaunchControl.setMessage(this.temperatureProbe.getName()
-                        + " is not associated with a PIDModel. "
-                        + "Cannot deactivate the PIDModel");
+//                LaunchControl.setMessage(this.temperatureProbe.getName()
+//                        + " is not associated with a PIDModel. "
+//                        + "Cannot deactivate the PIDModel");
             } else {
                 pid.setPidMode(OFF);
             }

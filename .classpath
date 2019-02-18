@@ -1,64 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src/main/java"/>
-	<classpathentry kind="src" path="src/test/java"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+	<classpathentry kind="src" output="bin/main" path="src/main/java">
 		<attributes>
-			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="gradle_scope" value="main"/>
+			<attribute name="gradle_used_by_scope" value="main,test"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry exported="true" kind="lib" path="libs/commons-logging-1.1.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/Cosm.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/ini4j-0.5.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/joda-time-2.2.jar"/>
-	<classpathentry kind="lib" path="libs/json-simple-1.1.1.jar"/>
-	<classpathentry kind="lib" path="libs/jGPIO.jar" sourcepath="/jGPIO"/>
-	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+	<classpathentry kind="src" output="bin/test" path="src/test/java">
 		<attributes>
-			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="gradle_scope" value="test"/>
+			<attribute name="gradle_used_by_scope" value="test"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="var" path="MAVEN_REPOSITORY/commons-io/commons-io/2.4/commons-io-2.4.jar" sourcepath="/MAVEN_REPOSITORY/commons-io/commons-io/2.4/commons-io-2.4-sources.jar">
-		<attributes/>
-	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jGPIO"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/linux-arm"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: commons-logging:commons-logging:1.1.1"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.apache.httpcomponents:httpclient:4.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.apache.httpcomponents:httpcore:4.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: commons-codec:commons-codec:1.6"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.ini4j:ini4j:0.5.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: joda-time:joda-time:2.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: com.googlecode.json-simple:json-simple:1.1.1"/>
+	<classpathentry kind="var" path="MAVEN_REPOSITORY/commons-io/commons-io/2.4/commons-io-2.4.jar" sourcepath="/MAVEN_REPOSITORY/commons-io/commons-io/2.4/commons-io-2.4-sources.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/jGPIO"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: net.java.dev.jna:jna:4.1.0"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.owfs:jowfsclient:1.2.6"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: commons-pool:commons-pool:1.6"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.slf4j:slf4j-api:1.7.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: JCosmAPI:JCosmAPI:0.0.1-SNAPSHOT"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: commons-cli:commons-cli:1.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.apache.commons:commons-lang3:3.3.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.eclipse.osgi:org.eclipse.osgi:3.7.1"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.rendersnake:rendersnake:1.9-SNAPSHOT"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.reflections:reflections:0.9.9-RC1"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: com.google.guava:guava:11.0.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: com.google.code.findbugs:jsr305:1.3.9"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.javassist:javassist:3.16.1-GA"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: dom4j:dom4j:1.6.1"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: xml-apis:xml-apis:1.0.b2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: junit:junit:4.12"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.hamcrest:hamcrest-core:1.3"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: commons-io:commons-io:2.4"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.easymock:easymock:3.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: cglib:cglib-nodep:2.2.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.objenesis:objenesis:1.3"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.powermock:powermock-module-junit4:1.6.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.powermock:powermock-module-junit4-common:1.6.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.powermock:powermock-core:1.6.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.powermock:powermock-reflect:1.6.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.powermock:powermock-api-mockito:1.6.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.mockito:mockito-all:1.10.19"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.powermock:powermock-api-support:1.6.2"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Maven: org.apache.tika:tika-core:1.11"/>
-	<classpathentry kind="output" path="target/classes"/>
+	<classpathentry kind="src" output="bin/main" path="src/main/resources">
+		<attributes>
+			<attribute name="gradle_scope" value="main"/>
+			<attribute name="gradle_used_by_scope" value="main,test"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-10/"/>
+	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
+	<classpathentry kind="output" path="bin/default"/>
 </classpath>

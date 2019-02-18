@@ -70,7 +70,7 @@ public class BeerXMLReader {
                     "Couldn't read beerXML File at: %1s",
                     inputFile.getAbsolutePath());
             this.logger.warn(output);
-            LaunchControl.setMessage(output);
+            //LaunchControl.setMessage(output);
             return false;
         }
         return true;
@@ -85,7 +85,7 @@ public class BeerXMLReader {
                     (NodeList) xp.evaluate(
                             "/RECIPES/RECIPE", this.recipeDocument, XPathConstants.NODESET);
             if (recipeList.getLength() == 0) {
-                LaunchControl.setMessage("No Recipes found in file");
+                //LaunchControl.setMessage("No Recipes found in file");
                 return null;
             }
 

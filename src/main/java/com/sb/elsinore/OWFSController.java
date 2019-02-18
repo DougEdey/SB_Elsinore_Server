@@ -1,9 +1,14 @@
 package com.sb.elsinore;
 
+import com.sb.elsinore.devices.TempProbe;
+import com.sb.elsinore.interfaces.TemperatureInterface;
 import com.sb.elsinore.models.SystemSettings;
+import com.sb.elsinore.models.TemperatureModel;
+import com.sb.elsinore.repositories.SystemSettingsRepository;
 import org.owfs.jowfsclient.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Singleton;
@@ -12,9 +17,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-@Component
-@Singleton
 public class OWFSController {
+
     /**
      * The default OWFS Port.
      */
@@ -25,6 +29,10 @@ public class OWFSController {
      * One Wire File System Connection.
      */
     private OwfsConnection owfsConnection = null;
+
+    public OWFSController(SystemSettings systemSettings) {
+        this.systemSettings = systemSettings;
+    }
 
     private String convertAddress(String oldAddress) {
         String[] newAddress = oldAddress.split("[.\\-]");
@@ -127,12 +135,11 @@ public class OWFSController {
         return result.trim();
     }
 
-    public List<String> getOneWireDevices(String prefix) {
-        List<String> devices;
+    public List<TempProbe> getOneWireDevices(String prefix) {
+        List<TempProbe> devices;
         devices = new ArrayList<>();
         if (this.owfsConnection == null) {
-            LaunchControl.setMessage("OWFS is not setup,"
-                    + " please delete your configuration file and start again");
+            //LaunchControl.setMessage("OWFS is not setup, please delete your configuration file and start again");
             return devices;
         }
         try {
@@ -147,7 +154,11 @@ public class OWFSController {
             while (dirIt.hasNext()) {
                 dir = dirIt.next();
                 if (dir.startsWith(prefix)) {
-                    devices.add(dir);
+                    TemperatureInterface temperatureInterface = new TemperatureModel();
+                    temperatureInterface.setName(dir);
+                    temperatureInterface.setDevice(dir);
+
+                    devices.add(new TempProbe(temperatureInterface));
                 }
             }
         } catch (OwfsException | IOException e) {

@@ -1,44 +1,32 @@
 package com.sb.elsinore.wrappers;
 
 
-import com.sb.elsinore.OWFSController;
+import com.sb.common.Constants;
+import com.sb.common.TemperatureResult;
+import com.sb.elsinore.hardware.OneWireController;
 import com.sb.elsinore.interfaces.TemperatureInterface;
-import com.sb.util.MathUtil;
-import org.apache.commons.lang3.StringUtils;
-import org.owfs.jowfsclient.OwfsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.sb.elsinore.wrappers.TemperatureValue.cToF;
 
 
 public class TempRunner implements Runnable {
+
+    @Autowired
+    public OneWireController oneWireController;
 
     public static final String TYPE = "tempProbe";
     /**
      * Strings for the Nodes.
      */
     public static final String POSITION = "position";
-    private static BigDecimal ERROR_TEMP = new BigDecimal(-999);
-    /**
-     * Base path for BBB System TempProbe.
-     */
-    private final String bbbSystemTemp =
-            "/sys/class/hwmon/hwmon0/device/temp1_input";
-    /**
-     * Base path for RPi System TempProbe.
-     */
-    private final String rpiSystemTemp =
-            "/sys/class/thermal/thermal_zone1/tempProbe";
+
     String currentError = null;
     TemperatureValue currentTemp = new TemperatureValue();
     TemperatureInterface temperature = null;
@@ -57,60 +45,33 @@ public class TempRunner implements Runnable {
     private BigDecimal tempF = null;
     private BigDecimal currentTime = null;
 
-    @Autowired
-    private OWFSController owfsController;
 
-    public TempRunner(TemperatureInterface temperature) {
+
+    public TempRunner(TemperatureInterface temperature, OneWireController oneWireController) {
+        this.oneWireController = oneWireController;
         this.temperature = temperature;
     }
 
+    @Autowired
+    public void setOneWireController(OneWireController oneWireController) {
+        this.oneWireController = oneWireController;
+    }
     private void initialize() {
-        if ("system".equalsIgnoreCase(this.temperature.getName())) {
-            this.temperature.setDevice("System");
-            File tempFile = new File(this.rpiSystemTemp);
+        if (Constants.SYSTEM.equalsIgnoreCase(this.temperature.getName())) {
+            this.temperature.setDevice(Constants.SYSTEM);
+            File tempFile = new File(Constants.rpiSystemTemp);
             if (tempFile.exists()) {
-                this.fileProbe = this.rpiSystemTemp;
+                this.fileProbe = Constants.rpiSystemTemp;
             } else {
-                tempFile = new File(this.bbbSystemTemp);
+                tempFile = new File(Constants.bbbSystemTemp);
                 if (tempFile.exists()) {
-                    this.fileProbe = this.bbbSystemTemp;
+                    this.fileProbe = Constants.bbbSystemTemp;
                 } else {
                     this.logger.warn("Couldn't find a valid system temperature probe");
                     return;
                 }
             }
 
-        } else if (!"blank".equalsIgnoreCase(this.temperature.getName())) {
-            this.fileProbe = "/sys/bus/w1/devices/" + this.temperature.getDevice() + "/w1_slave";
-            File probePath =
-                    new File(this.fileProbe);
-
-            // Lets assume that OWFS has "." separated names
-            if (!probePath.exists() && this.temperature.getDevice().contains(".")) {
-                String[] newAddress = this.temperature.getDevice().split("[.\\-]");
-
-                if (newAddress.length == 2) {
-                    String devFamily = newAddress[0];
-                    String devAddress = "";
-                    // Byte swap!
-                    devAddress += newAddress[1].subSequence(10, 12);
-                    devAddress += newAddress[1].subSequence(8, 10);
-                    devAddress += newAddress[1].subSequence(6, 8);
-                    devAddress += newAddress[1].subSequence(4, 6);
-                    devAddress += newAddress[1].subSequence(2, 4);
-                    devAddress += newAddress[1].subSequence(0, 2);
-
-                    String fixedAddress = devFamily + "-" + devAddress.toLowerCase();
-
-                    this.logger.info("Converted address: " + fixedAddress);
-
-                    this.fileProbe = "/sys/bus/w1/devices/" + fixedAddress + "/w1_slave";
-                    probePath = new File(this.fileProbe);
-                    if (probePath.exists()) {
-                        this.temperature.setDevice(fixedAddress);
-                    }
-                }
-            }
         }
 
         this.logger.info("{} initialized.", this.temperature.getName());
@@ -125,7 +86,7 @@ public class TempRunner implements Runnable {
      * @return The current temperature as read. -999 if it's bad.
      */
     public BigDecimal updateTemp() {
-        BigDecimal result;
+        TemperatureResult result;
 
         if (!this.initialized) {
             initialize();
@@ -134,15 +95,21 @@ public class TempRunner implements Runnable {
         if (this.badTemp && this.currentError != null && this.currentError.equals("")) {
             this.logger.warn("Trying to recover {}", this.temperature.getName());
         }
-        if (this.temperature.getDevice() == null) {
-            result = updateTempFromOWFS();
+        if (this.temperature.getDevice() != null) {
+            result = this.oneWireController.updateTempFromDevice(this.temperature.getDevice());
         } else {
-            result = updateTempFromFile();
+            result = this.oneWireController.updateTempFromFile(new File(this.fileProbe));
+            if (result.isError() && Constants.rpiSystemTemp.equals(this.fileProbe)) {
+                result = this.oneWireController.updateTempFromFile(new File(Constants.bbbSystemTemp));
+                if (result.isOK()) {
+                    this.fileProbe = Constants.bbbSystemTemp;
+                }
+            }
         }
 
-        if (result.equals(ERROR_TEMP)) {
+        if (result.isError()) {
             this.badTemp = true;
-            return result;
+            return result.temperature;
         }
 
         if (this.badTemp) {
@@ -154,7 +121,7 @@ public class TempRunner implements Runnable {
         }
 
         // OWFS/One wire always uses Celsius
-        this.currentTemp.setValue(result, TemperatureValue.Scale.C);
+        this.currentTemp.setValue(result.temperature, TemperatureValue.Scale.C);
 
         this.currentError = null;
 
@@ -164,109 +131,8 @@ public class TempRunner implements Runnable {
             this.logger.error("{}: ****** CUT OFF TEMPERATURE ({}) EXCEEDED *****", this.currentTemp, this.temperature.getCutoffTemp());
             System.exit(-1);
         }
-        return result;
+        return result.temperature;
     }
-
-    /**
-     * @return Get the current temperature from the OWFS server
-     */
-    public BigDecimal updateTempFromOWFS() {
-        // Use the OWFS connection
-        if (isNullOrEmpty(this.temperature.getDevice()) || this.temperature.getDevice().equals("Blank")) {
-            return new BigDecimal(0.0);
-        }
-
-        BigDecimal temp = ERROR_TEMP;
-        String rawTemp = "";
-
-        try {
-            rawTemp = this.owfsController.readOWFSPath(this.temperature.getDevice() + "/temperature");
-            if (rawTemp.equals("")) {
-                this.logger.error("Couldn't find the probe {} for {}", this.temperature.getDevice(), this.temperature.getName());
-                this.owfsController.setupOWFS();
-            } else {
-                temp = new BigDecimal(rawTemp);
-            }
-        } catch (IOException e) {
-            this.currentError = "Couldn't read " + this.temperature.getDevice();
-            this.logger.error(this.currentError, e);
-        } catch (OwfsException e) {
-            this.currentError = "Couldn't read " + this.temperature.getDevice();
-            this.logger.error(this.currentError, e);
-            this.owfsController.setupOWFS();
-        } catch (NumberFormatException e) {
-            this.currentError = "Couldn't parse" + rawTemp;
-            this.logger.error(this.currentError, e);
-        }
-
-        this.loggingOn = (!temp.equals(ERROR_TEMP));
-
-        return temp;
-    }
-
-    public BigDecimal updateTempFromFile() {
-        if (StringUtils.isEmpty(this.fileProbe)) {
-            this.logger.warn("No File to probe");
-            return BigDecimal.ZERO;
-        }
-
-        BufferedReader br = null;
-        String temp = null;
-
-        BigDecimal newTemperature = null;
-
-        try {
-            br = new BufferedReader(new FileReader(this.fileProbe));
-            String line = br.readLine();
-
-            if (line == null || line.contains("NO")) {
-                // bad CRC, do nothing
-                this.currentError = "Bad CRC from " + this.fileProbe;
-            } else if (line.contains("YES")) {
-                // good CRC
-                line = br.readLine();
-                // last value should be t=
-                int t = line.indexOf("t=");
-                temp = line.substring(t + 2);
-                BigDecimal tTemp = new BigDecimal(temp);
-                newTemperature = MathUtil.divide(tTemp, 1000);
-                this.currentError = null;
-            } else {
-                // System TemperatureModel
-                BigDecimal tTemp = new BigDecimal(line);
-                newTemperature = MathUtil.divide(tTemp, 1000);
-            }
-
-        } catch (IOException ie) {
-            if (this.loggingOn) {
-                this.currentError = "Couldn't find the device under: " + this.fileProbe;
-                this.logger.warn(this.currentError);
-                if (this.fileProbe.equals(this.rpiSystemTemp)) {
-                    this.fileProbe = this.bbbSystemTemp;
-                }
-            }
-            return ERROR_TEMP;
-        } catch (NumberFormatException nfe) {
-            this.currentError = "Couldn't parse " + temp + " as a double";
-            nfe.printStackTrace();
-        } catch (Exception e) {
-            this.currentError = "Couldn't update temperature from file";
-            e.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException ie) {
-                    this.logger.warn(ie.getLocalizedMessage());
-                }
-            }
-        }
-        if (newTemperature == null) {
-            newTemperature = getTempC();
-        }
-        return newTemperature;
-    }
-
 
     /**
      * @return Get the current temperature
