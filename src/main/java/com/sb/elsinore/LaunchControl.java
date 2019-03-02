@@ -77,7 +77,7 @@ public class LaunchControl {
 
     private ProcessBuilder pb = null;
     private HashMap<String, TempRunner> deviceMap = new HashMap<>();
-    private HashMap<String, TempProbe> tempProbes = new HashMap<>();
+    private HashMap<Long, TempProbe> tempProbes = new HashMap<>();
     private SystemSettings systemSettings = null;
     private StatusRecorder recorder = null;
 
@@ -189,8 +189,8 @@ public class LaunchControl {
         } else {
             tempProbe = new TempProbe(newTempProbe);
         }
-        if (!this.tempProbes.containsKey(tempProbe.getName())) {
-            this.tempProbes.put(tempProbe.getName(), tempProbe);
+        if (!this.tempProbes.containsKey(tempProbe.getId())) {
+            this.tempProbes.put(tempProbe.getId(), tempProbe);
         }
 
         return tempRunnerOpt;
@@ -366,7 +366,7 @@ public class LaunchControl {
     public void deleteTemp(TemperatureModel tTempProbe) {
         getTempRunners().removeIf(tempRunner -> tempRunner.getTempInterface().getName().equals(tTempProbe.getName()));
         getTempThreads().removeIf(tempThread -> tempThread.getName().equalsIgnoreCase(tTempProbe.getName()));
-        this.tempProbes.remove(tTempProbe.getName());
+        this.tempProbes.remove(tTempProbe.getId());
         this.temperatureRepository.flush();
     }
 
@@ -498,6 +498,8 @@ public class LaunchControl {
         Optional<TempRunner> tempRunner = findTempRunner(device);
         if (tempRunner.isEmpty() && device != null) {
             tempRunner = addTemp(device);
+        } else if (tempRunner.isPresent()) {
+            tempRunner.get().updateTemperatureInterface(device);
         } else {
             this.logger.warn("Failed to find temperature probe with name: {}", name);
         }
@@ -507,7 +509,8 @@ public class LaunchControl {
 
     private Optional<TempRunner> findTempRunner(TemperatureInterface temperatureInterface) {
         return getTempRunners().stream()
-                .filter(pRunner -> pRunner.getTempInterface() == temperatureInterface).findFirst();
+                .filter(pRunner -> pRunner.getTempInterface().getId().equals(temperatureInterface.getId()))
+                .findFirst();
     }
 
     public PIDModel findPID(String name) {
@@ -529,7 +532,6 @@ public class LaunchControl {
     }
 
     public List<TempProbe> availableProbes() {
-
         List<TempProbe> allDevices = this.oneWireController.getAvailableDevices(DeviceType.TEMPERATURE);
         allDevices.removeIf(d-> getTempProbes().stream().anyMatch(p -> p.getDevice().equals(p.getDevice())));
         return allDevices;

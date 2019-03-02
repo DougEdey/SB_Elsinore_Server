@@ -16,7 +16,7 @@ type TempRunner = {
     started: boolean
 };
 
-export const TemperatureProbeList: React.FunctionComponent<Response> = (props: Response) => {
+const TemperatureProbeList: React.FunctionComponent<Response> = (props: Response) => {
     return (
         <Query query={QUERY} >
             {({ loading, data, error }) => {
@@ -25,11 +25,13 @@ export const TemperatureProbeList: React.FunctionComponent<Response> = (props: R
                 if (!data) return <div>no data</div>;
 
                 const { tempRunners } = data;
-                return (tempRunners.map((probe: TempRunner) => <TempProbe key={probe.id.toString()} probe={probe}/>));
+                tempRunners.map((probe: TempRunner) => console.log(JSON.stringify(probe)));
+                const content = tempRunners.map((probe: TempRunner) => <TempProbe key={probe.name} probe={probe}/>);
+                return content;
             }}
         </Query>
     );
 };
 
 export default TemperatureProbeList;
-export {TempRunner};
+export {TempRunner, TemperatureProbeList};

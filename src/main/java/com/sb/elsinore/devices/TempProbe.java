@@ -749,7 +749,6 @@ public class TempProbe implements TemperatureInterface {
         this.temperatureInterface.setVolumeMeasurementEnabled(enabled);
     }
 
-    @Override
     public TemperatureModel getModel() {
         if (this.temperatureInterface instanceof TemperatureModel) {
             return (TemperatureModel) this.temperatureInterface;

@@ -28,12 +28,14 @@
     "jquery": "^3.3.1",
     "parcel-bundler": "^1.11.0",
     "popper.js": "^1.14.6",
+    "prop-types": "^15.7.2",
     "react": "^16.7.0",
     "react-apollo": "^2.4.0",
     "react-apollo-form": "^0.1.7",
     "react-bootstrap": "^1.0.0-beta.5",
     "react-bootstrap-navbar": "^1.1.0",
     "react-bootstrap-navbar-offcanvas": "^1.0.3",
+    "react-bootstrap-switch": "^15.5.3",
     "react-dom": "^16.7.0"
   },
   "scripts": {

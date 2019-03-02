@@ -318,7 +318,6 @@ public class TemperatureModel implements TemperatureInterface {
         this.volumeMeasurementEnabled = enabled;
     }
 
-    @Override
     public TemperatureModel getModel() {
         return this;
     }

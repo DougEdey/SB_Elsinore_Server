@@ -1,9 +1,6 @@
 package com.sb.elsinore.triggers;
 
 import org.json.simple.JSONObject;
-import org.rendersnake.HtmlCanvas;
-
-import java.io.IOException;
 
 /**
  * This is the base Trigger interface, a trigger should cause an action.

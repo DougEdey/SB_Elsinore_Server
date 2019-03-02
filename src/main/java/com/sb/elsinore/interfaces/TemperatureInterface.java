@@ -100,6 +100,4 @@ public interface TemperatureInterface {
     Boolean getVolumeMeasurementEnabled();
 
     void setVolumeMeasurementEnabled(Boolean enabled);
-
-    TemperatureModel getModel();
 }

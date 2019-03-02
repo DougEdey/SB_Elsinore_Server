@@ -4,24 +4,22 @@ import {Form} from "react-bootstrap";
 
 type Props = {
     value: String;
-    updateName: Function;
+    updateDevice: Function;
 }
 
-export class ProbeNameField extends Component<Props> {
+export class ProbeDeviceField extends Component<Props> {
 
     render() {
-        let {updateName, value} = this.props;
-        if (value == null) {
-            value = "" 
-        }
+        const {updateDevice, value} = this.props;
         //const errorMessage = this.getErrorMessage(value);
         return (
-            <Form.Group controlId="probe.name">
-                <Form.Label>Name</Form.Label>
+            <Form.Group controlId="probe.device">
+                <Form.Label>Device</Form.Label>
                 <Form.Control type="text"
-                    placeholder="Probe Name"
-                    defaultValue={value.toString()}
-                    onBlur={(event: React.FocusEvent<HTMLInputElement>) => updateName(event.target.value)} />
+                    readOnly={true}
+                    placeholder="Device"
+                    defaultValue={value}
+                    onBlur={(event: React.FocusEvent<HTMLInputElement>) => updateDevice(event.target.value)} />
             </Form.Group>
         );
     }

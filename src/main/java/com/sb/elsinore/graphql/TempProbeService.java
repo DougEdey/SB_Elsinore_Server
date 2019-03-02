@@ -42,6 +42,11 @@ public class TempProbeService {
         return this.temperatureRepository.findAll();
     }
 
+    @GraphQLQuery(name = "temperatureModel")
+    public TemperatureModel getTemperature(Long id) {
+        return this.temperatureRepository.findById(id).orElse(null);
+    }
+
     @GraphQLQuery(name = "tempProbes")
     public Collection<TempProbe> getTempProbes() {
         return this.launchControl.getTempProbes();
@@ -51,7 +56,6 @@ public class TempProbeService {
     public TempRunner addTemperatureProbe(String name, String device) {
         this.temperatureRepository.save(new TemperatureModel(name, device));
         return findTempRunnerByName(name);
-
     }
 
     @GraphQLMutation(name = "deleteProbe")

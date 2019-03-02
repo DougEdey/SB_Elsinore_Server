@@ -1,28 +1,29 @@
 import * as React from "react";
 import gql from "graphql-tag";
 import { graphql, compose } from "react-apollo";
-import { TempRunner} from "../TemperatureProbeList";
-import  ProbeNameField from "./formInputs/ProbeNameField"
+import { ProbeNameField, ProbeDeviceField, ScaleField, CalibrationField } from './formInputs';
 import {Button, Modal, Form} from "react-bootstrap";
+import { TemperatureModelInput, BigDecimal } from "../generated/graphql";
 
-type Props = {
-    probe: TempRunner;
+type ModalProps = {
+    probe: TemperatureModelInput;
     editModalActive: boolean;
     deleteProbeMutation: Function;
     toggleEditDialog: Function;
+    refetch: Function;
 }
 
 type State = {
-    newProbe: TempRunner
+    newProbe: TemperatureModelInput
 }
 
-class TempProbeModal extends React.Component<Props, State> {
+class TempProbeModal extends React.Component<ModalProps, State> {
 
-    constructor(props: Props) {
+    constructor(props: ModalProps) {
         super(props);
-        console.log("Active: " + props.editModalActive);
-        let newProbe: TempRunner = Object.assign({}, props.probe);
-        this.setState({newProbe: newProbe});
+        let newProbe: TemperatureModelInput = Object.assign({}, props.probe);
+        delete newProbe["__typename"]
+        this.state = { newProbe: newProbe };
     }
 
     updateName = (newName: string) => {
@@ -30,17 +31,44 @@ class TempProbeModal extends React.Component<Props, State> {
         this.setState(({newProbe}) => ({newProbe: {...newProbe, name: newName}}));
     }
 
+    updateDevice = (newDevice: string) => {
+        console.log("Updated device: "  + newDevice);
+        this.setState(({newProbe}) => ({newProbe: {...newProbe, device: newDevice}}));
+    }
+
+    updateScale = (newScale: string) => {
+        console.log("Updated scale: "  + newScale);
+        this.setState(({newProbe}) => ({newProbe: {...newProbe, scale: newScale}}));
+    }
+
+    updateCalibration = (newCalibration: BigDecimal) => {
+        if (newCalibration == "") {
+            newCalibration = null;
+        }
+        console.log("Updated calibration: "  + newCalibration);
+        this.setState(({newProbe}) => ({newProbe: {...newProbe, calibration: newCalibration}}));
+    }
+
+
     render() {
         const {editModalActive, probe} = this.props;
+
         return (
-            <Modal show={editModalActive}>
+            <Modal show={editModalActive} onHide={this.props.toggleEditDialog} >
                 <Modal.Header>
                     <Modal.Title>Edit {probe.name}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
             
                 <Form>
-                    <ProbeNameField value={this.props.probe.name} updateName={this.updateName} />
+                    <ProbeNameField value={probe.name} updateName={this.updateName} />
+                    <Form.Row>
+                        <CalibrationField value={probe.calibration} updateCalibration={this.updateCalibration} />
+                        <ScaleField value={probe.scale} updateScale={this.updateScale} />
+                    </Form.Row>
+                    <Form.Group>
+                        <ProbeDeviceField value={probe.device} updateDevice={this.updateDevice} />
+                    </Form.Group>
                 </Form>
                 </Modal.Body>
                 <Modal.Footer>
@@ -51,9 +79,14 @@ class TempProbeModal extends React.Component<Props, State> {
         );
     }
 
-
     private handleSave = () => {
-        console.log("Updated: " +  this.state.newProbe);
+        console.log("Updated: " +  JSON.stringify(this.state.newProbe));
+        this.props.updateProbeMutation({variables: { probe: this.state.newProbe}})
+            .then(({ data }) => {
+                console.log('got data', data);
+            }).catch((error) => {
+            console.log('there was an error sending the query', error);
+        });
         this.props.toggleEditDialog();
     };
 
@@ -74,6 +107,16 @@ const DELETE_PROBE = gql`
     }
 `;
 
-const WithData = compose(graphql(DELETE_PROBE, {name: 'deleteProbeMutation'})) (TempProbeModal);
+const UPDATE_PROBE = gql`
+    mutation UpdateProbe($probe: TemperatureModelInput!) {
+        updateProbe(probe: $probe) {
+            name
+        }
+    }
+`;
+const WithData = compose(
+    graphql(DELETE_PROBE, {name: 'deleteProbeMutation'}), 
+    graphql(UPDATE_PROBE, {name: 'updateProbeMutation'})
+) (TempProbeModal);
 
 export default WithData as TempProbeModal;

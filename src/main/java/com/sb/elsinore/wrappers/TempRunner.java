@@ -52,6 +52,10 @@ public class TempRunner implements Runnable {
         this.temperature = temperature;
     }
 
+    public void updateTemperatureInterface(TemperatureInterface temperatureInterface) {
+        this.temperature = temperatureInterface;
+    }
+
     @Autowired
     public void setOneWireController(OneWireController oneWireController) {
         this.oneWireController = oneWireController;
