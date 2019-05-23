@@ -1,6 +1,8 @@
 Strangebrew Elsinore Server
 ==================
 
+Dev has slowed down and will pick up eventually
+
 [JavaDoc for this project](http://dougedey.github.io/SB_Elsinore_Server/doc/)
 
 Java Server for Strangebrew Elsinore
