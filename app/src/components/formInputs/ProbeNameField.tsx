@@ -3,7 +3,7 @@ import * as React from "react";
 import {Form} from "react-bootstrap";
 
 type Props = {
-    value: String;
+    value: string | null | undefined;
     updateName: Function;
 }
 

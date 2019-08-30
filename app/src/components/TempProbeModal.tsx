@@ -1,20 +1,23 @@
 import * as React from "react";
 import gql from "graphql-tag";
+
 import { graphql, compose } from "react-apollo";
-import { ProbeNameField, ProbeDeviceField, ScaleField, CalibrationField } from './formInputs';
-import {Button, Modal, Form} from "react-bootstrap";
+import { ProbeNameField, ProbeDeviceField, ScaleField, CalibrationField, CutoffField } from './formInputs';
+import { Row, Col, Button, Modal, Form } from "react-bootstrap";
 import { TemperatureModelInput, BigDecimal } from "../generated/graphql";
 
 type ModalProps = {
     probe: TemperatureModelInput;
     editModalActive: boolean;
     deleteProbeMutation: Function;
-    toggleEditDialog: Function;
+    updateProbeMutation: Function;
+    toggleEditDialog: () => void;
     refetch: Function;
 }
 
 type State = {
-    newProbe: TemperatureModelInput
+    newProbe: TemperatureModelInput;
+    refreshComponents: boolean;
 }
 
 class TempProbeModal extends React.Component<ModalProps, State> {
@@ -23,7 +26,7 @@ class TempProbeModal extends React.Component<ModalProps, State> {
         super(props);
         let newProbe: TemperatureModelInput = Object.assign({}, props.probe);
         delete newProbe["__typename"]
-        this.state = { newProbe: newProbe };
+        this.state = { newProbe: newProbe, refreshComponents: false };
     }
 
     updateName = (newName: string) => {
@@ -31,14 +34,10 @@ class TempProbeModal extends React.Component<ModalProps, State> {
         this.setState(({newProbe}) => ({newProbe: {...newProbe, name: newName}}));
     }
 
-    updateDevice = (newDevice: string) => {
-        console.log("Updated device: "  + newDevice);
-        this.setState(({newProbe}) => ({newProbe: {...newProbe, device: newDevice}}));
-    }
-
     updateScale = (newScale: string) => {
         console.log("Updated scale: "  + newScale);
         this.setState(({newProbe}) => ({newProbe: {...newProbe, scale: newScale}}));
+        this.forceUpdate();
     }
 
     updateCalibration = (newCalibration: BigDecimal) => {
@@ -46,29 +45,52 @@ class TempProbeModal extends React.Component<ModalProps, State> {
             newCalibration = null;
         }
         console.log("Updated calibration: "  + newCalibration);
-        this.setState(({newProbe}) => ({newProbe: {...newProbe, calibration: newCalibration}}));
+        this.setState(({newProbe}) => ({newProbe: {...newProbe, calibration: newCalibration}, refreshComponents: !this.state.refreshComponents}));
+    }
+
+    updateCutoff = (newCutoff: BigDecimal) => {
+        if (newCutoff == "") {
+            newCutoff = null;
+        }
+        console.log("Updated cutoff: "  + newCutoff);
+        this.setState(({newProbe}) => ({newProbe: {...newProbe, cutoffTemp: newCutoff}}));
     }
 
 
     render() {
-        const {editModalActive, probe} = this.props;
+        const {editModalActive} = this.props;
+        let {newProbe} = this.state;
 
         return (
             <Modal show={editModalActive} onHide={this.props.toggleEditDialog} >
                 <Modal.Header>
-                    <Modal.Title>Edit {probe.name}</Modal.Title>
+                    <Modal.Title>Edit {newProbe.name}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
             
                 <Form>
-                    <ProbeNameField value={probe.name} updateName={this.updateName} />
-                    <Form.Row>
-                        <CalibrationField value={probe.calibration} updateCalibration={this.updateCalibration} />
-                        <ScaleField value={probe.scale} updateScale={this.updateScale} />
-                    </Form.Row>
-                    <Form.Group>
-                        <ProbeDeviceField value={probe.device} updateDevice={this.updateDevice} />
-                    </Form.Group>
+                    <ProbeNameField value={newProbe.name} updateName={this.updateName} />
+                    
+                    <Row>
+                        <Col>
+                            <ProbeDeviceField value={newProbe.device} />
+                        </Col>
+                        <Col>
+                            <ScaleField 
+                                value={newProbe.scale}
+                                updateScale={this.updateScale} />
+                        </Col>
+                    </Row>
+                    <CalibrationField 
+                        value={newProbe.calibration}
+                        scale={newProbe.scale}
+                        updateCalibration={this.updateCalibration} />
+                    
+                    <CutoffField 
+                        value={newProbe.cutoffTemp}
+                        scale={newProbe.scale}
+                        updateCutoff={this.updateCutoff} />
+                        
                 </Form>
                 </Modal.Body>
                 <Modal.Footer>
@@ -116,7 +138,7 @@ const UPDATE_PROBE = gql`
 `;
 const WithData = compose(
     graphql(DELETE_PROBE, {name: 'deleteProbeMutation'}), 
-    graphql(UPDATE_PROBE, {name: 'updateProbeMutation'})
+    graphql(UPDATE_PROBE, {name: 'updateProbeMutation'}),
 ) (TempProbeModal);
 
 export default WithData as TempProbeModal;

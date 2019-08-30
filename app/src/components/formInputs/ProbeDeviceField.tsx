@@ -1,26 +1,26 @@
 import {Component} from "react";
 import * as React from "react";
 import {Form} from "react-bootstrap";
+import { Maybe } from '../../generated/graphql';
 
 type Props = {
-    value: String;
-    updateDevice: Function;
+    value: Maybe<String>;
 }
 
 export class ProbeDeviceField extends Component<Props> {
 
     render() {
-        const {updateDevice, value} = this.props;
+        let {value} = this.props;
+        if (!(value instanceof String)) {
+            value = "";
+        }
+
         //const errorMessage = this.getErrorMessage(value);
         return (
-            <Form.Group controlId="probe.device">
-                <Form.Label>Device</Form.Label>
-                <Form.Control type="text"
-                    readOnly={true}
-                    placeholder="Device"
-                    defaultValue={value}
-                    onBlur={(event: React.FocusEvent<HTMLInputElement>) => updateDevice(event.target.value)} />
-            </Form.Group>
+            <Form.Control type="text"
+                readOnly={true}
+                placeholder="Device"
+                defaultValue={value.toString()} />
         );
     }
 

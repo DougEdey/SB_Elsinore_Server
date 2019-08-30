@@ -1,19 +1,21 @@
 import {Component} from "react";
 import * as React from "react";
 import {Form} from 'react-bootstrap';
+import { BigDecimal } from "../../generated/graphql"
 
 type Props = {
-    value: String;
+    value: BigDecimal;
+    scale: String;
     updateCalibration: Function;
 }
 
 export class CalibrationField extends Component<Props> {
     render() {
-        const {value, updateCalibration} = this.props;
+        const {value, scale, updateCalibration} = this.props;
         //const errorMessage = this.getErrorMessage(value);
         return (
             <Form.Group controlId="probe.device">
-                <Form.Label>Calibration</Form.Label>
+                <Form.Label>Calibration ({scale})</Form.Label>
                 <Form.Control type="Number"
                     placeholder="Offset"
                     defaultValue={value}

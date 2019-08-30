@@ -5,7 +5,7 @@ import Card from 'react-bootstrap/Card'
 import {TempRunner} from "../TemperatureProbeList";
 import ErrorBoundary from "./ErrorBoundary";
 import TempProbeModal  from "./TempProbeModal";
-import { Query, graphql } from 'react-apollo';
+import { Query } from 'react-apollo';
 import gql from "graphql-tag";
 import { TemperatureModelInput } from "../generated/graphql";
 import { client } from '../ApolloClient';
