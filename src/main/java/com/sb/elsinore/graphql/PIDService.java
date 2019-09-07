@@ -31,6 +31,9 @@ public class PIDService {
 
     @GraphQLMutation(name="updatePIDModel")
     public PIDModel updatePIDModel(PIDModel pidModel) {
+        if (pidModel.getId() != null) {
+            
+        }
         return pidRepository.saveAndFlush(pidModel);
     }
 }

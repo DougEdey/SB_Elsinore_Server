@@ -60,14 +60,14 @@ public class Elsinore implements WebMvcConfigurer {
         return viewResolver;
     }
 
-    @Bean
-    public ScriptTemplateConfigurer reactConfigurer() {
-        ScriptTemplateConfigurer configurer = new ScriptTemplateConfigurer();
-        configurer.setEngineName("nashorn");
-        configurer.setScripts("/META-INF/resources/webjars/react/16.3.2react.js");
-        configurer.setRenderFunction("render");
-        return configurer;
-    }
+    // @Bean
+    // public ScriptTemplateConfigurer reactConfigurer() {
+    //     ScriptTemplateConfigurer configurer = new ScriptTemplateConfigurer();
+    //     configurer.setEngineName("nashorn");
+    //     configurer.setScripts("/META-INF/resources/webjars/react/16.9.0.react.js");
+    //     configurer.setRenderFunction("render");
+    //     return configurer;
+    // }
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {

@@ -146,6 +146,7 @@ public class LaunchControl {
     @Autowired
     public void setTemperatureRepository(TemperatureRepository temperatureRepository) {
         this.temperatureRepository = temperatureRepository;
+        loadAllModels();
     }
 
     @Autowired

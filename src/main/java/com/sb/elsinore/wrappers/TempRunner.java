@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.util.regex.Pattern;
 
 import static com.sb.elsinore.wrappers.TemperatureValue.cToF;
 
@@ -37,15 +36,7 @@ public class TempRunner implements Runnable {
     boolean initialized = false;
     boolean loggingOn = true;
     private Logger logger = LoggerFactory.getLogger(TempRunner.class);
-    /**
-     * Match the temperature regexp.
-     */
-    private Pattern tempRegexp = null;
-    private BigDecimal previousTime = null;
-    private BigDecimal tempF = null;
-    private BigDecimal currentTime = null;
-
-
+    private BigDecimal defaultTemperature = null;
 
     public TempRunner(TemperatureInterface temperature, OneWireController oneWireController) {
         this.oneWireController = oneWireController;
@@ -112,6 +103,10 @@ public class TempRunner implements Runnable {
         }
 
         if (result.isError()) {
+            if (this.defaultTemperature != null) {
+                this.currentTemp.setValue(this.defaultTemperature, TemperatureValue.Scale.C);
+                return this.defaultTemperature;
+            }
             this.badTemp = true;
             return result.temperature;
         }
@@ -217,16 +212,11 @@ public class TempRunner implements Runnable {
     public void run() {
         startRunning();
         this.logger.info("Running " + this.temperature.getName() + ".");
-        // setup the first time
-        this.previousTime = new BigDecimal(System.currentTimeMillis());
-
-
         // Main loop
         while (isRunning()) {
             try {
-                this.tempF = getTempF();
+                getTempF();
                 // do the bulk of the work here
-                this.currentTime = new BigDecimal(System.currentTimeMillis());
                 loopRun();
 
                 //pause execution for a second
@@ -254,5 +244,9 @@ public class TempRunner implements Runnable {
 
     public Long getId() {
         return this.temperature.getId();
+    }
+
+    public void setDefaultTemperature(BigDecimal defaultTemperature) {
+        this.defaultTemperature = defaultTemperature;
     }
 }

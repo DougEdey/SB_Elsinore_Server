@@ -79,13 +79,13 @@ public class TemperatureValue {
     public void setValue(BigDecimal newValue, Scale scale) {
         if (this.scale == null) {
             this.scale = scale;
-        } else {
-            if (this.scale == Scale.F && scale == Scale.C) {
-                newValue = fToC(newValue);
-            } else if (this.scale == Scale.C && scale == Scale.F) {
-                newValue = cToF(newValue);
-            }
         }
+        if (this.scale == Scale.F && scale == Scale.C) {
+            newValue = fToC(newValue);
+        } else if (this.scale == Scale.C && scale == Scale.F) {
+            newValue = cToF(newValue);
+        }
+        
         this.value = newValue.setScale(2, RoundingMode.HALF_UP);
         this.time = System.currentTimeMillis();
     }

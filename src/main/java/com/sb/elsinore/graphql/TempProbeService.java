@@ -9,6 +9,7 @@ import io.leangen.graphql.annotations.GraphQLMutation;
 import io.leangen.graphql.annotations.GraphQLQuery;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 
@@ -56,6 +57,13 @@ public class TempProbeService {
     public TempRunner addTemperatureProbe(String name, String device) {
         this.temperatureRepository.save(new TemperatureModel(name, device));
         return findTempRunnerByName(name);
+    }
+
+    @GraphQLMutation(name = "setDefaultTemperature")
+    public TempRunner setDefaultTemperature(String name, BigDecimal temperature) {
+        TempRunner tempRunner = findTempRunnerByName(name);
+        tempRunner.setDefaultTemperature(temperature);
+        return tempRunner;
     }
 
     @GraphQLMutation(name = "deleteProbe")
