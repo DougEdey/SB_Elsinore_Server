@@ -1,7 +1,0 @@
-rootProject.name = 'Elsinore'
-
-sourceControl {
-    gitRepository("https://github.com/dougedey/jGPIO.git") {
-        producesModule("jGPIO:jGPIO")
-    }
-}

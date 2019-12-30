@@ -1,0 +1,13 @@
+type Query {
+    bookById(id: ID): PIDModel
+}
+
+type PIDModel {
+    id: ID
+    temperatureModel: TemperatureModel
+}
+
+type TemperatureModel {
+    id: ID
+    name: String
+}
