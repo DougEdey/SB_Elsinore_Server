@@ -1,10 +1,18 @@
 package com.sb.elsinore.repositories;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+import javax.validation.ConstraintViolationException;
+
 import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.configuration.JpaDataConfiguration;
 import com.sb.elsinore.configuration.TestJpaConfiguration;
 import com.sb.elsinore.configuration.TestRestConfiguration;
 import com.sb.elsinore.models.TemperatureModel;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,26 +20,23 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import javax.validation.ConstraintViolationException;
-
-import static org.junit.Assert.*;
-import static org.mockito.MockitoAnnotations.initMocks;
-
 @SpringBootTest
-@DataJpaTest
+@AutoConfigureTestDatabase
 @ContextConfiguration(classes = {
         JpaDataConfiguration.class,
         TestJpaConfiguration.class,
         TestRestConfiguration.class})
-    @EnableConfigurationProperties
+@EnableConfigurationProperties
+@RunWith(SpringJUnit4ClassRunner.class)
 public class TemperatureRepositoryTest extends AbstractTransactionalJUnit4SpringContextTests {
 
     @Rule
@@ -40,6 +45,8 @@ public class TemperatureRepositoryTest extends AbstractTransactionalJUnit4Spring
     private TestEntityManager entityManager;
     @Autowired
     private TemperatureRepository temperatureRepository;
+    @MockBean
+    private LaunchControl launchControl;
 
     @Before
     public void setup() {

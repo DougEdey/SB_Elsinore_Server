@@ -1,5 +1,6 @@
 package com.sb.elsinore.repositories;
 
+import com.sb.elsinore.LaunchControl;
 import com.sb.elsinore.configuration.JpaDataConfiguration;
 import com.sb.elsinore.configuration.TestJpaConfiguration;
 import com.sb.elsinore.configuration.TestRestConfiguration;
@@ -9,14 +10,18 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -26,7 +31,9 @@ import static org.mockito.MockitoAnnotations.initMocks;
         JpaDataConfiguration.class,
         TestJpaConfiguration.class,
         TestRestConfiguration.class})
-@DataJpaTest
+@EnableConfigurationProperties
+@AutoConfigureTestDatabase
+@RunWith(SpringJUnit4ClassRunner.class)
 public class PIDRepositoryTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -34,7 +41,9 @@ public class PIDRepositoryTest extends AbstractTransactionalJUnit4SpringContextT
     private TestEntityManager entityManager;
     @Autowired
     private PIDRepository pidRepository;
-
+    @MockBean
+    private LaunchControl launchControl;
+    
     private TemperatureModel temperature;
 
     @Before
