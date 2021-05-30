@@ -1,6 +1,8 @@
 Strangebrew Elsinore Server
 ==================
 
+Development has stopped on this application, please see https://github.com/DougEdey/elsinore/ as a replacement
+
 [JavaDoc for this project](http://dougedey.github.io/SB_Elsinore_Server/doc/)
 
 Java Server for Strangebrew Elsinore
